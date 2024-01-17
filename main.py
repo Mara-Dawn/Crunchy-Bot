@@ -1,61 +1,53 @@
 
 import discord
-import logging
-from logging.handlers import TimedRotatingFileHandler
+
+from discord.ext import commands
+from logger import BotLogger
+from settings import BotSettings
+from userlist import UserList
+from cogs.Police import Police
 
 TOKEN_FILE = 'key.txt'
+AUTHOR_ID = 90043934247501824
 
-class MommyBot(discord.Client):
+class MommyBot(commands.Bot):
 
-    LIMIT_ROLE = 551066138860060682;
-    RATE_LIMIT = 60
+    SETTINGS_FILE = "settings.json"
+    LOG_FILE = "mommybot.log"
 
     def __init__(self, *args, **kwargs):
+
         super().__init__(*args, **kwargs)
 
-        self.naughty_list = {}
+        self.logger = BotLogger(self, self.LOG_FILE)
+        self.settings = BotSettings(self.logger, self.SETTINGS_FILE)
+
+    async def setup_hook(self) -> None:
+        
+        await self.load_extension("cogs.Police")
+
+    async def on_guild_join(self, guild):
+
+        self.logger.log(guild.id,  "new guild registered.")
+        self.settings.add_guild(guild.id)
+
+    async def on_guild_remove(self, guild):
+
+        self.settings.remove_guild(guild.id)
+        self.logger.log(guild.id, "guild removed.")
 
     async def on_message(self, message):
-        author_id = message.author.id
-
-        if author_id == self.user.id:
-            return
-        
-        if self.LIMIT_ROLE in [x.id for x in message.author.roles]:
-            # user has the right role
-
-            if author_id not in self.naughty_list.keys():
-                self.naughty_list[author_id] = {"timestamp": message.created_at, "notified" : False}
-                return
-
-            naughty_user = self.naughty_list[author_id]
-
-            difference = message.created_at - naughty_user["timestamp"]
-
-            if difference.total_seconds() < self.RATE_LIMIT:
-                if not naughty_user["notified"]:
-                    await message.channel.send(f'<@{author_id}> Stop spamming, bitch! try again in {self.RATE_LIMIT - int(difference.total_seconds())} seconds.')
-                    self.naughty_list[author_id]["notified"] = True
-                await message.delete()
-            else:
-                self.naughty_list[author_id] = {"timestamp": message.created_at, "notified" : False}
+        await self.process_commands(message)
 
 
-
-
-logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
-handler = logging.handlers.TimedRotatingFileHandler("mommybot.log",'midnight', 1, 5, 'utf-8')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
 
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = MommyBot(intents=intents)
+bot = MommyBot(command_prefix="/", intents=intents)
 
 token = open(TOKEN_FILE,"r").readline()
-bot.run(token, log_handler=None)
+bot.run(token)
 
 
 #Set-ExecutionPolicy Unrestricted -Scope Process
