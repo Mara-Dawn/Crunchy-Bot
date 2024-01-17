@@ -12,7 +12,7 @@ class BotLogger():
         self.file_name = file_name
         self.bot = bot
         self.logger = logging.getLogger('discord')
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
         handler = logging.handlers.TimedRotatingFileHandler(self.file_name,'midnight', 1, 5, 'utf-8')
         handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
         self.logger.addHandler(handler)
@@ -36,12 +36,12 @@ class BotLogger():
 
     def log(self, guild: int, message: str, log=True, cog=False) -> None:
         log_str = self.__build_log_msg(guild, message, cog)
-        print(log_str)
+        #print(log_str)
         if log:
             self.logger.info("APPLICATION" + str(log_str))
     
     def debug(self, guild: int, message: str, log=True, cog=False) -> None:
         log_str = self.__build_log_msg(guild, message, cog)
-        print(log_str)
+        #print(log_str)
         if log:
             self.logger.debug("APPLICATION" + str(log_str))

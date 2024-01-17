@@ -1,5 +1,6 @@
 import json
 import os
+from typing import List
 
 from logger import BotLogger
 
@@ -112,10 +113,20 @@ class BotSettings():
         self.logger.log(guild_id,  "cleared savedata for guild")
         
 
-    def get_naughty_roles(self, guild: int) -> [int]:
+    def get_naughty_roles(self, guild: int) -> List[int]:
         return [int(x) for x in self.__get_setting(guild, self.NAUGHTY_ROLES_KEY)]
     
     def set_naughty_roles(self, guild: int, roles: [int]):
+        self.__update_setting(guild, self.NAUGHTY_ROLES_KEY, roles)
+        
+    def add_naughty_role(self, guild: int, role: int):
+        roles = self.get_naughty_roles(guild)
+        if role not in roles: roles.append(role)
+        self.__update_setting(guild, self.NAUGHTY_ROLES_KEY, roles)
+        
+    def remove_naughty_role(self, guild: int, role: int):
+        roles = self.get_naughty_roles(guild)
+        if role in roles: roles.remove(role)
         self.__update_setting(guild, self.NAUGHTY_ROLES_KEY, roles)
     
     def get_timeout(self, guild: int) -> int:

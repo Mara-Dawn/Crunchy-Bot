@@ -1,11 +1,12 @@
 import datetime
+from typing import Dict
 
 from userlistnode import UserListNode
 
 class UserList():
 
     def __init__(self):
-        self.users = {UserListNode}
+        self.users: Dict[int, UserListNode] = {}
 
     def update_user(self, author_id: int, timestamp: datetime.datetime) -> None:
         self.users[author_id] = UserListNode(author_id, timestamp)
