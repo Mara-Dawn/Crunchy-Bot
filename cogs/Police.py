@@ -36,12 +36,18 @@ class Police(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.message.Message):
-
+       
         author_id = message.author.id
-        guild_id = message.guild.id
-        
         if author_id == self.bot.user.id:
             return
+        
+        if len(message.content) > 0 and message.content[0] == "/":
+            return
+        
+        if not message.guild:
+            return
+        
+        guild_id = message.guild.id
         
         if not self.settings.get_enabled(guild_id):
             return
@@ -77,7 +83,7 @@ class Police(commands.Cog):
                 if not naughty_user.was_notified():
 
                     self.logger.debug(guild_id, f'User {message.author.name} was notified.')
-                    await message.channel.send(f'<@{author_id}> {self.settings.get_timeout_notice(guild_id)} try again in <t:{release}:R> .')
+                    await message.channel.send(f'<@{author_id}> {self.settings.get_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=remaining)
                     naughty_list.mark_as_notified(author_id)
 
                 await message.delete()

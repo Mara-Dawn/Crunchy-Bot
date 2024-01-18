@@ -1,6 +1,7 @@
 # My own stuff
 *.txt
 *.json
+*.log*
 
 
 # Byte-compiled / optimized / DLL files
