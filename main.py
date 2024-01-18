@@ -4,8 +4,8 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from logger import BotLogger
-from settings import BotSettings
-from userlist import UserList
+from BotSettings import BotSettings
+from datalayer.UserList import UserList
 from cogs.Police import Police
 
 TOKEN_FILE = 'key.txt'
@@ -19,11 +19,11 @@ class MommyBot(commands.Bot):
 
         super().__init__(*args, **kwargs)
 
-        self.logger = BotLogger(self, self.LOG_FILE)
-        self.settings = BotSettings(self.logger, self.SETTINGS_FILE)
+        
 
     async def setup_hook(self) -> None:
-        
+        self.logger = BotLogger(self, self.LOG_FILE)
+        self.settings = BotSettings(self, self.logger, self.SETTINGS_FILE)
         await self.load_extension("cogs.Police")
 
     async def on_guild_join(self, guild):

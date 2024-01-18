@@ -1,7 +1,7 @@
 import datetime
 from typing import Dict
 
-from userlistnode import UserListNode
+from datalayer.UserListNode import UserListNode
 
 class UserList():
 
