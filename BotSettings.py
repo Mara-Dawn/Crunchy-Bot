@@ -6,7 +6,7 @@ from typing import List
 from datalayer.Setting import Setting
 from datalayer.ModuleSettings import ModuleSettings
 from datalayer.GuildSettings import GuildSettings
-from logger import BotLogger
+from BotLogger import BotLogger
 from discord.ext import commands
 
 class BotSettings():

@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from typing import Dict, Literal, Optional
-from logger import BotLogger
+from BotLogger import BotLogger
 from BotSettings import BotSettings
 from datalayer.UserList import UserList
 
@@ -67,12 +67,12 @@ class Police(commands.Cog):
         
         if bool(set([x.id for x in message.author.roles]).intersection(self.settings.get_police_naughty_roles(guild_id))):
 
-            self.logger.log(guild_id, f'{message.author.name} has matching roles')
+            self.logger.debug(guild_id, f'{message.author.name} has matching roles')
             
             if not naughty_list.has_user(author_id):
                 
                 message_limit = self.settings.get_police_message_limit(guild_id)
-                self.logger.log(guild_id, f'Added rate tracing for user {message.author.name}')
+                self.logger.log(guild_id, f'Added rate tracking for user {message.author.name}')
                 naughty_list.add_user(author_id, message_limit)
                 naughty_list.add_message(author_id, message.created_at)
                 return
