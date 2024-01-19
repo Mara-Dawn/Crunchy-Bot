@@ -16,7 +16,6 @@ class MommyBot(commands.Bot):
     LOG_FILE = "mommybot.log"
 
     def __init__(self, *args, **kwargs):
-
         super().__init__(*args, **kwargs)
 
     async def setup_hook(self) -> None:
