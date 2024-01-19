@@ -26,11 +26,9 @@ class MommyBot(commands.Bot):
     async def on_guild_join(self, guild):
 
         self.logger.log(guild.id,  "new guild registered.")
-        self.settings.add_guild(guild.id)
 
     async def on_guild_remove(self, guild):
 
-        self.settings.remove_guild(guild.id)
         self.logger.log(guild.id, "guild removed.")
 
 
