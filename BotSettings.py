@@ -33,7 +33,7 @@ class BotSettings():
         police_settings.add_setting(self.POLICE_NAUGHTY_ROLES_KEY, [], "Roles affected by rate limiting", "handle_roles_value")
         police_settings.add_setting(self.POLICE_TIMEOUT_KEY, 60, "Timeout length in seconds")
         police_settings.add_setting(self.POLICE_TIMEOUT_NOTICE_KEY, "Stop spamming, bitch!", "Message sent to timed out users")
-        police_settings.add_setting(self.POLICE_MESSAGE_LIMIT_KEY, 3, "Number of messages before timeout")
+        police_settings.add_setting(self.POLICE_MESSAGE_LIMIT_KEY, 4, "Number of messages before timeout")
         police_settings.add_setting(self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY, 10, "Interval for counting messages before timeout")
         
         self.settings = GuildSettings()

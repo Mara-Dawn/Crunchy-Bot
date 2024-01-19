@@ -8,9 +8,12 @@ class UserList():
     def __init__(self):
         self.users: Dict[int, UserListNode] = {}
 
-    def update_user(self, author_id: int, timestamp: datetime.datetime) -> None:
-        self.users[author_id] = UserListNode(author_id, timestamp)
-
+    def add_user(self, author_id: int, message_limit: int) -> None:
+        self.users[author_id] = UserListNode(author_id, message_limit) 
+        
+    def add_message(self, user_id: int, message_timestamp: datetime.datetime) -> None:
+        self.users[user_id].add_message(message_timestamp)
+        
     def remove_user(self, author_id: int) -> None:
         del self.users[author_id]
 

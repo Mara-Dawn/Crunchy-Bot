@@ -64,45 +64,52 @@ class Police(commands.Cog):
             return
         
         naughty_list = self.naughty_list[guild_id]
-
-        self.logger.debug(guild_id, f'author roles: {[x.id for x in message.author.roles]}')
-        self.logger.debug(guild_id, f'settings: {self.settings.get_police_naughty_roles(guild_id)}')
         
         if bool(set([x.id for x in message.author.roles]).intersection(self.settings.get_police_naughty_roles(guild_id))):
 
             self.logger.log(guild_id, f'{message.author.name} has matching roles')
-
+            
             if not naughty_list.has_user(author_id):
-
-                self.logger.log(guild_id, f'Added rate tracing for user {message.author.name}')
-                naughty_list.update_user(author_id, message.created_at)
                 
+                message_limit = self.settings.get_police_message_limit(guild_id)
+                self.logger.log(guild_id, f'Added rate tracing for user {message.author.name}')
+                naughty_list.add_user(author_id, message_limit)
+                naughty_list.add_message(author_id, message.created_at)
+                return
+            
+            naughty_list.add_message(author_id, message.created_at)
+            
+            message_limit_interval = self.settings.get_police_message_limit_interval(guild_id)
+            naughty_user = naughty_list.get_user(author_id)
+            timeout_max = self.settings.get_police_timeout(guild_id)
+            
+            if not naughty_user.is_in_timeout():
+                
+                if not naughty_user.is_spamming(message_limit_interval):
+                    return
+                
+                release = int(message.created_at.timestamp()) + timeout_max
+                await message.channel.send(f'<@{author_id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=(timeout_max-2))
+                
+                naughty_user.timeout(message.created_at)
+                
+                self.logger.log(guild_id, f'Activated rate limit for {message.author.name}.')
+                await message.delete()
+                return
+            
+            
+            timeout_duration = message.created_at - naughty_user.get_timestamp()
+            
+            if timeout_duration.total_seconds() < timeout_max:
+
+                remaining = timeout_max - int(timeout_duration.total_seconds())
+                self.logger.log(guild_id, f'User rate limit activated for {message.author.name}. {remaining} seconds remaining.')
+                await message.delete()
                 return
 
-            naughty_user = naughty_list.get_user(author_id)
-            
-            timeout = self.settings.get_police_timeout(guild_id)
-            
-            difference = message.created_at - naughty_user.get_timestamp()
-            remaining = timeout - int(difference.total_seconds())
-            release = int(naughty_user.get_timestamp().timestamp()) + timeout
 
-            if difference.total_seconds() < self.settings.get_police_timeout(guild_id):
-
-                self.logger.log(guild_id, f'User rate limit active for {message.author.name}. {remaining} seconds remaining.')
-
-                if not naughty_user.was_notified():
-
-                    self.logger.log(guild_id, f'User {message.author.name} was notified.')
-                    await message.channel.send(f'<@{author_id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=remaining)
-                    naughty_list.mark_as_notified(author_id)
-
-                await message.delete()
-
-            else:
-
-                self.logger.log(guild_id, f'User {message.author.name} rate limit was reset.')
-                naughty_list.update_user(author_id, message.created_at)
+            self.logger.log(guild_id, f'User {message.author.name} rate limit was reset.')
+            naughty_user.release()
                 
         elif naughty_list.has_user(author_id):
             
@@ -169,7 +176,7 @@ class Police(commands.Cog):
         await self.__command_response(interaction, f'Police module was turned {enabled}.')
     
     
-    @group.command(name="set_timeout_interval")
+    @group.command(name="set_timeout_length")
     @app_commands.describe(interval='The amount of time the users will have to wait before posting again after getting timed out. (in seconds)')
     @app_commands.check(__has_permission)
     async def set_timeout_interval(self, interaction: discord.Interaction, interval: app_commands.Range[int, 0]):

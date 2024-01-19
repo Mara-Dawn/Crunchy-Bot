@@ -4,25 +4,28 @@ from typing import List
 
 class UserListNode():
     
-    def __init__(self, author_id: int, timestamp: datetime.datetime, queue_size: int = 4):
+    def __init__(self, author_id: int, queue_size: int):
         self.author_id = author_id
-        self.timeout_timestamp = timestamp
-        self.message_queue = collections.deque(5*[datetime.datetime], queue_size)
-        self.notified = False
+        self.timeout_timestamp = None
+        self.queue_size = queue_size
+        self.message_queue = collections.deque(maxlen=queue_size)
+        self.timeout_flag = False
     
     def add_message(self, message_timestamp: datetime.datetime) -> None:
         self.message_queue.append(message_timestamp)
         
-    def get_message_diff(self) -> float:
-        min_time = False
-        max_time = False
+    def is_spamming(self, interval: int) -> bool:
+        if len(self.message_queue) < self.queue_size:
+            return False
+        
+        min_time = datetime.datetime.max
+        max_time = datetime.datetime.min
         for timestamp in self.message_queue:
-            min_time = min(min_time, timestamp) if min_time else timestamp
-            max_time = max(max_time, timestamp) if max_time else timestamp
-        if not min_time or not max_time:
-            return 0
+            min_time = min([min_time, timestamp.replace(tzinfo=None)])
+            max_time = max([max_time, timestamp.replace(tzinfo=None)]) 
+        
         difference = max_time - min_time
-        return difference.total_seconds()
+        return difference.total_seconds() < interval
         
     def notify(self) -> None:
         self.notified = True;
@@ -32,6 +35,17 @@ class UserListNode():
     
     def get_timestamp(self) -> datetime.datetime:
         return self.timeout_timestamp
+    
+    def is_in_timeout(self) -> datetime.datetime:
+        return self.timeout_flag
 
-    def set_timestamp(self, timestamp: datetime.datetime) -> None:
+    def timeout(self, timestamp: datetime.datetime) -> None:
         self.timeout_timestamp = timestamp
+        self.timeout_flag = True
+        
+    def release(self) -> None:
+        self.timeout_timestamp = None
+        self.timeout_flag = False
+        last_msg = self.message_queue.pop()
+        self.message_queue.clear()
+        self.message_queue.append(last_msg)
