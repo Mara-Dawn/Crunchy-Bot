@@ -1,16 +1,15 @@
-
 import discord
 
 from discord.ext import commands
 from discord import app_commands
-from logger import BotLogger
+from BotLogger import BotLogger
 from BotSettings import BotSettings
 from datalayer.UserList import UserList
 from cogs.Police import Police
 
 TOKEN_FILE = 'key.txt'
 
-class MommyBot(commands.Bot):
+class MaraBot(commands.Bot):
 
     SETTINGS_FILE = "settings.json"
     LOG_FILE = "mommybot.log"
@@ -31,12 +30,10 @@ class MommyBot(commands.Bot):
 
         self.logger.log(guild.id, "guild removed.")
 
-
-
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = MommyBot(command_prefix="/", intents=intents)
+bot = MaraBot(command_prefix="/", intents=intents)
 
 async def on_tree_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     if isinstance(error, app_commands.CommandOnCooldown):
@@ -48,12 +45,7 @@ async def on_tree_error(interaction: discord.Interaction, error: app_commands.Ap
     else:
         raise error
 
-
-
 bot.tree.on_error = on_tree_error
 
 token = open(TOKEN_FILE,"r").readline()
 bot.run(token)
-
-
-#Set-ExecutionPolicy Unrestricted -Scope Process
