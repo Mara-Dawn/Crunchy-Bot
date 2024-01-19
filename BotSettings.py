@@ -159,7 +159,7 @@ class BotSettings():
         
         return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_KEY))
     
-    def set_police_message_limit(self, guild: int, cog: str, limit: int) -> None:
+    def set_police_message_limit(self, guild: int, limit: int) -> None:
         
         self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_KEY, limit)
         
@@ -167,6 +167,6 @@ class BotSettings():
         
         return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY))
     
-    def set_police_message_limit_interval(self, guild: int, cog: str, interval: int) -> None:
+    def set_police_message_limit_interval(self, guild: int, interval: int) -> None:
         
         self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY, interval)
