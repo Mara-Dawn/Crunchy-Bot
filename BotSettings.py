@@ -83,35 +83,6 @@ class BotSettings():
         
         guild_obj = self.bot.get_guild(guild_id)
         return " " + ", ".join([guild_obj.get_role(id).name for id in roles]) + " "
-    
-    def add_guild(self, guild_id: int) -> None:
-
-        with open(self.file_name, 'r+') as configfile:
-
-            data = json.load(configfile)
-            data[guild_id] = self.settings[self.DEFAULT_KEY]
-            configfile.seek(0)
-            json.dump(data, configfile, indent=4)
-            configfile.truncate()
-            self.settings = data
-            
-        self.logger.log(guild_id,  "added save data for guild")
-
-    def remove_guild(self, guild_id: int) -> None:
-
-        with open(self.file_name, "r+") as read_file:
-            data = json.load(read_file)
-            
-            if str(guild_id) in list(data):
-                del data[str(guild_id)]
-                
-            read_file.seek(0)
-            json.dump(data, read_file, indent=4)
-            read_file.truncate()
-            
-            self.settings = data
-            
-        self.logger.log(guild_id,  "cleared savedata for guild")
         
     def get_settings_string(self, guild: int, cog: str = "") -> str:
         
