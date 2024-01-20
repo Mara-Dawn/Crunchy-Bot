@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import datetime
+import traceback
 import discord
 
 from discord.ext import commands
@@ -46,11 +47,17 @@ class Police(commands.Cog):
         initial_overwrites = copy.deepcopy(user_overwrites)
         user_overwrites.send_messages = False
         
+        try:
+            await channel.set_permissions(user, overwrite=user_overwrites)
+            
+        except Exception as e:
+            self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.')
+            print(traceback.print_exc())
+            
         await message.channel.send(f'<@{user.id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=(timeout_max))
-        self.logger.log(guild_id, f'Activated rate limit for {message.author.name}.')
+        self.logger.log(guild_id, f'Activated rate limit for {message.author.name} in {channel.name}.')
         await message.delete()
-        
-        await channel.set_permissions(user, overwrite=user_overwrites)
+            
         self.logger.log(channel.guild.id, f'Temporarily removed send_messages permission from {user.name} in {channel.name}.')
         
         timeout_length = timeout_max - (int(datetime.datetime.now().timestamp()) - timestamp_now)
@@ -86,6 +93,9 @@ class Police(commands.Cog):
        
         author_id = message.author.id
         if author_id == self.bot.user.id:
+            return
+        
+        if message.author.bot:
             return
         
         if len(message.content) > 0 and message.content[0] == "/":
@@ -127,7 +137,6 @@ class Police(commands.Cog):
                     return
                 
                 self.bot.loop.create_task(self.timeout_task(message, naughty_user))
-                return
                 
         elif naughty_list.has_user(author_id):
             
