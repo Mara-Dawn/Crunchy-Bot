@@ -5,7 +5,6 @@ from discord import app_commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from datalayer.UserList import UserList
-from cogs.Police import Police
 
 TOKEN_FILE = 'key.txt'
 

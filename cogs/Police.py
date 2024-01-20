@@ -1,15 +1,19 @@
+import asyncio
+import copy
+import datetime
 import discord
 
 from discord.ext import commands
-from discord import app_commands
+from discord import Message, app_commands
 from typing import Dict, Literal, Optional
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from datalayer.UserList import UserList
+from datalayer.UserListNode import UserListNode
 
 class Police(commands.Cog):
     
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         
         self.naughty_list: Dict[int, UserList] = {}
@@ -27,6 +31,38 @@ class Police(commands.Cog):
         author_id = 90043934247501824
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
     
+    async def timeout_task(self, message: Message, user_node: UserListNode):
+        
+        channel = message.channel
+        user = message.author
+        guild_id = message.guild.id
+        timeout_max = self.settings.get_police_timeout(guild_id)
+        
+        timestamp_now = int(datetime.datetime.now().timestamp())
+        release = timestamp_now + timeout_max
+        user_node.timeout()
+        
+        user_overwrites = channel.overwrites_for(user)
+        initial_overwrites = copy.deepcopy(user_overwrites)
+        user_overwrites.send_messages = False
+        
+        await message.channel.send(f'<@{user.id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=(timeout_max))
+        self.logger.log(guild_id, f'Activated rate limit for {message.author.name}.')
+        await message.delete()
+        
+        await channel.set_permissions(user, overwrite=user_overwrites)
+        self.logger.log(channel.guild.id, f'Temporarily removed send_messages permission from {user.name} in {channel.name}.')
+        
+        timeout_length = timeout_max - (int(datetime.datetime.now().timestamp()) - timestamp_now)
+        
+        await asyncio.sleep(timeout_length)
+        
+        user_node.release()
+        self.logger.log(guild_id, f'User {message.author.name} rate limit was reset.')
+        
+        await message.channel.set_permissions(message.author, overwrite=initial_overwrites)
+        self.logger.log(guild_id, f'Reinstated old permissions for {user.name} in {channel.name}.')
+        
     @commands.Cog.listener()
     async def on_ready(self):
 
@@ -63,6 +99,9 @@ class Police(commands.Cog):
         if not self.settings.get_police_enabled(guild_id):
             return
         
+        if message.channel.id in self.settings.get_police_exclude_channels(guild_id):
+            return
+        
         naughty_list = self.naughty_list[guild_id]
         
         if bool(set([x.id for x in message.author.roles]).intersection(self.settings.get_police_naughty_roles(guild_id))):
@@ -81,35 +120,14 @@ class Police(commands.Cog):
             
             message_limit_interval = self.settings.get_police_message_limit_interval(guild_id)
             naughty_user = naughty_list.get_user(author_id)
-            timeout_max = self.settings.get_police_timeout(guild_id)
             
             if not naughty_user.is_in_timeout():
                 
                 if not naughty_user.is_spamming(message_limit_interval):
                     return
                 
-                release = int(message.created_at.timestamp()) + timeout_max
-                await message.channel.send(f'<@{author_id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=(timeout_max-2))
-                
-                naughty_user.timeout(message.created_at)
-                
-                self.logger.log(guild_id, f'Activated rate limit for {message.author.name}.')
-                await message.delete()
+                self.bot.loop.create_task(self.timeout_task(message, naughty_user))
                 return
-            
-            
-            timeout_duration = message.created_at - naughty_user.get_timestamp()
-            
-            if timeout_duration.total_seconds() < timeout_max:
-
-                remaining = timeout_max - int(timeout_duration.total_seconds())
-                self.logger.log(guild_id, f'User rate limit activated for {message.author.name}. {remaining} seconds remaining.')
-                await message.delete()
-                return
-
-
-            self.logger.log(guild_id, f'User {message.author.name} rate limit was reset.')
-            naughty_user.release()
                 
         elif naughty_list.has_user(author_id):
             
@@ -157,7 +175,7 @@ class Police(commands.Cog):
         
         await self.__command_response(interaction, "Meow!")
         
-    @group.command(name="get_settings")
+    @group.command(name="settings")
     @app_commands.check(__has_permission)
     async def get_settings(self, interaction: discord.Interaction):
         
@@ -177,27 +195,31 @@ class Police(commands.Cog):
     
     
     @group.command(name="set_timeout_length")
-    @app_commands.describe(interval='The amount of time the users will have to wait before posting again after getting timed out. (in seconds)')
+    @app_commands.describe(length='The amount of time the users will have to wait before posting again after getting timed out. (in seconds)')
     @app_commands.check(__has_permission)
-    async def set_timeout_interval(self, interaction: discord.Interaction, interval: app_commands.Range[int, 0]):
+    async def set_timeout_interval(self, interaction: discord.Interaction, length: app_commands.Range[int, 0]):
         
-        self.settings.set_police_timeout(interaction.guild_id, interval)
-        await self.__command_response(interaction, f'Timeout length set to {interval} seconds.')
+        self.settings.set_police_timeout(interaction.guild_id, length)
+        await self.__command_response(interaction, f'Timeout length set to {length} seconds.')
     
-    @group.command(name="set_rate_limit")
+    @group.command(name="set_spam_thresholds")
     @app_commands.describe(
         message_count='Numer of messages a user may send within the specified interval.',
         interval='Time interval within the user is allowed to send message_count messages.  (in seconds)'
         )
     @app_commands.check(__has_permission)
-    async def set_rate_limit(self, interaction: discord.Interaction, message_count: app_commands.Range[int, 1], interval: app_commands.Range[int, 1]):
+    async def set_spam_thresholds(self, interaction: discord.Interaction, message_count: app_commands.Range[int, 1], interval: app_commands.Range[int, 1]):
         
         self.settings.set_police_message_limit(interaction.guild_id, message_count)
         self.settings.set_police_message_limit_interval(interaction.guild_id, interval)
+        
+        for guild_id in self.naughty_list:
+            self.naughty_list[guild_id].clear()
+        
         await self.__command_response(interaction, f'Rate limit updated: Users can send {message_count} messages within {interval} seconds before getting timed out.')
     
     @group.command(name="add_role")
-    @app_commands.describe(role='The role that shall be rate limited.')
+    @app_commands.describe(role='The role that shall be tracked for spam detection.')
     @app_commands.check(__has_permission)
     async def add_role(self, interaction: discord.Interaction, role: discord.Role):
         
@@ -205,13 +227,29 @@ class Police(commands.Cog):
         await self.__command_response(interaction, f'Added {role.name} to the list of active roles.')
         
     @group.command(name="remove_role")
-    @app_commands.describe(role='Remove this role from the active list.')
+    @app_commands.describe(role='Remove spam detection from this role.')
     @app_commands.check(__has_permission)
     async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
         
-        self.settings.remove_naughty_role(interaction.guild_id, role.id)
+        self.settings.remove_police_naughty_role(interaction.guild_id, role.id)
         await self.__command_response(interaction, f'Removed {role.name} from active roles.')
+    
+    @group.command(name="untrack_channel")
+    @app_commands.describe(channel='Stop tracking spam for this channel.')
+    @app_commands.check(__has_permission)
+    async def untrack_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         
+        self.settings.add_police_exclude_channel(interaction.guild_id, channel.id)
+        await self.__command_response(interaction, f'Stopping spam detection in {channel.name}.')
+        
+    @group.command(name="track_channel")
+    @app_commands.describe(channel='Reenable tracking spam for this channel.')
+    @app_commands.check(__has_permission)
+    async def track_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        
+        self.settings.remove_police_exclude_channel(interaction.guild_id, channel.id)
+        await self.__command_response(interaction, f'Resuming spam detection in {channel.name}.')
+    
     @group.command(name="set_timeout_message")
     @app_commands.describe(message='This will be sent to the timed out person.')
     @app_commands.check(__has_permission)
