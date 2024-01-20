@@ -16,6 +16,9 @@ class UserList():
         
     def remove_user(self, author_id: int) -> None:
         del self.users[author_id]
+        
+    def clear(self) -> None:
+        self.users.clear()
 
     def get_user(self, author_id: int) -> UserListNode:
         return self.users[author_id] if self.has_user(author_id) else UserListNode(author_id, datetime.datetime.utcnow())

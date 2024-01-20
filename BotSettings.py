@@ -20,6 +20,7 @@ class BotSettings():
     POLICE_TIMEOUT_NOTICE_KEY = "timeout_notice"
     POLICE_MESSAGE_LIMIT_KEY = "message_limit"
     POLICE_MESSAGE_LIMIT_INTERVAL_KEY = "message_limit_interval"
+    POLICE_EXCLUDED_CHANNELS_KEY = "untracked_channels"
 
     def __init__(self, bot: commands.Bot, logger: BotLogger, file_name: str):
         
@@ -35,6 +36,7 @@ class BotSettings():
         police_settings.add_setting(self.POLICE_TIMEOUT_NOTICE_KEY, "Stop spamming, bitch!", "Message sent to timed out users")
         police_settings.add_setting(self.POLICE_MESSAGE_LIMIT_KEY, 4, "Number of messages before timeout")
         police_settings.add_setting(self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY, 10, "Interval for counting messages before timeout")
+        police_settings.add_setting(self.POLICE_EXCLUDED_CHANNELS_KEY, [], "Channels excluded from rate limit checks", "handle_channel_value")
         
         self.settings = GuildSettings()
         self.settings.add_module(police_settings)
@@ -83,6 +85,11 @@ class BotSettings():
         
         guild_obj = self.bot.get_guild(guild_id)
         return " " + ", ".join([guild_obj.get_role(id).name for id in roles]) + " "
+    
+    def handle_channel_value(self, guild_id: int, channels: List[int]) -> str:
+        
+        guild_obj = self.bot.get_guild(guild_id)
+        return " " + ", ".join([guild_obj.get_channel(id).name for id in channels]) + " "
         
     def get_settings_string(self, guild: int, cog: str = "") -> str:
         
@@ -133,11 +140,31 @@ class BotSettings():
         if role not in roles: roles.append(role)
         self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles)
         
-    def remove_naughty_role(self, guild: int, role: int) -> None:
+    def remove_police_naughty_role(self, guild: int, role: int) -> None:
         
         roles = self.get_police_naughty_roles(guild)
         if role in roles: roles.remove(role)
         self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles)
+    
+    def get_police_exclude_channels(self, guild: int) -> List[int]:
+        
+        return [int(x) for x in self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY)]
+    
+    def set_police_exclude_channels(self, guild: int, channels: [int]) -> None:
+        
+        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
+    
+    def add_police_exclude_channel(self, guild: int, channel: int) -> None:
+        
+        channels = self.get_police_exclude_channels(channel)
+        if channel not in channels: channels.append(channel)
+        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
+        
+    def remove_police_exclude_channel(self, guild: int, channel: int) -> None:
+        
+        channels = self.get_police_exclude_channels(guild)
+        if channel in channels: channels.remove(channel)
+        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
     
     def get_police_timeout(self, guild: int) -> int:
         
