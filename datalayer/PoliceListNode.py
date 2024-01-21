@@ -1,7 +1,7 @@
 import collections
 import datetime
 
-class UserListNode():
+class PoliceListNode():
     
     def __init__(self, author_id: int, queue_size: int):
         self.author_id = author_id

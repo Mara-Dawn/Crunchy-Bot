@@ -9,30 +9,25 @@ from discord import Message, app_commands
 from typing import Dict, Literal, Optional
 from BotLogger import BotLogger
 from BotSettings import BotSettings
-from datalayer.UserList import UserList
-from datalayer.UserListNode import UserListNode
+from MaraBot import MaraBot
+from datalayer.PoliceList import PoliceList
+from datalayer.PoliceListNode import PoliceListNode
 
 class Police(commands.Cog):
     
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: MaraBot):
         self.bot = bot
         
-        self.naughty_list: Dict[int, UserList] = {}
+        self.naughty_list: Dict[int, PoliceList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
-
-    async def __command_response(self, interaction: discord.Interaction, message: str) -> None:
-        
-        log_message = f'{interaction.user.name} used command `{interaction.command.name}`.'
-        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        await interaction.response.send_message(message, ephemeral=True)
     
     async def __has_permission(interaction: discord.Interaction) -> bool:
         
         author_id = 90043934247501824
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
     
-    async def timeout_task(self, message: Message, user_node: UserListNode):
+    async def timeout_task(self, message: Message, user_node: PoliceListNode):
         
         channel = message.channel
         user = message.author
@@ -51,37 +46,37 @@ class Police(commands.Cog):
             await channel.set_permissions(user, overwrite=user_overwrites)
             
         except Exception as e:
-            self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.')
+            self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
             print(traceback.print_exc())
             
         await message.channel.send(f'<@{user.id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=(timeout_max))
-        self.logger.log(guild_id, f'Activated rate limit for {message.author.name} in {channel.name}.')
+        self.logger.log(guild_id, f'Activated rate limit for {message.author.name} in {channel.name}.', cog=self.__cog_name__)
         await message.delete()
             
-        self.logger.log(channel.guild.id, f'Temporarily removed send_messages permission from {user.name} in {channel.name}.')
+        self.logger.log(channel.guild.id, f'Temporarily removed send_messages permission from {user.name} in {channel.name}.', cog=self.__cog_name__)
         
         timeout_length = timeout_max - (int(datetime.datetime.now().timestamp()) - timestamp_now)
         
         await asyncio.sleep(timeout_length)
         
         user_node.release()
-        self.logger.log(guild_id, f'User {message.author.name} rate limit was reset.')
+        self.logger.log(guild_id, f'User {message.author.name} rate limit was reset.', cog=self.__cog_name__)
         
         await message.channel.set_permissions(message.author, overwrite=initial_overwrites)
-        self.logger.log(guild_id, f'Reinstated old permissions for {user.name} in {channel.name}.')
+        self.logger.log(guild_id, f'Reinstated old permissions for {user.name} in {channel.name}.', cog=self.__cog_name__)
         
     @commands.Cog.listener()
     async def on_ready(self):
 
         for guild in self.bot.guilds:
-            self.naughty_list[guild.id] = UserList()
+            self.naughty_list[guild.id] = PoliceList()
             
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
 
-        self.naughty_list[guild.id] = UserList()
+        self.naughty_list[guild.id] = PoliceList()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
@@ -116,7 +111,7 @@ class Police(commands.Cog):
         
         if bool(set([x.id for x in message.author.roles]).intersection(self.settings.get_police_naughty_roles(guild_id))):
 
-            self.logger.debug(guild_id, f'{message.author.name} has matching roles')
+            self.logger.debug(guild_id, f'{message.author.name} has matching roles', cog=self.__cog_name__)
             
             if not naughty_list.has_user(author_id):
                 
@@ -140,7 +135,7 @@ class Police(commands.Cog):
                 
         elif naughty_list.has_user(author_id):
             
-            self.logger.log(guild_id, f'Removed rate tracing for user {message.author.name}')
+            self.logger.log(guild_id, f'Removed rate tracing for user {message.author.name}', cog=self.__cog_name__)
             naughty_list.remove_user(author_id)
 
     @commands.command()
@@ -176,13 +171,13 @@ class Police(commands.Cog):
 
         await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
     
-    group = app_commands.Group(name="police", description="...asd")
+    group = app_commands.Group(name="police", description="Subcommands for the Police module.")
 
     @app_commands.command(name="meow")
     @app_commands.check(__has_permission)
     async def meow(self, interaction: discord.Interaction) -> None:
         
-        await self.__command_response(interaction, "Meow!")
+        await self.bot.command_response(self.__cog_name__, interaction, "Meow!")
         
     @group.command(name="settings")
     @app_commands.check(__has_permission)
@@ -190,7 +185,7 @@ class Police(commands.Cog):
         
         output = self.settings.get_settings_string(interaction.guild_id, BotSettings.POLICE_SUBSETTINGS_KEY)
         
-        await self.__command_response(interaction, output)
+        await self.bot.command_response(self.__cog_name__, interaction, output)
     
     
     @group.command(name="toggle")
@@ -200,7 +195,7 @@ class Police(commands.Cog):
         
         self.settings.set_police_enabled(interaction.guild_id, enabled == "on")
         
-        await self.__command_response(interaction, f'Police module was turned {enabled}.')
+        await self.bot.command_response(self.__cog_name__, interaction, f'Police module was turned {enabled}.', enabled)
     
     
     @group.command(name="set_timeout_length")
@@ -209,7 +204,7 @@ class Police(commands.Cog):
     async def set_timeout_interval(self, interaction: discord.Interaction, length: app_commands.Range[int, 0]):
         
         self.settings.set_police_timeout(interaction.guild_id, length)
-        await self.__command_response(interaction, f'Timeout length set to {length} seconds.')
+        await self.bot.command_response(self.__cog_name__, interaction, f'Timeout length set to {length} seconds.', length)
     
     @group.command(name="set_spam_thresholds")
     @app_commands.describe(
@@ -225,7 +220,7 @@ class Police(commands.Cog):
         for guild_id in self.naughty_list:
             self.naughty_list[guild_id].clear()
         
-        await self.__command_response(interaction, f'Rate limit updated: Users can send {message_count} messages within {interval} seconds before getting timed out.')
+        await self.bot.command_response(self.__cog_name__, interaction, f'Rate limit updated: Users can send {message_count} messages within {interval} seconds before getting timed out.', message_count, interval)
     
     @group.command(name="add_role")
     @app_commands.describe(role='The role that shall be tracked for spam detection.')
@@ -233,7 +228,7 @@ class Police(commands.Cog):
     async def add_role(self, interaction: discord.Interaction, role: discord.Role):
         
         self.settings.add_police_naughty_role(interaction.guild_id, role.id)
-        await self.__command_response(interaction, f'Added {role.name} to the list of active roles.')
+        await self.bot.command_response(self.__cog_name__, interaction, f'Added {role.name} to the list of active roles.', role)
         
     @group.command(name="remove_role")
     @app_commands.describe(role='Remove spam detection from this role.')
@@ -241,7 +236,7 @@ class Police(commands.Cog):
     async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
         
         self.settings.remove_police_naughty_role(interaction.guild_id, role.id)
-        await self.__command_response(interaction, f'Removed {role.name} from active roles.')
+        await self.bot.command_response(self.__cog_name__, interaction, f'Removed {role.name} from active roles.', role)
     
     @group.command(name="untrack_channel")
     @app_commands.describe(channel='Stop tracking spam for this channel.')
@@ -249,7 +244,7 @@ class Police(commands.Cog):
     async def untrack_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         
         self.settings.add_police_exclude_channel(interaction.guild_id, channel.id)
-        await self.__command_response(interaction, f'Stopping spam detection in {channel.name}.')
+        await self.bot.command_response(self.__cog_name__, interaction, f'Stopping spam detection in {channel.name}.', channel)
         
     @group.command(name="track_channel")
     @app_commands.describe(channel='Reenable tracking spam for this channel.')
@@ -257,7 +252,7 @@ class Police(commands.Cog):
     async def track_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         
         self.settings.remove_police_exclude_channel(interaction.guild_id, channel.id)
-        await self.__command_response(interaction, f'Resuming spam detection in {channel.name}.')
+        await self.bot.command_response(self.__cog_name__, interaction, f'Resuming spam detection in {channel.name}.', channel)
     
     @group.command(name="set_timeout_message")
     @app_commands.describe(message='This will be sent to the timed out person.')
@@ -265,7 +260,7 @@ class Police(commands.Cog):
     async def set_message(self, interaction: discord.Interaction, message: str):
         
         self.settings.set_police_timeout_notice(interaction.guild_id, message)
-        await interaction.response.send_message(f'Timeout warning set to:\n `{message}`', ephemeral=True)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Timeout warning set to:\n `{message}`', message)
                 
 async def setup(bot):
     await bot.add_cog(Police(bot))
