@@ -14,7 +14,9 @@ intents.emojis_and_stickers = True
 intents.reactions = True
 intents.emojis_and_stickers = True
 
-bot = MaraBot(command_prefix="/", intents=intents)
+activity = discord.Activity(type=discord.ActivityType.watching, name="this monkey zoo")
+
+bot = MaraBot(command_prefix="/", intents=intents, activity=activity)
 
 async def on_tree_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     if isinstance(error, app_commands.CommandOnCooldown):

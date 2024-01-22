@@ -1,8 +1,13 @@
 
 import datetime
+import random
 from typing import List
 
+import discord
+from BotSettings import BotSettings
+
 from BotUtil import BotUtil
+from datalayer.UserInteraction import UserInteraction
 
 class JailListNode():
     
@@ -80,3 +85,45 @@ class JailListNode():
         remainder = self.release_timestamp - datetime.datetime.now()
         
         return BotUtil.strfdelta(remainder)
+    
+    def get_list(self, type: UserInteraction) -> List[int]:
+        
+        match type:
+            case UserInteraction.SLAP:
+                return self.slappers
+            case UserInteraction.PET:
+                return self.petters
+            case UserInteraction.FART:
+                return self.farters
+    
+    def apply_interaction(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member, settings: BotSettings) -> str:
+        
+        response = ""
+        amount = 0
+        
+        match type:
+            case UserInteraction.SLAP:
+                amount = settings.get_jail_slap_time(interaction.guild_id)
+                self.add_to_duration(amount)
+                self.add_slapper(interaction.user.id)
+            case UserInteraction.PET:
+                amount = -settings.get_jail_pet_time(interaction.guild_id)
+                self.add_to_duration(amount)
+                self.add_petter(interaction.user.id)
+            case UserInteraction.FART:
+                min_amount = settings.get_jail_fart_min(interaction.guild_id)
+                max_amount = settings.get_jail_fart_max(interaction.guild_id)
+                amount = random.randint(min_amount, max_amount)
+                self.add_to_duration(amount)
+                self.add_farter(interaction.user.id)
+        
+        if amount > 0:
+            response += f'Their jail sentence was increased by {amount} minutes. '
+        elif amount < 0: 
+            response += f'Their jail sentence was reduced by {abs(amount)} minutes. '
+            
+        response += f'{self.get_remaining_str()} still remain.'
+        
+        return response 
+            
+        

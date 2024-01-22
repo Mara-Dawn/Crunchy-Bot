@@ -33,6 +33,4 @@ class PoliceListNode():
         
     def release(self) -> None:
         self.timeout_flag = False
-        last_msg = self.message_queue.pop()
         self.message_queue.clear()
-        self.message_queue.append(last_msg)

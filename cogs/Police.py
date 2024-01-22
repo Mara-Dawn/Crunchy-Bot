@@ -62,7 +62,14 @@ class Police(commands.Cog):
         user_node.release()
         self.logger.log(guild_id, f'User {message.author.name} rate limit was reset.', cog=self.__cog_name__)
         
-        await message.channel.set_permissions(message.author, overwrite=initial_overwrites)
+        try:
+            await channel.set_permissions(message.author, overwrite=initial_overwrites)
+            
+        except Exception as e:
+            self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
+            print(traceback.print_exc())
+            
+        
         self.logger.log(guild_id, f'Reinstated old permissions for {user.name} in {channel.name}.', cog=self.__cog_name__)
         
     @commands.Cog.listener()

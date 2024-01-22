@@ -11,6 +11,7 @@ from BotLogger import BotLogger
 from BotSettings import BotSettings
 from MaraBot import MaraBot
 from datalayer.JailList import JailList
+from datalayer.UserInteraction import UserInteraction
 
 class Jail(commands.Cog):
     
@@ -29,23 +30,97 @@ class Jail(commands.Cog):
         author_id = 90043934247501824
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
     
-    async def has_mod_permission(self, interaction: discord.Interaction) -> bool:
+    async def __has_mod_permission(self, interaction: discord.Interaction) -> bool:
         
         author_id = 90043934247501824
         roles = self.settings.get_jail_mod_roles(interaction.guild_id)
         is_mod = bool(set([x.id for x in interaction.user.roles]).intersection(roles))
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator or is_mod
     
+    def __get_already_used_msg(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
+        
+        match type:
+            case UserInteraction.SLAP:
+                return f'<@{user.id}> was slapped by <@{interaction.user.id}>!\n You already slapped {user.name}, no extra time will be added this time.'
+            case UserInteraction.PET:
+                return f'<@{user.id}> recieved pets from <@{interaction.user.id}>!\n You already gave {user.name} pets, no extra time will be added this time.'
+            case UserInteraction.FART:
+                return f'<@{user.id}> was farted on by <@{interaction.user.id}>!\n{user.name} already enjoyed your farts, no extra time will be added this time.'
+            
+    def __get_already_used_log_msg(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
+        
+        match type:
+            case UserInteraction.SLAP:
+                return f'User {user.name} was already slapped by {interaction.user.name}. No extra time will be added.'
+            case UserInteraction.PET:
+                return f'User {user.name} already recieved pats from {interaction.user.name}. No extra time will be added.'
+            case UserInteraction.FART:
+                return f'User {user.name} already enjoyed {interaction.user.name}\'s farts. No extra time will be added.'
+    
+    def __get_response(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
+        match type:
+            case UserInteraction.SLAP:
+                return f'<@{user.id}> was slapped by <@{interaction.user.id}>!'
+            case UserInteraction.PET:
+                return f'<@{user.id}> recieved pets from <@{interaction.user.id}>!'
+            case UserInteraction.FART:
+                return f'<@{user.id}> was farted on by <@{interaction.user.id}>!'
+    
+    async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member):
+        
+        command = interaction.command
+        
+        command_type = None
+        
+        match command.name:
+            case "slap":
+                command_type = UserInteraction.SLAP
+            case "pet":
+                command_type = UserInteraction.PET
+            case "fart":
+                command_type = UserInteraction.FART
+        
+        log_message = f'{interaction.user.name} used command `{command.name}` on {user.name}.'
+        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
+        
+        guild_id = interaction.guild_id
+        invoker = interaction.user
+        
+        list = self.jail_list[guild_id]
+        
+        jail_role = self.settings.get_jail_role(guild_id)
+        jail_channels = self.settings.get_jail_channels(guild_id)
+        
+        if list.has_user(user.id) and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels:
+            
+            user_node = list.get_user(user.id)
+            self.logger.log(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
+            
+            if invoker.id in user_node.get_list(command_type):
+                self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
+                await interaction.response.send_message(self.__get_already_used_msg(command_type, interaction, user))
+                return
+
+            response = self.__get_response(command_type, interaction, user)
+            
+            response += '\n' + user_node.apply_interaction(command_type, interaction, user, self.settings)
+
+            await interaction.response.send_message(response)
+            
+            return
+        
+        await interaction.response.send_message(self.__get_response(command_type, interaction, user))
+    
     @tasks.loop(seconds=10)
     async def jail_check(self):
         
-        self.logger.log("sys", f'Jail Check task started', cog=self.__cog_name__)
+        self.logger.debug("sys", f'Jail Check task started', cog=self.__cog_name__)
         
         for guild_id in self.jail_list:
             
             guild_list = self.jail_list[guild_id]
             guild = self.bot.get_guild(guild_id)
-            self.logger.log(guild_id, f'Jail Check for guild {guild.name}.', cog=self.__cog_name__)
+            self.logger.debug(guild_id, f'Jail Check for guild {guild.name}.', cog=self.__cog_name__)
             
             for user_id in guild_list.get_user_ids():
                 
@@ -108,36 +183,7 @@ class Jail(commands.Cog):
     @app_commands.guild_only()
     async def slap(self, interaction: discord.Interaction, user: discord.Member):
         
-        log_message = f'{interaction.user.name} used command `{interaction.command.name}` on {user.name}.'
-        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        
-        guild_id = interaction.guild_id
-        invoker = interaction.user
-        
-        list = self.jail_list[guild_id]
-        
-        jail_role = self.settings.get_jail_role(guild_id)
-        jail_channels = self.settings.get_jail_channels(guild_id)
-        
-        if list.has_user(user.id) and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels:
-            
-            self.logger.log(guild_id, f'Slapped user {user.name} is in jail.', cog=self.__cog_name__)
-            user_node = list.get_user(user.id)
-            
-            if invoker.id in user_node.get_slappers():
-                self.logger.log(guild_id, f'User {user.name} was already slapped by {invoker.name}. No extra time will be added.', cog=self.__cog_name__)
-                await interaction.response.send_message(f'<@{user.id}> was slapped by <@{invoker.id}>!\n You already slapped {user.name}, no extra time will be added this time.')
-                return
-                
-            amount = self.settings.get_jail_slap_time(guild_id)
-            user_node.add_to_duration(amount)
-            user_node.add_slapper(invoker.id)
-            
-            await interaction.response.send_message(f'<@{user.id}> was slapped by <@{invoker.id}>!\n{amount} minutes were added to their Jail sentence. {user_node.get_remaining_str()} still remain.')
-            
-            return
-        
-        await interaction.response.send_message(f'<@{user.id}> was slapped by <@{invoker.id}>!')
+        await self.user_command_interaction(interaction, user)
     
     @app_commands.command(name="pet")
     @app_commands.describe(
@@ -146,35 +192,7 @@ class Jail(commands.Cog):
     @app_commands.guild_only()
     async def pet(self, interaction: discord.Interaction, user: discord.Member):
         
-        log_message = f'{interaction.user.name} used command `{interaction.command.name}` on {user.name}.'
-        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        
-        guild_id = interaction.guild_id
-        invoker = interaction.user
-        
-        list = self.jail_list[guild_id]
-        
-        jail_role = self.settings.get_jail_role(guild_id)
-        jail_channels = self.settings.get_jail_channels(guild_id)
-        
-        if list.has_user(user.id) and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels:
-            
-            self.logger.log(guild_id, f'Petted user {user.name} is in jail.', cog=self.__cog_name__)
-            user_node = list.get_user(user.id)
-            
-            if invoker.id in user_node.get_petters():
-                self.logger.log(guild_id, f'User {user.name} was already petted by {invoker.name}. No extra time will be subtracted.', cog=self.__cog_name__)
-                await interaction.response.send_message(f'<@{user.id}> was petted by <@{invoker.id}>!\nYou already petted {user.name}, no extra time will be subtracted this time.', ephemeral=True)
-                return
-                
-            amount = self.settings.get_jail_pet_time(guild_id)
-            user_node.add_to_duration(-amount)
-            user_node.add_petter(invoker.id)
-            
-            await interaction.response.send_message(f'<@{user.id}> was petted by <@{invoker.id}>!\nTheir jail sentence was reduced by {amount} minutes. {user_node.get_remaining_str()} still remain.')
-            return
-        
-        await interaction.response.send_message(f'<@{user.id}> was petted by <@{invoker.id}>!')
+        await self.user_command_interaction(interaction, user)
 
     @app_commands.command(name="fart")
     @app_commands.describe(
@@ -183,43 +201,7 @@ class Jail(commands.Cog):
     @app_commands.guild_only()
     async def fart(self, interaction: discord.Interaction, user: discord.Member):
         
-        log_message = f'{interaction.user.name} used command `{interaction.command.name}` on {user.name}.'
-        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        
-        guild_id = interaction.guild_id
-        invoker = interaction.user
-        
-        list = self.jail_list[guild_id]
-        
-        jail_role = self.settings.get_jail_role(guild_id)
-        jail_channels = self.settings.get_jail_channels(guild_id)
-        
-        if list.has_user(user.id) and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels:
-            
-            self.logger.log(guild_id, f'Petted user {user.name} is in jail.', cog=self.__cog_name__)
-            user_node = list.get_user(user.id)
-            
-            if invoker.id in user_node.get_farters():
-                self.logger.log(guild_id, f'User {user.name} was already farted on by {invoker.name}. No extra time will be added.', cog=self.__cog_name__)
-                await interaction.response.send_message(f'<@{user.id}> was farted on by <@{invoker.id}>!\nYou already farted on {user.name}, no extra time will be added this time.', ephemeral=True)
-                return
-                
-            min_amount = self.settings.get_jail_fart_min(guild_id)
-            max_amount = self.settings.get_jail_fart_max(guild_id)
-            amount = random.randint(min_amount, max_amount)
-            user_node.add_to_duration(amount)
-            user_node.add_farter(invoker.id)
-            
-            if amount > 0:
-                notice = f'Their jail sentence was increased by {amount} minutes.'
-            else: 
-                notice = f'Their jail sentence was reduced by {amount} minutes.'
-            
-            await interaction.response.send_message(f'<@{user.id}> was farted on by <@{invoker.id}>!\n{notice} {user_node.get_remaining_str()} still remain.')
-            
-            return
-        
-        await interaction.response.send_message(f'<@{user.id}> was farted on by <@{invoker.id}>!')
+        await self.user_command_interaction(interaction, user)
     
     @app_commands.command(name="jail")
     @app_commands.describe(
@@ -229,7 +211,7 @@ class Jail(commands.Cog):
     @app_commands.guild_only()
     async def jail(self, interaction: discord.Interaction, user: discord.Member, duration: app_commands.Range[int, 1]):
         
-        if not self.has_mod_permission:
+        if not self.__has_mod_permission:
             raise app_commands.MissingPermissions([])
         
         guild_id = interaction.guild_id
@@ -260,7 +242,7 @@ class Jail(commands.Cog):
     @app_commands.guild_only()
     async def release(self, interaction: discord.Interaction, user: discord.Member):
         
-        if not self.has_mod_permission:
+        if not self.__has_mod_permission:
             raise app_commands.MissingPermissions([])
         
         guild_id = interaction.guild_id

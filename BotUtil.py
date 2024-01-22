@@ -24,11 +24,17 @@ class BotUtil():
 
         possible_fields = ('weeks', 'days', 'hours', 'minutes', 'seconds')
         constants = {'weeks': 604800, 'days': 86400, 'hours': 3600, 'minutes': 60, 'seconds': 1}
-        output = ""
+        output = []
         for field in possible_fields:
             result, remainder = divmod(remainder, constants[field])
             
             if result > 0:
-                output += str(result) + " " + field + " "
-               
-        return output.strip()
+                output.append(str(result) + " " + field)
+        
+        if len(output) <= 1:
+            return  ''.join(output)
+        
+        result = ', '.join([str(x) for x in output[:-1]])
+        result += ' and ' + str(output[-1])
+            
+        return result.strip()
