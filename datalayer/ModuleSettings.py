@@ -26,19 +26,3 @@ class ModuleSettings():
     def get_settings(self) -> Dict[str, Setting]:
         
         return self.settings
-    
-    def update_setting(self, guild_id: int, key: str, value):
-        
-        if key not in self.settings.keys():
-            return None
-        
-        self.settings[key].update(guild_id, value)
-    
-    def to_json(self):
-        
-        output = {}
-        
-        for setting_key in self.settings:
-            output[setting_key] = self.settings[setting_key].get_default()
-        
-        return output

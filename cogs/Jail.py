@@ -1,12 +1,9 @@
-import asyncio
-import copy
 import datetime
-import random
 import discord
 
 from discord.ext import tasks, commands
-from discord import Message, app_commands
-from typing import Dict, Literal, Optional
+from discord import app_commands
+from typing import Dict, Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from MaraBot import MaraBot
@@ -21,7 +18,6 @@ class Jail(commands.Cog):
         self.jail_list: Dict[int, JailList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
-        
         
         self.jail_check.start()
     

@@ -3,6 +3,7 @@ import json
 import os
 
 from typing import List
+from datalayer.Database import Database
 from datalayer.Setting import Setting
 from datalayer.ModuleSettings import ModuleSettings
 from datalayer.GuildSettings import GuildSettings
@@ -33,11 +34,12 @@ class BotSettings():
     JAIL_FART_TIME_MIN_KEY = "fart_time_min"
     JAIL_MOD_ROLES_KEY = "moderator_roles"
 
-    def __init__(self, bot: commands.Bot, logger: BotLogger, file_name: str):
+    def __init__(self, bot: commands.Bot, database: Database, logger: BotLogger, file_name: str):
         
         self.file_name = file_name
         self.logger = logger
         self.bot = bot
+        self.database = database
         
         # defaults
         police_settings = ModuleSettings(self.POLICE_SUBSETTINGS_KEY, "Police")
@@ -63,46 +65,19 @@ class BotSettings():
         self.settings.add_module(police_settings)
         self.settings.add_module(jail_settings)
         
-        #check if config file exists
-        if not os.path.exists(self.file_name):
-             
-            self.logger.log("init","Creating settings file, using default values")
-            
-            with open(self.file_name, 'w') as configfile:
-                json.dump(self.settings.to_json(), configfile, indent=4)
-            
-            self.logger.log("init","Settings created successfully")
-            return
-        
-        self.logger.log("init","Load settings from settings.json")
-        
-        self.__settings_from_file()
-        
-        self.logger.log("init","Settings loaded")
-
-    def __settings_from_file(self):
-        
-        with open(self.file_name, 'r+') as configfile:
-            data = json.load(configfile)
-            self.settings.from_json(data)
-    
-    def __settings_to_file(self):
-        
-        with open(self.file_name, 'w') as configfile:
-            data = self.settings.to_json()
-            configfile.seek(0)
-            json.dump(data, configfile, indent=4)
-            configfile.truncate()
-    
-    def __update_setting(self, guild: int, cog: str, key: str, value) -> None:
-        
+    def __update_setting(self, guild: int, cog: str, key: str, value) -> None:        
         self.settings.update_setting(guild, cog, key, value)
-        self.__settings_to_file()
+        self.database.update_setting(guild, cog, key, value)
                        
     def __get_setting(self, guild: int, cog: str, key: str):
-        return self.settings.get_guild_setting(guild, cog, key)
+        
+        result = self.database.get_setting(guild, cog, key)
+        
+        if result is not None:
+            return result
+        
+        return self.settings.get_default_setting(cog, key)
     
-
     def handle_roles_value(self, guild_id: int, roles: List[int]) -> str:
         
         return " " + ", ".join([self.handle_role_value(guild_id, id) for id in roles]) + " "
@@ -137,7 +112,7 @@ class BotSettings():
             for setting_key in module_settings:
                 
                 setting = module_settings[setting_key]
-                value = setting.get_value(guild)
+                value = self.__get_setting(guild, module_key, setting_key)
                 
                 if setting.get_handler() != "":
                     handler = getattr(self, setting.get_handler())
@@ -241,8 +216,8 @@ class BotSettings():
         self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ENABLED_KEY, enabled)
         
     def get_jail_role(self, guild: int) -> int:
-        
-        return int(self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY))
+        value = self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY)
+        return int(value) if value is not '' else 0
     
     def set_jail_role(self, guild: int, role_id: int) -> None:
         

@@ -3,21 +3,25 @@ import discord
 from discord.ext import commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
+from datalayer.Database import Database
 
 class MaraBot(commands.Bot):
 
     SETTINGS_FILE = "settings.json"
+    DB_FILE = "database.sqlite"
     LOG_FILE = "marabot.log"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     async def setup_hook(self) -> None:
+        
         self.logger = BotLogger(self, self.LOG_FILE)
-        self.settings = BotSettings(self, self.logger, self.SETTINGS_FILE)
+        self.database = Database(self.logger, self.DB_FILE)
+        self.settings = BotSettings(self,self.database, self.logger, self.SETTINGS_FILE)
         await self.load_extension("cogs.Police")
         await self.load_extension("cogs.Jail")
-
+        
     async def on_guild_join(self, guild):
 
         self.logger.log(guild.id,  "new guild registered.")
