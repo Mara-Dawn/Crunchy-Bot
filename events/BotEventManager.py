@@ -68,4 +68,12 @@ class BotEventManager():
             total_duration += event[Database.JAIL_EVENT_DURATION_COL]
         
         return total_duration
-            
+    
+    def has_jail_event(self, jail_id: int, user_id: int, type: JailEventType) -> int:
+        
+        events = self.database.has_jail_event(jail_id, user_id, type)
+        total_duration = 0
+        for event in events:
+            total_duration += event[Database.JAIL_EVENT_DURATION_COL]
+        
+        return total_duration
