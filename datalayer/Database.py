@@ -38,8 +38,8 @@ class Database():
         {JAIL_ID_COL}  INTEGER PRIMARY KEY AUTOINCREMENT,
         {JAIL_GUILD_ID_COL} INTEGER, 
         {JAIL_MEMBER_COL} INTEGER, 
-        {JAIL_JAILED_ON_COL}, 
-        {JAIL_RELEASED_ON_COL}
+        {JAIL_JAILED_ON_COL} INTEGER, 
+        {JAIL_RELEASED_ON_COL} INTEGER
     );'''
     
     EVENT_TABLE = 'events'
@@ -119,7 +119,23 @@ class Database():
             
         except Error as e:
             self.logger.error("DB",e)
-                  
+
+    def __parse_rows(self, rows, headings):
+        
+        if rows is None:
+            return None
+        
+        output = []
+            
+        for row in rows:
+            new_row = {}
+            for idx, val in enumerate(row):
+                new_row[headings[idx]] = val
+            
+            output.append(new_row)
+        
+        return output
+
     def get_all_settings(self):
         
         command = f'SELECT * FROM {self.SETTINGS_TABLE};'
@@ -325,3 +341,41 @@ class Database():
             
         except Error as e:
             self.logger.error("DB",e)
+            
+    def get_active_jails(self):
+        
+        command = f'''
+            SELECT * FROM {self.JAIL_TABLE} 
+            WHERE {self.JAIL_RELEASED_ON_COL} IS NULL 
+            OR {self.JAIL_RELEASED_ON_COL} = 0;
+        '''
+        
+        try:
+            c = self.conn.cursor()
+            c.execute(command)
+            rows = c.fetchall()
+            headings = [x[0] for x in c.description]
+            return self.__parse_rows(rows, headings)
+            
+        except Error as e:
+            self.logger.error("DB",e)
+            return None 
+    
+    def get_jail_events(self, jail_id: int):
+        
+        command = f'''
+            SELECT * FROM {self.JAIL_EVENT_TABLE} 
+            WHERE {self.JAIL_EVENT_JAILREFERENCE_COL} = {int(jail_id)};
+        '''
+        
+        try:
+            c = self.conn.cursor()
+            c.execute(command)
+            rows = c.fetchall()
+            
+            headings = [x[0] for x in c.description]
+            return self.__parse_rows(rows, headings)
+            
+        except Error as e:
+            self.logger.error("DB",e)
+            return None 

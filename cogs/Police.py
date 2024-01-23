@@ -45,7 +45,7 @@ class Police(commands.Cog):
         initial_overwrites = copy.deepcopy(user_overwrites)
         user_overwrites.send_messages = False
         
-        self.event_manager.create_timeout_event(time_now, guild_id, user.id, timeout_max)
+        self.event_manager.dispatch_timeout_event(time_now, guild_id, user.id, timeout_max)
         
         try:
             await channel.set_permissions(user, overwrite=user_overwrites)

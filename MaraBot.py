@@ -20,7 +20,7 @@ class MaraBot(commands.Bot):
         self.logger = BotLogger(self, self.LOG_FILE)
         self.database = Database(self.logger, self.DB_FILE)
         self.settings = BotSettings(self,self.database, self.logger, self.SETTINGS_FILE)
-        self.event_manager = BotEventManager(self, self.settings, self.database)
+        self.event_manager = BotEventManager(self, self.settings, self.database, self.logger)
         await self.load_extension("cogs.Police")
         await self.load_extension("cogs.Jail")
         
@@ -37,7 +37,7 @@ class MaraBot(commands.Bot):
         log_message = f'{interaction.user.name} used command `{interaction.command.name}`.'
         
         if len(args) > 0: 
-            log_message += "Arguments: " + ", ".join([str(x) for x in args])
+            log_message += " Arguments: " + ", ".join([str(x) for x in args])
                 
         self.logger.log(interaction.guild_id, log_message, cog=module)
         await interaction.response.send_message(message, ephemeral=True)
