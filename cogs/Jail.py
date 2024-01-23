@@ -154,7 +154,7 @@ class Jail(commands.Cog):
             if amount > 0:
                 response += f'Their jail sentence was `increased by {amount}` minutes. '
             elif amount < 0: 
-                response += f'Their jail sentence was "reduced by {abs(amount)}` minutes. '
+                response += f'Their jail sentence was `reduced by {abs(amount)}` minutes. '
                 
             response += f'`{user_node.get_remaining_str()}` still remain.'
             
