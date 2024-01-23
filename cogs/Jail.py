@@ -185,7 +185,7 @@ class Jail(commands.Cog):
                 member = guild.get_member(user_id)
                 
                 user_node = guild_list.get_user(user_id)
-                self.logger.log(guild_id, f'Jail Check for {member.name}. Duration: {user_node.get_duration()}, Remaining: {user_node.get_remaining()}', cog=self.__cog_name__)
+                self.logger.debug(guild_id, f'Jail Check for {member.name}. Duration: {user_node.get_duration()}, Remaining: {user_node.get_remaining()}', cog=self.__cog_name__)
                 
                 if user_node.get_remaining() > 0:
                     continue
