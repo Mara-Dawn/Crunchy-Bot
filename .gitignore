@@ -2,6 +2,7 @@
 *.txt
 *.json
 *.log*
+*.sqlite
 
 
 # Byte-compiled / optimized / DLL files

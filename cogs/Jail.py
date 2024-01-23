@@ -7,8 +7,12 @@ from typing import Dict, Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from MaraBot import MaraBot
+from datalayer.Database import Database
 from datalayer.JailList import JailList
 from datalayer.UserInteraction import UserInteraction
+from events.BotEventManager import BotEventManager
+from events.EventType import EventType
+from events.JailEventType import JailEventType
 
 class Jail(commands.Cog):
     
@@ -18,6 +22,8 @@ class Jail(commands.Cog):
         self.jail_list: Dict[int, JailList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
+        self.database: Database = bot.database
+        self.event_manager: BotEventManager = bot.event_manager
         
         self.jail_check.start()
     
@@ -65,6 +71,8 @@ class Jail(commands.Cog):
     async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member):
         
         command = interaction.command
+        guild_id = interaction.guild_id
+        invoker = interaction.user
         
         command_type = None
         
@@ -75,12 +83,11 @@ class Jail(commands.Cog):
                 command_type = UserInteraction.PET
             case "fart":
                 command_type = UserInteraction.FART
+                
+        self.event_manager.create_interaction_event(interaction.created_at, guild_id, command_type, invoker.id, user.id)
         
         log_message = f'{interaction.user.name} used command `{command.name}` on {user.name}.'
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        
-        guild_id = interaction.guild_id
-        invoker = interaction.user
         
         list = self.jail_list[guild_id]
         
@@ -99,7 +106,13 @@ class Jail(commands.Cog):
 
             response = self.__get_response(command_type, interaction, user)
             
-            response += '\n' + user_node.apply_interaction(command_type, interaction, user, self.settings)
+            result = user_node.apply_interaction(command_type, interaction, user, self.settings)
+            
+            response += '\n' + result[0]
+            
+            time_now = datetime.datetime.now()
+            timestamp_now = int(time_now.timestamp())
+            self.event_manager.create_jail_event(time_now, guild_id, command.name, interaction.user.id, result[1], user_node.get_jail_id())
 
             await interaction.response.send_message(response)
             
@@ -136,6 +149,11 @@ class Jail(commands.Cog):
                 await member.remove_roles(member.get_role(jail_role))
                 
                 self.logger.log(guild_id, f'User {member.name} was released from jail after {user_node.get_duration_str()}.', cog=self.__cog_name__)
+                
+                time_now = datetime.datetime.now()
+                timestamp_now = int(time_now.timestamp())
+                self.event_manager.create_jail_event(time_now, guild_id, JailEventType.RELEASE, 0, 0, user_node.get_jail_id())
+                self.database.log_jail_release(user_node.get_jail_id(), timestamp_now)
                 
                 for channel_id in jail_channels:
                     
@@ -224,11 +242,16 @@ class Jail(commands.Cog):
         
         await user.add_roles(self.bot.get_guild(guild_id).get_role(jail_role))
         
-        timestamp_now = int(datetime.datetime.now().timestamp())
+        time_now = datetime.datetime.now()
+        timestamp_now = int(time_now.timestamp())
         release = timestamp_now + (duration*60)
         await interaction.channel.send(f'<@{user.id}> was sentenced to Jail by <@{interaction.user.id}> . They will be released <t:{release}:R>.', delete_after=(duration*60))
         
         await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} jailed successfully.')
+        
+        jail_id = self.database.log_jail_sentence(guild_id, user.id, timestamp_now)
+        list.add_jail_id(jail_id, user.id)
+        self.event_manager.create_jail_event(time_now, guild_id, JailEventType.JAIL, interaction.user.id, duration, jail_id)
 
 
     @app_commands.command(name="release")
@@ -257,8 +280,11 @@ class Jail(commands.Cog):
             user_node = list.get_user(user.id)
             response += f' Their remaining sentence of {user_node.get_remaining_str()} will be forgiven.'
             
+            time_now = datetime.datetime.now()
+            timestamp_now = int(time_now.timestamp())
+            self.event_manager.create_jail_event(time_now, guild_id, JailEventType.RELEASE, interaction.user.id, 0, user_node.get_jail_id())
+            self.database.log_jail_release(user_node.get_jail_id(), timestamp_now)
             list.remove_user(user.id)
-        
         
         await interaction.channel.send(response)
         

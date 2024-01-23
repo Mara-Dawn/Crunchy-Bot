@@ -65,8 +65,7 @@ class BotSettings():
         self.settings.add_module(police_settings)
         self.settings.add_module(jail_settings)
         
-    def __update_setting(self, guild: int, cog: str, key: str, value) -> None:        
-        self.settings.update_setting(guild, cog, key, value)
+    def __update_setting(self, guild: int, cog: str, key: str, value) -> None:
         self.database.update_setting(guild, cog, key, value)
                        
     def __get_setting(self, guild: int, cog: str, key: str):

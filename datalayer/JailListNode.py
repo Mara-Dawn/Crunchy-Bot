@@ -1,7 +1,7 @@
 
 import datetime
 import random
-from typing import List
+from typing import List, Tuple
 
 import discord
 from BotSettings import BotSettings
@@ -17,6 +17,7 @@ class JailListNode():
         self.timestamp = timestamp
         self.duration = duration
         self.release_timestamp = timestamp + datetime.timedelta(minutes=duration) 
+        self.jail_id: int = None
         
         self.slappers: List[int] = []
         self.petters: List[int] = []
@@ -62,6 +63,14 @@ class JailListNode():
         
         return self.farters
     
+    def set_jail_id(self, id: int):
+        
+        self.jail_id = id
+        
+    def get_jail_id(self) -> int:
+        
+        return self.jail_id
+    
     def add_to_duration(self, amount: int) -> None:
         
         self.duration += amount
@@ -96,7 +105,7 @@ class JailListNode():
             case UserInteraction.FART:
                 return self.farters
     
-    def apply_interaction(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member, settings: BotSettings) -> str:
+    def apply_interaction(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member, settings: BotSettings) -> Tuple[str, int]:
         
         response = ""
         amount = 0
@@ -124,6 +133,6 @@ class JailListNode():
             
         response += f'{self.get_remaining_str()} still remain.'
         
-        return response 
+        return (response, amount)
             
         

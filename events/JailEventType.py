@@ -1,6 +1,8 @@
 from enum import Enum
 
-class UserInteraction(str, Enum):
+class JailEventType(str, Enum):
+    JAIL = 'jail'
+    RELEASE = 'release'
     SLAP = 'slap'
     PET = 'pet'
     FART = 'fart'

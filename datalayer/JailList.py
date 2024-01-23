@@ -23,7 +23,10 @@ class JailList():
             self.remove_user(user)
         
         self.delete_users.clear()
-        
+    
+    def add_jail_id(self, jail_id: int, user_id: int):
+        self.users[user_id].set_jail_id(jail_id)
+    
     def clear(self) -> None:
         self.users.clear()
 

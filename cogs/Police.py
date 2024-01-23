@@ -12,6 +12,7 @@ from BotSettings import BotSettings
 from MaraBot import MaraBot
 from datalayer.PoliceList import PoliceList
 from datalayer.PoliceListNode import PoliceListNode
+from events.BotEventManager import BotEventManager
 
 class Police(commands.Cog):
     
@@ -21,6 +22,7 @@ class Police(commands.Cog):
         self.naughty_list: Dict[int, PoliceList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
+        self.event_manager: BotEventManager = bot.event_manager
     
     async def __has_permission(interaction: discord.Interaction) -> bool:
         
@@ -34,13 +36,16 @@ class Police(commands.Cog):
         guild_id = message.guild.id
         timeout_max = self.settings.get_police_timeout(guild_id)
         
-        timestamp_now = int(datetime.datetime.now().timestamp())
+        time_now = datetime.datetime.now()
+        timestamp_now = int(time_now.timestamp())
         release = timestamp_now + timeout_max
         user_node.timeout()
         
         user_overwrites = channel.overwrites_for(user)
         initial_overwrites = copy.deepcopy(user_overwrites)
         user_overwrites.send_messages = False
+        
+        self.event_manager.create_timeout_event(time_now, guild_id, user.id, timeout_max)
         
         try:
             await channel.set_permissions(user, overwrite=user_overwrites)
