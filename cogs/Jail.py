@@ -1,6 +1,7 @@
 import datetime
 import random
 import discord
+import TenGiphPy
 
 from discord.ext import tasks, commands
 from discord import app_commands
@@ -62,6 +63,7 @@ class Jail(commands.Cog):
                 return f'User {user.name} already enjoyed {interaction.user.name}\'s farts. No extra time will be added.'
     
     def __get_response(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
+        
         match type:
             case UserInteraction.SLAP:
                 return f'<@{user.id}> was slapped by <@{interaction.user.id}>!'
@@ -69,6 +71,30 @@ class Jail(commands.Cog):
                 return f'<@{user.id}> recieved pets from <@{interaction.user.id}>!'
             case UserInteraction.FART:
                 return f'<@{user.id}> was farted on by <@{interaction.user.id}>!'
+    
+    async def __get_response_embed(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
+        
+        search = ''
+        
+        match type:
+            case UserInteraction.SLAP:
+                search = 'bitchslap'
+            case UserInteraction.PET:
+                search = f'headpats on'
+            case UserInteraction.FART:
+                search = f'farting on'
+        
+        g = TenGiphPy.Giphy(token='IRtV1lJjcPEsIGEOcRBlM1E8HUrPMsHA')
+        
+        result = await g.arandom(tag=search)
+        gif = result['data']['images']['downsized_large']['url']
+        
+        embed = discord.Embed(
+                color=discord.Colour.purple()
+        )
+        embed.set_image(url=gif)
+        
+        return embed
     
     async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member):
         
@@ -137,11 +163,13 @@ class Jail(commands.Cog):
             time_now = datetime.datetime.now()
             self.event_manager.dispatch_jail_event(time_now, guild_id, command.name, interaction.user.id, amount, user_node.get_jail_id())
 
-            await interaction.response.send_message(response)
+            embed = await self.__get_response_embed(command_type, interaction, user)
+            await interaction.response.send_message(response, embed=embed)
             
             return
         
-        await interaction.response.send_message(self.__get_response(command_type, interaction, user))
+        embed = await self.__get_response_embed(command_type, interaction, user)
+        await interaction.response.send_message(self.__get_response(command_type, interaction, user), embed=embed)
     
     @tasks.loop(seconds=10)
     async def jail_check(self):
