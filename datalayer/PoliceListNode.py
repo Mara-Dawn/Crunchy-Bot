@@ -1,7 +1,7 @@
 import collections
 import datetime
 
-class UserListNode():
+class PoliceListNode():
     
     def __init__(self, author_id: int, queue_size: int):
         self.author_id = author_id
@@ -33,6 +33,4 @@ class UserListNode():
         
     def release(self) -> None:
         self.timeout_flag = False
-        last_msg = self.message_queue.pop()
         self.message_queue.clear()
-        self.message_queue.append(last_msg)
