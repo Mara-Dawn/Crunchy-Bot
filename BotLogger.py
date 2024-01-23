@@ -25,7 +25,7 @@ class BotLogger():
             log_str += "[" + str(cog) + "]"
         
         if guild_obj:
-            log_str += "[" + str(guild_obj.name) + ":" + str(guild) +"] "
+            log_str += "[" + str(guild_obj.name) + "] "
         else:
             log_str += "[" + str(guild) + "] "
 
