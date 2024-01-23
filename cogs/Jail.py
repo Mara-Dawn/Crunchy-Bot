@@ -104,6 +104,8 @@ class Jail(commands.Cog):
         
         command_type = None
         
+        await interaction.response.defer()
+        
         match command.name:
             case "slap":
                 command_type = UserInteraction.SLAP
@@ -130,7 +132,7 @@ class Jail(commands.Cog):
             if self.event_manager.has_jail_event(user_node.get_jail_id(), interaction.user.id, command.name):
                 self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
                 embed = await self.__get_response_embed(command_type, interaction, user)
-                await interaction.response.send_message(self.__get_already_used_msg(command_type, interaction, user), embed=embed)
+                await interaction.followup.send(self.__get_already_used_msg(command_type, interaction, user), embed=embed)
                 return
 
             response = self.__get_response(command_type, interaction, user)
@@ -152,9 +154,9 @@ class Jail(commands.Cog):
                     user_node.add_to_duration(amount)
             
             if amount > 0:
-                response += f'Their jail sentence was `increased by {amount}` minutes. '
+                response += f'Their jail sentence was increased by `{amount}` minutes. '
             elif amount < 0: 
-                response += f'Their jail sentence was `reduced by {abs(amount)}` minutes. '
+                response += f'Their jail sentence was reduced by `{abs(amount)}` minutes. '
                 
             response += f'`{user_node.get_remaining_str()}` still remain.'
             
@@ -162,14 +164,14 @@ class Jail(commands.Cog):
             self.event_manager.dispatch_jail_event(time_now, guild_id, command.name, interaction.user.id, amount, user_node.get_jail_id())
 
             embed = await self.__get_response_embed(command_type, interaction, user)
-            await interaction.response.send_message(response, embed=embed)
+            await interaction.followup.send(response, embed=embed)
             
             return
         
         embed = await self.__get_response_embed(command_type, interaction, user)
-        await interaction.response.send_message(self.__get_response(command_type, interaction, user), embed=embed)
+        await interaction.followup.send(self.__get_response(command_type, interaction, user), embed=embed)
     
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=20)
     async def jail_check(self):
         
         self.logger.debug("sys", f'Jail Check task started', cog=self.__cog_name__)
