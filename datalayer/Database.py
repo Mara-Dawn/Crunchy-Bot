@@ -379,3 +379,27 @@ class Database():
         except Error as e:
             self.logger.error("DB",e)
             return None 
+    
+    def has_jail_event(self, jail_id: int, user_id: int, type: JailEventType):
+        
+        command = f'''
+            SELECT * FROM {self.JAIL_EVENT_TABLE} 
+            WHERE {self.JAIL_EVENT_JAILREFERENCE_COL} = ?
+            AND {self.JAIL_EVENT_BY_COL} = ?
+            AND {self.JAIL_EVENT_TYPE_COL} = ?
+            LIMIT 1;
+        '''
+        
+        task = (jail_id, user_id,type)
+        
+        try:
+            c = self.conn.cursor()
+            c.execute(command, task)
+            rows = c.fetchall()
+            
+            headings = [x[0] for x in c.description]
+            return self.__parse_rows(rows, headings)
+            
+        except Error as e:
+            self.logger.error("DB",e)
+            return None 
