@@ -1,7 +1,6 @@
 import discord
-
 from discord.ext import commands
-from discord import app_commands
+
 from MaraBot import MaraBot
 
 TOKEN_FILE = 'key.txt'
@@ -16,19 +15,18 @@ intents.emojis_and_stickers = True
 
 activity = discord.Activity(type=discord.ActivityType.watching, name="this monkey zoo")
 
-bot = MaraBot(command_prefix="/", intents=intents, activity=activity)
+bot = MaraBot( intents=intents, activity=activity)
 
-async def on_tree_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    if isinstance(error, app_commands.CommandOnCooldown):
-        return await interaction.response.send_message(f"Command is currently on cooldown! Try again in **{error.retry_after:.2f}** seconds!", ephemeral=True)
-    elif isinstance(error, app_commands.MissingPermissions):
-        return await interaction.response.send_message(f"You're missing permissions to use that", ephemeral=True)
-    elif isinstance(error, app_commands.errors.CheckFailure):
-        return await interaction.response.send_message(f"You're missing permissions to use that", ephemeral=True)
+@bot.event
+async def on_application_command_error(ctx: discord.ApplicationContext, error: discord.DiscordException):
+    if isinstance(error, commands.CommandOnCooldown):
+        return await ctx.respond(f"Command is currently on cooldown! Try again in **{error.retry_after:.2f}** seconds!", ephemeral=True)
+    elif isinstance(error, commands.MissingPermissions):
+        return await ctx.respond(f"You're missing permissions to use that", ephemeral=True)
+    elif isinstance(error, commands.errors.CheckFailure):
+        return await ctx.respond(f"You're missing permissions to use that", ephemeral=True)
     else:
         raise error
-
-bot.tree.on_error = on_tree_error
 
 token = open(TOKEN_FILE,"r").readline()
 bot.run(token)

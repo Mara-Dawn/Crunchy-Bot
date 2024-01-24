@@ -1,6 +1,4 @@
-
-import json
-import os
+import discord
 
 from typing import List
 from datalayer.Database import Database
@@ -8,7 +6,6 @@ from datalayer.Setting import Setting
 from datalayer.ModuleSettings import ModuleSettings
 from datalayer.GuildSettings import GuildSettings
 from BotLogger import BotLogger
-from discord.ext import commands
 
 class BotSettings():
 
@@ -34,7 +31,7 @@ class BotSettings():
     JAIL_FART_TIME_MIN_KEY = "fart_time_min"
     JAIL_MOD_ROLES_KEY = "moderator_roles"
 
-    def __init__(self, bot: commands.Bot, database: Database, logger: BotLogger, file_name: str):
+    def __init__(self, bot: discord.Bot, database: Database, logger: BotLogger, file_name: str):
         
         self.file_name = file_name
         self.logger = logger
@@ -216,7 +213,7 @@ class BotSettings():
         
     def get_jail_role(self, guild: int) -> int:
         value = self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY)
-        return int(value) if value is not '' else 0
+        return int(value) if value != '' else 0
     
     def set_jail_role(self, guild: int, role_id: int) -> None:
         

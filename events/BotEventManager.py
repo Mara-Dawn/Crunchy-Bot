@@ -1,8 +1,8 @@
 
 import datetime
-from discord.ext import commands
-from BotLogger import BotLogger
+import discord
 
+from BotLogger import BotLogger
 from BotSettings import BotSettings
 from datalayer.Database import Database
 from datalayer.UserInteraction import UserInteraction
@@ -13,7 +13,7 @@ from events.TimeoutEvent import TimeoutEvent
 
 class BotEventManager():
 
-    def __init__(self, bot: commands.Bot, settings: BotSettings, database: Database, logger: BotLogger):
+    def __init__(self, bot: discord.Bot, settings: BotSettings, database: Database, logger: BotLogger):
         
         self.bot = bot
         self.settings = settings

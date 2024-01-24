@@ -5,7 +5,9 @@ import traceback
 import discord
 
 from discord.ext import commands
-from discord import Message, app_commands
+from discord import Message
+from discord.commands import SlashCommandGroup
+from discord.commands import SlashCommand
 from typing import Dict, Literal, Optional
 from BotLogger import BotLogger
 from BotSettings import BotSettings
@@ -24,10 +26,10 @@ class Police(commands.Cog):
         self.settings: BotSettings = bot.settings
         self.event_manager: BotEventManager = bot.event_manager
     
-    async def __has_permission(interaction: discord.Interaction) -> bool:
+    async def __has_permission(self, ctx: discord.ApplicationContext) -> bool:
         
         author_id = 90043934247501824
-        return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
+        return ctx.author.id == author_id or ctx.author.guild_permissions.administrator
     
     async def timeout_task(self, message: Message, user_node: PoliceListNode):
         
@@ -150,129 +152,156 @@ class Police(commands.Cog):
             self.logger.log(guild_id, f'Removed rate tracing for user {message.author.name}', cog=self.__cog_name__)
             naughty_list.remove_user(author_id)
 
-    @commands.command()
-    @commands.guild_only()
-    @commands.is_owner()
-    async def sync(self, ctx: commands.Context, guilds: commands.Greedy[discord.Object], spec: Optional[Literal["~", "*", "^"]] = None) -> None:
-        if not guilds:
-            if spec == "~":
-                synced = await ctx.bot.tree.sync(guild=ctx.guild)
-            elif spec == "*":
-                ctx.bot.tree.copy_global_to(guild=ctx.guild)
-                synced = await ctx.bot.tree.sync(guild=ctx.guild)
-            elif spec == "^":
-                ctx.bot.tree.clear_commands(guild=ctx.guild)
-                await ctx.bot.tree.sync(guild=ctx.guild)
-                synced = []
-            else:
-                synced = await ctx.bot.tree.sync()
+    @discord.slash_command(name="meow", description="Makes me meow back at you.")
+    @discord.guild_only()
+    async def meow(self, ctx: discord.ApplicationContext) -> None:
+        
+        await self.bot.command_response(self.__cog_name__, ctx, "Meow!")
+    
+    police = SlashCommandGroup(name="police", description="Subcommands for the Police module.")
 
-            await ctx.send(
-                f"Synced {len(synced)} commands {'globally' if spec is None else 'to the current guild.'}"
-            )
-            return
-
-        ret = 0
-        for guild in guilds:
-            try:
-                await ctx.bot.tree.sync(guild=guild)
-            except discord.HTTPException:
-                pass
-            else:
-                ret += 1
-
-        await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
-    
-    group = app_commands.Group(name="police", description="Subcommands for the Police module.")
-
-    @app_commands.command(name="meow")
-    @app_commands.check(__has_permission)
-    async def meow(self, interaction: discord.Interaction) -> None:
+    @police.command(name="settings", description="Overview of all police related settings and their current value.")
+    @discord.guild_only()
+    async def get_settings(self, ctx: discord.ApplicationContext):
         
-        await self.bot.command_response(self.__cog_name__, interaction, "Meow!")
+        if not self.__has_permission(ctx):
+            raise commands.MissingPermissions
         
-    @group.command(name="settings")
-    @app_commands.check(__has_permission)
-    async def get_settings(self, interaction: discord.Interaction):
+        output = self.settings.get_settings_string(ctx.guild_id, BotSettings.POLICE_SUBSETTINGS_KEY)
         
-        output = self.settings.get_settings_string(interaction.guild_id, BotSettings.POLICE_SUBSETTINGS_KEY)
-        
-        await self.bot.command_response(self.__cog_name__, interaction, output)
+        await self.bot.command_response(self.__cog_name__, ctx, output)
     
     
-    @group.command(name="toggle")
-    @app_commands.describe(enabled='Turns the police module on or off.')
-    @app_commands.check(__has_permission)
-    async def set_toggle(self, interaction: discord.Interaction, enabled: Literal['on', 'off']):
+    @police.command(name="toggle", description="Enable or disable the entire police module.")
+    @discord.option(
+        "enabled",
+        description="Enable or disable the entire police module.",
+        choices=['on', 'off']
+    )
+    @discord.guild_only()
+    async def set_toggle(self, ctx: discord.ApplicationContext, enabled: str):
         
-        self.settings.set_police_enabled(interaction.guild_id, enabled == "on")
+        if not self.__has_permission(ctx):
+            raise commands.MissingPermissions
         
-        await self.bot.command_response(self.__cog_name__, interaction, f'Police module was turned {enabled}.', enabled)
+        self.settings.set_police_enabled(ctx.guild_id, enabled == "on")
+        
+        await self.bot.command_response(self.__cog_name__, ctx, f'Police module was turned {enabled}.', enabled)
+    
+    @police.command(name="set_timeout_length", description="Specify the length of time a user will be timed out when he spams.")
+    @discord.option(
+        "length",
+        type=int,
+        description="Timeout length (in seconds)",
+        min_value=1
+    )
+    @discord.guild_only()
+    async def set_timeout_interval(self, ctx: discord.ApplicationContext, length: int):
+        
+        if not self.__has_permission(ctx):
+            raise commands.MissingPermissions
+        
+        self.settings.set_police_timeout(ctx.guild_id, length)
+        await self.bot.command_response(self.__cog_name__, ctx, f'Timeout length set to {length} seconds.', length)
     
     
-    @group.command(name="set_timeout_length")
-    @app_commands.describe(length='The amount of time the users will have to wait before posting again after getting timed out. (in seconds)')
-    @app_commands.check(__has_permission)
-    async def set_timeout_interval(self, interaction: discord.Interaction, length: app_commands.Range[int, 0]):
+    @police.command(name="set_spam_thresholds", description="Specify the length of time a user will be timed out when he spams.")
+    @discord.option(
+        "message_count",
+        type=int,
+        description='Numer of messages a user may send within the specified interval.',
+        min_value=1
+    )
+    @discord.option(
+        "interval",
+        type=int,
+        description='Time interval within the user is allowed to send message_count messages.  (in seconds)',
+        min_value=1
+    )
+    @discord.guild_only()
+    async def set_spam_thresholds(self, ctx: discord.ApplicationContext, message_count: int, interval: int):
         
-        self.settings.set_police_timeout(interaction.guild_id, length)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Timeout length set to {length} seconds.', length)
-    
-    @group.command(name="set_spam_thresholds")
-    @app_commands.describe(
-        message_count='Numer of messages a user may send within the specified interval.',
-        interval='Time interval within the user is allowed to send message_count messages.  (in seconds)'
-        )
-    @app_commands.check(__has_permission)
-    async def set_spam_thresholds(self, interaction: discord.Interaction, message_count: app_commands.Range[int, 1], interval: app_commands.Range[int, 1]):
+        if not self.__has_permission(ctx):
+            raise commands.MissingPermissions
         
-        self.settings.set_police_message_limit(interaction.guild_id, message_count)
-        self.settings.set_police_message_limit_interval(interaction.guild_id, interval)
+        self.settings.set_police_message_limit(ctx.guild_id, message_count)
+        self.settings.set_police_message_limit_interval(ctx.guild_id, interval)
         
         for guild_id in self.naughty_list:
             self.naughty_list[guild_id].clear()
         
-        await self.bot.command_response(self.__cog_name__, interaction, f'Rate limit updated: Users can send {message_count} messages within {interval} seconds before getting timed out.', message_count, interval)
+        await self.bot.command_response(self.__cog_name__, ctx, f'Rate limit updated: Users can send {message_count} messages within {interval} seconds before getting timed out.', message_count, interval)
     
-    @group.command(name="add_role")
-    @app_commands.describe(role='The role that shall be tracked for spam detection.')
-    @app_commands.check(__has_permission)
-    async def add_role(self, interaction: discord.Interaction, role: discord.Role):
+    @police.command(name="add_role", description="Add roles to be monitored by spam detection.")
+    @discord.option(
+        "role",
+        type=discord.Role,
+        description='The role that shall be tracked for spam detection.'
+    )
+    @discord.guild_only()
+    async def add_role(self, ctx: discord.ApplicationContext, role: discord.Role):
         
-        self.settings.add_police_naughty_role(interaction.guild_id, role.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Added {role.name} to the list of active roles.', role)
+        if not self.__has_permission(ctx):
+            raise commands.MissingPermissions
         
-    @group.command(name="remove_role")
-    @app_commands.describe(role='Remove spam detection from this role.')
-    @app_commands.check(__has_permission)
-    async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
+        self.settings.add_police_naughty_role(ctx.guild_id, role.id)
+        await self.bot.command_response(self.__cog_name__, ctx, f'Added {role.name} to the list of active roles.', role)
         
-        self.settings.remove_police_naughty_role(interaction.guild_id, role.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Removed {role.name} from active roles.', role)
+    @police.command(name="remove_role", description="Remove roles from spam detection.")
+    @discord.option(
+        "role",
+        type=discord.Role,
+        description='Remove spam detection from this role.'
+    )
+    @discord.guild_only()
+    async def remove_role(self, ctx: discord.ApplicationContext, role: discord.Role):
+        
+        if not self.__has_permission(ctx):
+            raise commands.MissingPermissions
+        
+        self.settings.remove_police_naughty_role(ctx.guild_id, role.id)
+        await self.bot.command_response(self.__cog_name__, ctx, f'Removed {role.name} from active roles.', role)
     
-    @group.command(name="untrack_channel")
-    @app_commands.describe(channel='Stop tracking spam for this channel.')
-    @app_commands.check(__has_permission)
-    async def untrack_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+    @police.command(name="untrack_channel", description="Stop tracking spam in specific channels.")
+    @discord.option(
+        "channel",
+        type=discord.TextChannel,
+        description='Stop tracking spam for this channel.'
+    )
+    @discord.guild_only()
+    async def untrack_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         
-        self.settings.add_police_exclude_channel(interaction.guild_id, channel.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Stopping spam detection in {channel.name}.', channel)
+        if not self.__has_permission(ctx):
+            raise commands.MissingPermissions
         
-    @group.command(name="track_channel")
-    @app_commands.describe(channel='Reenable tracking spam for this channel.')
-    @app_commands.check(__has_permission)
-    async def track_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        self.settings.add_police_exclude_channel(ctx.guild_id, channel.id)
+        await self.bot.command_response(self.__cog_name__, ctxctx, f'Stopping spam detection in {channel.name}.', channel)
         
-        self.settings.remove_police_exclude_channel(interaction.guild_id, channel.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Resuming spam detection in {channel.name}.', channel)
+    @police.command(name="track_channel", description='Reenable tracking spam for specific channels.')
+    @discord.option(
+        "channel",
+        type=discord.TextChannel,
+        description='Reenable tracking spam for this channel.'
+    )
+    @discord.guild_only()
+    async def track_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
+        
+        if not self.__has_permission(ctx):
+            raise commands.MissingPermissions
+        
+        self.settings.remove_police_exclude_channel(ctx.guild_id, channel.id)
+        await self.bot.command_response(self.__cog_name__, ctx, f'Resuming spam detection in {channel.name}.', channel)
     
-    @group.command(name="set_timeout_message")
-    @app_commands.describe(message='This will be sent to the timed out person.')
-    @app_commands.check(__has_permission)
+    @police.command(name="set_timeout_message", description='Set the message a user will recieve when timed out.')
+    @discord.option(
+        "message",
+        description='This will be sent to the timed out person.'
+    )
+    @discord.guild_only()
     async def set_message(self, interaction: discord.Interaction, message: str):
         
         self.settings.set_police_timeout_notice(interaction.guild_id, message)
         await self.bot.command_response(self.__cog_name__, interaction, f'Timeout warning set to:\n `{message}`', message)
                 
-async def setup(bot):
-    await bot.add_cog(Police(bot))
+def setup(bot):
+    bot.add_cog(Police(bot))
