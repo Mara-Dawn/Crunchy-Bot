@@ -206,37 +206,37 @@ class BotEventManager():
                     
                     if event[Database.INTERACTION_EVENT_FROM_COL] not in slap_list.keys():
                         slap_list[event[Database.INTERACTION_EVENT_FROM_COL]] = 1
-                        continue
-                    slap_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1
+                    else:
+                        slap_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1
                     
                     if event[Database.INTERACTION_EVENT_TO_COL] not in slap_reciever_list.keys():
                         slap_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] = 1
-                        continue
-                    slap_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
+                    else:
+                        slap_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
                     
                 case UserInteraction.PET:
                     
                     if event[Database.INTERACTION_EVENT_FROM_COL] not in pet_list.keys():
                         pet_list[event[Database.INTERACTION_EVENT_FROM_COL]] = 1
-                        continue
-                    pet_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1 
+                    else:
+                        pet_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1 
                     
                     if event[Database.INTERACTION_EVENT_TO_COL] not in pet_reciever_list.keys():
                         pet_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] = 1
-                        continue
-                    pet_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
+                    else:
+                        pet_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
                     
                 case UserInteraction.FART:
                     
                     if event[Database.INTERACTION_EVENT_FROM_COL] not in fart_list.keys():
                         fart_list[event[Database.INTERACTION_EVENT_FROM_COL]] = 1
-                        continue
-                    fart_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1 
+                    else:
+                        fart_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1 
                     
                     if event[Database.INTERACTION_EVENT_TO_COL] not in fart_reciever_list.keys():
                         fart_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] = 1
-                        continue
-                    fart_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
+                    else:
+                        fart_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
         
         
         user_rankings.set_interaction_data(
@@ -257,13 +257,13 @@ class BotEventManager():
             
             if event[Database.TIMEOUT_EVENT_MEMBER_COL] not in timeout_lengths.keys():
                 timeout_lengths[event[Database.TIMEOUT_EVENT_MEMBER_COL]] = event[Database.TIMEOUT_EVENT_DURATION_COL]
-                continue
-            timeout_lengths[event[Database.TIMEOUT_EVENT_MEMBER_COL]] += event[Database.TIMEOUT_EVENT_DURATION_COL]
+            else:
+                timeout_lengths[event[Database.TIMEOUT_EVENT_MEMBER_COL]] += event[Database.TIMEOUT_EVENT_DURATION_COL]
             
             if event[Database.TIMEOUT_EVENT_MEMBER_COL] not in timeout_count.keys():
                 timeout_count[event[Database.TIMEOUT_EVENT_MEMBER_COL]] = 1
-                continue
-            timeout_count[event[Database.TIMEOUT_EVENT_MEMBER_COL]] += 1
+            else:
+                timeout_count[event[Database.TIMEOUT_EVENT_MEMBER_COL]] += 1
             
         user_rankings.set_timeout_data(
             timeout_lengths,
@@ -279,15 +279,15 @@ class BotEventManager():
             
             if event[Database.JAIL_MEMBER_COL] not in jail_lengths.keys():
                 jail_lengths[event[Database.JAIL_MEMBER_COL]] = event[Database.JAIL_EVENT_DURATION_COL]
-                continue
-            jail_lengths[event[Database.JAIL_MEMBER_COL]] += event[Database.JAIL_EVENT_DURATION_COL]
+            else:
+                jail_lengths[event[Database.JAIL_MEMBER_COL]] += event[Database.JAIL_EVENT_DURATION_COL]
             
             if event[Database.JAIL_EVENT_TYPE_COL] == JailEventType.JAIL:
             
                 if event[Database.JAIL_MEMBER_COL] not in jail_count.keys():
                     jail_count[event[Database.JAIL_MEMBER_COL]] = 1
-                    continue
-                jail_count[event[Database.JAIL_MEMBER_COL]] += 1
+                else:
+                    jail_count[event[Database.JAIL_MEMBER_COL]] += 1
         
         user_rankings.set_jail_data(
             jail_lengths,
