@@ -297,6 +297,7 @@ class Jail(commands.Cog):
         user='Slap this bitch.',
         )
     @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 10)
     async def slap(self, interaction: discord.Interaction, user: discord.Member):
         
         await self.user_command_interaction(interaction, user, UserInteraction.SLAP)
@@ -306,6 +307,7 @@ class Jail(commands.Cog):
         user='Give them a pat.',
         )
     @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 10)
     async def pet(self, interaction: discord.Interaction, user: discord.Member):
         
         await self.user_command_interaction(interaction, user, UserInteraction.PET)
@@ -315,6 +317,7 @@ class Jail(commands.Cog):
         user='Fart on this user.',
         )
     @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 10)
     async def fart(self, interaction: discord.Interaction, user: discord.Member):
         
         await self.user_command_interaction(interaction, user, UserInteraction.FART)
@@ -322,7 +325,7 @@ class Jail(commands.Cog):
     @app_commands.command(name="jail", description='Jail a user.')
     @app_commands.describe(
         user='User who will be jailed.',
-        duration='Length of the jail sentence.  (in minutes)'
+        duration='Length of the jail sentence. (in minutes)'
         )
     @app_commands.guild_only()
     async def jail(self, interaction: discord.Interaction, user: discord.Member, duration: app_commands.Range[int, 1]):
@@ -424,7 +427,7 @@ class Jail(commands.Cog):
         self.settings.remove_jail_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Removed {channel.name} from jail channels.', channel.name)
     
-    @group.command(name="add_mod_role")
+    @group.command(name="add_mod_role", description='Add jail privileges to a role.')
     @app_commands.describe(role='This role will be allowed to jail users.')
     @app_commands.check(__has_permission)
     async def add_mod_role(self, interaction: discord.Interaction, role: discord.Role):
@@ -432,7 +435,7 @@ class Jail(commands.Cog):
         self.settings.add_jail_mod_role(interaction.guild_id, role.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Added {role.name} to jail moderators.', role.name)
         
-    @group.command(name="remove_mod_role")
+    @group.command(name="remove_mod_role", description='Remove jail privileges from a role.')
     @app_commands.describe(role='Removes role from jail mods.')
     @app_commands.check(__has_permission)
     async def remove_mod_role(self, interaction: discord.Interaction, role: discord.Role):

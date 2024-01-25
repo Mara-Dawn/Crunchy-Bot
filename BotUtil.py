@@ -38,3 +38,10 @@ class BotUtil():
         result += ' and ' + str(output[-1])
             
         return result.strip()
+
+    def get_name(bot, guild_id: int, user_id: int, max_len: int = 20):
+            if bot.get_guild(guild_id) is None or bot.get_guild(guild_id).get_member(user_id) is None:
+                return "User not found"
+            name = bot.get_guild(guild_id).get_member(user_id).display_name
+            name = (name[:max_len] + '..') if len(name) > max_len else name
+            return name

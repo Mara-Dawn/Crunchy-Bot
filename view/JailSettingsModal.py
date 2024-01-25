@@ -62,7 +62,3 @@ class JailSettingsModal(discord.ui.Modal, title='Jail Settings'):
         self.settings.set_jail_fart_max(interaction.guild_id, values['Fart maximum'])
         
         await self.bot.modal_response('Jail', interaction, f'Settings were successfully updated.', self.command, *values.values())
-
-    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
-        await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
-        raise error

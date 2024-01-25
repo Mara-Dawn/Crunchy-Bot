@@ -61,7 +61,3 @@ class PoliceSettingsModal(discord.ui.Modal, title='Police Settings'):
         self.settings.set_police_timeout_notice(interaction.guild_id, timeout_notice)
         
         await self.bot.modal_response('Police', interaction, f'Settings were successfully updated.', self.command, *values.values())
-
-    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
-        await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
-        raise error

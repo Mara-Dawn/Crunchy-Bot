@@ -32,6 +32,68 @@ class Police(commands.Cog):
         author_id = 90043934247501824
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
     
+    
+    async def timeout_task_interaction(self,  interaction: discord.Interaction, user: discord.Member, duration: int):
+        
+        channel = interaction.channel
+        guild_id =interaction.guild_id
+        
+        time_now = datetime.datetime.now()
+        timestamp_now = int(time_now.timestamp())
+        release = timestamp_now + duration
+        
+        naughty_list = self.naughty_list[guild_id]
+        
+        if not naughty_list.has_user(user.id):
+            
+            message_limit = self.settings.get_police_message_limit(guild_id)
+            self.logger.log(guild_id, f'Added rate tracking for user {user.name}', cog=self.__cog_name__)
+            naughty_list.add_user(user.id, message_limit)
+            
+        naughty_list.add_message(user.id, time_now)
+            
+        naughty_user = naughty_list.get_user(user.id)
+        
+        if naughty_user.is_in_timeout():
+            return
+        
+        naughty_user.timeout()
+        
+        user_overwrites = channel.overwrites_for(user)
+        initial_overwrites = copy.deepcopy(user_overwrites)
+        user_overwrites.send_messages = False
+        
+        self.event_manager.dispatch_timeout_event(time_now, guild_id, user.id, duration)
+        
+        try:
+            await channel.set_permissions(user, overwrite=user_overwrites)
+            
+        except Exception as e:
+            self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
+            print(traceback.print_exc())
+            
+        await channel.send(f'<@{user.id}> You were timed out. Try again <t:{release}:R>.', delete_after=(duration))
+        self.logger.log(guild_id, f'Activated rate limit for {user.name} in {channel.name}.', cog=self.__cog_name__)
+            
+        self.logger.log(channel.guild.id, f'Temporarily removed send_messages permission from {user.name} in {channel.name}.', cog=self.__cog_name__)
+        
+        timeout_length = duration - (int(datetime.datetime.now().timestamp()) - timestamp_now)
+        
+        await asyncio.sleep(timeout_length)
+        
+        naughty_user.release()
+        self.logger.log(guild_id, f'User {user.name} rate limit was reset.', cog=self.__cog_name__)
+        
+        try:
+            await channel.set_permissions(user, overwrite=initial_overwrites)
+            
+        except Exception as e:
+            self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
+            print(traceback.print_exc())
+            
+        
+        self.logger.log(guild_id, f'Reinstated old permissions for {user.name} in {channel.name}.', cog=self.__cog_name__)
+    
     async def timeout_task(self, message: Message, user_node: PoliceListNode):
         
         channel = message.channel
@@ -211,6 +273,24 @@ class Police(commands.Cog):
         output = self.settings.get_settings_string(interaction.guild_id, BotSettings.POLICE_SUBSETTINGS_KEY)
         
         await self.bot.command_response(self.__cog_name__, interaction, output)
+    
+    @app_commands.command(name="timeout", description='Timeout a user.')
+    @app_commands.describe(
+        user='User who will be timed out.',
+        duration='Length of the timeout. (in seconds)'
+        )
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def timeout(self, interaction: discord.Interaction, user: discord.Member, duration: app_commands.Range[int, 1]):
+        
+        naughty_list = self.naughty_list[interaction.guild_id]
+        
+        if naughty_list.has_user(user.id) and naughty_list.get_user(user.id).is_in_timeout():
+            await self.bot.command_response(self.__cog_name__, interaction, "User already in timeout.")
+        
+        self.bot.loop.create_task(self.timeout_task_interaction(interaction, user, duration))
+        
+        await self.bot.command_response(self.__cog_name__, interaction, "User timed out successfully.")
     
     @group.command(name="toggle", description="Enable or disable the entire police module.")
     @app_commands.describe(enabled='Turns the police module on or off.')

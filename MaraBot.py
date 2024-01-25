@@ -41,7 +41,14 @@ class MaraBot(commands.Bot):
             log_message += " Arguments: " + ", ".join([str(x) for x in args])
                 
         self.logger.log(interaction.guild_id, log_message, cog=module)
-        await interaction.response.send_message(message, ephemeral=True)
+        
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(message, ephemeral=True) 
+            else:
+                await interaction.followup.send(message, ephemeral=True) 
+        except discord.errors.InteractionResponded:
+            await interaction.followup.send(message, ephemeral=True) 
     
     async def modal_response(self, module: str,  interaction: discord.Interaction, message: str, command: str, *args) -> None:
         
@@ -51,4 +58,11 @@ class MaraBot(commands.Bot):
             log_message += " Arguments: " + ", ".join([str(x) for x in args])
                 
         self.logger.log(interaction.guild_id, log_message, cog=module)
-        await interaction.response.send_message(message, ephemeral=True)
+        
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(message, ephemeral=True) 
+            else:
+                await interaction.followup.send(message, ephemeral=True) 
+        except discord.errors.InteractionResponded:
+            await interaction.followup.send(message, ephemeral=True) 

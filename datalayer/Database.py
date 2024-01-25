@@ -428,6 +428,31 @@ class Database():
             self.logger.error("DB",e)
             return None 
         
+    def get_guild_jail_events(self, guild_id: int):
+        
+        command = f'''
+            SELECT {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_JAILREFERENCE_COL},
+                   {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_TYPE_COL},
+                   {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_DURATION_COL},
+                   {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_BY_COL},
+                   {self.JAIL_TABLE}.{self.JAIL_MEMBER_COL}
+            FROM {self.JAIL_TABLE} 
+            INNER JOIN {self.JAIL_EVENT_TABLE} ON {self.JAIL_TABLE}.{self.JAIL_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_JAILREFERENCE_COL}
+            WHERE {self.JAIL_TABLE}.{self.JAIL_GUILD_ID_COL} = {int(guild_id)};
+        '''
+        
+        try:
+            c = self.conn.cursor()
+            c.execute(command)
+            rows = c.fetchall()
+            
+            headings = [x[0] for x in c.description]
+            return self.__parse_rows(rows, headings)
+            
+        except Error as e:
+            self.logger.error("DB",e)
+            return None 
+        
     def get_user_jail_interaction_events(self, user_id: int):
         
         command = f'''
@@ -471,6 +496,28 @@ class Database():
             self.logger.error("DB",e)
             return None 
     
+    def get_guild_timeout_events(self, guild_id: int):
+        
+        command = f'''
+            SELECT {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_MEMBER_COL},
+                   {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_DURATION_COL}
+            FROM {self.EVENT_TABLE} 
+            INNER JOIN {self.TIMEOUT_EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
+            WHERE {self.EVENT_TABLE}.{self.EVEN_GUILD_ID_COL} = {int(guild_id)};
+        '''
+        
+        try:
+            c = self.conn.cursor()
+            c.execute(command)
+            rows = c.fetchall()
+            
+            headings = [x[0] for x in c.description]
+            return self.__parse_rows(rows, headings)
+            
+        except Error as e:
+            self.logger.error("DB",e)
+            return None 
+    
     def get_user_interaction_events(self, user_id: int):
         
         command_from = f'''
@@ -499,6 +546,29 @@ class Database():
             to_rows =  self.__parse_rows(rows, headings)
             
             return {"out": from_rows, "in": to_rows}
+            
+        except Error as e:
+            self.logger.error("DB",e)
+            return None 
+    
+    def get_guild_interaction_events(self, guild_id: int):
+        
+        command = f'''
+            SELECT {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_FROM_COL},
+                   {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_TO_COL},
+                   {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_TYPE_COL}
+            FROM {self.EVENT_TABLE} 
+            INNER JOIN {self.INTERACTION_EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
+            WHERE {self.EVENT_TABLE}.{self.EVEN_GUILD_ID_COL} = {int(guild_id)};
+        '''
+        
+        try:
+            c = self.conn.cursor()
+            c.execute(command)
+            rows = c.fetchall()
+            
+            headings = [x[0] for x in c.description]
+            return self.__parse_rows(rows, headings)
             
         except Error as e:
             self.logger.error("DB",e)

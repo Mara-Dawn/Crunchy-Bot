@@ -6,6 +6,7 @@ from BotLogger import BotLogger
 from BotSettings import BotSettings
 from datalayer.Database import Database
 from datalayer.UserInteraction import UserInteraction
+from datalayer.UserRankings import UserRankings
 from datalayer.UserStats import UserStats
 from events.InteractionEvent import InteractionEvent
 from events.JailEvent import JailEvent
@@ -184,3 +185,114 @@ class BotEventManager():
      
         
         return user_stats
+
+    def get_user_rankings(self, guild_id: int):
+        
+        guild_interaction_events = self.database.get_guild_interaction_events(guild_id)
+        
+        user_rankings = UserRankings()
+        
+        slap_list = {}
+        pet_list = {}
+        fart_list = {}
+        
+        slap_reciever_list = {}
+        pet_reciever_list = {}
+        fart_reciever_list = {}
+        
+        for event in guild_interaction_events:
+            
+            match event[Database.INTERACTION_EVENT_TYPE_COL]:
+                case UserInteraction.SLAP:
+                    
+                    if event[Database.INTERACTION_EVENT_FROM_COL] not in slap_list.keys():
+                        slap_list[event[Database.INTERACTION_EVENT_FROM_COL]] = 1
+                        continue
+                    slap_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1
+                    
+                    if event[Database.INTERACTION_EVENT_TO_COL] not in slap_reciever_list.keys():
+                        slap_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] = 1
+                        continue
+                    slap_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
+                    
+                case UserInteraction.PET:
+                    
+                    if event[Database.INTERACTION_EVENT_FROM_COL] not in pet_list.keys():
+                        pet_list[event[Database.INTERACTION_EVENT_FROM_COL]] = 1
+                        continue
+                    pet_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1 
+                    
+                    if event[Database.INTERACTION_EVENT_TO_COL] not in pet_reciever_list.keys():
+                        pet_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] = 1
+                        continue
+                    pet_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
+                    
+                case UserInteraction.FART:
+                    
+                    if event[Database.INTERACTION_EVENT_FROM_COL] not in fart_list.keys():
+                        fart_list[event[Database.INTERACTION_EVENT_FROM_COL]] = 1
+                        continue
+                    slap_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1 
+                    
+                    if event[Database.INTERACTION_EVENT_TO_COL] not in fart_reciever_list.keys():
+                        fart_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] = 1
+                        continue
+                    fart_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
+        
+        
+        user_rankings.set_interaction_data(
+            slap_list,
+            pet_list,
+            fart_list,
+            slap_reciever_list,
+            pet_reciever_list,
+            fart_reciever_list
+        )
+        
+        guild_timeout_events = self.database.get_guild_timeout_events(guild_id)
+        
+        timeout_lengths = {}
+        timeout_count = {}
+        
+        for event in guild_timeout_events:
+            
+            if event[Database.TIMEOUT_EVENT_MEMBER_COL] not in timeout_lengths.keys():
+                timeout_lengths[event[Database.TIMEOUT_EVENT_MEMBER_COL]] = event[Database.TIMEOUT_EVENT_DURATION_COL]
+                continue
+            timeout_lengths[event[Database.TIMEOUT_EVENT_MEMBER_COL]] += event[Database.TIMEOUT_EVENT_DURATION_COL]
+            
+            if event[Database.TIMEOUT_EVENT_MEMBER_COL] not in timeout_count.keys():
+                timeout_count[event[Database.TIMEOUT_EVENT_MEMBER_COL]] = 1
+                continue
+            timeout_count[event[Database.TIMEOUT_EVENT_MEMBER_COL]] += 1
+            
+        user_rankings.set_timeout_data(
+            timeout_lengths,
+            timeout_count
+        )
+        
+        guild_jail_events = self.database.get_guild_jail_events(guild_id)
+        
+        jail_lengths = {}
+        jail_count = {}
+        
+        for event in guild_jail_events:
+            
+            if event[Database.JAIL_MEMBER_COL] not in jail_lengths.keys():
+                jail_lengths[event[Database.JAIL_MEMBER_COL]] = event[Database.JAIL_EVENT_DURATION_COL]
+                continue
+            jail_lengths[event[Database.JAIL_MEMBER_COL]] += event[Database.JAIL_EVENT_DURATION_COL]
+            
+            if event[Database.JAIL_EVENT_TYPE_COL] == JailEventType.JAIL:
+            
+                if event[Database.JAIL_MEMBER_COL] not in jail_count.keys():
+                    jail_count[event[Database.JAIL_MEMBER_COL]] = 1
+                    continue
+                jail_count[event[Database.JAIL_MEMBER_COL]] += 1
+        
+        user_rankings.set_jail_data(
+            jail_lengths,
+            jail_count
+        )
+        
+        return user_rankings
