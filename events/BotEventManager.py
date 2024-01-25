@@ -231,7 +231,7 @@ class BotEventManager():
                     if event[Database.INTERACTION_EVENT_FROM_COL] not in fart_list.keys():
                         fart_list[event[Database.INTERACTION_EVENT_FROM_COL]] = 1
                         continue
-                    slap_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1 
+                    fart_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1 
                     
                     if event[Database.INTERACTION_EVENT_TO_COL] not in fart_reciever_list.keys():
                         fart_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] = 1
