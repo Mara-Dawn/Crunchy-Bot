@@ -40,13 +40,6 @@ class UserRankings():
     
     
     def get_rankings(self, type: RankingType):
-        
-        
-        def convert(list):
-            new_list = []
-            for (k,v) in list:
-                new_list.append((k, BotUtil.strfdelta(sorted_list, inputtype='seconds')))
-            return new_list
                 
         match type:
             case RankingType.SLAP: 
