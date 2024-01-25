@@ -41,3 +41,13 @@ class MaraBot(commands.Bot):
                 
         self.logger.log(interaction.guild_id, log_message, cog=module)
         await interaction.response.send_message(message, ephemeral=True)
+    
+    async def modal_response(self, module: str,  interaction: discord.Interaction, message: str, command: str, *args) -> None:
+        
+        log_message = f'{interaction.user.name} used command `{command}`.'
+        
+        if len(args) > 0: 
+            log_message += " Arguments: " + ", ".join([str(x) for x in args])
+                
+        self.logger.log(interaction.guild_id, log_message, cog=module)
+        await interaction.response.send_message(message, ephemeral=True)

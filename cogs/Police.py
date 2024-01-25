@@ -13,6 +13,7 @@ from MaraBot import MaraBot
 from datalayer.PoliceList import PoliceList
 from datalayer.PoliceListNode import PoliceListNode
 from events.BotEventManager import BotEventManager
+from view.PoliceSettingsModal import PoliceSettingsModal
 
 class Police(commands.Cog):
     
@@ -23,6 +24,8 @@ class Police(commands.Cog):
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
         self.event_manager: BotEventManager = bot.event_manager
+        
+        self.initialized = False
     
     async def __has_permission(interaction: discord.Interaction) -> bool:
         
@@ -84,19 +87,30 @@ class Police(commands.Cog):
             self.naughty_list[guild.id] = PoliceList()
             
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
+        
+        self.initialized = True
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-
+        
+        if not self.initialized:
+           return
+       
         self.naughty_list[guild.id] = PoliceList()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-
+        
+        if not self.initialized:
+           return
+       
         del self.naughty_list[guild.id]
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.message.Message):
+       
+        if not self.initialized:
+           return
        
         author_id = message.author.id
         if author_id == self.bot.user.id:
@@ -185,13 +199,12 @@ class Police(commands.Cog):
     
     group = app_commands.Group(name="police", description="Subcommands for the Police module.")
 
-    @app_commands.command(name="meow")
-    @app_commands.check(__has_permission)
+    @app_commands.command(name="meow", description="Makes me meow!")
     async def meow(self, interaction: discord.Interaction) -> None:
         
         await self.bot.command_response(self.__cog_name__, interaction, "Meow!")
         
-    @group.command(name="settings")
+    @group.command(name="settings", description="Overview of all police related settings and their current value.")
     @app_commands.check(__has_permission)
     async def get_settings(self, interaction: discord.Interaction):
         
@@ -199,8 +212,7 @@ class Police(commands.Cog):
         
         await self.bot.command_response(self.__cog_name__, interaction, output)
     
-    
-    @group.command(name="toggle")
+    @group.command(name="toggle", description="Enable or disable the entire police module.")
     @app_commands.describe(enabled='Turns the police module on or off.')
     @app_commands.check(__has_permission)
     async def set_toggle(self, interaction: discord.Interaction, enabled: Literal['on', 'off']):
@@ -209,32 +221,7 @@ class Police(commands.Cog):
         
         await self.bot.command_response(self.__cog_name__, interaction, f'Police module was turned {enabled}.', enabled)
     
-    
-    @group.command(name="set_timeout_length")
-    @app_commands.describe(length='The amount of time the users will have to wait before posting again after getting timed out. (in seconds)')
-    @app_commands.check(__has_permission)
-    async def set_timeout_interval(self, interaction: discord.Interaction, length: app_commands.Range[int, 0]):
-        
-        self.settings.set_police_timeout(interaction.guild_id, length)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Timeout length set to {length} seconds.', length)
-    
-    @group.command(name="set_spam_thresholds")
-    @app_commands.describe(
-        message_count='Numer of messages a user may send within the specified interval.',
-        interval='Time interval within the user is allowed to send message_count messages.  (in seconds)'
-        )
-    @app_commands.check(__has_permission)
-    async def set_spam_thresholds(self, interaction: discord.Interaction, message_count: app_commands.Range[int, 1], interval: app_commands.Range[int, 1]):
-        
-        self.settings.set_police_message_limit(interaction.guild_id, message_count)
-        self.settings.set_police_message_limit_interval(interaction.guild_id, interval)
-        
-        for guild_id in self.naughty_list:
-            self.naughty_list[guild_id].clear()
-        
-        await self.bot.command_response(self.__cog_name__, interaction, f'Rate limit updated: Users can send {message_count} messages within {interval} seconds before getting timed out.', message_count, interval)
-    
-    @group.command(name="add_role")
+    @group.command(name="add_role", description="Add roles to be monitored by spam detection.")
     @app_commands.describe(role='The role that shall be tracked for spam detection.')
     @app_commands.check(__has_permission)
     async def add_role(self, interaction: discord.Interaction, role: discord.Role):
@@ -242,7 +229,7 @@ class Police(commands.Cog):
         self.settings.add_police_naughty_role(interaction.guild_id, role.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Added {role.name} to the list of active roles.', role)
         
-    @group.command(name="remove_role")
+    @group.command(name="remove_role", description="Remove roles from spam detection.")
     @app_commands.describe(role='Remove spam detection from this role.')
     @app_commands.check(__has_permission)
     async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
@@ -250,7 +237,7 @@ class Police(commands.Cog):
         self.settings.remove_police_naughty_role(interaction.guild_id, role.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Removed {role.name} from active roles.', role)
     
-    @group.command(name="untrack_channel")
+    @group.command(name="untrack_channel", description="Stop tracking spam in specific channels.")
     @app_commands.describe(channel='Stop tracking spam for this channel.')
     @app_commands.check(__has_permission)
     async def untrack_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
@@ -258,7 +245,7 @@ class Police(commands.Cog):
         self.settings.add_police_exclude_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Stopping spam detection in {channel.name}.', channel)
         
-    @group.command(name="track_channel")
+    @group.command(name="track_channel", description='Reenable tracking spam for specific channels.')
     @app_commands.describe(channel='Reenable tracking spam for this channel.')
     @app_commands.check(__has_permission)
     async def track_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
@@ -266,13 +253,22 @@ class Police(commands.Cog):
         self.settings.remove_police_exclude_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Resuming spam detection in {channel.name}.', channel)
     
-    @group.command(name="set_timeout_message")
-    @app_commands.describe(message='This will be sent to the timed out person.')
+    @group.command(name="setup", description="Opens a dialog to edit various police settings.")
     @app_commands.check(__has_permission)
-    async def set_message(self, interaction: discord.Interaction, message: str):
+    async def setup(self, interaction: discord.Interaction):
         
-        self.settings.set_police_timeout_notice(interaction.guild_id, message)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Timeout warning set to:\n `{message}`', message)
-                
+        current_timeout = self.settings.get_police_timeout(interaction.guild_id)
+        current_message_limit = self.settings.get_police_message_limit(interaction.guild_id)
+        current_message_limit_interval = self.settings.get_police_message_limit_interval(interaction.guild_id)
+        current_timeout_notice = self.settings.get_police_timeout_notice(interaction.guild_id)
+
+        modal = PoliceSettingsModal(self.bot, self.settings)
+        modal.timeout_length.default = current_timeout
+        modal.message_limit.default = current_message_limit
+        modal.message_limit_interval.default = current_message_limit_interval
+        modal.timeout_notice.default = current_timeout_notice
+        
+        await interaction.response.send_modal(modal)
+        
 async def setup(bot):
     await bot.add_cog(Police(bot))
