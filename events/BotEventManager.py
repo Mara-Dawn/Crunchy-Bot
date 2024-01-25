@@ -6,6 +6,7 @@ from BotLogger import BotLogger
 from BotSettings import BotSettings
 from datalayer.Database import Database
 from datalayer.UserInteraction import UserInteraction
+from datalayer.UserStats import UserStats
 from events.InteractionEvent import InteractionEvent
 from events.JailEvent import JailEvent
 from events.JailEventType import JailEventType
@@ -77,3 +78,109 @@ class BotEventManager():
             total_duration += event[Database.JAIL_EVENT_DURATION_COL]
         
         return total_duration
+    
+    def get_user_statistics(self, user_id: int) -> UserStats:
+        
+        events = self.database.get_user_interaction_events(user_id)
+        
+        events_out = events["out"]
+        events_in = events["in"]
+        
+        user_stats = UserStats()
+        
+        count_out = {
+            UserInteraction.SLAP: 0,
+            UserInteraction.PET: 0,
+            UserInteraction.FART: 0
+        }
+        user_count_out = {}
+        
+        for event in events_out:
+            if event[Database.INTERACTION_EVENT_TYPE_COL] not in count_out.keys():
+                continue
+            
+            count_out[event[Database.INTERACTION_EVENT_TYPE_COL]] += 1
+            
+            if event[Database.INTERACTION_EVENT_TO_COL] not in user_count_out.keys():
+                user_count_out[event[Database.INTERACTION_EVENT_TO_COL]] = {
+                    UserInteraction.SLAP: 0,
+                    UserInteraction.PET: 0,
+                    UserInteraction.FART: 0
+                }
+            
+            user_count_out[event[Database.INTERACTION_EVENT_TO_COL]][event[Database.INTERACTION_EVENT_TYPE_COL]] += 1
+            
+        user_stats.set_count_out(count_out)
+        user_stats.set_user_count_out(user_count_out)
+        
+        count_in = {
+            UserInteraction.SLAP: 0,
+            UserInteraction.PET: 0,
+            UserInteraction.FART: 0
+        }
+        user_count_in = {}
+        
+        for event in events_in:
+            count_in[event[Database.INTERACTION_EVENT_TYPE_COL]] += 1
+            
+            if event[Database.INTERACTION_EVENT_TO_COL] not in user_count_in.keys():
+                user_count_in[event[Database.INTERACTION_EVENT_FROM_COL]] = {
+                    UserInteraction.SLAP: 0,
+                    UserInteraction.PET: 0,
+                    UserInteraction.FART: 0
+                }
+            
+            user_count_in[event[Database.INTERACTION_EVENT_FROM_COL]][event[Database.INTERACTION_EVENT_TYPE_COL]] += 1
+        
+        user_stats.set_count_in(count_in)
+        user_stats.set_user_count_in(user_count_in)
+        
+        jail_events = self.database.get_user_jail_events(user_id)
+        
+        total_jail_duration = 0
+        jail_stays = []
+        max_fart = 0
+        min_fart = 0
+        total_added_to_self = 0
+        
+        for event in jail_events:
+            
+            if event[Database.JAIL_EVENT_TYPE_COL] in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
+                total_added_to_self += event[Database.JAIL_EVENT_DURATION_COL]
+            
+            if event[Database.JAIL_EVENT_TYPE_COL] == JailEventType.FART:  
+                max_fart = max(max_fart, event[Database.JAIL_EVENT_DURATION_COL])
+                min_fart = min(min_fart, event[Database.JAIL_EVENT_DURATION_COL])
+            
+            total_jail_duration += event[Database.JAIL_EVENT_DURATION_COL]
+            jail_id = event[Database.JAIL_EVENT_JAILREFERENCE_COL]
+            jail_stays.append(jail_id) if jail_id not in jail_stays else jail_stays
+
+        user_stats.set_jail_total(total_jail_duration)
+        user_stats.set_jail_amount(len(jail_stays))
+        user_stats.set_fart_stats(max_fart, min_fart)
+        
+        
+        jail_interaction_events = self.database.get_user_jail_interaction_events(user_id)
+        total_added_to_others = 0
+        
+        for event in jail_interaction_events:
+            if event[Database.JAIL_EVENT_TYPE_COL] in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
+                total_added_to_others += event[Database.JAIL_EVENT_DURATION_COL]
+
+        user_stats.set_total_added_others(total_added_to_others)
+        user_stats.set_total_added_self(total_added_to_self)
+        
+        timeout_events = self.database.get_user_timeout_events(user_id)
+        
+        total_timeout_duration = 0
+        timeout_count = len(timeout_events)
+        
+        for event in timeout_events:
+            total_timeout_duration += event[Database.TIMEOUT_EVENT_DURATION_COL]
+        
+        user_stats.set_timeout_total(total_timeout_duration)
+        user_stats.set_timeout_amount(timeout_count)
+     
+        
+        return user_stats

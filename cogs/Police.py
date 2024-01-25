@@ -142,7 +142,7 @@ class Police(commands.Cog):
             if not naughty_list.has_user(author_id):
                 
                 message_limit = self.settings.get_police_message_limit(guild_id)
-                self.logger.log(guild_id, f'Added rate tracking for user {message.author.name}')
+                self.logger.log(guild_id, f'Added rate tracking for user {message.author.name}', cog=self.__cog_name__)
                 naughty_list.add_user(author_id, message_limit)
                 naughty_list.add_message(author_id, message.created_at)
                 return

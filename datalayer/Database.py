@@ -379,7 +379,7 @@ class Database():
         except Error as e:
             self.logger.error("DB",e)
             return None 
-    
+
     def has_jail_event(self, jail_id: int, user_id: int, type: JailEventType):
         
         command = f'''
@@ -399,6 +399,106 @@ class Database():
             
             headings = [x[0] for x in c.description]
             return self.__parse_rows(rows, headings)
+            
+        except Error as e:
+            self.logger.error("DB",e)
+            return None 
+         
+    def get_user_jail_events(self, user_id: int):
+        
+        command = f'''
+            SELECT {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_JAILREFERENCE_COL},
+                   {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_TYPE_COL},
+                   {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_DURATION_COL},
+                   {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_BY_COL}
+            FROM {self.JAIL_TABLE} 
+            INNER JOIN {self.JAIL_EVENT_TABLE} ON {self.JAIL_TABLE}.{self.JAIL_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_JAILREFERENCE_COL}
+            WHERE {self.JAIL_TABLE}.{self.JAIL_MEMBER_COL} = {int(user_id)};
+        '''
+        
+        try:
+            c = self.conn.cursor()
+            c.execute(command)
+            rows = c.fetchall()
+            
+            headings = [x[0] for x in c.description]
+            return self.__parse_rows(rows, headings)
+            
+        except Error as e:
+            self.logger.error("DB",e)
+            return None 
+        
+    def get_user_jail_interaction_events(self, user_id: int):
+        
+        command = f'''
+            SELECT {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_JAILREFERENCE_COL},
+                   {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_TYPE_COL},
+                   {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_DURATION_COL},
+                   {self.JAIL_TABLE}.{self.JAIL_MEMBER_COL}
+            FROM {self.JAIL_TABLE} 
+            INNER JOIN {self.JAIL_EVENT_TABLE} ON {self.JAIL_TABLE}.{self.JAIL_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_JAILREFERENCE_COL}
+            WHERE {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_BY_COL} = {int(user_id)};
+        '''
+        
+        try:
+            c = self.conn.cursor()
+            c.execute(command)
+            rows = c.fetchall()
+            
+            headings = [x[0] for x in c.description]
+            return self.__parse_rows(rows, headings)
+            
+        except Error as e:
+            self.logger.error("DB",e)
+            return None 
+        
+    def get_user_timeout_events(self, user_id: int):
+        
+        command = f'''
+            SELECT * FROM {self.TIMEOUT_EVENT_TABLE}
+            WHERE {self.TIMEOUT_EVENT_MEMBER_COL} = {int(user_id)};
+        '''
+        
+        try:
+            c = self.conn.cursor()
+            c.execute(command)
+            rows = c.fetchall()
+            
+            headings = [x[0] for x in c.description]
+            return self.__parse_rows(rows, headings)
+            
+        except Error as e:
+            self.logger.error("DB",e)
+            return None 
+    
+    def get_user_interaction_events(self, user_id: int):
+        
+        command_from = f'''
+            SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
+            WHERE {self.INTERACTION_EVENT_FROM_COL} = {int(user_id)};
+        '''
+        
+        command_to = f'''
+            SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
+            WHERE {self.INTERACTION_EVENT_TO_COL} = {int(user_id)};
+        '''
+        
+        try:
+            c = self.conn.cursor()
+            c.execute(command_from)
+            rows = c.fetchall()
+            
+            headings = [x[0] for x in c.description]
+            from_rows =  self.__parse_rows(rows, headings)
+            
+            c = self.conn.cursor()
+            c.execute(command_to)
+            rows = c.fetchall()
+            
+            headings = [x[0] for x in c.description]
+            to_rows =  self.__parse_rows(rows, headings)
+            
+            return {"out": from_rows, "in": to_rows}
             
         except Error as e:
             self.logger.error("DB",e)

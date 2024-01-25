@@ -23,6 +23,7 @@ class MaraBot(commands.Bot):
         self.event_manager = BotEventManager(self, self.settings, self.database, self.logger)
         await self.load_extension("cogs.Police")
         await self.load_extension("cogs.Jail")
+        await self.load_extension("cogs.Statistics")
         
     async def on_guild_join(self, guild):
 
