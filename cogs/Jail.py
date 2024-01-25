@@ -48,6 +48,24 @@ class Jail(commands.Cog):
             callback=self.fart_context_menu,
         )
         self.bot.tree.add_command(self.ctx_menu)
+        
+        self.ctx_menu = app_commands.ContextMenu(
+            name='Slap',
+            callback=self.slap_msg_context_menu,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
+        
+        self.ctx_menu = app_commands.ContextMenu(
+            name='Pet',
+            callback=self.pet_msg_context_menu,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
+        
+        self.ctx_menu = app_commands.ContextMenu(
+            name='Fart',
+            callback=self.fart_msg_context_menu,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
     
     async def slap_context_menu(self, interaction: discord.Interaction, user: discord.Member):
         await self.user_command_interaction(interaction, user, UserInteraction.SLAP)
@@ -58,6 +76,14 @@ class Jail(commands.Cog):
     async def fart_context_menu(self, interaction: discord.Interaction, user: discord.Member):
         await self.user_command_interaction(interaction, user, UserInteraction.FART)
     
+    async def slap_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
+        await self.user_command_interaction(interaction, message.author, UserInteraction.SLAP)
+    
+    async def pet_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
+        await self.user_command_interaction(interaction, message.author, UserInteraction.PET)
+
+    async def fart_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
+        await self.user_command_interaction(interaction, message.author, UserInteraction.FART)
     
     async def __has_permission(interaction: discord.Interaction) -> bool:
         
