@@ -124,7 +124,7 @@ class BotEventManager():
         for event in events_in:
             count_in[event[Database.INTERACTION_EVENT_TYPE_COL]] += 1
             
-            if event[Database.INTERACTION_EVENT_TO_COL] not in user_count_in.keys():
+            if event[Database.INTERACTION_EVENT_FROM_COL] not in user_count_in.keys():
                 user_count_in[event[Database.INTERACTION_EVENT_FROM_COL]] = {
                     UserInteraction.SLAP: 0,
                     UserInteraction.PET: 0,
