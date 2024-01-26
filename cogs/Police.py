@@ -32,30 +32,16 @@ class Police(commands.Cog):
         author_id = 90043934247501824
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
     
-    
-    async def timeout_task_interaction(self,  interaction: discord.Interaction, user: discord.Member, duration: int):
+    async def timeout_task(self, channel: discord.TextChannel, user: discord.Member, duration: int):
         
-        channel = interaction.channel
-        guild_id =interaction.guild_id
+        guild_id = channel.guild.id
         
         time_now = datetime.datetime.now()
         timestamp_now = int(time_now.timestamp())
         release = timestamp_now + duration
         
         naughty_list = self.naughty_list[guild_id]
-        
-        if not naughty_list.has_user(user.id):
-            
-            message_limit = self.settings.get_police_message_limit(guild_id)
-            self.logger.log(guild_id, f'Added rate tracking for user {user.name}', cog=self.__cog_name__)
-            naughty_list.add_user(user.id, message_limit)
-            
-        naughty_list.add_message(user.id, time_now)
-            
         naughty_user = naughty_list.get_user(user.id)
-        
-        if naughty_user.is_in_timeout():
-            return
         
         naughty_user.timeout()
         
@@ -72,7 +58,7 @@ class Police(commands.Cog):
             self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
             print(traceback.print_exc())
             
-        await channel.send(f'<@{user.id}> You were timed out. Try again <t:{release}:R>.', delete_after=(duration))
+        await channel.send(f'<@{user.id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=(duration))
         self.logger.log(guild_id, f'Activated rate limit for {user.name} in {channel.name}.', cog=self.__cog_name__)
             
         self.logger.log(channel.guild.id, f'Temporarily removed send_messages permission from {user.name} in {channel.name}.', cog=self.__cog_name__)
@@ -86,54 +72,6 @@ class Police(commands.Cog):
         
         try:
             await channel.set_permissions(user, overwrite=initial_overwrites)
-            
-        except Exception as e:
-            self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
-            print(traceback.print_exc())
-            
-        
-        self.logger.log(guild_id, f'Reinstated old permissions for {user.name} in {channel.name}.', cog=self.__cog_name__)
-    
-    async def timeout_task(self, message: Message, user_node: PoliceListNode):
-        
-        channel = message.channel
-        user = message.author
-        guild_id = message.guild.id
-        timeout_max = self.settings.get_police_timeout(guild_id)
-        
-        time_now = datetime.datetime.now()
-        timestamp_now = int(time_now.timestamp())
-        release = timestamp_now + timeout_max
-        user_node.timeout()
-        
-        user_overwrites = channel.overwrites_for(user)
-        initial_overwrites = copy.deepcopy(user_overwrites)
-        user_overwrites.send_messages = False
-        
-        self.event_manager.dispatch_timeout_event(time_now, guild_id, user.id, timeout_max)
-        
-        try:
-            await channel.set_permissions(user, overwrite=user_overwrites)
-            
-        except Exception as e:
-            self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
-            print(traceback.print_exc())
-            
-        await message.channel.send(f'<@{user.id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=(timeout_max))
-        self.logger.log(guild_id, f'Activated rate limit for {message.author.name} in {channel.name}.', cog=self.__cog_name__)
-        await message.delete()
-            
-        self.logger.log(channel.guild.id, f'Temporarily removed send_messages permission from {user.name} in {channel.name}.', cog=self.__cog_name__)
-        
-        timeout_length = timeout_max - (int(datetime.datetime.now().timestamp()) - timestamp_now)
-        
-        await asyncio.sleep(timeout_length)
-        
-        user_node.release()
-        self.logger.log(guild_id, f'User {message.author.name} rate limit was reset.', cog=self.__cog_name__)
-        
-        try:
-            await channel.set_permissions(message.author, overwrite=initial_overwrites)
             
         except Exception as e:
             self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
@@ -219,7 +157,8 @@ class Police(commands.Cog):
                 if not naughty_user.is_spamming(message_limit_interval):
                     return
                 
-                self.bot.loop.create_task(self.timeout_task(message, naughty_user))
+                duration = self.settings.get_police_timeout(guild_id)
+                self.bot.loop.create_task(self.timeout_task(message.channel, message.author, duration))
                 
         elif naughty_list.has_user(author_id):
             
@@ -288,7 +227,7 @@ class Police(commands.Cog):
         if naughty_list.has_user(user.id) and naughty_list.get_user(user.id).is_in_timeout():
             await self.bot.command_response(self.__cog_name__, interaction, "User already in timeout.")
         
-        self.bot.loop.create_task(self.timeout_task_interaction(interaction, user, duration))
+        self.bot.loop.create_task(self.timeout_task(interaction.channel, user, duration))
         
         await self.bot.command_response(self.__cog_name__, interaction, "User timed out successfully.")
     

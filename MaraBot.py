@@ -10,7 +10,7 @@ class MaraBot(commands.Bot):
 
     SETTINGS_FILE = "settings.json"
     DB_FILE = "database.sqlite"
-    LOG_FILE = "marabot.log"
+    LOG_FILE = "./log/marabot.log"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

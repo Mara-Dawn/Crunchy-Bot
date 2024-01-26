@@ -17,6 +17,17 @@ class RankingView(discord.ui.View):
         embed = RankingEmbed(self.bot, interaction, self.ranking_data, type)
         await interaction.response.edit_message(embed=embed, view=self)
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user == self.interaction.user:
+            return True
+        else:
+            emb = discord.Embed(
+                description=f"Only the author of the command can perform this action.",
+                color=16711680
+            )
+            await interaction.response.send_message(embed=emb, ephemeral=True)
+            return False
+    
     async def on_timeout(self):
         # remove buttons on timeout
         message = await self.interaction.original_response()
@@ -44,4 +55,6 @@ class Dropdown(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         
         view: RankingView = self.view
-        await view.edit_page(interaction, int(self.values[0]))
+        
+        if await view.interaction_check(interaction):
+            await view.edit_page(interaction, int(self.values[0]))
