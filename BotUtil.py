@@ -1,6 +1,7 @@
 import json
 from string import Formatter
 from datetime import timedelta
+from typing import Any, Dict
 from discord.ext import commands
 import requests
 
@@ -48,18 +49,17 @@ class BotUtil():
             name = bot.get_guild(guild_id).get_member(user_id).display_name
             name = (name[:max_len] + '..') if len(name) > max_len else name
             return name
-
-class TenorImage(object):
-    def __init__(self, data=None):
-        if data:
-            self.created = data.get('created')
-            self.url = data.get('url')
-            self.tags = data.get('tags')
-            self.type = data.get('tupe')
-            self.dims = ""
-            self.preview = ""
-            self.size = ""
-            self.duration = ""
+        
+    def dict_append(dict: Dict, key: Any, value: Any, mode="add"):
+        
+        if key not in dict.keys():
+            dict[key] = value
+        else:
+            match mode:
+                case 'set':
+                    dict[key] = value
+                case 'add':
+                    dict[key] += value
 
 
 class Tenor(object):

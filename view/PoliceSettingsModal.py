@@ -50,7 +50,7 @@ class PoliceSettingsModal(discord.ui.Modal, title='Police Settings'):
         
         if len(error) != 0:
             message = f'Illegal values: {', '.join([f'{key}({value})' for key, value in error.items()])}\nPlease only use positive integers.'
-            await self.bot.modal_response('Police', interaction, message, *values.values())
+            await self.bot.response('Police', interaction, message, *values.values())
             return
         
         values = {key: int(value) for (key, value) in values.items()}
@@ -60,4 +60,4 @@ class PoliceSettingsModal(discord.ui.Modal, title='Police Settings'):
         self.settings.set_police_message_limit_interval(interaction.guild_id, values['Limit Interval'])
         self.settings.set_police_timeout_notice(interaction.guild_id, timeout_notice)
         
-        await self.bot.modal_response('Police', interaction, f'Settings were successfully updated.', self.command, *values.values())
+        await self.bot.response('Police', interaction, f'Settings were successfully updated.', self.command, *values.values())

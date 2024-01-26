@@ -10,6 +10,7 @@ from BotSettings import BotSettings
 from BotUtil import BotUtil, Tenor
 from MaraBot import MaraBot
 from datalayer.Database import Database
+from datalayer.UserJail import UserJail
 from datalayer.JailList import JailList
 from datalayer.UserInteraction import UserInteraction
 from events.BotEventManager import BotEventManager
@@ -174,7 +175,7 @@ class Jail(commands.Cog):
             user_node = list.get_user(user.id)
             self.logger.log(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
             
-            if self.event_manager.has_jail_event(user_node.get_jail_id(), interaction.user.id, command.name):
+            if self.event_manager.has_jail_event_from_user(user_node.get_jail_id(), interaction.user.id, command.name):
                 self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
                 embed = await self.__get_response_embed(command_type, interaction, user)
                 await interaction.followup.send(self.__get_already_used_msg(command_type, interaction, user), embed=embed)
@@ -188,15 +189,15 @@ class Jail(commands.Cog):
             match command_type:
                 case UserInteraction.SLAP:
                     amount = self.settings.get_jail_slap_time(interaction.guild_id)
-                    user_node.add_to_duration(amount)
                 case UserInteraction.PET:
                     amount = -self.settings.get_jail_pet_time(interaction.guild_id)
-                    user_node.add_to_duration(amount)
                 case UserInteraction.FART:
                     min_amount = self.settings.get_jail_fart_min(interaction.guild_id)
                     max_amount = self.settings.get_jail_fart_max(interaction.guild_id)
                     amount = random.randint(min_amount, max_amount)
-                    user_node.add_to_duration(amount)
+                
+            amount = max(amount, -int((user_node.get_remaining()/60)+1))
+            user_node.add_to_duration(amount)
             
             if amount > 0:
                 response += f'Their jail sentence was increased by `{amount}` minutes. '
@@ -271,16 +272,16 @@ class Jail(commands.Cog):
         for guild in self.bot.guilds:
             self.jail_list[guild.id] = JailList()
             
-        rows = self.database.get_active_jails()
+        jails = self.database.get_active_jails()
         
-        if len(rows) > 0:
-            self.logger.log("init",f'Found {len(rows)} ongoing jail sentences.', cog=self.__cog_name__)
+        if len(jails) > 0:
+            self.logger.log("init",f'Found {len(jails)} ongoing jail sentences.', cog=self.__cog_name__)
         
-        for row in rows:
-            guild_id = row[Database.JAIL_GUILD_ID_COL]
-            member_id = row[Database.JAIL_MEMBER_COL]
-            jail_id = row[Database.JAIL_ID_COL]
-            timestamp = row[Database.JAIL_JAILED_ON_COL]
+        for jail in jails:
+            guild_id = jail.get_guild_id()
+            member_id = jail.get_member_id()
+            jail_id = jail.get_id()
+            timestamp = jail.get_jailed_on()
             member = None
             
             if guild_id in self.jail_list.keys():
@@ -299,9 +300,8 @@ class Jail(commands.Cog):
                 
             duration = self.event_manager.get_jail_duration(jail_id)
                 
-            self.jail_list[guild.id].add_user(member.id, datetime.datetime.fromtimestamp(timestamp), duration)
+            self.jail_list[guild.id].add_user(member.id, timestamp, duration)
             self.jail_list[guild.id].add_jail_id(jail_id, member.id)
-            
             
             self.logger.log("init",f'Continuing jail sentence of {member.name}. Remaining duration: {self.jail_list[guild.id].get_user(member.id).get_remaining_str()}', cog=self.__cog_name__)
             
@@ -368,7 +368,7 @@ class Jail(commands.Cog):
         if list.has_user(user.id) or user.get_role(jail_role) is not None:
             await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} is already in jail.', user.name, duration)
             return
-            
+        
         list.add_user(user.id, datetime.datetime.now(), duration)
         
         await user.add_roles(self.bot.get_guild(guild_id).get_role(jail_role))
@@ -376,13 +376,18 @@ class Jail(commands.Cog):
         time_now = datetime.datetime.now()
         timestamp_now = int(time_now.timestamp())
         release = timestamp_now + (duration*60)
+        
+        jail = UserJail(guild_id, user.id, time_now)
+        
+        jail = self.database.log_jail_sentence(jail)
+        list.add_jail_id(jail.get_id(), user.id)
+        self.event_manager.dispatch_jail_event(time_now, guild_id, JailEventType.JAIL, interaction.user.id, duration, jail.get_id())
+        
         await interaction.channel.send(f'<@{user.id}> was sentenced to Jail by <@{interaction.user.id}> . They will be released <t:{release}:R>.', delete_after=(duration*60))
         
         await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} jailed successfully.', user.name, duration)
         
-        jail_id = self.database.log_jail_sentence(guild_id, user.id, timestamp_now)
-        list.add_jail_id(jail_id, user.id)
-        self.event_manager.dispatch_jail_event(time_now, guild_id, JailEventType.JAIL, interaction.user.id, duration, jail_id)
+        
 
     @app_commands.command(name="release", description='Resease a user from jail.')
     @app_commands.describe(

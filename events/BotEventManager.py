@@ -1,9 +1,11 @@
 
 import datetime
+import discord
 from discord.ext import commands
 from BotLogger import BotLogger
 
 from BotSettings import BotSettings
+from BotUtil import BotUtil
 from datalayer.Database import Database
 from datalayer.UserInteraction import UserInteraction
 from datalayer.UserRankings import UserRankings
@@ -12,6 +14,7 @@ from events.InteractionEvent import InteractionEvent
 from events.JailEvent import JailEvent
 from events.JailEventType import JailEventType
 from events.TimeoutEvent import TimeoutEvent
+from events.QuoteEvent import QuoteEvent
 
 class BotEventManager():
 
@@ -60,32 +63,38 @@ class BotEventManager():
         if jail_event_type is JailEventType.RELEASE:
             self.database.log_jail_release(jail_reference, int(timestamp.timestamp()))
             self.logger.log(guild_id, f'Jail sentence `{jail_reference}` marked as released.', self.log_name)
-            
+    
+    def dispatch_quote_event(self,
+        timestamp: datetime.datetime,
+        guild_id: int, 
+        quote_id: int
+    ):
+        event = QuoteEvent(timestamp, guild_id, quote_id)
+        self.database.log_event(event)
+        self.logger.log(guild_id, f'Quote event was logged for {quote_id}.', self.log_name)
     
     def get_jail_duration(self, jail_id: int) -> int:
         
-        events = self.database.get_jail_events(jail_id)
+        events = self.database.get_jail_events_by_jail(jail_id)
         total_duration = 0
         for event in events:
-            total_duration += event[Database.JAIL_EVENT_DURATION_COL]
+            total_duration += event.get_duration()
         
         return total_duration
     
-    def has_jail_event(self, jail_id: int, user_id: int, type: JailEventType) -> int:
+    def has_jail_event_from_user(self, jail_id: int, user_id: int, type: JailEventType) -> bool:
         
-        events = self.database.has_jail_event(jail_id, user_id, type)
-        total_duration = 0
-        for event in events:
-            total_duration += event[Database.JAIL_EVENT_DURATION_COL]
+        events = self.database.get_jail_events_by_user(user_id)
         
-        return total_duration
+        for event  in events:
+            if event.get_jail_id() == jail_id and event.get_jail_event_type() == type:
+                return True
+        
+        return False
     
     def get_user_statistics(self, user_id: int) -> UserStats:
         
-        events = self.database.get_user_interaction_events(user_id)
-        
-        events_out = events["out"]
-        events_in = events["in"]
+        events_out = self.database.get_interaction_events_by_user(user_id)
         
         user_stats = UserStats()
         
@@ -97,22 +106,27 @@ class BotEventManager():
         user_count_out = {}
         
         for event in events_out:
-            if event[Database.INTERACTION_EVENT_TYPE_COL] not in count_out.keys():
+            
+            interaction_type = event.get_interaction_type()
+            
+            if interaction_type not in count_out.keys():
                 continue
             
-            count_out[event[Database.INTERACTION_EVENT_TYPE_COL]] += 1
-            
-            if event[Database.INTERACTION_EVENT_TO_COL] not in user_count_out.keys():
-                user_count_out[event[Database.INTERACTION_EVENT_TO_COL]] = {
+            count_out[interaction_type] += 1
+            member_id = event.get_to_user()
+            if member_id not in user_count_out.keys():
+                user_count_out[member_id] = {
                     UserInteraction.SLAP: 0,
                     UserInteraction.PET: 0,
                     UserInteraction.FART: 0
                 }
             
-            user_count_out[event[Database.INTERACTION_EVENT_TO_COL]][event[Database.INTERACTION_EVENT_TYPE_COL]] += 1
+            user_count_out[member_id][interaction_type] += 1
             
         user_stats.set_count_out(count_out)
         user_stats.set_user_count_out(user_count_out)
+        
+        events_in = self.database.get_interaction_events_affecting_user(user_id)
         
         count_in = {
             UserInteraction.SLAP: 0,
@@ -122,21 +136,24 @@ class BotEventManager():
         user_count_in = {}
         
         for event in events_in:
-            count_in[event[Database.INTERACTION_EVENT_TYPE_COL]] += 1
             
-            if event[Database.INTERACTION_EVENT_FROM_COL] not in user_count_in.keys():
-                user_count_in[event[Database.INTERACTION_EVENT_FROM_COL]] = {
+            interaction_type = event.get_interaction_type()
+            
+            count_in[interaction_type] += 1
+            member_id = event.get_from_user()
+            if member_id not in user_count_in.keys():
+                user_count_in[member_id] = {
                     UserInteraction.SLAP: 0,
                     UserInteraction.PET: 0,
                     UserInteraction.FART: 0
                 }
             
-            user_count_in[event[Database.INTERACTION_EVENT_FROM_COL]][event[Database.INTERACTION_EVENT_TYPE_COL]] += 1
+            user_count_in[member_id][interaction_type] += 1
         
         user_stats.set_count_in(count_in)
         user_stats.set_user_count_in(user_count_in)
         
-        jail_events = self.database.get_user_jail_events(user_id)
+        jail_events = self.database.get_jail_events_affecting_user(user_id)
         
         total_jail_duration = 0
         jail_stays = []
@@ -145,22 +162,22 @@ class BotEventManager():
         
         for event in jail_events:
             
-            duration = event[Database.JAIL_EVENT_DURATION_COL]
+            duration = event.get_duration()
             
-            if event[Database.JAIL_EVENT_TYPE_COL] in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
+            if event.get_jail_event_type() in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
                 if duration >= 0:
                     total_added_to_self += duration
                 else:
                     total_reduced_from_self += duration
             
             total_jail_duration += duration
-            jail_id = event[Database.JAIL_EVENT_JAILREFERENCE_COL]
+            jail_id = event.get_jail_id()
             jail_stays.append(jail_id) if jail_id not in jail_stays else jail_stays
 
         user_stats.set_jail_total(total_jail_duration)
         user_stats.set_jail_amount(len(jail_stays))
         
-        jail_interaction_events = self.database.get_user_jail_interaction_events(user_id)
+        jail_interaction_events = self.database.get_jail_events_by_user(user_id)
         total_added_to_others = 0
         total_reduced_from_others = 0
         max_fart = None
@@ -168,15 +185,15 @@ class BotEventManager():
         
         for event in jail_interaction_events:
             
-            duration = event[Database.JAIL_EVENT_DURATION_COL]
-            if event[Database.JAIL_EVENT_TYPE_COL] in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
+            duration = event.get_duration()
+            if event.get_jail_event_type() in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
                 
                 if duration >= 0:
                     total_added_to_others += duration
                 else:
                     total_reduced_from_others += duration
                     
-            if event[Database.JAIL_EVENT_TYPE_COL] == JailEventType.FART:  
+            if event.get_jail_event_type() == JailEventType.FART:  
                 
                 if max_fart is None or min_fart is None:
                     max_fart = duration
@@ -192,18 +209,17 @@ class BotEventManager():
         user_stats.set_total_reduced_from_self(abs(total_reduced_from_self))
         user_stats.set_fart_stats(max_fart, min_fart)
         
-        timeout_events = self.database.get_user_timeout_events(user_id)
+        timeout_events = self.database.get_timeout_events_by_user(user_id)
         
         total_timeout_duration = 0
         timeout_count = len(timeout_events)
         
         for event in timeout_events:
-            total_timeout_duration += event[Database.TIMEOUT_EVENT_DURATION_COL]
+            total_timeout_duration += event.get_duration()
         
         user_stats.set_timeout_total(total_timeout_duration)
         user_stats.set_timeout_amount(timeout_count)
      
-        
         return user_stats
 
     def get_user_rankings(self, guild_id: int):
@@ -222,43 +238,24 @@ class BotEventManager():
         
         for event in guild_interaction_events:
             
-            match event[Database.INTERACTION_EVENT_TYPE_COL]:
+            from_user_id = event.get_from_user()
+            to_user_id = event.get_to_user()
+            
+            match event.get_interaction_type():
                 case UserInteraction.SLAP:
                     
-                    if event[Database.INTERACTION_EVENT_FROM_COL] not in slap_list.keys():
-                        slap_list[event[Database.INTERACTION_EVENT_FROM_COL]] = 1
-                    else:
-                        slap_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1
-                    
-                    if event[Database.INTERACTION_EVENT_TO_COL] not in slap_reciever_list.keys():
-                        slap_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] = 1
-                    else:
-                        slap_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
+                    BotUtil.dict_append(slap_list, from_user_id, 1)
+                    BotUtil.dict_append(slap_reciever_list, to_user_id, 1)
                     
                 case UserInteraction.PET:
                     
-                    if event[Database.INTERACTION_EVENT_FROM_COL] not in pet_list.keys():
-                        pet_list[event[Database.INTERACTION_EVENT_FROM_COL]] = 1
-                    else:
-                        pet_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1 
-                    
-                    if event[Database.INTERACTION_EVENT_TO_COL] not in pet_reciever_list.keys():
-                        pet_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] = 1
-                    else:
-                        pet_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
+                    BotUtil.dict_append(pet_list, from_user_id, 1)
+                    BotUtil.dict_append(pet_reciever_list, to_user_id, 1)
                     
                 case UserInteraction.FART:
                     
-                    if event[Database.INTERACTION_EVENT_FROM_COL] not in fart_list.keys():
-                        fart_list[event[Database.INTERACTION_EVENT_FROM_COL]] = 1
-                    else:
-                        fart_list[event[Database.INTERACTION_EVENT_FROM_COL]] += 1 
-                    
-                    if event[Database.INTERACTION_EVENT_TO_COL] not in fart_reciever_list.keys():
-                        fart_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] = 1
-                    else:
-                        fart_reciever_list[event[Database.INTERACTION_EVENT_TO_COL]] += 1
-        
+                    BotUtil.dict_append(fart_list, from_user_id, 1)
+                    BotUtil.dict_append(fart_reciever_list, to_user_id, 1)
         
         user_rankings.set_interaction_data(
             slap_list,
@@ -269,46 +266,38 @@ class BotEventManager():
             fart_reciever_list
         )
         
-        guild_timeout_events = self.database.get_guild_timeout_events(guild_id)
+        guild_timeout_events = self.database.get_timeout_events_by_guild(guild_id)
         
         timeout_lengths = {}
         timeout_count = {}
         
         for event in guild_timeout_events:
             
-            if event[Database.TIMEOUT_EVENT_MEMBER_COL] not in timeout_lengths.keys():
-                timeout_lengths[event[Database.TIMEOUT_EVENT_MEMBER_COL]] = event[Database.TIMEOUT_EVENT_DURATION_COL]
-            else:
-                timeout_lengths[event[Database.TIMEOUT_EVENT_MEMBER_COL]] += event[Database.TIMEOUT_EVENT_DURATION_COL]
+            member_id = event.get_member()
             
-            if event[Database.TIMEOUT_EVENT_MEMBER_COL] not in timeout_count.keys():
-                timeout_count[event[Database.TIMEOUT_EVENT_MEMBER_COL]] = 1
-            else:
-                timeout_count[event[Database.TIMEOUT_EVENT_MEMBER_COL]] += 1
+            BotUtil.dict_append(timeout_lengths, member_id, event.get_duration())
+            BotUtil.dict_append(timeout_count, member_id, 1)
             
         user_rankings.set_timeout_data(
             timeout_lengths,
             timeout_count
         )
         
-        guild_jail_events = self.database.get_guild_jail_events(guild_id)
+        jail_data = self.database.get_jail_events_by_guild(guild_id)
         
         jail_lengths = {}
         jail_count = {}
         
-        for event in guild_jail_events:
+        for jail, events in jail_data.items():
             
-            if event[Database.JAIL_MEMBER_COL] not in jail_lengths.keys():
-                jail_lengths[event[Database.JAIL_MEMBER_COL]] = event[Database.JAIL_EVENT_DURATION_COL]
-            else:
-                jail_lengths[event[Database.JAIL_MEMBER_COL]] += event[Database.JAIL_EVENT_DURATION_COL]
-            
-            if event[Database.JAIL_EVENT_TYPE_COL] == JailEventType.JAIL:
-            
-                if event[Database.JAIL_MEMBER_COL] not in jail_count.keys():
-                    jail_count[event[Database.JAIL_MEMBER_COL]] = 1
-                else:
-                    jail_count[event[Database.JAIL_MEMBER_COL]] += 1
+            for event in events:
+                
+                jail_member = jail.get_member_id()
+                BotUtil.dict_append(jail_lengths, jail_member, event.get_duration())
+                
+                if event.get_jail_event_type() == JailEventType.JAIL:
+                
+                    BotUtil.dict_append(jail_count, jail_member, 1)
         
         user_rankings.set_jail_data(
             jail_lengths,

@@ -1,5 +1,6 @@
 
 import datetime
+from typing import Any, Dict
 
 from events.BotEvent import BotEvent
 from events.EventType import EventType
@@ -14,9 +15,10 @@ class JailEvent(BotEvent):
         jail_event_type: JailEventType,
         jailed_by: int,
         duration: int,
-        jail_reference: int
+        jail_reference: int,
+        event_id: int = None
     ):
-        super().__init__(timestamp, guild_id, EventType.JAIL)
+        super().__init__(timestamp, guild_id, EventType.JAIL, event_id)
         self.jail_event_type = jail_event_type
         self.jailed_by = jailed_by
         self.duration = duration
@@ -31,5 +33,21 @@ class JailEvent(BotEvent):
     def get_duration(self) -> int:
         return self.duration
 
-    def get_jail_reference(self) -> int:
+    def get_jail_id(self) -> int:
         return self.jail_reference
+    
+    @staticmethod
+    def from_db_row(row: Dict[str, Any]) -> 'JailEvent':
+        from datalayer.Database import Database
+        if row is None:
+            return None
+        
+        return JailEvent(
+            datetime.datetime.fromtimestamp(row[Database.EVENT_TIMESTAMP_COL]),
+            row[Database.EVEN_GUILD_ID_COL],
+            row[Database.JAIL_EVENT_TYPE_COL],
+            row[Database.JAIL_EVENT_BY_COL],
+            row[Database.JAIL_EVENT_DURATION_COL],
+            row[Database.JAIL_EVENT_JAILREFERENCE_COL],
+            row[Database.EVENT_ID_COL]
+        )
