@@ -315,7 +315,6 @@ class Database():
     def __query_insert(self, query: str, task = None) -> int:
         
         try:
-            value = json.dumps(value)
             cur = self.conn.cursor()
             cur.execute(query, task) if task is not None else cur.execute(query)
             insert_id = cur.lastrowid
@@ -420,213 +419,129 @@ class Database():
             '''
         task = (event.get_timestamp(), event.get_guild_id(), event.get_type())
         
-        self.__query_insert(command, task)
-        try:
-            command = f'''
-                INSERT INTO {self.EVENT_TABLE} (
-                {self.EVENT_TIMESTAMP_COL}, 
-                {self.EVEN_GUILD_ID_COL}, 
-                {self.EVENT_TYPE_COL}) 
-                VALUES (?, ?, ?);
-            '''
-            task = (event.get_timestamp(), event.get_guild_id(), event.get_type())
-
-            cur = self.conn.cursor()
-            cur.execute(command, task)
-            insert_id = cur.lastrowid
-            
-            self.conn.commit()
-            
-            return insert_id
-        
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None
+        return self.__query_insert(command, task)
     
-    def __create_interaction_event(self, event_id: int, event: InteractionEvent):
+    def __create_interaction_event(self, event_id: int, event: InteractionEvent) -> int:
         
-        try:
-            command = f'''
-                INSERT INTO {self.INTERACTION_EVENT_TABLE} (
-                {self.INTERACTION_EVENT_ID_COL},
-                {self.INTERACTION_EVENT_TYPE_COL},
-                {self.INTERACTION_EVENT_FROM_COL},
-                {self.INTERACTION_EVENT_TO_COL}) 
-                VALUES (?, ?, ?, ?);
-            '''
-            
-            task = (event_id, event.get_interaction_type(), event.get_from_user(), event.get_to_user())
+        command = f'''
+            INSERT INTO {self.INTERACTION_EVENT_TABLE} (
+            {self.INTERACTION_EVENT_ID_COL},
+            {self.INTERACTION_EVENT_TYPE_COL},
+            {self.INTERACTION_EVENT_FROM_COL},
+            {self.INTERACTION_EVENT_TO_COL}) 
+            VALUES (?, ?, ?, ?);
+        '''
+        task = (event_id, event.get_interaction_type(), event.get_from_user(), event.get_to_user())
 
-            cur = self.conn.cursor()
-            cur.execute(command, task)
-            self.conn.commit()
-        
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-    
-    def __create_timeout_event(self, event_id: int, event: TimeoutEvent):
-        
-        try:
-            command = f'''
-                INSERT INTO {self.TIMEOUT_EVENT_TABLE} (
-                {self.TIMEOUT_EVENT_ID_COL},
-                {self.TIMEOUT_EVENT_MEMBER_COL},
-                {self.TIMEOUT_EVENT_DURATION_COL})
-                VALUES (?, ?, ?);
-            '''
-            
-            task = (event_id, event.get_member(), event.get_duration())
+        return self.__query_insert(command, task)
 
-            cur = self.conn.cursor()
-            cur.execute(command, task)
-            self.conn.commit()
+    def __create_timeout_event(self, event_id: int, event: TimeoutEvent) -> int:
         
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-    
-    def __create_jail_event(self, event_id: int, event: JailEvent):
-        
-        try:
-            command = f'''
-                INSERT INTO {self.JAIL_EVENT_TABLE} (
-                {self.JAIL_EVENT_ID_COL},
-                {self.JAIL_EVENT_TYPE_COL},
-                {self.JAIL_EVENT_BY_COL},
-                {self.JAIL_EVENT_DURATION_COL},
-                {self.JAIL_EVENT_JAILREFERENCE_COL})
-                VALUES (?, ?, ?, ?, ?);
-            '''
-            
-            task = (event_id, event.get_jail_event_type(), event.get_jailed_by(), event.get_duration(), event.get_jail_id())
+        command = f'''
+            INSERT INTO {self.TIMEOUT_EVENT_TABLE} (
+            {self.TIMEOUT_EVENT_ID_COL},
+            {self.TIMEOUT_EVENT_MEMBER_COL},
+            {self.TIMEOUT_EVENT_DURATION_COL})
+            VALUES (?, ?, ?);
+        '''
+        task = (event_id, event.get_member(), event.get_duration())
 
-            cur = self.conn.cursor()
-            cur.execute(command, task)
-            self.conn.commit()
-        
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
+        return self.__query_insert(command, task)
     
-    def __create_quote_event(self, event_id: int, event: QuoteEvent):
+    def __create_jail_event(self, event_id: int, event: JailEvent) -> int:
         
-        try:
-            command = f'''
-                INSERT INTO {self.QUOTE_EVENT_TABLE} (
-                {self.QUOTE_EVENT_ID_COL},
-                {self.QUOTE_EVENT_REF_COL})
-                VALUES (?, ?);
-            '''
-            
-            task = (event_id, event.get_quote_id())
+        command = f'''
+            INSERT INTO {self.JAIL_EVENT_TABLE} (
+            {self.JAIL_EVENT_ID_COL},
+            {self.JAIL_EVENT_TYPE_COL},
+            {self.JAIL_EVENT_BY_COL},
+            {self.JAIL_EVENT_DURATION_COL},
+            {self.JAIL_EVENT_JAILREFERENCE_COL})
+            VALUES (?, ?, ?, ?, ?);
+        '''
+        task = (event_id, event.get_jail_event_type(), event.get_jailed_by(), event.get_duration(), event.get_jail_id())
 
-            cur = self.conn.cursor()
-            cur.execute(command, task)
-            self.conn.commit()
-        
-        except Error as e:
-            self.logger.error("DB",e)
+        return self.__query_insert(command, task)
     
-    def log_event(self, event: BotEvent):
+    def __create_quote_event(self, event_id: int, event: QuoteEvent) -> int:
+        
+        command = f'''
+            INSERT INTO {self.QUOTE_EVENT_TABLE} (
+            {self.QUOTE_EVENT_ID_COL},
+            {self.QUOTE_EVENT_REF_COL})
+            VALUES (?, ?);
+        '''
+        task = (event_id, event.get_quote_id())
+        
+        return self.__query_insert(command, task)
+    
+    def log_event(self, event: BotEvent) -> int:
         
         event_id = self.__create_base_event(event)
         
         if event_id is None:
             self.logger.error("DB","Event creation error, id was NoneType")
-            return
+            return None
         
         match event.get_type():
             case EventType.INTERACTION:
-                self.__create_interaction_event(event_id, event)
+                return self.__create_interaction_event(event_id, event)
             case EventType.JAIL:
-                self.__create_jail_event(event_id, event)
+                return self.__create_jail_event(event_id, event)
             case EventType.TIMEOUT:
-                self.__create_timeout_event(event_id, event)
+                return self.__create_timeout_event(event_id, event)
             case EventType.QUOTE:
-                self.__create_quote_event(event_id, event)
+                return self.__create_quote_event(event_id, event)
                 
-    def log_quote(self, quote: Quote):
+    def log_quote(self, quote: Quote) -> int:
         
-        try:
-            command = f'''
-                INSERT INTO {self.QUOTE_TABLE} (
-                {self.QUOTE_GUILD_COL},
-                {self.QUOTE_MEMBER_COL},
-                {self.QUOTE_MEMBER_NAME_COL},
-                {self.QUOTE_SAVED_BY_COL},
-                {self.QUOTE_MESSAGE_COL},
-                {self.QUOTE_TIMESTAMP_COL},
-                {self.QUOTE_TEXT_COL}) 
-                VALUES (?, ?, ?, ?, ?, ?, ?);
-            '''
-            
-            task = (
-                quote.get_guild_id(),
-                quote.get_member(), 
-                quote.get_member_name(), 
-                quote.get_saved_by(), 
-                quote.get_message_id(), 
-                quote.get_timestamp(), 
-                quote.get_message_content(), 
-            )
-
-            cur = self.conn.cursor()
-            cur.execute(command, task)
-            insert_id = cur.lastrowid
-            self.conn.commit()
-            
-            return insert_id
+        command = f'''
+            INSERT INTO {self.QUOTE_TABLE} (
+            {self.QUOTE_GUILD_COL},
+            {self.QUOTE_MEMBER_COL},
+            {self.QUOTE_MEMBER_NAME_COL},
+            {self.QUOTE_SAVED_BY_COL},
+            {self.QUOTE_MESSAGE_COL},
+            {self.QUOTE_TIMESTAMP_COL},
+            {self.QUOTE_TEXT_COL}) 
+            VALUES (?, ?, ?, ?, ?, ?, ?);
+        '''
+        task = (
+            quote.get_guild_id(),
+            quote.get_member(), 
+            quote.get_member_name(), 
+            quote.get_saved_by(), 
+            quote.get_message_id(), 
+            quote.get_timestamp(), 
+            quote.get_message_content(), 
+        )
         
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        return self.__query_insert(command, task)
         
     def log_jail_sentence(self, jail: UserJail) -> UserJail:
         
-        try:
-            command = f'''
-                INSERT INTO {self.JAIL_TABLE} (
-                {self.JAIL_GUILD_ID_COL},
-                {self.JAIL_MEMBER_COL},
-                {self.JAIL_JAILED_ON_COL}) 
-                VALUES (?, ?, ?);
-            '''
-            
-            task = (jail.get_guild_id(), jail.get_member_id(), jail.get_jailed_on_timestamp())
+        command = f'''
+            INSERT INTO {self.JAIL_TABLE} (
+            {self.JAIL_GUILD_ID_COL},
+            {self.JAIL_MEMBER_COL},
+            {self.JAIL_JAILED_ON_COL}) 
+            VALUES (?, ?, ?);
+        '''
+        task = (jail.get_guild_id(), jail.get_member_id(), jail.get_jailed_on_timestamp())
 
-            cur = self.conn.cursor()
-            cur.execute(command, task)
-            insert_id = cur.lastrowid
-            self.conn.commit()
-            
-            return UserJail.from_jail(jail, jail_id=insert_id)
-        
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        insert_id = self.__query_insert(command, task)
+        return UserJail.from_jail(jail, jail_id=insert_id)
     
-    def log_jail_release(self, jail_id: int, released_on: int):
+    def log_jail_release(self, jail_id: int, released_on: int) -> int:
         
-        try:
-            command = f'''
-                UPDATE {self.JAIL_TABLE} 
-                SET {self.JAIL_RELEASED_ON_COL} = ?
-                WHERE {self.JAIL_ID_COL} = ?;
-            '''
-            
-            task = (released_on, jail_id)
-
-            cur = self.conn.cursor()
-            cur.execute(command, task)
-            self.conn.commit()
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
+        command = f'''
+            UPDATE {self.JAIL_TABLE} 
+            SET {self.JAIL_RELEASED_ON_COL} = ?
+            WHERE {self.JAIL_ID_COL} = ?;
+        '''
+        task = (released_on, jail_id)
+        
+        return self.__query_insert(command, task)
             
     def get_active_jails(self) -> List[UserJail]:
         
@@ -635,20 +550,9 @@ class Database():
             WHERE {self.JAIL_RELEASED_ON_COL} IS NULL 
             OR {self.JAIL_RELEASED_ON_COL} = 0;
         '''
+        rows = self.__query_select(command)
         
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            headings = [x[0] for x in c.description]
-            
-            rows = self.__parse_rows(rows, headings)
-            return [UserJail.from_db_row(row) for row in rows]
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        return [UserJail.from_db_row(row) for row in rows]
     
     def get_jail(self, jail_id: int) -> UserJail:
         
@@ -657,23 +561,12 @@ class Database():
             WHERE {self.JAIL_ID_COL} = {int(jail_id)}
             LIMIT 1;
         '''
+        rows = self.__query_select(command)
         
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            
-            if len(rows) < 1:
-                return None 
-            
-            headings = [x[0] for x in c.description]
-            
-            rows = self.__parse_rows(rows, headings)
-            return UserJail.from_db_row(rows) 
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
+        if rows and len(rows) < 1:
             return None 
+        
+        return UserJail.from_db_row(rows) 
         
     def get_jails_by_guild(self, guild_id: int) -> List[UserJail]:
         
@@ -681,20 +574,10 @@ class Database():
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_GUILD_ID_COL} = {int(guild_id)}
         '''
-        
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            
-            headings = [x[0] for x in c.description]
-            
-            rows = self.__parse_rows(rows, headings)
-            return [UserJail.from_db_row(row) for row in rows]
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [UserJail.from_db_row(row) for row in rows]
     
     def get_jail_events_by_jail(self, jail_id: int) -> List[JailEvent]:
         
@@ -703,21 +586,10 @@ class Database():
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
             WHERE {self.JAIL_EVENT_JAILREFERENCE_COL} = {int(jail_id)};
         '''
-        
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            
-            headings = [x[0] for x in c.description]
-            rows = self.__parse_rows(rows, headings)
-            
-            return [JailEvent.from_db_row(row) for row in rows]
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [JailEvent.from_db_row(row) for row in rows]
 
     def get_jail_events_by_user(self, user_id: int) -> List[JailEvent]:
         
@@ -726,21 +598,10 @@ class Database():
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
             AND {self.JAIL_EVENT_BY_COL} = {int(user_id)};
         '''
-        
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            
-            headings = [x[0] for x in c.description]
-            rows = self.__parse_rows(rows, headings)
-            
-            return [JailEvent.from_db_row(row) for row in rows]
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [JailEvent.from_db_row(row) for row in rows]
          
     def get_jail_events_affecting_user(self, user_id: int) -> List[JailEvent]:
         
@@ -750,20 +611,10 @@ class Database():
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
             WHERE {self.JAIL_TABLE}.{self.JAIL_MEMBER_COL} = {int(user_id)};
         '''
-        
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            
-            headings = [x[0] for x in c.description]
-            rows = self.__parse_rows(rows, headings)
-            
-            return [JailEvent.from_db_row(row) for row in rows]
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            return None 
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [JailEvent.from_db_row(row) for row in rows]
         
     def get_jail_events_by_guild(self, guild_id: int) -> Dict[UserJail,List[JailEvent]]:
         
@@ -781,21 +632,10 @@ class Database():
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
             WHERE {self.TIMEOUT_EVENT_MEMBER_COL} = {int(user_id)};
         '''
-        
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            
-            headings = [x[0] for x in c.description]
-            rows = self.__parse_rows(rows, headings)
-            
-            return [TimeoutEvent.from_db_row(row) for row in rows]
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [TimeoutEvent.from_db_row(row) for row in rows]
     
     def get_timeout_events_by_guild(self, guild_id: int) -> List[TimeoutEvent]:
         
@@ -804,21 +644,10 @@ class Database():
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
             WHERE {self.EVENT_TABLE}.{self.EVEN_GUILD_ID_COL} = {int(guild_id)};
         '''
-        
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            
-            headings = [x[0] for x in c.description]
-            rows = self.__parse_rows(rows, headings)
-            
-            return [TimeoutEvent.from_db_row(row) for row in rows]
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [TimeoutEvent.from_db_row(row) for row in rows]
     
     def get_interaction_events_by_user(self, user_id: int) -> List[InteractionEvent]:
         
@@ -827,21 +656,10 @@ class Database():
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
             WHERE {self.INTERACTION_EVENT_FROM_COL} = {int(user_id)};
         '''
-        
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            
-            headings = [x[0] for x in c.description]
-            rows = self.__parse_rows(rows, headings)
-            
-            return [InteractionEvent.from_db_row(row) for row in rows]
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [InteractionEvent.from_db_row(row) for row in rows]
         
     def get_interaction_events_affecting_user(self, user_id: int) -> List[InteractionEvent]:
         
@@ -850,21 +668,10 @@ class Database():
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
             WHERE {self.INTERACTION_EVENT_TO_COL} = {int(user_id)};
         '''
-        
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            
-            headings = [x[0] for x in c.description]
-            rows = self.__parse_rows(rows, headings)
-            
-            return [InteractionEvent.from_db_row(row) for row in rows]
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [InteractionEvent.from_db_row(row) for row in rows]
     
     def get_guild_interaction_events(self, guild_id: int) -> List[InteractionEvent]:
 
@@ -873,18 +680,7 @@ class Database():
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
             WHERE {self.EVENT_TABLE}.{self.EVEN_GUILD_ID_COL} = {int(guild_id)};
         '''
-        
-        try:
-            c = self.conn.cursor()
-            c.execute(command)
-            rows = c.fetchall()
-            
-            headings = [x[0] for x in c.description]
-            rows = self.__parse_rows(rows, headings)
-            
-            return [InteractionEvent.from_db_row(row) for row in rows]
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [InteractionEvent.from_db_row(row) for row in rows]
