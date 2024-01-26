@@ -11,6 +11,7 @@ class MaraBot(commands.Bot):
     SETTINGS_FILE = "settings.json"
     DB_FILE = "database.sqlite"
     LOG_FILE = "./log/marabot.log"
+    TENOR_TOKEN_FILE = 'tenor.txt'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -1,14 +1,13 @@
 import datetime
 import random
 import discord
-import TenGiphPy
 
 from discord.ext import tasks, commands
 from discord import app_commands
 from typing import Dict, Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
-from BotUtil import BotUtil
+from BotUtil import BotUtil, Tenor
 from MaraBot import MaraBot
 from datalayer.Database import Database
 from datalayer.JailList import JailList
@@ -135,14 +134,15 @@ class Jail(commands.Cog):
             case UserInteraction.SLAP:
                 search = 'bitchslap'
             case UserInteraction.PET:
-                search = f'headpats on'
+                search = f'headpats'
             case UserInteraction.FART:
                 search = f'farting on'
         
-        g = TenGiphPy.Giphy(token='IRtV1lJjcPEsIGEOcRBlM1E8HUrPMsHA')
+        token = open(self.bot.TENOR_TOKEN_FILE,"r").readline()
         
-        result = await g.arandom(tag=search)
-        gif = result['data']['images']['downsized_large']['url']
+        g = Tenor(token=token)
+        
+        gif = await g.random(tag=search)
         
         embed = discord.Embed(
                 color=discord.Colour.purple()
