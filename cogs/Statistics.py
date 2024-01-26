@@ -74,10 +74,6 @@ class Statistics(commands.Cog):
         embed = RankingEmbed(self.bot, interaction, ranking_data, RankingType.SLAP)
         view = RankingView(self.bot, interaction, ranking_data)
         
-        
-        log_message = f'{interaction.user.name} used command `{interaction.command.name}`.'
-        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        
         await interaction.followup.send("",embed=embed, view=view, files=[police_img,jail_wide_img])
     
 async def setup(bot):
