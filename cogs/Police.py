@@ -165,39 +165,6 @@ class Police(commands.Cog):
             self.logger.log(guild_id, f'Removed rate tracing for user {message.author.name}', cog=self.__cog_name__)
             naughty_list.remove_user(author_id)
 
-    @commands.command()
-    @commands.guild_only()
-    @commands.is_owner()
-    async def sync(self, ctx: commands.Context, guilds: commands.Greedy[discord.Object], spec: Optional[Literal["~", "*", "^"]] = None) -> None:
-        if not guilds:
-            if spec == "~":
-                synced = await ctx.bot.tree.sync(guild=ctx.guild)
-            elif spec == "*":
-                ctx.bot.tree.copy_global_to(guild=ctx.guild)
-                synced = await ctx.bot.tree.sync(guild=ctx.guild)
-            elif spec == "^":
-                ctx.bot.tree.clear_commands(guild=ctx.guild)
-                await ctx.bot.tree.sync(guild=ctx.guild)
-                synced = []
-            else:
-                synced = await ctx.bot.tree.sync()
-
-            await ctx.send(
-                f"Synced {len(synced)} commands {'globally' if spec is None else 'to the current guild.'}"
-            )
-            return
-
-        ret = 0
-        for guild in guilds:
-            try:
-                await ctx.bot.tree.sync(guild=guild)
-            except discord.HTTPException:
-                pass
-            else:
-                ret += 1
-
-        await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
-    
     group = app_commands.Group(name="police", description="Subcommands for the Police module.")
 
     @app_commands.command(name="meow", description="Makes me meow!")
@@ -227,9 +194,14 @@ class Police(commands.Cog):
         if naughty_list.has_user(user.id) and naughty_list.get_user(user.id).is_in_timeout():
             await self.bot.command_response(self.__cog_name__, interaction, "User already in timeout.")
         
+        if not naughty_list.has_user(user.id):
+                message_limit = self.settings.get_police_message_limit(interaction.guild_id)
+                self.logger.log(interaction.guild_id, f'Added rate tracking for user {user.name}', cog=self.__cog_name__)
+                naughty_list.add_user(user.id, message_limit)
+        
         self.bot.loop.create_task(self.timeout_task(interaction.channel, user, duration))
         
-        await self.bot.command_response(self.__cog_name__, interaction, "User timed out successfully.")
+        await self.bot.command_response(self.__cog_name__, interaction, "User timed out successfully.", user.name, duration)
     
     @group.command(name="toggle", description="Enable or disable the entire police module.")
     @app_commands.describe(enabled='Turns the police module on or off.')

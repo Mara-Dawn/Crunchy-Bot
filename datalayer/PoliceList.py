@@ -21,7 +21,7 @@ class PoliceList():
         self.users.clear()
 
     def get_user(self, author_id: int) -> PoliceListNode:
-        return self.users[author_id] if self.has_user(author_id) else PoliceListNode(author_id, datetime.datetime.utcnow())
+        return self.users[author_id]
 
     def has_user(self, author_id: int) -> bool:
         return author_id in self.users.keys()
