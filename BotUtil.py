@@ -1,5 +1,6 @@
 from string import Formatter
 from datetime import timedelta
+from discord.ext import commands
 
 
 class BotUtil():
@@ -39,7 +40,7 @@ class BotUtil():
             
         return result.strip()
 
-    def get_name(bot, guild_id: int, user_id: int, max_len: int = 20):
+    def get_name(bot: commands.Bot, guild_id: int, user_id: int, max_len: int = 15):
             if bot.get_guild(guild_id) is None or bot.get_guild(guild_id).get_member(user_id) is None:
                 return "User not found"
             name = bot.get_guild(guild_id).get_member(user_id).display_name

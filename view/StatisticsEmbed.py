@@ -31,8 +31,6 @@ class StatisticsEmbed(discord.Embed):
         self.add_field(name="Top Petters:", value="\n".join(top_petters), inline=True)
         self.add_field(name="Top Farters:", value="\n".join(top_farters), inline=True)
         
-        self.add_field(name="", value="And the people you interacted with.", inline=False)
-        
         top_slapperd = user_statistics.get_top_slapperd(5)
         top_petterd = user_statistics.get_top_petterd(5)
         top_farterd = user_statistics.get_top_farterd(5)
@@ -45,10 +43,14 @@ class StatisticsEmbed(discord.Embed):
         self.add_field(name="Top Petted:", value="\n".join(top_petterd), inline=True)
         self.add_field(name="Top Farted:", value="\n".join(top_farterd), inline=True)
         
-        self.add_field(name="__Jail Stats__", value="Check how much of a bad person you are.", inline=False)
+        self.add_field(name="__Jail Stats__", value="Check how much of a bad person you are. Increases and reductions taken from interactions (/slap etc) in jail.", inline=False)
         
         self.add_field(name="Times in jail:", value=f'**{user_statistics.get_jail_count()}**', inline=True)
+        self.add_field(name="inc. (to others):", value=BotUtil.strfdelta(user_statistics.get_total_added_to_others(), inputtype='minutes'), inline=True)
+        self.add_field(name="red. (to others):", value=BotUtil.strfdelta(user_statistics.get_total_reduced_from_others(), inputtype='minutes'), inline=True)
         self.add_field(name="Total jailtime:", value=BotUtil.strfdelta(user_statistics.get_jail_total(), inputtype='minutes'), inline=True)
+        self.add_field(name="inc. (from others):", value=BotUtil.strfdelta(user_statistics.get_total_added_to_self(), inputtype='minutes'), inline=True)
+        self.add_field(name="red. (from others):", value=BotUtil.strfdelta(user_statistics.get_total_reduced_from_self(), inputtype='minutes'), inline=True)
         
         self.add_field(name="__Timeout Stats__", value="Enter abuse statistics.", inline=False)
         
@@ -60,9 +62,7 @@ class StatisticsEmbed(discord.Embed):
         self.add_field(name="Biggest Fart:", value=f'**{user_statistics.get_biggest_fart()}**', inline=True)
         self.add_field(name="Smallest Fart:", value=f'**{user_statistics.get_smallest_fart()}**', inline=True)
         self.add_field(name="Monkey:", value='Yes', inline=True)
-        self.add_field(name="Jailtime added to others by you:", value=BotUtil.strfdelta(user_statistics.get_total_added_others(), inputtype='minutes'), inline=True)
-        self.add_field(name="Jailtime added to self by others:", value=BotUtil.strfdelta(user_statistics.get_total_added_self(), inputtype='minutes'), inline=True)
         
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")
-        #self.set_thumbnail(url=user.avatar.url)
+        self.set_thumbnail(url=user.avatar.url)
         self.set_footer(text="Enjoy your stay!", icon_url="attachment://jail.png")

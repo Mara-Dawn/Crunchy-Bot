@@ -140,16 +140,20 @@ class BotEventManager():
         
         total_jail_duration = 0
         jail_stays = []
-        max_fart = 0
-        min_fart = 0
         total_added_to_self = 0
+        total_reduced_from_self = 0
         
         for event in jail_events:
             
-            if event[Database.JAIL_EVENT_TYPE_COL] in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
-                total_added_to_self += event[Database.JAIL_EVENT_DURATION_COL]
+            duration = event[Database.JAIL_EVENT_DURATION_COL]
             
-            total_jail_duration += event[Database.JAIL_EVENT_DURATION_COL]
+            if event[Database.JAIL_EVENT_TYPE_COL] in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
+                if duration >= 0:
+                    total_added_to_self += duration
+                else:
+                    total_reduced_from_self += duration
+            
+            total_jail_duration += duration
             jail_id = event[Database.JAIL_EVENT_JAILREFERENCE_COL]
             jail_stays.append(jail_id) if jail_id not in jail_stays else jail_stays
 
@@ -158,17 +162,34 @@ class BotEventManager():
         
         jail_interaction_events = self.database.get_user_jail_interaction_events(user_id)
         total_added_to_others = 0
+        total_reduced_from_others = 0
+        max_fart = None
+        min_fart = None
         
         for event in jail_interaction_events:
+            
+            duration = event[Database.JAIL_EVENT_DURATION_COL]
             if event[Database.JAIL_EVENT_TYPE_COL] in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
-                total_added_to_others += event[Database.JAIL_EVENT_DURATION_COL]
                 
+                if duration >= 0:
+                    total_added_to_others += duration
+                else:
+                    total_reduced_from_others += duration
+                    
             if event[Database.JAIL_EVENT_TYPE_COL] == JailEventType.FART:  
-                max_fart = max(max_fart, event[Database.JAIL_EVENT_DURATION_COL])
-                min_fart = min(min_fart, event[Database.JAIL_EVENT_DURATION_COL])
+                
+                if max_fart is None or min_fart is None:
+                    max_fart = duration
+                    min_fart = duration
+                    continue
+                    
+                max_fart = max(max_fart, duration)
+                min_fart = min(min_fart, duration)
 
         user_stats.set_total_added_others(total_added_to_others)
         user_stats.set_total_added_self(total_added_to_self)
+        user_stats.set_total_reduced_from_others(abs(total_reduced_from_others))
+        user_stats.set_total_reduced_from_self(abs(total_reduced_from_self))
         user_stats.set_fart_stats(max_fart, min_fart)
         
         timeout_events = self.database.get_user_timeout_events(user_id)
