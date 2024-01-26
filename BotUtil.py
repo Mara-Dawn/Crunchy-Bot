@@ -1,6 +1,8 @@
+import json
 from string import Formatter
 from datetime import timedelta
 from discord.ext import commands
+import requests
 
 
 class BotUtil():
@@ -46,3 +48,44 @@ class BotUtil():
             name = bot.get_guild(guild_id).get_member(user_id).display_name
             name = (name[:max_len] + '..') if len(name) > max_len else name
             return name
+
+class TenorImage(object):
+    def __init__(self, data=None):
+        if data:
+            self.created = data.get('created')
+            self.url = data.get('url')
+            self.tags = data.get('tags')
+            self.type = data.get('tupe')
+            self.dims = ""
+            self.preview = ""
+            self.size = ""
+            self.duration = ""
+
+
+class Tenor(object):
+    def __init__(self, token):
+        self.api_key = token
+
+    def _get(self, **params):
+        params['key'] = self.api_key
+        params['client_key'] = 'MaraBot'
+        params['media_filter'] = 'gif'
+
+        response = requests.get('https://tenor.googleapis.com/v2/search', params=params)
+
+        results = json.loads(response.text)
+
+        return results
+
+    def search(self, tag, random=False, limit=None):
+        params = {'q': tag}
+        params['random'] = random
+        if limit:
+            params['limit'] = limit
+        results = self._get(**params)
+        return results
+
+    async def random(self, tag):
+        search_results = self.search(tag=tag, random=True, limit=50)
+        gif = search_results['results'][0]['media_formats']['gif']['url']
+        return gif
