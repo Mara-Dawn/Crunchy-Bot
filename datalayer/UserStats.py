@@ -17,6 +17,8 @@ class UserStats():
         self.max_fart = 0
         self.total_added_to_others = 0
         self.total_added_to_self = 0
+        self.total_reduced_from_others = 0
+        self.total_reduced_from_self = 0
               
     def set_count_in(self, count_in: Dict[UserInteraction, int]):
         self.count_in = count_in
@@ -49,8 +51,14 @@ class UserStats():
     def set_total_added_others(self, total_added_to_others: int):
         self.total_added_to_others = total_added_to_others
         
+    def set_total_reduced_from_others(self, total_reduced_from_others: int):
+        self.total_reduced_from_others = total_reduced_from_others
+    
     def set_total_added_self(self, total_added_to_self: int):
         self.total_added_to_self = total_added_to_self
+        
+    def set_total_reduced_from_self(self, total_reduced_from_self: int):
+        self.total_reduced_from_self = total_reduced_from_self
         
     def get_slaps_recieved(self):
         return self.count_in[UserInteraction.SLAP]
@@ -122,8 +130,14 @@ class UserStats():
     def get_smallest_fart(self):
         return self.min_fart
     
-    def get_total_added_others(self):
+    def get_total_added_to_others(self):
         return self.total_added_to_others
         
-    def get_total_added_self(self):
+    def get_total_added_to_self(self):
         return self.total_added_to_self
+    
+    def get_total_reduced_from_others(self):
+        return self.total_reduced_from_others
+        
+    def get_total_reduced_from_self(self):
+        return self.total_reduced_from_self
