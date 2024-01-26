@@ -245,9 +245,7 @@ class Database():
             self.SETTINGS_TABLE: self.settings_dict,
             self.EVENT_TABLE: self.event_dict,
             self.JAIL_TABLE: self.jail_dict,
-            self.QUOTE_TABLE: self.quote_dict,
             self.JAIL_EVENT_TABLE: self.jail_event_dict,
-            self.QUOTE_EVENT_TABLE: self.quote_event_dict,
             self.INTERACTION_EVENT_TABLE: self.interaction_event_dict,
             self.TIMEOUT_EVENT_TABLE: self.timeout_event_dict
         }
