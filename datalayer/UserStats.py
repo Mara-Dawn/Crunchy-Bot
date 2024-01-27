@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List, Tuple
 from datalayer.UserInteraction import UserInteraction
 
 
@@ -60,25 +60,25 @@ class UserStats():
     def set_total_reduced_from_self(self, total_reduced_from_self: int):
         self.total_reduced_from_self = total_reduced_from_self
         
-    def get_slaps_recieved(self):
+    def get_slaps_recieved(self) -> int:
         return self.count_in[UserInteraction.SLAP]
     
-    def get_slaps_given(self):
+    def get_slaps_given(self) -> int:
         return self.count_out[UserInteraction.SLAP]
     
-    def get_pets_recieved(self):
+    def get_pets_recieved(self) -> int:
         return self.count_in[UserInteraction.PET]
     
-    def get_pets_given(self):
+    def get_pets_given(self) -> int:
         return self.count_out[UserInteraction.PET]
     
-    def get_farts_recieved(self):
+    def get_farts_recieved(self) -> int:
         return self.count_in[UserInteraction.FART]
     
-    def get_farts_given(self):
+    def get_farts_given(self) -> int:
         return self.count_out[UserInteraction.FART]
     
-    def __get_top(self, type: UserInteraction, amount: int, data):
+    def __get_top(self, type: UserInteraction, amount: int, data: Dict) -> List[Tuple]:
         if len(data) == 0:
             return {}
         
@@ -94,50 +94,50 @@ class UserStats():
         amount = min(amount, len(data))
         return lst_sorted[:amount]
     
-    def get_top_slappers(self, amount: int):
+    def get_top_slappers(self, amount: int) -> List[Tuple]:
         return self.__get_top(UserInteraction.SLAP, amount, self.user_count_in)
     
-    def get_top_petters(self, amount: int):
+    def get_top_petters(self, amount: int) -> List[Tuple]:
         return self.__get_top(UserInteraction.PET, amount, self.user_count_in)
     
-    def get_top_farters(self, amount: int):
+    def get_top_farters(self, amount: int) -> List[Tuple]:
         return self.__get_top(UserInteraction.FART, amount, self.user_count_in)
     
-    def get_top_slapperd(self, amount: int):
+    def get_top_slapperd(self, amount: int) -> List[Tuple]:
         return self.__get_top(UserInteraction.SLAP, amount, self.user_count_out)
     
-    def get_top_petterd(self, amount: int):
+    def get_top_petterd(self, amount: int) -> List[Tuple]:
         return self.__get_top(UserInteraction.PET, amount, self.user_count_out)
     
-    def get_top_farterd(self, amount: int):
+    def get_top_farterd(self, amount: int) -> List[Tuple]:
         return self.__get_top(UserInteraction.FART, amount, self.user_count_out)
     
-    def get_jail_count(self):
+    def get_jail_count(self) -> int:
         return self.jail_count
         
-    def get_jail_total(self):
+    def get_jail_total(self) -> int:
         return self.jail_total_duration
         
-    def get_timeout_count(self):
+    def get_timeout_count(self) -> int:
         return self.timeout_count
         
-    def get_timeout_total(self):
+    def get_timeout_total(self) -> int:
         return self.timeout_total_duration
 
-    def get_biggest_fart(self):
+    def get_biggest_fart(self) -> int:
         return self.max_fart
     
-    def get_smallest_fart(self):
+    def get_smallest_fart(self) -> int:
         return self.min_fart
     
-    def get_total_added_to_others(self):
+    def get_total_added_to_others(self) -> int:
         return self.total_added_to_others
         
-    def get_total_added_to_self(self):
+    def get_total_added_to_self(self) -> int:
         return self.total_added_to_self
     
-    def get_total_reduced_from_others(self):
+    def get_total_reduced_from_others(self) -> int:
         return self.total_reduced_from_others
         
-    def get_total_reduced_from_self(self):
+    def get_total_reduced_from_self(self) -> int:
         return self.total_reduced_from_self

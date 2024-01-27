@@ -21,7 +21,6 @@ class RankingEmbed(discord.Embed):
     }
     
     def __init__(self, bot: MaraBot,  interaction: discord.Interaction, user_rankings: UserRankings, type: RankingType):
-        
         super().__init__(
             title=f"Leaderbords for {interaction.guild.name}",
             color=discord.Colour.purple(),
@@ -29,8 +28,6 @@ class RankingEmbed(discord.Embed):
         )
         
         leaderbord_msg = ''
-        
-        
         data = user_rankings.get_rankings(type)
         rank = 1
         for (id, amount) in data:

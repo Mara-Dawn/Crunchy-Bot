@@ -12,18 +12,15 @@ class GuildSettings():
         self.settings[module_settings.get_key()] = module_settings
         
     def get_module(self, key: str):
-        
         if key not in self.settings.keys():
             return None
         
         return self.settings[key]
     
     def get_modules(self):
-        
         return self.settings
     
     def get_default_setting(self, module: str, setting: str):
-        
         if module not in self.settings.keys():
             return None
         

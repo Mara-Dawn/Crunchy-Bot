@@ -6,10 +6,8 @@ from discord import app_commands
 from typing import Dict, Literal, Optional
 from BotLogger import BotLogger
 from BotSettings import BotSettings
-from BotUtil import BotUtil
 from MaraBot import MaraBot
 from datalayer.Database import Database
-from datalayer.UserInteraction import UserInteraction
 from events.BotEventManager import BotEventManager
 from view.RankingEmbed import RankingEmbed
 from view.RankingType import RankingType
@@ -20,7 +18,6 @@ class Statistics(commands.Cog):
     
     def __init__(self, bot: MaraBot):
         self.bot = bot
-        
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
@@ -32,7 +29,6 @@ class Statistics(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
-        
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
     
     @commands.command()
@@ -77,7 +73,6 @@ class Statistics(commands.Cog):
         )
     @app_commands.guild_only()
     async def stats(self, interaction: discord.Interaction, user: typing.Optional[discord.Member] = None):
-        
         await interaction.response.defer()
         
         police_img = discord.File("./img/police.png", "police.png")

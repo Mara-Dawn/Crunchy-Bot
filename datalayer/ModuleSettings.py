@@ -18,11 +18,9 @@ class ModuleSettings():
         self.settings[key] = Setting(self.key, key, default, title, handler)
         
     def get_setting(self, key: str) -> Setting:
-        
         if key not in self.settings.keys():
             return None
         return self.settings[key]
     
     def get_settings(self) -> Dict[str, Setting]:
-        
         return self.settings

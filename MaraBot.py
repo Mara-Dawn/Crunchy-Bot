@@ -8,7 +8,6 @@ from datalayer.Database import Database
 from events.BotEventManager import BotEventManager
 
 class MaraBot(commands.Bot):
-
     SETTINGS_FILE = "settings.json"
     DB_FILE = "database.sqlite"
     LOG_FILE = "./log/marabot.log"
@@ -18,7 +17,6 @@ class MaraBot(commands.Bot):
         super().__init__(*args, **kwargs)
 
     async def setup_hook(self) -> None:
-        
         self.logger = BotLogger(self, self.LOG_FILE)
         self.database = Database(self.logger, self.DB_FILE)
         self.settings = BotSettings(self,self.database, self.logger, self.SETTINGS_FILE)
@@ -29,20 +27,16 @@ class MaraBot(commands.Bot):
         await self.load_extension("cogs.Quotes")
         
     async def on_guild_join(self, guild):
-
         self.logger.log(guild.id,  "new guild registered.")
 
     async def on_guild_remove(self, guild):
-
         self.logger.log(guild.id, "guild removed.")
 
     
     async def command_response(self, module: str,  interaction: discord.Interaction, message: str, *args) -> None:
-        
         return await self.response(module, interaction, message, interaction.command.name, *args)
     
     async def response(self, module: str,  interaction: discord.Interaction, message: str, command: str, *args) -> None:
-        
         log_message = f'{interaction.user.name} used command `{command}`.'
         
         if len(args) > 0: 

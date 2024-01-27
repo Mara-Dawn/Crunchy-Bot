@@ -32,7 +32,6 @@ class JailSettingsModal(discord.ui.Modal, title='Jail Settings'):
     )
     
     async def on_submit(self, interaction: discord.Interaction):
-        
         values = {
             'Slap time': self.slap_time.value,
             'Pet time': self.pet_time.value,

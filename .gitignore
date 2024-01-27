@@ -3,6 +3,8 @@
 *.json
 *.log*
 *.sqlite
+.VSCodeCounter/
+tmp/
 
 
 # Byte-compiled / optimized / DLL files

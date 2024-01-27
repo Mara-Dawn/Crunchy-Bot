@@ -5,13 +5,12 @@ import traceback
 import discord
 
 from discord.ext import commands
-from discord import Message, app_commands
-from typing import Dict, Literal, Optional
+from discord import app_commands
+from typing import Dict, Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from MaraBot import MaraBot
 from datalayer.PoliceList import PoliceList
-from datalayer.PoliceListNode import PoliceListNode
 from events.BotEventManager import BotEventManager
 from view.PoliceSettingsModal import PoliceSettingsModal
 
@@ -19,7 +18,6 @@ class Police(commands.Cog):
     
     def __init__(self, bot: MaraBot):
         self.bot = bot
-        
         self.naughty_list: Dict[int, PoliceList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
@@ -28,21 +26,17 @@ class Police(commands.Cog):
         self.initialized = False
     
     async def __has_permission(interaction: discord.Interaction) -> bool:
-        
         author_id = 90043934247501824
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
     
     async def timeout_task(self, channel: discord.TextChannel, user: discord.Member, duration: int):
-        
         guild_id = channel.guild.id
-        
         time_now = datetime.datetime.now()
         timestamp_now = int(time_now.timestamp())
         release = timestamp_now + duration
         
         naughty_list = self.naughty_list[guild_id]
         naughty_user = naughty_list.get_user(user.id)
-        
         naughty_user.timeout()
         
         user_overwrites = channel.overwrites_for(user)
@@ -77,38 +71,30 @@ class Police(commands.Cog):
             self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
             print(traceback.print_exc())
             
-        
         self.logger.log(guild_id, f'Reinstated old permissions for {user.name} in {channel.name}.', cog=self.__cog_name__)
         
     @commands.Cog.listener()
     async def on_ready(self):
-
         for guild in self.bot.guilds:
             self.naughty_list[guild.id] = PoliceList()
             
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
-        
         self.initialized = True
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        
         if not self.initialized:
            return
-       
         self.naughty_list[guild.id] = PoliceList()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-        
         if not self.initialized:
            return
-       
         del self.naughty_list[guild.id]
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.message.Message):
-       
         if not self.initialized:
            return
        
@@ -136,11 +122,9 @@ class Police(commands.Cog):
         naughty_list = self.naughty_list[guild_id]
         
         if bool(set([x.id for x in message.author.roles]).intersection(self.settings.get_police_naughty_roles(guild_id))):
-
             self.logger.debug(guild_id, f'{message.author.name} has matching roles', cog=self.__cog_name__)
             
             if not naughty_list.has_user(author_id):
-                
                 message_limit = self.settings.get_police_message_limit(guild_id)
                 self.logger.log(guild_id, f'Added rate tracking for user {message.author.name}', cog=self.__cog_name__)
                 naughty_list.add_user(author_id, message_limit)
@@ -153,7 +137,6 @@ class Police(commands.Cog):
             naughty_user = naughty_list.get_user(author_id)
             
             if not naughty_user.is_in_timeout():
-                
                 if not naughty_user.is_spamming(message_limit_interval):
                     return
                 
@@ -161,7 +144,6 @@ class Police(commands.Cog):
                 self.bot.loop.create_task(self.timeout_task(message.channel, message.author, duration))
                 
         elif naughty_list.has_user(author_id):
-            
             self.logger.log(guild_id, f'Removed rate tracing for user {message.author.name}', cog=self.__cog_name__)
             naughty_list.remove_user(author_id)
 
@@ -169,15 +151,12 @@ class Police(commands.Cog):
 
     @app_commands.command(name="meow", description="Makes me meow!")
     async def meow(self, interaction: discord.Interaction) -> None:
-        
         await self.bot.command_response(self.__cog_name__, interaction, "Meow!")
         
     @group.command(name="settings", description="Overview of all police related settings and their current value.")
     @app_commands.check(__has_permission)
     async def get_settings(self, interaction: discord.Interaction):
-        
         output = self.settings.get_settings_string(interaction.guild_id, BotSettings.POLICE_SUBSETTINGS_KEY)
-        
         await self.bot.command_response(self.__cog_name__, interaction, output)
     
     @app_commands.command(name="timeout", description='Timeout a user.')
@@ -188,7 +167,6 @@ class Police(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def timeout(self, interaction: discord.Interaction, user: discord.Member, duration: app_commands.Range[int, 1]):
-        
         naughty_list = self.naughty_list[interaction.guild_id]
         
         if naughty_list.has_user(user.id) and naughty_list.get_user(user.id).is_in_timeout():
@@ -200,23 +178,19 @@ class Police(commands.Cog):
                 naughty_list.add_user(user.id, message_limit)
         
         self.bot.loop.create_task(self.timeout_task(interaction.channel, user, duration))
-        
         await self.bot.command_response(self.__cog_name__, interaction, "User timed out successfully.", user.name, duration)
     
     @group.command(name="toggle", description="Enable or disable the entire police module.")
     @app_commands.describe(enabled='Turns the police module on or off.')
     @app_commands.check(__has_permission)
     async def set_toggle(self, interaction: discord.Interaction, enabled: Literal['on', 'off']):
-        
         self.settings.set_police_enabled(interaction.guild_id, enabled == "on")
-        
         await self.bot.command_response(self.__cog_name__, interaction, f'Police module was turned {enabled}.', enabled)
     
     @group.command(name="add_role", description="Add roles to be monitored by spam detection.")
     @app_commands.describe(role='The role that shall be tracked for spam detection.')
     @app_commands.check(__has_permission)
     async def add_role(self, interaction: discord.Interaction, role: discord.Role):
-        
         self.settings.add_police_naughty_role(interaction.guild_id, role.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Added {role.name} to the list of active roles.', role)
         
@@ -224,7 +198,6 @@ class Police(commands.Cog):
     @app_commands.describe(role='Remove spam detection from this role.')
     @app_commands.check(__has_permission)
     async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
-        
         self.settings.remove_police_naughty_role(interaction.guild_id, role.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Removed {role.name} from active roles.', role)
     
@@ -232,7 +205,6 @@ class Police(commands.Cog):
     @app_commands.describe(channel='Stop tracking spam for this channel.')
     @app_commands.check(__has_permission)
     async def untrack_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
-        
         self.settings.add_police_exclude_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Stopping spam detection in {channel.name}.', channel)
         
@@ -240,14 +212,12 @@ class Police(commands.Cog):
     @app_commands.describe(channel='Reenable tracking spam for this channel.')
     @app_commands.check(__has_permission)
     async def track_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
-        
         self.settings.remove_police_exclude_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Resuming spam detection in {channel.name}.', channel)
     
     @group.command(name="setup", description="Opens a dialog to edit various police settings.")
     @app_commands.check(__has_permission)
     async def setup(self, interaction: discord.Interaction):
-        
         current_timeout = self.settings.get_police_timeout(interaction.guild_id)
         current_message_limit = self.settings.get_police_message_limit(interaction.guild_id)
         current_message_limit_interval = self.settings.get_police_message_limit_interval(interaction.guild_id)
