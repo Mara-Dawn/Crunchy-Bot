@@ -31,18 +31,6 @@ class Database():
         {SETTINGS_VALUE_COL}, 
         PRIMARY KEY ({SETTINGS_GUILD_ID_COL}, {SETTINGS_MODULE_COL}, {SETTINGS_KEY_COL})
     );'''
-    OLD_SETTINGS_GUILD_ID_COL = 'guild_id'
-    OLD_SETTINGS_MODULE_COL = 'module'
-    OLD_SETTINGS_KEY_COL = 'key'
-    OLD_SETTINGS_VALUE_COL = 'value'
-    
-    settings_dict = {
-        OLD_SETTINGS_GUILD_ID_COL : SETTINGS_GUILD_ID_COL,
-        OLD_SETTINGS_MODULE_COL : SETTINGS_MODULE_COL,
-        OLD_SETTINGS_KEY_COL : SETTINGS_KEY_COL,
-        OLD_SETTINGS_VALUE_COL : SETTINGS_VALUE_COL
-    }
-    
     
     JAIL_TABLE = 'jail'
     JAIL_ID_COL = 'jail_id'
@@ -58,20 +46,6 @@ class Database():
         {JAIL_JAILED_ON_COL} INTEGER, 
         {JAIL_RELEASED_ON_COL} INTEGER
     );'''
-    OLD_JAIL_ID_COL = 'id'
-    OLD_JAIL_GUILD_ID_COL = 'guild_id'
-    OLD_JAIL_MEMBER_COL = 'member'
-    OLD_JAIL_JAILED_ON_COL = 'jailed_on'
-    OLD_JAIL_RELEASED_ON_COL = 'released_on'
-    
-    jail_dict = {
-        OLD_JAIL_ID_COL : JAIL_ID_COL,
-        OLD_JAIL_GUILD_ID_COL : JAIL_GUILD_ID_COL,
-        OLD_JAIL_MEMBER_COL : JAIL_MEMBER_COL,
-        OLD_JAIL_JAILED_ON_COL : JAIL_JAILED_ON_COL,
-        OLD_JAIL_RELEASED_ON_COL : JAIL_RELEASED_ON_COL
-    }
-    
     
     EVENT_TABLE = 'events'
     EVENT_ID_COL = 'evnt_id'
@@ -85,18 +59,6 @@ class Database():
         {EVEN_GUILD_ID_COL} INTEGER,
         {EVENT_TYPE_COL} TEXT
     );'''
-    OLD_EVENT_ID_COL = 'event_id'
-    OLD_EVENT_TIMESTAMP_COL = 'timestamp'
-    OLD_EVEN_GUILD_ID_COL = 'guild_id'
-    OLD_EVENT_TYPE_COL = 'type'
-
-    event_dict = {
-        OLD_EVENT_ID_COL : EVENT_ID_COL,
-        OLD_EVENT_TIMESTAMP_COL : EVENT_TIMESTAMP_COL,
-        OLD_EVEN_GUILD_ID_COL : EVEN_GUILD_ID_COL,
-        OLD_EVENT_TYPE_COL : EVENT_TYPE_COL
-    }
-    
     
     INTERACTION_EVENT_TABLE = 'interactionevents'
     INTERACTION_EVENT_ID_COL = 'inev_id'
@@ -111,18 +73,6 @@ class Database():
         {INTERACTION_EVENT_TO_COL} INTEGER,
         PRIMARY KEY ({INTERACTION_EVENT_ID_COL})
     );'''
-    OLD_INTERACTION_EVENT_ID_COL = 'id'
-    OLD_INTERACTION_EVENT_TYPE_COL= 'type'
-    OLD_INTERACTION_EVENT_FROM_COL = 'from_member'
-    OLD_INTERACTION_EVENT_TO_COL = 'to_member'
-    
-    interaction_event_dict = {
-        OLD_INTERACTION_EVENT_ID_COL : INTERACTION_EVENT_ID_COL,
-        OLD_INTERACTION_EVENT_TYPE_COL : INTERACTION_EVENT_TYPE_COL,
-        OLD_INTERACTION_EVENT_FROM_COL : INTERACTION_EVENT_FROM_COL,
-        OLD_INTERACTION_EVENT_TO_COL : INTERACTION_EVENT_TO_COL
-    }
-    
     
     JAIL_EVENT_TABLE = 'jailevents'
     JAIL_EVENT_ID_COL = 'jaev_id'
@@ -139,19 +89,6 @@ class Database():
         {JAIL_EVENT_JAILREFERENCE_COL} INTEGER REFERENCES {JAIL_TABLE} ({JAIL_ID_COL}),
         PRIMARY KEY ({JAIL_EVENT_ID_COL})
     );'''
-    OLD_JAIL_EVENT_ID_COL = 'id'
-    OLD_JAIL_EVENT_TYPE_COL = 'type'
-    OLD_JAIL_EVENT_BY_COL = 'by'
-    OLD_JAIL_EVENT_DURATION_COL = 'duration'
-    OLD_JAIL_EVENT_JAILREFERENCE_COL = 'sentence_id'
-    
-    jail_event_dict = {
-        OLD_JAIL_EVENT_ID_COL : JAIL_EVENT_ID_COL,
-        OLD_JAIL_EVENT_TYPE_COL : JAIL_EVENT_TYPE_COL,
-        OLD_JAIL_EVENT_BY_COL : JAIL_EVENT_BY_COL,
-        OLD_JAIL_EVENT_DURATION_COL : JAIL_EVENT_DURATION_COL,
-        OLD_JAIL_EVENT_JAILREFERENCE_COL : JAIL_EVENT_JAILREFERENCE_COL
-    }
     
     TIMEOUT_EVENT_TABLE = 'timeoutevents'
     TIMEOUT_EVENT_ID_COL = 'toev_id'
@@ -164,16 +101,6 @@ class Database():
         {TIMEOUT_EVENT_DURATION_COL} INTEGER,
         PRIMARY KEY ({TIMEOUT_EVENT_ID_COL})
     );'''
-    OLD_TIMEOUT_EVENT_ID_COL = 'id'
-    OLD_TIMEOUT_EVENT_MEMBER_COL = 'member'
-    OLD_TIMEOUT_EVENT_DURATION_COL = 'duration'
-    
-    timeout_event_dict = {
-        OLD_TIMEOUT_EVENT_ID_COL : TIMEOUT_EVENT_ID_COL,
-        OLD_TIMEOUT_EVENT_MEMBER_COL : TIMEOUT_EVENT_MEMBER_COL,
-        OLD_TIMEOUT_EVENT_DURATION_COL : TIMEOUT_EVENT_DURATION_COL
-    }
-    
     
     QUOTE_TABLE = 'quotes'
     QUOTE_ID_COL = 'quot_id'
@@ -195,27 +122,6 @@ class Database():
         {QUOTE_TIMESTAMP_COL} INTEGER, 
         {QUOTE_TEXT_COL} TEXT
     );'''
-    OLD_QUOTE_ID_COL = 'id'
-    OLD_QUOTE_GUILD_COL = 'guild_id'
-    OLD_QUOTE_MEMBER_COL = 'member_id'
-    OLD_QUOTE_MEMBER_NAME_COL = 'member_name'
-    OLD_QUOTE_SAVED_BY_COL = 'saved_by'
-    OLD_QUOTE_MESSAGE_COL = 'message_id'
-    OLD_QUOTE_TIMESTAMP_COL = 'timestamp'
-    OLD_QUOTE_TEXT_COL = 'message_content'
-    
-    quote_dict = {
-        OLD_QUOTE_ID_COL : QUOTE_ID_COL,
-        OLD_QUOTE_GUILD_COL : QUOTE_GUILD_COL,
-        OLD_QUOTE_MEMBER_COL : QUOTE_MEMBER_COL,
-        OLD_QUOTE_MEMBER_NAME_COL : QUOTE_MEMBER_NAME_COL,
-        OLD_QUOTE_SAVED_BY_COL : QUOTE_SAVED_BY_COL,
-        OLD_QUOTE_MESSAGE_COL : QUOTE_MESSAGE_COL,
-        OLD_QUOTE_TIMESTAMP_COL : QUOTE_TIMESTAMP_COL,
-        OLD_QUOTE_TEXT_COL : QUOTE_TEXT_COL
-    }
-    
-    
     
     QUOTE_EVENT_TABLE = 'quoteevents'
     QUOTE_EVENT_ID_COL = 'quev_id'
@@ -226,54 +132,11 @@ class Database():
         {QUOTE_EVENT_REF_COL} INTEGER REFERENCES {QUOTE_TABLE} ({QUOTE_ID_COL}),
         PRIMARY KEY ({QUOTE_EVENT_ID_COL})
     );'''
-    OLD_QUOTE_EVENT_ID_COL = 'id'
-    OLD_QUOTE_EVENT_REF_COL = 'quote_id'
-    
-    quote_event_dict = {
-        OLD_QUOTE_EVENT_ID_COL : QUOTE_EVENT_ID_COL,
-        OLD_QUOTE_EVENT_REF_COL : QUOTE_EVENT_REF_COL
-    }
-    
     
     def __init__(self, logger: BotLogger, db_file: str):
         
         self.conn = None
         self.logger = logger
-        
-        
-        lst = {
-            self.SETTINGS_TABLE: self.settings_dict,
-            self.EVENT_TABLE: self.event_dict,
-            self.JAIL_TABLE: self.jail_dict,
-            self.JAIL_EVENT_TABLE: self.jail_event_dict,
-            self.INTERACTION_EVENT_TABLE: self.interaction_event_dict,
-            self.TIMEOUT_EVENT_TABLE: self.timeout_event_dict
-        }
-        
-        
-        try:
-            self.conn = sqlite3.connect(db_file)
-            
-            c = self.conn.cursor()
-            
-            c.execute(f"SELECT {self.SETTINGS_GUILD_ID_COL} FROM {self.SETTINGS_TABLE};")
-            c.close()
-        except OperationalError as e:
-            
-            self.conn = sqlite3.connect(db_file)
-            self.logger.log("DB",f'Loaded DB version {sqlite3.version} from {db_file}.')
-            
-            c = self.conn.cursor()
-            
-            for table, item in lst.items():
-                self.logger.log("DB",f'--{table}--')
-                for old, new in item.items():
-                    command = f'ALTER TABLE {table} RENAME COLUMN "{old}" TO "{new}"'
-                    self.logger.log("DB",f'{command} : {old} -> {new}')
-                    c.execute(command)
-            
-            c.close()
-        
         
         try:
             self.conn = sqlite3.connect(db_file)
