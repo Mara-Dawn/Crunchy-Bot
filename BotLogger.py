@@ -21,7 +21,6 @@ class BotLogger():
         self.logger.addHandler(handler)
 
     def __build_log_msg(self, guild: int, message: str, cog=False) -> str:
-        
         guild_obj = self.bot.get_guild(guild)
         log_str = "";
         if cog:

@@ -13,7 +13,6 @@ class RankingView(discord.ui.View):
         self.add_item(Dropdown())
 
     async def edit_page(self, interaction: discord.Interaction, type: RankingType):
-        
         embed = RankingEmbed(self.bot, interaction, self.ranking_data, type)
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -36,7 +35,6 @@ class RankingView(discord.ui.View):
 class Dropdown(discord.ui.Select):
     
     def __init__(self):
-
         options = [
             discord.SelectOption(label=RankingEmbed.TITLES[RankingType.SLAP], description='Who slapped the most users?', emoji='✋', value=RankingType.SLAP),
             discord.SelectOption(label=RankingEmbed.TITLES[RankingType.PET], description='Who petted the most users?', emoji='🥰', value=RankingType.PET),
@@ -53,7 +51,6 @@ class Dropdown(discord.ui.Select):
         super().__init__(placeholder='Choose a Leaderbord', min_values=1, max_values=1, options=options, row=0)
     
     async def callback(self, interaction: discord.Interaction):
-        
         view: RankingView = self.view
         
         if await view.interaction_check(interaction):

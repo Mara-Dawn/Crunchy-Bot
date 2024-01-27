@@ -19,7 +19,6 @@ class Police(commands.Cog):
     
     def __init__(self, bot: MaraBot):
         self.bot = bot
-        
         self.naughty_list: Dict[int, PoliceList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings

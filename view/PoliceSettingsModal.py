@@ -34,7 +34,6 @@ class PoliceSettingsModal(discord.ui.Modal, title='Police Settings'):
     )
     
     async def on_submit(self, interaction: discord.Interaction):
-        
         timeout_notice = self.timeout_notice.value
         
         values = {

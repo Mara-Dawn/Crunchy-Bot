@@ -14,7 +14,6 @@ class Quote():
         message_content: str,
         quote_id: str = None
     ):
-        
         self.timestamp = timestamp
         self.guild_id = guild_id
         self.member = member

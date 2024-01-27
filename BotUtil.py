@@ -9,7 +9,6 @@ import requests
 class BotUtil():
     
     def strfdelta(tdelta, inputtype='timedelta'):
-
         if inputtype == 'timedelta':
             remainder = int(tdelta.total_seconds())
         elif inputtype in ['s', 'seconds']:
@@ -51,7 +50,6 @@ class BotUtil():
             return name
         
     def dict_append(dict: Dict, key: Any, value: Any, mode="add"):
-        
         if key not in dict.keys():
             dict[key] = value
         else:

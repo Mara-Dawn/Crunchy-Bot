@@ -19,7 +19,6 @@ from events.QuoteEvent import QuoteEvent
 class BotEventManager():
 
     def __init__(self, bot: commands.Bot, settings: BotSettings, database: Database, logger: BotLogger):
-        
         self.bot = bot
         self.settings = settings
         self.database = database
@@ -33,7 +32,6 @@ class BotEventManager():
         from_user: int,
         to_user: int
     ):
-        
         event = InteractionEvent(timestamp, guild_id, interaction_type, from_user, to_user)
         self.database.log_event(event)
         self.logger.log(guild_id, f'Interaction event `{interaction_type}` was logged.', self.log_name)
@@ -74,7 +72,6 @@ class BotEventManager():
         self.logger.log(guild_id, f'Quote event was logged for {quote_id}.', self.log_name)
     
     def get_jail_duration(self, jail_id: int) -> int:
-        
         events = self.database.get_jail_events_by_jail(jail_id)
         total_duration = 0
         for event in events:
@@ -83,7 +80,6 @@ class BotEventManager():
         return total_duration
     
     def has_jail_event_from_user(self, jail_id: int, user_id: int, type: JailEventType) -> bool:
-        
         events = self.database.get_jail_events_by_user(user_id)
         
         for event  in events:
@@ -93,7 +89,6 @@ class BotEventManager():
         return False
     
     def get_user_statistics(self, user_id: int) -> UserStats:
-        
         events_out = self.database.get_interaction_events_by_user(user_id)
         
         user_stats = UserStats()
@@ -106,7 +101,6 @@ class BotEventManager():
         user_count_out = {}
         
         for event in events_out:
-            
             interaction_type = event.get_interaction_type()
             
             if interaction_type not in count_out.keys():
@@ -136,7 +130,6 @@ class BotEventManager():
         user_count_in = {}
         
         for event in events_in:
-            
             interaction_type = event.get_interaction_type()
             
             count_in[interaction_type] += 1
@@ -161,9 +154,7 @@ class BotEventManager():
         total_reduced_from_self = 0
         
         for event in jail_events:
-            
             duration = event.get_duration()
-            
             if event.get_jail_event_type() in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
                 if duration >= 0:
                     total_added_to_self += duration
@@ -184,7 +175,6 @@ class BotEventManager():
         min_fart = None
         
         for event in jail_interaction_events:
-            
             duration = event.get_duration()
             if event.get_jail_event_type() in [JailEventType.FART, JailEventType.PET, JailEventType.SLAP]:
                 
@@ -194,7 +184,6 @@ class BotEventManager():
                     total_reduced_from_others += duration
                     
             if event.get_jail_event_type() == JailEventType.FART:  
-                
                 if max_fart is None or min_fart is None:
                     max_fart = duration
                     min_fart = duration
@@ -223,7 +212,6 @@ class BotEventManager():
         return user_stats
 
     def get_user_rankings(self, guild_id: int):
-        
         guild_interaction_events = self.database.get_guild_interaction_events(guild_id)
         
         user_rankings = UserRankings()
@@ -237,7 +225,6 @@ class BotEventManager():
         fart_reciever_list = {}
         
         for event in guild_interaction_events:
-            
             from_user_id = event.get_from_user()
             to_user_id = event.get_to_user()
             
@@ -272,7 +259,6 @@ class BotEventManager():
         timeout_count = {}
         
         for event in guild_timeout_events:
-            
             member_id = event.get_member()
             
             BotUtil.dict_append(timeout_lengths, member_id, event.get_duration())
@@ -289,9 +275,7 @@ class BotEventManager():
         jail_count = {}
         
         for jail, events in jail_data.items():
-            
             for event in events:
-                
                 jail_member = jail.get_member_id()
                 BotUtil.dict_append(jail_lengths, jail_member, event.get_duration())
                 

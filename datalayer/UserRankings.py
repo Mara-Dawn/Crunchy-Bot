@@ -1,27 +1,33 @@
-from typing import Dict
+from typing import Dict, List, Tuple
 from BotUtil import BotUtil
-from datalayer.UserInteraction import UserInteraction
 from view.RankingType import RankingType
 
 class UserRankings():
     
     def __init__(self):
+        self.slap_list: Dict[int, int] = {}
+        self.pet_list: Dict[int, int] = {}
+        self.fart_list: Dict[int, int] = {}
         
-        self.slap_list = {}
-        self.pet_list = {}
-        self.fart_list = {}
+        self.slap_reciever_list: Dict[int, int] = {}
+        self.pet_reciever_list: Dict[int, int] = {}
+        self.fart_reciever_list: Dict[int, int] = {}
         
-        self.slap_reciever_list = {}
-        self.pet_reciever_list = {}
-        self.fart_reciever_list = {}
+        self.timeout_lengths: Dict[int, int] = {}
+        self.timeout_count: Dict[int, int] = {}
         
-        self.timeout_lengths = {}
-        self.timeout_count = {}
-        
-        self.jail_lengths = {}
-        self.jail_count = {}
+        self.jail_lengths: Dict[int, int] = {}
+        self.jail_count: Dict[int, int] = {}
     
-    def set_interaction_data(self, slap_list, pet_list, fart_list, slap_reciever_list, pet_reciever_list, fart_reciever_list):
+    def set_interaction_data(
+        self, 
+        slap_list: Dict[int, int], 
+        pet_list: Dict[int, int], 
+        fart_list: Dict[int, int], 
+        slap_reciever_list: Dict[int, int], 
+        pet_reciever_list: Dict[int, int], 
+        fart_reciever_list: Dict[int, int]
+    ):
         self.slap_list = slap_list
         self.pet_list = pet_list
         self.fart_list = fart_list
@@ -30,17 +36,16 @@ class UserRankings():
         self.pet_reciever_list = pet_reciever_list
         self.fart_reciever_list = fart_reciever_list
         
-    def set_timeout_data(self, timeout_lengths, timeout_count):
+    def set_timeout_data(self, timeout_lengths: Dict[int, int], timeout_count: Dict[int, int]):
         self.timeout_lengths = timeout_lengths
         self.timeout_count = timeout_count
         
-    def set_jail_data(self, jail_lengths, jail_count):
+    def set_jail_data(self, jail_lengths: Dict[int, int], jail_count: Dict[int, int]):
         self.jail_lengths = jail_lengths
         self.jail_count = jail_count
     
     
-    def get_rankings(self, type: RankingType):
-                
+    def get_rankings(self, type: RankingType) -> List[Tuple]:
         match type:
             case RankingType.SLAP: 
                 return sorted(self.slap_list.items(), key=lambda item: item[1], reverse=True)

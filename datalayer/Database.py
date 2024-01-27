@@ -159,7 +159,6 @@ class Database():
             self.logger.error("DB",e)
 
     def __query_select(self, query: str, task = None):
-  
         try:
             c = self.conn.cursor()
             c.execute(query, task) if task is not None else c.execute(query)
@@ -174,7 +173,6 @@ class Database():
             return None 
     
     def __query_insert(self, query: str, task = None) -> int:
-        
         try:
             cur = self.conn.cursor()
             cur.execute(query, task) if task is not None else cur.execute(query)
@@ -189,7 +187,6 @@ class Database():
             return None
     
     def __parse_rows(self, rows, headings):
-        
         if rows is None:
             return None
         
@@ -205,7 +202,6 @@ class Database():
         return output
 
     def get_all_settings(self):
-        
         command = f'SELECT * FROM {self.SETTINGS_TABLE};'
         try:
             c = self.conn.cursor()
@@ -231,7 +227,6 @@ class Database():
             return None 
                 
     def get_setting(self, guild_id: int, module: str, key: str):
-        
         command = f'''
             SELECT * FROM {self.SETTINGS_TABLE} 
             WHERE {self.SETTINGS_GUILD_ID_COL}=? AND {self.SETTINGS_MODULE_COL}=? AND {self.SETTINGS_KEY_COL}=? 
@@ -258,7 +253,12 @@ class Database():
         try:
             value = json.dumps(value)
             
-            command = f'INSERT INTO {self.SETTINGS_TABLE} ({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}, {self.SETTINGS_VALUE_COL}) VALUES (?, ?, ?, ?) ON CONFLICT({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}) DO UPDATE SET {self.SETTINGS_VALUE_COL}=excluded.{self.SETTINGS_VALUE_COL};'
+            command = f'''
+                INSERT INTO {self.SETTINGS_TABLE} ({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}, {self.SETTINGS_VALUE_COL}) 
+                VALUES (?, ?, ?, ?) 
+                ON CONFLICT({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}) 
+                DO UPDATE SET {self.SETTINGS_VALUE_COL}=excluded.{self.SETTINGS_VALUE_COL};
+            '''
             task = (int(guild_id), str(module), str(key), value)
         
             cur = self.conn.cursor()
@@ -270,7 +270,6 @@ class Database():
             traceback.print_exc()
     
     def __create_base_event(self, event: BotEvent) -> int:
-        
         command = f'''
                 INSERT INTO {self.EVENT_TABLE} (
                 {self.EVENT_TIMESTAMP_COL}, 
@@ -283,7 +282,6 @@ class Database():
         return self.__query_insert(command, task)
     
     def __create_interaction_event(self, event_id: int, event: InteractionEvent) -> int:
-        
         command = f'''
             INSERT INTO {self.INTERACTION_EVENT_TABLE} (
             {self.INTERACTION_EVENT_ID_COL},
@@ -297,7 +295,6 @@ class Database():
         return self.__query_insert(command, task)
 
     def __create_timeout_event(self, event_id: int, event: TimeoutEvent) -> int:
-        
         command = f'''
             INSERT INTO {self.TIMEOUT_EVENT_TABLE} (
             {self.TIMEOUT_EVENT_ID_COL},
@@ -310,7 +307,6 @@ class Database():
         return self.__query_insert(command, task)
     
     def __create_jail_event(self, event_id: int, event: JailEvent) -> int:
-        
         command = f'''
             INSERT INTO {self.JAIL_EVENT_TABLE} (
             {self.JAIL_EVENT_ID_COL},
@@ -325,7 +321,6 @@ class Database():
         return self.__query_insert(command, task)
     
     def __create_quote_event(self, event_id: int, event: QuoteEvent) -> int:
-        
         command = f'''
             INSERT INTO {self.QUOTE_EVENT_TABLE} (
             {self.QUOTE_EVENT_ID_COL},
@@ -337,7 +332,6 @@ class Database():
         return self.__query_insert(command, task)
     
     def log_event(self, event: BotEvent) -> int:
-        
         event_id = self.__create_base_event(event)
         
         if event_id is None:
@@ -355,7 +349,6 @@ class Database():
                 return self.__create_quote_event(event_id, event)
                 
     def log_quote(self, quote: Quote) -> int:
-        
         command = f'''
             INSERT INTO {self.QUOTE_TABLE} (
             {self.QUOTE_GUILD_COL},
@@ -380,7 +373,6 @@ class Database():
         return self.__query_insert(command, task)
         
     def log_jail_sentence(self, jail: UserJail) -> UserJail:
-        
         command = f'''
             INSERT INTO {self.JAIL_TABLE} (
             {self.JAIL_GUILD_ID_COL},
@@ -394,7 +386,6 @@ class Database():
         return UserJail.from_jail(jail, jail_id=insert_id)
     
     def log_jail_release(self, jail_id: int, released_on: int) -> int:
-        
         command = f'''
             UPDATE {self.JAIL_TABLE} 
             SET {self.JAIL_RELEASED_ON_COL} = ?
@@ -405,7 +396,6 @@ class Database():
         return self.__query_insert(command, task)
             
     def get_active_jails(self) -> List[UserJail]:
-        
         command = f'''
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_RELEASED_ON_COL} IS NULL 
@@ -416,7 +406,6 @@ class Database():
         return [UserJail.from_db_row(row) for row in rows]
     
     def get_jail(self, jail_id: int) -> UserJail:
-        
         command = f'''
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_ID_COL} = {int(jail_id)}
@@ -430,7 +419,6 @@ class Database():
         return UserJail.from_db_row(rows) 
         
     def get_jails_by_guild(self, guild_id: int) -> List[UserJail]:
-        
         command = f'''
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_GUILD_ID_COL} = {int(guild_id)}
@@ -441,7 +429,6 @@ class Database():
         return [UserJail.from_db_row(row) for row in rows]
     
     def get_jail_events_by_jail(self, jail_id: int) -> List[JailEvent]:
-        
         command = f'''
             SELECT * FROM {self.JAIL_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
@@ -453,7 +440,6 @@ class Database():
         return [JailEvent.from_db_row(row) for row in rows]
 
     def get_jail_events_by_user(self, user_id: int) -> List[JailEvent]:
-        
         command = f'''
             SELECT * FROM {self.JAIL_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
@@ -465,7 +451,6 @@ class Database():
         return [JailEvent.from_db_row(row) for row in rows]
          
     def get_jail_events_affecting_user(self, user_id: int) -> List[JailEvent]:
-        
         command = f'''
             SELECT * FROM {self.JAIL_TABLE} 
             INNER JOIN {self.JAIL_EVENT_TABLE} ON {self.JAIL_TABLE}.{self.JAIL_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_JAILREFERENCE_COL}
@@ -478,7 +463,6 @@ class Database():
         return [JailEvent.from_db_row(row) for row in rows]
         
     def get_jail_events_by_guild(self, guild_id: int) -> Dict[UserJail,List[JailEvent]]:
-        
         jails = self.get_jails_by_guild(guild_id)
         output = {}
         for jail in jails:
@@ -487,7 +471,6 @@ class Database():
         return output
              
     def get_timeout_events_by_user(self, user_id: int) -> List[TimeoutEvent]:
-        
         command = f'''
             SELECT * FROM {self.TIMEOUT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
@@ -499,7 +482,6 @@ class Database():
         return [TimeoutEvent.from_db_row(row) for row in rows]
     
     def get_timeout_events_by_guild(self, guild_id: int) -> List[TimeoutEvent]:
-        
         command = f'''
             SELECT * FROM {self.TIMEOUT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
@@ -511,7 +493,6 @@ class Database():
         return [TimeoutEvent.from_db_row(row) for row in rows]
     
     def get_interaction_events_by_user(self, user_id: int) -> List[InteractionEvent]:
-        
         command = f'''
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
@@ -523,7 +504,6 @@ class Database():
         return [InteractionEvent.from_db_row(row) for row in rows]
         
     def get_interaction_events_affecting_user(self, user_id: int) -> List[InteractionEvent]:
-        
         command = f'''
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
@@ -535,7 +515,6 @@ class Database():
         return [InteractionEvent.from_db_row(row) for row in rows]
     
     def get_guild_interaction_events(self, guild_id: int) -> List[InteractionEvent]:
-
         command = f'''
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
