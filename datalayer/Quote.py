@@ -1,5 +1,6 @@
 
 import datetime
+from typing import Any, Dict
 
 class Quote():
 
@@ -47,3 +48,20 @@ class Quote():
     def get_id(self) -> int:
         return self.quote_id
     
+    @staticmethod
+    def from_db_row(row: Dict[str, Any]) -> 'Quote':
+        from datalayer.Database import Database
+        
+        if row is None:
+            return None
+        
+        return Quote(
+            timestamp=datetime.datetime.fromtimestamp(row[Database.QUOTE_TIMESTAMP_COL]),
+            guild_id=row[Database.QUOTE_GUILD_COL],
+            member=row[Database.QUOTE_MEMBER_COL],
+            member_name=row[Database.QUOTE_MEMBER_NAME_COL],
+            saved_by=row[Database.QUOTE_SAVED_BY_COL],
+            message_id=row[Database.QUOTE_MESSAGE_COL],
+            message_content=row[Database.QUOTE_TEXT_COL],
+            quote_id=row[Database.QUOTE_ID_COL]
+        )

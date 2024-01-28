@@ -12,7 +12,6 @@ intents.guilds = True
 intents.members = True
 intents.emojis_and_stickers = True
 intents.reactions = True
-intents.emojis_and_stickers = True
 
 activity = discord.Activity(type=discord.ActivityType.watching, name="this monkey zoo")
 
