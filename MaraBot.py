@@ -31,7 +31,6 @@ class MaraBot(commands.Bot):
 
     async def on_guild_remove(self, guild):
         self.logger.log(guild.id, "guild removed.")
-
     
     async def command_response(self, module: str,  interaction: discord.Interaction, message: str, *args) -> None:
         return await self.response(module, interaction, message, interaction.command.name, *args)

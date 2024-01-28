@@ -524,3 +524,14 @@ class Database():
         if not rows: 
             return []
         return [InteractionEvent.from_db_row(row) for row in rows]
+    
+    def get_random_quote(self, guild_id: int) -> Quote:
+        command = f''' 
+            SELECT * FROM {self.QUOTE_TABLE} 
+            WHERE {self.QUOTE_TABLE}.{self.QUOTE_GUILD_COL} = {int(guild_id)}
+            ORDER BY RANDOM() LIMIT 1;
+        '''
+        rows = self.__query_select(command)
+        if not rows: 
+            return None
+        return Quote.from_db_row(rows[0])
