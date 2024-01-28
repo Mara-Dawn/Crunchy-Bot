@@ -80,12 +80,12 @@ class ImageGenerator():
             if text_height < max_text_height or self.font_size <= 1:
                 break
         
-        stroke_width = self.font_size//20
+        stroke_width = self.font_size//15
         
         if self.anchor == 'ma':
             self.position = (self.position[0], self.image.height//2 - text_height//2)
         
-        draw.multiline_text(self.position, f'{text}', (255, 255, 255), font=self.font, stroke_width=stroke_width, anchor=self.anchor, align=self.align, stroke_fill='black')
+        draw.multiline_text(self.position, f'{text}', (0, 0, 0), font=self.font, stroke_width=stroke_width, anchor=self.anchor, align=self.align, stroke_fill='white')
         
         author_position = (self.image.width - 15, self.image.height - 15)
         author_name = self.bot.get_guild(guild_id).get_member(quote.get_member()).display_name 
@@ -94,12 +94,12 @@ class ImageGenerator():
         
         author_text = f'- {author_name}'
         
-        while self.font.getlength(author_text) > max_text_width:
+        while self.font.getlength(author_text) > (max_text_width//2):
             self.font_size -= 1
             self.font = ImageFont.truetype(self.font_path, self.font_size)
         
         stroke_width = self.font_size//20
-        draw.multiline_text(author_position, author_text, (255, 255, 255), font=self.font, anchor ="rd", stroke_width=stroke_width, stroke_fill='black')
+        draw.multiline_text(author_position, author_text, (0, 0, 0), font=self.font, anchor ="rd", stroke_width=stroke_width, stroke_fill='white')
         
         arr = io.BytesIO()
         self.image.save(arr, format='PNG')
