@@ -30,7 +30,7 @@ class Quotes(commands.Cog):
     async def quote_menu(self, interaction: discord.Interaction, message: discord.Message):
         guild_id = interaction.guild_id
         
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         
         quote = Quote(
             message.created_at, 
