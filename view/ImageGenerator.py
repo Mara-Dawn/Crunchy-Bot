@@ -46,12 +46,12 @@ class ImageGenerator():
                 'anchor': 'la',
                 'pos': (self.image.width//10,self.image.height//10),
                 'align': 'left'
-            },
-            {
-                'anchor': 'ra',
-                'pos': (self.image.width - (self.image.width//10),self.image.height//10),
-                'align': 'right'
             }
+            # {
+            #     'anchor': 'ra',
+            #     'pos': (self.image.width - (self.image.width//10),self.image.height//10),
+            #     'align': 'right'
+            # }
         ]
         
         position_dict = random.choice(positions)
@@ -118,7 +118,7 @@ class ImageGenerator():
                 text = text.replace(f"<@{mention}>", f"{user.display_name}")
                 text = text.replace(f"<@!{mention}>", f"{user.display_name}")
         
-        emoji_pattern = re.compile(r'<:([^:]+):\d+>')
+        emoji_pattern = re.compile(r'<a?:([^:]+):\d+>')
         return emoji_pattern.sub(lambda m: f":{m.group(1)}:", text)
     
     def wrap_text(self, text: str, font: ImageFont.FreeTypeFont, max_text_width) -> str:
