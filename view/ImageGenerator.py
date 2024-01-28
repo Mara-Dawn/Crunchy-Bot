@@ -65,7 +65,7 @@ class ImageGenerator():
         guild_id = quote.get_guild_id()
         
         max_text_width = self.image.width - (self.image.width//10) * 2
-        max_text_height = int(self.image.height * 1/2)
+        max_text_height = int(self.image.height * 1/3)
         
         draw = ImageDraw.Draw(self.image)
         
@@ -80,12 +80,12 @@ class ImageGenerator():
             if text_height < max_text_height or self.font_size <= 1:
                 break
         
-        stroke_width = self.font_size//15
+        stroke_width = self.font_size//20
         
         if self.anchor == 'ma':
             self.position = (self.position[0], self.image.height//2 - text_height//2)
         
-        draw.multiline_text(self.position, f'{text}', (0, 0, 0), font=self.font, stroke_width=stroke_width, anchor=self.anchor, align=self.align, stroke_fill='white')
+        draw.multiline_text(self.position, f'{text}', (0, 0, 0), font=self.font, anchor=self.anchor, align=self.align, stroke_width=stroke_width, stroke_fill='white')
         
         author_position = (self.image.width - 15, self.image.height - 15)
         author_name = self.bot.get_guild(guild_id).get_member(quote.get_member()).display_name 
