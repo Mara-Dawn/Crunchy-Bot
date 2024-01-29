@@ -113,7 +113,7 @@ class ImageGenerator():
             self.font_size -= 1
             self.font = ImageFont.truetype(self.font_path, self.font_size)
         
-        stroke_width = self.font_size//20
+        #stroke_width = self.font_size//20
         draw.multiline_text(author_position, author_text, self.color_text, font=self.font, anchor ="rd", stroke_width=stroke_width, stroke_fill=self.color_stroke)
         
         arr = io.BytesIO()
