@@ -39,6 +39,7 @@ class Quotes(commands.Cog):
             message.author.display_name, 
             interaction.user.id, 
             message.id, 
+            message.channel.id, 
             message.content
         )
         
