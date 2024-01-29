@@ -101,9 +101,11 @@ class ImageGenerator():
         draw.multiline_text(self.position, f'{text}', self.color_text, font=self.font, anchor=self.anchor, align=self.align, stroke_width=stroke_width, stroke_fill=self.color_stroke)
         
         author_position = (self.image.width - 15, self.image.height - 15)
-        author_name = self.bot.get_guild(guild_id).get_member(quote.get_member()).display_name 
-        if author_name is None:
+        author = self.bot.get_guild(guild_id).get_member(quote.get_member()) 
+        if author is None:
             author_name = quote.get_member_name()
+        else:
+            author_name = author.display_name
         
         author_text = f'- {author_name}'
         
