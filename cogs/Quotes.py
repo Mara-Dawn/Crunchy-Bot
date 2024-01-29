@@ -80,6 +80,8 @@ class Quotes(commands.Cog):
                     message = await channel.fetch_message(message_id)
                 except discord.errors.NotFound as e:
                     continue
+                except discord.errors.Forbidden as e:
+                    pass
                 if message is not None:
                     url = message.jump_url
                     self.database.fix_quote(quote, channel.id)
@@ -89,6 +91,8 @@ class Quotes(commands.Cog):
             try:
                 message = await interaction.guild.get_channel(channel_id).fetch_message(message_id)
             except discord.errors.NotFound as e:
+                pass
+            except discord.errors.Forbidden as e:
                 pass
             if message is not None:
                     url = message.jump_url

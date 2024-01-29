@@ -141,25 +141,25 @@ class Database():
         self.logger = logger
         
         
-        try:
-            self.conn = sqlite3.connect(db_file)
+        # try:
+        #     self.conn = sqlite3.connect(db_file)
             
-            c = self.conn.cursor()
+        #     c = self.conn.cursor()
             
-            c.execute(f"SELECT {self.QUOTE_CHANNEL_COL} FROM {self.QUOTE_TABLE};")
-            c.close()
-        except OperationalError as e:
+        #     c.execute(f"SELECT {self.QUOTE_CHANNEL_COL} FROM {self.QUOTE_TABLE};")
+        #     c.close()
+        # except OperationalError as e:
             
-            self.conn = sqlite3.connect(db_file)
-            self.logger.log("DB",f'Loaded DB version {sqlite3.version} from {db_file}.')
+        #     self.conn = sqlite3.connect(db_file)
+        #     self.logger.log("DB",f'Loaded DB version {sqlite3.version} from {db_file}.')
             
-            c = self.conn.cursor()
+        #     c = self.conn.cursor()
             
-            command = f'ALTER TABLE {self.QUOTE_TABLE} ADD COLUMN {self.QUOTE_CHANNEL_COL} INTEGER;'
-            self.logger.log("DB",f'{command}')
-            c.execute(command)
+        #     command = f'ALTER TABLE {self.QUOTE_TABLE} ADD COLUMN {self.QUOTE_CHANNEL_COL} INTEGER;'
+        #     self.logger.log("DB",f'{command}')
+        #     c.execute(command)
             
-            c.close()
+        #     c.close()
         
         
         try:
