@@ -69,7 +69,31 @@ class Quotes(commands.Cog):
         image = image_generator.from_quote(quote)
         
         result_image = discord.File(image, "img.png")
-        await interaction.followup.send(f"Check this Quote from <@{quote.get_member()}>:", files=[result_image])
+        
+        message_id = quote.get_message_id()
+        channel_id = quote.get_channel_id()
+        url = ''
+        message = None
+        if channel_id is None:
+            for channel in interaction.guild.text_channels:
+                try:
+                    message = await channel.fetch_message(message_id)
+                except discord.errors.NotFound as e:
+                    continue
+                if message is not None:
+                    url = message.jump_url
+                    self.database.fix_quote(quote, channel.id)
+                    break
+        else:
+            
+            try:
+                message = await interaction.guild.get_channel(channel_id).fetch_message(message_id)
+            except discord.errors.NotFound as e:
+                pass
+            if message is not None:
+                    url = message.jump_url
+        
+        await interaction.followup.send(f"Check this Quote from <@{quote.get_member()}>: {url}", files=[result_image], silent=True)
 
 async def setup(bot):
     await bot.add_cog(Quotes(bot))
