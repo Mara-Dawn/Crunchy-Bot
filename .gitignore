@@ -5,6 +5,7 @@
 *.sqlite
 .VSCodeCounter/
 tmp/
+fonts/meh/
 
 
 # Byte-compiled / optimized / DLL files

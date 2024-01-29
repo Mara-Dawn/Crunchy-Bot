@@ -535,3 +535,16 @@ class Database():
         if not rows: 
             return None
         return Quote.from_db_row(rows[0])
+    
+    def get_random_quote_by_user(self, guild_id: int, user_id: int) -> Quote:
+        command = f''' 
+            SELECT * FROM {self.QUOTE_TABLE} 
+            WHERE {self.QUOTE_TABLE}.{self.QUOTE_GUILD_COL} = ?
+            AND {self.QUOTE_TABLE}.{self.QUOTE_MEMBER_COL} = ?
+            ORDER BY RANDOM() LIMIT 1;
+        '''
+        task = (guild_id, user_id)
+        rows = self.__query_select(command,task)
+        if not rows: 
+            return None
+        return Quote.from_db_row(rows[0])

@@ -30,7 +30,7 @@ class Quotes(commands.Cog):
     async def quote_menu(self, interaction: discord.Interaction, message: discord.Message):
         guild_id = interaction.guild_id
         
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         
         quote = Quote(
             message.created_at, 
@@ -61,7 +61,11 @@ class Quotes(commands.Cog):
         await interaction.response.defer()
         
         image_generator = ImageGenerator(self.bot)
-        quote = self.database.get_random_quote(interaction.guild_id)
+        if user is not None:
+            quote = self.database.get_random_quote_by_user(interaction.guild_id, user.id)
+        else:
+            quote = self.database.get_random_quote(interaction.guild_id)
+        
         image = image_generator.from_quote(quote)
         
         result_image = discord.File(image, "img.png")
