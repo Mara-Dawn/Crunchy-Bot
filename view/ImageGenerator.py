@@ -14,10 +14,13 @@ class ImageGenerator():
     def __init__(self, bot: MaraBot):
         self.bot = bot
         
-        self.images_path = "./img/quote/"
+        images_dark_path = "./img/quote/dark/"
+        images_light_path = "./img/quote/light/"
         self.fonts_path = "./fonts/"
         
-        self.images = [os.path.join(self.images_path, f) for f in os.listdir(self.images_path) if os.path.isfile(os.path.join(self.images_path, f))]
+        images_dark = [os.path.join(images_dark_path, f) for f in os.listdir(images_dark_path) if os.path.isfile(os.path.join(images_dark_path, f))]
+        images_light = [os.path.join(images_light_path, f) for f in os.listdir(images_light_path) if os.path.isfile(os.path.join(images_light_path, f))]
+        self.images = images_dark + images_light
         self.image = None
         
         self.fonts = [os.path.join(self.fonts_path, f) for f in os.listdir(self.fonts_path) if os.path.isfile(os.path.join(self.fonts_path, f))]
@@ -27,10 +30,20 @@ class ImageGenerator():
         self.anchor = None
         self.position = None
         self.align = None
+        self.color_text = None
+        self.color_stroke = None
     
     def randomize(self):
         image_path = self.images[random.randrange(len(self.images))]
+        
         self.image = Image.open(image_path)
+        
+        if "dark" in image_path:
+            self.color_text = "black"
+            self.color_stroke = "white"
+        else:
+            self.color_text = "white"
+            self.color_stroke = "black"
         
         self.font_path = self.fonts[random.randrange(len(self.fonts))]
         self.font_size = self.image.height//8
@@ -85,7 +98,7 @@ class ImageGenerator():
         if self.anchor == 'ma':
             self.position = (self.position[0], self.image.height//2 - text_height//2)
         
-        draw.multiline_text(self.position, f'{text}', (0, 0, 0), font=self.font, anchor=self.anchor, align=self.align, stroke_width=stroke_width, stroke_fill='white')
+        draw.multiline_text(self.position, f'{text}', self.color_text, font=self.font, anchor=self.anchor, align=self.align, stroke_width=stroke_width, stroke_fill=self.color_stroke)
         
         author_position = (self.image.width - 15, self.image.height - 15)
         author_name = self.bot.get_guild(guild_id).get_member(quote.get_member()).display_name 
@@ -99,7 +112,7 @@ class ImageGenerator():
             self.font = ImageFont.truetype(self.font_path, self.font_size)
         
         stroke_width = self.font_size//20
-        draw.multiline_text(author_position, author_text, (0, 0, 0), font=self.font, anchor ="rd", stroke_width=stroke_width, stroke_fill='white')
+        draw.multiline_text(author_position, author_text, self.color_text, font=self.font, anchor ="rd", stroke_width=stroke_width, stroke_fill=self.color_stroke)
         
         arr = io.BytesIO()
         self.image.save(arr, format='PNG')
@@ -108,7 +121,6 @@ class ImageGenerator():
     
     def parse_text(self, quote: Quote) -> str:
         text = quote.get_message_content()
-        
         mention_pattern = re.compile(r"<@!?(\d+)>")
         mentions = mention_pattern.findall(text)
 
