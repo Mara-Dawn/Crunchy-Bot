@@ -109,6 +109,7 @@ class Database():
     QUOTE_MEMBER_NAME_COL = 'quot_member_name'
     QUOTE_SAVED_BY_COL = 'quot_saved_by'
     QUOTE_MESSAGE_COL = 'quot_message_id'
+    QUOTE_CHANNEL_COL = 'quot_channel_id'
     QUOTE_TIMESTAMP_COL = 'quot_timestamp'
     QUOTE_TEXT_COL = 'quot_message_content'
     CREATE_QUOTE_TABLE = f'''
@@ -119,6 +120,7 @@ class Database():
         {QUOTE_MEMBER_NAME_COL} TEXT, 
         {QUOTE_SAVED_BY_COL} INTEGER, 
         {QUOTE_MESSAGE_COL} INTEGER, 
+        {QUOTE_CHANNEL_COL} INTEGER, 
         {QUOTE_TIMESTAMP_COL} INTEGER, 
         {QUOTE_TEXT_COL} TEXT
     );'''
@@ -137,6 +139,28 @@ class Database():
         
         self.conn = None
         self.logger = logger
+        
+        
+        try:
+            self.conn = sqlite3.connect(db_file)
+            
+            c = self.conn.cursor()
+            
+            c.execute(f"SELECT {self.QUOTE_CHANNEL_COL} FROM {self.QUOTE_TABLE};")
+            c.close()
+        except OperationalError as e:
+            
+            self.conn = sqlite3.connect(db_file)
+            self.logger.log("DB",f'Loaded DB version {sqlite3.version} from {db_file}.')
+            
+            c = self.conn.cursor()
+            
+            command = f'ALTER TABLE {self.QUOTE_TABLE} ADD COLUMN {self.QUOTE_CHANNEL_COL} INTEGER;'
+            self.logger.log("DB",f'{command}')
+            c.execute(command)
+            
+            c.close()
+        
         
         try:
             self.conn = sqlite3.connect(db_file)
@@ -356,9 +380,10 @@ class Database():
             {self.QUOTE_MEMBER_NAME_COL},
             {self.QUOTE_SAVED_BY_COL},
             {self.QUOTE_MESSAGE_COL},
+            {self.QUOTE_CHANNEL_COL},
             {self.QUOTE_TIMESTAMP_COL},
             {self.QUOTE_TEXT_COL}) 
-            VALUES (?, ?, ?, ?, ?, ?, ?);
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
         '''
         task = (
             quote.get_guild_id(),
@@ -366,12 +391,23 @@ class Database():
             quote.get_member_name(), 
             quote.get_saved_by(), 
             quote.get_message_id(), 
+            quote.get_channel_id(), 
             quote.get_timestamp(), 
             quote.get_message_content(), 
         )
         
         return self.__query_insert(command, task)
+    
+    def fix_quote(self, quote: Quote, channel_id: int) -> int:
+        command = f'''
+            UPDATE {self.QUOTE_TABLE} 
+            SET {self.QUOTE_CHANNEL_COL} = ?
+            WHERE {self.QUOTE_ID_COL} = ?;
+        '''
+        task = (channel_id, quote.get_id())
         
+        return self.__query_insert(command, task)
+    
     def log_jail_sentence(self, jail: UserJail) -> UserJail:
         command = f'''
             INSERT INTO {self.JAIL_TABLE} (
