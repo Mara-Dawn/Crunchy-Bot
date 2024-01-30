@@ -159,7 +159,7 @@ class Jail(commands.Cog):
             user_node = list.get_user(user.id)
             self.logger.log(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
             
-            if self.event_manager.has_jail_event_from_user(user_node.get_jail_id(), interaction.user.id, command.name):
+            if self.event_manager.has_jail_event_from_user(user_node.get_jail_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
                 self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
                 embed = await self.__get_response_embed(command_type, interaction, user)
                 await interaction.followup.send(self.__get_already_used_msg(command_type, interaction, user), embed=embed)
