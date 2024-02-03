@@ -71,7 +71,11 @@ class Police(commands.Cog):
             
             role_overwrites = discord.PermissionOverwrite()
             role_overwrites.send_messages = False
-            await channel.set_permissions(timeout_role, overwrite=role_overwrites)
+            try:
+                await channel.set_permissions(timeout_role, overwrite=role_overwrites)
+            except Exception as e:
+                self.logger.log(channel.guild.id, f'Missing permissions in {channel.name}.', cog=self.__cog_name__)
+                print(traceback.print_exc())
             
         return timeout_role
       
