@@ -47,7 +47,8 @@ class Police(commands.Cog):
             reason="Needed for server wide timeouts."
         )
             
-        bot_roles = guild.get_member(self.bot.user.id).roles
+        bot_member = guild.get_member(self.bot.user.id)
+        bot_roles = bot_member.roles
     
         max_pos = 0
         for role in bot_roles:
@@ -63,7 +64,12 @@ class Police(commands.Cog):
             if channel.id in exclude_channels:
                 continue
             
-            role_overwrites = channel.overwrites_for(timeout_role)
+            bot_permissions = channel.permissions_for(bot_member)
+            if not bot_permissions.manage_roles:
+                self.logger.log(channel.guild.id, f'Missing manage_roles permissions in {channel.name}.', cog=self.__cog_name__)
+                continue
+            
+            role_overwrites = discord.PermissionOverwrite()
             role_overwrites.send_messages = False
             await channel.set_permissions(timeout_role, overwrite=role_overwrites)
             

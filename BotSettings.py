@@ -206,7 +206,7 @@ class BotSettings():
         
     def get_jail_role(self, guild: int) -> int:
         value = self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY)
-        return int(value) if value is not '' else 0
+        return int(value) if value != '' else 0
     
     def set_jail_role(self, guild: int, role_id: int) -> None:
         self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY, role_id)
