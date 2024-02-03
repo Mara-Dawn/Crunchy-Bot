@@ -14,6 +14,8 @@ class BotLogger():
         self.logger = logging.getLogger('discord')
         self.logger.setLevel(logging.INFO)
         
+        self.DEBUG_ENABLED = False
+        
         pathlib.Path(file_name).parent.mkdir(parents=True, exist_ok=True) 
         
         handler = logging.handlers.TimedRotatingFileHandler(self.file_name,'midnight', 1, 5, 'utf-8')
@@ -46,3 +48,5 @@ class BotLogger():
     def debug(self, guild: int, message: str, cog=False) -> None:
         log_str = self.__build_log_msg(guild, message, cog)
         self.logger.debug(log_str)
+        if self.DEBUG_ENABLED:
+            self.logger.info(log_str)

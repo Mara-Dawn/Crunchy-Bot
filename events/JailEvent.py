@@ -43,11 +43,11 @@ class JailEvent(BotEvent):
             return None
         
         return JailEvent(
-            datetime.datetime.fromtimestamp(row[Database.EVENT_TIMESTAMP_COL]),
-            row[Database.EVEN_GUILD_ID_COL],
-            row[Database.JAIL_EVENT_TYPE_COL],
-            row[Database.JAIL_EVENT_BY_COL],
-            row[Database.JAIL_EVENT_DURATION_COL],
-            row[Database.JAIL_EVENT_JAILREFERENCE_COL],
-            row[Database.EVENT_ID_COL]
+            timestamp = datetime.datetime.fromtimestamp(row[Database.EVENT_TIMESTAMP_COL]),
+            guild_id = row[Database.EVEN_GUILD_ID_COL],
+            jail_event_type = row[Database.JAIL_EVENT_TYPE_COL],
+            jailed_by = row[Database.JAIL_EVENT_BY_COL],
+            duration = row[Database.JAIL_EVENT_DURATION_COL],
+            jail_reference = row[Database.JAIL_EVENT_JAILREFERENCE_COL],
+            event_id = row[Database.EVENT_ID_COL]
         )

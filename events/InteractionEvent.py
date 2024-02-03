@@ -37,10 +37,10 @@ class InteractionEvent(BotEvent):
             return None
         
         return InteractionEvent(
-            datetime.datetime.fromtimestamp(row[Database.EVENT_TIMESTAMP_COL]),
-            row[Database.EVEN_GUILD_ID_COL],
-            row[Database.INTERACTION_EVENT_TYPE_COL],
-            row[Database.INTERACTION_EVENT_FROM_COL],
-            row[Database.INTERACTION_EVENT_TO_COL],
-            row[Database.EVENT_ID_COL]
+            timestamp = datetime.datetime.fromtimestamp(row[Database.EVENT_TIMESTAMP_COL]),
+            guild_id = row[Database.EVEN_GUILD_ID_COL],
+            interaction_type = row[Database.INTERACTION_EVENT_TYPE_COL],
+            from_user = row[Database.INTERACTION_EVENT_FROM_COL],
+            to_user = row[Database.INTERACTION_EVENT_TO_COL],
+            event_id = row[Database.EVENT_ID_COL]
         )

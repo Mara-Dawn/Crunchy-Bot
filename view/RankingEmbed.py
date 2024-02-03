@@ -18,6 +18,7 @@ class RankingEmbed(discord.Embed):
         RankingType.TIMEOUT_COUNT: "Timeout Count Rankings",
         RankingType.JAIL_TOTAL: "Total Jail Duration Rankings",
         RankingType.JAIL_COUNT: "Jail Count Rankings",
+        RankingType.SPAM_SCORE: "Spam Score Rankings",
     }
     
     def __init__(self, bot: MaraBot,  interaction: discord.Interaction, user_rankings: UserRankings, type: RankingType):

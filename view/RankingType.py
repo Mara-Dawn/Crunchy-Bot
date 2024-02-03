@@ -11,3 +11,4 @@ class RankingType(int, Enum):
     TIMEOUT_COUNT = 7
     JAIL_TOTAL = 8
     JAIL_COUNT = 9
+    SPAM_SCORE = 10

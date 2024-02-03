@@ -18,6 +18,7 @@ class UserRankings():
         
         self.jail_lengths: Dict[int, int] = {}
         self.jail_count: Dict[int, int] = {}
+        self.spam_scores: Dict[int, int] = {}
     
     def set_interaction_data(
         self, 
@@ -43,6 +44,9 @@ class UserRankings():
     def set_jail_data(self, jail_lengths: Dict[int, int], jail_count: Dict[int, int]):
         self.jail_lengths = jail_lengths
         self.jail_count = jail_count
+    
+    def set_spam_data(self, spam_scores: Dict[int, int]):
+        self.spam_scores = spam_scores
     
     
     def get_rankings(self, type: RankingType) -> List[Tuple]:
@@ -71,3 +75,5 @@ class UserRankings():
                 return converted
             case RankingType.JAIL_COUNT:
                 return sorted(self.jail_count.items(), key=lambda item: item[1], reverse=True)
+            case RankingType.SPAM_SCORE:
+                return sorted(self.spam_scores.items(), key=lambda item: item[1], reverse=True)

@@ -13,6 +13,7 @@ from events.InteractionEvent import InteractionEvent
 from events.JailEvent import JailEvent
 from events.JailEventType import JailEventType
 from events.QuoteEvent import QuoteEvent
+from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
 
 
@@ -102,6 +103,16 @@ class Database():
         PRIMARY KEY ({TIMEOUT_EVENT_ID_COL})
     );'''
     
+    SPAM_EVENT_TABLE = 'spamevents'
+    SPAM_EVENT_ID_COL = 'spev_id'
+    SPAM_EVENT_MEMBER_COL = 'spev_member'
+    CREATE_SPAM_EVENT_TABLE = f'''
+    CREATE TABLE if not exists {SPAM_EVENT_TABLE} (
+        {SPAM_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {SPAM_EVENT_MEMBER_COL} INTEGER, 
+        PRIMARY KEY ({SPAM_EVENT_ID_COL})
+    );'''
+    
     QUOTE_TABLE = 'quotes'
     QUOTE_ID_COL = 'quot_id'
     QUOTE_GUILD_COL = 'quot_guild_id'
@@ -139,7 +150,7 @@ class Database():
         
         self.conn = None
         self.logger = logger
-   
+        
         try:
             self.conn = sqlite3.connect(db_file)
             self.logger.log("DB",f'Loaded DB version {sqlite3.version} from {db_file}.')
@@ -153,6 +164,7 @@ class Database():
             c.execute(self.CREATE_INTERACTION_EVENT_TABLE)
             c.execute(self.CREATE_JAIL_EVENT_TABLE)
             c.execute(self.CREATE_TIMEOUT_EVENT_TABLE)
+            c.execute(self.CREATE_SPAM_EVENT_TABLE)
             c.execute(self.CREATE_QUOTE_EVENT_TABLE)
             c.close()
             
@@ -308,6 +320,17 @@ class Database():
 
         return self.__query_insert(command, task)
     
+    def __create_spam_event(self, event_id: int, event: SpamEvent) -> int:
+        command = f'''
+            INSERT INTO {self.SPAM_EVENT_TABLE} (
+            {self.SPAM_EVENT_ID_COL},
+            {self.SPAM_EVENT_MEMBER_COL})
+            VALUES (?, ?);
+        '''
+        task = (event_id, event.get_member())
+
+        return self.__query_insert(command, task)
+    
     def __create_jail_event(self, event_id: int, event: JailEvent) -> int:
         command = f'''
             INSERT INTO {self.JAIL_EVENT_TABLE} (
@@ -349,6 +372,8 @@ class Database():
                 return self.__create_timeout_event(event_id, event)
             case EventType.QUOTE:
                 return self.__create_quote_event(event_id, event)
+            case EventType.SPAM:
+                return self.__create_spam_event(event_id, event)
                 
     def log_quote(self, quote: Quote) -> int:
         command = f'''
@@ -505,6 +530,28 @@ class Database():
         if not rows: 
             return []
         return [TimeoutEvent.from_db_row(row) for row in rows]
+
+    def get_spam_events_by_user(self, user_id: int) -> List[SpamEvent]:
+        command = f'''
+            SELECT * FROM {self.SPAM_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.SPAM_EVENT_TABLE}.{self.SPAM_EVENT_ID_COL}
+            WHERE {self.SPAM_EVENT_MEMBER_COL} = {int(user_id)};
+        '''
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [SpamEvent.from_db_row(row) for row in rows]
+    
+    def get_spam_events_by_guild(self, guild_id: int) -> List[SpamEvent]:
+        command = f'''
+            SELECT * FROM {self.SPAM_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.SPAM_EVENT_TABLE}.{self.SPAM_EVENT_ID_COL}
+            WHERE {self.EVENT_TABLE}.{self.EVEN_GUILD_ID_COL} = {int(guild_id)};
+        '''
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [SpamEvent.from_db_row(row) for row in rows]
     
     def get_interaction_events_by_user(self, user_id: int) -> List[InteractionEvent]:
         command = f'''
