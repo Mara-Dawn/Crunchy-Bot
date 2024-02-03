@@ -66,7 +66,7 @@ class Police(commands.Cog):
             
             bot_permissions = channel.permissions_for(bot_member)
             if not bot_permissions.manage_roles:
-                self.logger.log(channel.guild.id, f'Missing manage_roles permissions in {channel.name}.', cog=self.__cog_name__)
+                self.logger.debug(channel.guild.id, f'Missing manage_roles permissions in {channel.name}.', cog=self.__cog_name__)
                 continue
             
             role_overwrites = discord.PermissionOverwrite()
@@ -74,8 +74,7 @@ class Police(commands.Cog):
             try:
                 await channel.set_permissions(timeout_role, overwrite=role_overwrites)
             except Exception as e:
-                self.logger.log(channel.guild.id, f'Missing permissions in {channel.name}.', cog=self.__cog_name__)
-                print(traceback.print_exc())
+                self.logger.debug(channel.guild.id, f'Missing permissions in {channel.name}.', cog=self.__cog_name__)
             
         return timeout_role
       
