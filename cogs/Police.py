@@ -114,10 +114,7 @@ class Police(commands.Cog):
         guild_id = message.guild.id
         
         if not self.settings.get_police_enabled(guild_id):
-            return
-        
-        if message.channel.id in self.settings.get_police_exclude_channels(guild_id):
-            return
+            return 
         
         naughty_list = self.naughty_list[guild_id]
         
@@ -125,19 +122,25 @@ class Police(commands.Cog):
             self.logger.debug(guild_id, f'{message.author.name} has matching roles', cog=self.__cog_name__)
             
             if not naughty_list.has_user(author_id):
-                message_limit = self.settings.get_police_message_limit(guild_id)
                 self.logger.log(guild_id, f'Added rate tracking for user {message.author.name}', cog=self.__cog_name__)
-                naughty_list.add_user(author_id, message_limit)
+                naughty_list.add_user(author_id, 50)
                 naughty_list.add_message(author_id, message.created_at)
                 return
             
             naughty_list.add_message(author_id, message.created_at)
             
+            message_limit = self.settings.get_police_message_limit(guild_id)
             message_limit_interval = self.settings.get_police_message_limit_interval(guild_id)
             naughty_user = naughty_list.get_user(author_id)
             
-            if not naughty_user.is_in_timeout():
-                if not naughty_user.is_spamming(message_limit_interval):
+            if naughty_user.is_spamming(message_limit_interval, message_limit):
+                
+                if naughty_user.check_score_increase(message_limit_interval, message_limit):
+                    time_now = datetime.datetime.now()
+                    self.event_manager.dispatch_spam_event(time_now, guild_id, author_id)
+                    self.logger.log(guild_id, f'Spam counter increased for {message.author.name}', cog=self.__cog_name__)
+            
+                if naughty_user.is_in_timeout() or message.channel.id in self.settings.get_police_exclude_channels(guild_id):
                     return
                 
                 duration = self.settings.get_police_timeout(guild_id)

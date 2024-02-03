@@ -61,7 +61,7 @@ class StatisticsEmbed(discord.Embed):
         
         self.add_field(name="Biggest Fart:", value=f'**{user_statistics.get_biggest_fart()}**', inline=True)
         self.add_field(name="Smallest Fart:", value=f'**{user_statistics.get_smallest_fart()}**', inline=True)
-        self.add_field(name="Monkey:", value='Yes', inline=True)
+        self.add_field(name="Spam Score:", value=f'**{user_statistics.get_spam_score()}**', inline=True)
         
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")
         self.set_thumbnail(url=user.avatar.url)

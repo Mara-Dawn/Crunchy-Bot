@@ -15,6 +15,7 @@ class UserStats():
         self.timeout_count = 0
         self.min_fart = 0
         self.max_fart = 0
+        self.spam_score = 0
         self.total_added_to_others = 0
         self.total_added_to_self = 0
         self.total_reduced_from_others = 0
@@ -47,6 +48,9 @@ class UserStats():
     def set_fart_stats(self, max_fart: int, min_fart: int):
         self.min_fart = min_fart
         self.max_fart = max_fart
+        
+    def set_spam_score(self, score: int):
+        self.spam_score = score
         
     def set_total_added_others(self, total_added_to_others: int):
         self.total_added_to_others = total_added_to_others
@@ -129,6 +133,9 @@ class UserStats():
     
     def get_smallest_fart(self) -> int:
         return self.min_fart
+    
+    def get_spam_score(self) -> int:
+        return self.spam_score
     
     def get_total_added_to_others(self) -> int:
         return self.total_added_to_others

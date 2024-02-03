@@ -5,3 +5,4 @@ class EventType(str, Enum):
     JAIL = 'jail'
     TIMEOUT = 'timeout'
     QUOTE = 'quote'
+    SPAM = 'spam'

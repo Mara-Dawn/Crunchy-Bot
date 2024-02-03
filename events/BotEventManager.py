@@ -13,6 +13,7 @@ from datalayer.UserStats import UserStats
 from events.InteractionEvent import InteractionEvent
 from events.JailEvent import JailEvent
 from events.JailEventType import JailEventType
+from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
 from events.QuoteEvent import QuoteEvent
 
@@ -45,7 +46,16 @@ class BotEventManager():
         event = TimeoutEvent(timestamp, guild_id, member, duration)
         self.database.log_event(event)
         self.logger.log(guild_id, f'Timeout event was logged.', self.log_name)
-        
+    
+    def dispatch_spam_event(self,
+        timestamp: datetime.datetime,
+        guild_id: int, 
+        member: int
+    ):
+        event = SpamEvent(timestamp, guild_id, member)
+        self.database.log_event(event)
+        self.logger.log(guild_id, f'Spam event was logged.', self.log_name)
+    
     def dispatch_jail_event(self,
         timestamp: datetime.datetime,
         guild_id: int, 
@@ -208,6 +218,10 @@ class BotEventManager():
         
         user_stats.set_timeout_total(total_timeout_duration)
         user_stats.set_timeout_amount(timeout_count)
+        
+        spam_events = self.database.get_spam_events_by_user(user_id)
+        spam_count = len(spam_events)
+        user_stats.set_spam_score(spam_count)
      
         return user_stats
 
@@ -286,6 +300,19 @@ class BotEventManager():
         user_rankings.set_jail_data(
             jail_lengths,
             jail_count
+        )
+        
+        guild_spam_events = self.database.get_spam_events_by_guild(guild_id)
+        
+        spam_count = {}
+        
+        for event in guild_spam_events:
+            member_id = event.get_member()
+            
+            BotUtil.dict_append(spam_count, member_id, 1)
+            
+        user_rankings.set_spam_data(
+            spam_count
         )
         
         return user_rankings
