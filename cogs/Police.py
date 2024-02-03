@@ -10,8 +10,11 @@ from typing import Dict, Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from MaraBot import MaraBot
+from cogs.Jail import Jail
+from datalayer.Database import Database
 from datalayer.PoliceList import PoliceList
 from events.BotEventManager import BotEventManager
+from events.JailEventType import JailEventType
 from view.PoliceSettingsModal import PoliceSettingsModal
 
 class Police(commands.Cog):
@@ -22,6 +25,7 @@ class Police(commands.Cog):
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
         self.event_manager: BotEventManager = bot.event_manager
+        self.database: Database = bot.database
         
         self.initialized = False
     
@@ -135,7 +139,7 @@ class Police(commands.Cog):
             
             if naughty_user.is_spamming(message_limit_interval, message_limit):
                 
-                if naughty_user.check_score_increase(message_limit_interval, message_limit):
+                if naughty_user.check_spam_score_increase(message_limit_interval, message_limit):
                     time_now = datetime.datetime.now()
                     self.event_manager.dispatch_spam_event(time_now, guild_id, author_id)
                     self.logger.log(guild_id, f'Spam counter increased for {message.author.name}', cog=self.__cog_name__)
@@ -143,11 +147,42 @@ class Police(commands.Cog):
                 if naughty_user.is_in_timeout() or message.channel.id in self.settings.get_police_exclude_channels(guild_id):
                     return
                 
+                self.database.increment_timeout_tracker(guild_id, author_id)
+                
+                timeout_count = self.database.get_timeout_tracker_count(guild_id, author_id)
+                timeout_count_threshold = self.settings.get_police_timeouts_before_jail(guild_id)
+                
+                if timeout_count >= timeout_count_threshold:
+                    
+                    self.logger.log(guild_id, f'Timeout jail threshold reached for {message.author.name}', cog=self.__cog_name__)
+                    
+                    jail_cog: Jail = self.bot.get_cog('Jail')
+                    duration = self.settings.get_police_timeout_jail_duration(guild_id)
+                    success = await jail_cog.jail_user(guild_id, self.bot.user.id, message.author, duration)
+                    timestamp_now = int(datetime.datetime.now().timestamp())
+                    release = timestamp_now + (duration*60)
+                    response = f'<@{message.author.id}> was timed out `{timeout_count}` times, resulting in a jail sentence.'
+                    if success:
+                        self.database.reset_timeout_tracker(guild_id, author_id)
+                        response += f' Their timeout count was reset and they will be released <t:{release}:R>.'
+                    else:
+                        jail_id = jail_cog.get_user_jail_id(guild_id, author_id)
+                        
+                        if jail_id is None:
+                            self.logger.error(guild_id, f'Timeout jail threshold reached for {message.author.name}. User already jailed but no active jail was found.', cog=self.__cog_name__)
+                            return
+                        
+                        self.event_manager.dispatch_jail_event(time_now, guild_id, JailEventType.INCREASE, self.bot.user.id, duration, jail_id)
+                        response += f' As they are already in jail, their sentence will be extended by `{duration}` minutes and their timeout count was reset.'
+                        
+                    await message.channel.send(response, delete_after=(duration*60))
+                    return
+                
                 duration = self.settings.get_police_timeout(guild_id)
                 self.bot.loop.create_task(self.timeout_task(message.channel, message.author, duration))
                 
         elif naughty_list.has_user(author_id):
-            self.logger.log(guild_id, f'Removed rate tracing for user {message.author.name}', cog=self.__cog_name__)
+            self.logger.log(guild_id, f'Removed rate tracking for user {message.author.name}', cog=self.__cog_name__)
             naughty_list.remove_user(author_id)
 
     group = app_commands.Group(name="police", description="Subcommands for the Police module.")
@@ -224,15 +259,25 @@ class Police(commands.Cog):
         current_timeout = self.settings.get_police_timeout(interaction.guild_id)
         current_message_limit = self.settings.get_police_message_limit(interaction.guild_id)
         current_message_limit_interval = self.settings.get_police_message_limit_interval(interaction.guild_id)
-        current_timeout_notice = self.settings.get_police_timeout_notice(interaction.guild_id)
+        current_timeouts_before_jail = self.settings.get_police_timeouts_before_jail(interaction.guild_id)
+        current_timeout_jail_duration = self.settings.get_police_timeout_jail_duration(interaction.guild_id)
 
         modal = PoliceSettingsModal(self.bot, self.settings)
         modal.timeout_length.default = current_timeout
         modal.message_limit.default = current_message_limit
         modal.message_limit_interval.default = current_message_limit_interval
-        modal.timeout_notice.default = current_timeout_notice
+        modal.timeouts_before_jail.default = current_timeouts_before_jail
+        modal.timeout_jail_duration.default = current_timeout_jail_duration
         
         await interaction.response.send_modal(modal)
-        
+    
+    @group.command(name="set_timeout_message")
+    @app_commands.describe(message='This will be sent to the timed out person.')
+    @app_commands.check(__has_permission)
+    async def set_message(self, interaction: discord.Interaction, message: str):
+
+        self.settings.set_police_timeout_notice(interaction.guild_id, message)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Timeout warning set to:\n `{message}`', message)
+    
 async def setup(bot):
     await bot.add_cog(Police(bot))

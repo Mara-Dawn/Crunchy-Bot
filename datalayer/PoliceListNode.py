@@ -32,7 +32,7 @@ class PoliceListNode():
         difference = max_time - min_time
         return difference.total_seconds() < interval
     
-    def check_score_increase(self, interval: int, limit: int) -> bool:
+    def check_spam_score_increase(self, interval: int, limit: int) -> bool:
         # only returns true for every limit'th message the user was spamming in a row
         offset = 0
         while self.is_spamming(interval, limit, offset):

@@ -26,20 +26,24 @@ class PoliceSettingsModal(discord.ui.Modal, title='Police Settings'):
         required=False,
     )
     
-    timeout_notice = discord.ui.TextInput(
-        label='Timeout Warning Message',
-        style=discord.TextStyle.long,
+    timeouts_before_jail = discord.ui.TextInput(
+        label='Timeouts before jail (count)',
         required=False,
-        max_length=300,
+    )
+    
+    timeout_jail_duration = discord.ui.TextInput(
+        label='Jail duration (minutes)',
+        required=False,
     )
     
     async def on_submit(self, interaction: discord.Interaction):
-        timeout_notice = self.timeout_notice.value
         
         values = {
             'Timeout Length': self.timeout_length.value,
             'Message Limit': self.message_limit.value,
             'Limit Interval': self.message_limit_interval.value,
+            'Timeouts before jail': self.timeouts_before_jail.value,
+            'Jail duration': self.timeout_jail_duration.value,
         }
         error = {}
         
@@ -57,6 +61,8 @@ class PoliceSettingsModal(discord.ui.Modal, title='Police Settings'):
         self.settings.set_police_timeout(interaction.guild_id, values['Timeout Length'])
         self.settings.set_police_message_limit(interaction.guild_id, values['Message Limit'])
         self.settings.set_police_message_limit_interval(interaction.guild_id, values['Limit Interval'])
-        self.settings.set_police_timeout_notice(interaction.guild_id, timeout_notice)
+        self.settings.set_police_message_limit(interaction.guild_id, values['Message Limit'])
+        self.settings.set_police_timeouts_before_jail(interaction.guild_id, values['Timeouts before jail'])
+        self.settings.set_police_timeout_jail_duration(interaction.guild_id, values['Jail duration'])
         
         await self.bot.response('Police', interaction, f'Settings were successfully updated.', self.command, *values.values())

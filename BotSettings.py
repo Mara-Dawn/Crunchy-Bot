@@ -22,6 +22,8 @@ class BotSettings():
     POLICE_MESSAGE_LIMIT_KEY = "message_limit"
     POLICE_MESSAGE_LIMIT_INTERVAL_KEY = "message_limit_interval"
     POLICE_EXCLUDED_CHANNELS_KEY = "untracked_channels"
+    POLICE_TIMEOUTS_BEFORE_JAIL_KEY = "timeouts_before_jail"
+    POLICE_TIMEOUT_JAIL_DURATION_KEY = "timeout_jail_duration"
     
     
     JAIL_SUBSETTINGS_KEY = "jail"
@@ -49,6 +51,8 @@ class BotSettings():
         police_settings.add_setting(self.POLICE_MESSAGE_LIMIT_KEY, 4, "Number of messages before timeout")
         police_settings.add_setting(self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY, 10, "Interval for counting messages before timeout")
         police_settings.add_setting(self.POLICE_EXCLUDED_CHANNELS_KEY, [], "Channels excluded from rate limit checks", "handle_channels_value")
+        police_settings.add_setting(self.POLICE_TIMEOUTS_BEFORE_JAIL_KEY, 5, "Number of timeouts before jail")
+        police_settings.add_setting(self.POLICE_TIMEOUT_JAIL_DURATION_KEY, 30, "Jail duration")
         
         jail_settings = ModuleSettings(self.JAIL_SUBSETTINGS_KEY, "Jail")
         jail_settings.add_setting(self.JAIL_ENABLED_KEY, True, "Module Enabled")
@@ -179,6 +183,18 @@ class BotSettings():
     
     def set_police_message_limit_interval(self, guild: int, interval: int) -> None:
         self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY, interval)
+    
+    def get_police_timeouts_before_jail(self, guild: int) -> int:
+        return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUTS_BEFORE_JAIL_KEY))
+    
+    def set_police_timeouts_before_jail(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUTS_BEFORE_JAIL_KEY, amount)
+        
+    def get_police_timeout_jail_duration(self, guild: int) -> int:
+        return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_JAIL_DURATION_KEY))
+    
+    def set_police_timeout_jail_duration(self, guild: int, duration: int) -> None:
+        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_JAIL_DURATION_KEY, duration)
     
     # Jail Settings
     

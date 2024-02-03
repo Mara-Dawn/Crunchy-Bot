@@ -201,6 +201,36 @@ class Jail(commands.Cog):
         embed = await self.__get_response_embed(command_type, interaction, user)
         await interaction.followup.send(self.__get_response(command_type, interaction, user), embed=embed)
     
+    async def jail_user(self, guild_id: int, jailed_by_id: int, user: discord.Member, duration: int) -> bool:
+        list = self.jail_list[guild_id]
+        
+        jail_role = self.settings.get_jail_role(guild_id)
+        
+        if list.has_user(user.id) or user.get_role(jail_role) is not None:
+            return False
+        
+        list.add_user(user.id, datetime.datetime.now(), duration)
+        
+        await user.add_roles(self.bot.get_guild(guild_id).get_role(jail_role))
+        
+        time_now = datetime.datetime.now()
+        jail = UserJail(guild_id, user.id, time_now)
+        
+        jail = self.database.log_jail_sentence(jail)
+        list.add_jail_id(jail.get_id(), user.id)
+        self.event_manager.dispatch_jail_event(time_now, guild_id, JailEventType.JAIL, jailed_by_id, duration, jail.get_id())
+        
+        return True
+    
+    def get_user_jail_id(self, guild_id: int, user_id: int) -> int:
+        list = self.jail_list[guild_id]
+        
+        if not list.has_user(user_id):
+            return None
+        
+        user_node = list.get_user(user_id)
+        return user_node.get_jail_id()
+    
     @tasks.loop(seconds=20)
     async def jail_check(self):
         self.logger.debug("sys", f'Jail Check task started', cog=self.__cog_name__)
@@ -332,27 +362,14 @@ class Jail(commands.Cog):
         
         guild_id = interaction.guild_id
         
-        list = self.jail_list[guild_id]
+        success = await self.jail_user(guild_id, interaction.user.id, user, duration)
         
-        jail_role = self.settings.get_jail_role(guild_id)
-        
-        if list.has_user(user.id) or user.get_role(jail_role) is not None:
+        if not success:
             await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} is already in jail.', user.name, duration)
             return
         
-        list.add_user(user.id, datetime.datetime.now(), duration)
-        
-        await user.add_roles(self.bot.get_guild(guild_id).get_role(jail_role))
-        
-        time_now = datetime.datetime.now()
-        timestamp_now = int(time_now.timestamp())
+        timestamp_now = int(datetime.datetime.now().timestamp())
         release = timestamp_now + (duration*60)
-        
-        jail = UserJail(guild_id, user.id, time_now)
-        
-        jail = self.database.log_jail_sentence(jail)
-        list.add_jail_id(jail.get_id(), user.id)
-        self.event_manager.dispatch_jail_event(time_now, guild_id, JailEventType.JAIL, interaction.user.id, duration, jail.get_id())
         
         await interaction.channel.send(f'<@{user.id}> was sentenced to Jail by <@{interaction.user.id}> . They will be released <t:{release}:R>.', delete_after=(duration*60))
         

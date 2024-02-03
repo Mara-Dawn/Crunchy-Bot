@@ -33,6 +33,18 @@ class Database():
         PRIMARY KEY ({SETTINGS_GUILD_ID_COL}, {SETTINGS_MODULE_COL}, {SETTINGS_KEY_COL})
     );'''
     
+    TIMEOUT_TRACKER_TABLE = 'timeout_tracking'
+    TIMEOUT_TRACKER_GUILD_ID_COL = 'titr_guild_id'
+    TIMEOUT_TRACKER_MEMBER_COL = 'titr_member'
+    TIMEOUT_TRACKER_COUNT_COL = 'titr_count'
+    CREATE_TIMEOUT_TRACKER_TABLE = f'''
+    CREATE TABLE if not exists {TIMEOUT_TRACKER_TABLE} (
+        {TIMEOUT_TRACKER_GUILD_ID_COL} INTEGER,
+        {TIMEOUT_TRACKER_MEMBER_COL} INTEGER, 
+        {TIMEOUT_TRACKER_COUNT_COL} INTEGER,
+        PRIMARY KEY ({TIMEOUT_TRACKER_GUILD_ID_COL}, {TIMEOUT_TRACKER_MEMBER_COL})
+    );'''
+    
     JAIL_TABLE = 'jail'
     JAIL_ID_COL = 'jail_id'
     JAIL_GUILD_ID_COL = 'jail_guild_id'
@@ -161,6 +173,7 @@ class Database():
             c.execute(self.CREATE_JAIL_TABLE)
             c.execute(self.CREATE_EVENT_TABLE)
             c.execute(self.CREATE_QUOTE_TABLE)
+            c.execute(self.CREATE_TIMEOUT_TRACKER_TABLE)
             c.execute(self.CREATE_INTERACTION_EVENT_TABLE)
             c.execute(self.CREATE_JAIL_EVENT_TABLE)
             c.execute(self.CREATE_TIMEOUT_EVENT_TABLE)
@@ -410,6 +423,43 @@ class Database():
         task = (channel_id, quote.get_id())
         
         return self.__query_insert(command, task)
+    
+    def increment_timeout_tracker(self, guild_id: int, user_id: int) -> int:
+        
+        command = f'''
+            INSERT INTO {self.TIMEOUT_TRACKER_TABLE} ({self.TIMEOUT_TRACKER_GUILD_ID_COL}, {self.TIMEOUT_TRACKER_MEMBER_COL}, {self.TIMEOUT_TRACKER_COUNT_COL}) 
+            VALUES (?, ?, 1) 
+            ON CONFLICT({self.TIMEOUT_TRACKER_GUILD_ID_COL}, {self.TIMEOUT_TRACKER_MEMBER_COL}) 
+            DO UPDATE SET {self.TIMEOUT_TRACKER_COUNT_COL} = {self.TIMEOUT_TRACKER_COUNT_COL} + 1;
+        '''
+        task = (guild_id, user_id)
+        
+        return self.__query_insert(command, task)
+    
+    def reset_timeout_tracker(self, guild_id: int, user_id: int) -> int:
+        command = f'''
+            UPDATE {self.TIMEOUT_TRACKER_TABLE} 
+            SET {self.TIMEOUT_TRACKER_COUNT_COL} = 0
+            WHERE {self.TIMEOUT_TRACKER_GUILD_ID_COL} = ? 
+            AND {self.TIMEOUT_TRACKER_MEMBER_COL} = ? ;
+        '''
+        task = (guild_id, user_id)
+        
+        return self.__query_insert(command, task)
+    
+    def get_timeout_tracker_count(self, guild_id: int, user_id: int) -> int:
+        command = f'''
+            SELECT * FROM {self.TIMEOUT_TRACKER_TABLE}
+            WHERE {self.TIMEOUT_TRACKER_GUILD_ID_COL} = ? 
+            AND {self.TIMEOUT_TRACKER_MEMBER_COL} = ? LIMIT 1;
+        '''
+        task = (guild_id, user_id)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return 0 
+        
+        return rows[0][self.TIMEOUT_TRACKER_COUNT_COL]
     
     def log_jail_sentence(self, jail: UserJail) -> UserJail:
         command = f'''
