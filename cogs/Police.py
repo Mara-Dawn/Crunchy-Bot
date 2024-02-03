@@ -19,9 +19,11 @@ from view.PoliceSettingsModal import PoliceSettingsModal
 
 class Police(commands.Cog):
     
+    TIMEOUT_ROLE_NAME = 'Timeout'
+    
     def __init__(self, bot: MaraBot):
         self.bot = bot
-        self.naughty_list: Dict[int, PoliceList] = {}
+        self.user_list: Dict[int, PoliceList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
         self.event_manager: BotEventManager = bot.event_manager
@@ -33,27 +35,95 @@ class Police(commands.Cog):
         author_id = 90043934247501824
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
     
+    async def __reload_timeout_role(self, guild: discord.Guild) -> discord.Role:
+        timeout_role = discord.utils.get(guild.roles, name=self.TIMEOUT_ROLE_NAME)
+        
+        if timeout_role is not None:
+            await timeout_role.delete()
+        
+        timeout_role = await guild.create_role(
+            name=self.TIMEOUT_ROLE_NAME,
+            mentionable=False,
+            reason="Needed for server wide timeouts."
+        )
+            
+        bot_roles = guild.get_member(self.bot.user.id).roles
+    
+        max_pos = 0
+        for role in bot_roles:
+            max_pos = max(max_pos, role.position)
+            
+        max_pos = max_pos-1
+        
+        await timeout_role.edit(position=max_pos)
+        
+        exclude_channels = self.settings.get_police_exclude_channels(guild.id)
+        
+        for channel in guild.channels:
+            if channel.id in exclude_channels:
+                continue
+            
+            role_overwrites = channel.overwrites_for(timeout_role)
+            role_overwrites.send_messages = False
+            await channel.set_permissions(timeout_role, overwrite=role_overwrites)
+            
+        return timeout_role
+      
+    async def __get_timeout_role(self, guild: discord.Guild) -> discord.Role:
+        timeout_role = discord.utils.get(guild.roles, name=self.TIMEOUT_ROLE_NAME)
+
+        if timeout_role is None:
+            timeout_role = await self.__reload_timeout_role(guild)
+                
+        return timeout_role
+    
+    async def __jail_check(self, guild_id: int, user: discord.Member):
+        timeout_count = self.database.get_timeout_tracker_count(guild_id, user.id)
+        timeout_count_threshold = self.settings.get_police_timeouts_before_jail(guild_id)
+        
+        if timeout_count >= timeout_count_threshold:
+            self.logger.log(guild_id, f'Timeout jail threshold reached for {user.name}', cog=self.__cog_name__)            
+            jail_cog: Jail = self.bot.get_cog('Jail')
+            duration = self.settings.get_police_timeout_jail_duration(guild_id)
+            success = await jail_cog.jail_user(guild_id, self.bot.user.id, user, duration)
+            timestamp_now = int(datetime.datetime.now().timestamp())
+            release = timestamp_now + (duration*60)
+            response = f'<@{user.id}> was timed out `{timeout_count}` times, resulting in a jail sentence.'
+            if success:
+                self.database.reset_timeout_tracker(guild_id, user.id)
+                response += f' Their timeout count was reset and they will be released <t:{release}:R>.'
+            else:
+                jail_id = jail_cog.get_user_jail_id(guild_id, user.id)
+                
+                if jail_id is None:
+                    self.logger.error(guild_id, f'User already jailed but no active jail was found.', cog=self.__cog_name__)
+                    return None
+                
+                self.database.reset_timeout_tracker(guild_id, user.id)
+                self.event_manager.dispatch_jail_event(datetime.datetime.now(), guild_id, JailEventType.INCREASE, self.bot.user.id, duration, jail_id)
+                response += f' As they are already in jail, their sentence will be extended by `{duration}` minutes and their timeout count was reset.'
+            
+            return response
+        return None
+       
     async def timeout_task(self, channel: discord.TextChannel, user: discord.Member, duration: int):
         guild_id = channel.guild.id
         time_now = datetime.datetime.now()
         timestamp_now = int(time_now.timestamp())
         release = timestamp_now + duration
         
-        naughty_list = self.naughty_list[guild_id]
+        naughty_list = self.user_list[guild_id]
         naughty_user = naughty_list.get_user(user.id)
         naughty_user.timeout()
-        
-        user_overwrites = channel.overwrites_for(user)
-        initial_overwrites = copy.deepcopy(user_overwrites)
-        user_overwrites.send_messages = False
         
         self.event_manager.dispatch_timeout_event(time_now, guild_id, user.id, duration)
         
         try:
-            await channel.set_permissions(user, overwrite=user_overwrites)
+            timeout_role = await self.__get_timeout_role(channel.guild)
+            await user.add_roles(timeout_role)
             
         except Exception as e:
-            self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
+            self.logger.log(channel.guild.id, f'Missing permissions to change user roles of {user.name}.', cog=self.__cog_name__)
             print(traceback.print_exc())
             
         await channel.send(f'<@{user.id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=(duration))
@@ -69,10 +139,11 @@ class Police(commands.Cog):
         self.logger.log(guild_id, f'User {user.name} rate limit was reset.', cog=self.__cog_name__)
         
         try:
-            await channel.set_permissions(user, overwrite=initial_overwrites)
+            timeout_role = await self.__get_timeout_role(channel.guild)
+            await user.remove_roles(timeout_role)
             
         except Exception as e:
-            self.logger.log(channel.guild.id, f'Missing permissions to change user permissions in {channel.name}.', cog=self.__cog_name__)
+            self.logger.log(channel.guild.id, f'Missing permissions to change user roles of {user.name}.', cog=self.__cog_name__)
             print(traceback.print_exc())
             
         self.logger.log(guild_id, f'Reinstated old permissions for {user.name} in {channel.name}.', cog=self.__cog_name__)
@@ -80,8 +151,10 @@ class Police(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         for guild in self.bot.guilds:
-            self.naughty_list[guild.id] = PoliceList()
+            self.user_list[guild.id] = PoliceList()
             
+            await self.__reload_timeout_role(guild)
+        
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
         self.initialized = True
 
@@ -89,13 +162,15 @@ class Police(commands.Cog):
     async def on_guild_join(self, guild):
         if not self.initialized:
            return
-        self.naughty_list[guild.id] = PoliceList()
+        self.user_list[guild.id] = PoliceList()
+        
+        await self.__reload_timeout_role(guild)
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         if not self.initialized:
            return
-        del self.naughty_list[guild.id]
+        del self.user_list[guild.id]
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.message.Message):
@@ -120,70 +195,46 @@ class Police(commands.Cog):
         if not self.settings.get_police_enabled(guild_id):
             return 
         
-        naughty_list = self.naughty_list[guild_id]
+        user_list = self.user_list[guild_id]
+        
+        message_limit = self.settings.get_police_message_limit(guild_id)
+        message_limit_interval = self.settings.get_police_message_limit_interval(guild_id)
+            
+        if not user_list.has_user(author_id):
+            self.logger.log(guild_id, f'Added rate tracking for user {message.author.name}', cog=self.__cog_name__)
+            user_list.add_user(author_id)
+            
+        user_node = user_list.get_user(author_id)
+        
+        user_list.track_spam_message(author_id, message.created_at)
+        
+        if user_node.spam_check(message_limit_interval, message_limit):
+            if user_node.check_spam_score_increase(message_limit_interval, message_limit):
+                self.event_manager.dispatch_spam_event(datetime.datetime.now(), guild_id, author_id)
+                self.logger.log(guild_id, f'Spam counter increased for {message.author.name}', cog=self.__cog_name__)
         
         if bool(set([x.id for x in message.author.roles]).intersection(self.settings.get_police_naughty_roles(guild_id))):
             self.logger.debug(guild_id, f'{message.author.name} has matching roles', cog=self.__cog_name__)
             
-            if not naughty_list.has_user(author_id):
-                self.logger.log(guild_id, f'Added rate tracking for user {message.author.name}', cog=self.__cog_name__)
-                naughty_list.add_user(author_id, 50)
-                naughty_list.add_message(author_id, message.created_at)
+            if user_node.is_in_timeout() or message.channel.id in self.settings.get_police_exclude_channels(guild_id):
                 return
             
-            naughty_list.add_message(author_id, message.created_at)
+            user_list.track_timeout_message(author_id, message.created_at)
             
-            message_limit = self.settings.get_police_message_limit(guild_id)
-            message_limit_interval = self.settings.get_police_message_limit_interval(guild_id)
-            naughty_user = naughty_list.get_user(author_id)
-            
-            if naughty_user.is_spamming(message_limit_interval, message_limit):
-                
-                if naughty_user.check_spam_score_increase(message_limit_interval, message_limit):
-                    time_now = datetime.datetime.now()
-                    self.event_manager.dispatch_spam_event(time_now, guild_id, author_id)
-                    self.logger.log(guild_id, f'Spam counter increased for {message.author.name}', cog=self.__cog_name__)
-            
-                if naughty_user.is_in_timeout() or message.channel.id in self.settings.get_police_exclude_channels(guild_id):
-                    return
-                
+            if user_node.timeout_check(message_limit_interval, message_limit):
                 self.database.increment_timeout_tracker(guild_id, author_id)
                 
-                timeout_count = self.database.get_timeout_tracker_count(guild_id, author_id)
-                timeout_count_threshold = self.settings.get_police_timeouts_before_jail(guild_id)
+                response = await self.__jail_check(guild_id, message.author)
                 
-                if timeout_count >= timeout_count_threshold:
-                    
-                    self.logger.log(guild_id, f'Timeout jail threshold reached for {message.author.name}', cog=self.__cog_name__)
-                    
-                    jail_cog: Jail = self.bot.get_cog('Jail')
-                    duration = self.settings.get_police_timeout_jail_duration(guild_id)
-                    success = await jail_cog.jail_user(guild_id, self.bot.user.id, message.author, duration)
-                    timestamp_now = int(datetime.datetime.now().timestamp())
-                    release = timestamp_now + (duration*60)
-                    response = f'<@{message.author.id}> was timed out `{timeout_count}` times, resulting in a jail sentence.'
-                    if success:
-                        self.database.reset_timeout_tracker(guild_id, author_id)
-                        response += f' Their timeout count was reset and they will be released <t:{release}:R>.'
-                    else:
-                        jail_id = jail_cog.get_user_jail_id(guild_id, author_id)
-                        
-                        if jail_id is None:
-                            self.logger.error(guild_id, f'Timeout jail threshold reached for {message.author.name}. User already jailed but no active jail was found.', cog=self.__cog_name__)
-                            return
-                        
-                        self.event_manager.dispatch_jail_event(time_now, guild_id, JailEventType.INCREASE, self.bot.user.id, duration, jail_id)
-                        response += f' As they are already in jail, their sentence will be extended by `{duration}` minutes and their timeout count was reset.'
-                        
-                    await message.channel.send(response, delete_after=(duration*60))
-                    return
+                if response is not None:
+                    await message.channel.send(response)
+                else:
+                    duration = self.settings.get_police_timeout(guild_id)
+                    self.bot.loop.create_task(self.timeout_task(message.channel, message.author, duration))
                 
-                duration = self.settings.get_police_timeout(guild_id)
-                self.bot.loop.create_task(self.timeout_task(message.channel, message.author, duration))
-                
-        elif naughty_list.has_user(author_id):
+        elif user_list.has_user(author_id):
             self.logger.log(guild_id, f'Removed rate tracking for user {message.author.name}', cog=self.__cog_name__)
-            naughty_list.remove_user(author_id)
+            user_list.remove_user(author_id)
 
     group = app_commands.Group(name="police", description="Subcommands for the Police module.")
 
@@ -205,7 +256,7 @@ class Police(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def timeout(self, interaction: discord.Interaction, user: discord.Member, duration: app_commands.Range[int, 1]):
-        naughty_list = self.naughty_list[interaction.guild_id]
+        naughty_list = self.user_list[interaction.guild_id]
         
         if naughty_list.has_user(user.id) and naughty_list.get_user(user.id).is_in_timeout():
             await self.bot.command_response(self.__cog_name__, interaction, "User already in timeout.")
@@ -243,14 +294,18 @@ class Police(commands.Cog):
     @app_commands.describe(channel='Stop tracking spam for this channel.')
     @app_commands.check(__has_permission)
     async def untrack_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        await interaction.response.defer(ephemeral=True)
         self.settings.add_police_exclude_channel(interaction.guild_id, channel.id)
+        await self.__reload_timeout_role(interaction.guild)
         await self.bot.command_response(self.__cog_name__, interaction, f'Stopping spam detection in {channel.name}.', channel)
         
     @group.command(name="track_channel", description='Reenable tracking spam for specific channels.')
     @app_commands.describe(channel='Reenable tracking spam for this channel.')
     @app_commands.check(__has_permission)
     async def track_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        await interaction.response.defer(ephemeral=True)
         self.settings.remove_police_exclude_channel(interaction.guild_id, channel.id)
+        await self.__reload_timeout_role(interaction.guild)
         await self.bot.command_response(self.__cog_name__, interaction, f'Resuming spam detection in {channel.name}.', channel)
     
     @group.command(name="setup", description="Opens a dialog to edit various police settings.")

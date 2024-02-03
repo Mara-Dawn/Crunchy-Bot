@@ -308,10 +308,10 @@ class Jail(commands.Cog):
                 
             duration = self.event_manager.get_jail_duration(jail_id)
                 
-            self.jail_list[guild.id].add_user(member.id, timestamp, duration)
-            self.jail_list[guild.id].add_jail_id(jail_id, member.id)
+            self.jail_list[guild_id].add_user(member.id, timestamp, duration)
+            self.jail_list[guild_id].add_jail_id(jail_id, member.id)
             
-            self.logger.log("init",f'Continuing jail sentence of {member.name}. Remaining duration: {self.jail_list[guild.id].get_user(member.id).get_remaining_str()}', cog=self.__cog_name__)
+            self.logger.log("init",f'Continuing jail sentence of {member.name} in {self.bot.get_guild(guild_id).name}. Remaining duration: {self.jail_list[guild_id].get_user(member.id).get_remaining_str()}', cog=self.__cog_name__)
             
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
 
@@ -392,6 +392,7 @@ class Jail(commands.Cog):
         
         if user.get_role(jail_role) is None:
             await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} is currently not in jail.', user)
+            return
             
         await user.remove_roles(user.get_role(jail_role))
         
