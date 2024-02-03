@@ -135,8 +135,6 @@ class Police(commands.Cog):
             
             if naughty_user.is_spamming(message_limit_interval, message_limit):
                 
-                test = naughty_user.check_score_increase(message_limit_interval, message_limit)
-                
                 if naughty_user.check_score_increase(message_limit_interval, message_limit):
                     time_now = datetime.datetime.now()
                     self.event_manager.dispatch_spam_event(time_now, guild_id, author_id)
