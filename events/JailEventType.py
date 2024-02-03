@@ -6,3 +6,5 @@ class JailEventType(str, Enum):
     SLAP = 'slap'
     PET = 'pet'
     FART = 'fart'
+    INCREASE = 'increase'
+    REDUCE = 'reduce'
