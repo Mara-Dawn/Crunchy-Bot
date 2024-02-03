@@ -87,10 +87,10 @@ class Jail(commands.Cog):
         author_id = 90043934247501824
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
     
-    async def __has_mod_permission(self, interaction: discord.Interaction) -> bool:
+    def __has_mod_permission(self, interaction: discord.Interaction) -> bool:
         author_id = 90043934247501824
         roles = self.settings.get_jail_mod_roles(interaction.guild_id)
-        is_mod = bool(set([x.id for x in interaction.user.roles]).intersection(roles))
+        is_mod = len(set([x.id for x in interaction.user.roles]).intersection(roles)) > 0
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator or is_mod
     
     def __get_already_used_msg(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
@@ -327,7 +327,7 @@ class Jail(commands.Cog):
         )
     @app_commands.guild_only()
     async def jail(self, interaction: discord.Interaction, user: discord.Member, duration: app_commands.Range[int, 1]):
-        if not self.__has_mod_permission:
+        if not self.__has_mod_permission(interaction):
             raise app_commands.MissingPermissions([])
         
         guild_id = interaction.guild_id
@@ -364,7 +364,7 @@ class Jail(commands.Cog):
         )
     @app_commands.guild_only()
     async def release(self, interaction: discord.Interaction, user: discord.Member):
-        if not self.__has_mod_permission:
+        if not self.__has_mod_permission(interaction):
             raise app_commands.MissingPermissions([])
         
         guild_id = interaction.guild_id
@@ -373,8 +373,10 @@ class Jail(commands.Cog):
         
         jail_role = self.settings.get_jail_role(guild_id)
         
-        if user.get_role(jail_role) is not None:
-            await user.remove_roles(user.get_role(jail_role))
+        if user.get_role(jail_role) is None:
+            await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} is currently not in jail.', user)
+            
+        await user.remove_roles(user.get_role(jail_role))
         
         response = f'<@{user.id}> was released from Jail by <@{interaction.user.id}>.'
         
