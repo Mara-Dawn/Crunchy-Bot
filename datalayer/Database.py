@@ -1,9 +1,9 @@
-from typing import Dict, List
 import json
 import sqlite3
-from sqlite3 import Error, OperationalError
 import traceback
 
+from typing import Dict, List
+from sqlite3 import Error
 from BotLogger import BotLogger
 from datalayer.UserJail import UserJail
 from datalayer.Quote import Quote
@@ -11,11 +11,9 @@ from events.BotEvent import BotEvent
 from events.EventType import EventType
 from events.InteractionEvent import InteractionEvent
 from events.JailEvent import JailEvent
-from events.JailEventType import JailEventType
 from events.QuoteEvent import QuoteEvent
 from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
-
 
 class Database():    
     

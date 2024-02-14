@@ -1,10 +1,8 @@
 import json
-from string import Formatter
-from datetime import timedelta
-from typing import Any, Dict
-from discord.ext import commands
 import requests
 
+from typing import Any, Dict
+from discord.ext import commands
 
 class BotUtil():
     
@@ -64,7 +62,7 @@ class Tenor(object):
     def __init__(self, token):
         self.api_key = token
 
-    def _get(self, **params):
+    def __get(self, **params):
         params['key'] = self.api_key
         params['client_key'] = 'MaraBot'
         params['media_filter'] = 'gif'
@@ -80,7 +78,7 @@ class Tenor(object):
         params['random'] = random
         if limit:
             params['limit'] = limit
-        results = self._get(**params)
+        results = self.__get(**params)
         return results
 
     async def random(self, tag):

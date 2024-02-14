@@ -1,21 +1,16 @@
-
 import datetime
-from typing import List
 
 from BotUtil import BotUtil
-from datalayer.UserInteraction import UserInteraction
 
 class JailListNode():
     
     def __init__(self, user_id: int, timestamp: datetime.datetime, duration: int):
-        
         self.user_id = user_id
         self.timestamp = timestamp
         self.duration = duration
         self.release_timestamp = timestamp + datetime.timedelta(minutes=duration) 
         self.jail_id: int = None
 
-    
     def gt_user_id(self) -> int:
         return self.user_id
     

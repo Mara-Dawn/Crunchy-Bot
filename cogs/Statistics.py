@@ -3,7 +3,7 @@ import discord
 
 from discord.ext import commands
 from discord import app_commands
-from typing import Dict, Literal, Optional
+from typing import Literal, Optional
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from MaraBot import MaraBot
@@ -22,10 +22,6 @@ class Statistics(commands.Cog):
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
         self.event_manager: BotEventManager = bot.event_manager
-        
-    async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
-        return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
     
     @commands.Cog.listener()
     async def on_ready(self):

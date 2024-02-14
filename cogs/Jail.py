@@ -66,22 +66,22 @@ class Jail(commands.Cog):
         self.bot.tree.add_command(self.ctx_menu)
     
     async def slap_context_menu(self, interaction: discord.Interaction, user: discord.Member):
-        await self.user_command_interaction(interaction, user, UserInteraction.SLAP)
+        await self.__user_command_interaction(interaction, user, UserInteraction.SLAP)
     
     async def pet_context_menu(self, interaction: discord.Interaction, user: discord.Member):
-        await self.user_command_interaction(interaction, user, UserInteraction.PET)
+        await self.__user_command_interaction(interaction, user, UserInteraction.PET)
 
     async def fart_context_menu(self, interaction: discord.Interaction, user: discord.Member):
-        await self.user_command_interaction(interaction, user, UserInteraction.FART)
+        await self.__user_command_interaction(interaction, user, UserInteraction.FART)
     
     async def slap_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
-        await self.user_command_interaction(interaction, message.author, UserInteraction.SLAP)
+        await self.__user_command_interaction(interaction, message.author, UserInteraction.SLAP)
     
     async def pet_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
-        await self.user_command_interaction(interaction, message.author, UserInteraction.PET)
+        await self.__user_command_interaction(interaction, message.author, UserInteraction.PET)
 
     async def fart_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
-        await self.user_command_interaction(interaction, message.author, UserInteraction.FART)
+        await self.__user_command_interaction(interaction, message.author, UserInteraction.FART)
     
     async def __has_permission(interaction: discord.Interaction) -> bool:
         author_id = 90043934247501824
@@ -138,7 +138,7 @@ class Jail(commands.Cog):
         
         return embed
     
-    async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
+    async def __user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
         command = interaction.command
         guild_id = interaction.guild_id
         invoker = interaction.user
@@ -330,7 +330,7 @@ class Jail(commands.Cog):
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 10)
     async def slap(self, interaction: discord.Interaction, user: discord.Member):
-        await self.user_command_interaction(interaction, user, UserInteraction.SLAP)
+        await self.__user_command_interaction(interaction, user, UserInteraction.SLAP)
     
     @app_commands.command(name="pet", description='Give someone a pat.')
     @app_commands.describe(
@@ -339,7 +339,7 @@ class Jail(commands.Cog):
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 10)
     async def pet(self, interaction: discord.Interaction, user: discord.Member):
-        await self.user_command_interaction(interaction, user, UserInteraction.PET)
+        await self.__user_command_interaction(interaction, user, UserInteraction.PET)
 
     @app_commands.command(name="fart", description='Fart on someone.')
     @app_commands.describe(
@@ -348,7 +348,7 @@ class Jail(commands.Cog):
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 10)
     async def fart(self, interaction: discord.Interaction, user: discord.Member):
-        await self.user_command_interaction(interaction, user, UserInteraction.FART)
+        await self.__user_command_interaction(interaction, user, UserInteraction.FART)
     
     @app_commands.command(name="jail", description='Jail a user.')
     @app_commands.describe(

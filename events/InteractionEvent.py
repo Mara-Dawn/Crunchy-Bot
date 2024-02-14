@@ -1,7 +1,7 @@
 import datetime
+
 from typing import Any, Dict
 from datalayer import UserInteraction
-
 from events.BotEvent import BotEvent
 from events.EventType import EventType
 

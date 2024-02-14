@@ -1,10 +1,12 @@
 import discord
+
 from MaraBot import MaraBot
 from datalayer.UserRankings import UserRankings
 from view.RankingEmbed import RankingEmbed
 from view.RankingType import RankingType
 
 class RankingView(discord.ui.View):
+    
     def __init__(self, bot: MaraBot, interaction: discord.Interaction, ranking_data: UserRankings):
         self.interaction = interaction
         self.ranking_data = ranking_data

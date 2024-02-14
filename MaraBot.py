@@ -1,4 +1,3 @@
-from typing import Literal, Optional
 import discord
 
 from discord.ext import commands
@@ -8,6 +7,7 @@ from datalayer.Database import Database
 from events.BotEventManager import BotEventManager
 
 class MaraBot(commands.Bot):
+    
     SETTINGS_FILE = "settings.json"
     DB_FILE = "database.sqlite"
     LOG_FILE = "./log/marabot.log"

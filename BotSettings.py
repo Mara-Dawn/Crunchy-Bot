@@ -1,10 +1,5 @@
-
-import json
-import os
-
 from typing import List
 from datalayer.Database import Database
-from datalayer.Setting import Setting
 from datalayer.ModuleSettings import ModuleSettings
 from datalayer.GuildSettings import GuildSettings
 from BotLogger import BotLogger
@@ -118,7 +113,6 @@ class BotSettings():
                 output += f'{indent}{setting.get_title()}: `{value}`\n'
                 
         return output
-
 
     # Police Settings
 
