@@ -1,6 +1,6 @@
 import datetime
-from typing import Any, Dict
 
+from typing import Any, Dict
 from events.BotEvent import BotEvent
 from events.EventType import EventType
 

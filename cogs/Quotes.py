@@ -23,11 +23,11 @@ class Quotes(commands.Cog):
         
         self.ctx_menu = app_commands.ContextMenu(
             name='Quote',
-            callback=self.quote_menu,
+            callback=self.quote_context_menu,
         )
         self.bot.tree.add_command(self.ctx_menu)
     
-    async def quote_menu(self, interaction: discord.Interaction, message: discord.Message):
+    async def quote_context_menu(self, interaction: discord.Interaction, message: discord.Message):
         guild_id = interaction.guild_id
         
         await interaction.response.defer()

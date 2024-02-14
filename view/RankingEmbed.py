@@ -1,12 +1,12 @@
 import discord
+
 from BotUtil import BotUtil
 from MaraBot import MaraBot
 from datalayer.UserRankings import UserRankings
-from datalayer.UserStats import UserStats
 from view.RankingType import RankingType
 
 class RankingEmbed(discord.Embed):
-
+    
     TITLES = {
         RankingType.SLAP: "Slap Rankings",
         RankingType.PET: "Pet Rankings",

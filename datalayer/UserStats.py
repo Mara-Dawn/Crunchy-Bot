@@ -1,7 +1,6 @@
 from typing import Dict, List, Tuple
 from datalayer.UserInteraction import UserInteraction
 
-
 class UserStats():
     
     def __init__(self):

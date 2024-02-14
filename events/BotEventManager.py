@@ -1,9 +1,7 @@
-
 import datetime
-import discord
+
 from discord.ext import commands
 from BotLogger import BotLogger
-
 from BotSettings import BotSettings
 from BotUtil import BotUtil
 from datalayer.Database import Database

@@ -1,6 +1,6 @@
 import datetime
-from typing import Dict
 
+from typing import Dict
 from datalayer.PoliceListNode import PoliceListNode
 
 class PoliceList():

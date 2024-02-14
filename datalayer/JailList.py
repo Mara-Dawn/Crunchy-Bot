@@ -1,6 +1,6 @@
 import datetime
-from typing import Dict, List
 
+from typing import Dict, List
 from datalayer.JailListNode import JailListNode
 
 class JailList():

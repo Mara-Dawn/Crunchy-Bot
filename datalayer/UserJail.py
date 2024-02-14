@@ -1,6 +1,6 @@
 import datetime
-from typing import Any, Dict
 
+from typing import Any, Dict
 
 class UserJail():
 
@@ -12,7 +12,6 @@ class UserJail():
         released_on: datetime.datetime = None,
         jail_id: str = None
     ):
-        
         self.guild_id = guild_id
         self.member = member
         self.jailed_on = jailed_on

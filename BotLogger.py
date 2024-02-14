@@ -1,10 +1,9 @@
 
-import discord
-import datetime
+import pathlib
 import logging
+
 from logging.handlers import TimedRotatingFileHandler
 from discord.ext import commands
-import pathlib
 
 class BotLogger():
 
@@ -18,7 +17,7 @@ class BotLogger():
         
         pathlib.Path(file_name).parent.mkdir(parents=True, exist_ok=True) 
         
-        handler = logging.handlers.TimedRotatingFileHandler(self.file_name,'midnight', 1, 5, 'utf-8')
+        handler = TimedRotatingFileHandler(self.file_name,'midnight', 1, 5, 'utf-8')
         handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
         self.logger.addHandler(handler)
 

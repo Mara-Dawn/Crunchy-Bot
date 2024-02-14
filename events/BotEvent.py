@@ -1,8 +1,6 @@
-
 import datetime
 
 from events.EventType import EventType
-
 
 class BotEvent():
 

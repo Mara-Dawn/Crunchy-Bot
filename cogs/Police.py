@@ -1,5 +1,4 @@
 import asyncio
-import copy
 import datetime
 import traceback
 import discord
@@ -38,14 +37,12 @@ class Police(commands.Cog):
     async def __reload_timeout_role(self, guild: discord.Guild) -> discord.Role:
         timeout_role = discord.utils.get(guild.roles, name=self.TIMEOUT_ROLE_NAME)
         
-        if timeout_role is not None:
-            await timeout_role.delete()
-        
-        timeout_role = await guild.create_role(
-            name=self.TIMEOUT_ROLE_NAME,
-            mentionable=False,
-            reason="Needed for server wide timeouts."
-        )
+        if timeout_role is None:
+            timeout_role = await guild.create_role(
+                name=self.TIMEOUT_ROLE_NAME,
+                mentionable=False,
+                reason="Needed for server wide timeouts."
+            )
             
         bot_member = guild.get_member(self.bot.user.id)
         bot_roles = bot_member.roles
@@ -69,7 +66,9 @@ class Police(commands.Cog):
                 self.logger.debug(channel.guild.id, f'Missing manage_roles permissions in {channel.name}.', cog=self.__cog_name__)
                 continue
             
-            role_overwrites = discord.PermissionOverwrite()
+            role_overwrites = channel.overwrites_for(timeout_role)
+            if role_overwrites.send_messages is False:
+                continue
             role_overwrites.send_messages = False
             try:
                 await channel.set_permissions(timeout_role, overwrite=role_overwrites)
