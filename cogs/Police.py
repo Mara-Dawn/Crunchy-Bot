@@ -135,9 +135,9 @@ class Police(commands.Cog):
             print(traceback.print_exc())
             
         await channel.send(f'<@{user.id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=(duration))
-        self.logger.log(guild_id, f'Activated rate limit for {user.name} in {channel.name}.', cog=self.__cog_name__)
+        self.logger.log(guild_id, f'Activated rate limit for {user.name}.', cog=self.__cog_name__)
             
-        self.logger.log(channel.guild.id, f'Temporarily removed send_messages permission from {user.name} in {channel.name}.', cog=self.__cog_name__)
+        self.logger.log(channel.guild.id, f'Temporarily removed send_messages permission from {user.name}.', cog=self.__cog_name__)
         
         timeout_length = duration - (int(datetime.datetime.now().timestamp()) - timestamp_now)
         
@@ -154,7 +154,7 @@ class Police(commands.Cog):
             self.logger.log(channel.guild.id, f'Missing permissions to change user roles of {user.name}.', cog=self.__cog_name__)
             print(traceback.print_exc())
             
-        self.logger.log(guild_id, f'Reinstated old permissions for {user.name} in {channel.name}.', cog=self.__cog_name__)
+        self.logger.log(guild_id, f'Reinstated old permissions for {user.name}.', cog=self.__cog_name__)
         
     @commands.Cog.listener()
     async def on_ready(self):
