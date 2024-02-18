@@ -77,7 +77,7 @@ class BotEventManager():
     ):
         event = QuoteEvent(timestamp, guild_id, quote_id)
         self.database.log_event(event)
-        self.logger.log(guild_id, f'Quote event was logged for {quote_id}.', self.log_name)
+        self.logger.log(guild_id, f'Quote event was logged.', self.log_name)
     
     def get_jail_duration(self, jail_id: int) -> int:
         events = self.database.get_jail_events_by_jail(jail_id)

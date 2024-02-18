@@ -157,7 +157,7 @@ class Jail(commands.Cog):
         
         if list.has_user(user.id) and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels:
             user_node = list.get_user(user.id)
-            self.logger.log(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
+            self.logger.debug(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
             
             if self.event_manager.has_jail_event_from_user(user_node.get_jail_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
                 self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
