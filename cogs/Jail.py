@@ -155,52 +155,53 @@ class Jail(commands.Cog):
         jail_role = self.settings.get_jail_role(guild_id)
         jail_channels = self.settings.get_jail_channels(guild_id)
         
-        if list.has_user(user.id) and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels:
-            user_node = list.get_user(user.id)
-            self.logger.debug(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
-            
-            if self.event_manager.has_jail_event_from_user(user_node.get_jail_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
-                self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
-                embed = await self.__get_response_embed(command_type, interaction, user)
-                await interaction.followup.send(self.__get_already_used_msg(command_type, interaction, user), embed=embed)
-                return
-
-            response = self.__get_response(command_type, interaction, user)
-            
-            response += '\n'
-            amount = 0
-            
-            match command_type:
-                case UserInteraction.SLAP:
-                    amount = self.settings.get_jail_slap_time(interaction.guild_id)
-                case UserInteraction.PET:
-                    amount = -self.settings.get_jail_pet_time(interaction.guild_id)
-                case UserInteraction.FART:
-                    min_amount = self.settings.get_jail_fart_min(interaction.guild_id)
-                    max_amount = self.settings.get_jail_fart_max(interaction.guild_id)
-                    amount = random.randint(min_amount, max_amount)
-                
-            amount = max(amount, -int((user_node.get_remaining()/60)+1))
-            user_node.add_to_duration(amount)
-            
-            if amount > 0:
-                response += f'Their jail sentence was increased by `{amount}` minutes. '
-            elif amount < 0: 
-                response += f'Their jail sentence was reduced by `{abs(amount)}` minutes. '
-                
-            response += f'`{user_node.get_remaining_str()}` still remain.'
-            
-            time_now = datetime.datetime.now()
-            self.event_manager.dispatch_jail_event(time_now, guild_id, command.name, interaction.user.id, amount, user_node.get_jail_id())
-
+        if not(list.has_user(user.id) and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels):
             embed = await self.__get_response_embed(command_type, interaction, user)
-            await interaction.followup.send(response, embed=embed)
-            
+            await interaction.channel.send(self.__get_response(command_type, interaction, user))
+            await interaction.followup.send(embed=embed)
             return
         
+        user_node = list.get_user(user.id)
+        self.logger.debug(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
+        
+        if self.event_manager.has_jail_event_from_user(user_node.get_jail_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
+            self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
+            embed = await self.__get_response_embed(command_type, interaction, user)
+            await interaction.followup.send(self.__get_already_used_msg(command_type, interaction, user), embed=embed)
+            return
+
+        response = self.__get_response(command_type, interaction, user)
+        
+        response += '\n'
+        amount = 0
+        
+        match command_type:
+            case UserInteraction.SLAP:
+                amount = self.settings.get_jail_slap_time(interaction.guild_id)
+            case UserInteraction.PET:
+                amount = -self.settings.get_jail_pet_time(interaction.guild_id)
+            case UserInteraction.FART:
+                min_amount = self.settings.get_jail_fart_min(interaction.guild_id)
+                max_amount = self.settings.get_jail_fart_max(interaction.guild_id)
+                amount = random.randint(min_amount, max_amount)
+            
+        amount = max(amount, -int((user_node.get_remaining()/60)+1))
+        user_node.add_to_duration(amount)
+        
+        if amount > 0:
+            response += f'Their jail sentence was increased by `{amount}` minutes. '
+        elif amount < 0: 
+            response += f'Their jail sentence was reduced by `{abs(amount)}` minutes. '
+            
+        response += f'`{user_node.get_remaining_str()}` still remain.'
+        
+        time_now = datetime.datetime.now()
+        self.event_manager.dispatch_jail_event(time_now, guild_id, command.name, interaction.user.id, amount, user_node.get_jail_id())
+
         embed = await self.__get_response_embed(command_type, interaction, user)
-        await interaction.followup.send(self.__get_response(command_type, interaction, user), embed=embed)
-    
+        await interaction.channel.send(response)
+        await interaction.followup.send(embed=embed)
+        
     async def jail_user(self, guild_id: int, jailed_by_id: int, user: discord.Member, duration: int) -> bool:
         list = self.jail_list[guild_id]
         
