@@ -31,8 +31,7 @@ class BotSettings():
     JAIL_FART_TIME_MIN_KEY = "fart_time_min"
     JAIL_MOD_ROLES_KEY = "moderator_roles"
 
-    def __init__(self, bot: commands.Bot, database: Database, logger: BotLogger, file_name: str):
-        self.file_name = file_name
+    def __init__(self, bot: commands.Bot, database: Database, logger: BotLogger):
         self.logger = logger
         self.bot = bot
         self.database = database

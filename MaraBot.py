@@ -8,7 +8,6 @@ from events.BotEventManager import BotEventManager
 
 class MaraBot(commands.Bot):
     
-    SETTINGS_FILE = "settings.json"
     DB_FILE = "database.sqlite"
     LOG_FILE = "./log/marabot.log"
     TENOR_TOKEN_FILE = 'tenor.txt'
@@ -19,7 +18,7 @@ class MaraBot(commands.Bot):
     async def setup_hook(self) -> None:
         self.logger = BotLogger(self, self.LOG_FILE)
         self.database = Database(self.logger, self.DB_FILE)
-        self.settings = BotSettings(self,self.database, self.logger, self.SETTINGS_FILE)
+        self.settings = BotSettings(self,self.database, self.logger)
         self.event_manager = BotEventManager(self, self.settings, self.database, self.logger)
         await self.load_extension("cogs.Police")
         await self.load_extension("cogs.Jail")

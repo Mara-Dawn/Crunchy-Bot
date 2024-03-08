@@ -128,7 +128,7 @@ class Jail(commands.Cog):
             case UserInteraction.PET:
                 search = f'headpats'
             case UserInteraction.FART:
-                search = f'farting on'
+                search = f'fart'
         
         token = open(self.bot.TENOR_TOKEN_FILE,"r").readline()
         g = Tenor(token=token)

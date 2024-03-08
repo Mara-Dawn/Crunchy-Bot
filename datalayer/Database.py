@@ -225,31 +225,6 @@ class Database():
             output.append(new_row)
         
         return output
-
-    def get_all_settings(self):
-        command = f'SELECT * FROM {self.SETTINGS_TABLE};'
-        try:
-            c = self.conn.cursor()
-            c.execute(command,)
-            rows = c.fetchall()
-        
-            output = []
-            
-            for row in rows:
-                new_row = {
-                    self.SETTINGS_GUILD_ID_COL : row[0],
-                    self.SETTINGS_MODULE_COL : row[1],
-                    self.SETTINGS_KEY_COL : row[2],
-                    self.SETTINGS_VALUE_COL : json.loads(row[3])
-                }
-                output.append(new_row)
-            
-            return output
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
-            return None 
                 
     def get_setting(self, guild_id: int, module: str, key: str):
         command = f'''
@@ -257,22 +232,13 @@ class Database():
             WHERE {self.SETTINGS_GUILD_ID_COL}=? AND {self.SETTINGS_MODULE_COL}=? AND {self.SETTINGS_KEY_COL}=? 
             LIMIT 1;
         '''
-        
         task = (int(guild_id), str(module), str(key))
-        try:
-            c = self.conn.cursor()
-            c.execute(command, task)
-            row = c.fetchone()
-            
-            if row is None:
-                return None
-                
-            return json.loads(row[3])
-            
-        except Error as e:
-            self.logger.error("DB",e)
-            traceback.print_exc()
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
             return None
+        
+        return json.loads(rows[0][self.SETTINGS_VALUE_COL])
     
     def update_setting(self, guild_id: int, module: str, key: str, value):
         try:
