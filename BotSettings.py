@@ -124,7 +124,7 @@ class BotSettings():
     def get_police_naughty_roles(self, guild: int) -> List[int]:
         return [int(x) for x in self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY)]
     
-    def set_police_naughty_roles(self, guild: int, roles: [int]) -> None:
+    def set_police_naughty_roles(self, guild: int, roles: List[int]) -> None:
         self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles)
         
     def add_police_naughty_role(self, guild: int, role: int) -> None:
@@ -140,7 +140,7 @@ class BotSettings():
     def get_police_exclude_channels(self, guild: int) -> List[int]:
         return [int(x) for x in self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY)]
     
-    def set_police_exclude_channels(self, guild: int, channels: [int]) -> None:
+    def set_police_exclude_channels(self, guild: int, channels: List[int]) -> None:
         self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
     
     def add_police_exclude_channel(self, guild: int, channel: int) -> None:

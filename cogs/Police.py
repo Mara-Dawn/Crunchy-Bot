@@ -12,7 +12,7 @@ from MaraBot import MaraBot
 from cogs.Jail import Jail
 from datalayer.Database import Database
 from datalayer.PoliceList import PoliceList
-from events.BotEventManager import BotEventManager
+from events.EventManager import EventManager
 from events.JailEventType import JailEventType
 from view.PoliceSettingsModal import PoliceSettingsModal
 
@@ -25,7 +25,7 @@ class Police(commands.Cog):
         self.user_list: Dict[int, PoliceList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
-        self.event_manager: BotEventManager = bot.event_manager
+        self.event_manager: EventManager = bot.event_manager
         self.database: Database = bot.database
         
         self.initialized = False
@@ -101,11 +101,13 @@ class Police(commands.Cog):
                 self.database.reset_timeout_tracker(guild_id, user.id)
                 response += f' Their timeout count was reset and they will be released <t:{release}:R>.'
             else:
-                jail_id = jail_cog.get_user_jail_id(guild_id, user.id)
+                affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
                 
-                if jail_id is None:
+                if len(affected_jails) <= 0:
                     self.logger.error(guild_id, f'User already jailed but no active jail was found.', cog=self.__cog_name__)
                     return None
+                
+                jail_id = affected_jails[0].get_id()
                 
                 self.database.reset_timeout_tracker(guild_id, user.id)
                 self.event_manager.dispatch_jail_event(datetime.datetime.now(), guild_id, JailEventType.INCREASE, self.bot.user.id, duration, jail_id)
@@ -122,7 +124,7 @@ class Police(commands.Cog):
         
         naughty_list = self.user_list[guild_id]
         naughty_user = naughty_list.get_user(user.id)
-        naughty_user.timeout()
+        naughty_user.set_timeout_flag()
         
         self.event_manager.dispatch_timeout_event(time_now, guild_id, user.id, duration)
         
@@ -161,7 +163,14 @@ class Police(commands.Cog):
         for guild in self.bot.guilds:
             self.user_list[guild.id] = PoliceList()
             
-            await self.__reload_timeout_role(guild)
+            timeout_role = await self.__get_timeout_role(guild)
+            
+            if len(timeout_role.members) > 0:
+                self.logger.log("init","Ongoing timeouts found. Commencing cleanup.", cog=self.__cog_name__)
+            
+                for member in timeout_role.members:
+                    await member.remove_roles(timeout_role)
+                    self.logger.log("init",f"Removed Timeout role from {member.display_name}.", cog=self.__cog_name__)
         
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
         self.initialized = True

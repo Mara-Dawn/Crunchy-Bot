@@ -8,7 +8,7 @@ from BotLogger import BotLogger
 from BotSettings import BotSettings
 from MaraBot import MaraBot
 from datalayer.Database import Database
-from events.BotEventManager import BotEventManager
+from events.EventManager import EventManager
 from view.RankingEmbed import RankingEmbed
 from view.RankingType import RankingType
 from view.RankingView import RankingView
@@ -21,7 +21,7 @@ class Statistics(commands.Cog):
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
-        self.event_manager: BotEventManager = bot.event_manager
+        self.event_manager: EventManager = bot.event_manager
     
     @commands.Cog.listener()
     async def on_ready(self):

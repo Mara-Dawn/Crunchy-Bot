@@ -389,7 +389,6 @@ class Database():
         return self.__query_insert(command, task)
     
     def increment_timeout_tracker(self, guild_id: int, user_id: int) -> int:
-        
         command = f'''
             INSERT INTO {self.TIMEOUT_TRACKER_TABLE} ({self.TIMEOUT_TRACKER_GUILD_ID_COL}, {self.TIMEOUT_TRACKER_MEMBER_COL}, {self.TIMEOUT_TRACKER_COUNT_COL}) 
             VALUES (?, ?, 1) 
@@ -474,9 +473,35 @@ class Database():
     def get_jails_by_guild(self, guild_id: int) -> List[UserJail]:
         command = f'''
             SELECT * FROM {self.JAIL_TABLE} 
-            WHERE {self.JAIL_GUILD_ID_COL} = {int(guild_id)}
+            WHERE {self.JAIL_GUILD_ID_COL} = {int(guild_id)};
         '''
         rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [UserJail.from_db_row(row) for row in rows]
+    
+    def get_active_jails_by_guild(self, guild_id: int) -> List[UserJail]:
+        command = f'''
+            SELECT * FROM {self.JAIL_TABLE} 
+            WHERE {self.JAIL_GUILD_ID_COL} = {int(guild_id)}
+            AND {self.JAIL_RELEASED_ON_COL} IS NULL 
+            OR {self.JAIL_RELEASED_ON_COL} = 0;
+        '''
+        rows = self.__query_select(command)
+        if not rows: 
+            return []
+        return [UserJail.from_db_row(row) for row in rows]
+    
+    def get_active_jails_by_member(self, guild_id: int, user_id: int) -> List[UserJail]:
+        command = f'''
+            SELECT * FROM {self.JAIL_TABLE} 
+            WHERE {self.JAIL_MEMBER_COL} = ?
+            AND {self.JAIL_GUILD_ID_COL} = ?
+            AND {self.JAIL_RELEASED_ON_COL} IS NULL 
+            OR {self.JAIL_RELEASED_ON_COL} = 0;
+        '''
+        task = (user_id, guild_id)
+        rows = self.__query_select(command, task)
         if not rows: 
             return []
         return [UserJail.from_db_row(row) for row in rows]

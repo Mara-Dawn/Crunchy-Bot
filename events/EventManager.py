@@ -4,6 +4,7 @@ from discord.ext import commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from BotUtil import BotUtil
+from datalayer.UserJail import UserJail
 from datalayer.Database import Database
 from datalayer.UserInteraction import UserInteraction
 from datalayer.UserRankings import UserRankings
@@ -15,7 +16,7 @@ from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
 from events.QuoteEvent import QuoteEvent
 
-class BotEventManager():
+class EventManager():
 
     def __init__(self, bot: commands.Bot, settings: BotSettings, database: Database, logger: BotLogger):
         self.bot = bot
@@ -79,13 +80,19 @@ class BotEventManager():
         self.database.log_event(event)
         self.logger.log(guild_id, f'Quote event was logged.', self.log_name)
     
-    def get_jail_duration(self, jail_id: int) -> int:
-        events = self.database.get_jail_events_by_jail(jail_id)
+    def get_jail_duration(self, jail: UserJail) -> int:
+        events = self.database.get_jail_events_by_jail(jail.get_id())
         total_duration = 0
         for event in events:
             total_duration += event.get_duration()
         
         return total_duration
+    
+    def get_jail_remaining(self, jail: UserJail) -> float:
+        duration = self.get_jail_duration(jail)
+        release_timestamp = jail.get_jailed_on() + datetime.timedelta(minutes=duration) 
+        remainder = release_timestamp - datetime.datetime.now()
+        return max(remainder.total_seconds()/60, 0)
     
     def has_jail_event_from_user(self, jail_id: int, user_id: int, type: JailEventType) -> bool:
         events = self.database.get_jail_events_by_user(user_id)
@@ -242,17 +249,12 @@ class BotEventManager():
             
             match event.get_interaction_type():
                 case UserInteraction.SLAP:
-                    
                     BotUtil.dict_append(slap_list, from_user_id, 1)
                     BotUtil.dict_append(slap_reciever_list, to_user_id, 1)
-                    
                 case UserInteraction.PET:
-                    
                     BotUtil.dict_append(pet_list, from_user_id, 1)
                     BotUtil.dict_append(pet_reciever_list, to_user_id, 1)
-                    
                 case UserInteraction.FART:
-                    
                     BotUtil.dict_append(fart_list, from_user_id, 1)
                     BotUtil.dict_append(fart_reciever_list, to_user_id, 1)
         
@@ -292,7 +294,6 @@ class BotEventManager():
                 BotUtil.dict_append(jail_lengths, jail_member, event.get_duration())
                 
                 if event.get_jail_event_type() == JailEventType.JAIL:
-                
                     BotUtil.dict_append(jail_count, jail_member, 1)
         
         user_rankings.set_jail_data(
@@ -306,11 +307,8 @@ class BotEventManager():
         
         for event in guild_spam_events:
             member_id = event.get_member()
-            
             BotUtil.dict_append(spam_count, member_id, 1)
             
-        user_rankings.set_spam_data(
-            spam_count
-        )
+        user_rankings.set_spam_data(spam_count)
         
         return user_rankings
