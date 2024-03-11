@@ -11,7 +11,6 @@ from BotUtil import BotUtil, Tenor
 from MaraBot import MaraBot
 from datalayer.Database import Database
 from datalayer.UserJail import UserJail
-from datalayer.JailList import JailList
 from datalayer.UserInteraction import UserInteraction
 from events.EventManager import EventManager
 from events.JailEventType import JailEventType
