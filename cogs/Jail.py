@@ -7,7 +7,7 @@ from discord import app_commands
 from typing import Dict, Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
-from BotUtil import Tenor
+from BotUtil import BotUtil, Tenor
 from MaraBot import MaraBot
 from datalayer.Database import Database
 from datalayer.UserJail import UserJail
@@ -21,13 +21,10 @@ class Jail(commands.Cog):
     
     def __init__(self, bot: MaraBot):
         self.bot = bot
-        self.jail_list: Dict[int, JailList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
-        
-        self.jail_check.start()
         
         self.ctx_menu = app_commands.ContextMenu(
             name='Slap',
@@ -150,23 +147,22 @@ class Jail(commands.Cog):
         log_message = f'{interaction.user.name} used command `{command.name}` on {user.name}.'
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         
-        list = self.jail_list[guild_id]
+        affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
         
         jail_role = self.settings.get_jail_role(guild_id)
         jail_channels = self.settings.get_jail_channels(guild_id)
         
-        jail = self.database.get_jail()
-        
-        if not(list.has_user(user.id) and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels):
+        if not(len(affected_jails) > 0 and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels):
             embed = await self.__get_response_embed(command_type, interaction, user)
             await interaction.channel.send(self.__get_response(command_type, interaction, user))
             await interaction.followup.send(embed=embed)
             return
         
-        user_node = list.get_user(user.id)
+        affected_jail = affected_jails[0]
+        
         self.logger.debug(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
         
-        if self.event_manager.has_jail_event_from_user(user_node.get_jail_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
+        if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
             self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
             embed = await self.__get_response_embed(command_type, interaction, user)
             await interaction.followup.send(self.__get_already_used_msg(command_type, interaction, user), embed=embed)
@@ -186,33 +182,33 @@ class Jail(commands.Cog):
                 min_amount = self.settings.get_jail_fart_min(interaction.guild_id)
                 max_amount = self.settings.get_jail_fart_max(interaction.guild_id)
                 amount = random.randint(min_amount, max_amount)
-            
-        amount = max(amount, -int((user_node.get_remaining()/60)+1))
-        user_node.add_to_duration(amount)
+        
+        remaining = self.event_manager.get_jail_remaining(affected_jail)
+        amount = max(amount, -int(remaining+1))
         
         if amount > 0:
             response += f'Their jail sentence was increased by `{amount}` minutes. '
         elif amount < 0: 
             response += f'Their jail sentence was reduced by `{abs(amount)}` minutes. '
             
-        response += f'`{user_node.get_remaining_str()}` still remain.'
-        
         time_now = datetime.datetime.now()
-        self.event_manager.dispatch_jail_event(time_now, guild_id, command.name, interaction.user.id, amount, user_node.get_jail_id())
+        self.event_manager.dispatch_jail_event(time_now, guild_id, command.name, interaction.user.id, amount, affected_jail.get_id())
+        
+        remaining = self.event_manager.get_jail_remaining(affected_jail)
+        response += f'`{BotUtil.strfdelta(remaining, inputtype='minutes')}` still remain.'
 
         embed = await self.__get_response_embed(command_type, interaction, user)
         await interaction.channel.send(response)
         await interaction.followup.send(embed=embed)
         
     async def jail_user(self, guild_id: int, jailed_by_id: int, user: discord.Member, duration: int) -> bool:
-        list = self.jail_list[guild_id]
+        active_jails = self.database.get_active_jails_by_guild(guild_id)
+        jailed_members = [jail.get_member_id() for jail in active_jails]
         
         jail_role = self.settings.get_jail_role(guild_id)
         
-        if list.has_user(user.id) or user.get_role(jail_role) is not None:
+        if user.id in jailed_members or user.get_role(jail_role) is not None:
             return False
-        
-        list.add_user(user.id, datetime.datetime.now(), duration)
         
         await user.add_roles(self.bot.get_guild(guild_id).get_role(jail_role))
         
@@ -220,54 +216,41 @@ class Jail(commands.Cog):
         jail = UserJail(guild_id, user.id, time_now)
         
         jail = self.database.log_jail_sentence(jail)
-        list.add_jail_id(jail.get_id(), user.id)
         self.event_manager.dispatch_jail_event(time_now, guild_id, JailEventType.JAIL, jailed_by_id, duration, jail.get_id())
         
         return True
-    
-    def get_user_jail_id(self, guild_id: int, user_id: int) -> int:
-        list = self.jail_list[guild_id]
-        
-        if not list.has_user(user_id):
-            return None
-        
-        user_node = list.get_user(user_id)
-        return user_node.get_jail_id()
     
     @tasks.loop(seconds=20)
     async def jail_check(self):
         self.logger.debug("sys", f'Jail Check task started', cog=self.__cog_name__)
         
-        for guild_id in self.jail_list:
-            guild_list = self.jail_list[guild_id]
-            guild = self.bot.get_guild(guild_id)
+        for guild in self.bot.guilds:
+            guild_id = guild.id
             self.logger.debug(guild_id, f'Jail Check for guild {guild.name}.', cog=self.__cog_name__)
+            active_jails = self.database.get_active_jails_by_guild(guild_id)
             
-            for user_id in guild_list.get_user_ids():
-                member = guild.get_member(user_id)
+            for jail in active_jails:
+                member = guild.get_member(jail.get_member_id())
+                duration = self.event_manager.get_jail_duration(jail)
+                remaining = self.event_manager.get_jail_remaining(jail)
                 
-                user_node = guild_list.get_user(user_id)
-                self.logger.debug(guild_id, f'Jail Check for {member.name}. Duration: {user_node.get_duration()}, Remaining: {user_node.get_remaining()}', cog=self.__cog_name__)
+                self.logger.debug(guild_id, f'Jail Check for {member.name}. Duration: {duration}, Remaining: {remaining}', cog=self.__cog_name__)
                 
-                if user_node.get_remaining() > 0:
+                if remaining > 0:
                     continue
                     
                 jail_role = self.settings.get_jail_role(guild_id)
                 jail_channels = self.settings.get_jail_channels(guild_id)
                 
-                guild_list.schedule_removal(user_id)
-                
                 await member.remove_roles(member.get_role(jail_role))
                 
-                self.logger.log(guild_id, f'User {member.name} was released from jail after {user_node.get_duration_str()}.', cog=self.__cog_name__)
+                self.logger.log(guild_id, f'User {member.name} was released from jail after {BotUtil.strfdelta(duration, inputtype='minutes')}.', cog=self.__cog_name__)
                 
-                self.event_manager.dispatch_jail_event(datetime.datetime.now(), guild_id, JailEventType.RELEASE, self.bot.user.id, 0, user_node.get_jail_id())
+                self.event_manager.dispatch_jail_event(datetime.datetime.now(), guild_id, JailEventType.RELEASE, self.bot.user.id, 0, jail.get_id())
                 
                 for channel_id in jail_channels:
                     channel = guild.get_channel(channel_id)
-                    await channel.send(f'<@{member.id}> was released from jail after {user_node.get_duration_str()}.')
-                    
-            guild_list.execute_removal()
+                    await channel.send(f'<@{member.id}> was released from jail after {BotUtil.strfdelta(duration, inputtype='minutes')}.')
     
     @jail_check.before_loop
     async def before_jail_check(self):
@@ -280,9 +263,6 @@ class Jail(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
-        for guild in self.bot.guilds:
-            self.jail_list[guild.id] = JailList()
-            
         jails = self.database.get_active_jails()
         
         if len(jails) > 0:
@@ -292,11 +272,9 @@ class Jail(commands.Cog):
             guild_id = jail.get_guild_id()
             member_id = jail.get_member_id()
             jail_id = jail.get_id()
-            timestamp = jail.get_jailed_on()
             member = None
-            
-            if guild_id in self.jail_list.keys():
-                member = self.bot.get_guild(guild_id).get_member(member_id)
+            guild = self.bot.get_guild(guild_id)
+            member = guild.get_member(member_id) if guild is not None else None
                 
             if member is None :
                 self.logger.log("init",f'Member or guild not found, user {member_id} was marked as released.', cog=self.__cog_name__)
@@ -309,22 +287,14 @@ class Jail(commands.Cog):
                 self.logger.log("init",f'Member {member.name} did not have the jail role, applying jail role now.', cog=self.__cog_name__)
                 await member.add_roles(self.bot.get_guild(guild_id).get_role(jail_role))
                 
-            duration = self.event_manager.get_jail_duration(jail_id)
-                
-            self.jail_list[guild_id].add_user(member.id, timestamp, duration)
-            self.jail_list[guild_id].add_jail_id(jail_id, member.id)
+            remaining = self.event_manager.get_jail_remaining(jail)
             
-            self.logger.log("init",f'Continuing jail sentence of {member.name} in {self.bot.get_guild(guild_id).name}. Remaining duration: {self.jail_list[guild_id].get_user(member.id).get_remaining_str()}', cog=self.__cog_name__)
-            
+            self.logger.log("init",f'Continuing jail sentence of {member.name} in {guild.name}. Remaining duration: {BotUtil.strfdelta(remaining, inputtype='minutes')}', cog=self.__cog_name__)
+        
+        
+        self.jail_check.start()
+        
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
-
-    @commands.Cog.listener()
-    async def on_guild_join(self, guild):
-        self.jail_list[guild.id] = JailList()
-
-    @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
-        del self.jail_list[guild.id]
 
     @app_commands.command(name="slap", description="Slap someone.")
     @app_commands.describe(
@@ -388,9 +358,6 @@ class Jail(commands.Cog):
             raise app_commands.MissingPermissions([])
         
         guild_id = interaction.guild_id
-        
-        list = self.jail_list[guild_id]
-        
         jail_role = self.settings.get_jail_role(guild_id)
         
         if user.get_role(jail_role) is None:
@@ -401,12 +368,13 @@ class Jail(commands.Cog):
         
         response = f'<@{user.id}> was released from Jail by <@{interaction.user.id}>.'
         
-        if list.has_user(user.id):
-            user_node = list.get_user(user.id)
-            response += f' Their remaining sentence of {user_node.get_remaining_str()} will be forgiven.'
-            
-            self.event_manager.dispatch_jail_event(datetime.datetime.now(), guild_id, JailEventType.RELEASE, interaction.user.id, 0, user_node.get_jail_id())
-            list.remove_user(user.id)
+        affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
+                
+        if len(affected_jails) > 0:
+            jail = affected_jails[0]
+            remaining = self.event_manager.get_jail_remaining(jail)
+            response += f' Their remaining sentence of {BotUtil.strfdelta(remaining, inputtype='minutes')} will be forgiven.'
+            self.event_manager.dispatch_jail_event(datetime.datetime.now(), guild_id, JailEventType.RELEASE, interaction.user.id, 0, jail.get_id())
         
         await interaction.channel.send(response)
         

@@ -101,11 +101,13 @@ class Police(commands.Cog):
                 self.database.reset_timeout_tracker(guild_id, user.id)
                 response += f' Their timeout count was reset and they will be released <t:{release}:R>.'
             else:
-                jail_id = jail_cog.get_user_jail_id(guild_id, user.id)
+                affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
                 
-                if jail_id is None:
+                if len(affected_jails) <= 0:
                     self.logger.error(guild_id, f'User already jailed but no active jail was found.', cog=self.__cog_name__)
                     return None
+                
+                jail_id = affected_jails[0].get_id()
                 
                 self.database.reset_timeout_tracker(guild_id, user.id)
                 self.event_manager.dispatch_jail_event(datetime.datetime.now(), guild_id, JailEventType.INCREASE, self.bot.user.id, duration, jail_id)
