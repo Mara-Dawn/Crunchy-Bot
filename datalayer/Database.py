@@ -389,7 +389,6 @@ class Database():
         return self.__query_insert(command, task)
     
     def increment_timeout_tracker(self, guild_id: int, user_id: int) -> int:
-        
         command = f'''
             INSERT INTO {self.TIMEOUT_TRACKER_TABLE} ({self.TIMEOUT_TRACKER_GUILD_ID_COL}, {self.TIMEOUT_TRACKER_MEMBER_COL}, {self.TIMEOUT_TRACKER_COUNT_COL}) 
             VALUES (?, ?, 1) 

@@ -13,7 +13,7 @@ from datalayer.Database import Database
 from datalayer.UserJail import UserJail
 from datalayer.JailList import JailList
 from datalayer.UserInteraction import UserInteraction
-from events.BotEventManager import BotEventManager
+from events.EventManager import EventManager
 from events.JailEventType import JailEventType
 from view.JailSettingsModal import JailSettingsModal
 
@@ -25,7 +25,7 @@ class Jail(commands.Cog):
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
-        self.event_manager: BotEventManager = bot.event_manager
+        self.event_manager: EventManager = bot.event_manager
         
         self.jail_check.start()
         
@@ -154,6 +154,8 @@ class Jail(commands.Cog):
         
         jail_role = self.settings.get_jail_role(guild_id)
         jail_channels = self.settings.get_jail_channels(guild_id)
+        
+        jail = self.database.get_jail()
         
         if not(list.has_user(user.id) and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels):
             embed = await self.__get_response_embed(command_type, interaction, user)

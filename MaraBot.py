@@ -4,7 +4,7 @@ from discord.ext import commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from datalayer.Database import Database
-from events.BotEventManager import BotEventManager
+from events.EventManager import EventManager
 
 class MaraBot(commands.Bot):
     
@@ -19,7 +19,7 @@ class MaraBot(commands.Bot):
         self.logger = BotLogger(self, self.LOG_FILE)
         self.database = Database(self.logger, self.DB_FILE)
         self.settings = BotSettings(self,self.database, self.logger)
-        self.event_manager = BotEventManager(self, self.settings, self.database, self.logger)
+        self.event_manager = EventManager(self, self.settings, self.database, self.logger)
         await self.load_extension("cogs.Police")
         await self.load_extension("cogs.Jail")
         await self.load_extension("cogs.Statistics")

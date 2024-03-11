@@ -15,7 +15,7 @@ from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
 from events.QuoteEvent import QuoteEvent
 
-class BotEventManager():
+class EventManager():
 
     def __init__(self, bot: commands.Bot, settings: BotSettings, database: Database, logger: BotLogger):
         self.bot = bot
@@ -242,17 +242,12 @@ class BotEventManager():
             
             match event.get_interaction_type():
                 case UserInteraction.SLAP:
-                    
                     BotUtil.dict_append(slap_list, from_user_id, 1)
                     BotUtil.dict_append(slap_reciever_list, to_user_id, 1)
-                    
                 case UserInteraction.PET:
-                    
                     BotUtil.dict_append(pet_list, from_user_id, 1)
                     BotUtil.dict_append(pet_reciever_list, to_user_id, 1)
-                    
                 case UserInteraction.FART:
-                    
                     BotUtil.dict_append(fart_list, from_user_id, 1)
                     BotUtil.dict_append(fart_reciever_list, to_user_id, 1)
         
@@ -292,7 +287,6 @@ class BotEventManager():
                 BotUtil.dict_append(jail_lengths, jail_member, event.get_duration())
                 
                 if event.get_jail_event_type() == JailEventType.JAIL:
-                
                     BotUtil.dict_append(jail_count, jail_member, 1)
         
         user_rankings.set_jail_data(
@@ -306,11 +300,8 @@ class BotEventManager():
         
         for event in guild_spam_events:
             member_id = event.get_member()
-            
             BotUtil.dict_append(spam_count, member_id, 1)
             
-        user_rankings.set_spam_data(
-            spam_count
-        )
+        user_rankings.set_spam_data(spam_count)
         
         return user_rankings
