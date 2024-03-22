@@ -29,6 +29,8 @@ class BotSettings():
     JAIL_PET_TIME_KEY = "pet_time"
     JAIL_FART_TIME_MAX_KEY = "fart_time_max"
     JAIL_FART_TIME_MIN_KEY = "fart_time_min"
+    JAIL_BASE_CRIT_RATE_KEY = "base_crit_rate"
+    JAIL_BASE_CRIT_MOD_KEY = "base_crit_mod"
     JAIL_MOD_ROLES_KEY = "moderator_roles"
 
     def __init__(self, bot: commands.Bot, database: Database, logger: BotLogger):
@@ -57,6 +59,8 @@ class BotSettings():
         jail_settings.add_setting(self.JAIL_PET_TIME_KEY, 5, "Time reduction for each pet in minutes")
         jail_settings.add_setting(self.JAIL_FART_TIME_MIN_KEY, -10, "Minimum amount of time change from farting in minutes")
         jail_settings.add_setting(self.JAIL_FART_TIME_MAX_KEY, 20, "Maximum amount of time change from farting in minutes")
+        jail_settings.add_setting(self.JAIL_BASE_CRIT_RATE_KEY, 0.2, "Chance to critically hit a fart etc")
+        jail_settings.add_setting(self.JAIL_BASE_CRIT_MOD_KEY, 2, "Crit Multiplier")
         
         self.settings = GuildSettings()
         self.settings.add_module(police_settings)
@@ -243,6 +247,18 @@ class BotSettings():
     
     def set_jail_fart_max(self, guild: int, time: int) -> None:
         self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MAX_KEY, time)
+        
+    def get_jail_base_crit_rate(self, guild: int) -> float:
+        return float(self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_RATE_KEY))
+    
+    def set_jail_base_crit_rate(self, guild: int, rate: float) -> None:
+        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_RATE_KEY, rate)
+    
+    def get_jail_base_crit_mod(self, guild: int) -> float:
+        return float(self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_MOD_KEY))
+    
+    def set_jail_base_crit_mod(self, guild: int, mod: float) -> None:
+        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_MOD_KEY, mod)
     
     def get_jail_mod_roles(self, guild: int) -> List[int]:
         return [int(x) for x in self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY)]

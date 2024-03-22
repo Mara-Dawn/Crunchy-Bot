@@ -164,7 +164,8 @@ class Jail(commands.Cog):
         if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
             self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
             embed = await self.__get_response_embed(command_type, interaction, user)
-            await interaction.followup.send(self.__get_already_used_msg(command_type, interaction, user), embed=embed)
+            await interaction.channel.send(self.__get_already_used_msg(command_type, interaction, user))
+            await interaction.followup.send(embed=embed)
             return
 
         response = self.__get_response(command_type, interaction, user)
@@ -185,7 +186,16 @@ class Jail(commands.Cog):
         remaining = self.event_manager.get_jail_remaining(affected_jail)
         amount = max(amount, -int(remaining+1))
         
-        if amount > 0:
+        crit_mod = self.settings.get_jail_base_crit_mod(interaction.guild_id)
+        crit_rate = self.settings.get_jail_base_crit_rate(interaction.guild_id)
+        
+        is_crit = random.random() <= crit_rate
+        
+        if is_crit:
+            response += f'**CRITICAL HIT!!!** '
+            amount *= crit_mod
+        
+        if amount >= 0:
             response += f'Their jail sentence was increased by `{amount}` minutes. '
         elif amount < 0: 
             response += f'Their jail sentence was reduced by `{abs(amount)}` minutes. '
@@ -437,12 +447,14 @@ class Jail(commands.Cog):
         current_pet_time = self.settings.get_jail_pet_time(interaction.guild_id)
         current_fart_min = self.settings.get_jail_fart_min(interaction.guild_id)
         current_fart_max = self.settings.get_jail_fart_max(interaction.guild_id)
+        current_base_crit = self.settings.get_jail_base_crit_rate(interaction.guild_id)
 
         modal = JailSettingsModal(self.bot, self.settings)
         modal.slap_time.default = current_slap_time
         modal.pet_time.default = current_pet_time
         modal.fart_min_time.default = current_fart_min
         modal.fart_max_time.default = current_fart_max
+        modal.base_crit_rate.default = str(current_base_crit)
         
         await interaction.response.send_modal(modal)
                 
