@@ -50,8 +50,13 @@ class JailSettingsModal(discord.ui.Modal, title='Jail Settings'):
         for key, value in values.items():
             if not value.lstrip('-').isdigit() and key != 'Base Crit Rate':
                 error[key] = value
-            elif key == 'Base Crit Rate' and value.lstrip('-').isdecimal() and float(value) <= 1 and float(value) > 0:
-                error[key] = value
+            elif key == 'Base Crit Rate':
+                try:
+                    float(value)
+                except ValueError:
+                    error[key] = value
+                if not (float(value) <= 1 and float(value) > 0):
+                    error[key] = value
                 
         
         if len(error) != 0:
