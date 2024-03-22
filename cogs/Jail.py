@@ -92,20 +92,20 @@ class Jail(commands.Cog):
     def __get_already_used_msg(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
         match type:
             case UserInteraction.SLAP:
-                return f'<@{user.id}> was slapped by <@{interaction.user.id}>!\n You already slapped {user.name}, no extra time will be added this time.'
+                return f'<@{user.id}> was slapped by <@{interaction.user.id}>!\n You already slapped {user.display_name}, no extra time will be added this time.'
             case UserInteraction.PET:
-                return f'<@{user.id}> recieved pets from <@{interaction.user.id}>!\n You already gave {user.name} pets, no extra time will be added this time.'
+                return f'<@{user.id}> recieved pets from <@{interaction.user.id}>!\n You already gave {user.display_name} pets, no extra time will be added this time.'
             case UserInteraction.FART:
-                return f'<@{user.id}> was farted on by <@{interaction.user.id}>!\n{user.name} already enjoyed your farts, no extra time will be added this time.'
+                return f'<@{user.id}> was farted on by <@{interaction.user.id}>!\n{user.display_name} already enjoyed your farts, no extra time will be added this time.'
             
     def __get_already_used_log_msg(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
         match type:
             case UserInteraction.SLAP:
-                return f'User {user.name} was already slapped by {interaction.user.name}. No extra time will be added.'
+                return f'User {user.display_name} was already slapped by {interaction.user.display_name}. No extra time will be added.'
             case UserInteraction.PET:
-                return f'User {user.name} already recieved pats from {interaction.user.name}. No extra time will be added.'
+                return f'User {user.display_name} already recieved pats from {interaction.user.display_name}. No extra time will be added.'
             case UserInteraction.FART:
-                return f'User {user.name} already enjoyed {interaction.user.name}\'s farts. No extra time will be added.'
+                return f'User {user.display_name} already enjoyed {interaction.user.display_name}\'s farts. No extra time will be added.'
     
     def __get_response(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
         match type:
@@ -164,7 +164,8 @@ class Jail(commands.Cog):
         if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
             self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
             embed = await self.__get_response_embed(command_type, interaction, user)
-            await interaction.followup.send(self.__get_already_used_msg(command_type, interaction, user), embed=embed)
+            await interaction.channel.send(self.__get_already_used_msg(command_type, interaction, user))
+            await interaction.followup.send(embed=embed)
             return
 
         response = self.__get_response(command_type, interaction, user)
@@ -185,16 +186,32 @@ class Jail(commands.Cog):
         remaining = self.event_manager.get_jail_remaining(affected_jail)
         amount = max(amount, -int(remaining+1))
         
-        if amount > 0:
-            response += f'Their jail sentence was increased by `{amount}` minutes. '
-        elif amount < 0: 
-            response += f'Their jail sentence was reduced by `{abs(amount)}` minutes. '
-            
-        time_now = datetime.datetime.now()
-        self.event_manager.dispatch_jail_event(time_now, guild_id, command.name, interaction.user.id, amount, affected_jail.get_id())
+        crit_mod = self.settings.get_jail_base_crit_mod(interaction.guild_id)
+        crit_rate = self.settings.get_jail_base_crit_rate(interaction.guild_id)
         
-        remaining = self.event_manager.get_jail_remaining(affected_jail)
-        response += f'`{BotUtil.strfdelta(remaining, inputtype='minutes')}` still remain.'
+        is_crit = random.random() <= crit_rate
+        
+        if is_crit:
+            response += f'**CRITICAL HIT!!!** '
+            amount *= crit_mod
+        
+        if amount == 0 and is_crit:
+            response += f'{interaction.user.display_name} farted so hard, they blew {user.display_name} out of Jail. They are free!\n'
+            response += await self.release_user(guild_id, interaction.user.id, user)
+            
+            if not response:
+                response +=  f'Something went wrong, user {user.display_name} could not be released.'
+        else:
+            if amount >= 0:
+                response += f'Their jail sentence was increased by `{amount}` minutes. '
+            elif amount < 0: 
+                response += f'Their jail sentence was reduced by `{abs(amount)}` minutes. '
+            
+            time_now = datetime.datetime.now()
+            self.event_manager.dispatch_jail_event(time_now, guild_id, command.name, interaction.user.id, amount, affected_jail.get_id())
+            
+            remaining = self.event_manager.get_jail_remaining(affected_jail)
+            response += f'`{BotUtil.strfdelta(remaining, inputtype='minutes')}` still remain.'
 
         embed = await self.__get_response_embed(command_type, interaction, user)
         await interaction.channel.send(response)
@@ -218,6 +235,28 @@ class Jail(commands.Cog):
         self.event_manager.dispatch_jail_event(time_now, guild_id, JailEventType.JAIL, jailed_by_id, duration, jail.get_id())
         
         return True
+    
+    async def release_user(self, guild_id: int, released_by_id: int, user: discord.Member) -> str:
+        active_jails = self.database.get_active_jails_by_guild(guild_id)
+        jailed_members = [jail.get_member_id() for jail in active_jails]
+        
+        jail_role = self.settings.get_jail_role(guild_id)
+        
+        if user.id not in jailed_members or user.get_role(jail_role) is None:
+            return False
+        
+        
+        await user.remove_roles(user.get_role(jail_role))
+        
+        affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
+                
+        if len(affected_jails) > 0:
+            jail = affected_jails[0]
+            remaining = self.event_manager.get_jail_remaining(jail)
+            response = f'Their remaining sentence of `{BotUtil.strfdelta(remaining, inputtype='minutes')}` will be forgiven.'
+            self.event_manager.dispatch_jail_event(datetime.datetime.now(), guild_id, JailEventType.RELEASE, released_by_id, 0, jail.get_id())
+        
+        return response
     
     @tasks.loop(seconds=20)
     async def jail_check(self):
@@ -360,24 +399,20 @@ class Jail(commands.Cog):
         jail_role = self.settings.get_jail_role(guild_id)
         
         if user.get_role(jail_role) is None:
-            await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} is currently not in jail.', user)
+            await self.bot.command_response(self.__cog_name__, interaction, f'User {user.display_name} is currently not in jail.', user)
             return
             
-        await user.remove_roles(user.get_role(jail_role))
+        response = await self.release_user(guild_id, interaction.user.id, user)
         
-        response = f'<@{user.id}> was released from Jail by <@{interaction.user.id}>.'
+        if not response:
+            await self.bot.command_response(self.__cog_name__, interaction, f'Something went wrong, user {user.display_name} could not be released.', user)
+            return
         
-        affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
-                
-        if len(affected_jails) > 0:
-            jail = affected_jails[0]
-            remaining = self.event_manager.get_jail_remaining(jail)
-            response += f' Their remaining sentence of {BotUtil.strfdelta(remaining, inputtype='minutes')} will be forgiven.'
-            self.event_manager.dispatch_jail_event(datetime.datetime.now(), guild_id, JailEventType.RELEASE, interaction.user.id, 0, jail.get_id())
-        
+        response = f'<@{user.id}> was released from Jail by <@{interaction.user.id}>. ' + response
+
         await interaction.channel.send(response)
         
-        await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} released successfully.', user)
+        await self.bot.command_response(self.__cog_name__, interaction, f'User {user.display_name} released successfully.', user)
 
     group = app_commands.Group(name="degenjail", description="Subcommands for the Jail module.")
 
@@ -437,12 +472,14 @@ class Jail(commands.Cog):
         current_pet_time = self.settings.get_jail_pet_time(interaction.guild_id)
         current_fart_min = self.settings.get_jail_fart_min(interaction.guild_id)
         current_fart_max = self.settings.get_jail_fart_max(interaction.guild_id)
+        current_base_crit = self.settings.get_jail_base_crit_rate(interaction.guild_id)
 
         modal = JailSettingsModal(self.bot, self.settings)
         modal.slap_time.default = current_slap_time
         modal.pet_time.default = current_pet_time
         modal.fart_min_time.default = current_fart_min
         modal.fart_max_time.default = current_fart_max
+        modal.base_crit_rate.default = str(current_base_crit)
         
         await interaction.response.send_modal(modal)
                 
