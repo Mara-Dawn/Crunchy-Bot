@@ -196,7 +196,7 @@ class Jail(commands.Cog):
             amount *= crit_mod
         
         if amount == 0 and is_crit:
-            response += f'{interaction.user.display_name} farted so hard, they blew {user.display_name} out of Jail!\n'
+            response += f'{interaction.user.display_name} farted so hard, they blew {user.display_name} out of Jail. They are free!\n'
             response += await self.release_user(guild_id, interaction.user.id, user)
             
             if not response:
