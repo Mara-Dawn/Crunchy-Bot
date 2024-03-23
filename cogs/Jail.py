@@ -4,10 +4,10 @@ import discord
 
 from discord.ext import tasks, commands
 from discord import app_commands
-from typing import Dict, Literal
+from typing import Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
-from BotUtil import BotUtil, Tenor
+from BotUtil import BotUtil
 from MaraBot import MaraBot
 from datalayer.Database import Database
 from datalayer.UserJail import UserJail
@@ -24,60 +24,7 @@ class Jail(commands.Cog):
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Slap',
-            callback=self.slap_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Pet',
-            callback=self.pet_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Fart',
-            callback=self.fart_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Slap',
-            callback=self.slap_msg_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Pet',
-            callback=self.pet_msg_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Fart',
-            callback=self.fart_msg_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-    
-    async def slap_context_menu(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.SLAP)
-    
-    async def pet_context_menu(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.PET)
 
-    async def fart_context_menu(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.FART)
-    
-    async def slap_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
-        await self.__user_command_interaction(interaction, message.author, UserInteraction.SLAP)
-    
-    async def pet_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
-        await self.__user_command_interaction(interaction, message.author, UserInteraction.PET)
-
-    async def fart_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
-        await self.__user_command_interaction(interaction, message.author, UserInteraction.FART)
     
     async def __has_permission(interaction: discord.Interaction) -> bool:
         author_id = 90043934247501824
@@ -106,45 +53,10 @@ class Jail(commands.Cog):
                 return f'User {user.display_name} already recieved pats from {interaction.user.display_name}. No extra time will be added.'
             case UserInteraction.FART:
                 return f'User {user.display_name} already enjoyed {interaction.user.display_name}\'s farts. No extra time will be added.'
-    
-    def __get_response(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
-        match type:
-            case UserInteraction.SLAP:
-                return f'<@{user.id}> was slapped by <@{interaction.user.id}>!'
-            case UserInteraction.PET:
-                return f'<@{user.id}> recieved pets from <@{interaction.user.id}>!'
-            case UserInteraction.FART:
-                return f'<@{user.id}> was farted on by <@{interaction.user.id}>!'
-    
-    async def __get_response_embed(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
-        search = ''
-        match type:
-            case UserInteraction.SLAP:
-                search = 'bitchslap'
-            case UserInteraction.PET:
-                search = f'headpats'
-            case UserInteraction.FART:
-                search = f'fart'
-        
-        token = open(self.bot.TENOR_TOKEN_FILE,"r").readline()
-        g = Tenor(token=token)
-        gif = await g.random(tag=search)
-        embed = discord.Embed(color=discord.Colour.purple())
-        embed.set_image(url=gif)
-        
-        return embed
-    
-    async def __user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
+ 
+    async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction) -> str:
         command = interaction.command
         guild_id = interaction.guild_id
-        invoker = interaction.user
-        
-        await interaction.response.defer()
-                
-        self.event_manager.dispatch_interaction_event(interaction.created_at, guild_id, command_type, invoker.id, user.id)
-        
-        log_message = f'{interaction.user.name} used command `{command.name}` on {user.name}.'
-        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         
         affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
         
@@ -152,10 +64,7 @@ class Jail(commands.Cog):
         jail_channels = self.settings.get_jail_channels(guild_id)
         
         if not(len(affected_jails) > 0 and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels):
-            embed = await self.__get_response_embed(command_type, interaction, user)
-            await interaction.channel.send(self.__get_response(command_type, interaction, user))
-            await interaction.followup.send(embed=embed)
-            return
+            return ''
         
         affected_jail = affected_jails[0]
         
@@ -163,14 +72,9 @@ class Jail(commands.Cog):
         
         if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
             self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
-            embed = await self.__get_response_embed(command_type, interaction, user)
-            await interaction.channel.send(self.__get_already_used_msg(command_type, interaction, user))
-            await interaction.followup.send(embed=embed)
-            return
+            return self.__get_already_used_msg(command_type, interaction, user)
 
-        response = self.__get_response(command_type, interaction, user)
-        
-        response += '\n'
+        response = '\n'
         amount = 0
         
         match command_type:
@@ -213,9 +117,7 @@ class Jail(commands.Cog):
             remaining = self.event_manager.get_jail_remaining(affected_jail)
             response += f'`{BotUtil.strfdelta(remaining, inputtype='minutes')}` still remain.'
 
-        embed = await self.__get_response_embed(command_type, interaction, user)
-        await interaction.channel.send(response)
-        await interaction.followup.send(embed=embed)
+        return response
         
     async def jail_user(self, guild_id: int, jailed_by_id: int, user: discord.Member, duration: int) -> bool:
         active_jails = self.database.get_active_jails_by_guild(guild_id)
@@ -333,33 +235,6 @@ class Jail(commands.Cog):
         self.jail_check.start()
         
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
-
-    @app_commands.command(name="slap", description="Slap someone.")
-    @app_commands.describe(
-        user='Slap this bitch.',
-        )
-    @app_commands.guild_only()
-    @app_commands.checks.cooldown(1, 10)
-    async def slap(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.SLAP)
-    
-    @app_commands.command(name="pet", description='Give someone a pat.')
-    @app_commands.describe(
-        user='Give them a pat.',
-        )
-    @app_commands.guild_only()
-    @app_commands.checks.cooldown(1, 10)
-    async def pet(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.PET)
-
-    @app_commands.command(name="fart", description='Fart on someone.')
-    @app_commands.describe(
-        user='Fart on this user.',
-        )
-    @app_commands.guild_only()
-    @app_commands.checks.cooldown(1, 10)
-    async def fart(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.FART)
     
     @app_commands.command(name="jail", description='Jail a user.')
     @app_commands.describe(

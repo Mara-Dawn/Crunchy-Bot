@@ -22,6 +22,7 @@ class MaraBot(commands.Bot):
         self.event_manager = EventManager(self, self.settings, self.database, self.logger)
         await self.load_extension("cogs.Police")
         await self.load_extension("cogs.Jail")
+        await self.load_extension("cogs.Interactions")
         await self.load_extension("cogs.Statistics")
         await self.load_extension("cogs.Quotes")
         
