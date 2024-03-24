@@ -193,7 +193,6 @@ class Beans(commands.Cog):
         user_id = user.id
         
         guild_id = interaction.guild_id
-        user_id = interaction.user.id
         
         current_balance = self.database.get_member_beans(guild_id, user_id)
         
