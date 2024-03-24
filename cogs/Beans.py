@@ -96,7 +96,8 @@ class Beans(commands.Cog):
             '\n**0x**',
             '\n**2x**🎲',
             '\n**3x**🎲🎲',
-            '\n**10x**🎲🎲🎲'
+            '\n**10x**🎲🎲🎲',
+            '\n**100x**🎲🎲🎲🎲'
         ]
         
         payout = 0
@@ -104,8 +105,10 @@ class Beans(commands.Cog):
         loss = 0.60
         doubling = 0.29
         tripling = 0.1
-        jackpot = 0.01 #x10
+        tenfold = 0.009
+        jackpot = 0.001 #x10
         
+        # -1 * 0.60 + 1 * 0.29 + 2 * 0.1 + 9 * 0.009 + 99 * 0.001
         result = random.random()
         
         if result <= loss:
@@ -115,13 +118,17 @@ class Beans(commands.Cog):
             final_display = 1
             payout = cost * 2
             final = f'\nYou won! Your payout is `{payout}` beans.'
-        elif result > (loss+doubling) and result <= (1-jackpot):
+        elif result > (loss+doubling) and result <= (loss+doubling+tripling):
             final_display = 2
             payout = cost * 3
             final = f'\nWow you got lucky! Your payout is `{payout}` beans.'
-        elif result > (1-jackpot) and result <= 1:
+        elif result > (loss+doubling+tripling) and result <= (1-jackpot):
             final_display = 3
             payout = cost * 10
+            final = f'\BIG WIN! Your payout is `{payout}` beans.'
+        elif result > (1-jackpot) and result <= 1:
+            final_display = 4
+            payout = cost * 100
             final = f'\nJACKPOT!!! Your payout is `{payout}` beans.'
         
         display = display_values[0]
