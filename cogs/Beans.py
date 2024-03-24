@@ -53,6 +53,8 @@ class Beans(commands.Cog):
         if not await self.__check_enabled(interaction):
             return 
         
+        await interaction.response.defer()
+        
         guild_id = interaction.guild_id
         user_id = interaction.user.id
         
