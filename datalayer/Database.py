@@ -692,9 +692,9 @@ class Database():
         
         rows = self.__query_select(command, task)
         if not rows or len(rows) < 1:
-            return 0 
-        
-        return rows[0][f'SUM({self.BEANS_EVENT_VALUE_COL})']
+            return 0
+        output = rows[0][f'SUM({self.BEANS_EVENT_VALUE_COL})']
+        return output if output is not None else 0
     
     def get_last_beans_event_date(self, guild_id: int, user_id: int, type: BeansEventType) -> int:
         command = f'''
