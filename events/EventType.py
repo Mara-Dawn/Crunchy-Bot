@@ -6,3 +6,4 @@ class EventType(str, Enum):
     TIMEOUT = 'timeout'
     QUOTE = 'quote'
     SPAM = 'spam'
+    BEANS = 'beans'

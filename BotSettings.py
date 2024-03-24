@@ -32,6 +32,18 @@ class BotSettings():
     JAIL_BASE_CRIT_RATE_KEY = "base_crit_rate"
     JAIL_BASE_CRIT_MOD_KEY = "base_crit_mod"
     JAIL_MOD_ROLES_KEY = "moderator_roles"
+    
+    BEANS_SUBSETTINGS_KEY = "beans"
+    BEANS_ENABLED_KEY = "beans_enabled"
+    BEANS_CHANNELS_KEY = "beans_channels"
+    BEANS_DAILY_MIN = "beans_daily_min"
+    BEANS_DAILY_MAX = "beans_daily_max"
+    BEANS_GAMBA_COST = "beans_gamba_amount"
+    BEANS_GAMBA_COOLDOWN = "beans_gamba_cooldown"
+    BEANS_GAMBA_COOLDOWN = "beans_gamba_cooldown"
+    
+    SHOP_SUBSETTINGS_KEY = "shop"
+    SHOP_ENABLED_KEY = "shop_enabled"
 
     def __init__(self, bot: commands.Bot, database: Database, logger: BotLogger):
         self.logger = logger
@@ -62,9 +74,22 @@ class BotSettings():
         jail_settings.add_setting(self.JAIL_BASE_CRIT_RATE_KEY, 0.2, "Chance to critically hit a fart etc")
         jail_settings.add_setting(self.JAIL_BASE_CRIT_MOD_KEY, 2, "Crit Multiplier")
         
+        beans_settings = ModuleSettings(self.BEANS_SUBSETTINGS_KEY, "Beans")
+        beans_settings.add_setting(self.BEANS_ENABLED_KEY, True, "Module Enabled")
+        beans_settings.add_setting(self.BEANS_CHANNELS_KEY, [], "Channels for bean commands", "handle_channels_value")
+        beans_settings.add_setting(self.BEANS_DAILY_MIN, 10, "Mininum amount of daily beans granted to users")
+        beans_settings.add_setting(self.BEANS_DAILY_MAX, 25, "Maximum amount of daily beans granted to users")
+        beans_settings.add_setting(self.BEANS_GAMBA_COST, 10, "Amount of beans spent on each gamba attempt")
+        beans_settings.add_setting(self.BEANS_GAMBA_COOLDOWN, 10, "Amount of minutes between gamba attempts")
+        
+        shop_settings = ModuleSettings(self.SHOP_SUBSETTINGS_KEY, "Beans Shop")
+        shop_settings.add_setting(self.SHOP_ENABLED_KEY, True, "Module Enabled")
+        
         self.settings = GuildSettings()
         self.settings.add_module(police_settings)
         self.settings.add_module(jail_settings)
+        self.settings.add_module(beans_settings)
+        self.settings.add_module(shop_settings)
         
     def __update_setting(self, guild: int, cog: str, key: str, value) -> None:
         self.database.update_setting(guild, cog, key, value)
@@ -276,3 +301,55 @@ class BotSettings():
         if role not in roles: roles.remove(role)
         self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles)
     
+    # Beans Settings
+    
+    def get_beans_enabled(self, guild: int) -> bool:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY)
+    
+    def set_beans_enabled(self, guild: int, enabled: bool) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY, enabled)
+        
+    def get_beans_daily_min(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN)
+    
+    def set_beans_daily_min(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN, amount)
+        
+    def get_beans_daily_max(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX)
+    
+    def set_beans_daily_max(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX, amount)
+        
+    def get_beans_gamba_cost(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COST)
+    
+    def set_beans_gamba_cost(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COST, amount)
+        
+    def get_beans_gamba_cooldown(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN)
+    
+    def set_beans_gamba_cooldown(self, guild: int, minutes: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN, minutes)
+    
+    def get_beans_channels(self, guild: int) -> List[int]:
+        return [int(x) for x in self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY)]
+
+    def add_beans_channel(self, guild: int, channel: int) -> None:
+        channels = self.get_beans_channels(guild)
+        if channel not in channels: channels.append(channel)
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY, channels)
+        
+    def remove_beans_channel(self, guild: int, channel: int) -> None:
+        channels = self.get_beans_channels(guild)
+        if channel in channels: channels.remove(channel)
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY, channels)
+    
+    # Shop Settings
+    
+    def get_shop_enabled(self, guild: int) -> bool:
+        return self.__get_setting(guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY)
+    
+    def set_shop_enabled(self, guild: int, enabled: bool) -> None:
+        self.__update_setting(guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY, enabled)

@@ -47,7 +47,7 @@ class Quotes(commands.Cog):
         
         self.event_manager.dispatch_quote_event(message.created_at, guild_id, quote_id)
         response = f'<@{message.author.id}> Your message {message.jump_url} was deemed quote worthy by <@{interaction.user.id}> and will be saved for the future.'
-        await self.bot.response(self.__cog_name__, interaction, response, 'quote', interaction.user.display_name, message.author.display_name)
+        await self.bot.response(self.__cog_name__, interaction, response, 'quote', args=[interaction.user.display_name, message.author.display_name])
     
     @commands.Cog.listener()
     async def on_ready(self):

@@ -61,11 +61,11 @@ class JailSettingsModal(discord.ui.Modal, title='Jail Settings'):
         
         if len(error) != 0:
             message = f'Illegal values: {', '.join([f'{key}({value})' for key, value in error.items()])}'
-            await self.bot.response('Jail', interaction, message, self.command, *values.values())
+            await self.bot.response('Jail', interaction, message, self.command, args=values.values())
             return
         
         if values['Fart minimum'] > values['Fart maximum'] :
-            await self.bot.response('Jail', interaction, f'Fart minimum must be smaller than Fart maximum.', self.command, *values.values())
+            await self.bot.response('Jail', interaction, f'Fart minimum must be smaller than Fart maximum.', self.command, args=values.values())
             return
             
         self.settings.set_jail_slap_time(interaction.guild_id, int(values['Slap time']))
@@ -74,4 +74,4 @@ class JailSettingsModal(discord.ui.Modal, title='Jail Settings'):
         self.settings.set_jail_fart_max(interaction.guild_id, int(values['Fart maximum']))
         self.settings.set_jail_base_crit_rate(interaction.guild_id, float(values['Base Crit Rate']))
         
-        await self.bot.response('Jail', interaction, f'Settings were successfully updated.', self.command, *values.values())
+        await self.bot.response('Jail', interaction, f'Settings were successfully updated.', self.command, args=values.values())

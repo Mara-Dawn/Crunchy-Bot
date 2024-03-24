@@ -27,7 +27,7 @@ class SpamEvent(BotEvent):
         
         return SpamEvent(
             timestamp = datetime.datetime.fromtimestamp(row[Database.EVENT_TIMESTAMP_COL]),
-            guild_id = row[Database.EVEN_GUILD_ID_COL],
+            guild_id = row[Database.EVENT_GUILD_ID_COL],
             member = row[Database.SPAM_EVENT_MEMBER_COL],
             event_id = row[Database.EVENT_ID_COL]
         )

@@ -4,10 +4,10 @@ import discord
 
 from discord.ext import tasks, commands
 from discord import app_commands
-from typing import Dict, Literal
+from typing import Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
-from BotUtil import BotUtil, Tenor
+from BotUtil import BotUtil
 from MaraBot import MaraBot
 from datalayer.Database import Database
 from datalayer.UserJail import UserJail
@@ -24,60 +24,7 @@ class Jail(commands.Cog):
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Slap',
-            callback=self.slap_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Pet',
-            callback=self.pet_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Fart',
-            callback=self.fart_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Slap',
-            callback=self.slap_msg_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Pet',
-            callback=self.pet_msg_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-        
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Fart',
-            callback=self.fart_msg_context_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
-    
-    async def slap_context_menu(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.SLAP)
-    
-    async def pet_context_menu(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.PET)
 
-    async def fart_context_menu(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.FART)
-    
-    async def slap_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
-        await self.__user_command_interaction(interaction, message.author, UserInteraction.SLAP)
-    
-    async def pet_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
-        await self.__user_command_interaction(interaction, message.author, UserInteraction.PET)
-
-    async def fart_msg_context_menu(self, interaction: discord.Interaction, message: discord.Message):
-        await self.__user_command_interaction(interaction, message.author, UserInteraction.FART)
     
     async def __has_permission(interaction: discord.Interaction) -> bool:
         author_id = 90043934247501824
@@ -88,6 +35,13 @@ class Jail(commands.Cog):
         roles = self.settings.get_jail_mod_roles(interaction.guild_id)
         is_mod = len(set([x.id for x in interaction.user.roles]).intersection(roles)) > 0
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator or is_mod
+    
+    async def __check_enabled(self, interaction: discord.Interaction):
+        guild_id = interaction.guild_id
+        if not self.settings.get_jail_enabled(guild_id):
+            await self.bot.command_response(self.__cog_name__, interaction, f'Jail module is currently disabled.')
+            return False
+        return True
     
     def __get_already_used_msg(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
         match type:
@@ -106,45 +60,10 @@ class Jail(commands.Cog):
                 return f'User {user.display_name} already recieved pats from {interaction.user.display_name}. No extra time will be added.'
             case UserInteraction.FART:
                 return f'User {user.display_name} already enjoyed {interaction.user.display_name}\'s farts. No extra time will be added.'
-    
-    def __get_response(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
-        match type:
-            case UserInteraction.SLAP:
-                return f'<@{user.id}> was slapped by <@{interaction.user.id}>!'
-            case UserInteraction.PET:
-                return f'<@{user.id}> recieved pets from <@{interaction.user.id}>!'
-            case UserInteraction.FART:
-                return f'<@{user.id}> was farted on by <@{interaction.user.id}>!'
-    
-    async def __get_response_embed(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
-        search = ''
-        match type:
-            case UserInteraction.SLAP:
-                search = 'bitchslap'
-            case UserInteraction.PET:
-                search = f'headpats'
-            case UserInteraction.FART:
-                search = f'fart'
-        
-        token = open(self.bot.TENOR_TOKEN_FILE,"r").readline()
-        g = Tenor(token=token)
-        gif = await g.random(tag=search)
-        embed = discord.Embed(color=discord.Colour.purple())
-        embed.set_image(url=gif)
-        
-        return embed
-    
-    async def __user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
+ 
+    async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction) -> str:
         command = interaction.command
         guild_id = interaction.guild_id
-        invoker = interaction.user
-        
-        await interaction.response.defer()
-                
-        self.event_manager.dispatch_interaction_event(interaction.created_at, guild_id, command_type, invoker.id, user.id)
-        
-        log_message = f'{interaction.user.name} used command `{command.name}` on {user.name}.'
-        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         
         affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
         
@@ -152,10 +71,7 @@ class Jail(commands.Cog):
         jail_channels = self.settings.get_jail_channels(guild_id)
         
         if not(len(affected_jails) > 0 and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels):
-            embed = await self.__get_response_embed(command_type, interaction, user)
-            await interaction.channel.send(self.__get_response(command_type, interaction, user))
-            await interaction.followup.send(embed=embed)
-            return
+            return ''
         
         affected_jail = affected_jails[0]
         
@@ -163,14 +79,9 @@ class Jail(commands.Cog):
         
         if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
             self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
-            embed = await self.__get_response_embed(command_type, interaction, user)
-            await interaction.channel.send(self.__get_already_used_msg(command_type, interaction, user))
-            await interaction.followup.send(embed=embed)
-            return
+            return self.__get_already_used_msg(command_type, interaction, user)
 
-        response = self.__get_response(command_type, interaction, user)
-        
-        response += '\n'
+        response = '\n'
         amount = 0
         
         match command_type:
@@ -213,9 +124,7 @@ class Jail(commands.Cog):
             remaining = self.event_manager.get_jail_remaining(affected_jail)
             response += f'`{BotUtil.strfdelta(remaining, inputtype='minutes')}` still remain.'
 
-        embed = await self.__get_response_embed(command_type, interaction, user)
-        await interaction.channel.send(response)
-        await interaction.followup.send(embed=embed)
+        return response
         
     async def jail_user(self, guild_id: int, jailed_by_id: int, user: discord.Member, duration: int) -> bool:
         active_jails = self.database.get_active_jails_by_guild(guild_id)
@@ -333,33 +242,6 @@ class Jail(commands.Cog):
         self.jail_check.start()
         
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
-
-    @app_commands.command(name="slap", description="Slap someone.")
-    @app_commands.describe(
-        user='Slap this bitch.',
-        )
-    @app_commands.guild_only()
-    @app_commands.checks.cooldown(1, 10)
-    async def slap(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.SLAP)
-    
-    @app_commands.command(name="pet", description='Give someone a pat.')
-    @app_commands.describe(
-        user='Give them a pat.',
-        )
-    @app_commands.guild_only()
-    @app_commands.checks.cooldown(1, 10)
-    async def pet(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.PET)
-
-    @app_commands.command(name="fart", description='Fart on someone.')
-    @app_commands.describe(
-        user='Fart on this user.',
-        )
-    @app_commands.guild_only()
-    @app_commands.checks.cooldown(1, 10)
-    async def fart(self, interaction: discord.Interaction, user: discord.Member):
-        await self.__user_command_interaction(interaction, user, UserInteraction.FART)
     
     @app_commands.command(name="jail", description='Jail a user.')
     @app_commands.describe(
@@ -371,12 +253,15 @@ class Jail(commands.Cog):
         if not self.__has_mod_permission(interaction):
             raise app_commands.MissingPermissions([])
         
+        if not await self.__check_enabled(interaction):
+            return
+        
         guild_id = interaction.guild_id
         
         success = await self.jail_user(guild_id, interaction.user.id, user, duration)
         
         if not success:
-            await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} is already in jail.', user.name, duration)
+            await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} is already in jail.', user.name, args=[duration])
             return
         
         timestamp_now = int(datetime.datetime.now().timestamp())
@@ -384,7 +269,7 @@ class Jail(commands.Cog):
         
         await interaction.channel.send(f'<@{user.id}> was sentenced to Jail by <@{interaction.user.id}> . They will be released <t:{release}:R>.', delete_after=(duration*60))
         
-        await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} jailed successfully.', user.name, duration)
+        await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} jailed successfully.', user.name, args=[duration])
 
     @app_commands.command(name="release", description='Resease a user from jail.')
     @app_commands.describe(
@@ -395,24 +280,27 @@ class Jail(commands.Cog):
         if not self.__has_mod_permission(interaction):
             raise app_commands.MissingPermissions([])
         
+        if not await self.__check_enabled(interaction):
+            return
+        
         guild_id = interaction.guild_id
         jail_role = self.settings.get_jail_role(guild_id)
         
         if user.get_role(jail_role) is None:
-            await self.bot.command_response(self.__cog_name__, interaction, f'User {user.display_name} is currently not in jail.', user)
+            await self.bot.command_response(self.__cog_name__, interaction, f'User {user.display_name} is currently not in jail.', args=[user])
             return
             
         response = await self.release_user(guild_id, interaction.user.id, user)
         
         if not response:
-            await self.bot.command_response(self.__cog_name__, interaction, f'Something went wrong, user {user.display_name} could not be released.', user)
+            await self.bot.command_response(self.__cog_name__, interaction, f'Something went wrong, user {user.display_name} could not be released.', args=[user])
             return
         
         response = f'<@{user.id}> was released from Jail by <@{interaction.user.id}>. ' + response
 
         await interaction.channel.send(response)
         
-        await self.bot.command_response(self.__cog_name__, interaction, f'User {user.display_name} released successfully.', user)
+        await self.bot.command_response(self.__cog_name__, interaction, f'User {user.display_name} released successfully.', args=[user])
 
     group = app_commands.Group(name="degenjail", description="Subcommands for the Jail module.")
 
@@ -423,46 +311,46 @@ class Jail(commands.Cog):
         await self.bot.command_response(self.__cog_name__, interaction, output)
     
     @group.command(name="toggle", description="Enable or disable the entire jail module.")
-    @app_commands.describe(enabled='Turns the police module on or off.')
+    @app_commands.describe(enabled='Turns the jail module on or off.')
     @app_commands.check(__has_permission)
-    async def set_toggle(self, interaction: discord.Interaction, enabled: Literal['on', 'off']):
+    async def set_toggle(self, interaction: discord.Interaction, enabled: Literal['on', 'off']): 
         self.settings.set_jail_enabled(interaction.guild_id, enabled == "on")
-        await self.bot.command_response(self.__cog_name__, interaction, f'Police module was turned {enabled}.', enabled)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Jail module was turned {enabled}.', args=[enabled])
     
     @group.command(name="add_channel", description='Enable jail interactions for a channel.')
     @app_commands.describe(channel='The jail channel.')
     @app_commands.check(__has_permission)
     async def add_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         self.settings.add_jail_channel(interaction.guild_id, channel.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Added {channel.name} to jail channels.', channel.name)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Added {channel.name} to jail channels.', args=[channel.name])
         
     @group.command(name="remove_channel", description='Disable jail interactions for a channel.')
     @app_commands.describe(channel='Removes this channel from the jail channels.')
     @app_commands.check(__has_permission)
     async def remove_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         self.settings.remove_jail_channel(interaction.guild_id, channel.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Removed {channel.name} from jail channels.', channel.name)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Removed {channel.name} from jail channels.', args=[channel.name])
     
     @group.command(name="add_mod_role", description='Add jail privileges to a role.')
     @app_commands.describe(role='This role will be allowed to jail users.')
     @app_commands.check(__has_permission)
     async def add_mod_role(self, interaction: discord.Interaction, role: discord.Role):
         self.settings.add_jail_mod_role(interaction.guild_id, role.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Added {role.name} to jail moderators.', role.name)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Added {role.name} to jail moderators.', args=[role.name])
         
     @group.command(name="remove_mod_role", description='Remove jail privileges from a role.')
     @app_commands.describe(role='Removes role from jail mods.')
     @app_commands.check(__has_permission)
     async def remove_mod_role(self, interaction: discord.Interaction, role: discord.Role):
         self.settings.remove_jail_mod_role(interaction.guild_id, role.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Removed {role.name} from jail moderators.', role.name)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Removed {role.name} from jail moderators.', args=[role.name])
     
     @group.command(name="set_jailed_role", description="Sets the role for jailed people.")
     @app_commands.describe(role='The role for jailed users.')
     @app_commands.check(__has_permission)
     async def set_jailed_role(self, interaction: discord.Interaction, role: discord.Role):
         self.settings.set_jail_role(interaction.guild_id, role.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Jail role was set to `{role.name}` .', role.name)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Jail role was set to `{role.name}` .', args=[role.name])
 
     
     @group.command(name="setup", description="Opens a dialog to edit various jail settings.")
