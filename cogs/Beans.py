@@ -71,13 +71,13 @@ class Beans(commands.Cog):
             last_gamba_beans_date = datetime.datetime.fromtimestamp(last_gamba_beans_date)
             
             delta = current_date - last_gamba_beans_date
-            delta_minutes = delta.total_seconds()/60
-            cooldown = self.settings.get_beans_gamba_cooldown(guild_id)
+            delta_seconds = delta.total_seconds()
+            cooldown = self.settings.get_beans_gamba_cooldown(guild_id)*60
 
-            if delta_minutes <= cooldown:
-                remaining = cooldown - delta_minutes
+            if delta_seconds <= cooldown:
+                remaining = cooldown - delta_seconds
                 
-                await self.bot.command_response(self.__cog_name__, interaction, f'Gamba is on cooldown. Try again in {BotUtil.strfdelta(remaining, inputtype='minutes')}', ephemeral=False)
+                await self.bot.command_response(self.__cog_name__, interaction, f'Gamba is on cooldown. Try again in {BotUtil.strfdelta(remaining, inputtype='seconds')}', ephemeral=False)
                 return
         
         self.event_manager.dispatch_beans_event(

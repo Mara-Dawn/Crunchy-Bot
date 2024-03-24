@@ -123,6 +123,10 @@ class Interactions(commands.Cog):
         await interaction.channel.send(response)
         await interaction.followup.send(embed=embed)
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
+    
     @app_commands.command(name="slap", description="Slap someone.")
     @app_commands.describe(
         user='Slap this bitch.',
