@@ -99,8 +99,8 @@ class Beans(commands.Cog):
         
         payout = 0
         
-        loss = 0.44
-        doubling = 0.45
+        loss = 0.65
+        doubling = 0.24
         tripling = 0.1
         jackpot = 0.01 #x10
         
