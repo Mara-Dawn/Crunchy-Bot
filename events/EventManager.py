@@ -9,6 +9,8 @@ from datalayer.Database import Database
 from datalayer.UserInteraction import UserInteraction
 from datalayer.UserRankings import UserRankings
 from datalayer.UserStats import UserStats
+from events.BeansEvent import BeansEvent
+from events.BeansEventType import BeansEventType
 from events.InteractionEvent import InteractionEvent
 from events.JailEvent import JailEvent
 from events.JailEventType import JailEventType
@@ -79,6 +81,17 @@ class EventManager():
         event = QuoteEvent(timestamp, guild_id, quote_id)
         self.database.log_event(event)
         self.logger.log(guild_id, f'Quote event was logged.', self.log_name)
+        
+    def dispatch_beans_event(self,
+        timestamp: datetime.datetime, 
+        guild_id: int,
+        beans_event_type: BeansEventType,
+        member: int,
+        value: int,
+    ):
+        event = BeansEvent(timestamp, guild_id, beans_event_type, member, value)
+        self.database.log_event(event)
+        self.logger.log(guild_id, f'Beans event `{beans_event_type}` was logged.', self.log_name)
     
     def get_jail_duration(self, jail: UserJail) -> int:
         events = self.database.get_jail_events_by_jail(jail.get_id())

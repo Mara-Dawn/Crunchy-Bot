@@ -7,6 +7,8 @@ from sqlite3 import Error
 from BotLogger import BotLogger
 from datalayer.UserJail import UserJail
 from datalayer.Quote import Quote
+from events.BeansEvent import BeansEvent
+from events.BeansEventType import BeansEventType
 from events.BotEvent import BotEvent
 from events.EventType import EventType
 from events.InteractionEvent import InteractionEvent
@@ -61,13 +63,13 @@ class Database():
     EVENT_TABLE = 'events'
     EVENT_ID_COL = 'evnt_id'
     EVENT_TIMESTAMP_COL = 'evnt_timestamp'
-    EVEN_GUILD_ID_COL = 'evnt_guild_id'
+    EVENT_GUILD_ID_COL = 'evnt_guild_id'
     EVENT_TYPE_COL = 'evnt_type'
     CREATE_EVENT_TABLE = f'''
     CREATE TABLE if not exists {EVENT_TABLE} (
         {EVENT_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT, 
         {EVENT_TIMESTAMP_COL} INTEGER,
-        {EVEN_GUILD_ID_COL} INTEGER,
+        {EVENT_GUILD_ID_COL} INTEGER,
         {EVENT_TYPE_COL} TEXT
     );'''
     
@@ -156,6 +158,20 @@ class Database():
         PRIMARY KEY ({QUOTE_EVENT_ID_COL})
     );'''
     
+    BEANS_EVENT_TABLE = 'beansevents'
+    BEANS_EVENT_ID_COL = 'bnev_id'
+    BEANS_EVENT_MEMBER_COL = 'bnev_member'
+    BEANS_EVENT_TYPE_COL = 'bnev_type'
+    BEANS_EVENT_VALUE_COL = 'bnev_value'
+    CREATE_BEANS_EVENT_TABLE = f'''
+    CREATE TABLE if not exists {BEANS_EVENT_TABLE} (
+        {BEANS_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {BEANS_EVENT_MEMBER_COL} INTEGER, 
+        {BEANS_EVENT_TYPE_COL} TEXT,
+        {BEANS_EVENT_VALUE_COL} INTEGER,
+        PRIMARY KEY ({BEANS_EVENT_ID_COL})
+    );'''
+    
     def __init__(self, logger: BotLogger, db_file: str):
         
         self.conn = None
@@ -177,6 +193,7 @@ class Database():
             c.execute(self.CREATE_TIMEOUT_EVENT_TABLE)
             c.execute(self.CREATE_SPAM_EVENT_TABLE)
             c.execute(self.CREATE_QUOTE_EVENT_TABLE)
+            c.execute(self.CREATE_BEANS_EVENT_TABLE)
             c.close()
             
         except Error as e:
@@ -264,7 +281,7 @@ class Database():
         command = f'''
                 INSERT INTO {self.EVENT_TABLE} (
                 {self.EVENT_TIMESTAMP_COL}, 
-                {self.EVEN_GUILD_ID_COL}, 
+                {self.EVENT_GUILD_ID_COL}, 
                 {self.EVENT_TYPE_COL}) 
                 VALUES (?, ?, ?);
             '''
@@ -333,6 +350,19 @@ class Database():
         
         return self.__query_insert(command, task)
     
+    def __create_beans_event(self, event_id: int, event: BeansEvent) -> int:
+        command = f'''
+            INSERT INTO {self.BEANS_EVENT_TABLE} (
+            {self.BEANS_EVENT_ID_COL},
+            {self.BEANS_EVENT_MEMBER_COL},
+            {self.BEANS_EVENT_TYPE_COL},
+            {self.BEANS_EVENT_VALUE_COL})
+            VALUES (?, ?, ?, ?);
+        '''
+        task = (event_id, event.get_member(), event.get_beans_event_type(), event.get_value())
+        
+        return self.__query_insert(command, task)
+    
     def log_event(self, event: BotEvent) -> int:
         event_id = self.__create_base_event(event)
         
@@ -351,6 +381,8 @@ class Database():
                 return self.__create_quote_event(event_id, event)
             case EventType.SPAM:
                 return self.__create_spam_event(event_id, event)
+            case EventType.BEANS:
+                return self.__create_beans_event(event_id, event)
                 
     def log_quote(self, quote: Quote) -> int:
         command = f'''
@@ -563,7 +595,7 @@ class Database():
         command = f'''
             SELECT * FROM {self.TIMEOUT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
-            WHERE {self.EVENT_TABLE}.{self.EVEN_GUILD_ID_COL} = {int(guild_id)};
+            WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = {int(guild_id)};
         '''
         rows = self.__query_select(command)
         if not rows: 
@@ -585,7 +617,7 @@ class Database():
         command = f'''
             SELECT * FROM {self.SPAM_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.SPAM_EVENT_TABLE}.{self.SPAM_EVENT_ID_COL}
-            WHERE {self.EVENT_TABLE}.{self.EVEN_GUILD_ID_COL} = {int(guild_id)};
+            WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = {int(guild_id)};
         '''
         rows = self.__query_select(command)
         if not rows: 
@@ -618,7 +650,7 @@ class Database():
         command = f'''
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
-            WHERE {self.EVENT_TABLE}.{self.EVEN_GUILD_ID_COL} = {int(guild_id)};
+            WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = {int(guild_id)};
         '''
         rows = self.__query_select(command)
         if not rows: 
@@ -648,3 +680,35 @@ class Database():
         if not rows: 
             return None
         return Quote.from_db_row(rows[0])
+
+    def get_member_beans(self, guild_id: int, user_id: int) -> int:
+        command = f'''
+            SELECT SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
+            WHERE {self.BEANS_EVENT_MEMBER_COL} = ?
+            AND {self.EVENT_GUILD_ID_COL} = ?;
+        '''
+        task = (user_id, guild_id)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return 0 
+        
+        return rows[0][f'SUM({self.BEANS_EVENT_VALUE_COL})']
+    
+    def get_last_beans_event_date(self, guild_id: int, user_id: int, type: BeansEventType) -> int:
+        command = f'''
+            SELECT * FROM {self.BEANS_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
+            WHERE {self.BEANS_EVENT_MEMBER_COL} = ?
+            AND {self.EVENT_GUILD_ID_COL} = ?
+            AND {self.BEANS_EVENT_TYPE_COL} = ?
+            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
+        '''
+        task = (user_id, guild_id, type)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return None
+        
+        return rows[0][f'{self.EVENT_TIMESTAMP_COL}']

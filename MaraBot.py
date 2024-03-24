@@ -1,3 +1,4 @@
+from typing import Any, List
 import discord
 
 from discord.ext import commands
@@ -25,6 +26,7 @@ class MaraBot(commands.Bot):
         await self.load_extension("cogs.Interactions")
         await self.load_extension("cogs.Statistics")
         await self.load_extension("cogs.Quotes")
+        await self.load_extension("cogs.Beans")
         
     async def on_guild_join(self, guild):
         self.logger.log(guild.id,  "new guild registered.")
@@ -32,10 +34,10 @@ class MaraBot(commands.Bot):
     async def on_guild_remove(self, guild):
         self.logger.log(guild.id, "guild removed.")
     
-    async def command_response(self, module: str,  interaction: discord.Interaction, message: str, *args) -> None:
-        return await self.response(module, interaction, message, interaction.command.name, *args)
+    async def command_response(self, module: str,  interaction: discord.Interaction, message: str, args: List[Any] = [], ephemeral: bool = True) -> None:
+        return await self.response(module, interaction, message, interaction.command.name, args, ephemeral)
     
-    async def response(self, module: str,  interaction: discord.Interaction, message: str, command: str, *args) -> None:
+    async def response(self, module: str,  interaction: discord.Interaction, message: str, command: str, args: List[Any] = [], ephemeral: bool = True) -> None:
         log_message = f'{interaction.user.name} used command `{command}`.'
         
         if len(args) > 0: 
@@ -45,9 +47,9 @@ class MaraBot(commands.Bot):
         
         try:
             if not interaction.response.is_done():
-                await interaction.response.send_message(message, ephemeral=True) 
+                await interaction.response.send_message(message, ephemeral=ephemeral) 
             else:
-                await interaction.followup.send(message, ephemeral=True) 
+                await interaction.followup.send(message, ephemeral=ephemeral) 
         except discord.errors.InteractionResponded:
-            await interaction.followup.send(message, ephemeral=True) 
+            await interaction.followup.send(message, ephemeral=ephemeral) 
     

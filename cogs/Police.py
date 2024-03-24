@@ -276,7 +276,7 @@ class Police(commands.Cog):
         naughty_list = self.user_list[interaction.guild_id]
         
         if naughty_list.has_user(user.id) and naughty_list.get_user(user.id).is_in_timeout():
-            await self.bot.command_response(self.__cog_name__, interaction, "User already in timeout.")
+            await self.bot.command_response(self.__cog_name__, interaction, "User already in timeout.", args=[user.name, duration])
         
         if not naughty_list.has_user(user.id):
                 message_limit = self.settings.get_police_message_limit(interaction.guild_id)
@@ -284,28 +284,28 @@ class Police(commands.Cog):
                 naughty_list.add_user(user.id, message_limit)
         
         self.bot.loop.create_task(self.timeout_task(interaction.channel, user, duration))
-        await self.bot.command_response(self.__cog_name__, interaction, "User timed out successfully.", user.name, duration)
+        await self.bot.command_response(self.__cog_name__, interaction, "User timed out successfully.", args=[user.name, duration])
     
     @group.command(name="toggle", description="Enable or disable the entire police module.")
     @app_commands.describe(enabled='Turns the police module on or off.')
     @app_commands.check(__has_permission)
     async def set_toggle(self, interaction: discord.Interaction, enabled: Literal['on', 'off']):
         self.settings.set_police_enabled(interaction.guild_id, enabled == "on")
-        await self.bot.command_response(self.__cog_name__, interaction, f'Police module was turned {enabled}.', enabled)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Police module was turned {enabled}.', args=[enabled])
     
     @group.command(name="add_role", description="Add roles to be monitored by spam detection.")
     @app_commands.describe(role='The role that shall be tracked for spam detection.')
     @app_commands.check(__has_permission)
     async def add_role(self, interaction: discord.Interaction, role: discord.Role):
         self.settings.add_police_naughty_role(interaction.guild_id, role.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Added {role.name} to the list of active roles.', role)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Added {role.name} to the list of active roles.', args=[role])
         
     @group.command(name="remove_role", description="Remove roles from spam detection.")
     @app_commands.describe(role='Remove spam detection from this role.')
     @app_commands.check(__has_permission)
     async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
         self.settings.remove_police_naughty_role(interaction.guild_id, role.id)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Removed {role.name} from active roles.', role)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Removed {role.name} from active roles.', args=[role])
     
     @group.command(name="untrack_channel", description="Stop tracking spam in specific channels.")
     @app_commands.describe(channel='Stop tracking spam for this channel.')
@@ -314,7 +314,7 @@ class Police(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         self.settings.add_police_exclude_channel(interaction.guild_id, channel.id)
         await self.__reload_timeout_role(interaction.guild)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Stopping spam detection in {channel.name}.', channel)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Stopping spam detection in {channel.name}.', args=[channel])
         
     @group.command(name="track_channel", description='Reenable tracking spam for specific channels.')
     @app_commands.describe(channel='Reenable tracking spam for this channel.')
@@ -323,7 +323,7 @@ class Police(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         self.settings.remove_police_exclude_channel(interaction.guild_id, channel.id)
         await self.__reload_timeout_role(interaction.guild)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Resuming spam detection in {channel.name}.', channel)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Resuming spam detection in {channel.name}.', args=[channel])
     
     @group.command(name="setup", description="Opens a dialog to edit various police settings.")
     @app_commands.check(__has_permission)
@@ -349,7 +349,7 @@ class Police(commands.Cog):
     async def set_message(self, interaction: discord.Interaction, message: str):
 
         self.settings.set_police_timeout_notice(interaction.guild_id, message)
-        await self.bot.command_response(self.__cog_name__, interaction, f'Timeout warning set to:\n `{message}`', message)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Timeout warning set to:\n `{message}`', args=[message])
     
 async def setup(bot):
     await bot.add_cog(Police(bot))

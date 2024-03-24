@@ -32,6 +32,14 @@ class BotSettings():
     JAIL_BASE_CRIT_RATE_KEY = "base_crit_rate"
     JAIL_BASE_CRIT_MOD_KEY = "base_crit_mod"
     JAIL_MOD_ROLES_KEY = "moderator_roles"
+    
+    BEANS_SUBSETTINGS_KEY = "beans"
+    BEANS_ENABLED_KEY = "beans_enabled"
+    BEANS_DAILY_MIN = "beans_daily_min"
+    BEANS_DAILY_MAX = "beans_daily_max"
+    BEANS_GAMBA_COST = "beans_gamba_amount"
+    BEANS_GAMBA_COOLDOWN = "beans_gamba_cooldown"
+    BEANS_GAMBA_COOLDOWN = "beans_gamba_cooldown"
 
     def __init__(self, bot: commands.Bot, database: Database, logger: BotLogger):
         self.logger = logger
@@ -62,9 +70,17 @@ class BotSettings():
         jail_settings.add_setting(self.JAIL_BASE_CRIT_RATE_KEY, 0.2, "Chance to critically hit a fart etc")
         jail_settings.add_setting(self.JAIL_BASE_CRIT_MOD_KEY, 2, "Crit Multiplier")
         
+        beans_settings = ModuleSettings(self.BEANS_SUBSETTINGS_KEY, "Beans")
+        beans_settings.add_setting(self.BEANS_ENABLED_KEY, True, "Module Enabled")
+        beans_settings.add_setting(self.BEANS_DAILY_MIN, 5, "Mininum amount of daily beans granted to users")
+        beans_settings.add_setting(self.BEANS_DAILY_MAX, 15, "Maximum amount of daily beans granted to users")
+        beans_settings.add_setting(self.BEANS_GAMBA_COST, 10, "Amount of beans spent on each gamba attempt")
+        beans_settings.add_setting(self.BEANS_GAMBA_COOLDOWN, 60, "Amount of minutes between gamba attempts")
+        
         self.settings = GuildSettings()
         self.settings.add_module(police_settings)
         self.settings.add_module(jail_settings)
+        self.settings.add_module(beans_settings)
         
     def __update_setting(self, guild: int, cog: str, key: str, value) -> None:
         self.database.update_setting(guild, cog, key, value)
@@ -276,3 +292,34 @@ class BotSettings():
         if role not in roles: roles.remove(role)
         self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles)
     
+    # Beans Settings
+    
+    def get_beans_enabled(self, guild: int) -> bool:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY)
+    
+    def set_beans_enabled(self, guild: int, enabled: bool) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY, enabled)
+        
+    def get_beans_daily_min(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN)
+    
+    def set_beans_daily_min(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN, amount)
+        
+    def get_beans_daily_max(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX)
+    
+    def set_beans_daily_max(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX, amount)
+        
+    def get_beans_gamba_cost(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COST)
+    
+    def set_beans_gamba_cost(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COST, amount)
+        
+    def get_beans_gamba_cooldown(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN)
+    
+    def set_beans_gamba_cooldown(self, guild: int, minutes: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN, minutes)

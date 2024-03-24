@@ -54,7 +54,7 @@ class PoliceSettingsModal(discord.ui.Modal, title='Police Settings'):
         
         if len(error) != 0:
             message = f'Illegal values: {', '.join([f'{key}({value})' for key, value in error.items()])}\nPlease only use positive integers.'
-            await self.bot.response('Police', interaction, message, *values.values())
+            await self.bot.response('Police', interaction, message, args=values.values())
             return
         
         values = {key: int(value) for (key, value) in values.items()}
@@ -66,4 +66,4 @@ class PoliceSettingsModal(discord.ui.Modal, title='Police Settings'):
         self.settings.set_police_timeouts_before_jail(interaction.guild_id, values['Timeouts before jail'])
         self.settings.set_police_timeout_jail_duration(interaction.guild_id, values['Jail duration'])
         
-        await self.bot.response('Police', interaction, f'Settings were successfully updated.', self.command, *values.values())
+        await self.bot.response('Police', interaction, f'Settings were successfully updated.', self.command, args=values.values())
