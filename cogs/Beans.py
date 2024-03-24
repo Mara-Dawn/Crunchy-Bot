@@ -125,7 +125,7 @@ class Beans(commands.Cog):
         elif result > (loss+doubling+tripling) and result <= (1-jackpot):
             final_display = 3
             payout = cost * 10
-            final = f'\BIG WIN! Your payout is `{payout}` beans.'
+            final = f'\nBIG WIN! Your payout is `{payout}` beans.'
         elif result > (1-jackpot) and result <= 1:
             final_display = 4
             payout = cost * 100
