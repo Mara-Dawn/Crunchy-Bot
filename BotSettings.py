@@ -12,7 +12,7 @@ class BotSettings():
     POLICE_SUBSETTINGS_KEY = "police"
     POLICE_ENABLED_KEY = "police_enabled"
     POLICE_NAUGHTY_ROLES_KEY = "naughty_roles"
-    POLICE_TIMEOUT_KEY = "timeout"
+    POLICE_TIMEOUT_LENGTH_KEY = "timeout"
     POLICE_TIMEOUT_NOTICE_KEY = "timeout_notice"
     POLICE_MESSAGE_LIMIT_KEY = "message_limit"
     POLICE_MESSAGE_LIMIT_INTERVAL_KEY = "message_limit_interval"
@@ -54,7 +54,7 @@ class BotSettings():
         police_settings = ModuleSettings(self.POLICE_SUBSETTINGS_KEY, "Police")
         police_settings.add_setting(self.POLICE_ENABLED_KEY, True, "Module Enabled")
         police_settings.add_setting(self.POLICE_NAUGHTY_ROLES_KEY, [], "Roles affected by rate limiting", "handle_roles_value")
-        police_settings.add_setting(self.POLICE_TIMEOUT_KEY, 60, "Timeout length in seconds")
+        police_settings.add_setting(self.POLICE_TIMEOUT_LENGTH_KEY, 60, "Timeout length in seconds")
         police_settings.add_setting(self.POLICE_TIMEOUT_NOTICE_KEY, "Stop spamming, bitch!", "Message sent to timed out users")
         police_settings.add_setting(self.POLICE_MESSAGE_LIMIT_KEY, 4, "Number of messages before timeout")
         police_settings.add_setting(self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY, 10, "Interval for counting messages before timeout")
@@ -69,16 +69,16 @@ class BotSettings():
         jail_settings.add_setting(self.JAIL_MOD_ROLES_KEY, [], "Roles with permission to jail people", "handle_roles_value")
         jail_settings.add_setting(self.JAIL_SLAP_TIME_KEY, 5, "Time increase for each slap in minutes")
         jail_settings.add_setting(self.JAIL_PET_TIME_KEY, 5, "Time reduction for each pet in minutes")
-        jail_settings.add_setting(self.JAIL_FART_TIME_MIN_KEY, -10, "Minimum amount of time change from farting in minutes")
-        jail_settings.add_setting(self.JAIL_FART_TIME_MAX_KEY, 20, "Maximum amount of time change from farting in minutes")
+        jail_settings.add_setting(self.JAIL_FART_TIME_MIN_KEY, -10, "Minimum time change from farting in minutes")
+        jail_settings.add_setting(self.JAIL_FART_TIME_MAX_KEY, 20, "Maximum time change from farting in minutes")
         jail_settings.add_setting(self.JAIL_BASE_CRIT_RATE_KEY, 0.2, "Chance to critically hit a fart etc")
         jail_settings.add_setting(self.JAIL_BASE_CRIT_MOD_KEY, 2, "Crit Multiplier")
         
         beans_settings = ModuleSettings(self.BEANS_SUBSETTINGS_KEY, "Beans")
         beans_settings.add_setting(self.BEANS_ENABLED_KEY, True, "Module Enabled")
         beans_settings.add_setting(self.BEANS_CHANNELS_KEY, [], "Channels for bean commands", "handle_channels_value")
-        beans_settings.add_setting(self.BEANS_DAILY_MIN, 10, "Mininum amount of daily beans granted to users")
-        beans_settings.add_setting(self.BEANS_DAILY_MAX, 25, "Maximum amount of daily beans granted to users")
+        beans_settings.add_setting(self.BEANS_DAILY_MIN, 10, "Mininum daily beans granted to users")
+        beans_settings.add_setting(self.BEANS_DAILY_MAX, 25, "Maximum daily beans granted to users")
         beans_settings.add_setting(self.BEANS_GAMBA_COST, 10, "Amount of beans spent on each gamba attempt")
         beans_settings.add_setting(self.BEANS_GAMBA_COOLDOWN, 10, "Amount of minutes between gamba attempts")
         
@@ -101,6 +101,19 @@ class BotSettings():
             return result
         
         return self.settings.get_default_setting(cog, key)
+    
+    def get_setting_title(self, cog: str, key: str):
+        result = self.settings.get_module(cog)
+
+        if result is None:
+             return None
+        
+        module = result.get_setting(key)
+
+        if module is None:
+            return None
+        
+        return module.get_title()
     
     def handle_roles_value(self, guild_id: int, roles: List[int]) -> str:
         return " " + ", ".join([self.handle_role_value(guild_id, id) for id in roles]) + " "
@@ -183,10 +196,10 @@ class BotSettings():
         self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
     
     def get_police_timeout(self, guild: int) -> int:
-        return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_KEY))
+        return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_LENGTH_KEY))
     
     def set_police_timeout(self, guild: int, timeout: int) -> None:
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_KEY, timeout)
+        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_LENGTH_KEY, timeout)
     
     def get_police_timeout_notice(self, guild: int) -> str:
         return self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_NOTICE_KEY)
