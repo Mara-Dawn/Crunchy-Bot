@@ -696,6 +696,22 @@ class Database():
         output = rows[0][f'SUM({self.BEANS_EVENT_VALUE_COL})']
         return output if output is not None else 0
     
+    def get_guild_beans(self, guild_id: int) -> Dict[int, int]:
+        command = f'''
+            SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
+            AND {self.EVENT_GUILD_ID_COL} = {int(guild_id)}
+            GROUP BY {self.BEANS_EVENT_MEMBER_COL};
+        '''
+        
+        rows = self.__query_select(command)
+        if not rows or len(rows) < 1:
+            return {}
+        
+        output = { row[self.BEANS_EVENT_MEMBER_COL]: row[f'SUM({self.BEANS_EVENT_VALUE_COL})'] for row in rows }
+        
+        return output
+    
     def get_last_beans_event_date(self, guild_id: int, user_id: int, type: BeansEventType) -> int:
         command = f'''
             SELECT * FROM {self.BEANS_EVENT_TABLE} 
