@@ -44,7 +44,6 @@ class JailSettingsModal(discord.ui.Modal, title='Jail Settings'):
                 except ValueError:
                     errors.append(text_input)
                 
-                
         if len(errors) != 0:
             message = f'Illegal values:\n{', \n'.join([f'{text_input.label}({text_input.value})' for text_input in errors])}'
             await self.bot.response('Jail', interaction, message, self.command, args=[input.label for input in text_inputs])
