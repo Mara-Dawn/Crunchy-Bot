@@ -12,3 +12,4 @@ class RankingType(int, Enum):
     JAIL_TOTAL = 8
     JAIL_COUNT = 9
     SPAM_SCORE = 10
+    BEANS = 11
