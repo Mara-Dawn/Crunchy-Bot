@@ -4,6 +4,7 @@ from datalayer.ModuleSettings import ModuleSettings
 from datalayer.GuildSettings import GuildSettings
 from BotLogger import BotLogger
 from discord.ext import commands
+from shop.ItemType import ItemType
 
 class BotSettings():
 
@@ -19,7 +20,6 @@ class BotSettings():
     POLICE_EXCLUDED_CHANNELS_KEY = "untracked_channels"
     POLICE_TIMEOUTS_BEFORE_JAIL_KEY = "timeouts_before_jail"
     POLICE_TIMEOUT_JAIL_DURATION_KEY = "timeout_jail_duration"
-    
     
     JAIL_SUBSETTINGS_KEY = "jail"
     JAIL_ENABLED_KEY = "jail_enabled"
@@ -353,3 +353,9 @@ class BotSettings():
     
     def set_shop_enabled(self, guild: int, enabled: bool) -> None:
         self.__update_setting(guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY, enabled)
+        
+    def get_shop_item_price(self, guild: int, item_type: ItemType) -> int:
+        return self.__get_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type)
+    
+    def set_shop_item_price(self, guild: int, item_type: ItemType, amount: int) -> None:
+        self.__update_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type, amount)

@@ -6,6 +6,7 @@ from BotLogger import BotLogger
 from BotSettings import BotSettings
 from datalayer.Database import Database
 from events.EventManager import EventManager
+from shop.ItemManager import ItemManager
 
 class MaraBot(commands.Bot):
     
@@ -21,12 +22,14 @@ class MaraBot(commands.Bot):
         self.database = Database(self.logger, self.DB_FILE)
         self.settings = BotSettings(self,self.database, self.logger)
         self.event_manager = EventManager(self, self.settings, self.database, self.logger)
+        self.item_manager = ItemManager(self, self.settings, self.logger)
         await self.load_extension("cogs.Police")
         await self.load_extension("cogs.Jail")
         await self.load_extension("cogs.Interactions")
         await self.load_extension("cogs.Statistics")
         await self.load_extension("cogs.Quotes")
         await self.load_extension("cogs.Beans")
+        await self.load_extension("cogs.Shop")
         
     async def on_guild_join(self, guild):
         self.logger.log(guild.id,  "new guild registered.")

@@ -23,5 +23,8 @@ class GuildSettings():
             return None
         
         module_settings = self.settings[module]
+        module_setting = module_settings.get_setting(setting)
+        if module_setting is None:
+            return None
         
-        return module_settings.get_setting(setting).get_default()
+        return module_setting.get_default()

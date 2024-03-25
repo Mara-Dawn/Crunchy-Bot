@@ -102,11 +102,11 @@ class Beans(commands.Cog):
         
         payout = 0
         
-        loss = 0.60
-        doubling = 0.29
-        tripling = 0.1
-        tenfold = 0.009
-        jackpot = 0.001 #x10
+        loss = 0.60 
+        doubling = 0.29 
+        tripling = 0.1 
+        tenfold = 0.009 
+        jackpot = 0.001 
         
         # -1 * 0.60 + 1 * 0.29 + 2 * 0.1 + 9 * 0.009 + 99 * 0.001
         result = random.random()

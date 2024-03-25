@@ -2,7 +2,8 @@ import discord
 
 from BotUtil import BotUtil
 from MaraBot import MaraBot
-from datalayer.UserRankings import UserRankings
+from shop.Item import Item
+from shop.ItemType import ItemType
 from view.RankingType import RankingType
 
 class ShopEmbed(discord.Embed):
@@ -28,15 +29,21 @@ class ShopEmbed(discord.Embed):
             description='Spend your hard earned beans here!'
         )
         
-        # leaderbord_msg = ''
-        # data = user_rankings.get_rankings(type)
-        # rank = 1
-        # for (id, amount) in data:
-        #     leaderbord_msg += f'**{rank}.** {BotUtil.get_name(bot, interaction.guild_id, id, 100)} `{amount}`\n'
-        #     rank += 1
-        #     if rank == 30:
-        #         break
+        self.item_manager = bot.item_manager
+        items = [x.value for x in ItemType]
         
-        self.add_field(name="Test", value='asdf')
-        self.set_image(url="attachment://jail_wide.png")
+        self.add_field(name='', value='', inline=False)
+        max_len = 49
+        for item_name in items:
+            item: Item = self.item_manager.get_item(interaction.guild_id, item_name)
+            
+            title = f'> ~*  {item.get_name()}  *~'
+            description = item.get_description()
+            cost = f'🅱️{item.get_cost()}'
+            spacing = max_len - len(cost)
+            info_block = f'```{description}\n\n{' '*spacing}{cost}```'
+            
+            self.add_field(name=title, value=info_block, inline=False)
+            
+        self.set_image(url="attachment://shop.png")
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")
