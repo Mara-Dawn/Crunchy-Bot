@@ -7,3 +7,4 @@ class EventType(str, Enum):
     QUOTE = 'quote'
     SPAM = 'spam'
     BEANS = 'beans'
+    INVENTORY = 'inventory'

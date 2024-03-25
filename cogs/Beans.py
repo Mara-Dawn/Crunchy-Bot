@@ -90,7 +90,7 @@ class Beans(commands.Cog):
             -cost
         )
         
-        response = f'You paid {cost} beans to gamba.'
+        response = f'You paid `{cost}` beans to gamba.'
         
         display_values = [
             '\n**0x**',

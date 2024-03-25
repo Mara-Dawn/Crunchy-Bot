@@ -11,14 +11,15 @@ class FartCrit(Item):
         cost: int|None
     ):
         name = 'Critical Fart'
-        type = ItemType.FART_BOOST
+        type = ItemType.FART_CRIT
         description = 'Guarantees a crit on your next fart.'
         defaultcost = 60
+        emoji = '🤢'
         
         if cost is None:
             cost = defaultcost
         
-        super().__init__(name, type , description, cost)
+        super().__init__(name, type, description, emoji, cost)
     
         def handle() -> None:
             pass

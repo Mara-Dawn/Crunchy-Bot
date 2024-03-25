@@ -58,9 +58,10 @@ class Shop(commands.Cog):
         
         shop_img = discord.File("./img/shop.png", "shop.png")
         police_img = discord.File("./img/police.png", "police.png")
+        items = self.item_manager.get_items(interaction.guild_id)
         
-        embed = ShopEmbed(self.bot, interaction)
-        view = ShopMenu(self.bot, interaction)
+        embed = ShopEmbed(self.bot, interaction, items)
+        view = ShopMenu(self.bot, interaction, items)
         
         await interaction.followup.send("",embed=embed, view=view, files=[shop_img, police_img])
     

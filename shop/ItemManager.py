@@ -1,3 +1,4 @@
+from typing import List
 from discord.ext import commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
@@ -21,3 +22,11 @@ class ItemManager():
         instance = item(self.settings.get_shop_item_price(guild_id, type))
         
         return instance
+    
+    def get_items(self, guild_id: int) -> List[Item]:
+        items = [x.value for x in ItemType]
+        output = []
+        for item_type in items:
+            output.append(self.get_item(guild_id, item_type))
+            
+        return output

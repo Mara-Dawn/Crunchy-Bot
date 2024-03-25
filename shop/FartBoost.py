@@ -14,11 +14,11 @@ class FartBoost(Item):
         type = ItemType.FART_BOOST
         description = 'Multiplies the power of your next fart by 3.'
         defaultcost = 100
+        emoji = '3️⃣'
         
         if cost is None:
             cost = defaultcost
-        
-        super().__init__(name, type , description, cost)
+        super().__init__(name, type, description, emoji, cost)
     
         def handle() -> None:
             pass
