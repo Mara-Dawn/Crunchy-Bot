@@ -38,6 +38,7 @@ class Dropdown(discord.ui.Select):
     
     def __init__(self):
         options = [
+            discord.SelectOption(label=RankingEmbed.TITLES[RankingType.BEANS], description='Who is the biggest beaner?', emoji='🅱️', value=RankingType.BEANS),
             discord.SelectOption(label=RankingEmbed.TITLES[RankingType.SPAM_SCORE], description='Who is the biggest spammer?', emoji='📢', value=RankingType.SPAM_SCORE),
             discord.SelectOption(label=RankingEmbed.TITLES[RankingType.SLAP], description='Who slapped the most users?', emoji='✋', value=RankingType.SLAP),
             discord.SelectOption(label=RankingEmbed.TITLES[RankingType.PET], description='Who petted the most users?', emoji='🥰', value=RankingType.PET),

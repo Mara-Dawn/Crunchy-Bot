@@ -8,6 +8,7 @@ class UserRankings():
         self.slap_list: Dict[int, int] = {}
         self.pet_list: Dict[int, int] = {}
         self.fart_list: Dict[int, int] = {}
+        self.beans_list: Dict[int, int] = {}
         
         self.slap_reciever_list: Dict[int, int] = {}
         self.pet_reciever_list: Dict[int, int] = {}
@@ -47,6 +48,9 @@ class UserRankings():
     
     def set_spam_data(self, spam_scores: Dict[int, int]):
         self.spam_scores = spam_scores
+        
+    def set_beans_data(self, beans_balances: Dict[int, int]):
+        self.beans_list = beans_balances
     
     
     def get_rankings(self, type: RankingType) -> List[Tuple]:
@@ -77,3 +81,5 @@ class UserRankings():
                 return sorted(self.jail_count.items(), key=lambda item: item[1], reverse=True)
             case RankingType.SPAM_SCORE:
                 return sorted(self.spam_scores.items(), key=lambda item: item[1], reverse=True)
+            case RankingType.BEANS:
+                return sorted(self.beans_list.items(), key=lambda item: item[1], reverse=True)

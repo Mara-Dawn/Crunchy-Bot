@@ -323,5 +323,9 @@ class EventManager():
             BotUtil.dict_append(spam_count, member_id, 1)
             
         user_rankings.set_spam_data(spam_count)
+
+        guild_beans_balances = self.database.get_guild_beans(guild_id)
+
+        user_rankings.set_beans_data(guild_beans_balances)
         
         return user_rankings
