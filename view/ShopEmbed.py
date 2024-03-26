@@ -13,15 +13,8 @@ class ShopEmbed(discord.Embed):
             description='Spend your hard earned beans here!'
         )
         
-        max_len = 49
         for item in items:
-            title = f'> ~*  {item.get_name()}  *~'
-            description = item.get_description()
-            cost = f'🅱️{item.get_cost()}'
-            spacing = max_len - len(cost)
-            info_block = f'```{description}\n\n{' '*spacing}{cost}```'
-            
-            self.add_field(name=title, value=info_block, inline=False)
+            item.add_to_embed(self)
             
         self.set_image(url="attachment://shop.png")
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")

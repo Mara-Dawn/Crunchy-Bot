@@ -62,7 +62,7 @@ class ShopMenu(discord.ui.View):
         log_message = f'{interaction.user.display_name} bought {item.get_name()} for {item.get_cost()} beans.'
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
         
-        success_message = f'You successfully bought one **{item.get_name()}** for `{item.get_cost()}` beans.'
+        success_message = f'You successfully bought one **{item.get_name()}** for `🅱️{item.get_cost()}` beans. Remaining balance: `🅱️{user_balance - item.get_cost()}`'
         await interaction.response.send_message(success_message, ephemeral=True)
 
     async def set_selected(self, interaction: discord.Interaction, item_type: ItemType):

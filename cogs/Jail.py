@@ -14,6 +14,8 @@ from datalayer.UserJail import UserJail
 from datalayer.UserInteraction import UserInteraction
 from events.EventManager import EventManager
 from events.JailEventType import JailEventType
+from shop.ItemGroup import ItemGroup
+from shop.ItemManager import ItemManager
 from view.JailSettingsModal import JailSettingsModal
 
 class Jail(commands.Cog):
@@ -24,6 +26,7 @@ class Jail(commands.Cog):
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
+        self.item_manager: ItemManager = bot.item_manager
 
     
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -60,7 +63,44 @@ class Jail(commands.Cog):
                 return f'User {user.display_name} already recieved pats from {interaction.user.display_name}. No extra time will be added.'
             case UserInteraction.FART:
                 return f'User {user.display_name} already enjoyed {interaction.user.display_name}\'s farts. No extra time will be added.'
- 
+    
+    def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction):
+        
+        modifier_items = self.item_manager.get_user_items_activated(
+            interaction.guild_id, 
+            interaction.user.id, 
+            ItemGroup.VALUE_MODIFIER,
+            command_type
+        )
+
+        response = ''
+        item_modifier = 1
+        auto_crit = False
+        
+        if len(modifier_items) != 0:
+            item_modifier = 0
+            for item in modifier_items:
+                item_modifier += item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
+                response += f'* {item.get_name()}\n'
+
+        crit_items = self.item_manager.get_user_items_activated(
+            interaction.guild_id, 
+            interaction.user.id, 
+            ItemGroup.AUTO_CRIT,
+            command_type
+        )
+        
+        for item in crit_items:
+            auto_crit = auto_crit or item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+            self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
+            response += f'* {item.get_name()}\n'
+
+        if response != '':
+            response = '__Items used:__\n' + response
+        
+        return response, item_modifier, auto_crit
+    
     async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction) -> str:
         command = interaction.command
         guild_id = interaction.guild_id
@@ -94,13 +134,21 @@ class Jail(commands.Cog):
                 max_amount = self.settings.get_jail_fart_max(interaction.guild_id)
                 amount = random.randint(min_amount, max_amount)
         
+        additional_infos = ''
+        item_info, item_modifier, auto_crit = self.__get_item_modifiers(interaction, command_type)
+        response += item_info
+        
+        if item_modifier != 1:
+            additional_infos = f' ({amount} * {item_modifier})'
+        
         remaining = self.event_manager.get_jail_remaining(affected_jail)
+        amount = int(amount * item_modifier)
         amount = max(amount, -int(remaining+1))
         
         crit_mod = self.settings.get_jail_base_crit_mod(interaction.guild_id)
         crit_rate = self.settings.get_jail_base_crit_rate(interaction.guild_id)
         
-        is_crit = random.random() <= crit_rate
+        is_crit = (random.random() <= crit_rate) or auto_crit
         
         if is_crit:
             response += f'**CRITICAL HIT!!!** '
@@ -114,9 +162,9 @@ class Jail(commands.Cog):
                 response +=  f'Something went wrong, user {user.display_name} could not be released.'
         else:
             if amount >= 0:
-                response += f'Their jail sentence was increased by `{amount}` minutes. '
+                response += f'Their jail sentence was increased by `{amount}{additional_infos}` minutes. '
             elif amount < 0: 
-                response += f'Their jail sentence was reduced by `{abs(amount)}` minutes. '
+                response += f'Their jail sentence was reduced by `{abs(amount)}{additional_infos}` minutes. '
             
             time_now = datetime.datetime.now()
             self.event_manager.dispatch_jail_event(time_now, guild_id, command.name, interaction.user.id, amount, affected_jail.get_id())
@@ -261,7 +309,7 @@ class Jail(commands.Cog):
         success = await self.jail_user(guild_id, interaction.user.id, user, duration)
         
         if not success:
-            await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} is already in jail.', user.name, args=[duration])
+            await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} is already in jail.', args=[user.name, duration])
             return
         
         timestamp_now = int(datetime.datetime.now().timestamp())
@@ -269,7 +317,7 @@ class Jail(commands.Cog):
         
         await interaction.channel.send(f'<@{user.id}> was sentenced to Jail by <@{interaction.user.id}> . They will be released <t:{release}:R>.', delete_after=(duration*60))
         
-        await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} jailed successfully.', user.name, args=[duration])
+        await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} jailed successfully.', args=[user.name, duration])
 
     @app_commands.command(name="release", description='Resease a user from jail.')
     @app_commands.describe(

@@ -22,7 +22,7 @@ class MaraBot(commands.Bot):
         self.database = Database(self.logger, self.DB_FILE)
         self.settings = BotSettings(self,self.database, self.logger)
         self.event_manager = EventManager(self, self.settings, self.database, self.logger)
-        self.item_manager = ItemManager(self, self.settings, self.logger)
+        self.item_manager = ItemManager(self, self.settings, self.database, self.event_manager, self.logger)
         await self.load_extension("cogs.Police")
         await self.load_extension("cogs.Jail")
         await self.load_extension("cogs.Interactions")
