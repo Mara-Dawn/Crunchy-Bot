@@ -17,7 +17,10 @@ from shop.SlapBoost import SlapBoost
 from shop.BonusFart import BonusFart
 from shop.BonusPet import BonusPet
 from shop.BonusSlap import BonusSlap
-from shop.TriggerItem import TriggerItem
+from shop.GigaFart import GigaFart
+from shop.FartStabilizer import FartStabilizer
+
+
 
 class ItemManager():
 

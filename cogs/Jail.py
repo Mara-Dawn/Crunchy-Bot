@@ -76,6 +76,7 @@ class Jail(commands.Cog):
         response = ''
         item_modifier = 1
         auto_crit = False
+        stabilized = False
         
         if len(modifier_items) != 0:
             item_modifier = 0
@@ -98,9 +99,24 @@ class Jail(commands.Cog):
             if auto_crit:
                 break
         
-        return response, item_modifier, auto_crit
+        stabilizer_item = self.item_manager.get_user_items_activated(
+            interaction.guild_id, 
+            interaction.user.id, 
+            ItemGroup.STABILIZER,
+            command_type
+        )
+
+        if len(stabilizer_item) != 0:
+            for item in stabilizer_item:
+                stabilized = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
+                response += f'* {item.get_name()}\n'
+                if stabilized:
+                    break
+        
+        return response, item_modifier, auto_crit, stabilized
     
-    def __get_item_bonus_attemt(self, interaction: discord.Interaction, command_type: UserInteraction):
+    def __get_item_bonus_attempt(self, interaction: discord.Interaction, command_type: UserInteraction):
         
         bonus_attempt_item = self.item_manager.get_user_items_activated(
             interaction.guild_id, 
@@ -141,7 +157,7 @@ class Jail(commands.Cog):
         
         if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name):# and not self.__has_mod_permission(interaction):
             
-            bonus_item_info, bonus_attempt = self.__get_item_bonus_attemt(interaction, command_type)
+            bonus_item_info, bonus_attempt = self.__get_item_bonus_attempt(interaction, command_type)
             item_info += bonus_item_info
             
             if not bonus_attempt:
@@ -151,18 +167,19 @@ class Jail(commands.Cog):
         response = '\n'
         amount = 0
         
+        modifier_item_info, item_modifier, auto_crit, stabilized = self.__get_item_modifiers(interaction, command_type)
+        
         match command_type:
             case UserInteraction.SLAP:
                 amount = self.settings.get_jail_slap_time(interaction.guild_id)
             case UserInteraction.PET:
                 amount = -self.settings.get_jail_pet_time(interaction.guild_id)
             case UserInteraction.FART:
-                min_amount = self.settings.get_jail_fart_min(interaction.guild_id)
+                min_amount = (0 if stabilized else self.settings.get_jail_fart_min(interaction.guild_id))
                 max_amount = self.settings.get_jail_fart_max(interaction.guild_id)
                 amount = random.randint(min_amount, max_amount)
         
-        modifier_item_info, item_modifier, auto_crit = self.__get_item_modifiers(interaction, command_type)
-       
+
         item_info += modifier_item_info
         if item_info != '':
             item_info = '__Items used:__\n' + item_info

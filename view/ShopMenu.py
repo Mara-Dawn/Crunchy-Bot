@@ -10,8 +10,6 @@ from view.ShopEmbed import ShopEmbed
 
 class ShopMenu(discord.ui.View):
     
-    ITEMS_PER_PAGE = 4
-    
     def __init__(self, bot: MaraBot, interaction: discord.Interaction, items: List[Item]):
         self.interaction = interaction
         self.bot = bot
@@ -19,21 +17,20 @@ class ShopMenu(discord.ui.View):
         self.item_manager = bot.item_manager
         self.database = bot.database
         self.logger = bot.logger
+        self.current_page = 0
+        self.selected: ItemType = None
         super().__init__(timeout=200)
         self.items = items
         self.items.sort(key=lambda x:x.get_cost())
-        
         self.item_count = len(self.items)
-        self.page_count = int(self.item_count / self.ITEMS_PER_PAGE) + (self.item_count % self.ITEMS_PER_PAGE > 0)
+        self.page_count = int(self.item_count / ShopEmbed.ITEMS_PER_PAGE) + (self.item_count % ShopEmbed.ITEMS_PER_PAGE > 0)
         
-        self.add_item(Dropdown(items[:self.ITEMS_PER_PAGE]))
-        self.add_item(PageButton("<", False))
-        self.add_item(BuyButton())
-        self.add_item(PageButton(">", True))
-        self.add_item(CurrentPageButton(f'Page 1/{self.page_count}'))
-        self.selected: ItemType = None
-        self.current_page = 0
-
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+        user_balance = self.database.get_member_beans(guild_id, member_id)
+        
+        self.refresh_ui(user_balance)
+        
     async def buy(self, interaction: discord.Interaction):
         if not await self.interaction_check(interaction):
             return
@@ -72,25 +69,42 @@ class ShopMenu(discord.ui.View):
         log_message = f'{interaction.user.display_name} bought {item.get_name()} for {item.get_cost()} beans.'
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
         
-        success_message = f'You successfully bought one **{item.get_name()}** for `🅱️{item.get_cost()}` beans. Remaining balance: `🅱️{user_balance - item.get_cost()}`'
+        new_user_balance = self.database.get_member_beans(guild_id, member_id)
+        success_message = f'You successfully bought one **{item.get_name()}** for `🅱️{item.get_cost()}` beans. Remaining balance: `🅱️{new_user_balance}`'
+        
         await interaction.response.send_message(success_message, ephemeral=True)
+        self.refresh_ui(new_user_balance)
+        
+        #await interaction.original_response().edit_message(view=self)
+        await interaction.message.edit(view=self)
 
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         
         self.current_page = (self.current_page +(1 if right else -1)) % self.page_count
-        start = self.ITEMS_PER_PAGE * self.current_page
-        end = min((start + self.ITEMS_PER_PAGE), self.item_count)
+        start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
+        end = min((start + ShopEmbed.ITEMS_PER_PAGE), self.item_count)
         
+        embed = ShopEmbed(self.bot, interaction, self.items, start)
+
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+        user_balance = self.database.get_member_beans(guild_id, member_id)
+        
+        self.refresh_ui(user_balance)
+        
+        await interaction.response.edit_message(embed=embed, view=self)
+    
+    def refresh_ui(self, user_balance: int):
+        start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
+        end = min((start + ShopEmbed.ITEMS_PER_PAGE), self.item_count)
         page_display = f'Page {self.current_page + 1}/{self.page_count}'
-        
-        embed = ShopEmbed(self.bot, interaction, self.items[start:end])
         self.clear_items()
-        self.add_item(Dropdown(self.items[start:end]))
+        self.add_item(Dropdown(self.items[start:end], self.selected))
         self.add_item(PageButton("<", False))
         self.add_item(BuyButton())
         self.add_item(PageButton(">", True))
         self.add_item(CurrentPageButton(page_display))
-        await interaction.response.edit_message(embed=embed, view=self)
+        self.add_item(BalanceButton(user_balance))
     
     async def set_selected(self, interaction: discord.Interaction, item_type: ItemType):
         self.selected = item_type
@@ -135,11 +149,23 @@ class CurrentPageButton(discord.ui.Button):
     
     def __init__(self, label: str):
         super().__init__(label=label, style=discord.ButtonStyle.grey, row=1, disabled=True)
+        
+class BalanceButton(discord.ui.Button):
+    
+    def __init__(self, amount: int):
+        self.text = f'🅱️{amount}'
+        super().__init__(label=self.text, style=discord.ButtonStyle.blurple, row=1)
+    
+    async def callback(self, interaction: discord.Interaction):
+        view: ShopMenu = self.view
+        
+        if await view.interaction_check(interaction):
+            await interaction.response.send_message(f"Your current bean balance is `{self.text}`.", ephemeral=True)
     
 
 class Dropdown(discord.ui.Select):
     
-    def __init__(self, items: List[Item]):
+    def __init__(self, items: List[Item], selected: ItemType):
         
         options = []
         
@@ -148,7 +174,10 @@ class Dropdown(discord.ui.Select):
                 label=item.get_name(),
                 description='', 
                 emoji=item.get_emoji(), 
-                value=item.get_type())
+                value=item.get_type(),
+                default=(selected==item.get_type())
+            )
+            
             options.append(option)
 
         super().__init__(placeholder='Select an item.', min_values=1, max_values=1, options=options, row=0)

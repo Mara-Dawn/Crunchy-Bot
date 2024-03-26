@@ -41,7 +41,7 @@ class Item():
         return self.cost
     
     def add_to_embed(self, embed: discord.Embed, max_width: int, count: int=None) -> None:
-        title = f'> ~*  {self.get_name()}  *~'
+        title = f'> ~*  {self.get_emoji()} {self.get_name()} {self.get_emoji()}  *~'
         description = self.get_description()
         
         if len(description) < max_width:

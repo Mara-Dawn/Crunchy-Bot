@@ -8,3 +8,5 @@ class ItemType(str, Enum):
     BONUS_FART = 'BonusFart'
     BONUS_PET = 'BonusPet'
     BONUS_SLAP = 'BonusSlap'
+    GIGA_FART = 'GigaFart'
+    FART_STABILIZER = 'FartStabilizer'
