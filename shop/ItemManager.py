@@ -19,8 +19,7 @@ from shop.BonusPet import BonusPet
 from shop.BonusSlap import BonusSlap
 from shop.GigaFart import GigaFart
 from shop.FartStabilizer import FartStabilizer
-
-
+from shop.Fartvantage import Fartvantage
 
 class ItemManager():
 
@@ -47,7 +46,7 @@ class ItemManager():
             
         return output
     
-    def get_user_items_activated(self, guild_id: int, user_id: int, group: ItemGroup, action: UserInteraction) -> List[Item]:
+    def get_user_items_activated(self, guild_id: int, user_id: int, action: UserInteraction) -> List[Item]:
         inventory = self.database.get_inventory_by_user(guild_id, user_id)
         inventory_items = inventory.get_inventory_items()
         
@@ -57,12 +56,10 @@ class ItemManager():
             
             item = self.get_item(guild_id, item_type)
             
-            if item.get_group() != group:
-                continue
-            
             if not item.activated(action):
                 continue
             
             output.append(item)
         
         return output
+    

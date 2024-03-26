@@ -65,78 +65,39 @@ class Jail(commands.Cog):
                 return f'User {user.display_name} already enjoyed {interaction.user.display_name}\'s farts. No extra time will be added.'
     
     def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction):
-        
-        modifier_items = self.item_manager.get_user_items_activated(
+        user_items = self.item_manager.get_user_items_activated(
             interaction.guild_id, 
             interaction.user.id, 
-            ItemGroup.VALUE_MODIFIER,
             command_type
         )
 
         response = ''
-        item_modifier = 1
+        item_modifier = 0
         auto_crit = False
         stabilized = False
-        
-        if len(modifier_items) != 0:
-            item_modifier = 0
-            for item in modifier_items:
-                item_modifier += item.use(self.event_manager, interaction.guild_id, interaction.user.id)
-                self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
-                response += f'* {item.get_name()}\n'
-
-        crit_items = self.item_manager.get_user_items_activated(
-            interaction.guild_id, 
-            interaction.user.id, 
-            ItemGroup.AUTO_CRIT,
-            command_type
-        )
-        
-        for item in crit_items:
-            auto_crit = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
-            self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
-            response += f'* {item.get_name()}\n'
-            if auto_crit:
-                break
-        
-        stabilizer_item = self.item_manager.get_user_items_activated(
-            interaction.guild_id, 
-            interaction.user.id, 
-            ItemGroup.STABILIZER,
-            command_type
-        )
-
-        if len(stabilizer_item) != 0:
-            for item in stabilizer_item:
-                stabilized = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
-                self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
-                response += f'* {item.get_name()}\n'
-                if stabilized:
-                    break
-        
-        return response, item_modifier, auto_crit, stabilized
-    
-    def __get_item_bonus_attempt(self, interaction: discord.Interaction, command_type: UserInteraction):
-        
-        bonus_attempt_item = self.item_manager.get_user_items_activated(
-            interaction.guild_id, 
-            interaction.user.id, 
-            ItemGroup.BONUS_ATTEMPT,
-            command_type
-        )
-
-        response = ''
+        advantage = False
         bonus_attempt = False
         
-        if len(bonus_attempt_item) != 0:
-            for item in bonus_attempt_item:
-                bonus_attempt = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
-                self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
-                response += f'* {item.get_name()}\n'
-                if bonus_attempt:
-                    break
-                
-        return response, bonus_attempt
+        for item in user_items:
+            match item.get_group():
+                case ItemGroup.VALUE_MODIFIER:
+                    item_modifier += item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                case ItemGroup.AUTO_CRIT:
+                    auto_crit = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                case ItemGroup.STABILIZER:
+                    stabilized = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                case ItemGroup.ADVANTAGE:
+                    advantage = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                case ItemGroup.BONUS_ATTEMPT:
+                    bonus_attempt = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                    
+            self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
+            response += f'* {item.get_name()}\n'
+        
+        if item_modifier == 0:
+            item_modifier = 1
+            
+        return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt
     
     async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction) -> str:
         command = interaction.command
@@ -155,19 +116,15 @@ class Jail(commands.Cog):
         
         self.logger.debug(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
         
+        modifier_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt = self.__get_item_modifiers(interaction, command_type)
+        
         if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name):# and not self.__has_mod_permission(interaction):
-            
-            bonus_item_info, bonus_attempt = self.__get_item_bonus_attempt(interaction, command_type)
-            item_info += bonus_item_info
-            
             if not bonus_attempt:
                 self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
                 return self.__get_already_used_msg(command_type, interaction, user)
 
         response = '\n'
         amount = 0
-        
-        modifier_item_info, item_modifier, auto_crit, stabilized = self.__get_item_modifiers(interaction, command_type)
         
         match command_type:
             case UserInteraction.SLAP:
@@ -178,8 +135,10 @@ class Jail(commands.Cog):
                 min_amount = (0 if stabilized else self.settings.get_jail_fart_min(interaction.guild_id))
                 max_amount = self.settings.get_jail_fart_max(interaction.guild_id)
                 amount = random.randint(min_amount, max_amount)
+                if advantage:
+                    amount_advantage = random.randint(min_amount, max_amount)
+                    amount = max(amount, amount_advantage)
         
-
         item_info += modifier_item_info
         if item_info != '':
             item_info = '__Items used:__\n' + item_info

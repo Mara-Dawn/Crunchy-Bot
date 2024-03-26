@@ -5,3 +5,4 @@ class ItemGroup(str, Enum):
     AUTO_CRIT = 'auto_crit'
     BONUS_ATTEMPT = 'bonus_attempt'
     STABILIZER = 'stabilizer'
+    ADVANTAGE = 'advantage'
