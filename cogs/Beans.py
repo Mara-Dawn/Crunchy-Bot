@@ -90,7 +90,7 @@ class Beans(commands.Cog):
             -cost
         )
         
-        response = f'You paid `{cost}` beans to gamba.'
+        response = f'You paid `🅱️{cost}` beans to gamba.'
         
         display_values = [
             '\n**0x**',
@@ -102,13 +102,13 @@ class Beans(commands.Cog):
         
         payout = 0
         
-        loss = 0.60 
-        doubling = 0.29 
-        tripling = 0.1 
-        tenfold = 0.009 
-        jackpot = 0.001 
+        loss = 0.50 
+        doubling = 0.33 
+        tripling = 0.15
+        tenfold = 0.019 
+        jackpot = 0.001
         
-        # -1 * 0.60 + 1 * 0.29 + 2 * 0.1 + 9 * 0.009 + 99 * 0.001
+        # (0.33*2)+(0.15*3)+(0.019*10)+(0.001*100)
         result = random.random()
         
         if result <= loss:
@@ -117,19 +117,19 @@ class Beans(commands.Cog):
         elif result > loss and result <= (loss+doubling):
             final_display = 1
             payout = cost * 2
-            final = f'\nYou won! Your payout is `{payout}` beans.'
+            final = f'\nYou won! Your payout is `🅱️{payout}` beans.'
         elif result > (loss+doubling) and result <= (loss+doubling+tripling):
             final_display = 2
             payout = cost * 3
-            final = f'\nWow you got lucky! Your payout is `{payout}` beans.'
+            final = f'\nWow you got lucky! Your payout is `🅱️{payout}` beans.'
         elif result > (loss+doubling+tripling) and result <= (1-jackpot):
             final_display = 3
             payout = cost * 10
-            final = f'\nBIG WIN! Your payout is `{payout}` beans.'
+            final = f'\nBIG WIN! Your payout is `🅱️{payout}` beans.'
         elif result > (1-jackpot) and result <= 1:
             final_display = 4
             payout = cost * 100
-            final = f'\nJACKPOT!!! Your payout is `{payout}` beans.'
+            final = f'\nJACKPOT!!! Your payout is `🅱️{payout}` beans.'
         
         display = display_values[0]
         await self.bot.command_response(self.__cog_name__, interaction, response, ephemeral=False)
@@ -137,7 +137,7 @@ class Beans(commands.Cog):
         message = await interaction.original_response()
         i = 0
         current = i
-        while i < 10 or current != final_display:
+        while i <= 10 or current != final_display:
             current = i % len(display_values)
             display = display_values[current]
             await asyncio.sleep((1/20)*i)
