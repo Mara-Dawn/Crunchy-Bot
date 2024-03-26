@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from datalayer.UserInteraction import UserInteraction
 from events.EventManager import EventManager
@@ -7,27 +7,25 @@ from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 
-class FartCrit(Item):
+class TriggerItem(Item):
 
     def __init__(
         self,
-        cost: int|None
+        name: str, 
+        type: ItemType,
+        group: ItemGroup,
+        description: str,
+        emoji: str,
+        cost: int,
+        trigger: List[UserInteraction],
+        value: Any
     ):
-        name = 'Critical Fart'
-        type = ItemType.FART_CRIT
-        group = ItemGroup.AUTO_CRIT
-        description = 'Guarantees a crit on your next fart.'
-        defaultcost = 60
-        emoji = '🤢'
-        self.trigger = UserInteraction.FART
-        
-        if cost is None:
-            cost = defaultcost
-        
+        self.trigger = trigger
+        self.value = value
         super().__init__(name, type, group, description, emoji, cost)
 
     def activated(self, action: UserInteraction):
-        return  action == self.trigger
+        return  action in self.trigger
     
     def use(self, event_manager: EventManager, guild_id: int, member_id: int):
         event_manager.dispatch_inventory_event(
@@ -39,6 +37,6 @@ class FartCrit(Item):
             -1
         )
         
-        return 1
+        return self.value
         
             

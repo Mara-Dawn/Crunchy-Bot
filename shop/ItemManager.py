@@ -1,4 +1,3 @@
-import datetime
 from typing import Any, List
 from discord.ext import commands
 from BotLogger import BotLogger
@@ -10,8 +9,15 @@ from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 
+# needed for global access
+from shop.AutoCrit import AutoCrit
 from shop.FartBoost import FartBoost
-from shop.FartCrit import FartCrit
+from shop.PetBoost import PetBoost
+from shop.SlapBoost import SlapBoost
+from shop.BonusFart import BonusFart
+from shop.BonusPet import BonusPet
+from shop.BonusSlap import BonusSlap
+from shop.TriggerItem import TriggerItem
 
 class ItemManager():
 
@@ -38,8 +44,6 @@ class ItemManager():
             
         return output
     
-    
-    
     def get_user_items_activated(self, guild_id: int, user_id: int, group: ItemGroup, action: UserInteraction) -> List[Item]:
         inventory = self.database.get_inventory_by_user(guild_id, user_id)
         inventory_items = inventory.get_inventory_items()
@@ -59,4 +63,3 @@ class ItemManager():
             output.append(item)
         
         return output
-    

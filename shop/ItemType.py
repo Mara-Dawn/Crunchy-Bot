@@ -1,5 +1,10 @@
 from enum import Enum
 
 class ItemType(str, Enum):
-    FART_CRIT = 'FartCrit'
+    AUTO_CRIT = 'AutoCrit'
     FART_BOOST = 'FartBoost'
+    PET_BOOST = 'PetBoost'
+    SLAP_BOOST = 'SlapBoost'
+    BONUS_FART = 'BonusFart'
+    BONUS_PET = 'BonusPet'
+    BONUS_SLAP = 'BonusSlap'

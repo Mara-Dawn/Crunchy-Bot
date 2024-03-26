@@ -1,9 +1,6 @@
-import datetime
-from typing import Any, Dict
-
 import discord
 
-from events.EventManager import EventManager
+from typing import Any, Dict
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 
@@ -43,16 +40,19 @@ class Item():
     def get_cost(self) -> int:
         return self.cost
     
-    def add_to_embed(self, embed: discord.Embed, count: int=None) -> None:
-        max_len = 49
+    def add_to_embed(self, embed: discord.Embed, max_width: int, count: int=None) -> None:
         title = f'> ~*  {self.get_name()}  *~'
         description = self.get_description()
         
+        if len(description) < max_width:
+            spacing = max_width - len(description)
+            description += ' '*spacing
+            
         if count is None:
             suffix = f'🅱️{self.get_cost()}'
         else:
             suffix = f'owned: {count}'
-        spacing = max_len - len(suffix)
+        spacing = max_width - len(suffix)
         info_block = f'```{description}\n\n{' '*spacing}{suffix}```'
         
         embed.add_field(name=title, value=info_block, inline=False)
@@ -60,5 +60,5 @@ class Item():
     def activated():
         pass
         
-    def use(self, event_manager: EventManager, guild_id: int, member_id: int):
+    def use():
         pass

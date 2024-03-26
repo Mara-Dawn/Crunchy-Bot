@@ -21,8 +21,7 @@ class InventoryEmbed(discord.Embed):
             self.add_field(name='', value="There is nothing here.", inline=False)
         
         for item_type, count in inventory_items.items():
-            
             item = self.item_manager.get_item(guild_id, item_type)
-            item.add_to_embed(self, count=count)
+            item.add_to_embed(self, 61, count=count)
             
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")

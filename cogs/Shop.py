@@ -30,9 +30,15 @@ class Shop(commands.Cog):
 
     async def __check_enabled(self, interaction: discord.Interaction):
         guild_id = interaction.guild_id
+        
         if not self.settings.get_shop_enabled(guild_id):
             await self.bot.command_response(self.__cog_name__, interaction, f'Beans shop module is currently disabled.')
             return False
+        
+        if interaction.channel_id not in self.settings.get_beans_channels(guild_id):
+            await self.bot.command_response(self.__cog_name__, interaction, f'Shop commands cannot be used in this channel.')
+            return False
+        
         return True
 
     @commands.Cog.listener()
@@ -53,7 +59,7 @@ class Shop(commands.Cog):
         police_img = discord.File("./img/police.png", "police.png")
         items = self.item_manager.get_items(interaction.guild_id)
         
-        embed = ShopEmbed(self.bot, interaction, items)
+        embed = ShopEmbed(self.bot, interaction, items[:ShopMenu.ITEMS_PER_PAGE])
         view = ShopMenu(self.bot, interaction, items)
         
         await interaction.followup.send("",embed=embed, view=view, files=[shop_img, police_img])

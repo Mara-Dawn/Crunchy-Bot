@@ -10,6 +10,8 @@ from view.ShopEmbed import ShopEmbed
 
 class ShopMenu(discord.ui.View):
     
+    ITEMS_PER_PAGE = 4
+    
     def __init__(self, bot: MaraBot, interaction: discord.Interaction, items: List[Item]):
         self.interaction = interaction
         self.bot = bot
@@ -17,14 +19,22 @@ class ShopMenu(discord.ui.View):
         self.item_manager = bot.item_manager
         self.database = bot.database
         self.logger = bot.logger
-        super().__init__(timeout=100)
+        super().__init__(timeout=200)
         self.items = items
-        self.add_item(Dropdown(items))
+        self.items.sort(key=lambda x:x.get_cost())
+        
+        self.item_count = len(self.items)
+        self.page_count = int(self.item_count / self.ITEMS_PER_PAGE) + (self.item_count % self.ITEMS_PER_PAGE > 0)
+        
+        self.add_item(Dropdown(items[:self.ITEMS_PER_PAGE]))
+        self.add_item(PageButton("<", False))
+        self.add_item(BuyButton())
+        self.add_item(PageButton(">", True))
+        self.add_item(CurrentPageButton(f'Page 1/{self.page_count}'))
         self.selected: ItemType = None
+        self.current_page = 0
 
-
-    @discord.ui.button(label='Buy', style=discord.ButtonStyle.green, row=1)
-    async def buy(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def buy(self, interaction: discord.Interaction):
         if not await self.interaction_check(interaction):
             return
         
@@ -65,6 +75,23 @@ class ShopMenu(discord.ui.View):
         success_message = f'You successfully bought one **{item.get_name()}** for `🅱️{item.get_cost()}` beans. Remaining balance: `🅱️{user_balance - item.get_cost()}`'
         await interaction.response.send_message(success_message, ephemeral=True)
 
+    async def flip_page(self, interaction: discord.Interaction, right: bool = False):
+        
+        self.current_page = (self.current_page +(1 if right else -1)) % self.page_count
+        start = self.ITEMS_PER_PAGE * self.current_page
+        end = min((start + self.ITEMS_PER_PAGE), self.item_count)
+        
+        page_display = f'Page {self.current_page + 1}/{self.page_count}'
+        
+        embed = ShopEmbed(self.bot, interaction, self.items[start:end])
+        self.clear_items()
+        self.add_item(Dropdown(self.items[start:end]))
+        self.add_item(PageButton("<", False))
+        self.add_item(BuyButton())
+        self.add_item(PageButton(">", True))
+        self.add_item(CurrentPageButton(page_display))
+        await interaction.response.edit_message(embed=embed, view=self)
+    
     async def set_selected(self, interaction: discord.Interaction, item_type: ItemType):
         self.selected = item_type
         await interaction.response.defer()
@@ -81,6 +108,35 @@ class ShopMenu(discord.ui.View):
         message = await self.interaction.original_response()
         await message.edit(view=None)
 
+class BuyButton(discord.ui.Button):
+    
+    def __init__(self):
+        super().__init__(label='Buy', style=discord.ButtonStyle.green, row=1)
+    
+    async def callback(self, interaction: discord.Interaction):
+        view: ShopMenu = self.view
+        
+        if await view.interaction_check(interaction):
+            await view.buy(interaction)
+
+class PageButton(discord.ui.Button):
+    
+    def __init__(self, label: str, right: bool):
+        self.right = right
+        super().__init__(label=label, style=discord.ButtonStyle.grey, row=1)
+    
+    async def callback(self, interaction: discord.Interaction):
+        view: ShopMenu = self.view
+        
+        if await view.interaction_check(interaction):
+            await view.flip_page(interaction, self.right)
+            
+class CurrentPageButton(discord.ui.Button):
+    
+    def __init__(self, label: str):
+        super().__init__(label=label, style=discord.ButtonStyle.grey, row=1, disabled=True)
+    
+
 class Dropdown(discord.ui.Select):
     
     def __init__(self, items: List[Item]):
@@ -90,7 +146,7 @@ class Dropdown(discord.ui.Select):
         for item in items:
             option = discord.SelectOption(
                 label=item.get_name(),
-                description=item.get_description(), 
+                description='', 
                 emoji=item.get_emoji(), 
                 value=item.get_type())
             options.append(option)

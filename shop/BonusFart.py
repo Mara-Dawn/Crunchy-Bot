@@ -3,20 +3,20 @@ from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from shop.TriggerItem import TriggerItem
 
-class FartBoost(TriggerItem):
+class BonusFart(TriggerItem):
 
     def __init__(
         self,
         cost: int|None
     ):
-        name = 'UK Breakfast Beans'
-        type = ItemType.FART_BOOST
-        group = ItemGroup.VALUE_MODIFIER
-        description = 'Extremely dangerous, multiplies the power of your next fart by 3.'
+        name = 'Bonus Fart'
+        type = ItemType.BONUS_FART
+        group = ItemGroup.BONUS_ATTEMPT
+        description = 'Allows you to continue farting on a jailed person after using your guaranteed one.'
         defaultcost = 200
-        emoji = '🤢'
+        emoji = '😂'
         trigger = [UserInteraction.FART]
-        value = 3
+        value = True 
         
         if cost is None:
             cost = defaultcost
