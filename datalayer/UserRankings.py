@@ -82,4 +82,6 @@ class UserRankings():
             case RankingType.SPAM_SCORE:
                 return sorted(self.spam_scores.items(), key=lambda item: item[1], reverse=True)
             case RankingType.BEANS:
-                return sorted(self.beans_list.items(), key=lambda item: item[1], reverse=True)
+                sorted_list = sorted(self.beans_list.items(), key=lambda item: item[1], reverse=True)
+                converted = [(k, f'🅱️{v}') for (k,v) in sorted_list]
+                return converted
