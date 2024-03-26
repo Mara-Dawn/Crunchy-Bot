@@ -12,11 +12,13 @@ from datalayer.UserStats import UserStats
 from events.BeansEvent import BeansEvent
 from events.BeansEventType import BeansEventType
 from events.InteractionEvent import InteractionEvent
+from events.InventoryEvent import InventoryEvent
 from events.JailEvent import JailEvent
 from events.JailEventType import JailEventType
 from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
 from events.QuoteEvent import QuoteEvent
+from shop.ItemType import ItemType
 
 class EventManager():
 
@@ -88,10 +90,23 @@ class EventManager():
         beans_event_type: BeansEventType,
         member: int,
         value: int,
-    ):
+    ) -> int:
         event = BeansEvent(timestamp, guild_id, beans_event_type, member, value)
-        self.database.log_event(event)
+        id = self.database.log_event(event)
         self.logger.log(guild_id, f'Beans event `{beans_event_type}` was logged.', self.log_name)
+        return id
+    
+    def dispatch_inventory_event(self,
+        timestamp: datetime.datetime, 
+        guild_id: int,
+        member_id: int,
+        item_type: ItemType,
+        beans_event_id: int,
+        amount: int,
+    ):
+        event = InventoryEvent(timestamp, guild_id, member_id, item_type, beans_event_id, amount)
+        self.database.log_event(event)
+        self.logger.log(guild_id, f'Inventory event for {amount} `{item_type}` was logged.', self.log_name)
     
     def get_jail_duration(self, jail: UserJail) -> int:
         events = self.database.get_jail_events_by_jail(jail.get_id())

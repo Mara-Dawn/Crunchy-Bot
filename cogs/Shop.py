@@ -1,7 +1,3 @@
-import asyncio
-import datetime
-import random
-import typing
 import discord
 
 from discord.ext import commands
@@ -9,15 +5,12 @@ from discord import app_commands
 from typing import Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
-from BotUtil import BotUtil
 from MaraBot import MaraBot
 from datalayer.Database import Database
-from events.BeansEventType import BeansEventType
 from events.EventManager import EventManager
 from shop.ItemManager import ItemManager
 from shop.ItemType import ItemType
-from view.BeansDailySettingsModal import BeansDailySettingsModal
-from view.BeansGambaSettingsModal import BeansGambaSettingsModal
+from view.InventoryEmbed import InventoryEmbed
 from view.ShopMenu import ShopMenu
 from view.ShopEmbed import ShopEmbed
 
@@ -64,6 +57,26 @@ class Shop(commands.Cog):
         view = ShopMenu(self.bot, interaction, items)
         
         await interaction.followup.send("",embed=embed, view=view, files=[shop_img, police_img])
+        
+    @app_commands.command(name="inventory", description='See the items you have bought from the beans shop.')
+    @app_commands.guild_only()
+    async def inventory(self, interaction: discord.Interaction):
+        if not await self.__check_enabled(interaction):
+            return 
+        
+        log_message = f'{interaction.user.name} used command `{interaction.command.name}`.'
+        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
+        await interaction.response.defer(ephemeral=True)
+        
+        police_img = discord.File("./img/police.png", "police.png")
+        
+        member_id = interaction.user.id
+        guild_id = interaction.guild_id
+        inventory = self.database.get_inventory_by_user(guild_id, member_id)
+        
+        embed = InventoryEmbed(self.bot, interaction, inventory)
+        
+        await interaction.followup.send("",embed=embed, files=[police_img])
     
     group = app_commands.Group(name="beansshop", description="Subcommands for the Beans Shop module.")
     

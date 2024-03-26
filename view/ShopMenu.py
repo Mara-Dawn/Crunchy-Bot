@@ -1,12 +1,11 @@
+import datetime
 from typing import List
 import discord
 
 from MaraBot import MaraBot
-from datalayer.UserRankings import UserRankings
+from events.BeansEventType import BeansEventType
 from shop.Item import Item
 from shop.ItemType import ItemType
-from view.RankingEmbed import RankingEmbed
-from view.RankingType import RankingType
 from view.ShopEmbed import ShopEmbed
 
 class ShopMenu(discord.ui.View):
@@ -17,14 +16,18 @@ class ShopMenu(discord.ui.View):
         self.event_manager = bot.event_manager
         self.item_manager = bot.item_manager
         self.database = bot.database
+        self.logger = bot.logger
         super().__init__(timeout=100)
         self.items = items
         self.add_item(Dropdown(items))
-        self.selected = None
+        self.selected: ItemType = None
 
 
-    @discord.ui.button(label='>       Buy       <', style=discord.ButtonStyle.green, row=1)
+    @discord.ui.button(label='Buy', style=discord.ButtonStyle.green, row=1)
     async def buy(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self.interaction_check(interaction):
+            return
+        
         if self.selected is None:
             await interaction.response.send_message('Please select an Item first.', ephemeral=True)
             return
@@ -33,10 +36,34 @@ class ShopMenu(discord.ui.View):
         member_id = interaction.user.id
         user_balance = self.database.get_member_beans(guild_id, member_id)
         
-        item = self.item_manager.get_item(self.selected)
+        item = self.item_manager.get_item(guild_id, self.selected)
         
         if user_balance < item.get_cost():
-            pass
+            await interaction.response.send_message('You dont have enough beans to buy that.', ephemeral=True)
+            return
+        
+        beans_event_id = self.event_manager.dispatch_beans_event(
+            datetime.datetime.now(), 
+            guild_id,
+            BeansEventType.SHOP_PURCHASE, 
+            member_id,
+            -item.get_cost()
+        )
+        
+        self.event_manager.dispatch_inventory_event(
+            datetime.datetime.now(), 
+            guild_id,
+            member_id,
+            item.get_type(),
+            beans_event_id,
+            1
+        )
+        
+        log_message = f'{interaction.user.display_name} bought {item.get_name()} for {item.get_cost()} beans.'
+        self.logger.log(interaction.guild_id, log_message, cog='Shop')
+        
+        success_message = f'You successfully bought one **{item.get_name()}** for `{item.get_cost()}` beans.'
+        await interaction.response.send_message(success_message, ephemeral=True)
 
     async def set_selected(self, interaction: discord.Interaction, item_type: ItemType):
         self.selected = item_type
@@ -46,11 +73,7 @@ class ShopMenu(discord.ui.View):
         if interaction.user == self.interaction.user:
             return True
         else:
-            embed = discord.Embed(
-                description=f"Only the author of the command can perform this action.",
-                color=16711680
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(f"Only the author of the command can perform this action.", ephemeral=True)
             return False
     
     async def on_timeout(self):

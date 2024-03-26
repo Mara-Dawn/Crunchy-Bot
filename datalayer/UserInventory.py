@@ -20,5 +20,5 @@ class UserInventory():
     def get_member_id(self) -> int:
         return self.member
     
-    def get_inventory(self) -> Dict[ItemType,int]:
+    def get_inventory_items(self) -> Dict[ItemType,int]:
         return self.inventory
