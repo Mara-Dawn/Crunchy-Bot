@@ -6,3 +6,4 @@ class ItemGroup(str, Enum):
     BONUS_ATTEMPT = 'bonus_attempt'
     STABILIZER = 'stabilizer'
     ADVANTAGE = 'advantage'
+    PROTECTION = 'protection'

@@ -3,9 +3,11 @@ from typing import List
 import discord
 
 from MaraBot import MaraBot
+from datalayer.Database import Database
 from events.BeansEventType import BeansEventType
 from shop.Item import Item
 from shop.ItemType import ItemType
+from view.InventoryEmbed import InventoryEmbed
 from view.ShopEmbed import ShopEmbed
 
 class ShopMenu(discord.ui.View):
@@ -63,7 +65,7 @@ class ShopMenu(discord.ui.View):
             member_id,
             item.get_type(),
             beans_event_id,
-            1
+            item.get_base_amount()
         )
         
         log_message = f'{interaction.user.display_name} bought {item.get_name()} for {item.get_cost()} beans.'
@@ -104,7 +106,7 @@ class ShopMenu(discord.ui.View):
         self.add_item(BuyButton())
         self.add_item(PageButton(">", True))
         self.add_item(CurrentPageButton(page_display))
-        self.add_item(BalanceButton(user_balance))
+        self.add_item(BalanceButton(self.bot, user_balance))
     
     async def set_selected(self, interaction: discord.Interaction, item_type: ItemType):
         self.selected = item_type
@@ -152,15 +154,27 @@ class CurrentPageButton(discord.ui.Button):
         
 class BalanceButton(discord.ui.Button):
     
-    def __init__(self, amount: int):
-        self.text = f'🅱️{amount}'
-        super().__init__(label=self.text, style=discord.ButtonStyle.blurple, row=1)
+    def __init__(self, bot: MaraBot, balance: int):
+        self.bot = bot
+        self.database = bot.database
+        self.balance = balance
+        super().__init__(label=f'🅱️{balance}', style=discord.ButtonStyle.blurple, row=1)
     
     async def callback(self, interaction: discord.Interaction):
         view: ShopMenu = self.view
         
         if await view.interaction_check(interaction):
-            await interaction.response.send_message(f"Your current bean balance is `{self.text}`.", ephemeral=True)
+            await interaction.response.defer(ephemeral=True)
+            
+            police_img = discord.File("./img/police.png", "police.png")
+        
+            member_id = interaction.user.id
+            guild_id = interaction.guild_id
+            inventory = self.database.get_inventory_by_user(guild_id, member_id)
+            
+            embed = InventoryEmbed(self.bot, interaction, inventory, self.balance)
+            
+            await interaction.followup.send(f"", embed=embed, files=[police_img], ephemeral=True)
     
 
 class Dropdown(discord.ui.Select):

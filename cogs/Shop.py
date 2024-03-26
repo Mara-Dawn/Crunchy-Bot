@@ -79,8 +79,8 @@ class Shop(commands.Cog):
         member_id = interaction.user.id
         guild_id = interaction.guild_id
         inventory = self.database.get_inventory_by_user(guild_id, member_id)
-        
-        embed = InventoryEmbed(self.bot, interaction, inventory)
+        user_balance = self.database.get_member_beans(guild_id, member_id)
+        embed = InventoryEmbed(self.bot, interaction, inventory, user_balance)
         
         await interaction.followup.send("",embed=embed, files=[police_img])
     

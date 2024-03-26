@@ -49,11 +49,11 @@ class Jail(commands.Cog):
     def __get_already_used_msg(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
         match type:
             case UserInteraction.SLAP:
-                return f'<@{user.id}> was slapped by <@{interaction.user.id}>!\n You already slapped {user.display_name}, no extra time will be added this time.'
+                return f'\n You already slapped {user.display_name}, no extra time will be added this time.'
             case UserInteraction.PET:
-                return f'<@{user.id}> recieved pets from <@{interaction.user.id}>!\n You already gave {user.display_name} pets, no extra time will be added this time.'
+                return f'\n You already gave {user.display_name} pets, no extra time will be added this time.'
             case UserInteraction.FART:
-                return f'<@{user.id}> was farted on by <@{interaction.user.id}>!\n{user.display_name} already enjoyed your farts, no extra time will be added this time.'
+                return f'\n{user.display_name} already enjoyed your farts, no extra time will be added this time.'
             
     def __get_already_used_log_msg(self, type: UserInteraction, interaction: discord.Interaction, user: discord.Member) -> str:
         match type:
@@ -90,6 +90,8 @@ class Jail(commands.Cog):
                     advantage = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
                 case ItemGroup.BONUS_ATTEMPT:
                     bonus_attempt = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                case _:
+                    continue
                     
             self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
             response += f'* {item.get_name()}\n'
@@ -98,6 +100,31 @@ class Jail(commands.Cog):
             item_modifier = 1
             
         return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt
+    
+    def __get_target_item_modifiers(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
+        user_items = self.item_manager.get_user_items_activated(
+            interaction.guild_id, 
+            user.id, 
+            command_type
+        )
+
+        response = ''
+        reduction = 1
+        for item in user_items:
+            
+            if item.get_group() != ItemGroup.PROTECTION:
+                continue
+            
+            match item.get_group():
+                case ItemGroup.PROTECTION:
+                    reduction *= item.use(self.event_manager, interaction.guild_id, user.id)
+                case _:
+                    continue
+                
+            self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
+            response += f'* {item.get_name()}\n'
+            
+        return response, reduction
     
     async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction) -> str:
         command = interaction.command
@@ -112,18 +139,20 @@ class Jail(commands.Cog):
             return ''
         
         affected_jail = affected_jails[0]
-        item_info = ''
+        response = '\n'
         
         self.logger.debug(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
         
-        modifier_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt = self.__get_item_modifiers(interaction, command_type)
+        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt = self.__get_item_modifiers(interaction, command_type)
+        
+        if user_item_info != '':
+            response += '__Items used:__\n' + user_item_info
         
         if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name):# and not self.__has_mod_permission(interaction):
             if not bonus_attempt:
                 self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
                 return self.__get_already_used_msg(command_type, interaction, user)
 
-        response = '\n'
         amount = 0
         
         match command_type:
@@ -139,12 +168,6 @@ class Jail(commands.Cog):
                     amount_advantage = random.randint(min_amount, max_amount)
                     amount = max(amount, amount_advantage)
         
-        item_info += modifier_item_info
-        if item_info != '':
-            item_info = '__Items used:__\n' + item_info
-        
-        response += item_info
-        
         remaining = self.event_manager.get_jail_remaining(affected_jail)
         amount = int(amount * item_modifier)
         amount = max(amount, -int(remaining+1))
@@ -155,8 +178,16 @@ class Jail(commands.Cog):
         is_crit = (random.random() <= crit_rate) or auto_crit
         
         if is_crit:
-            response += f'**CRITICAL HIT!!!** '
-            amount = int(amount *crit_mod)
+            response += f'**CRITICAL HIT!!!** \n'
+            amount = int(amount * crit_mod)
+        
+        if amount > 0:
+            tartget_item_info, reduction = self.__get_target_item_modifiers(interaction, user, command_type)
+            
+            if tartget_item_info != '':
+                response += '__Items used to defend:__\n' + tartget_item_info
+                
+            amount = int(amount * reduction)
         
         if amount == 0 and is_crit:
             response += f'{interaction.user.display_name} farted so hard, they blew {user.display_name} out of Jail. They are free!\n'

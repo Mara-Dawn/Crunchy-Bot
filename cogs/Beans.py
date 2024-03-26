@@ -187,7 +187,7 @@ class Beans(commands.Cog):
             user_id, 
             amount
         )
-        await self.bot.command_response(self.__cog_name__, interaction, f'<@{user_id}> got their daily dose of `{amount}` beans.', args=[amount], ephemeral=False)
+        await self.bot.command_response(self.__cog_name__, interaction, f'<@{user_id}> got their daily dose of `🅱️{amount}` beans.', args=[amount], ephemeral=False)
     
     @group.command(name="balance", description='Your current bean balance.')
     @app_commands.describe(
@@ -205,7 +205,7 @@ class Beans(commands.Cog):
         
         current_balance = self.database.get_member_beans(guild_id, user_id)
         
-        await self.bot.command_response(self.__cog_name__, interaction, f'<@{user_id}> currently has `{current_balance}` beans.', args=[user.display_name], ephemeral=False)
+        await self.bot.command_response(self.__cog_name__, interaction, f'<@{user_id}> currently has `🅱️{current_balance}` beans.', args=[user.display_name], ephemeral=False)
     
     @group.command(name="grant", description="Give or remove beans from specific users. (Admin only)")
     @app_commands.describe(

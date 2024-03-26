@@ -18,11 +18,12 @@ class TriggerItem(Item):
         emoji: str,
         cost: int,
         trigger: List[UserInteraction],
-        value: Any
+        value: Any,
+        base_amount: int = 1
     ):
         self.trigger = trigger
         self.value = value
-        super().__init__(name, type, group, description, emoji, cost)
+        super().__init__(name, type, group, description, emoji, cost, base_amount)
 
     def activated(self, action: UserInteraction):
         return  action in self.trigger

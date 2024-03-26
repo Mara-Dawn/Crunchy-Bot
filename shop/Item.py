@@ -13,7 +13,8 @@ class Item():
         group: ItemGroup,
         description: str,
         emoji: str,
-        cost: int
+        cost: int,
+        base_amount: int = 1
     ):
         self.name = name
         self.type = type
@@ -21,6 +22,7 @@ class Item():
         self.description = description
         self.cost = cost
         self.emoji = emoji
+        self.base_amount = base_amount
      
     def get_name(self) -> str:
         return self.name
@@ -39,6 +41,9 @@ class Item():
     
     def get_cost(self) -> int:
         return self.cost
+    
+    def get_base_amount(self) -> int:
+        return self.base_amount
     
     def add_to_embed(self, embed: discord.Embed, max_width: int, count: int=None) -> None:
         title = f'> ~*  {self.get_emoji()} {self.get_name()} {self.get_emoji()}  *~'

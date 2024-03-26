@@ -6,11 +6,11 @@ from datalayer.UserInventory import UserInventory
 
 class InventoryEmbed(discord.Embed):
     
-    def __init__(self, bot: MaraBot,  interaction: discord.Interaction, inventory: UserInventory):
+    def __init__(self, bot: MaraBot,  interaction: discord.Interaction, inventory: UserInventory, balance = int):
         super().__init__(
-            title=f"Inventory of {interaction.user.display_name}",
+            title=f"Inventory of {interaction.user.display_name}\nBeans: `🅱️{balance}`",
             color=discord.Colour.purple(),
-            description='All the items you currently own.'
+            description=f'All the items you currently own.'
         )
         
         self.item_manager = bot.item_manager

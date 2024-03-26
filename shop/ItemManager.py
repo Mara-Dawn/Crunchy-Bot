@@ -20,6 +20,8 @@ from shop.BonusSlap import BonusSlap
 from shop.GigaFart import GigaFart
 from shop.FartStabilizer import FartStabilizer
 from shop.Fartvantage import Fartvantage
+from shop.FartProtection import FartProtection
+
 
 class ItemManager():
 

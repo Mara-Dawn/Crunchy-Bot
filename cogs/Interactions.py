@@ -94,7 +94,7 @@ class Interactions(commands.Cog):
                 search = f'fart'
         
         token = open(self.bot.TENOR_TOKEN_FILE,"r").readline()
-        g = Tenor(token=token)
+        g = Tenor(token)
         gif = await g.random(tag=search)
         embed = discord.Embed(color=discord.Colour.purple())
         embed.set_image(url=gif)
