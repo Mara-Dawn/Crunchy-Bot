@@ -8,7 +8,7 @@ from view.RankingType import RankingType
 class RankingEmbed(discord.Embed):
     
     TITLES = {
-        RankingType.BEANS: "Beans Rankings",
+        RankingType.BEANS: "Beans Rankings (total gained)",
         RankingType.SLAP: "Slap Rankings",
         RankingType.PET: "Pet Rankings",
         RankingType.FART: "Fart Rankings",
@@ -39,5 +39,5 @@ class RankingEmbed(discord.Embed):
                 break
         
         self.add_field(name="", value=leaderbord_msg)
-        self.set_image(url="attachment://jail_wide.png")
+        self.set_image(url="attachment://ranking_img.png")
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")

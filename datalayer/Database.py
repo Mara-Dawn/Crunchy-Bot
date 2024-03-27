@@ -18,7 +18,6 @@ from events.JailEvent import JailEvent
 from events.QuoteEvent import QuoteEvent
 from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
-from shop.ItemType import ItemType
 
 class Database():    
     
@@ -175,17 +174,6 @@ class Database():
         PRIMARY KEY ({BEANS_EVENT_ID_COL})
     );'''
     
-    # INVENTORY_TABLE = 'inventory'
-    # INVENTORY_ID_COL = 'invt_id'
-    # INVENTORY_GUILD_COL = 'invt_guild_id'
-    # INVENTORY_MEMBER_COL = 'invt_member_id'
-    # CREATE_INVENTORY_TABLE = f'''
-    # CREATE TABLE if not exists {INVENTORY_TABLE} (
-    #     {INVENTORY_ID_COL}  INTEGER PRIMARY KEY AUTOINCREMENT,
-    #     {INVENTORY_GUILD_COL} INTEGER, 
-    #     {INVENTORY_MEMBER_COL} INTEGER
-    # );'''
-    
     INVENTORY_EVENT_TABLE = 'inventoryevents'
     INVENTORY_EVENT_ID_COL = 'inve_id'
     INVENTORY_EVENT_MEMBER_COL = 'inve_member_id'
@@ -226,6 +214,20 @@ class Database():
             c.execute(self.CREATE_BEANS_EVENT_TABLE)
             c.execute(self.CREATE_INVENTORY_EVENT_TABLE)
             c.close()
+            
+            command = f'''
+                UPDATE {self.JAIL_EVENT_TABLE} 
+                SET {self.JAIL_EVENT_TYPE_COL} = ?
+                WHERE {self.JAIL_EVENT_TYPE_COL} = ?;
+            '''
+            task = ('fart', 'Fart')
+            self.__query_insert(command, task)
+            
+            task = ('slap', 'Slap')
+            self.__query_insert(command, task)
+            
+            task = ('pet', 'Pet')
+            self.__query_insert(command, task)
             
         except Error as e:
             traceback.print_exc()
@@ -748,6 +750,23 @@ class Database():
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
             AND {self.EVENT_GUILD_ID_COL} = {int(guild_id)}
+            GROUP BY {self.BEANS_EVENT_MEMBER_COL};
+        '''
+        
+        rows = self.__query_select(command)
+        if not rows or len(rows) < 1:
+            return {}
+        
+        output = { row[self.BEANS_EVENT_MEMBER_COL]: row[f'SUM({self.BEANS_EVENT_VALUE_COL})'] for row in rows }
+        
+        return output
+    
+    def get_guild_beans_gained(self, guild_id: int) -> Dict[int, int]:
+        command = f'''
+            SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
+            AND {self.EVENT_GUILD_ID_COL} = {int(guild_id)}
+            WHERE {self.BEANS_EVENT_VALUE_COL} > 0
             GROUP BY {self.BEANS_EVENT_MEMBER_COL};
         '''
         

@@ -226,7 +226,7 @@ class Beans(commands.Cog):
             amount
         )
         
-        response = f'`{abs(amount)}` beans were '
+        response = f'`🅱️{abs(amount)}` beans were '
         if amount >= 0:
             response += 'added to '
         else:

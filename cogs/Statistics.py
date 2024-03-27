@@ -94,14 +94,14 @@ class Statistics(commands.Cog):
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         await interaction.response.defer()
         
-        police_img = discord.File("./img/police.png", "police.png")
-        jail_wide_img = discord.File("./img/jail_wide.png", "jail_wide.png")
         ranking_data = self.event_manager.get_user_rankings(interaction.guild_id)
         
         embed = RankingEmbed(self.bot, interaction, ranking_data, RankingType.BEANS)
         view = RankingView(self.bot, interaction, ranking_data)
         
-        await interaction.followup.send("",embed=embed, view=view, files=[police_img,jail_wide_img])
+        ranking_img = discord.File("./img/jail_wide.png", "ranking_img.png")
+        police_img = discord.File("./img/police.png", "police.png")
+        await interaction.followup.send("",embed=embed, view=view, files=[police_img, ranking_img])
     
 async def setup(bot):
     await bot.add_cog(Statistics(bot))

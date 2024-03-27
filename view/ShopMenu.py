@@ -98,6 +98,10 @@ class ShopMenu(discord.ui.View):
         
         await interaction.response.send_message(success_message, ephemeral=True)
         
+        self.refresh_ui(new_user_balance)
+        await interaction.message.edit(view=self)
+    
+        
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         self.current_page = (self.current_page +(1 if right else -1)) % self.page_count
         start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
