@@ -38,9 +38,11 @@ class BotSettings():
     BEANS_CHANNELS_KEY = "beans_channels"
     BEANS_DAILY_MIN = "beans_daily_min"
     BEANS_DAILY_MAX = "beans_daily_max"
-    BEANS_GAMBA_COST = "beans_gamba_amount"
+    BEANS_GAMBA_DEFAULT = "beans_gamba_default"
     BEANS_GAMBA_COOLDOWN = "beans_gamba_cooldown"
     BEANS_GAMBA_COOLDOWN = "beans_gamba_cooldown"
+    BEANS_GAMBA_MIN = "beans_gamba_min"
+    BEANS_GAMBA_MAX = "beans_gamba_max"
     
     SHOP_SUBSETTINGS_KEY = "shop"
     SHOP_ENABLED_KEY = "shop_enabled"
@@ -79,8 +81,10 @@ class BotSettings():
         beans_settings.add_setting(self.BEANS_CHANNELS_KEY, [], "Channels for bean commands", "handle_channels_value")
         beans_settings.add_setting(self.BEANS_DAILY_MIN, 10, "Mininum daily beans granted to users")
         beans_settings.add_setting(self.BEANS_DAILY_MAX, 25, "Maximum daily beans granted to users")
-        beans_settings.add_setting(self.BEANS_GAMBA_COST, 10, "Amount of beans spent on each gamba attempt")
+        beans_settings.add_setting(self.BEANS_GAMBA_DEFAULT, 10, "Default amount of beans gambad")
         beans_settings.add_setting(self.BEANS_GAMBA_COOLDOWN, 10, "Amount of minutes between gamba attempts")
+        beans_settings.add_setting(self.BEANS_GAMBA_MIN, 1, "Minimum amount of beans that can be gambled")
+        beans_settings.add_setting(self.BEANS_GAMBA_MAX, 100, "Maximum amount of beans that can be gambled")
         
         shop_settings = ModuleSettings(self.SHOP_SUBSETTINGS_KEY, "Beans Shop")
         shop_settings.add_setting(self.SHOP_ENABLED_KEY, True, "Module Enabled")
@@ -335,10 +339,10 @@ class BotSettings():
         self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX, amount)
         
     def get_beans_gamba_cost(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COST)
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_DEFAULT)
     
     def set_beans_gamba_cost(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COST, amount)
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_DEFAULT, amount)
         
     def get_beans_gamba_cooldown(self, guild: int) -> int:
         return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN)
@@ -358,6 +362,18 @@ class BotSettings():
         channels = self.get_beans_channels(guild)
         if channel in channels: channels.remove(channel)
         self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY, channels)
+
+    def get_beans_gamba_min(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MIN)
+    
+    def set_beans_gamba_min(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MIN, amount)
+        
+    def get_beans_gamba_max(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MAX)
+    
+    def set_beans_gamba_max(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MAX, amount)
     
     # Shop Settings
     

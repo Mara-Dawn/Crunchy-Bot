@@ -49,19 +49,28 @@ class Beans(commands.Cog):
         
     @app_commands.command(name="gamba", description='Gamba away your beans.')
     @app_commands.guild_only()
-    async def gamba(self, interaction: discord.Interaction):
+    async def gamba(self, interaction: discord.Interaction, amount: typing.Optional[int] = None):
         if not await self.__check_enabled(interaction):
             return 
         
-        await interaction.response.defer()
-        
         guild_id = interaction.guild_id
         user_id = interaction.user.id
-        
+        beans_gamba_min = self.settings.get_beans_gamba_min(guild_id)
+        beans_gamba_max = self.settings.get_beans_gamba_max(guild_id)
+
+        if amount is not None:
+            if not (beans_gamba_min <= amount and amount <= beans_gamba_max):
+                await self.bot.command_response(self.__cog_name__, interaction, f'Between`🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}`, you fucking monkey.', ephemeral=False)
+                return 
+            
+        await interaction.response.defer()
+
+        if amount is None:
+            amount = self.settings.get_beans_gamba_cost(guild_id)
+
         current_balance = self.database.get_member_beans(guild_id, user_id)
-        cost = self.settings.get_beans_gamba_cost(guild_id)
         
-        if current_balance < cost:
+        if current_balance < amount:
             await self.bot.command_response(self.__cog_name__, interaction, f'You\'re out of beans, idiot.', ephemeral=False)
             return
         
@@ -87,10 +96,10 @@ class Beans(commands.Cog):
             guild_id, 
             BeansEventType.GAMBA_COST, 
             user_id,
-            -cost
+            -amount
         )
         
-        response = f'You paid `🅱️{cost}` beans to gamba.'
+        response = f'You paid `🅱️{amount}` beans to gamba.'
         
         display_values = [
             '\n**0x**',
@@ -116,19 +125,19 @@ class Beans(commands.Cog):
             final = f'\nYou lost. It is what it is.'
         elif result > loss and result <= (loss+doubling):
             final_display = 1
-            payout = cost * 2
+            payout = amount * 2
             final = f'\nYou won! Your payout is `🅱️{payout}` beans.'
         elif result > (loss+doubling) and result <= (loss+doubling+tripling):
             final_display = 2
-            payout = cost * 3
+            payout = amount * 3
             final = f'\nWow you got lucky! Your payout is `🅱️{payout}` beans.'
         elif result > (loss+doubling+tripling) and result <= (1-jackpot):
             final_display = 3
-            payout = cost * 10
+            payout = amount * 10
             final = f'\nBIG WIN! Your payout is `🅱️{payout}` beans.'
         elif result > (1-jackpot) and result <= 1:
             final_display = 4
-            payout = cost * 100
+            payout = amount * 100
             final = f'\nJACKPOT!!! Your payout is `🅱️{payout}` beans.'
         
         display = display_values[0]
@@ -270,10 +279,14 @@ class Beans(commands.Cog):
     async def gamba_setup(self, interaction: discord.Interaction):
         beans_gamba_cost = self.settings.get_beans_gamba_cost(interaction.guild_id)
         beans_gamba_cooldown = self.settings.get_beans_gamba_cooldown(interaction.guild_id)
+        beans_gamba_max = self.settings.get_beans_gamba_max(interaction.guild_id)
+        beans_gamba_min = self.settings.get_beans_gamba_min(interaction.guild_id)
 
         modal = BeansGambaSettingsModal(self.bot, self.settings)
         modal.beans_gamba_cost.default = str(beans_gamba_cost)
         modal.beans_gamba_cooldown.default = str(beans_gamba_cooldown)
+        modal.beans_gamba_max.default = str(beans_gamba_max)
+        modal.beans_gamba_min.default = str(beans_gamba_min)
         
         await interaction.response.send_modal(modal) 
     
