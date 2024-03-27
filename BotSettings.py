@@ -82,7 +82,7 @@ class BotSettings():
         beans_settings.add_setting(self.BEANS_DAILY_MIN, 10, "Mininum daily beans granted to users")
         beans_settings.add_setting(self.BEANS_DAILY_MAX, 25, "Maximum daily beans granted to users")
         beans_settings.add_setting(self.BEANS_GAMBA_DEFAULT, 10, "Default amount of beans gambad")
-        beans_settings.add_setting(self.BEANS_GAMBA_COOLDOWN, 10, "Amount of minutes between gamba attempts")
+        beans_settings.add_setting(self.BEANS_GAMBA_COOLDOWN, 10, "Default delay in minutes between attempts")
         beans_settings.add_setting(self.BEANS_GAMBA_MIN, 1, "Minimum amount of beans that can be gambled")
         beans_settings.add_setting(self.BEANS_GAMBA_MAX, 100, "Maximum amount of beans that can be gambled")
         
