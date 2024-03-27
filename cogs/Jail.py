@@ -231,7 +231,7 @@ class Jail(commands.Cog):
                 response += f'Their jail sentence was reduced by `{abs(amount)}` {damage_info} minutes. '
             
             time_now = datetime.datetime.now()
-            self.event_manager.dispatch_jail_event(time_now, guild_id, command.name, interaction.user.id, amount, affected_jail.get_id())
+            self.event_manager.dispatch_jail_event(time_now, guild_id, command_type, interaction.user.id, amount, affected_jail.get_id())
             
             remaining = self.event_manager.get_jail_remaining(affected_jail)
             response += f'`{BotUtil.strfdelta(remaining, inputtype='minutes')}` still remain.'

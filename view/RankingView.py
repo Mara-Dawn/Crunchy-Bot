@@ -15,8 +15,16 @@ class RankingView(discord.ui.View):
         self.add_item(Dropdown())
 
     async def edit_page(self, interaction: discord.Interaction, type: RankingType):
+        match type:
+            # case RankingType.BEANS:
+            #     image = "./img/beans_rankings.png"
+            case _:
+                image = "./img/jail_wide.png"
+        
+        ranking_img = discord.File(image, "ranking_img.png") 
+        police_img = discord.File("./img/police.png", "police.png")
         embed = RankingEmbed(self.bot, interaction, self.ranking_data, type)
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=self, attachments=[police_img, ranking_img])
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user == self.interaction.user:
