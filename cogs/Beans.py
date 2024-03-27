@@ -65,8 +65,10 @@ class Beans(commands.Cog):
             
         await interaction.response.defer()
 
+        default_amount = self.settings.get_beans_gamba_cost(guild_id)
+        
         if amount is None:
-            amount = self.settings.get_beans_gamba_cost(guild_id)
+            amount = default_amount
 
         current_balance = self.database.get_member_beans(guild_id, user_id)
         
@@ -74,16 +76,20 @@ class Beans(commands.Cog):
             await self.bot.command_response(self.__cog_name__, interaction, f'You\'re out of beans, idiot.', ephemeral=False)
             return
         
-        last_gamba_beans_date = self.database.get_last_beans_event_date(guild_id, user_id, BeansEventType.GAMBA_COST)
+        last_gamba_beans_event = self.database.get_last_beans_event(guild_id, user_id, BeansEventType.GAMBA_COST)
         
-        if last_gamba_beans_date is not None: 
+        if last_gamba_beans_event is not None: 
         
             current_date = datetime.datetime.now()
-            last_gamba_beans_date = datetime.datetime.fromtimestamp(last_gamba_beans_date)
+            last_gamba_beans_date = last_gamba_beans_event.get_datetime()
             
             delta = current_date - last_gamba_beans_date
             delta_seconds = delta.total_seconds()
-            cooldown = self.settings.get_beans_gamba_cooldown(guild_id)*60
+            default_cooldown = self.settings.get_beans_gamba_cooldown(guild_id)*60
+            
+            last_gamba_amount = abs(last_gamba_beans_event.get_value())
+            
+            cooldown = default_cooldown * (last_gamba_amount / default_amount) 
 
             if delta_seconds <= cooldown:
                 remaining = cooldown - delta_seconds

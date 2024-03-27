@@ -13,6 +13,9 @@ class BotEvent():
     def get_timestamp(self) -> int:
         return int(self.timestamp.timestamp())
     
+    def get_datetime(self) -> datetime.datetime:
+        return self.timestamp
+    
     def get_guild_id(self) -> int:
         return self.guild_id
     

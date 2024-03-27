@@ -781,6 +781,22 @@ class Database():
         
         return rows[0][f'{self.EVENT_TIMESTAMP_COL}']
     
+    def get_last_beans_event(self, guild_id: int, user_id: int, type: BeansEventType) -> BeansEvent:
+        command = f'''
+            SELECT * FROM {self.BEANS_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
+            WHERE {self.BEANS_EVENT_MEMBER_COL} = ?
+            AND {self.EVENT_GUILD_ID_COL} = ?
+            AND {self.BEANS_EVENT_TYPE_COL} = ?
+            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
+        '''
+        task = (user_id, guild_id, type)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return None
+        return BeansEvent.from_db_row(rows[0])
+    
     def get_inventory_by_user(self, guild_id: int, user_id: int) -> UserInventory:
         
         command = f'''
