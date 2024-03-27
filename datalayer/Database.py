@@ -5,6 +5,7 @@ import traceback
 from typing import Dict, List
 from sqlite3 import Error
 from BotLogger import BotLogger
+from datalayer.UserInventory import UserInventory
 from datalayer.UserJail import UserJail
 from datalayer.Quote import Quote
 from events.BeansEvent import BeansEvent
@@ -12,10 +13,12 @@ from events.BeansEventType import BeansEventType
 from events.BotEvent import BotEvent
 from events.EventType import EventType
 from events.InteractionEvent import InteractionEvent
+from events.InventoryEvent import InventoryEvent
 from events.JailEvent import JailEvent
 from events.QuoteEvent import QuoteEvent
 from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
+from shop.ItemType import ItemType
 
 class Database():    
     
@@ -172,6 +175,33 @@ class Database():
         PRIMARY KEY ({BEANS_EVENT_ID_COL})
     );'''
     
+    # INVENTORY_TABLE = 'inventory'
+    # INVENTORY_ID_COL = 'invt_id'
+    # INVENTORY_GUILD_COL = 'invt_guild_id'
+    # INVENTORY_MEMBER_COL = 'invt_member_id'
+    # CREATE_INVENTORY_TABLE = f'''
+    # CREATE TABLE if not exists {INVENTORY_TABLE} (
+    #     {INVENTORY_ID_COL}  INTEGER PRIMARY KEY AUTOINCREMENT,
+    #     {INVENTORY_GUILD_COL} INTEGER, 
+    #     {INVENTORY_MEMBER_COL} INTEGER
+    # );'''
+    
+    INVENTORY_EVENT_TABLE = 'inventoryevents'
+    INVENTORY_EVENT_ID_COL = 'inve_id'
+    INVENTORY_EVENT_MEMBER_COL = 'inve_member_id'
+    INVENTORY_EVENT_ITEM_TYPE_COL = 'inve_item_type'
+    INVENTORY_EVENT_BEANS_EVENT_COL = 'inve_beans_event_id'
+    INVENTORY_EVENT_AMOUNT = 'inve_amount'
+    CREATE_INVENTORY_EVENT_TABLE = f'''
+    CREATE TABLE if not exists {INVENTORY_EVENT_TABLE} (
+        {INVENTORY_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {INVENTORY_EVENT_MEMBER_COL} INTEGER, 
+        {INVENTORY_EVENT_ITEM_TYPE_COL} TEXT, 
+        {INVENTORY_EVENT_BEANS_EVENT_COL} INTEGER REFERENCES {BEANS_EVENT_TABLE} ({BEANS_EVENT_ID_COL}),
+        {INVENTORY_EVENT_AMOUNT} INTEGER,
+        PRIMARY KEY ({INVENTORY_EVENT_ID_COL})
+    );'''
+    
     def __init__(self, logger: BotLogger, db_file: str):
         
         self.conn = None
@@ -194,6 +224,7 @@ class Database():
             c.execute(self.CREATE_SPAM_EVENT_TABLE)
             c.execute(self.CREATE_QUOTE_EVENT_TABLE)
             c.execute(self.CREATE_BEANS_EVENT_TABLE)
+            c.execute(self.CREATE_INVENTORY_EVENT_TABLE)
             c.close()
             
         except Error as e:
@@ -363,6 +394,20 @@ class Database():
         
         return self.__query_insert(command, task)
     
+    def __create_inventory_event(self, event_id: int, event: InventoryEvent) -> int:
+        command = f'''
+            INSERT INTO {self.INVENTORY_EVENT_TABLE} (
+            {self.INVENTORY_EVENT_ID_COL},
+            {self.INVENTORY_EVENT_MEMBER_COL},
+            {self.INVENTORY_EVENT_ITEM_TYPE_COL},
+            {self.INVENTORY_EVENT_BEANS_EVENT_COL},
+            {self.INVENTORY_EVENT_AMOUNT})
+            VALUES (?, ?, ?, ?, ?);
+        '''
+        task = (event_id, event.get_member_id(), event.get_item_type(), event.get_beans_event_id(), event.get_amount())
+        
+        return self.__query_insert(command, task)
+    
     def log_event(self, event: BotEvent) -> int:
         event_id = self.__create_base_event(event)
         
@@ -383,6 +428,8 @@ class Database():
                 return self.__create_spam_event(event_id, event)
             case EventType.BEANS:
                 return self.__create_beans_event(event_id, event)
+            case EventType.INVENTORY:
+                return self.__create_inventory_event(event_id, event)
                 
     def log_quote(self, quote: Quote) -> int:
         command = f'''
@@ -728,3 +775,22 @@ class Database():
             return None
         
         return rows[0][f'{self.EVENT_TIMESTAMP_COL}']
+    
+    def get_inventory_by_user(self, guild_id: int, user_id: int) -> UserInventory:
+        
+        command = f'''
+            SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, SUM({self.INVENTORY_EVENT_AMOUNT}) FROM {self.INVENTORY_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} 
+            ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INVENTORY_EVENT_TABLE}.{self.INVENTORY_EVENT_ID_COL}
+            WHERE {self.INVENTORY_EVENT_MEMBER_COL} = ?
+            AND {self.EVENT_GUILD_ID_COL} = ?
+            GROUP BY {self.INVENTORY_EVENT_ITEM_TYPE_COL};
+        '''
+        task = (user_id, guild_id)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return UserInventory(guild_id, user_id, {})
+        
+        items = { row[self.INVENTORY_EVENT_ITEM_TYPE_COL]: row[f'SUM({self.INVENTORY_EVENT_AMOUNT})'] for row in rows if row[f'SUM({self.INVENTORY_EVENT_AMOUNT})'] > 0}
+        return UserInventory(guild_id, user_id, items)

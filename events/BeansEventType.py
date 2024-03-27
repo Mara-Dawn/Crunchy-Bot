@@ -5,3 +5,4 @@ class BeansEventType(str, Enum):
     GAMBA_COST = 'gamba_cost'
     GAMBA_PAYOUT = 'gamba_payout'
     BALANCE_CHANGE = 'balance_change'
+    SHOP_PURCHASE = 'shop_purchase'

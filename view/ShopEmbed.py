@@ -1,42 +1,31 @@
+from typing import List
 import discord
 
-from BotUtil import BotUtil
 from MaraBot import MaraBot
-from datalayer.UserRankings import UserRankings
-from view.RankingType import RankingType
+from shop.Item import Item
 
 class ShopEmbed(discord.Embed):
     
-    TITLES = {
-        RankingType.SLAP: "Slap Rankings",
-        RankingType.PET: "Pet Rankings",
-        RankingType.FART: "Fart Rankings",
-        RankingType.SLAP_RECIEVED: "Slaps Recieved Rankings",
-        RankingType.PET_RECIEVED: "Pets Recieved  Rankings",
-        RankingType.FART_RECIEVED: "Farts Recieved  Rankings",
-        RankingType.TIMEOUT_TOTAL: "Total Timeout Duration Rankings",
-        RankingType.TIMEOUT_COUNT: "Timeout Count Rankings",
-        RankingType.JAIL_TOTAL: "Total Jail Duration Rankings",
-        RankingType.JAIL_COUNT: "Jail Count Rankings",
-        RankingType.SPAM_SCORE: "Spam Score Rankings",
-    }
+    ITEMS_PER_PAGE = 4
     
-    def __init__(self, bot: MaraBot,  interaction: discord.Interaction):
+    def __init__(self, bot: MaraBot,  interaction: discord.Interaction, items: List[Item], start_offset:int = 0):
         super().__init__(
             title=f"Beans Shop for {interaction.guild.name}",
             color=discord.Colour.purple(),
-            description='Spend your hard earned beans here!'
+            description=f'''
+                Spend your hard earned beans!
+                Only <@{interaction.user.id}> can interact here.
+                Use `/shop` to open your own shop widget.
+                Use `/inventory` or the balance button below to see your inventory. \n
+            '''
         )
+        end_offset = min((start_offset + self.ITEMS_PER_PAGE), len(items))
+        items.sort(key=lambda x:x.get_cost())
+        display = items[start_offset:end_offset]
         
-        # leaderbord_msg = ''
-        # data = user_rankings.get_rankings(type)
-        # rank = 1
-        # for (id, amount) in data:
-        #     leaderbord_msg += f'**{rank}.** {BotUtil.get_name(bot, interaction.guild_id, id, 100)} `{amount}`\n'
-        #     rank += 1
-        #     if rank == 30:
-        #         break
-        
-        self.add_field(name="Test", value='asdf')
-        self.set_image(url="attachment://jail_wide.png")
+        for item in display:
+            self.add_field(name='', value='', inline=False)
+            item.add_to_embed(self, 49)
+            
+        self.set_image(url="attachment://shop.png")
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")
