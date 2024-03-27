@@ -22,6 +22,8 @@ from shop.FartStabilizer import FartStabilizer
 from shop.Fartvantage import Fartvantage
 from shop.FartProtection import FartProtection
 
+from shop.Arrest import Arrest
+
 
 class ItemManager():
 

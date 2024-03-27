@@ -5,10 +5,13 @@ import discord
 from MaraBot import MaraBot
 from datalayer.Database import Database
 from events.BeansEventType import BeansEventType
+from shop.IsntantItem import InstantItem
 from shop.Item import Item
+from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from view.InventoryEmbed import InventoryEmbed
 from view.ShopEmbed import ShopEmbed
+from view.ArrestView import ArrestView
 
 class ShopMenu(discord.ui.View):
     
@@ -51,6 +54,21 @@ class ShopMenu(discord.ui.View):
             await interaction.response.send_message('You dont have enough beans to buy that.', ephemeral=True)
             return
         
+        if item.get_group() == ItemGroup.IMMEDIATE_USE:
+            await interaction.response.defer(ephemeral=True)
+        
+            item: InstantItem = item
+            embed = item.get_embed()
+            view_class_name = item.get_view_class()
+            
+            view_class = globals()[view_class_name]
+            view = view_class(self.bot, interaction)
+            
+            self.stop()
+            await interaction.followup.send(f"", embed=embed, view=view, ephemeral=True)
+            await interaction.message.delete()
+            return
+        
         beans_event_id = self.event_manager.dispatch_beans_event(
             datetime.datetime.now(), 
             guild_id,
@@ -75,16 +93,10 @@ class ShopMenu(discord.ui.View):
         success_message = f'You successfully bought one **{item.get_name()}** for `🅱️{item.get_cost()}` beans. Remaining balance: `🅱️{new_user_balance}`'
         
         await interaction.response.send_message(success_message, ephemeral=True)
-        self.refresh_ui(new_user_balance)
         
-        #await interaction.original_response().edit_message(view=self)
-        await interaction.message.edit(view=self)
-
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
-        
         self.current_page = (self.current_page +(1 if right else -1)) % self.page_count
         start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
-        end = min((start + ShopEmbed.ITEMS_PER_PAGE), self.item_count)
         
         embed = ShopEmbed(self.bot, interaction, self.items, start)
 
