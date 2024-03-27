@@ -215,20 +215,6 @@ class Database():
             c.execute(self.CREATE_INVENTORY_EVENT_TABLE)
             c.close()
             
-            command = f'''
-                UPDATE {self.JAIL_EVENT_TABLE} 
-                SET {self.JAIL_EVENT_TYPE_COL} = ?
-                WHERE {self.JAIL_EVENT_TYPE_COL} = ?;
-            '''
-            task = ('fart', 'Fart')
-            self.__query_insert(command, task)
-            
-            task = ('slap', 'Slap')
-            self.__query_insert(command, task)
-            
-            task = ('pet', 'Pet')
-            self.__query_insert(command, task)
-            
         except Error as e:
             traceback.print_exc()
             self.logger.error("DB",e)
