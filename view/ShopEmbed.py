@@ -12,7 +12,12 @@ class ShopEmbed(discord.Embed):
         super().__init__(
             title=f"Beans Shop for {interaction.guild.name}",
             color=discord.Colour.purple(),
-            description=f'Spend your hard earned beans! \n Only <@{interaction.user.id}> can interact here, use /shop to open your own shop widget.'
+            description=f'''
+                Spend your hard earned beans!
+                Only <@{interaction.user.id}> can interact here.
+                Use `/shop` to open your own shop widget.
+                Use `/inventory` or the balance button below to see your inventory. \n
+            '''
         )
         end_offset = min((start_offset + self.ITEMS_PER_PAGE), len(items))
         items.sort(key=lambda x:x.get_cost())

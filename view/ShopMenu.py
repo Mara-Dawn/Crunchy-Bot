@@ -12,6 +12,7 @@ from shop.ItemType import ItemType
 from view.InventoryEmbed import InventoryEmbed
 from view.ShopEmbed import ShopEmbed
 from view.ArrestView import ArrestView
+from view.ReleaseView import ReleaseView
 
 class ShopMenu(discord.ui.View):
     
@@ -62,11 +63,14 @@ class ShopMenu(discord.ui.View):
             view_class_name = item.get_view_class()
             
             view_class = globals()[view_class_name]
-            view = view_class(self.bot, interaction)
+            view = view_class(self.bot, interaction, self)
             
-            self.stop()
-            await interaction.followup.send(f"", embed=embed, view=view, ephemeral=True)
-            await interaction.message.delete()
+            message = await interaction.followup.send(f"", embed=embed, view=view, ephemeral=True)
+            view.set_message(message)
+            
+            self.refresh_ui(user_balance, disabled=True)
+            await interaction.message.edit(view=self)
+            
             return
         
         beans_event_id = self.event_manager.dispatch_beans_event(
@@ -108,15 +112,15 @@ class ShopMenu(discord.ui.View):
         
         await interaction.response.edit_message(embed=embed, view=self)
     
-    def refresh_ui(self, user_balance: int):
+    def refresh_ui(self, user_balance: int, disabled: bool = False):
         start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
         end = min((start + ShopEmbed.ITEMS_PER_PAGE), self.item_count)
         page_display = f'Page {self.current_page + 1}/{self.page_count}'
         self.clear_items()
-        self.add_item(Dropdown(self.items[start:end], self.selected))
-        self.add_item(PageButton("<", False))
-        self.add_item(BuyButton())
-        self.add_item(PageButton(">", True))
+        self.add_item(Dropdown(self.items[start:end], self.selected, disabled))
+        self.add_item(PageButton("<", False, disabled))
+        self.add_item(BuyButton(disabled))
+        self.add_item(PageButton(">", True, disabled))
         self.add_item(CurrentPageButton(page_display))
         self.add_item(BalanceButton(self.bot, user_balance))
     
@@ -138,8 +142,8 @@ class ShopMenu(discord.ui.View):
 
 class BuyButton(discord.ui.Button):
     
-    def __init__(self):
-        super().__init__(label='Buy', style=discord.ButtonStyle.green, row=1)
+    def __init__(self, disabled: bool = False):
+        super().__init__(label='Buy', style=discord.ButtonStyle.green, row=1, disabled=disabled)
     
     async def callback(self, interaction: discord.Interaction):
         view: ShopMenu = self.view
@@ -149,9 +153,9 @@ class BuyButton(discord.ui.Button):
 
 class PageButton(discord.ui.Button):
     
-    def __init__(self, label: str, right: bool):
+    def __init__(self, label: str, right: bool, disabled: bool = False):
         self.right = right
-        super().__init__(label=label, style=discord.ButtonStyle.grey, row=1)
+        super().__init__(label=label, style=discord.ButtonStyle.grey, row=1, disabled=disabled)
     
     async def callback(self, interaction: discord.Interaction):
         view: ShopMenu = self.view
@@ -191,7 +195,7 @@ class BalanceButton(discord.ui.Button):
 
 class Dropdown(discord.ui.Select):
     
-    def __init__(self, items: List[Item], selected: ItemType):
+    def __init__(self, items: List[Item], selected: ItemType, disabled: bool = False):
         
         options = []
         
@@ -206,7 +210,7 @@ class Dropdown(discord.ui.Select):
             
             options.append(option)
 
-        super().__init__(placeholder='Select an item.', min_values=1, max_values=1, options=options, row=0)
+        super().__init__(placeholder='Select an item.', min_values=1, max_values=1, options=options, row=0, disabled=disabled)
     
     async def callback(self, interaction: discord.Interaction):
         view: ShopMenu = self.view

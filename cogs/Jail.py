@@ -219,7 +219,6 @@ class Jail(commands.Cog):
         
         damage_info = f'({initial_amount})' if initial_amount != amount else ''
         
-        
         if amount == 0 and is_crit:
             response += f'{interaction.user.display_name} farted so hard, they blew {user.display_name} out of Jail. They are free!\n'
             response += await self.release_user(guild_id, interaction.user.id, user)
@@ -280,6 +279,13 @@ class Jail(commands.Cog):
             self.event_manager.dispatch_jail_event(datetime.datetime.now(), guild_id, JailEventType.RELEASE, released_by_id, 0, jail.get_id())
         
         return response
+    
+    async def announce(self, guild: discord.Guild, message: str, *args, **kwargs) -> str:
+        jail_channels = self.settings.get_jail_channels(guild.id)
+        
+        for channel_id in jail_channels:
+            channel = guild.get_channel(channel_id)
+            await channel.send(message, *args, **kwargs)
     
     @tasks.loop(seconds=20)
     async def jail_check(self):
@@ -381,7 +387,7 @@ class Jail(commands.Cog):
         timestamp_now = int(datetime.datetime.now().timestamp())
         release = timestamp_now + (duration*60)
         
-        await interaction.channel.send(f'<@{user.id}> was sentenced to Jail by <@{interaction.user.id}> . They will be released <t:{release}:R>.', delete_after=(duration*60))
+        await self.announce(interaction.guild, f'<@{user.id}> was sentenced to Jail by <@{interaction.user.id}> . They will be released <t:{release}:R>.', delete_after=(duration*60))
         
         await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} jailed successfully.', args=[user.name, duration])
 
@@ -412,7 +418,7 @@ class Jail(commands.Cog):
         
         response = f'<@{user.id}> was released from Jail by <@{interaction.user.id}>. ' + response
 
-        await interaction.channel.send(response)
+        await self.announce(interaction.guild, response)
         
         await self.bot.command_response(self.__cog_name__, interaction, f'User {user.display_name} released successfully.', args=[user])
 

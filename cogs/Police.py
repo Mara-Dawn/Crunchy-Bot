@@ -244,7 +244,8 @@ class Police(commands.Cog):
                 response = await self.__jail_check(guild_id, message.author)
                 
                 if response is not None:
-                    await message.channel.send(response)
+                    jail_cog: Jail = self.bot.get_cog('Jail')
+                    await jail_cog.announce(message.guild, response)
                 else:
                     duration = self.settings.get_police_timeout(guild_id)
                     self.bot.loop.create_task(self.timeout_task(message.channel, message.author, duration))
