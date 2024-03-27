@@ -13,7 +13,7 @@ class FartProtection(TriggerItem):
         type = ItemType.FART_PROTECTION
         group = ItemGroup.PROTECTION
         description = 'According to him his grandpa took it from a dead guy in ww2. The next 5 interactions negatively affecting your jailtime will be reduced by 50%'
-        defaultcost = 50
+        defaultcost = 175
         emoji = '☣'
         trigger = [UserInteraction.FART]
         value = 0.5

@@ -11,7 +11,7 @@ class Arrest(InstantItem):
         type = ItemType.ARREST
         group = ItemGroup.IMMEDIATE_USE
         self.description = 'Take the law into your own hands and arrest a user of choice for 30 minutes.'
-        defaultcost = 2000
+        defaultcost = 1000
         emoji = '🚨'
         view = 'ShopUserSelectView'
         

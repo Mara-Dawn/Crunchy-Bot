@@ -11,7 +11,7 @@ class Bailout(InstantItem):
         type = ItemType.BAILOUT
         group = ItemGroup.IMMEDIATE_USE
         self.description = 'Pay off the mods to let you out of jail early.'
-        defaultcost = 3000
+        defaultcost = 1500
         emoji = '🗿'
         view = 'ShopConfirmView'
         

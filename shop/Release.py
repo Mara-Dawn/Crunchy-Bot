@@ -11,7 +11,7 @@ class Release(InstantItem):
         type = ItemType.RELEASE
         group = ItemGroup.IMMEDIATE_USE
         self.description = 'Due to dietary advancements your farts can now help a friend out of jail for one time only.'
-        defaultcost = 2000
+        defaultcost = 1000
         emoji = '🔑'
         view = 'ShopUserSelectView'
         

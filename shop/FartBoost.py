@@ -13,7 +13,7 @@ class FartBoost(TriggerItem):
         type = ItemType.FART_BOOST
         group = ItemGroup.VALUE_MODIFIER
         description = 'Extremely dangerous, multiplies the power of your next fart by 3.'
-        defaultcost = 200
+        defaultcost = 150
         emoji = '🤢'
         trigger = [UserInteraction.FART]
         value = 3

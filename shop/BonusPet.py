@@ -13,7 +13,7 @@ class BonusPet(TriggerItem):
         type = ItemType.BONUS_PET
         group = ItemGroup.BONUS_ATTEMPT
         description = 'Allows you to continue giving pets to a jailed person after using your guaranteed one.'
-        defaultcost = 100
+        defaultcost = 60
         emoji = '🥰'
         trigger = [UserInteraction.PET]
         value = True

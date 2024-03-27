@@ -13,7 +13,7 @@ class BonusFart(TriggerItem):
         type = ItemType.BONUS_FART
         group = ItemGroup.BONUS_ATTEMPT
         description = 'Allows you to continue farting on a jailed person after using your guaranteed one.'
-        defaultcost = 200
+        defaultcost = 100
         emoji = '😂'
         trigger = [UserInteraction.FART]
         value = True 

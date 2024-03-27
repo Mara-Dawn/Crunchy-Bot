@@ -13,7 +13,7 @@ class FartStabilizer(TriggerItem):
         type = ItemType.FART_STABILIZER
         group = ItemGroup.STABILIZER
         description = 'Stabilizes your aim and increases your rectal precision. Your next fart cannot roll below 0.'
-        defaultcost = 50
+        defaultcost = 45
         emoji = '🔭'
         trigger = [UserInteraction.FART]
         value = 10
