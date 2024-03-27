@@ -251,6 +251,44 @@ class Beans(commands.Cog):
             
         await self.bot.command_response(self.__cog_name__, interaction, response, args=[user.display_name, amount], ephemeral=False)
     
+    @group.command(name="transfer", description="Transfer your beans to other users.")
+    @app_commands.describe(
+        user='User to transfer beans to.',
+        amount='Amount of beans.'
+        )
+    @app_commands.guild_only()
+    async def transfer(self, interaction: discord.Interaction, user: discord.Member, amount: app_commands.Range[int, 1]):
+        
+        guild_id = interaction.guild_id
+        user_id = interaction.user.id
+        
+        current_balance = self.database.get_member_beans(guild_id, user_id)
+        
+        if current_balance < amount:
+            await self.bot.command_response(self.__cog_name__, interaction, f'You dont have that many beans, idiot.', ephemeral=False)
+            return
+        now = datetime.datetime.now()
+        
+        self.event_manager.dispatch_beans_event(
+            now, 
+            guild_id,
+            BeansEventType.USER_TRANSFER, 
+            interaction.user.id,
+            -amount
+        )
+        
+        self.event_manager.dispatch_beans_event(
+            now, 
+            guild_id,
+            BeansEventType.USER_TRANSFER, 
+            user.id,
+            amount
+        )
+        
+        response = f'`🅱️{abs(amount)}` beans were transferred from <@{interaction.user.id}> to <@{user.id}>.'
+            
+        await self.bot.command_response(self.__cog_name__, interaction, response, args=[interaction.user.display_name,user.display_name, amount], ephemeral=False)
+    
     @group.command(name="settings", description="Overview of all beans related settings and their current value.")
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
