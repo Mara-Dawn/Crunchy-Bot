@@ -13,7 +13,7 @@ class Release(InstantItem):
         self.description = 'Due to dietary advancements your farts can now help a friend out of jail for one time only.'
         defaultcost = 2000
         emoji = '🔑'
-        view = 'ReleaseView'
+        view = 'ShopUserSelectView'
         
         if cost is None:
             cost = defaultcost

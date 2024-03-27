@@ -1,19 +1,19 @@
 from shop.IsntantItem import InstantItem
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
-class Arrest(InstantItem):
+class Bailout(InstantItem):
 
     def __init__(
         self,
-        cost: int|None
+        cost: str|int|None
     ):
-        self.name = 'Citizens Arrest'
-        type = ItemType.ARREST
+        self.name = 'Bribe the Mods'
+        type = ItemType.BAILOUT
         group = ItemGroup.IMMEDIATE_USE
-        self.description = 'Take the law into your own hands and arrest a user of choice for 30 minutes.'
-        defaultcost = 2000
-        emoji = '🚨'
-        view = 'ShopUserSelectView'
+        self.description = 'Pay off the mods to let you out of jail early.'
+        defaultcost = 3000
+        emoji = '🗿'
+        view = 'ShopConfirmView'
         
         if cost is None:
             cost = defaultcost

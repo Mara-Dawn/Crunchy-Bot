@@ -24,6 +24,7 @@ from shop.FartProtection import FartProtection
 
 from shop.Arrest import Arrest
 from shop.Release import Release
+from shop.Bailout import Bailout
 
 
 class ItemManager():

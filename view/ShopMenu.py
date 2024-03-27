@@ -3,7 +3,6 @@ from typing import List
 import discord
 
 from MaraBot import MaraBot
-from datalayer.Database import Database
 from events.BeansEventType import BeansEventType
 from shop.IsntantItem import InstantItem
 from shop.Item import Item
@@ -11,8 +10,9 @@ from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from view.InventoryEmbed import InventoryEmbed
 from view.ShopEmbed import ShopEmbed
-from view.ArrestView import ArrestView
-from view.ReleaseView import ReleaseView
+
+from view.ShopUserSelectView import ShopUserSelectView
+from view.ShopConfirmView import ShopConfirmView
 
 class ShopMenu(discord.ui.View):
     
@@ -63,7 +63,7 @@ class ShopMenu(discord.ui.View):
             view_class_name = item.get_view_class()
             
             view_class = globals()[view_class_name]
-            view = view_class(self.bot, interaction, self)
+            view = view_class(self.bot, interaction, self, item)
             
             message = await interaction.followup.send(f"", embed=embed, view=view, ephemeral=True)
             view.set_message(message)

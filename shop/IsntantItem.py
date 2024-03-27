@@ -30,7 +30,19 @@ class InstantItem(Item):
         super().__init__(name, type, group, description, emoji, cost, base_amount)
 
     def get_embed(self):
-        embed = discord.Embed(title=self.name, description=self.description, color=discord.Colour.purple()) if self.embed is None else self.embed
+        title = f'{self.get_emoji()} {self.get_name()}'
+        description = self.get_description()
+        max_width = 60
+        if len(description) < max_width:
+            spacing = max_width - len(description)
+            description += ' '*spacing
+            
+        suffix = f'🅱️{self.get_cost()}'
+        spacing = max_width - len(suffix)
+        info_block = f'```{description}\n\n{' '*spacing}{suffix}```'
+        
+        embed = discord.Embed(title=title, description=info_block, color=discord.Colour.purple()) if self.embed is None else self.embed
+        
         return embed
     
     def get_view_class(self):

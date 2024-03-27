@@ -14,3 +14,4 @@ class ItemType(str, Enum):
     FART_PROTECTION = 'FartProtection'
     ARREST = 'Arrest'
     RELEASE = 'Release'
+    BAILOUT = 'Bailout'

@@ -28,7 +28,6 @@ class Jail(commands.Cog):
         self.event_manager: EventManager = bot.event_manager
         self.item_manager: ItemManager = bot.item_manager
 
-    
     async def __has_permission(interaction: discord.Interaction) -> bool:
         author_id = 90043934247501824
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
@@ -204,7 +203,7 @@ class Jail(commands.Cog):
             amount = int(amount * reduction)
             reduction_text = reduction if reduction != 1 else ''
         
-        damage_info = f'{initial_amount}'
+        damage_info = f'[{initial_amount}]'
         
         if modifier_text != '':
             damage_info = f'{damage_info}*{modifier_text}'
@@ -215,9 +214,9 @@ class Jail(commands.Cog):
         if advantage_text != '':
             damage_info = f'{damage_info}  advantage:{advantage_text}'
         
-        #damage_info = f'`{damage_info}`' if damage_info != f'{initial_amount}' else ''
+        #damage_info = f'({damage_info})' if damage_info != f'{initial_amount}' else ''
         
-        damage_info = f'({initial_amount})' if initial_amount != amount else ''
+        damage_info = f'*({initial_amount})*' if initial_amount != amount else ''
         
         if amount == 0 and is_crit:
             response += f'{interaction.user.display_name} farted so hard, they blew {user.display_name} out of Jail. They are free!\n'
