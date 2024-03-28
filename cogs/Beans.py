@@ -60,7 +60,7 @@ class Beans(commands.Cog):
 
         if amount is not None:
             if not (beans_gamba_min <= amount and amount <= beans_gamba_max):
-                await self.bot.command_response(self.__cog_name__, interaction, f'Between`🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}`, you fucking monkey.', ephemeral=False)
+                await self.bot.command_response(self.__cog_name__, interaction, f'Between`🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}` you fucking monkey.', ephemeral=False)
                 return 
             
         await interaction.response.defer()
@@ -258,6 +258,7 @@ class Beans(commands.Cog):
         )
     @app_commands.guild_only()
     async def transfer(self, interaction: discord.Interaction, user: discord.Member, amount: app_commands.Range[int, 1]):
+        await interaction.response.defer()
         
         guild_id = interaction.guild_id
         user_id = interaction.user.id
