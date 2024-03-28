@@ -60,7 +60,7 @@ class Beans(commands.Cog):
 
         if amount is not None:
             if not (beans_gamba_min <= amount and amount <= beans_gamba_max):
-                await self.bot.command_response(self.__cog_name__, interaction, f'Between`🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}` you fucking monkey.', ephemeral=False)
+                await self.bot.command_response(self.__cog_name__, interaction, f'Between `🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}` you fucking monkey.', ephemeral=False)
                 return 
             
         await interaction.response.defer()
@@ -76,20 +76,24 @@ class Beans(commands.Cog):
             await self.bot.command_response(self.__cog_name__, interaction, f'You\'re out of beans, idiot.', ephemeral=False)
             return
         
-        last_gamba_beans_event = self.database.get_last_beans_event(guild_id, user_id, BeansEventType.GAMBA_COST)
+        last_gamba_cost_event = self.database.get_last_beans_event(guild_id, user_id, BeansEventType.GAMBA_COST)
+        last_gamba_payout_event = self.database.get_last_beans_event(guild_id, user_id, BeansEventType.GAMBA_PAYOUT)
         
-        if last_gamba_beans_event is not None: 
+        if last_gamba_cost_event is not None: 
         
             current_date = datetime.datetime.now()
-            last_gamba_beans_date = last_gamba_beans_event.get_datetime()
+            last_gamba_beans_date = last_gamba_cost_event.get_datetime()
             
             delta = current_date - last_gamba_beans_date
             delta_seconds = delta.total_seconds()
-            default_cooldown = self.settings.get_beans_gamba_cooldown(guild_id)*60
+            default_cooldown = self.settings.get_beans_gamba_cooldown(guild_id)
             
-            last_gamba_amount = abs(last_gamba_beans_event.get_value())
+            last_gamba_amount = abs(last_gamba_cost_event.get_value())
+            cooldown = default_cooldown 
             
-            cooldown = default_cooldown * (last_gamba_amount / default_amount) 
+            if last_gamba_payout_event.get_value() != 0:
+                #only go on cooldown when previous gamba was a win
+                cooldown = default_cooldown * (last_gamba_amount / default_amount) 
 
             if delta_seconds <= cooldown:
                 remaining = cooldown - delta_seconds
