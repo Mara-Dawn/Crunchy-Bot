@@ -63,11 +63,11 @@ class EventManager():
         timestamp: datetime.datetime,
         guild_id: int, 
         jail_event_type: JailEventType,
-        jailed_by: int,
+        caused_by: int,
         duration: int,
         jail_reference: int
     ):
-        event = JailEvent(timestamp, guild_id, jail_event_type, jailed_by, duration, jail_reference)
+        event = JailEvent(timestamp, guild_id, jail_event_type, caused_by, duration, jail_reference)
         self.database.log_event(event)
         self.logger.log(guild_id, f'Jail event `{jail_event_type}` was logged for jail {jail_reference}.', self.log_name)
         
@@ -93,7 +93,7 @@ class EventManager():
     ) -> int:
         event = BeansEvent(timestamp, guild_id, beans_event_type, member, value)
         id = self.database.log_event(event)
-        self.logger.log(guild_id, f'Beans event `{beans_event_type}` was logged.', self.log_name)
+        self.logger.log(guild_id, f'Beans event `{beans_event_type}` was logged. [{value}]', self.log_name)
         return id
     
     def dispatch_inventory_event(self,

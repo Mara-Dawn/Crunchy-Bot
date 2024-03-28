@@ -94,7 +94,7 @@ class ShopMenu(discord.ui.View):
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
         
         new_user_balance = self.database.get_member_beans(guild_id, member_id)
-        success_message = f'You successfully bought one **{item.get_name()}** for `🅱️{item.get_cost()}` beans. Remaining balance: `🅱️{new_user_balance}`'
+        success_message = f'You successfully bought one **{item.get_name()}** for `🅱️{item.get_cost()}` beans. Remaining balance: `🅱️{new_user_balance}`\n Use */inventory* to check your inventory.'
         
         await interaction.response.send_message(success_message, ephemeral=True)
         

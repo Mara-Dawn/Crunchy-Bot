@@ -12,6 +12,7 @@ class ItemType(str, Enum):
     FART_STABILIZER = 'FartStabilizer'
     FARTVANTAGE = 'Fartvantage'
     FART_PROTECTION = 'FartProtection'
+    JAIL_REDUCTION = 'JailReduction'
     ARREST = 'Arrest'
     RELEASE = 'Release'
     BAILOUT = 'Bailout'
