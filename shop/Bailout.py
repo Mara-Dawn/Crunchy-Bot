@@ -14,8 +14,9 @@ class Bailout(InstantItem):
         defaultcost = 1500
         emoji = '🗿'
         view = 'ShopConfirmView'
+        value = None
         
         if cost is None:
             cost = defaultcost
         
-        super().__init__(self.name, type, group, self.description, emoji, cost, view)
+        super().__init__(self.name, type, group, self.description, emoji, cost, view, value)

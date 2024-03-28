@@ -354,7 +354,7 @@ class Database():
             {self.JAIL_EVENT_JAILREFERENCE_COL})
             VALUES (?, ?, ?, ?, ?);
         '''
-        task = (event_id, event.get_jail_event_type(), event.get_jailed_by(), event.get_duration(), event.get_jail_id())
+        task = (event_id, event.get_jail_event_type(), event.get_caused_by(), event.get_duration(), event.get_jail_id())
 
         return self.__query_insert(command, task)
     

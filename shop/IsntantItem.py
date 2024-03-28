@@ -19,17 +19,21 @@ class InstantItem(Item):
         description: str,
         emoji: str,
         cost: int,
-        view_class: discord.ui.View,
+        view_class: str,
+        value: Any,
         embed: discord.Embed = None,
+        allow_amount: bool = False,
         base_amount: int = 1
     ):
         self.name = name
         self.description = description
         self.embed = embed
         self.view_class = view_class
+        self.value = value
+        self.allow_amount = allow_amount
         super().__init__(name, type, group, description, emoji, cost, base_amount)
 
-    def get_embed(self):
+    def get_embed(self) -> discord.Embed:
         title = f'{self.get_emoji()} {self.get_name()}'
         description = self.get_description()
         max_width = 60
@@ -45,7 +49,13 @@ class InstantItem(Item):
         
         return embed
     
-    def get_view_class(self):
+    def get_value(self) -> Any:
+        return self.value
+    
+    def get_view_class(self) -> str:
         return self.view_class
+    
+    def get_allow_amount(self) -> bool:
+        return self.allow_amount
         
             

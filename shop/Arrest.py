@@ -14,8 +14,9 @@ class Arrest(InstantItem):
         defaultcost = 1000
         emoji = '🚨'
         view = 'ShopUserSelectView'
+        value = None
         
         if cost is None:
             cost = defaultcost
         
-        super().__init__(self.name, type, group, self.description, emoji, cost, view)
+        super().__init__(self.name, type, group, self.description, emoji, cost, view, value)
