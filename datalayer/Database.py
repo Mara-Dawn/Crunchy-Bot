@@ -764,16 +764,17 @@ class Database():
         
         return output
     
-    def get_beans_event_count(self, guild_id: int, user_id: int, type: BeansEventType, min_value: int) -> int:
+    def get_beans_daily_gamba_count(self, guild_id: int, user_id: int, type: BeansEventType, min_value: int, date: int) -> int:
         command = f'''
             SELECT COUNT(*) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
             WHERE {self.BEANS_EVENT_MEMBER_COL} = ?
             AND {self.EVENT_GUILD_ID_COL} = ?
             AND {self.BEANS_EVENT_TYPE_COL} = ?
-            AND ABS({self.BEANS_EVENT_VALUE_COL}) >= ?;
+            AND ABS({self.BEANS_EVENT_VALUE_COL}) >= ?
+            AND {self.EVENT_TIMESTAMP_COL} >= ?;
         '''
-        task = (user_id, guild_id, type, min_value)
+        task = (user_id, guild_id, type, min_value, date)
         
         rows = self.__query_select(command, task)
         if not rows or len(rows) < 1:

@@ -163,13 +163,19 @@ class Beans(commands.Cog):
             await message.edit(content=response+display)
             i += 1
         
-        user_gamba_count = self.database.get_beans_event_count(guild_id, user_id, BeansEventType.GAMBA_COST, default_amount)
+        today = datetime.datetime.now().date()
+        today_timestamp = datetime.datetime(year=today.year, month=today.month, day=today.day).timestamp()
         
-        beans_bonus_count = self.settings.get_beans_bonus_count(interaction.guild_id)
-        beans_bonus_amount = self.settings.get_beans_bonus_amount(interaction.guild_id)
+        user_daily_gamba_count = self.database.get_beans_daily_gamba_count(guild_id, user_id, BeansEventType.GAMBA_COST, default_amount, today_timestamp)
+        beans_bonus_amount = 0
+        match user_daily_gamba_count:
+            case 10:
+                beans_bonus_amount = self.settings.get_beans_bonus_amount_10(interaction.guild_id)
+            case 25:
+                beans_bonus_amount = self.settings.get_beans_bonus_amount_25(interaction.guild_id)
         
-        if user_gamba_count > 0 and user_gamba_count % beans_bonus_count == 0:
-            final += f'\nYou gamba\'d **{beans_bonus_count}** times in a row! Enjoy these bonus beans `🅱️{beans_bonus_amount}`'
+        if beans_bonus_amount > 0:
+            final += f'\n🎉 You reached **{user_daily_gamba_count}** gambas for today! Enjoy these bonus beans `🅱️{beans_bonus_amount}` 🎉'
             self.event_manager.dispatch_beans_event(
                 datetime.datetime.now(), 
                 guild_id, 
@@ -330,14 +336,14 @@ class Beans(commands.Cog):
     async def daily_setup(self, interaction: discord.Interaction):
         beans_daily_min = self.settings.get_beans_daily_min(interaction.guild_id)
         beans_daily_max = self.settings.get_beans_daily_max(interaction.guild_id)
-        beans_bonus_count = self.settings.get_beans_bonus_count(interaction.guild_id)
-        beans_bonus_amount = self.settings.get_beans_bonus_amount(interaction.guild_id)
+        beans_bonus_amount_10 = self.settings.get_beans_bonus_amount_10(interaction.guild_id)
+        beans_bonus_amount_25 = self.settings.get_beans_bonus_amount_25(interaction.guild_id)
 
         modal = BeansDailySettingsModal(self.bot, self.settings)
         modal.beans_daily_min.default = beans_daily_min
         modal.beans_daily_max.default = beans_daily_max
-        modal.beans_bonus_count.default = beans_bonus_count
-        modal.beans_bonus_amount.default = beans_bonus_amount
+        modal.beans_bonus_amount_10.default = beans_bonus_amount_10
+        modal.beans_bonus_amount_25.default = beans_bonus_amount_25
         
         await interaction.response.send_modal(modal)
         

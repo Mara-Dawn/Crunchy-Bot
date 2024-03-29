@@ -43,8 +43,8 @@ class BotSettings():
     BEANS_GAMBA_COOLDOWN = "beans_gamba_cooldown"
     BEANS_GAMBA_MIN = "beans_gamba_min"
     BEANS_GAMBA_MAX = "beans_gamba_max"
-    BEANS_BONUS_CARD_COUNT ="beans_bonus_card_count"
-    BEANS_BONUS_CARD_AMOUNT = "beans_bonus_card_amount"
+    BEANS_BONUS_CARD_AMOUNT_10 = "beans_bonus_card_amount_10"
+    BEANS_BONUS_CARD_AMOUNT_25 = "beans_bonus_card_amount_25"
     
     SHOP_SUBSETTINGS_KEY = "shop"
     SHOP_ENABLED_KEY = "shop_enabled"
@@ -87,8 +87,8 @@ class BotSettings():
         beans_settings.add_setting(self.BEANS_GAMBA_COOLDOWN, 180, "Default delay in seconds between attempts")
         beans_settings.add_setting(self.BEANS_GAMBA_MIN, 1, "Minimum amount of beans that can be gambled")
         beans_settings.add_setting(self.BEANS_GAMBA_MAX, 100, "Maximum amount of beans that can be gambled")
-        beans_settings.add_setting(self.BEANS_BONUS_CARD_COUNT, 10, "Amount of gambas after the bonus is paid out")
-        beans_settings.add_setting(self.BEANS_BONUS_CARD_AMOUNT, 100, "Bonus beans for regular gamblers")
+        beans_settings.add_setting(self.BEANS_BONUS_CARD_AMOUNT_10, 50, "Daily bonus beans after 10 gambas")
+        beans_settings.add_setting(self.BEANS_BONUS_CARD_AMOUNT_25, 150, "Daily bonus beans after 25 gambas")
         
         shop_settings = ModuleSettings(self.SHOP_SUBSETTINGS_KEY, "Beans Shop")
         shop_settings.add_setting(self.SHOP_ENABLED_KEY, True, "Module Enabled")
@@ -379,17 +379,17 @@ class BotSettings():
     def set_beans_gamba_max(self, guild: int, amount: int) -> None:
         self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MAX, amount)
         
-    def get_beans_bonus_count(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_COUNT)
+    def get_beans_bonus_amount_10(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_10)
     
-    def set_beans_bonus_count(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_COUNT, amount)
+    def set_beans_bonus_amount_10(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_10, amount)
         
-    def get_beans_bonus_amount(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT)
+    def get_beans_bonus_amount_25(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_25)
     
-    def set_beans_bonus_amount(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT, amount)
+    def set_beans_bonus_amount_25(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_25, amount)
     
     # Shop Settings
     
