@@ -13,7 +13,7 @@ class PetBoost(TriggerItem):
         type = ItemType.PET_BOOST
         group = ItemGroup.VALUE_MODIFIER
         description = 'When a normal pet just isnt enough. Powers up your next pet by 5x.'
-        defaultcost = 200
+        defaultcost = 120
         emoji = '🧸'
         trigger = [UserInteraction.PET]
         value = 5

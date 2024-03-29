@@ -13,7 +13,7 @@ class SlapBoost(TriggerItem):
         type = ItemType.SLAP_BOOST
         group = ItemGroup.VALUE_MODIFIER
         description = 'For when someone has been extra horny. Powers up your next slap by 5x.'
-        defaultcost = 200
+        defaultcost = 120
         emoji = '🔨'
         trigger = [UserInteraction.SLAP]
         value = 5

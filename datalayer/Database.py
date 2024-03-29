@@ -764,22 +764,22 @@ class Database():
         
         return output
     
-    def get_last_beans_event_date(self, guild_id: int, user_id: int, type: BeansEventType) -> int:
+    def get_beans_event_count(self, guild_id: int, user_id: int, type: BeansEventType, min_value: int) -> int:
         command = f'''
-            SELECT * FROM {self.BEANS_EVENT_TABLE} 
+            SELECT COUNT(*) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
             WHERE {self.BEANS_EVENT_MEMBER_COL} = ?
             AND {self.EVENT_GUILD_ID_COL} = ?
             AND {self.BEANS_EVENT_TYPE_COL} = ?
-            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
+            AND ABS({self.BEANS_EVENT_VALUE_COL}) >= ?;
         '''
-        task = (user_id, guild_id, type)
+        task = (user_id, guild_id, type, min_value)
         
         rows = self.__query_select(command, task)
         if not rows or len(rows) < 1:
-            return None
+            return 0
         
-        return rows[0][f'{self.EVENT_TIMESTAMP_COL}']
+        return rows[0][f'COUNT(*)']
     
     def get_last_beans_event(self, guild_id: int, user_id: int, type: BeansEventType) -> BeansEvent:
         command = f'''
