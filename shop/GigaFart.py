@@ -12,7 +12,7 @@ class GigaFart(TriggerItem):
         name = 'Shady 4am Chinese Takeout'
         type = ItemType.GIGA_FART
         group = ItemGroup.VALUE_MODIFIER
-        description = 'Works better than any laxative and boosts the pressure of your next fart by x10. Try not to hurt yoruself.'
+        description = 'Works better than any laxative and boosts the pressure of your next fart by x10. Try not to hurt yourself.'
         defaultcost = 500
         emoji = '💀'
         trigger = [ItemTrigger.FART]
