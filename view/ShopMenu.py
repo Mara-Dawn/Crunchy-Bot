@@ -57,7 +57,7 @@ class ShopMenu(discord.ui.View):
         
         inventory = self.database.get_inventory_by_user(guild_id, member_id)
         
-        if inventory.get_item_count(item.get_type()) >= item.get_max_amount():
+        if item.get_max_amount() is not None and inventory.get_item_count(item.get_type()) >= item.get_max_amount():
             await interaction.response.send_message(f'You cannot own more than {item.get_max_amount()} items of this type.', ephemeral=True)
             return
  
