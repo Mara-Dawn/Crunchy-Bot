@@ -97,8 +97,10 @@ class Beans(commands.Cog):
 
             if delta_seconds <= cooldown:
                 remaining = cooldown - delta_seconds
+                timestamp_now = int(datetime.datetime.now().timestamp())
+                cooldowntimer = int(timestamp_now + remaining)
                 
-                await self.bot.command_response(self.__cog_name__, interaction, f'Gamba is on cooldown. Try again in {BotUtil.strfdelta(remaining, inputtype='seconds')}', ephemeral=False)
+                await self.bot.command_response(self.__cog_name__, interaction, f'Gamba is on cooldown. Try again in <t:{cooldowntimer}:R>.', ephemeral=False)
                 return
         
         self.event_manager.dispatch_beans_event(
