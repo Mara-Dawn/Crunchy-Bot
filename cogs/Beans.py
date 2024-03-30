@@ -61,6 +61,8 @@ class Beans(commands.Cog):
         user_id = interaction.user.id
         beans_gamba_min = self.settings.get_beans_gamba_min(guild_id)
         beans_gamba_max = self.settings.get_beans_gamba_max(guild_id)
+        default_cooldown = self.settings.get_beans_gamba_cooldown(guild_id)
+        timestamp_now = int(datetime.datetime.now().timestamp())
 
         if amount is not None:
             if not (beans_gamba_min <= amount and amount <= beans_gamba_max):
@@ -90,7 +92,6 @@ class Beans(commands.Cog):
             
             delta = current_date - last_gamba_beans_date
             delta_seconds = delta.total_seconds()
-            default_cooldown = self.settings.get_beans_gamba_cooldown(guild_id)
             
             last_gamba_amount = abs(last_gamba_cost_event.get_value())
             cooldown = default_cooldown 
@@ -101,10 +102,11 @@ class Beans(commands.Cog):
 
             if delta_seconds <= cooldown:
                 remaining = cooldown - delta_seconds
-                timestamp_now = int(datetime.datetime.now().timestamp())
                 cooldowntimer = int(timestamp_now + remaining)
                 
                 await self.bot.command_response(self.__cog_name__, interaction, f'Gamba is on cooldown. Try again in <t:{cooldowntimer}:R>.', ephemeral=False)
+                await asyncio.sleep(remaining)
+                await interaction.delete_original_response()
                 return
         
         self.event_manager.dispatch_beans_event(
@@ -197,7 +199,13 @@ class Beans(commands.Cog):
             user_id,
             payout
         )
-        await message.edit(content=response+display+final)
+        cooldowntimer = int(default_cooldown*amount/default_amount)
+        remaining = int(timestamp_now+cooldowntimer)
+        timer =f'\nYou can gamble again <t:{remaining}:R>.'
+        await message.edit(content=response+display+final+timer)
+        await asyncio.sleep(max(0,cooldowntimer-10))
+        await interaction.edit_original_response(content=response+display+final)
+        
         
     group = app_commands.Group(name="beans", description="Subcommands for the Beans module.")
     
