@@ -22,3 +22,10 @@ class UserInventory():
     
     def get_inventory_items(self) -> Dict[ItemType,int]:
         return self.inventory
+    
+    def get_item_count(self, type: ItemType) -> int:
+        if type not in self.inventory.keys():
+            return 0
+        return self.inventory[type]
+        
+        

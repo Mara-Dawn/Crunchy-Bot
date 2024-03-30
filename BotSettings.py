@@ -45,6 +45,7 @@ class BotSettings():
     BEANS_GAMBA_MAX = "beans_gamba_max"
     BEANS_BONUS_CARD_AMOUNT_10 = "beans_bonus_card_amount_10"
     BEANS_BONUS_CARD_AMOUNT_25 = "beans_bonus_card_amount_25"
+    BEANS_LOTTERY_BASE_AMOUNT = "beans_lottery_base_amount"
     
     SHOP_SUBSETTINGS_KEY = "shop"
     SHOP_ENABLED_KEY = "shop_enabled"
@@ -89,6 +90,7 @@ class BotSettings():
         beans_settings.add_setting(self.BEANS_GAMBA_MAX, 100, "Maximum amount of beans that can be gambled")
         beans_settings.add_setting(self.BEANS_BONUS_CARD_AMOUNT_10, 50, "Daily bonus beans after 10 gambas")
         beans_settings.add_setting(self.BEANS_BONUS_CARD_AMOUNT_25, 150, "Daily bonus beans after 25 gambas")
+        beans_settings.add_setting(self.BEANS_LOTTERY_BASE_AMOUNT, 1500, "Base pot for weekly beans lottery")
         
         shop_settings = ModuleSettings(self.SHOP_SUBSETTINGS_KEY, "Beans Shop")
         shop_settings.add_setting(self.SHOP_ENABLED_KEY, True, "Module Enabled")
@@ -390,6 +392,12 @@ class BotSettings():
     
     def set_beans_bonus_amount_25(self, guild: int, amount: int) -> None:
         self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_25, amount)
+    
+    def get_beans_lottery_base_amount(self, guild: int) -> int:
+        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_LOTTERY_BASE_AMOUNT)
+    
+    def set_beans_lottery_base_amount(self, guild: int, amount: int) -> None:
+        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_LOTTERY_BASE_AMOUNT, amount)
     
     # Shop Settings
     

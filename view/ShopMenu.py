@@ -55,6 +55,12 @@ class ShopMenu(discord.ui.View):
             await interaction.response.send_message('You dont have enough beans to buy that.', ephemeral=True)
             return
         
+        inventory = self.database.get_inventory_by_user(guild_id, member_id)
+        
+        if inventory.get_item_count(item.get_type()) >= item.get_max_amount():
+            await interaction.response.send_message(f'You cannot own more than {item.get_max_amount()} items of this type.', ephemeral=True)
+            return
+ 
         if item.get_group() == ItemGroup.IMMEDIATE_USE:
             await interaction.response.defer(ephemeral=True)
         

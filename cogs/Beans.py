@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import random
+import secrets
 import typing
 import discord
 
@@ -14,6 +15,8 @@ from MaraBot import MaraBot
 from datalayer.Database import Database
 from events.BeansEventType import BeansEventType
 from events.EventManager import EventManager
+from shop.ItemManager import ItemManager
+from shop.ItemType import ItemType
 from view.BeansDailySettingsModal import BeansDailySettingsModal
 from view.BeansGambaSettingsModal import BeansGambaSettingsModal
 
@@ -25,6 +28,7 @@ class Beans(commands.Cog):
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
+        self.item_manager: ItemManager = bot.item_manager
 
     async def __has_permission(interaction: discord.Interaction) -> bool:
         author_id = 90043934247501824
@@ -314,6 +318,60 @@ class Beans(commands.Cog):
         response = f'`🅱️{abs(amount)}` beans were transferred from <@{interaction.user.id}> to <@{user.id}>.'
             
         await self.bot.command_response(self.__cog_name__, interaction, response, args=[interaction.user.display_name,user.display_name, amount], ephemeral=False)
+    
+    @group.command(name="lottery", description="Check the current pot for this weeks beans lottery.")
+    @app_commands.guild_only()
+    async def lottery(self, interaction: discord.Interaction):
+        guild_id = interaction.guild_id
+        base_pot = self.settings.get_beans_lottery_base_amount(guild_id)
+        
+        lottery_data = self.database.get_lottery_data(guild_id)
+        total_pot = base_pot
+        participants = len(lottery_data)
+        item = self.item_manager.get_trigger_item(guild_id, ItemType.LOTTERY_TICKET)
+        
+        for user_id, count in lottery_data.items():
+            total_pot += item.get_cost() * count
+            
+        response = f'This weeks lottery has `{participants}` participants with a total pot of  `🅱️{total_pot}` beans.'
+        await self.bot.command_response(self.__cog_name__, interaction, response, ephemeral=False)
+        
+    @group.command(name="lottery_draw", description="Manually draw the winner of this weeks bean lottery. (Admin only)")
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def lottery_draw(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        
+        guild_id = interaction.guild_id
+        base_pot = self.settings.get_beans_lottery_base_amount(guild_id)
+        
+        lottery_data = self.database.get_lottery_data(guild_id)
+        total_pot = base_pot
+        ticket_pool = []
+        participants = len(lottery_data)
+        item = self.item_manager.get_trigger_item(guild_id, ItemType.LOTTERY_TICKET)
+        
+        for user_id, count in lottery_data.items():
+            for i in range(count):
+                ticket_pool.append(user_id)
+            total_pot += item.get_cost() * count
+            item.use(self.event_manager, interaction.guild_id, user_id, amount=count)
+        
+        response = f'# Weekly Crunchy Beans Lottery \nThis weeks lottery has `{participants}` participants with a total pot of  `🅱️{total_pot}` beans.'
+        
+        winner = secrets.choice(ticket_pool)
+        
+        self.event_manager.dispatch_beans_event(
+            datetime.datetime.now(), 
+            guild_id,
+            BeansEventType.LOTTERY_PAYOUT, 
+            winner,
+            total_pot
+        )
+        
+        response += f'\n\n**The lucky winner is:**\n🎉 <@{winner}> 🎉\n **Congratulations, the `🅱️{total_pot}` beans were tansferred to your account!**\n\n Thank you for playing 😊'
+        
+        await self.bot.command_response(self.__cog_name__, interaction, response, ephemeral=False)
     
     @group.command(name="settings", description="Overview of all beans related settings and their current value.")
     @app_commands.check(__has_permission)

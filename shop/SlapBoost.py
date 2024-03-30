@@ -1,4 +1,4 @@
-from datalayer.UserInteraction import UserInteraction
+from datalayer.ItemTrigger import ItemTrigger
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from shop.TriggerItem import TriggerItem
@@ -15,7 +15,7 @@ class SlapBoost(TriggerItem):
         description = 'For when someone has been extra horny. Powers up your next slap by 5x.'
         defaultcost = 120
         emoji = '🔨'
-        trigger = [UserInteraction.SLAP]
+        trigger = [ItemTrigger.SLAP]
         value = 5
         
         if cost is None:

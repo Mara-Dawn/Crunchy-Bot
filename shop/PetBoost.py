@@ -1,4 +1,4 @@
-from datalayer.UserInteraction import UserInteraction
+from datalayer.ItemTrigger import ItemTrigger
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from shop.TriggerItem import TriggerItem
@@ -15,7 +15,7 @@ class PetBoost(TriggerItem):
         description = 'When a normal pet just isnt enough. Powers up your next pet by 5x.'
         defaultcost = 120
         emoji = '🧸'
-        trigger = [UserInteraction.PET]
+        trigger = [ItemTrigger.PET]
         value = 5
         
         if cost is None:
