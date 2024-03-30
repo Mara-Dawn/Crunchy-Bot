@@ -200,6 +200,8 @@ class Beans(commands.Cog):
             payout
         )
         cooldowntimer = int(default_cooldown*amount/default_amount)
+        if payout == 0:
+            cooldowntimer = int(default_cooldown)
         remaining = int(timestamp_now+cooldowntimer)
         timer =f'\nYou can gamble again <t:{remaining}:R>.'
         await message.edit(content=response+display+final+timer)
