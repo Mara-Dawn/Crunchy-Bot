@@ -1,4 +1,4 @@
-from datalayer.UserInteraction import UserInteraction
+from datalayer.ItemTrigger import ItemTrigger
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from shop.TriggerItem import TriggerItem
@@ -15,7 +15,7 @@ class GigaFart(TriggerItem):
         description = 'Works better than any laxative and boosts the pressure of your next fart by x10. Try not to hurt yoruself.'
         defaultcost = 500
         emoji = '💀'
-        trigger = [UserInteraction.FART]
+        trigger = [ItemTrigger.FART]
         value = 10
         
         if cost is None:

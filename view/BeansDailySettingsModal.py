@@ -7,6 +7,8 @@ from MaraBot import MaraBot
 class BeansDailySettingsModal(discord.ui.Modal, title='Beans Settings'):
     beans_daily_min = discord.ui.TextInput(label='', required=False, custom_id=BotSettings.BEANS_DAILY_MIN)
     beans_daily_max = discord.ui.TextInput(label='', required=False, custom_id=BotSettings.BEANS_DAILY_MAX)
+    beans_bonus_amount_10 = discord.ui.TextInput(label='', required=False, custom_id=BotSettings.BEANS_BONUS_CARD_AMOUNT_10)
+    beans_bonus_amount_25 = discord.ui.TextInput(label='', required=False, custom_id=BotSettings.BEANS_BONUS_CARD_AMOUNT_25)
 
     def __init__(self, bot: MaraBot, settings: BotSettings):
         super().__init__()
@@ -17,11 +19,15 @@ class BeansDailySettingsModal(discord.ui.Modal, title='Beans Settings'):
 
         self.beans_daily_min.label = self.settings.get_setting_title(BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_DAILY_MIN)
         self.beans_daily_max.label = self.settings.get_setting_title(BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_DAILY_MAX)
+        self.beans_bonus_amount_10.label = self.settings.get_setting_title(BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_BONUS_CARD_AMOUNT_10)
+        self.beans_bonus_amount_25.label = self.settings.get_setting_title(BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_BONUS_CARD_AMOUNT_25)
     
     async def on_submit(self, interaction: discord.Interaction):
         text_inputs = [
             self.beans_daily_min,
-            self.beans_daily_max
+            self.beans_daily_max,
+            self.beans_bonus_amount_10,
+            self.beans_bonus_amount_25
         ]
         errors: List[discord.ui.TextInput] = []
         
@@ -40,5 +46,7 @@ class BeansDailySettingsModal(discord.ui.Modal, title='Beans Settings'):
             
         self.settings.set_beans_daily_min(interaction.guild_id, int(self.beans_daily_min.value))
         self.settings.set_beans_daily_max(interaction.guild_id, int(self.beans_daily_max.value))
+        self.settings.set_beans_bonus_amount_10(interaction.guild_id, int(self.beans_bonus_amount_10.value))
+        self.settings.set_beans_bonus_amount_25(interaction.guild_id, int(self.beans_bonus_amount_25.value))
         
-        await self.bot.response('Beans', interaction, f'Settings were successfully updated.', self.command, args=[text_input.label for text_input in text_inputs])
+        await self.bot.response('Beans', interaction, f'Settings were successfully updated.', self.command, args=[text_input.value for text_input in text_inputs])

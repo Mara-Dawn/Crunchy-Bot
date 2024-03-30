@@ -14,7 +14,8 @@ class Item():
         description: str,
         emoji: str,
         cost: int,
-        base_amount: int = 1
+        base_amount: int = 1,
+        max_amount: int = None
     ):
         self.name = name
         self.type = type
@@ -23,6 +24,7 @@ class Item():
         self.cost = cost
         self.emoji = emoji
         self.base_amount = base_amount
+        self.max_amount = max_amount
      
     def get_name(self) -> str:
         return self.name
@@ -45,6 +47,9 @@ class Item():
     def get_base_amount(self) -> int:
         return self.base_amount
     
+    def get_max_amount(self) -> int:
+        return self.max_amount
+    
     def add_to_embed(self, embed: discord.Embed, max_width: int, count: int=None) -> None:
         title = f'> ~*  {self.get_emoji()} {self.get_name()} {self.get_emoji()}  *~'
         description = self.get_description()
@@ -61,9 +66,3 @@ class Item():
         info_block = f'```{description}\n\n{' '*spacing}{suffix}```'
         
         embed.add_field(name=title, value=info_block, inline=False)
-    
-    def activated():
-        pass
-        
-    def use():
-        pass

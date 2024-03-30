@@ -3,11 +3,12 @@ from discord.ext import commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from datalayer.Database import Database
+from datalayer.ItemTrigger import ItemTrigger
 from datalayer.UserInteraction import UserInteraction
 from events.EventManager import EventManager
 from shop.Item import Item
-from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from shop.TriggerItem import TriggerItem
 
 # needed for global access
 from shop.AutoCrit import AutoCrit
@@ -21,6 +22,7 @@ from shop.GigaFart import GigaFart
 from shop.FartStabilizer import FartStabilizer
 from shop.Fartvantage import Fartvantage
 from shop.FartProtection import FartProtection
+from shop.LotteryTicket import LotteryTicket
 
 from shop.Arrest import Arrest
 from shop.Release import Release
@@ -45,6 +47,9 @@ class ItemManager():
         
         return instance
     
+    def get_trigger_item(self, guild_id: int, type: ItemType) -> TriggerItem:
+        return self.get_item(guild_id, type)
+    
     def get_items(self, guild_id: int) -> List[Item]:
         items = [x.value for x in ItemType]
         output = []
@@ -53,7 +58,21 @@ class ItemManager():
             
         return output
     
-    def get_user_items_activated(self, guild_id: int, user_id: int, action: UserInteraction) -> List[Item]:
+    def get_user_items_activated_by_interaction(self, guild_id: int, user_id: int, action: UserInteraction) -> List[TriggerItem]:
+        trigger = None
+        
+        match action:
+            case UserInteraction.FART:
+                trigger = ItemTrigger.FART
+            case UserInteraction.SLAP:
+                trigger = ItemTrigger.SLAP
+            case UserInteraction.PET:
+                trigger = ItemTrigger.PET
+        
+        return self.get_user_items_activated(guild_id, user_id, trigger)
+    
+    
+    def get_user_items_activated(self, guild_id: int, user_id: int, action: ItemTrigger) -> List[TriggerItem]:
         inventory = self.database.get_inventory_by_user(guild_id, user_id)
         inventory_items = inventory.get_inventory_items()
         
