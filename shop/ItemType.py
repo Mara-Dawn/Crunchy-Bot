@@ -16,3 +16,4 @@ class ItemType(str, Enum):
     ARREST = 'Arrest'
     RELEASE = 'Release'
     BAILOUT = 'Bailout'
+    LOTTERY_TICKET = 'LotteryTicket'

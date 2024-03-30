@@ -1,4 +1,4 @@
-from datalayer.UserInteraction import UserInteraction
+from datalayer.ItemTrigger import ItemTrigger
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from shop.TriggerItem import TriggerItem
@@ -15,7 +15,7 @@ class AutoCrit(TriggerItem):
         description = 'Let these rainbow colored little beans guide your next slap, pet or fart to a guaranteed critical hit.'
         defaultcost = 100
         emoji = '💥'
-        trigger = [UserInteraction.FART, UserInteraction.PET, UserInteraction.SLAP]
+        trigger = [ItemTrigger.FART, ItemTrigger.PET, ItemTrigger.SLAP]
         value = True 
         
         if cost is None:

@@ -1,4 +1,4 @@
-from datalayer.UserInteraction import UserInteraction
+from datalayer.ItemTrigger import ItemTrigger
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from shop.TriggerItem import TriggerItem
@@ -13,9 +13,9 @@ class BonusSlap(TriggerItem):
         type = ItemType.BONUS_SLAP
         group = ItemGroup.BONUS_ATTEMPT
         description = 'Allows you to continue slapping a jailed person after using your guaranteed one.'
-        defaultcost = 60
+        defaultcost = 35
         emoji = '✋'
-        trigger = [UserInteraction.SLAP]
+        trigger = [ItemTrigger.SLAP]
         value = True
         
         if cost is None:

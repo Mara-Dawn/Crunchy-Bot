@@ -1,4 +1,4 @@
-from datalayer.UserInteraction import UserInteraction
+from datalayer.ItemTrigger import ItemTrigger
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from shop.TriggerItem import TriggerItem
@@ -15,7 +15,7 @@ class BonusFart(TriggerItem):
         description = 'Allows you to continue farting on a jailed person after using your guaranteed one.'
         defaultcost = 100
         emoji = '😂'
-        trigger = [UserInteraction.FART]
+        trigger = [ItemTrigger.FART]
         value = True 
         
         if cost is None:

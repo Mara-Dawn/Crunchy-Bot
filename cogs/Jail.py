@@ -10,6 +10,7 @@ from BotSettings import BotSettings
 from BotUtil import BotUtil
 from MaraBot import MaraBot
 from datalayer.Database import Database
+from datalayer.ItemTrigger import ItemTrigger
 from datalayer.UserJail import UserJail
 from datalayer.UserInteraction import UserInteraction
 from events.EventManager import EventManager
@@ -64,7 +65,7 @@ class Jail(commands.Cog):
                 return f'User {user.display_name} already enjoyed {interaction.user.display_name}\'s farts. No extra time will be added.'
     
     def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction):
-        user_items = self.item_manager.get_user_items_activated(
+        user_items = self.item_manager.get_user_items_activated_by_interaction(
             interaction.guild_id, 
             interaction.user.id, 
             command_type
@@ -92,7 +93,8 @@ class Jail(commands.Cog):
                 case ItemGroup.ADVANTAGE:
                     advantage = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
                 case ItemGroup.BONUS_ATTEMPT:
-                    bonus_attempt = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                    bonus_attempt = item
+                    continue
                 case _:
                     continue
                     
@@ -111,7 +113,7 @@ class Jail(commands.Cog):
         return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text
     
     def __get_target_item_modifiers(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
-        user_items = self.item_manager.get_user_items_activated(
+        user_items = self.item_manager.get_user_items_activated_by_interaction(
             interaction.guild_id, 
             user.id, 
             command_type
@@ -153,14 +155,18 @@ class Jail(commands.Cog):
         
         user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text = self.__get_item_modifiers(interaction, command_type)
         
-        if user_item_info != '':
-            response += '__Items used:__\n' + user_item_info
-        
         if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
-            if not bonus_attempt:
+            if bonus_attempt:
+                bonus_attempt.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                self.logger.log(interaction.guild_id, f'Item {bonus_attempt.get_name()} was used.', cog=self.__cog_name__)
+                user_item_info += f'* {bonus_attempt.get_name()}\n'
+            else:
                 self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
                 return self.__get_already_used_msg(command_type, interaction, user)
 
+        if user_item_info != '':
+            response += '__Items used:__\n' + user_item_info
+        
         amount = 0
         advantage_text = ''
         reduction_text = ''

@@ -1,4 +1,4 @@
-from datalayer.UserInteraction import UserInteraction
+from datalayer.ItemTrigger import ItemTrigger
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from shop.TriggerItem import TriggerItem
@@ -15,7 +15,7 @@ class FartStabilizer(TriggerItem):
         description = 'Stabilizes your aim and increases your rectal precision. Your next fart cannot roll below 0.'
         defaultcost = 45
         emoji = '🔭'
-        trigger = [UserInteraction.FART]
+        trigger = [ItemTrigger.FART]
         value = 10
         
         if cost is None:

@@ -1,4 +1,4 @@
-from datalayer.UserInteraction import UserInteraction
+from datalayer.ItemTrigger import ItemTrigger
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from shop.TriggerItem import TriggerItem
@@ -15,7 +15,7 @@ class FartBoost(TriggerItem):
         description = 'Extremely dangerous, multiplies the power of your next fart by 3.'
         defaultcost = 150
         emoji = '🤢'
-        trigger = [UserInteraction.FART]
+        trigger = [ItemTrigger.FART]
         value = 3
         
         if cost is None:
