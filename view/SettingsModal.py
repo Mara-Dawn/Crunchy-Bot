@@ -84,7 +84,8 @@ class SettingsModal(discord.ui.Modal):
                 return
             
         for text_input_id, keys in self.input_settings_map.items():
-            self.settings.update_setting(interaction.guild_id, keys[0], keys[1], self.id_map[text_input_id].value)
+            value = self.__cast_value(self.id_map[text_input_id].value, self.type_map[text_input_id])
+            self.settings.update_setting(interaction.guild_id, keys[0], keys[1], value)
         
         await self.bot.response(self.cog, interaction, f'Settings were successfully updated.', self.command, args=[text_input.value for text_input in self.children])
         

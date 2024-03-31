@@ -105,7 +105,12 @@ class Beans(commands.Cog):
                 
                 await self.bot.command_response(self.__cog_name__, interaction, f'Gamba is on cooldown. Try again in <t:{cooldowntimer}:R>.', ephemeral=False)
                 message = await interaction.original_response()
+                channel_id = message.channel.id
+                message_id = message.id
+                
                 await asyncio.sleep(remaining)
+                
+                message = await self.bot.get_guild(guild_id).get_channel(channel_id).fetch_message(message_id)
                 await message.delete()
                 return
         
@@ -205,7 +210,10 @@ class Beans(commands.Cog):
         remaining = int(timestamp_now+cooldowntimer)
         timer =f'\nYou can gamble again <t:{remaining}:R>.'
         await message.edit(content=response+display+final+timer)
+        channel_id = message.channel.id
+        message_id = message.id
         await asyncio.sleep(max(0,cooldowntimer-10))
+        message = await self.bot.get_guild(guild_id).get_channel(channel_id).fetch_message(message_id)
         await message.edit(content=response+display+final)
         
         
