@@ -7,7 +7,7 @@ import discord
 
 from discord.ext import commands
 from discord import app_commands
-from typing import Literal
+from typing import *
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from BotUtil import BotUtil
@@ -17,8 +17,7 @@ from events.BeansEventType import BeansEventType
 from events.EventManager import EventManager
 from shop.ItemManager import ItemManager
 from shop.ItemType import ItemType
-from view.BeansDailySettingsModal import BeansDailySettingsModal
-from view.BeansGambaSettingsModal import BeansGambaSettingsModal
+from view.SettingsModal import SettingsModal
 
 class Beans(commands.Cog):
     
@@ -405,16 +404,15 @@ class Beans(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def daily_setup(self, interaction: discord.Interaction):
-        beans_daily_min = self.settings.get_beans_daily_min(interaction.guild_id)
-        beans_daily_max = self.settings.get_beans_daily_max(interaction.guild_id)
-        beans_bonus_amount_10 = self.settings.get_beans_bonus_amount_10(interaction.guild_id)
-        beans_bonus_amount_25 = self.settings.get_beans_bonus_amount_25(interaction.guild_id)
-
-        modal = BeansDailySettingsModal(self.bot, self.settings)
-        modal.beans_daily_min.default = beans_daily_min
-        modal.beans_daily_max.default = beans_daily_max
-        modal.beans_bonus_amount_10.default = beans_bonus_amount_10
-        modal.beans_bonus_amount_25.default = beans_bonus_amount_25
+        guild_id = interaction.guild_id
+        modal = SettingsModal(self.bot, self.settings, self.__cog_name__, interaction.command.name, "Settings for Daily Beans related Features")
+        
+        modal.add_field(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_DAILY_MIN_KEY, int)
+        modal.add_field(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_DAILY_MAX_KEY, int)
+        modal.add_field(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_BONUS_CARD_AMOUNT_10_KEY, int)
+        modal.add_field(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_BONUS_CARD_AMOUNT_25_KEY, int)
+        
+        modal.add_constraint([BotSettings.BEANS_DAILY_MIN_KEY, BotSettings.BEANS_DAILY_MAX_KEY], lambda a,b: a <= b , 'Beans minimum must be smaller than Beans maximum.')
         
         await interaction.response.send_modal(modal)
         
@@ -422,16 +420,15 @@ class Beans(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def gamba_setup(self, interaction: discord.Interaction):
-        beans_gamba_cost = self.settings.get_beans_gamba_cost(interaction.guild_id)
-        beans_gamba_cooldown = self.settings.get_beans_gamba_cooldown(interaction.guild_id)
-        beans_gamba_max = self.settings.get_beans_gamba_max(interaction.guild_id)
-        beans_gamba_min = self.settings.get_beans_gamba_min(interaction.guild_id)
-
-        modal = BeansGambaSettingsModal(self.bot, self.settings)
-        modal.beans_gamba_cost.default = str(beans_gamba_cost)
-        modal.beans_gamba_cooldown.default = str(beans_gamba_cooldown)
-        modal.beans_gamba_max.default = str(beans_gamba_max)
-        modal.beans_gamba_min.default = str(beans_gamba_min)
+        guild_id = interaction.guild_id
+        modal = SettingsModal(self.bot, self.settings, self.__cog_name__, interaction.command.name, "Settings for Gamba related Features")
+        
+        modal.add_field(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_GAMBA_DEFAULT_KEY, int)
+        modal.add_field(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_GAMBA_COOLDOWN_KEY, int)
+        modal.add_field(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_GAMBA_MIN_KEY, int)
+        modal.add_field(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_GAMBA_MAX_KEY, int)
+        
+        modal.add_constraint([BotSettings.BEANS_GAMBA_MIN_KEY, BotSettings.BEANS_GAMBA_MAX_KEY], lambda a,b: a <= b , 'Gamba minimum must be smaller than gamba maximum.')
         
         await interaction.response.send_modal(modal) 
     
