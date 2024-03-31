@@ -105,8 +105,9 @@ class Beans(commands.Cog):
                 cooldowntimer = int(timestamp_now + remaining)
                 
                 await self.bot.command_response(self.__cog_name__, interaction, f'Gamba is on cooldown. Try again in <t:{cooldowntimer}:R>.', ephemeral=False)
+                message = await interaction.original_response()
                 await asyncio.sleep(remaining)
-                await interaction.delete_original_response()
+                await message.delete()
                 return
         
         self.event_manager.dispatch_beans_event(
@@ -206,7 +207,7 @@ class Beans(commands.Cog):
         timer =f'\nYou can gamble again <t:{remaining}:R>.'
         await message.edit(content=response+display+final+timer)
         await asyncio.sleep(max(0,cooldowntimer-10))
-        await interaction.edit_original_response(content=response+display+final)
+        await message.edit(content=response+display+final)
         
         
     group = app_commands.Group(name="beans", description="Subcommands for the Beans module.")
