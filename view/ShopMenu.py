@@ -2,7 +2,7 @@ import datetime
 from typing import List
 import discord
 
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from events.BeansEventType import BeansEventType
 from shop.IsntantItem import InstantItem
 from shop.Item import Item
@@ -16,7 +16,7 @@ from view.ShopConfirmView import ShopConfirmView
 
 class ShopMenu(discord.ui.View):
     
-    def __init__(self, bot: MaraBot, interaction: discord.Interaction, items: List[Item]):
+    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, items: List[Item]):
         self.interaction = interaction
         self.bot = bot
         self.event_manager = bot.event_manager
@@ -180,7 +180,7 @@ class CurrentPageButton(discord.ui.Button):
         
 class BalanceButton(discord.ui.Button):
     
-    def __init__(self, bot: MaraBot, balance: int):
+    def __init__(self, bot: CrunchyBot, balance: int):
         self.bot = bot
         self.database = bot.database
         self.balance = balance

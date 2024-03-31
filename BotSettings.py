@@ -36,16 +36,16 @@ class BotSettings():
     BEANS_SUBSETTINGS_KEY = "beans"
     BEANS_ENABLED_KEY = "beans_enabled"
     BEANS_CHANNELS_KEY = "beans_channels"
-    BEANS_DAILY_MIN = "beans_daily_min"
-    BEANS_DAILY_MAX = "beans_daily_max"
-    BEANS_GAMBA_DEFAULT = "beans_gamba_default"
-    BEANS_GAMBA_COOLDOWN = "beans_gamba_cooldown"
-    BEANS_GAMBA_COOLDOWN = "beans_gamba_cooldown"
-    BEANS_GAMBA_MIN = "beans_gamba_min"
-    BEANS_GAMBA_MAX = "beans_gamba_max"
-    BEANS_BONUS_CARD_AMOUNT_10 = "beans_bonus_card_amount_10"
-    BEANS_BONUS_CARD_AMOUNT_25 = "beans_bonus_card_amount_25"
-    BEANS_LOTTERY_BASE_AMOUNT = "beans_lottery_base_amount"
+    BEANS_DAILY_MIN_KEY = "beans_daily_min"
+    BEANS_DAILY_MAX_KEY = "beans_daily_max"
+    BEANS_GAMBA_DEFAULT_KEY = "beans_gamba_default"
+    BEANS_GAMBA_COOLDOWN_KEY = "beans_gamba_cooldown"
+    BEANS_GAMBA_COOLDOWN_KEY = "beans_gamba_cooldown"
+    BEANS_GAMBA_MIN_KEY = "beans_gamba_min"
+    BEANS_GAMBA_MAX_KEY = "beans_gamba_max"
+    BEANS_BONUS_CARD_AMOUNT_10_KEY = "beans_bonus_card_amount_10"
+    BEANS_BONUS_CARD_AMOUNT_25_KEY = "beans_bonus_card_amount_25"
+    BEANS_LOTTERY_BASE_AMOUNT_KEY = "beans_lottery_base_amount"
     
     SHOP_SUBSETTINGS_KEY = "shop"
     SHOP_ENABLED_KEY = "shop_enabled"
@@ -82,15 +82,15 @@ class BotSettings():
         beans_settings = ModuleSettings(self.BEANS_SUBSETTINGS_KEY, "Beans")
         beans_settings.add_setting(self.BEANS_ENABLED_KEY, True, "Module Enabled")
         beans_settings.add_setting(self.BEANS_CHANNELS_KEY, [], "Channels for bean commands", "handle_channels_value")
-        beans_settings.add_setting(self.BEANS_DAILY_MIN, 10, "Mininum daily beans granted to users")
-        beans_settings.add_setting(self.BEANS_DAILY_MAX, 25, "Maximum daily beans granted to users")
-        beans_settings.add_setting(self.BEANS_GAMBA_DEFAULT, 10, "Default amount of beans gambad")
-        beans_settings.add_setting(self.BEANS_GAMBA_COOLDOWN, 180, "Default delay in seconds between attempts")
-        beans_settings.add_setting(self.BEANS_GAMBA_MIN, 1, "Minimum amount of beans that can be gambled")
-        beans_settings.add_setting(self.BEANS_GAMBA_MAX, 100, "Maximum amount of beans that can be gambled")
-        beans_settings.add_setting(self.BEANS_BONUS_CARD_AMOUNT_10, 50, "Daily bonus beans after 10 gambas")
-        beans_settings.add_setting(self.BEANS_BONUS_CARD_AMOUNT_25, 150, "Daily bonus beans after 25 gambas")
-        beans_settings.add_setting(self.BEANS_LOTTERY_BASE_AMOUNT, 1500, "Base pot for weekly beans lottery")
+        beans_settings.add_setting(self.BEANS_DAILY_MIN_KEY, 10, "Mininum daily beans granted to users")
+        beans_settings.add_setting(self.BEANS_DAILY_MAX_KEY, 25, "Maximum daily beans granted to users")
+        beans_settings.add_setting(self.BEANS_GAMBA_DEFAULT_KEY, 10, "Default amount of beans gambad")
+        beans_settings.add_setting(self.BEANS_GAMBA_COOLDOWN_KEY, 180, "Default delay in seconds between attempts")
+        beans_settings.add_setting(self.BEANS_GAMBA_MIN_KEY, 1, "Minimum amount of beans that can be gambled")
+        beans_settings.add_setting(self.BEANS_GAMBA_MAX_KEY, 100, "Maximum amount of beans that can be gambled")
+        beans_settings.add_setting(self.BEANS_BONUS_CARD_AMOUNT_10_KEY, 50, "Daily bonus beans after 10 gambas")
+        beans_settings.add_setting(self.BEANS_BONUS_CARD_AMOUNT_25_KEY, 150, "Daily bonus beans after 25 gambas")
+        beans_settings.add_setting(self.BEANS_LOTTERY_BASE_AMOUNT_KEY, 1500, "Base pot for weekly beans lottery")
         
         shop_settings = ModuleSettings(self.SHOP_SUBSETTINGS_KEY, "Beans Shop")
         shop_settings.add_setting(self.SHOP_ENABLED_KEY, True, "Module Enabled")
@@ -101,16 +101,16 @@ class BotSettings():
         self.settings.add_module(beans_settings)
         self.settings.add_module(shop_settings)
         
-    def __update_setting(self, guild: int, cog: str, key: str, value) -> None:
-        self.database.update_setting(guild, cog, key, value)
+    def update_setting(self, guild: int, subsetting_key: str, key: str, value) -> None:
+        self.database.update_setting(guild, subsetting_key, key, value)
                        
-    def __get_setting(self, guild: int, cog: str, key: str):
-        result = self.database.get_setting(guild, cog, key)
+    def get_setting(self, guild: int, subsetting_key: str, key: str):
+        result = self.database.get_setting(guild, subsetting_key, key)
         
         if result is not None:
             return result
         
-        return self.settings.get_default_setting(cog, key)
+        return self.settings.get_default_setting(subsetting_key, key)
     
     def get_setting_title(self, cog: str, key: str):
         result = self.settings.get_module(cog)
@@ -155,7 +155,7 @@ class BotSettings():
             for setting_key in module_settings:
                 
                 setting = module_settings[setting_key]
-                value = self.__get_setting(guild, module_key, setting_key)
+                value = self.get_setting(guild, module_key, setting_key)
                 
                 if setting.get_handler() != "":
                     handler = getattr(self, setting.get_handler())
@@ -168,247 +168,247 @@ class BotSettings():
     # Police Settings
 
     def get_police_enabled(self, guild: int) -> bool:
-        return self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_ENABLED_KEY)
+        return self.get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_ENABLED_KEY)
     
     def set_police_enabled(self, guild: int, enabled: bool) -> None:
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_ENABLED_KEY, enabled)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_ENABLED_KEY, enabled)
         
     def get_police_naughty_roles(self, guild: int) -> List[int]:
-        return [int(x) for x in self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY)]
+        return [int(x) for x in self.get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY)]
     
     def set_police_naughty_roles(self, guild: int, roles: List[int]) -> None:
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles)
         
     def add_police_naughty_role(self, guild: int, role: int) -> None:
         roles = self.get_police_naughty_roles(guild)
         if role not in roles: roles.append(role)
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles)
         
     def remove_police_naughty_role(self, guild: int, role: int) -> None:
         roles = self.get_police_naughty_roles(guild)
         if role in roles: roles.remove(role)
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles)
     
     def get_police_exclude_channels(self, guild: int) -> List[int]:
-        return [int(x) for x in self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY)]
+        return [int(x) for x in self.get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY)]
     
     def set_police_exclude_channels(self, guild: int, channels: List[int]) -> None:
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
     
     def add_police_exclude_channel(self, guild: int, channel: int) -> None:
         channels = self.get_police_exclude_channels(guild)
         if channel not in channels: channels.append(channel)
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
         
     def remove_police_exclude_channel(self, guild: int, channel: int) -> None:
         channels = self.get_police_exclude_channels(guild)
         if channel in channels: channels.remove(channel)
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY, channels)
     
     def get_police_timeout(self, guild: int) -> int:
-        return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_LENGTH_KEY))
+        return int(self.get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_LENGTH_KEY))
     
     def set_police_timeout(self, guild: int, timeout: int) -> None:
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_LENGTH_KEY, timeout)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_LENGTH_KEY, timeout)
     
     def get_police_timeout_notice(self, guild: int) -> str:
-        return self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_NOTICE_KEY)
+        return self.get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_NOTICE_KEY)
     
     def set_police_timeout_notice(self, guild: int, message: str) -> None:
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_NOTICE_KEY, message)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_NOTICE_KEY, message)
         
     def get_police_message_limit(self, guild: int) -> int:
-        return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_KEY))
+        return int(self.get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_KEY))
     
     def set_police_message_limit(self, guild: int, limit: int) -> None:
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_KEY, limit)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_KEY, limit)
         
     def get_police_message_limit_interval(self, guild: int) -> int:
-        return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY))
+        return int(self.get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY))
     
     def set_police_message_limit_interval(self, guild: int, interval: int) -> None:
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY, interval)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY, interval)
     
     def get_police_timeouts_before_jail(self, guild: int) -> int:
-        return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUTS_BEFORE_JAIL_KEY))
+        return int(self.get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUTS_BEFORE_JAIL_KEY))
     
     def set_police_timeouts_before_jail(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUTS_BEFORE_JAIL_KEY, amount)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUTS_BEFORE_JAIL_KEY, amount)
         
     def get_police_timeout_jail_duration(self, guild: int) -> int:
-        return int(self.__get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_JAIL_DURATION_KEY))
+        return int(self.get_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_JAIL_DURATION_KEY))
     
     def set_police_timeout_jail_duration(self, guild: int, duration: int) -> None:
-        self.__update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_JAIL_DURATION_KEY, duration)
+        self.update_setting(guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_JAIL_DURATION_KEY, duration)
     
     # Jail Settings
     
     def get_jail_enabled(self, guild: int) -> bool:
-        return self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ENABLED_KEY)
+        return self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ENABLED_KEY)
     
     def set_jail_enabled(self, guild: int, enabled: bool) -> None:
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ENABLED_KEY, enabled)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ENABLED_KEY, enabled)
         
     def get_jail_role(self, guild: int) -> int:
-        value = self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY)
+        value = self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY)
         return int(value) if value != '' else 0
     
     def set_jail_role(self, guild: int, role_id: int) -> None:
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY, role_id)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY, role_id)
         
     def get_jail_channels(self, guild: int) -> List[int]:
-        return [int(x) for x in self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY)]
+        return [int(x) for x in self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY)]
     
     def set_jail_channels(self, guild: int, channels: List[int]) -> None:
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY, channels)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY, channels)
     
     def add_jail_channel(self, guild: int, channel: int) -> None:
         channels = self.get_jail_channels(guild)
         if channel not in channels: channels.append(channel)
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY, channels)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY, channels)
         
     def remove_jail_channel(self, guild: int, channel: int) -> None:
         channels = self.get_jail_channels(guild)
         if channel in channels: channels.remove(channel)
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY, channels)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY, channels)
         
     def get_jail_slap_time(self, guild: int) -> int:
-        return int(self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_SLAP_TIME_KEY))
+        return int(self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_SLAP_TIME_KEY))
     
     def set_jail_slap_time(self, guild: int, time: int) -> None:
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_SLAP_TIME_KEY, time)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_SLAP_TIME_KEY, time)
         
     def get_jail_pet_time(self, guild: int) -> int:
-        return int(self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_PET_TIME_KEY))
+        return int(self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_PET_TIME_KEY))
     
     def set_jail_pet_time(self, guild: int, time: int) -> None:
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_PET_TIME_KEY, time)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_PET_TIME_KEY, time)
         
     def get_jail_fart_min(self, guild: int) -> int:
-        return int(self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MIN_KEY))
+        return int(self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MIN_KEY))
     
     def set_jail_fart_min(self, guild: int, time: int) -> None:
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MIN_KEY, time)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MIN_KEY, time)
     
     def get_jail_fart_max(self, guild: int) -> int:
-        return int(self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MAX_KEY))
+        return int(self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MAX_KEY))
     
     def set_jail_fart_max(self, guild: int, time: int) -> None:
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MAX_KEY, time)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MAX_KEY, time)
         
     def get_jail_base_crit_rate(self, guild: int) -> float:
-        return float(self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_RATE_KEY))
+        return float(self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_RATE_KEY))
     
     def set_jail_base_crit_rate(self, guild: int, rate: float) -> None:
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_RATE_KEY, rate)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_RATE_KEY, rate)
     
     def get_jail_base_crit_mod(self, guild: int) -> float:
-        return float(self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_MOD_KEY))
+        return float(self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_MOD_KEY))
     
     def set_jail_base_crit_mod(self, guild: int, mod: float) -> None:
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_MOD_KEY, mod)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_MOD_KEY, mod)
     
     def get_jail_mod_roles(self, guild: int) -> List[int]:
-        return [int(x) for x in self.__get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY)]
+        return [int(x) for x in self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY)]
     
     def set_jail_mod_roles(self, guild: int, roles: List[int]) -> None:
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles)
     
     def add_jail_mod_role(self, guild: int, role: int) -> None:
         roles = self.get_jail_mod_roles(guild)
         if role not in roles: roles.append(role)
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles)
         
     def remove_jail_mod_role(self, guild: int, role: int) -> None:
         roles = self.get_jail_mod_roles(guild)
         if role not in roles: roles.remove(role)
-        self.__update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles)
+        self.update_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles)
     
     # Beans Settings
     
     def get_beans_enabled(self, guild: int) -> bool:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY)
+        return self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY)
     
     def set_beans_enabled(self, guild: int, enabled: bool) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY, enabled)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY, enabled)
         
     def get_beans_daily_min(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN)
+        return self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN_KEY)
     
     def set_beans_daily_min(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN, amount)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN_KEY, amount)
         
     def get_beans_daily_max(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX)
+        return self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX_KEY)
     
     def set_beans_daily_max(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX, amount)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX_KEY, amount)
         
     def get_beans_gamba_cost(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_DEFAULT)
+        return self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_DEFAULT_KEY)
     
     def set_beans_gamba_cost(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_DEFAULT, amount)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_DEFAULT_KEY, amount)
         
     def get_beans_gamba_cooldown(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN)
+        return self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN_KEY)
     
-    def set_beans_gamba_cooldown(self, guild: int, minutes: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN, minutes)
+    def set_beans_gamba_cooldown(self, guild: int, seconds: int) -> None:
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN_KEY, seconds)
     
     def get_beans_channels(self, guild: int) -> List[int]:
-        return [int(x) for x in self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY)]
+        return [int(x) for x in self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY)]
 
     def add_beans_channel(self, guild: int, channel: int) -> None:
         channels = self.get_beans_channels(guild)
         if channel not in channels: channels.append(channel)
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY, channels)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY, channels)
         
     def remove_beans_channel(self, guild: int, channel: int) -> None:
         channels = self.get_beans_channels(guild)
         if channel in channels: channels.remove(channel)
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY, channels)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY, channels)
 
     def get_beans_gamba_min(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MIN)
+        return self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MIN_KEY)
     
     def set_beans_gamba_min(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MIN, amount)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MIN_KEY, amount)
         
     def get_beans_gamba_max(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MAX)
+        return self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MAX_KEY)
     
     def set_beans_gamba_max(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MAX, amount)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MAX_KEY, amount)
         
     def get_beans_bonus_amount_10(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_10)
+        return self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_10_KEY)
     
     def set_beans_bonus_amount_10(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_10, amount)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_10_KEY, amount)
         
     def get_beans_bonus_amount_25(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_25)
+        return self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_25_KEY)
     
     def set_beans_bonus_amount_25(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_25, amount)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_25_KEY, amount)
     
     def get_beans_lottery_base_amount(self, guild: int) -> int:
-        return self.__get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_LOTTERY_BASE_AMOUNT)
+        return self.get_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_LOTTERY_BASE_AMOUNT_KEY)
     
     def set_beans_lottery_base_amount(self, guild: int, amount: int) -> None:
-        self.__update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_LOTTERY_BASE_AMOUNT, amount)
+        self.update_setting(guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_LOTTERY_BASE_AMOUNT_KEY, amount)
     
     # Shop Settings
     
     def get_shop_enabled(self, guild: int) -> bool:
-        return self.__get_setting(guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY)
+        return self.get_setting(guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY)
     
     def set_shop_enabled(self, guild: int, enabled: bool) -> None:
-        self.__update_setting(guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY, enabled)
+        self.update_setting(guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY, enabled)
         
     def get_shop_item_price(self, guild: int, item_type: ItemType) -> int:
-        return self.__get_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type)
+        return self.get_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type)
     
     def set_shop_item_price(self, guild: int, item_type: ItemType, amount: int) -> None:
-        self.__update_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type, amount)
+        self.update_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type, amount)

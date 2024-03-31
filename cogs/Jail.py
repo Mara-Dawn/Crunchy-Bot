@@ -8,7 +8,7 @@ from typing import Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from BotUtil import BotUtil
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from datalayer.Database import Database
 from datalayer.ItemTrigger import ItemTrigger
 from datalayer.UserJail import UserJail
@@ -17,11 +17,11 @@ from events.EventManager import EventManager
 from events.JailEventType import JailEventType
 from shop.ItemGroup import ItemGroup
 from shop.ItemManager import ItemManager
-from view.JailSettingsModal import JailSettingsModal
+from view.SettingsModal import SettingsModal
 
 class Jail(commands.Cog):
     
-    def __init__(self, bot: MaraBot):
+    def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
@@ -481,20 +481,19 @@ class Jail(commands.Cog):
     @group.command(name="setup", description="Opens a dialog to edit various jail settings.")
     @app_commands.check(__has_permission)
     async def setup(self, interaction: discord.Interaction):
-        current_slap_time = self.settings.get_jail_slap_time(interaction.guild_id)
-        current_pet_time = self.settings.get_jail_pet_time(interaction.guild_id)
-        current_fart_min = self.settings.get_jail_fart_min(interaction.guild_id)
-        current_fart_max = self.settings.get_jail_fart_max(interaction.guild_id)
-        current_base_crit = self.settings.get_jail_base_crit_rate(interaction.guild_id)
-
-        modal = JailSettingsModal(self.bot, self.settings)
-        modal.slap_time.default = current_slap_time
-        modal.pet_time.default = current_pet_time
-        modal.fart_min_time.default = current_fart_min
-        modal.fart_max_time.default = current_fart_max
-        modal.base_crit_rate.default = str(current_base_crit)
+        guild_id = interaction.guild_id
+        modal = SettingsModal(self.bot, self.settings, self.__cog_name__, interaction.command.name, "Settings for Jail Features")
         
-        await interaction.response.send_modal(modal)
+        modal.add_field(guild_id, BotSettings.JAIL_SUBSETTINGS_KEY, BotSettings.JAIL_SLAP_TIME_KEY, int)
+        modal.add_field(guild_id, BotSettings.JAIL_SUBSETTINGS_KEY, BotSettings.JAIL_PET_TIME_KEY, int)
+        modal.add_field(guild_id, BotSettings.JAIL_SUBSETTINGS_KEY, BotSettings.JAIL_FART_TIME_MIN_KEY, int, allow_negative=True)
+        modal.add_field(guild_id, BotSettings.JAIL_SUBSETTINGS_KEY, BotSettings.JAIL_FART_TIME_MAX_KEY, int)
+        modal.add_field(guild_id, BotSettings.JAIL_SUBSETTINGS_KEY, BotSettings.JAIL_BASE_CRIT_RATE_KEY, float)
+        
+        modal.add_constraint([BotSettings.JAIL_FART_TIME_MIN_KEY, BotSettings.JAIL_FART_TIME_MAX_KEY], lambda a,b: a <= b , 'fart minimum must be smaller than fart maximum.')
+        modal.add_constraint([BotSettings.JAIL_BASE_CRIT_RATE_KEY], lambda a: a >= 0 and a <= 1 , 'crit rate must be between 0 and 1.')
+        
+        await interaction.response.send_modal(modal) 
                 
 async def setup(bot):
     await bot.add_cog(Jail(bot))

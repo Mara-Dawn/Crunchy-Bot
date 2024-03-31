@@ -1,12 +1,12 @@
 from typing import List
 import discord
 
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from datalayer.UserInventory import UserInventory
 
 class InventoryEmbed(discord.Embed):
     
-    def __init__(self, bot: MaraBot,  interaction: discord.Interaction, inventory: UserInventory, balance = int):
+    def __init__(self, bot: CrunchyBot,  interaction: discord.Interaction, inventory: UserInventory, balance = int):
         super().__init__(
             title=f"Inventory of {interaction.user.display_name}\nBeans: `🅱️{balance}`",
             color=discord.Colour.purple(),

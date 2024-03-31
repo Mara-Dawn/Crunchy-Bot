@@ -5,7 +5,7 @@ from discord import app_commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from BotUtil import Tenor
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from cogs.Jail import Jail
 from datalayer.Database import Database
 from datalayer.UserInteraction import UserInteraction
@@ -13,7 +13,7 @@ from events.EventManager import EventManager
 
 class Interactions(commands.Cog):
     
-    def __init__(self, bot: MaraBot):
+    def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings

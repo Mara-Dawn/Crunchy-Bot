@@ -8,19 +8,19 @@ from discord import app_commands
 from typing import Dict, Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from cogs.Jail import Jail
 from datalayer.Database import Database
 from datalayer.PoliceList import PoliceList
 from events.EventManager import EventManager
 from events.JailEventType import JailEventType
-from view.PoliceSettingsModal import PoliceSettingsModal
+from view.SettingsModal import SettingsModal
 
 class Police(commands.Cog):
     
     TIMEOUT_ROLE_NAME = 'Timeout'
     
-    def __init__(self, bot: MaraBot):
+    def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.user_list: Dict[int, PoliceList] = {}
         self.logger: BotLogger = bot.logger
@@ -329,20 +329,16 @@ class Police(commands.Cog):
     @group.command(name="setup", description="Opens a dialog to edit various police settings.")
     @app_commands.check(__has_permission)
     async def setup(self, interaction: discord.Interaction):
-        current_timeout = self.settings.get_police_timeout(interaction.guild_id)
-        current_message_limit = self.settings.get_police_message_limit(interaction.guild_id)
-        current_message_limit_interval = self.settings.get_police_message_limit_interval(interaction.guild_id)
-        current_timeouts_before_jail = self.settings.get_police_timeouts_before_jail(interaction.guild_id)
-        current_timeout_jail_duration = self.settings.get_police_timeout_jail_duration(interaction.guild_id)
-
-        modal = PoliceSettingsModal(self.bot, self.settings)
-        modal.timeout_length.default = current_timeout
-        modal.message_limit.default = current_message_limit
-        modal.message_limit_interval.default = current_message_limit_interval
-        modal.timeouts_before_jail.default = current_timeouts_before_jail
-        modal.timeout_jail_duration.default = current_timeout_jail_duration
+        guild_id = interaction.guild_id
+        modal = SettingsModal(self.bot, self.settings, self.__cog_name__, interaction.command.name, "Settings for Police Features")
         
-        await interaction.response.send_modal(modal)
+        modal.add_field(guild_id, BotSettings.POLICE_SUBSETTINGS_KEY, BotSettings.POLICE_TIMEOUT_LENGTH_KEY, int)
+        modal.add_field(guild_id, BotSettings.POLICE_SUBSETTINGS_KEY, BotSettings.POLICE_MESSAGE_LIMIT_KEY, int)
+        modal.add_field(guild_id, BotSettings.POLICE_SUBSETTINGS_KEY, BotSettings.POLICE_MESSAGE_LIMIT_INTERVAL_KEY, int)
+        modal.add_field(guild_id, BotSettings.POLICE_SUBSETTINGS_KEY, BotSettings.POLICE_TIMEOUTS_BEFORE_JAIL_KEY, int)
+        modal.add_field(guild_id, BotSettings.POLICE_SUBSETTINGS_KEY, BotSettings.POLICE_TIMEOUT_JAIL_DURATION_KEY, int)
+        
+        await interaction.response.send_modal(modal) 
     
     @group.command(name="set_timeout_message")
     @app_commands.describe(message='This will be sent to the timed out person.')

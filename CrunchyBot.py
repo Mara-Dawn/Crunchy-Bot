@@ -8,7 +8,7 @@ from datalayer.Database import Database
 from events.EventManager import EventManager
 from shop.ItemManager import ItemManager
 
-class MaraBot(commands.Bot):
+class CrunchyBot(commands.Bot):
     
     DB_FILE = "database.sqlite"
     LOG_FILE = "./log/marabot.log"

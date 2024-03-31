@@ -1,7 +1,7 @@
 import discord
 
 from BotUtil import BotUtil
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from datalayer.UserRankings import UserRankings
 from view.RankingType import RankingType
 
@@ -22,7 +22,7 @@ class RankingEmbed(discord.Embed):
         RankingType.SPAM_SCORE: "Spam Score Rankings",
     }
     
-    def __init__(self, bot: MaraBot,  interaction: discord.Interaction, user_rankings: UserRankings, type: RankingType):
+    def __init__(self, bot: CrunchyBot,  interaction: discord.Interaction, user_rankings: UserRankings, type: RankingType):
         super().__init__(
             title=f"Leaderbords for {interaction.guild.name}",
             color=discord.Colour.purple(),
