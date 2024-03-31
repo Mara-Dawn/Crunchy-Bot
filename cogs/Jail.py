@@ -9,6 +9,7 @@ from BotLogger import BotLogger
 from BotSettings import BotSettings
 from BotUtil import BotUtil
 from CrunchyBot import CrunchyBot
+from RoleManager import RoleManager
 from datalayer.Database import Database
 from datalayer.ItemTrigger import ItemTrigger
 from datalayer.UserJail import UserJail
@@ -27,6 +28,7 @@ class Jail(commands.Cog):
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
+        self.role_manager: RoleManager = bot.role_manager
         self.item_manager: ItemManager = bot.item_manager
 
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -64,7 +66,7 @@ class Jail(commands.Cog):
             case UserInteraction.FART:
                 return f'User {user.display_name} already enjoyed {interaction.user.display_name}\'s farts. No extra time will be added.'
     
-    def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction):
+    async def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction):
         user_items = self.item_manager.get_user_items_activated_by_interaction(
             interaction.guild_id, 
             interaction.user.id, 
@@ -83,15 +85,15 @@ class Jail(commands.Cog):
         for item in user_items:
             match item.get_group():
                 case ItemGroup.VALUE_MODIFIER:
-                    modifier = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                    modifier = await item.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                     item_modifier += modifier
                     modifier_list.append(modifier)
                 case ItemGroup.AUTO_CRIT:
-                    auto_crit = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                    auto_crit = await item.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                 case ItemGroup.STABILIZER:
-                    stabilized = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                    stabilized = await item.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                 case ItemGroup.ADVANTAGE:
-                    advantage = item.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                    advantage = await item.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                 case ItemGroup.BONUS_ATTEMPT:
                     bonus_attempt = item
                     continue
@@ -112,7 +114,7 @@ class Jail(commands.Cog):
             
         return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text
     
-    def __get_target_item_modifiers(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
+    async def __get_target_item_modifiers(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
         user_items = self.item_manager.get_user_items_activated_by_interaction(
             interaction.guild_id, 
             user.id, 
@@ -127,7 +129,7 @@ class Jail(commands.Cog):
             
             match item.get_group():
                 case ItemGroup.PROTECTION:
-                    reduction *= item.use(self.event_manager, interaction.guild_id, user.id)
+                    reduction *= await item.use(self.role_manager, self.event_manager, interaction.guild_id, user.id)
                 case _:
                     continue
                 
@@ -153,11 +155,11 @@ class Jail(commands.Cog):
         
         self.logger.debug(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
         
-        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text = self.__get_item_modifiers(interaction, command_type)
+        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text = await self.__get_item_modifiers(interaction, command_type)
         
         if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
             if bonus_attempt:
-                bonus_attempt.use(self.event_manager, interaction.guild_id, interaction.user.id)
+                await bonus_attempt.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                 self.logger.log(interaction.guild_id, f'Item {bonus_attempt.get_name()} was used.', cog=self.__cog_name__)
                 user_item_info += f'* {bonus_attempt.get_name()}\n'
             else:
@@ -201,7 +203,7 @@ class Jail(commands.Cog):
             amount = int(amount * crit_mod)
         
         if amount > 0:
-            tartget_item_info, reduction = self.__get_target_item_modifiers(interaction, user, command_type)
+            tartget_item_info, reduction = await self.__get_target_item_modifiers(interaction, user, command_type)
             
             if tartget_item_info != '':
                 response += '__Items used to defend:__\n' + tartget_item_info

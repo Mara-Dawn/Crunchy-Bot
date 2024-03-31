@@ -12,6 +12,7 @@ from BotLogger import BotLogger
 from BotSettings import BotSettings
 from BotUtil import BotUtil
 from CrunchyBot import CrunchyBot
+from RoleManager import RoleManager
 from datalayer.Database import Database
 from events.BeansEventType import BeansEventType
 from events.EventManager import EventManager
@@ -27,6 +28,7 @@ class Beans(commands.Cog):
         self.settings: BotSettings = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
+        self.role_manager: RoleManager = bot.role_manager
         self.item_manager: ItemManager = bot.item_manager
 
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -360,8 +362,6 @@ class Beans(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def lottery_draw(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        
         guild_id = interaction.guild_id
         base_pot = self.settings.get_beans_lottery_base_amount(guild_id)
         
@@ -375,9 +375,15 @@ class Beans(commands.Cog):
             for i in range(count):
                 ticket_pool.append(user_id)
             total_pot += item.get_cost() * count
-            item.use(self.event_manager, interaction.guild_id, user_id, amount=count)
         
-        response = f'# Weekly Crunchy Beans Lottery \nThis weeks lottery has `{participants}` participants with a total pot of  `🅱️{total_pot}` beans.'
+        lottery_role: discord.Role = await self.role_manager.get_lottery_role(interaction.guild)
+        
+        response = f'# Weekly Crunchy Beans Lottery \nThis weeks <@&{lottery_role.id}> has `{participants}` participants with a total pot of  `🅱️{total_pot}` beans.'
+        
+        if len(ticket_pool) == 0:
+            response += f'\n\nNo winner this week due to lack of participation.'
+            await self.bot.command_response(self.__cog_name__, interaction, response, ephemeral=False)
+            return
         
         winner = secrets.choice(ticket_pool)
         
@@ -392,6 +398,9 @@ class Beans(commands.Cog):
         response += f'\n\n**The lucky winner is:**\n🎉 <@{winner}> 🎉\n **Congratulations, the `🅱️{total_pot}` beans were tansferred to your account!**\n\n Thank you for playing 😊'
         
         await self.bot.command_response(self.__cog_name__, interaction, response, ephemeral=False)
+        
+        for user_id, count in lottery_data.items():
+            await item.use(self.role_manager, self.event_manager, interaction.guild_id, user_id, amount=count)
     
     @group.command(name="settings", description="Overview of all beans related settings and their current value.")
     @app_commands.check(__has_permission)

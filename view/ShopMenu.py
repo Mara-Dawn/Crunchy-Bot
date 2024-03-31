@@ -8,6 +8,7 @@ from shop.IsntantItem import InstantItem
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from shop.TriggerItem import TriggerItem
 from view.InventoryEmbed import InventoryEmbed
 from view.ShopEmbed import ShopEmbed
 
@@ -21,6 +22,7 @@ class ShopMenu(discord.ui.View):
         self.bot = bot
         self.event_manager = bot.event_manager
         self.item_manager = bot.item_manager
+        self.role_manager = bot.role_manager
         self.database = bot.database
         self.logger = bot.logger
         self.current_page = 0
@@ -87,14 +89,8 @@ class ShopMenu(discord.ui.View):
             -item.get_cost()
         )
         
-        self.event_manager.dispatch_inventory_event(
-            datetime.datetime.now(), 
-            guild_id,
-            member_id,
-            item.get_type(),
-            beans_event_id,
-            item.get_base_amount()
-        )
+        item: TriggerItem = item
+        await item.obtain(self.role_manager, self.event_manager, guild_id, member_id, beans_event_id=beans_event_id)
         
         log_message = f'{interaction.user.display_name} bought {item.get_name()} for {item.get_cost()} beans.'
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
