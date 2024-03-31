@@ -43,7 +43,7 @@ class CrunchyBot(commands.Bot):
     async def response(self, module: str,  interaction: discord.Interaction, message: str, command: str, args: List[Any] = [], ephemeral: bool = True) -> None:
         log_message = f'{interaction.user.name} used command `{command}`.'
         
-        if len(args) > 0: 
+        if len(args) > 0:
             log_message += " Arguments: " + ", ".join([str(x) for x in args])
                 
         self.logger.log(interaction.guild_id, log_message, cog=module)
