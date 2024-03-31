@@ -1,11 +1,11 @@
 import discord
 from BotUtil import BotUtil
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from datalayer.UserStats import UserStats
 
 class StatisticsEmbed(discord.Embed):
 
-    def __init__(self, bot: MaraBot, interaction: discord.Interaction, user: discord.Member, user_statistics: UserStats):
+    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, user: discord.Member, user_statistics: UserStats):
         super().__init__(
             title=f"User Statistics for {BotUtil.get_name(bot, interaction.guild_id, user.id, 30)}",
             color=discord.Colour.purple(),

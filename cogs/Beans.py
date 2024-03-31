@@ -11,7 +11,7 @@ from typing import *
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from BotUtil import BotUtil
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from datalayer.Database import Database
 from events.BeansEventType import BeansEventType
 from events.EventManager import EventManager
@@ -21,7 +21,7 @@ from view.SettingsModal import SettingsModal
 
 class Beans(commands.Cog):
     
-    def __init__(self, bot: MaraBot):
+    def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings

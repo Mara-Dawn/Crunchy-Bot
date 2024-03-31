@@ -3,7 +3,7 @@ import os
 import random
 import re
 
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from datalayer.Quote import Quote
 from PIL import Image
 from PIL import ImageDraw
@@ -11,7 +11,7 @@ from PIL import ImageFont
 
 class ImageGenerator():
 
-    def __init__(self, bot: MaraBot):
+    def __init__(self, bot: CrunchyBot):
         self.bot = bot
         
         images_dark_path = "./img/quote/dark/"

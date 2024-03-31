@@ -5,7 +5,7 @@ from discord import app_commands
 from typing import Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from datalayer.Database import Database
 from events.EventManager import EventManager
 from shop.ItemManager import ItemManager
@@ -16,7 +16,7 @@ from view.ShopEmbed import ShopEmbed
 
 class Shop(commands.Cog):
     
-    def __init__(self, bot: MaraBot):
+    def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings

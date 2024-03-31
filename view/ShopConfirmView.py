@@ -2,7 +2,7 @@ import datetime
 import discord
 
 from BotUtil import BotUtil
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from cogs.Jail import Jail
 from events.BeansEventType import BeansEventType
 from events.JailEventType import JailEventType
@@ -11,7 +11,7 @@ from shop.ItemType import ItemType
 
 class ShopConfirmView(discord.ui.View):
     
-    def __init__(self, bot: MaraBot, interaction: discord.Interaction, parent, item: InstantItem):
+    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: InstantItem):
         self.bot = bot
         self.parent = parent
         self.interaction = interaction

@@ -3,11 +3,11 @@ from typing import *
 import discord
 
 from BotSettings import BotSettings
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 
 class SettingsModal(discord.ui.Modal):
 
-    def __init__(self, bot: MaraBot, settings: BotSettings, cog: str, command: str, title: str):
+    def __init__(self, bot: CrunchyBot, settings: BotSettings, cog: str, command: str, title: str):
         super().__init__(title=title)
         
         self.settings = settings

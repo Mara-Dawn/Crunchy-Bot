@@ -8,7 +8,7 @@ from typing import Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from BotUtil import BotUtil
-from MaraBot import MaraBot
+from CrunchyBot import CrunchyBot
 from datalayer.Database import Database
 from datalayer.ItemTrigger import ItemTrigger
 from datalayer.UserJail import UserJail
@@ -21,7 +21,7 @@ from view.SettingsModal import SettingsModal
 
 class Jail(commands.Cog):
     
-    def __init__(self, bot: MaraBot):
+    def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
