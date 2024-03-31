@@ -9,6 +9,7 @@ from typing import Dict, Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from CrunchyBot import CrunchyBot
+from RoleManager import RoleManager
 from cogs.Jail import Jail
 from datalayer.Database import Database
 from datalayer.PoliceList import PoliceList
@@ -18,14 +19,13 @@ from view.SettingsModal import SettingsModal
 
 class Police(commands.Cog):
     
-    TIMEOUT_ROLE_NAME = 'Timeout'
-    
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.user_list: Dict[int, PoliceList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: BotSettings = bot.settings
         self.event_manager: EventManager = bot.event_manager
+        self.role_manager: RoleManager = bot.role_manager
         self.database: Database = bot.database
         
         self.initialized = False
@@ -33,57 +33,6 @@ class Police(commands.Cog):
     async def __has_permission(interaction: discord.Interaction) -> bool:
         author_id = 90043934247501824
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
-    
-    async def __reload_timeout_role(self, guild: discord.Guild) -> discord.Role:
-        timeout_role = discord.utils.get(guild.roles, name=self.TIMEOUT_ROLE_NAME)
-        
-        if timeout_role is None:
-            timeout_role = await guild.create_role(
-                name=self.TIMEOUT_ROLE_NAME,
-                mentionable=False,
-                reason="Needed for server wide timeouts."
-            )
-            
-        bot_member = guild.get_member(self.bot.user.id)
-        bot_roles = bot_member.roles
-    
-        max_pos = 0
-        for role in bot_roles:
-            max_pos = max(max_pos, role.position)
-            
-        max_pos = max_pos-1
-        
-        await timeout_role.edit(position=max_pos)
-        
-        exclude_channels = self.settings.get_police_exclude_channels(guild.id)
-        
-        for channel in guild.channels:
-            if channel.id in exclude_channels:
-                continue
-            
-            bot_permissions = channel.permissions_for(bot_member)
-            if not bot_permissions.manage_roles:
-                self.logger.debug(channel.guild.id, f'Missing manage_roles permissions in {channel.name}.', cog=self.__cog_name__)
-                continue
-            
-            role_overwrites = channel.overwrites_for(timeout_role)
-            if role_overwrites.send_messages is False:
-                continue
-            role_overwrites.send_messages = False
-            try:
-                await channel.set_permissions(timeout_role, overwrite=role_overwrites)
-            except Exception as e:
-                self.logger.debug(channel.guild.id, f'Missing permissions in {channel.name}.', cog=self.__cog_name__)
-            
-        return timeout_role
-      
-    async def __get_timeout_role(self, guild: discord.Guild) -> discord.Role:
-        timeout_role = discord.utils.get(guild.roles, name=self.TIMEOUT_ROLE_NAME)
-
-        if timeout_role is None:
-            timeout_role = await self.__reload_timeout_role(guild)
-                
-        return timeout_role
     
     async def __jail_check(self, guild_id: int, user: discord.Member):
         timeout_count = self.database.get_timeout_tracker_count(guild_id, user.id)
@@ -129,7 +78,7 @@ class Police(commands.Cog):
         self.event_manager.dispatch_timeout_event(time_now, guild_id, user.id, duration)
         
         try:
-            timeout_role = await self.__get_timeout_role(channel.guild)
+            timeout_role = await self.role_manager.get_timeout_role(channel.guild)
             await user.add_roles(timeout_role)
             
         except Exception as e:
@@ -149,7 +98,7 @@ class Police(commands.Cog):
         self.logger.log(guild_id, f'User {user.name} rate limit was reset.', cog=self.__cog_name__)
         
         try:
-            timeout_role = await self.__get_timeout_role(channel.guild)
+            timeout_role = await self.role_manager.get_timeout_role(channel.guild)
             await user.remove_roles(timeout_role)
             
         except Exception as e:
@@ -163,7 +112,7 @@ class Police(commands.Cog):
         for guild in self.bot.guilds:
             self.user_list[guild.id] = PoliceList()
             
-            timeout_role = await self.__get_timeout_role(guild)
+            timeout_role = await self.role_manager.get_timeout_role(guild)
             
             if len(timeout_role.members) > 0:
                 self.logger.log("init","Ongoing timeouts found. Commencing cleanup.", cog=self.__cog_name__)
@@ -181,7 +130,7 @@ class Police(commands.Cog):
            return
         self.user_list[guild.id] = PoliceList()
         
-        await self.__reload_timeout_role(guild)
+        await self.role_manager.reload_timeout_role(guild)
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
@@ -314,7 +263,7 @@ class Police(commands.Cog):
     async def untrack_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         await interaction.response.defer(ephemeral=True)
         self.settings.add_police_exclude_channel(interaction.guild_id, channel.id)
-        await self.__reload_timeout_role(interaction.guild)
+        await self.role_manager.reload_timeout_role(interaction.guild)
         await self.bot.command_response(self.__cog_name__, interaction, f'Stopping spam detection in {channel.name}.', args=[channel])
         
     @group.command(name="track_channel", description='Reenable tracking spam for specific channels.')
@@ -323,7 +272,7 @@ class Police(commands.Cog):
     async def track_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         await interaction.response.defer(ephemeral=True)
         self.settings.remove_police_exclude_channel(interaction.guild_id, channel.id)
-        await self.__reload_timeout_role(interaction.guild)
+        await self.role_manager.reload_timeout_role(interaction.guild)
         await self.bot.command_response(self.__cog_name__, interaction, f'Resuming spam detection in {channel.name}.', args=[channel])
     
     @group.command(name="setup", description="Opens a dialog to edit various police settings.")
