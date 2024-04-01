@@ -43,12 +43,12 @@ class LootBoxMenu(discord.ui.View):
                 beans = -bean_balance
             
             embed.add_field(name='Oh no, it\'s a Mimic!', value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them.", inline=False)
-            embed.set_image(url="attachment://mimic.png")
-            attachment = discord.File("./img/treasure.png", "mimic.png")
+            embed.set_image(url="attachment://mimic.gif")
+            attachment = discord.File("./img/mimic.gif", "mimic.gif")
         else:
             embed.add_field(name='A Bunch of Beans!', value=f"A whole  `🅱️{beans}` of them.", inline=False)
             embed.set_image(url="attachment://treasure_open.png")
-            attachment = discord.File("./img/treasure.png", "treasure_open.png")
+            attachment = discord.File("./img/treasure_open.png", "treasure_open.png")
         
         log_message = f'{interaction.user.display_name} claimed a loot box containing {beans} beans'
         

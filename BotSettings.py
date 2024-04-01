@@ -97,7 +97,7 @@ class BotSettings():
         beans_settings.add_setting(self.BEANS_BONUS_CARD_AMOUNT_25_KEY, 150, "Daily bonus beans after 25 gambas")
         beans_settings.add_setting(self.BEANS_LOTTERY_BASE_AMOUNT_KEY, 1500, "Base pot for weekly beans lottery")
         beans_settings.add_setting(self.BEANS_LOOTBOX_MIN_WAIT_KEY, 30, "Min delay between loot box spawns (minutes)")
-        beans_settings.add_setting(self.BEANS_LOOTBOX_MAX_WAIT_KEY, 180, "Max delay between loot box spawns (minutes)")
+        beans_settings.add_setting(self.BEANS_LOOTBOX_MAX_WAIT_KEY, 120, "Max delay between loot box spawns (minutes)")
         beans_settings.add_setting(self.BEANS_LOOTBOX_MIN_BEANS_KEY, 10, "Min amount of beans found in a loot box")
         beans_settings.add_setting(self.BEANS_LOOTBOX_MAX_BEANS_KEY, 100, "Max amount of beans found in a loot box")
         beans_settings.add_setting(self.BEANS_LOOTBOX_RARE_CHANCE_KEY, 0.2, "Chance for a rare lootbox to spawn")
