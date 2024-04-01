@@ -94,7 +94,7 @@ class ItemManager():
         
         beans = random.randint(min_beans,max_beans)
         roll = random.random()
-        roll = 0.1
+        
         if roll <= chance_for_item:
             weights = [1.0 / w for w in weights]
             sum_weights = sum(weights)
