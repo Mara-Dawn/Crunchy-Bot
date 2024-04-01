@@ -83,7 +83,8 @@ class Police(commands.Cog):
             
         except Exception as e:
             self.logger.log(channel.guild.id, f'Missing permissions to change user roles of {user.name}.', cog=self.__cog_name__)
-            print(traceback.print_exc())
+            traceback.print_stack()
+            traceback.print_exc()
             
         await channel.send(f'<@{user.id}> {self.settings.get_police_timeout_notice(guild_id)} Try again <t:{release}:R>.', delete_after=(duration))
         self.logger.log(guild_id, f'Activated rate limit for {user.name}.', cog=self.__cog_name__)
@@ -103,7 +104,8 @@ class Police(commands.Cog):
             
         except Exception as e:
             self.logger.log(channel.guild.id, f'Missing permissions to change user roles of {user.name}.', cog=self.__cog_name__)
-            print(traceback.print_exc())
+            traceback.print_stack()
+            traceback.print_exc()
             
         self.logger.log(guild_id, f'Reinstated old permissions for {user.name}.', cog=self.__cog_name__)
         

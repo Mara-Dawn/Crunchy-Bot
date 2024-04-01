@@ -5,6 +5,7 @@ import traceback
 from typing import Dict, List
 from sqlite3 import Error
 from BotLogger import BotLogger
+from datalayer.LootBox import LootBox
 from datalayer.UserInventory import UserInventory
 from datalayer.UserJail import UserJail
 from datalayer.Quote import Quote
@@ -15,6 +16,8 @@ from events.EventType import EventType
 from events.InteractionEvent import InteractionEvent
 from events.InventoryEvent import InventoryEvent
 from events.JailEvent import JailEvent
+from events.LootBoxEvent import LootBoxEvent
+from events.LootBoxEventType import LootBoxEventType
 from events.QuoteEvent import QuoteEvent
 from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
@@ -191,6 +194,35 @@ class Database():
         PRIMARY KEY ({INVENTORY_EVENT_ID_COL})
     );'''
     
+    LOOTBOX_TABLE = 'lootbox'
+    LOOTBOX_ID_COL = 'lobo_id'
+    LOOTBOX_GUILD_COL = 'lobo_guild_id'
+    LOOTBOX_MESSAGE_ID_COL = 'lobo_message_id_id'
+    LOOTBOX_ITEM_TYPE_COL = 'lobo_item_type'
+    LOOTBOX_BEANS_COL = 'lobo_beans'
+    CREATE_LOOTBOX_TABLE = f'''
+    CREATE TABLE if not exists {LOOTBOX_TABLE} (
+        {LOOTBOX_ID_COL}  INTEGER PRIMARY KEY AUTOINCREMENT,
+        {LOOTBOX_GUILD_COL} INTEGER, 
+        {LOOTBOX_MESSAGE_ID_COL} INTEGER, 
+        {LOOTBOX_ITEM_TYPE_COL} TEXT, 
+        {LOOTBOX_BEANS_COL} INTEGER
+    );'''
+    
+    LOOTBOX_EVENT_TABLE = 'lootboxevents'
+    LOOTBOX_EVENT_ID_COL = 'lbev_event_id'
+    LOOTBOX_EVENT_LOOTBOX_ID_COL = 'lbev_lootbox_id'
+    LOOTBOX_EVENT_MEMBER_COL = 'lbev_member_id'
+    LOOTBOX_EVENT_TYPE_COL = 'lbev_event_type'
+    CREATE_LOOTBOX_EVENT_TABLE = f'''
+    CREATE TABLE if not exists {LOOTBOX_EVENT_TABLE} (
+        {LOOTBOX_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {LOOTBOX_EVENT_LOOTBOX_ID_COL} INTEGER REFERENCES {LOOTBOX_TABLE} ({LOOTBOX_ID_COL}),
+        {LOOTBOX_EVENT_MEMBER_COL} INTEGER, 
+        {LOOTBOX_EVENT_TYPE_COL} TEXT,
+        PRIMARY KEY ({LOOTBOX_EVENT_ID_COL})
+    );'''
+    
     def __init__(self, logger: BotLogger, db_file: str):
         
         self.conn = None
@@ -214,9 +246,12 @@ class Database():
             c.execute(self.CREATE_QUOTE_EVENT_TABLE)
             c.execute(self.CREATE_BEANS_EVENT_TABLE)
             c.execute(self.CREATE_INVENTORY_EVENT_TABLE)
+            c.execute(self.CREATE_LOOTBOX_TABLE)
+            c.execute(self.CREATE_LOOTBOX_EVENT_TABLE)
             c.close()
             
         except Error as e:
+            traceback.print_stack()
             traceback.print_exc()
             self.logger.error("DB",e)
 
@@ -231,6 +266,7 @@ class Database():
             
         except Error as e:
             self.logger.error("DB",e)
+            traceback.print_stack()
             traceback.print_exc()
             return None 
     
@@ -245,6 +281,7 @@ class Database():
         
         except Error as e:
             self.logger.error("DB",e)
+            traceback.print_stack()
             traceback.print_exc()    
             return None
     
@@ -295,6 +332,7 @@ class Database():
         
         except Error as e:
             self.logger.error("DB",e)
+            traceback.print_stack()
             traceback.print_exc()
     
     def __create_base_event(self, event: BotEvent) -> int:
@@ -397,6 +435,19 @@ class Database():
         
         return self.__query_insert(command, task)
     
+    def __create_loot_box_event(self, event_id: int, event: LootBoxEvent) -> int:
+        command = f'''
+            INSERT INTO {self.LOOTBOX_EVENT_TABLE} (
+            {self.LOOTBOX_EVENT_ID_COL},
+            {self.LOOTBOX_EVENT_LOOTBOX_ID_COL},
+            {self.LOOTBOX_EVENT_MEMBER_COL},
+            {self.LOOTBOX_EVENT_TYPE_COL})
+            VALUES (?, ?, ?, ?);
+        '''
+        task = (event_id, event.get_loot_box_id(), event.get_member_id(), event.get_loot_box_event_type())
+        
+        return self.__query_insert(command, task)
+    
     def log_event(self, event: BotEvent) -> int:
         event_id = self.__create_base_event(event)
         
@@ -419,6 +470,8 @@ class Database():
                 return self.__create_beans_event(event_id, event)
             case EventType.INVENTORY:
                 return self.__create_inventory_event(event_id, event)
+            case EventType.LOOTBOX:
+                return self.__create_loot_box_event(event_id, event)
                 
     def log_quote(self, quote: Quote) -> int:
         command = f'''
@@ -442,6 +495,24 @@ class Database():
             quote.get_channel_id(), 
             quote.get_timestamp(), 
             quote.get_message_content(), 
+        )
+        
+        return self.__query_insert(command, task)
+
+    def log_lootbox(self, loot_box: LootBox) -> int:
+        command = f'''
+            INSERT INTO {self.LOOTBOX_TABLE} (
+            {self.LOOTBOX_GUILD_COL},
+            {self.LOOTBOX_MESSAGE_ID_COL},
+            {self.LOOTBOX_ITEM_TYPE_COL},
+            {self.LOOTBOX_BEANS_COL}) 
+            VALUES (?, ?, ?, ?);
+        '''
+        task = (
+            loot_box.get_guild_id(),
+            loot_box.get_message_id(),
+            loot_box.get_item_type(), 
+            loot_box.get_beans()
         )
         
         return self.__query_insert(command, task)
@@ -717,6 +788,33 @@ class Database():
             return None
         return Quote.from_db_row(rows[0])
 
+    def get_loot_box_by_message_id(self, guild_id: int, message_id: int) -> LootBox:
+        command = f''' 
+            SELECT * FROM {self.LOOTBOX_TABLE} 
+            WHERE {self.LOOTBOX_MESSAGE_ID_COL} = ?
+            AND {self.LOOTBOX_GUILD_COL} = ?
+            LIMIT 1;
+        '''
+        task = (message_id, guild_id)
+        rows = self.__query_select(command,task)
+        if not rows: 
+            return None
+        return LootBox.from_db_row(rows[0])
+    
+    def get_last_loot_box_event(self, guild_id: int):
+        command = f'''
+            SELECT * FROM {self.LOOTBOX_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
+            WHERE {self.LOOTBOX_EVENT_TYPE_COL} = ?
+            AND {self.EVENT_GUILD_ID_COL} = ?
+            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
+        '''
+        task = (LootBoxEventType.DROP.value, guild_id)
+        rows = self.__query_select(command, task)
+        if not rows: 
+            return None
+        return LootBoxEvent.from_db_row(rows[0])
+    
     def get_member_beans(self, guild_id: int, user_id: int) -> int:
         command = f'''
             SELECT SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 

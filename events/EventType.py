@@ -8,3 +8,4 @@ class EventType(str, Enum):
     SPAM = 'spam'
     BEANS = 'beans'
     INVENTORY = 'inventory'
+    LOOTBOX = 'loot_box'
