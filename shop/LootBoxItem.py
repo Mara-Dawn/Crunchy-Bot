@@ -2,19 +2,19 @@ from shop.IsntantItem import InstantItem
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 
-class Release(InstantItem):
+class LootBoxItem(InstantItem):
 
     def __init__(
         self,
         cost: int|None
     ):
-        self.name = 'Get out of Jail Fart'
-        type = ItemType.RELEASE
-        group = ItemGroup.IMMEDIATE_USE
-        self.description = 'Due to dietary advancements your farts can now help a friend out of jail for one time only.'
-        defaultcost = 1000
-        emoji = '🔑'
-        view = 'ShopUserSelectView'
+        self.name = 'Random Treasure Chest'
+        type = ItemType.LOOTBOX
+        group = ItemGroup.LOOTBOX
+        self.description = 'No need to wait for loot box drops, just buy your own!'
+        defaultcost = 150
+        emoji = '🧰'
+        view = 'LootBoxMenu'
         value = None
         
         if cost is None:

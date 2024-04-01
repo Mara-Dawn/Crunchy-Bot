@@ -9,3 +9,4 @@ class ItemGroup(str, Enum):
     PROTECTION = 'protection'
     LOTTERY = 'lottery'
     IMMEDIATE_USE = 'immediate_use'
+    LOOTBOX = 'loot_box'

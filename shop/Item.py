@@ -61,7 +61,7 @@ class Item():
         if count is None:
             suffix = f'🅱️{self.get_cost()}'
         else:
-            suffix = f'owned: {count}'
+            suffix = f'amount: {count}'
         spacing = max_width - len(suffix)
         info_block = f'```{description}\n\n{' '*spacing}{suffix}```'
         

@@ -4,12 +4,14 @@ import discord
 
 from CrunchyBot import CrunchyBot
 from events.BeansEventType import BeansEventType
+from events.LootBoxEventType import LootBoxEventType
 from shop.IsntantItem import InstantItem
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from shop.TriggerItem import TriggerItem
 from view.InventoryEmbed import InventoryEmbed
+from view.LootBoxMenu import LootBoxMenu
 from view.ShopEmbed import ShopEmbed
 
 from view.ShopUserSelectView import ShopUserSelectView
@@ -89,6 +91,41 @@ class ShopMenu(discord.ui.View):
             -item.get_cost()
         )
         
+        if item.get_group() == ItemGroup.LOOTBOX:
+            
+            await interaction.response.defer()
+            
+            loot_box = self.item_manager.create_loot_box(guild_id)
+            
+            title = f"{interaction.user.display_name}'s Random Treasure Chest"
+            description = f"Only you can claim this, <@{interaction.user.id}>!"
+            embed = discord.Embed(title=title, description=description, color=discord.Colour.purple()) 
+            embed.set_image(url="attachment://treasure_closed.jpg")
+            
+            item = None
+            if loot_box.get_item_type() is not None:
+                item = self.item_manager.get_item(guild_id, loot_box.get_item_type())
+                
+            view = LootBoxMenu(self.event_manager, self.database, self.logger, item, user_id=interaction.user.id)
+            treasure_close_img = discord.File("./img/treasure_closed.jpg", "treasure_closed.jpg")
+            
+            message = await interaction.followup.send(f"", embed=embed, view=view, files=[treasure_close_img])
+            
+            self.refresh_ui(user_balance)
+            await interaction.message.edit(view=self)
+            
+            loot_box.set_message_id(message.id)
+            loot_box_id = self.database.log_lootbox(loot_box)
+            
+            self.event_manager.dispatch_loot_box_event(
+                datetime.datetime.now(), 
+                guild_id,
+                loot_box_id,
+                interaction.user.id,
+                LootBoxEventType.BUY
+            )
+            return
+        
         item: TriggerItem = item
         await item.obtain(self.role_manager, self.event_manager, guild_id, member_id, beans_event_id=beans_event_id)
         
@@ -115,7 +152,7 @@ class ShopMenu(discord.ui.View):
         user_balance = self.database.get_member_beans(guild_id, member_id)
         
         self.refresh_ui(user_balance)
-        
+        self.selected = None
         await interaction.response.edit_message(embed=embed, view=self)
     
     def refresh_ui(self, user_balance: int, disabled: bool = False):
