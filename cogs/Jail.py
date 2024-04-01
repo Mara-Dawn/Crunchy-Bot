@@ -416,7 +416,13 @@ class Jail(commands.Cog):
         if user.get_role(jail_role) is None:
             await self.bot.command_response(self.__cog_name__, interaction, f'User {user.display_name} is currently not in jail.', args=[user])
             return
-            
+
+        if interaction.user.guild_permissions.administrator and interaction.user.id == user.id:
+            response = f'<@{interaction.user.id}> tried to abuse their mod privileges by freeing themselves with admin powers. BUT NOT THIS TIME!'
+            await self.announce(interaction.guild, response)
+            await self.bot.command_response(self.__cog_name__, interaction, f'lmao', args=[user])
+            return
+        
         response = await self.release_user(guild_id, interaction.user.id, user)
         
         if not response:
