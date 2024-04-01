@@ -2,6 +2,7 @@ from typing import Any, List
 import discord
 
 from discord.ext import commands
+from discord import app_commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from RoleManager import RoleManager
@@ -14,7 +15,7 @@ class CrunchyBot(commands.Bot):
     DB_FILE = "database.sqlite"
     LOG_FILE = "./log/marabot.log"
     TENOR_TOKEN_FILE = 'tenor.txt'
-
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -30,8 +31,9 @@ class CrunchyBot(commands.Bot):
         await self.load_extension("cogs.Interactions")
         await self.load_extension("cogs.Statistics")
         await self.load_extension("cogs.Quotes")
-        await self.load_extension("cogs.Beans")
-        await self.load_extension("cogs.Shop")
+        await self.load_extension("cogs.beans.Shop")
+        await self.load_extension("cogs.beans.Gamba")
+        await self.load_extension("cogs.beans.Beans")
         
     async def on_guild_join(self, guild):
         self.logger.log(guild.id,  "new guild registered.")
