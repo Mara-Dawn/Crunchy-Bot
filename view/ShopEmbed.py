@@ -9,22 +9,20 @@ class ShopEmbed(discord.Embed):
     ITEMS_PER_PAGE = 4
     
     def __init__(self, bot: CrunchyBot,  interaction: discord.Interaction, items: List[Item], start_offset:int = 0):
+        description = f'Spend your hard earned beans!\n'
+        description += f'Only <@{interaction.user.id}> can interact here.\n'
+        description += f'Use `/shop` to open your own shop widget.\n'
+        description += f'Use `/inventory` or the balance button below to see your inventory. \n'
         super().__init__(
             title=f"Beans Shop for {interaction.guild.name}",
             color=discord.Colour.purple(),
-            description=f'''
-                Spend your hard earned beans!
-                Only <@{interaction.user.id}> can interact here.
-                Use `/shop` to open your own shop widget.
-                Use `/inventory` or the balance button below to see your inventory. \n
-            '''
+            description=description
         )
         end_offset = min((start_offset + self.ITEMS_PER_PAGE), len(items))
         items.sort(key=lambda x:x.get_cost())
         display = items[start_offset:end_offset]
         
         for item in display:
-            self.add_field(name='', value='', inline=False)
             item.add_to_embed(self, 49)
             
         self.set_image(url="attachment://shop.png")

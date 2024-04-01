@@ -127,7 +127,7 @@ class Beans(commands.Cog):
     
     @tasks.loop(minutes = 1)
     async def loot_box_task(self):
-        self.logger.log("sys", f'Lootbox task started.', cog=self.__cog_name__)
+        self.logger.debug("sys", f'Lootbox task started.', cog=self.__cog_name__)
         
         for guild in self.bot.guilds:
             if datetime.datetime.now() < self.lootbox_timers[guild.id]:
@@ -562,7 +562,14 @@ class Beans(commands.Cog):
     @app_commands.guild_only()
     async def lootbox_setup(self, interaction: discord.Interaction):
         guild_id = interaction.guild_id
-        modal = SettingsModal(self.bot, self.settings, self.__cog_name__, interaction.command.name, "Settings for Lootbox related Features")
+        modal = SettingsModal(
+            self.bot, self.settings,
+            self.__cog_name__,
+            interaction.command.name,
+            "Settings for Lootbox related Features",
+            self.__reevaluate_next_lootbox,
+            [interaction.guild.id]
+        )
         
         modal.add_field(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_MIN_WAIT_KEY, int)
         modal.add_field(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_MAX_WAIT_KEY, int)
@@ -574,10 +581,8 @@ class Beans(commands.Cog):
         modal.add_constraint([BotSettings.BEANS_LOOTBOX_MIN_BEANS_KEY, BotSettings.BEANS_LOOTBOX_MAX_BEANS_KEY], lambda a,b: a <= b , 'Minimum beans must be smaller than maximum.')
         modal.add_constraint([BotSettings.BEANS_LOOTBOX_RARE_CHANCE_KEY], lambda a: a >= 0 and a <= 1 , 'Chance must be between 0 and 1.')
         
-        self.__reevaluate_next_lootbox(interaction.guild.id)
+        await interaction.response.send_modal(modal)
         
-        await interaction.response.send_modal(modal) 
-    
     @group.command(name="add_channel", description='Enable beans commands for a channel.')
     @app_commands.describe(channel='The beans channel.')
     @app_commands.check(__has_permission)

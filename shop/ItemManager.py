@@ -81,17 +81,22 @@ class ItemManager():
             ItemType.FARTVANTAGE
         ]
         
+        mimic_chance = 0.1
         weights = [self.get_trigger_item(guild_id, x).get_cost() for x in item_pool]
         chance_for_item = self.settings.get_setting(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_RARE_CHANCE_KEY)
         random_item = None
-        if random.random() < chance_for_item:
+        roll = random.random()
+        if roll < chance_for_item:
             random_item = random.choices(item_pool, weights=weights)[0]
         
         min_beans = self.settings.get_setting(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_MIN_BEANS_KEY)
         max_beans = self.settings.get_setting(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_MAX_BEANS_KEY)
         
         beans = random.randint(min_beans,max_beans)
-        if random_item is None and random.random() < chance_for_item:
+        
+        if random_item is None and roll > 1-mimic_chance:
+            beans = -beans
+        elif random_item is None and random.random() < chance_for_item:
             beans = random.randint(min_beans*10,max_beans*10)
         
         return LootBox(guild_id, random_item, beans)
@@ -105,17 +110,19 @@ class ItemManager():
         title = "A Random Treasure has Appeared"
         description = "Quick, claim it before anyone else does!"
         embed = discord.Embed(title=title, description=description, color=discord.Colour.purple()) 
-        embed.set_image(url="attachment://treasure.png")
+        embed.set_image(url="attachment://treasure_closed.png")
         item = None
         if loot_box.get_item_type() is not None:
             item = self.get_item(guild.id, loot_box.get_item_type())
         view = LootBoxMenu(self.event_manager, self.database, self.logger, item)
         
-        treasure_img = discord.File("./img/treasure.png", "treasure.png")
+        treasure_close_img = discord.File("./img/treasure.png", "treasure_closed.png")
+        treasure_open_img = discord.File("./img/treasure.png", "treasure_open.png")
+        mimic_img = discord.File("./img/treasure.png", "mimic.png")
         
         channel = guild.get_channel(channel_id)
         
-        message = await channel.send("",embed=embed, view=view, files=[treasure_img])
+        message = await channel.send("",embed=embed, view=view, files=[treasure_close_img])
         
         loot_box.set_message_id(message.id)
         loot_box_id = self.database.log_lootbox(loot_box)

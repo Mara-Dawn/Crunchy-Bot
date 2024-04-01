@@ -7,13 +7,15 @@ from CrunchyBot import CrunchyBot
 
 class SettingsModal(discord.ui.Modal):
 
-    def __init__(self, bot: CrunchyBot, settings: BotSettings, cog: str, command: str, title: str):
+    def __init__(self, bot: CrunchyBot, settings: BotSettings, cog: str, command: str, title: str, callback: Callable = None, callback_arguments: List[Any] = None):
         super().__init__(title=title)
         
         self.settings = settings
         self.bot = bot
         self.command = command
         self.cog = cog
+        self.callback = callback
+        self.callback_arguments = callback_arguments
         self.id_map: Dict[str, discord.ui.TextInput] = {}
         self.type_map: Dict[str, Type[Any]] = {}
         self.input_settings_map: Dict[str, Tuple[str,str]] = {}
@@ -86,8 +88,11 @@ class SettingsModal(discord.ui.Modal):
         for text_input_id, keys in self.input_settings_map.items():
             value = self.__cast_value(self.id_map[text_input_id].value, self.type_map[text_input_id])
             self.settings.update_setting(interaction.guild_id, keys[0], keys[1], value)
-        
+            
         await self.bot.response(self.cog, interaction, f'Settings were successfully updated.', self.command, args=[text_input.value for text_input in self.children])
+        
+        if self.callback is not None:
+            self.callback(*self.callback_arguments)
         
         
 class SettingsConstraint():

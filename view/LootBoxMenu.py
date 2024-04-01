@@ -34,14 +34,25 @@ class LootBoxMenu(discord.ui.View):
         description = f"This treasure was claimed by: \n <@{member_id}>"
         description += f"\n\nThey slowly open the chest and reveal..."
         embed = discord.Embed(title=title, description=description, color=discord.Colour.purple()) 
-        embed.set_image(url="attachment://treasure.png")
+        
         beans = loot_box.get_beans()
-        embed.add_field(name='', value='', inline=False)
-        embed.add_field(name='A Bunch of Beans!', value=f"A whole  `🅱️{beans}` of them.", inline=False)
+        
+        if beans < 0:
+            bean_balance = self.database.get_member_beans(guild_id, interaction.user.id)
+            if bean_balance + beans < 0:
+                beans = -bean_balance
+            
+            embed.add_field(name='Oh no, it\'s a Mimic!', value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them.", inline=False)
+            embed.set_image(url="attachment://mimic.png")
+            attachment = discord.File("./img/treasure.png", "mimic.png")
+        else:
+            embed.add_field(name='A Bunch of Beans!', value=f"A whole  `🅱️{beans}` of them.", inline=False)
+            embed.set_image(url="attachment://treasure_open.png")
+            attachment = discord.File("./img/treasure.png", "treasure_open.png")
+        
         log_message = f'{interaction.user.display_name} claimed a loot box containing {beans} beans'
         
         if loot_box.get_item_type() is not None:
-            embed.add_field(name='', value='', inline=False)
             embed.add_field(name='Woah, a Shiny Item!', value=f"1x {self.item.get_emoji()} {self.item.get_name()}.", inline=False)
             log_message += f' and 1x {self.item.get_name()}'
             
@@ -72,7 +83,7 @@ class LootBoxMenu(discord.ui.View):
         
         self.logger.log(interaction.guild_id, log_message, cog='Beans')
         
-        await interaction.edit_original_response(embed=embed, view=None)
+        await interaction.edit_original_response(embed=embed, view=None, attachments=[attachment])
         
 class ClaimButton(discord.ui.Button):
     
