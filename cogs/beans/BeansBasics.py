@@ -36,7 +36,7 @@ class BeansBasics(BeansGroup):
 
     @commands.Cog.listener('on_ready')
     async def on_ready_beansbasics(self):
-        self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
+        self.logger.log("init", "BeansBasics loaded.", cog=self.__cog_name__)
     
     @app_commands.command(name="please", description='Your daily dose of beans.')
     @app_commands.guild_only()

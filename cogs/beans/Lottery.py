@@ -76,7 +76,7 @@ class Lottery(BeansGroup):
     @commands.Cog.listener('on_ready')
     async def on_ready_lottery(self):
         self.lottery_task.start()
-        self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
+        self.logger.log("init","Lottery loaded.", cog=self.__cog_name__)
        
     @tasks.loop(time=datetime.time(hour=12, tzinfo=datetime.timezone.utc))
     async def lottery_task(self):

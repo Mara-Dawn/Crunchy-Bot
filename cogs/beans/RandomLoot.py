@@ -45,7 +45,7 @@ class RandomLoot(BeansGroup):
     @commands.Cog.listener('on_ready')
     async def on_ready_randomloot(self):
         self.loot_box_task.start()
-        self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
+        self.logger.log("init", "RandomLoot loaded.", cog=self.__cog_name__)
 
     @commands.Cog.listener('on_guild_join')
     async def on_guild_join_randomloot(self, guild):
