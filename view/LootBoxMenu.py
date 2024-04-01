@@ -18,19 +18,20 @@ class LootBoxMenu(discord.ui.View):
         self.logger = logger
         self.user_id = user_id
         
-        super().__init__()
+        super().__init__(timeout=None)
         self.add_item(ClaimButton())
         
     async def claim(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        
         guild_id = interaction.guild_id
         member_id = interaction.user.id
         
         if self.user_id is not None and member_id != self.user_id:
-            await interaction.response.send_message(f'This is a personalized lootbox, only the owner can claim it.', ephemeral=True)
+            await interaction.followup.send(f'This is a personalized lootbox, only the owner can claim it.', ephemeral=True)
             return
 
         self.stop()
-        await interaction.response.defer()
         
         message = await interaction.original_response()
         loot_box = self.database.get_loot_box_by_message_id(guild_id, message.id)
