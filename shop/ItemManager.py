@@ -94,9 +94,7 @@ class ItemManager():
         max_beans = self.settings.get_setting(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_MAX_BEANS_KEY)
         
         beans = random.randint(min_beans,max_beans)
-        
         roll = random.random()
-        self.logger.log(guild_id, f'ROLL: {roll}', cog="Beans")
         
         if roll <= chance_for_item:
             random_item = random.choices(item_pool, weights=weights)[0]
