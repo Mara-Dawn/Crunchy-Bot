@@ -37,7 +37,8 @@ class RoleManager():
             self.logger.log(guild_id, f'Added role {self.LOTTERY_ROLE_NAME} to member {member.name}.', cog='Beans')
         except Exception as e:
             self.logger.log(guild_id, f'Missing permissions to change user roles of {member.name}.', cog='Beans')
-            print(traceback.print_exc())
+            traceback.print_stack()
+            traceback.print_exc()
         
     async def remove_lottery_role(self, guild_id: int, user_id: int) -> discord.Role:
         guild: discord.Guild = self.bot.get_guild(guild_id)
@@ -48,7 +49,8 @@ class RoleManager():
             self.logger.log(guild_id, f'Removed role {self.LOTTERY_ROLE_NAME} from member {member.name}.', cog='Beans')
         except Exception as e:
             self.logger.log(guild_id, f'Missing permissions to change user roles of {member.name}.', cog='Beans')
-            print(traceback.print_exc())
+            traceback.print_stack()
+            traceback.print_exc()
     
     async def get_timeout_role(self, guild: discord.Guild) -> discord.Role:
         timeout_role = discord.utils.get(guild.roles, name=self.TIMEOUT_ROLE_NAME)

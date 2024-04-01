@@ -15,6 +15,8 @@ from events.InteractionEvent import InteractionEvent
 from events.InventoryEvent import InventoryEvent
 from events.JailEvent import JailEvent
 from events.JailEventType import JailEventType
+from events.LootBoxEvent import LootBoxEvent
+from events.LootBoxEventType import LootBoxEventType
 from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
 from events.QuoteEvent import QuoteEvent
@@ -107,6 +109,17 @@ class EventManager():
         event = InventoryEvent(timestamp, guild_id, member_id, item_type, beans_event_id, amount)
         self.database.log_event(event)
         self.logger.log(guild_id, f'Inventory event for {amount} `{item_type}` was logged.', self.log_name)
+    
+    def dispatch_loot_box_event(self,
+        timestamp: datetime.datetime, 
+        guild_id: int,
+        loot_box_id: int,
+        member_id: int,
+        loot_box_event_type: LootBoxEventType
+    ):
+        event = LootBoxEvent(timestamp, guild_id, loot_box_id, member_id, loot_box_event_type)
+        self.database.log_event(event)
+        self.logger.log(guild_id, f'Loot Box event of type {loot_box_event_type} was logged.', self.log_name)
     
     def get_jail_duration(self, jail: UserJail) -> int:
         events = self.database.get_jail_events_by_jail(jail.get_id())
