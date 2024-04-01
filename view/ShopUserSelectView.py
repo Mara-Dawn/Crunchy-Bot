@@ -47,10 +47,6 @@ class ShopUserSelectView(discord.ui.View):
             await interaction.followup.send('Please select a user first.', ephemeral=True)
             return
         
-        if self.selected.guild_permissions.administrator and self.type == ItemType.ARREST:
-            await interaction.followup.send('Administrators cannot be jailed.', ephemeral=True)
-            return
-        
         if self.selected.id == interaction.user.id and self.type == ItemType.RELEASE:
             await interaction.followup.send('You cannot free yourself using this item.', ephemeral=True)
             return
