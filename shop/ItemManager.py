@@ -83,7 +83,6 @@ class ItemManager():
             ItemType.FARTVANTAGE
         ]
         
-        mimic_chance = 0.1
         weights = [self.get_trigger_item(guild_id, x).get_cost() for x in item_pool]
         chance_for_item = self.settings.get_setting(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_RARE_CHANCE_KEY)
         mimic_chance = 0.1
@@ -95,8 +94,11 @@ class ItemManager():
         
         beans = random.randint(min_beans,max_beans)
         roll = random.random()
-        
+        roll = 0.1
         if roll <= chance_for_item:
+            weights = [1.0 / w for w in weights]
+            sum_weights = sum(weights)
+            weights = [w / sum_weights for w in weights]  
             random_item = random.choices(item_pool, weights=weights)[0]
         elif roll > chance_for_item and roll <= (chance_for_item + chance_for_bonus_beans):
             beans = random.randint(min_beans*10,max_beans*10)
