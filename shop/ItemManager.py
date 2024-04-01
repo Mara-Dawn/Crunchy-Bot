@@ -35,6 +35,8 @@ from shop.Arrest import Arrest
 from shop.Release import Release
 from shop.Bailout import Bailout
 from shop.JailReduction import JailReduction
+from shop.LootBoxItem import LootBoxItem
+
 
 
 class ItemManager():
@@ -84,21 +86,23 @@ class ItemManager():
         mimic_chance = 0.1
         weights = [self.get_trigger_item(guild_id, x).get_cost() for x in item_pool]
         chance_for_item = self.settings.get_setting(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_RARE_CHANCE_KEY)
+        mimic_chance = 0.1
+        chance_for_bonus_beans = 0.2
         random_item = None
-        roll = random.random()
-        if roll < chance_for_item:
-            random_item = random.choices(item_pool, weights=weights)[0]
         
         min_beans = self.settings.get_setting(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_MIN_BEANS_KEY)
         max_beans = self.settings.get_setting(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_MAX_BEANS_KEY)
         
         beans = random.randint(min_beans,max_beans)
+        roll = random.random()
         
-        if random_item is None and roll > 1-mimic_chance:
-            beans = -beans
-        elif random_item is None and random.random() < chance_for_item:
+        if roll <= chance_for_item:
+            random_item = random.choices(item_pool, weights=weights)[0]
+        elif roll > chance_for_item and roll <= (chance_for_item + chance_for_bonus_beans):
             beans = random.randint(min_beans*10,max_beans*10)
-        
+        elif roll > 1-mimic_chance:
+            beans = -beans
+            
         return LootBox(guild_id, random_item, beans)
     
     async def drop_loot_box(self, guild: discord.Guild, channel_id: int):

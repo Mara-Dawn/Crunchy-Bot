@@ -11,26 +11,34 @@ from shop.Item import Item
 
 class LootBoxMenu(discord.ui.View):
     
-    def __init__(self, event_manager: EventManager, database: Database, logger: BotLogger, item: Item):
+    def __init__(self, event_manager: EventManager, database: Database, logger: BotLogger, item: Item, user_id: int = None):
         self.database = database
         self.event_manager = event_manager
         self.item = item
         self.logger = logger
+        self.user_id = user_id
         
         super().__init__()
         self.add_item(ClaimButton())
         
     async def claim(self, interaction: discord.Interaction):
-        self.stop()
-        await interaction.response.defer()
-        
         guild_id = interaction.guild_id
         member_id = interaction.user.id
+        
+        if self.user_id is not None and member_id != self.user_id:
+            await interaction.response.send_message(f'This is a personalized lootbox, only the owner can claim it.', ephemeral=True)
+            return
+
+        self.stop()
+        await interaction.response.defer()
         
         message = await interaction.original_response()
         loot_box = self.database.get_loot_box_by_message_id(guild_id, message.id)
         
         title = "A Random Treasure has Appeared"
+        if self.user_id is not None:
+            title = f"{interaction.user.display_name}'s Random Treasure Chest"
+            
         description = f"This treasure was claimed by: \n <@{member_id}>"
         description += f"\n\nThey slowly open the chest and reveal..."
         embed = discord.Embed(title=title, description=description, color=discord.Colour.purple()) 
@@ -53,7 +61,8 @@ class LootBoxMenu(discord.ui.View):
         log_message = f'{interaction.user.display_name} claimed a loot box containing {beans} beans'
         
         if loot_box.get_item_type() is not None:
-            embed.add_field(name='Woah, a Shiny Item!', value=f"1x {self.item.get_emoji()} {self.item.get_name()}.", inline=False)
+            embed.add_field(name='Woah, a Shiny Item!', value='', inline=False)
+            self.item.add_to_embed(embed, 37, count=self.item.get_base_amount())
             log_message += f' and 1x {self.item.get_name()}'
             
             self.event_manager.dispatch_inventory_event(
@@ -62,7 +71,7 @@ class LootBoxMenu(discord.ui.View):
                 member_id,
                 loot_box.get_item_type(),
                 0,
-                1
+                self.item.get_base_amount()
             )
         
         self.event_manager.dispatch_beans_event(
@@ -73,12 +82,16 @@ class LootBoxMenu(discord.ui.View):
             beans
         )
         
+        event_type = LootBoxEventType.CLAIM
+        if self.user_id is not None:
+            event_type = LootBoxEventType.OPEN
+        
         self.event_manager.dispatch_loot_box_event(
             datetime.datetime.now(), 
             guild_id,
             loot_box.get_id(),
             member_id,
-            LootBoxEventType.CLAIM
+            event_type
         )
         
         self.logger.log(interaction.guild_id, log_message, cog='Beans')
