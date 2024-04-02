@@ -157,7 +157,7 @@ class Jail(commands.Cog):
         
         user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text = await self.__get_item_modifiers(interaction, command_type)
         
-        if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name) and not self.__has_mod_permission(interaction):
+        if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name):
             if bonus_attempt:
                 await bonus_attempt.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                 self.logger.log(interaction.guild_id, f'Item {bonus_attempt.get_name()} was used.', cog=self.__cog_name__)
