@@ -105,7 +105,6 @@ class Lottery(BeansGroup):
         total_pot = base_pot
         participants = len(lottery_data)
         item = self.item_manager.get_trigger_item(guild_id, ItemType.LOTTERY_TICKET)
-        
         for user_id, count in lottery_data.items():
             total_pot += item.get_cost() * count
         
@@ -115,6 +114,12 @@ class Lottery(BeansGroup):
         
         response = f'This weeks lottery has `{participants}` participants with a total pot of  `🅱️{total_pot}` beans.'
         response += f'\nThe draw happens every Saturday noon at 12 PM UTC. Next draw <t:{int(next_draw.timestamp())}:R>.'
+        
+        if participants > 0:
+            participant_list = ', '.join([BotUtil.get_name(self.bot, guild_id, user_id, max_len=50) + f'[{v}]' for k,v in lottery_data.items()])
+            participant_list = '```Participants: ' + participant_list + '```'
+            response += participant_list
+            
         await self.bot.command_response(self.__cog_name__, interaction, response, ephemeral=False)
         
     @app_commands.command(name="lottery_draw", description="Manually draw the winner of this weeks bean lottery. (Admin only)")
