@@ -46,6 +46,6 @@ class InventoryEvent(BotEvent):
             member_id = row[Database.INVENTORY_EVENT_MEMBER_COL],
             item_type = row[Database.INVENTORY_EVENT_ITEM_TYPE_COL],
             beans_event_id = row[Database.INVENTORY_EVENT_BEANS_EVENT_COL],
-            amount = row[Database.INVENTORY_EVENT_AMOUNT_COL],
+            amount = row[Database.INVENTORY_EVENT_AMOUNT],
             event_id = row[Database.EVENT_ID_COL]
         )

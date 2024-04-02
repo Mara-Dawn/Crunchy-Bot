@@ -6,4 +6,4 @@ class ItemTrigger(str, Enum):
     SLAP = UserInteraction.SLAP
     PET = UserInteraction.PET
     FART = UserInteraction.FART
-    DAILY = 'daily'
+    LOTTERY = 'lottery'

@@ -6,16 +6,15 @@ from typing import Any, List
 from discord.ext import commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
-from RoleManager import RoleManager
 from datalayer.Database import Database
 from datalayer.ItemTrigger import ItemTrigger
 from datalayer.LootBox import LootBox
 from datalayer.UserInteraction import UserInteraction
-from datalayer.UserInventory import UserInventory
 from events.EventManager import EventManager
 from events.LootBoxEventType import LootBoxEventType
 from shop.Item import Item
 from shop.ItemType import ItemType
+from shop.TriggerItem import TriggerItem
 from view.LootBoxMenu import LootBoxMenu
 
 # needed for global access
@@ -31,8 +30,6 @@ from shop.FartStabilizer import FartStabilizer
 from shop.Fartvantage import Fartvantage
 from shop.FartProtection import FartProtection
 from shop.LotteryTicket import LotteryTicket
-from shop.NameColor import NameColor
-
 
 from shop.Arrest import Arrest
 from shop.Release import Release
@@ -44,12 +41,11 @@ from shop.LootBoxItem import LootBoxItem
 
 class ItemManager():
 
-    def __init__(self, bot: commands.Bot, settings: BotSettings, database: Database, event_manager: EventManager, role_manager: RoleManager, logger: BotLogger):
+    def __init__(self, bot: commands.Bot, settings: BotSettings, database: Database, event_manager: EventManager, logger: BotLogger):
         self.bot = bot
         self.settings = settings
         self.database = database
         self.event_manager = event_manager
-        self.role_manager = role_manager
         self.logger = logger
         self.log_name = "Shop"
         
@@ -59,6 +55,9 @@ class ItemManager():
         instance = item(self.settings.get_shop_item_price(guild_id, type))
         
         return instance
+    
+    def get_trigger_item(self, guild_id: int, type: ItemType) -> TriggerItem:
+        return self.get_item(guild_id, type)
     
     def get_items(self, guild_id: int) -> List[Item]:
         items = [x.value for x in ItemType]
@@ -84,7 +83,7 @@ class ItemManager():
             ItemType.FARTVANTAGE
         ]
         
-        weights = [self.get_item(guild_id, x).get_cost() for x in item_pool]
+        weights = [self.get_trigger_item(guild_id, x).get_cost() for x in item_pool]
         chance_for_item = self.settings.get_setting(guild_id, BotSettings.BEANS_SUBSETTINGS_KEY, BotSettings.BEANS_LOOTBOX_RARE_CHANCE_KEY)
         mimic_chance = 0.1
         chance_for_bonus_beans = 0.2
@@ -140,7 +139,7 @@ class ItemManager():
             LootBoxEventType.DROP
         )
     
-    def get_user_items_activated_by_interaction(self, guild_id: int, user_id: int, action: UserInteraction) -> List[Item]:
+    def get_user_items_activated_by_interaction(self, guild_id: int, user_id: int, action: UserInteraction) -> List[TriggerItem]:
         trigger = None
         
         match action:
@@ -153,7 +152,7 @@ class ItemManager():
         
         return self.get_user_items_activated(guild_id, user_id, trigger)
     
-    def get_user_items_activated(self, guild_id: int, user_id: int, action: ItemTrigger) -> List[Item]:
+    def get_user_items_activated(self, guild_id: int, user_id: int, action: ItemTrigger) -> List[TriggerItem]:
         inventory = self.database.get_inventory_by_user(guild_id, user_id)
         inventory_items = inventory.get_inventory_items()
         
@@ -169,22 +168,4 @@ class ItemManager():
             output.append(item)
         
         return output
-    
-    async def use_items(self, guild_id: int, inventories: List[UserInventory], trigger: ItemTrigger):
-        for inventory in inventories:
-            inventory_items = inventory.get_inventory_items()
-            for item_type, count in inventory_items.items():
-            
-                item = self.get_item(guild_id, item_type)
-                
-                if not item.activated(trigger):
-                    continue
-                
-                await item.use(
-                    self.role_manager,
-                    self.event_manager,
-                    inventory.get_guild_id(),
-                    inventory.get_member_id(),
-                    1
-                )
     

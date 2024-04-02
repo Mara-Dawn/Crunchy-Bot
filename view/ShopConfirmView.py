@@ -6,12 +6,12 @@ from CrunchyBot import CrunchyBot
 from cogs.Jail import Jail
 from events.BeansEventType import BeansEventType
 from events.JailEventType import JailEventType
-from shop.Item import Item
+from shop.IsntantItem import InstantItem
 from shop.ItemType import ItemType
 
 class ShopConfirmView(discord.ui.View):
     
-    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: Item):
+    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: InstantItem):
         self.bot = bot
         self.parent = parent
         self.interaction = interaction
@@ -27,9 +27,8 @@ class ShopConfirmView(discord.ui.View):
         self.add_item(ConfirmButton())
         self.add_item(CancelButton())
         
-        self.select_amount = AmountInput()
         if item.get_allow_amount():
-            self.add_item(self.select_amount)
+            self.add_item(AmountInput())
     
     async def submit(self, interaction: discord.Interaction):
         match self.type:
@@ -38,19 +37,8 @@ class ShopConfirmView(discord.ui.View):
             case ItemType.JAIL_REDUCTION:
                 await self.jail_interaction(interaction)
     
-    async def refresh_embed(self, interaction: discord.Interaction):
-        message = await interaction.original_response()
-        embed = self.item.get_embed(amount_in_cart=self.selected_amount)
-        if self.selected_amount > 1:
-            embed.title = f'{self.selected_amount}x {embed.title}'
-            
-        self.select_amount.options[self.selected_amount-1].default = True
-        await message.edit(embed=embed, view=self)
-    
-    async def set_amount(self, interaction: discord.Interaction, amount: int):
-        self.select_amount.options[self.selected_amount-1].default = False
+    async def set_amount(self, amount: int):
         self.selected_amount = amount
-        await self.refresh_embed(interaction)
     
     async def jail_interaction(self, interaction: discord.Interaction):
         
@@ -133,7 +121,7 @@ class ShopConfirmView(discord.ui.View):
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
         
         new_user_balance = self.database.get_member_beans(guild_id, member_id)
-        success_message = f'You successfully bought {amount} **{self.item.get_name()}** for `🅱️{cost}` beans, {message_suffix}\n Remaining balance: `🅱️{new_user_balance}`'
+        success_message = f'You successfully bought {amount} **{self.item.get_name()}** for `🅱️{self.item.get_cost()}` beans, {message_suffix}\n Remaining balance: `🅱️{new_user_balance}`'
         
         await interaction.followup.send(success_message, ephemeral=True)
         
@@ -175,20 +163,20 @@ class ConfirmButton(discord.ui.Button):
 
 class AmountInput(discord.ui.Select):
     
-    def __init__(self, suffix: str = ''):
+    def __init__(self):
         options = []
         
         for i in range(1,20):
-            options.append(discord.SelectOption(label=f'{i}{suffix}', value=i, default=(i==1)))
+            options.append(discord.SelectOption(label=i, value=i, default=(i==1)))
 
-        super().__init__(placeholder='Choose the amount.', min_values=1, max_values=1, options=options, row=0)
+        super().__init__(placeholder='Choose the amount.', min_values=1, max_values=1, options=options)
     
     async def callback(self, interaction: discord.Interaction):
         view: ShopConfirmView = self.view
-        await interaction.response.defer()
+        
         if await view.interaction_check(interaction):
-            await view.set_amount(interaction, int(self.values[0]))
-            
+            await view.set_amount(int(self.values[0]))
+            await interaction.response.defer()
 
 class CancelButton(discord.ui.Button):
     

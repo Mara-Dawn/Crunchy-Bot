@@ -10,4 +10,3 @@ class ItemGroup(str, Enum):
     LOTTERY = 'lottery'
     IMMEDIATE_USE = 'immediate_use'
     LOOTBOX = 'loot_box'
-    DAILY_USE = 'daily_use'

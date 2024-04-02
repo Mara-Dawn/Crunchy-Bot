@@ -1,36 +1,32 @@
 import datetime
 from RoleManager import RoleManager
 from datalayer.ItemTrigger import ItemTrigger
+from datalayer.UserInteraction import UserInteraction
 from events.EventManager import EventManager
-from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from shop.TriggerItem import TriggerItem
 
-class LotteryTicket(Item):
+class LotteryTicket(TriggerItem):
 
     def __init__(
         self,
         cost: int|None
     ):
+        name = 'Lottery Ticket'
+        type = ItemType.LOTTERY_TICKET
+        group = ItemGroup.VALUE_MODIFIER
+        description = 'Enter the Weekly Crunchy Bean Lottery© and win big! Max 3 tickets per person.'
         defaultcost = 100
+        emoji = '🎫'
+        trigger = [ItemTrigger.LOTTERY]
+        value = 1
+        max_amount = 3
         
         if cost is None:
             cost = defaultcost
             
-        super().__init__(
-            name = 'Lottery Ticket',
-            type = ItemType.LOTTERY_TICKET,
-            group = ItemGroup.LOTTERY,
-            description = 'Enter the Weekly Crunchy Bean Lottery© and win big! Max 3 tickets per person.',
-            emoji = '🎫',
-            cost = cost,
-            value = 1,
-            view_class = None,
-            allow_amount = False,
-            base_amount = 1,
-            max_amount = 3,
-            trigger = None
-        )
+        super().__init__(name, type, group, description, emoji, cost, trigger, value, max_amount=max_amount)
         
     async def obtain(self, role_manager: RoleManager, event_manager: EventManager, guild_id: int, member_id: int, beans_event_id: int = 0, amount: int = 1):
         event_manager.dispatch_inventory_event(

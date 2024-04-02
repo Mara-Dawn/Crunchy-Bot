@@ -5,16 +5,17 @@ import discord
 from CrunchyBot import CrunchyBot
 from events.BeansEventType import BeansEventType
 from events.LootBoxEventType import LootBoxEventType
+from shop.IsntantItem import InstantItem
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from shop.TriggerItem import TriggerItem
 from view.InventoryEmbed import InventoryEmbed
 from view.LootBoxMenu import LootBoxMenu
 from view.ShopEmbed import ShopEmbed
 
 from view.ShopUserSelectView import ShopUserSelectView
 from view.ShopConfirmView import ShopConfirmView
-from view.ColorSelectView import ColorSelectView
 
 class ShopMenu(discord.ui.View):
     
@@ -63,25 +64,24 @@ class ShopMenu(discord.ui.View):
         if item.get_max_amount() is not None and inventory.get_item_count(item.get_type()) >= item.get_max_amount():
             await interaction.response.send_message(f'You cannot own more than {item.get_max_amount()} items of this type.', ephemeral=True)
             return
-
-        # instantly used items and items with confirmation modals
-        match item.get_group():
-            case ItemGroup.IMMEDIATE_USE | ItemGroup.DAILY_USE:
-                await interaction.response.defer(ephemeral=True)
+ 
+        if item.get_group() == ItemGroup.IMMEDIATE_USE:
+            await interaction.response.defer(ephemeral=True)
+        
+            item: InstantItem = item
+            embed = item.get_embed()
+            view_class_name = item.get_view_class()
             
-                embed = item.get_embed()
-                view_class_name = item.get_view_class()
-                
-                view_class = globals()[view_class_name]
-                view = view_class(self.bot, interaction, self, item)
-                
-                message = await interaction.followup.send(f"", embed=embed, view=view, ephemeral=True)
-                view.set_message(message)
-                
-                self.refresh_ui(user_balance, disabled=True)
-                await interaction.message.edit(view=self)
-                
-                return
+            view_class = globals()[view_class_name]
+            view = view_class(self.bot, interaction, self, item)
+            
+            message = await interaction.followup.send(f"", embed=embed, view=view, ephemeral=True)
+            view.set_message(message)
+            
+            self.refresh_ui(user_balance, disabled=True)
+            await interaction.message.edit(view=self)
+            
+            return
         
         beans_event_id = self.event_manager.dispatch_beans_event(
             datetime.datetime.now(), 
@@ -91,44 +91,42 @@ class ShopMenu(discord.ui.View):
             -item.get_cost()
         )
         
-        # directly purchasable items without inventory
-        match item.get_group():
-            case ItemGroup.LOOTBOX:
-                await interaction.response.defer()
+        if item.get_group() == ItemGroup.LOOTBOX:
+            
+            await interaction.response.defer()
+            
+            loot_box = self.item_manager.create_loot_box(guild_id)
+            
+            title = f"{interaction.user.display_name}'s Random Treasure Chest"
+            description = f"Only you can claim this, <@{interaction.user.id}>!"
+            embed = discord.Embed(title=title, description=description, color=discord.Colour.purple()) 
+            embed.set_image(url="attachment://treasure_closed.jpg")
+            
+            item = None
+            if loot_box.get_item_type() is not None:
+                item = self.item_manager.get_item(guild_id, loot_box.get_item_type())
                 
-                loot_box = self.item_manager.create_loot_box(guild_id)
-                
-                title = f"{interaction.user.display_name}'s Random Treasure Chest"
-                description = f"Only you can claim this, <@{interaction.user.id}>!"
-                embed = discord.Embed(title=title, description=description, color=discord.Colour.purple()) 
-                embed.set_image(url="attachment://treasure_closed.jpg")
-                
-                item = None
-                if loot_box.get_item_type() is not None:
-                    item = self.item_manager.get_item(guild_id, loot_box.get_item_type())
-                    
-                view = LootBoxMenu(self.event_manager, self.database, self.logger, item, user_id=interaction.user.id)
-                treasure_close_img = discord.File("./img/treasure_closed.jpg", "treasure_closed.jpg")
-                
-                message = await interaction.followup.send(f"", embed=embed, view=view, files=[treasure_close_img])
-                
-                self.refresh_ui(user_balance)
-                await interaction.message.edit(view=self)
-                
-                loot_box.set_message_id(message.id)
-                loot_box_id = self.database.log_lootbox(loot_box)
-                
-                self.event_manager.dispatch_loot_box_event(
-                    datetime.datetime.now(), 
-                    guild_id,
-                    loot_box_id,
-                    interaction.user.id,
-                    LootBoxEventType.BUY
-                )
-                return
+            view = LootBoxMenu(self.event_manager, self.database, self.logger, item, user_id=interaction.user.id)
+            treasure_close_img = discord.File("./img/treasure_closed.jpg", "treasure_closed.jpg")
+            
+            message = await interaction.followup.send(f"", embed=embed, view=view, files=[treasure_close_img])
+            
+            self.refresh_ui(user_balance)
+            await interaction.message.edit(view=self)
+            
+            loot_box.set_message_id(message.id)
+            loot_box_id = self.database.log_lootbox(loot_box)
+            
+            self.event_manager.dispatch_loot_box_event(
+                datetime.datetime.now(), 
+                guild_id,
+                loot_box_id,
+                interaction.user.id,
+                LootBoxEventType.BUY
+            )
+            return
         
-        # All other items get added to the inventory awaiting their trigger
-        
+        item: TriggerItem = item
         await item.obtain(self.role_manager, self.event_manager, guild_id, member_id, beans_event_id=beans_event_id)
         
         log_message = f'{interaction.user.display_name} bought {item.get_name()} for {item.get_cost()} beans.'
