@@ -1,22 +1,28 @@
-from shop.IsntantItem import InstantItem
+from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
-class Bailout(InstantItem):
+class Bailout(Item):
 
     def __init__(
         self,
-        cost: str|int|None
+        cost: int|None
     ):
-        self.name = 'Bribe the Mods'
-        type = ItemType.BAILOUT
-        group = ItemGroup.IMMEDIATE_USE
-        self.description = 'Pay off the mods to let you out of jail early.'
         defaultcost = 1500
-        emoji = '🗿'
-        view = 'ShopConfirmView'
-        value = None
         
         if cost is None:
             cost = defaultcost
-        
-        super().__init__(self.name, type, group, self.description, emoji, cost, view, value)
+
+        super().__init__(
+            name = 'Bribe the Mods',
+            type = ItemType.BAILOUT,
+            group = ItemGroup.IMMEDIATE_USE,
+            description = 'Pay off the mods to let you out of jail early.',
+            emoji = '🗿',
+            cost = cost,
+            value = None,
+            view_class = 'ShopConfirmView',
+            allow_amount = False,
+            base_amount = 1,
+            max_amount = None,
+            trigger = None
+        )

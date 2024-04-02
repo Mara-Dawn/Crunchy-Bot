@@ -6,12 +6,12 @@ from CrunchyBot import CrunchyBot
 from cogs.Jail import Jail
 from events.BeansEventType import BeansEventType
 from events.JailEventType import JailEventType
-from shop.IsntantItem import InstantItem
+from shop.Item import Item
 from shop.ItemType import ItemType
 
 class ShopConfirmView(discord.ui.View):
     
-    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: InstantItem):
+    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: Item):
         self.bot = bot
         self.parent = parent
         self.interaction = interaction
@@ -37,8 +37,16 @@ class ShopConfirmView(discord.ui.View):
             case ItemType.JAIL_REDUCTION:
                 await self.jail_interaction(interaction)
     
-    async def set_amount(self, amount: int):
+    async def refresh_embed(self, interaction: discord.Interaction):
+        message = await interaction.original_response()
+        embed = self.item.get_embed(amount_in_cart=self.selected_amount)
+        if self.selected_amount > 1:
+            embed.title = f'{self.selected_amount}x {embed.title}'
+        await message.edit(embed=embed)
+    
+    async def set_amount(self, interaction: discord.Interaction, amount: int):
         self.selected_amount = amount
+        await self.refresh_embed(interaction)
     
     async def jail_interaction(self, interaction: discord.Interaction):
         
@@ -163,20 +171,20 @@ class ConfirmButton(discord.ui.Button):
 
 class AmountInput(discord.ui.Select):
     
-    def __init__(self):
+    def __init__(self, suffix: str = ''):
         options = []
         
         for i in range(1,20):
-            options.append(discord.SelectOption(label=i, value=i, default=(i==1)))
+            options.append(discord.SelectOption(label=f'{i}{suffix}', value=i))
 
-        super().__init__(placeholder='Choose the amount.', min_values=1, max_values=1, options=options)
+        super().__init__(placeholder='Choose the amount.', min_values=1, max_values=1, options=options, row=0)
     
     async def callback(self, interaction: discord.Interaction):
         view: ShopConfirmView = self.view
-        
+        await interaction.response.defer()
         if await view.interaction_check(interaction):
-            await view.set_amount(int(self.values[0]))
-            await interaction.response.defer()
+            await view.set_amount(interaction, int(self.values[0]))
+            
 
 class CancelButton(discord.ui.Button):
     

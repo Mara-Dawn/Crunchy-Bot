@@ -1,12 +1,14 @@
+import datetime
 import discord
 
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import app_commands
 from typing import Literal
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from CrunchyBot import CrunchyBot
 from datalayer.Database import Database
+from datalayer.ItemTrigger import ItemTrigger
 from events.EventManager import EventManager
 from shop.ItemManager import ItemManager
 from shop.ItemType import ItemType
@@ -43,7 +45,21 @@ class Shop(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        self.daily_collection_task.start()
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
+    
+    @tasks.loop(time=datetime.time(hour=0))
+    async def daily_collection_task(self):
+        self.logger.log("sys", f'Daily Item Check started.', cog=self.__cog_name__)
+        
+        for guild in self.bot.guilds:
+            if not self.settings.get_beans_enabled(guild.id):
+                self.logger.log("sys", f'Beans module disabled.', cog=self.__cog_name__)
+                return
+            
+            inventories = self.database.get_inventories_by_guild(guild.id)
+            await self.item_manager.use_items(guild.id, inventories, ItemTrigger.DAILY)
+            
     
     @app_commands.command(name="shop", description='Buy cool stuff with your beans.')
     @app_commands.guild_only()

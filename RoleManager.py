@@ -4,15 +4,18 @@ import discord
 from discord.ext import commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
+from datalayer.Database import Database
+from shop.ItemType import ItemType
 
 class RoleManager():
 
     LOTTERY_ROLE_NAME = 'Lottery'
     TIMEOUT_ROLE_NAME = 'Timeout'
     
-    def __init__(self, bot: commands.Bot, settings: BotSettings, logger: BotLogger):
+    def __init__(self, bot: commands.Bot, settings: BotSettings, database: Database, logger: BotLogger):
         self.bot = bot
         self.settings = settings
+        self.database = database
         self.logger = logger
         self.log_name = "Events"
     
@@ -51,6 +54,59 @@ class RoleManager():
             self.logger.log(guild_id, f'Missing permissions to change user roles of {member.name}.', cog='Beans')
             traceback.print_stack()
             traceback.print_exc()
+    
+    async def create_custom_user_role(self, guild: discord.Guild, user: discord.Member, color: discord.Color) -> discord.Role:
+        custom_role = await guild.create_role(
+            name=f'~{user.name}~',
+            mentionable=False,
+            colour=color,
+            reason=f"Custom color role for {user.display_name}."
+        )
+
+        user_roles = user.roles
+        max_pos = 0
+        for role in user_roles:
+            max_pos = max(max_pos, role.position)
+
+        await custom_role.edit(position=max_pos)
+        
+        self.database.log_custom_role(guild.id, user.id, custom_role.id)
+        
+        await user.add_roles(custom_role)
+    
+    async def update_username_color(self, guild_id: int, user_id: int):
+        guild: discord.Guild = self.bot.get_guild(guild_id)
+        member: discord.Member = guild.get_member(user_id)
+        
+        custom_role_id = self.database.get_custom_role(guild_id, user_id)
+        custom_color = self.database.get_custom_color(guild_id, user_id)
+        
+        if custom_color is None:
+            return
+        
+        hex_value = int(custom_color, 16)
+        color = discord.Color(hex_value)
+        
+        name_token_count = self.database.get_inventory_by_user(guild_id, user_id).get_item_count(ItemType.NAME_COLOR)
+
+        if custom_role_id is None:
+            if name_token_count <= 0:
+                return
+            custom_role = await self.create_custom_user_role(guild, member, color)
+        else:
+            custom_role = discord.utils.get(guild.roles, id=custom_role_id)
+            
+            if custom_role is None:
+                if name_token_count <= 0:
+                    return
+                await self.create_custom_user_role(guild, member, color)
+                return
+           
+            if name_token_count <= 0:
+                await custom_role.delete(reason=f"Member ran out of name color tokens.")
+                return
+           
+            await custom_role.edit(color=color)
     
     async def get_timeout_role(self, guild: discord.Guild) -> discord.Role:
         timeout_role = discord.utils.get(guild.roles, name=self.TIMEOUT_ROLE_NAME)

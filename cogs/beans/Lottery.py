@@ -29,7 +29,7 @@ class Lottery(BeansGroup):
         total_pot = base_pot
         ticket_pool = []
         participants = len(lottery_data)
-        item = self.item_manager.get_trigger_item(guild_id, ItemType.LOTTERY_TICKET)
+        item = self.item_manager.get_item(guild_id, ItemType.LOTTERY_TICKET)
         
         for user_id, count in lottery_data.items():
             for i in range(count):
@@ -80,7 +80,6 @@ class Lottery(BeansGroup):
        
     @tasks.loop(time=datetime.time(hour=12, tzinfo=datetime.timezone.utc))
     async def lottery_task(self):
-        
         self.logger.log("sys", f'Lottery task started.', cog=self.__cog_name__)
         
         if datetime.datetime.today().weekday() != 5:
@@ -104,7 +103,7 @@ class Lottery(BeansGroup):
         lottery_data = self.database.get_lottery_data(guild_id)
         total_pot = base_pot
         participants = len(lottery_data)
-        item = self.item_manager.get_trigger_item(guild_id, ItemType.LOTTERY_TICKET)
+        item = self.item_manager.get_item(guild_id, ItemType.LOTTERY_TICKET)
         
         for user_id, count in lottery_data.items():
             total_pot += item.get_cost() * count
