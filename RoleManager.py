@@ -69,15 +69,19 @@ class RoleManager():
         bot_max_pos = 0
         for role in bot_roles:
             bot_max_pos = max(bot_max_pos, role.position)
+        self.logger.log(guild.id, f'BOT MAX POS:{bot_max_pos}', cog='TEST')
         bot_max_pos -= 1
         
         user_roles = user.roles
         max_pos = 0
         for role in user_roles:
             max_pos = max(max_pos, role.position)
+        self.logger.log(guild.id, f'USER MAX POS:{max_pos}', cog='TEST')
         max_pos += 1
-            
+        
         max_pos = min(bot_max_pos, max_pos)
+        
+        self.logger.log(guild.id, f'MAX POS:{max_pos}', cog='TEST')
 
         await custom_role.edit(position=max_pos)
         
