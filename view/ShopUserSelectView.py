@@ -4,12 +4,12 @@ import discord
 from CrunchyBot import CrunchyBot
 from cogs.Jail import Jail
 from events.BeansEventType import BeansEventType
-from shop.IsntantItem import InstantItem
+from shop.Item import Item
 from shop.ItemType import ItemType
 
 class ShopUserSelectView(discord.ui.View):
     
-    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: InstantItem):
+    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: Item):
         self.bot = bot
         self.parent = parent
         self.interaction = interaction

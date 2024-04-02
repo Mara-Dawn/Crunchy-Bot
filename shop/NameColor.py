@@ -1,6 +1,6 @@
 import datetime
-from typing import Any, Dict, List
 
+import discord
 from RoleManager import RoleManager
 from datalayer.ItemTrigger import ItemTrigger
 from events.EventManager import EventManager
@@ -8,27 +8,31 @@ from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 
-class TriggerItem(Item):
+class NameColor(Item):
 
     def __init__(
         self,
-        name: str, 
-        type: ItemType,
-        group: ItemGroup,
-        description: str,
-        emoji: str,
-        cost: int,
-        trigger: List[ItemTrigger],
-        value: Any,
-        base_amount: int = 1,
-        max_amount: int = None
+        cost: int|None
     ):
-        self.trigger = trigger
-        self.value = value
-        super().__init__(name, type, group, description, emoji, cost, base_amount=base_amount, max_amount=max_amount)
+        defaultcost = 100
+        
+        if cost is None:
+            cost = defaultcost
 
-    def activated(self, action: ItemTrigger):
-        return action in self.trigger
+        super().__init__(
+            name = 'Name Color Change',
+            type = ItemType.NAME_COLOR,
+            group = ItemGroup.DAILY_USE,
+            description = 'Paint your discord name in your favourite color! Grab one weeks worth of color tokens. Each day, a token gets consumed until you run out.',
+            emoji = '🌈',
+            cost = cost,
+            value = 1,
+            view_class = 'ColorSelectView',
+            allow_amount = True,
+            base_amount = 7,
+            max_amount = None,
+            trigger = [ItemTrigger.DAILY]
+        )
     
     async def obtain(self, role_manager: RoleManager, event_manager: EventManager, guild_id: int, member_id: int, beans_event_id: int = 0, amount: int = 1):
         event_manager.dispatch_inventory_event(
@@ -39,6 +43,8 @@ class TriggerItem(Item):
             beans_event_id,
             amount
         )
+        
+        await role_manager.update_username_color(guild_id, member_id)
     
     async def use(self, role_manager: RoleManager, event_manager: EventManager, guild_id: int, member_id: int, amount: int = 1):
         event_manager.dispatch_inventory_event(
@@ -50,6 +56,7 @@ class TriggerItem(Item):
             -amount
         )
         
+        await role_manager.update_username_color(guild_id, member_id)
         return self.value
         
-            
+                

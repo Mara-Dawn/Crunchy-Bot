@@ -18,3 +18,4 @@ class ItemType(str, Enum):
     BAILOUT = 'Bailout'
     LOOTBOX = 'LootBoxItem'
     LOTTERY_TICKET = 'LotteryTicket'
+    NAME_COLOR = 'NameColor'

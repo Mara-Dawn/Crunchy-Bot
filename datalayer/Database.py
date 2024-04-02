@@ -183,14 +183,14 @@ class Database():
     INVENTORY_EVENT_MEMBER_COL = 'inve_member_id'
     INVENTORY_EVENT_ITEM_TYPE_COL = 'inve_item_type'
     INVENTORY_EVENT_BEANS_EVENT_COL = 'inve_beans_event_id'
-    INVENTORY_EVENT_AMOUNT = 'inve_amount'
+    INVENTORY_EVENT_AMOUNT_COL = 'inve_amount'
     CREATE_INVENTORY_EVENT_TABLE = f'''
     CREATE TABLE if not exists {INVENTORY_EVENT_TABLE} (
         {INVENTORY_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
         {INVENTORY_EVENT_MEMBER_COL} INTEGER, 
         {INVENTORY_EVENT_ITEM_TYPE_COL} TEXT, 
         {INVENTORY_EVENT_BEANS_EVENT_COL} INTEGER REFERENCES {BEANS_EVENT_TABLE} ({BEANS_EVENT_ID_COL}),
-        {INVENTORY_EVENT_AMOUNT} INTEGER,
+        {INVENTORY_EVENT_AMOUNT_COL} INTEGER,
         PRIMARY KEY ({INVENTORY_EVENT_ID_COL})
     );'''
     
@@ -223,6 +223,21 @@ class Database():
         PRIMARY KEY ({LOOTBOX_EVENT_ID_COL})
     );'''
     
+    
+    CUSTOM_COLOR_TABLE = 'customcolor'
+    CUSTOM_COLOR_GUILD_COL = 'cuco_guild_id'
+    CUSTOM_COLOR_MEMBER_COL = 'cuco_member_id'
+    CUSTOM_COLOR_ROLE_COL = 'cuco_role_id'
+    CUSTOM_COLOR_COLOR_COL = 'cuco_color'
+    CREATE_CUSTOM_COLOR_TABLE = f'''
+    CREATE TABLE if not exists {CUSTOM_COLOR_TABLE} (
+        {CUSTOM_COLOR_GUILD_COL} INTEGER, 
+        {CUSTOM_COLOR_MEMBER_COL}  INTEGER,
+        {CUSTOM_COLOR_ROLE_COL} INTEGER, 
+        {CUSTOM_COLOR_COLOR_COL} TEXT,
+        PRIMARY KEY ({CUSTOM_COLOR_MEMBER_COL}, {CUSTOM_COLOR_GUILD_COL})
+    );'''
+    
     def __init__(self, logger: BotLogger, db_file: str):
         
         self.conn = None
@@ -248,6 +263,7 @@ class Database():
             c.execute(self.CREATE_INVENTORY_EVENT_TABLE)
             c.execute(self.CREATE_LOOTBOX_TABLE)
             c.execute(self.CREATE_LOOTBOX_EVENT_TABLE)
+            c.execute(self.CREATE_CUSTOM_COLOR_TABLE)
             c.close()
             
         except Error as e:
@@ -428,7 +444,7 @@ class Database():
             {self.INVENTORY_EVENT_MEMBER_COL},
             {self.INVENTORY_EVENT_ITEM_TYPE_COL},
             {self.INVENTORY_EVENT_BEANS_EVENT_COL},
-            {self.INVENTORY_EVENT_AMOUNT})
+            {self.INVENTORY_EVENT_AMOUNT_COL})
             VALUES (?, ?, ?, ?, ?);
         '''
         task = (event_id, event.get_member_id(), event.get_item_type(), event.get_beans_event_id(), event.get_amount())
@@ -516,6 +532,65 @@ class Database():
         )
         
         return self.__query_insert(command, task)
+    
+    def log_custom_color(self, guild_id: int, user_id: int, color: str) -> int:
+        command = f'''
+            INSERT INTO {self.CUSTOM_COLOR_TABLE} ({self.CUSTOM_COLOR_GUILD_COL}, {self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_COLOR_COL}) 
+            VALUES (?, ?, ?) 
+            ON CONFLICT({self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_GUILD_COL}) 
+            DO UPDATE SET {self.CUSTOM_COLOR_COLOR_COL}=excluded.{self.CUSTOM_COLOR_COLOR_COL};
+        '''
+        task = (
+            guild_id,
+            user_id,
+            color
+        )
+        
+        return self.__query_insert(command, task)
+    
+    def log_custom_role(self, guild_id: int, user_id: int, role_id: int) -> int:
+        command = f'''
+            INSERT INTO {self.CUSTOM_COLOR_TABLE} ({self.CUSTOM_COLOR_GUILD_COL}, {self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_ROLE_COL}) 
+            VALUES (?, ?, ?) 
+            ON CONFLICT({self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_GUILD_COL}) 
+            DO UPDATE SET {self.CUSTOM_COLOR_ROLE_COL}=excluded.{self.CUSTOM_COLOR_ROLE_COL}
+            WHERE excluded.{self.CUSTOM_COLOR_ROLE_COL} IS NOT NULL ;
+        '''
+        task = (
+            guild_id,
+            user_id,
+            role_id
+        )
+        
+        return self.__query_insert(command, task)
+    
+    def get_custom_color(self, guild_id: int, user_id: int) -> str:
+        command = f'''
+            SELECT * FROM {self.CUSTOM_COLOR_TABLE}
+            WHERE {self.CUSTOM_COLOR_MEMBER_COL} = ? 
+            AND {self.CUSTOM_COLOR_GUILD_COL} = ? LIMIT 1;
+        '''
+        task = (user_id, guild_id)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return None
+        
+        return rows[0][self.CUSTOM_COLOR_COLOR_COL]
+    
+    def get_custom_role(self, guild_id: int, user_id: int) -> int:
+        command = f'''
+            SELECT * FROM {self.CUSTOM_COLOR_TABLE}
+            WHERE {self.CUSTOM_COLOR_MEMBER_COL} = ? 
+            AND {self.CUSTOM_COLOR_GUILD_COL} = ? LIMIT 1;
+        '''
+        task = (user_id, guild_id)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return None
+        
+        return rows[0][self.CUSTOM_COLOR_ROLE_COL]
     
     def fix_quote(self, quote: Quote, channel_id: int) -> int:
         command = f'''
@@ -899,7 +974,7 @@ class Database():
     
     def get_lottery_data(self, guild_id: int) -> Dict[int,int]:     
         command = f'''
-            SELECT {self.INVENTORY_EVENT_MEMBER_COL}, SUM({self.INVENTORY_EVENT_AMOUNT}) FROM {self.INVENTORY_EVENT_TABLE} 
+            SELECT {self.INVENTORY_EVENT_MEMBER_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
             ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INVENTORY_EVENT_TABLE}.{self.INVENTORY_EVENT_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
@@ -911,12 +986,43 @@ class Database():
         rows = self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
-        rows = { row[self.INVENTORY_EVENT_MEMBER_COL]: row[f'SUM({self.INVENTORY_EVENT_AMOUNT})'] for row in rows if row[f'SUM({self.INVENTORY_EVENT_AMOUNT})'] > 0}
+        rows = { row[self.INVENTORY_EVENT_MEMBER_COL]: row[f'SUM({self.INVENTORY_EVENT_AMOUNT_COL})'] for row in rows if row[f'SUM({self.INVENTORY_EVENT_AMOUNT_COL})'] > 0}
         return rows
+    
+    def get_inventories_by_guild(self, guild_id: int) -> List[UserInventory]: 
+        command = f'''
+            SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, {self.INVENTORY_EVENT_MEMBER_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} 
+            ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INVENTORY_EVENT_TABLE}.{self.INVENTORY_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = {int(guild_id)}
+            GROUP BY {self.INVENTORY_EVENT_ITEM_TYPE_COL};
+        '''
+        
+        rows = self.__query_select(command)
+        if not rows or len(rows) < 1:
+            return []
+        
+        transformed = {}
+        for row in rows:
+            user_id = row[self.INVENTORY_EVENT_MEMBER_COL]
+            item_type = row[self.INVENTORY_EVENT_ITEM_TYPE_COL]
+            amount = row[f'SUM({self.INVENTORY_EVENT_AMOUNT_COL})']
+            if amount <= 0:
+                continue
+            if user_id not in transformed.keys():
+                transformed[user_id] = {item_type: amount}
+            else:
+                transformed[user_id][item_type] = amount
+                
+        inventories = []
+        for user_id, items in transformed.items():
+            inventories.append(UserInventory(guild_id, user_id, items))
+        
+        return inventories
     
     def get_inventory_by_user(self, guild_id: int, user_id: int) -> UserInventory: 
         command = f'''
-            SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, SUM({self.INVENTORY_EVENT_AMOUNT}) FROM {self.INVENTORY_EVENT_TABLE} 
+            SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
             ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INVENTORY_EVENT_TABLE}.{self.INVENTORY_EVENT_ID_COL}
             WHERE {self.INVENTORY_EVENT_MEMBER_COL} = ?
@@ -929,5 +1035,5 @@ class Database():
         if not rows or len(rows) < 1:
             return UserInventory(guild_id, user_id, {})
         
-        items = { row[self.INVENTORY_EVENT_ITEM_TYPE_COL]: row[f'SUM({self.INVENTORY_EVENT_AMOUNT})'] for row in rows if row[f'SUM({self.INVENTORY_EVENT_AMOUNT})'] > 0}
+        items = { row[self.INVENTORY_EVENT_ITEM_TYPE_COL]: row[f'SUM({self.INVENTORY_EVENT_AMOUNT_COL})'] for row in rows if row[f'SUM({self.INVENTORY_EVENT_AMOUNT_COL})'] > 0}
         return UserInventory(guild_id, user_id, items)

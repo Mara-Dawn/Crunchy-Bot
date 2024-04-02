@@ -1,25 +1,30 @@
 from datalayer.ItemTrigger import ItemTrigger
+from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
-from shop.TriggerItem import TriggerItem
 
-class BonusSlap(TriggerItem):
+class BonusSlap(Item):
 
     def __init__(
         self,
         cost: int|None
     ):
-        name = 'Bonus Slap'
-        type = ItemType.BONUS_SLAP
-        group = ItemGroup.BONUS_ATTEMPT
-        description = 'Allows you to continue slapping a jailed person after using your guaranteed one.'
         defaultcost = 35
-        emoji = '✋'
-        trigger = [ItemTrigger.SLAP]
-        value = True
-        
+
         if cost is None:
             cost = defaultcost
-            
-        super().__init__(name, type, group, description, emoji, cost, trigger, value)
-            
+
+        super().__init__(
+            name = 'Bonus Slap',
+            type = ItemType.BONUS_SLAP,
+            group = ItemGroup.BONUS_ATTEMPT,
+            description = 'Allows you to continue slapping a jailed person after using your guaranteed one.',
+            emoji = '✋',
+            cost = cost,
+            value = True,
+            view_class = None,
+            allow_amount = False,
+            base_amount = 1,
+            max_amount = None,
+            trigger = [ItemTrigger.SLAP]
+        )
