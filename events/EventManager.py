@@ -352,7 +352,7 @@ class EventManager():
             
         user_rankings.set_spam_data(spam_count)
 
-        guild_beans_balances = self.database.get_guild_beans_gained(guild_id)
+        guild_beans_balances = self.database.get_guild_beans_rankings(guild_id)
 
         user_rankings.set_beans_data(guild_beans_balances)
         

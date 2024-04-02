@@ -921,12 +921,12 @@ class Database():
         
         return output
     
-    def get_guild_beans_gained(self, guild_id: int) -> Dict[int, int]:
+    def get_guild_beans_rankings(self, guild_id: int) -> Dict[int, int]:
         command = f'''
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
             AND {self.EVENT_GUILD_ID_COL} = {int(guild_id)}
-            WHERE {self.BEANS_EVENT_VALUE_COL} > 0
+            WHERE {self.BEANS_EVENT_TYPE_COL} != '{BeansEventType.SHOP_PURCHASE.value}'
             GROUP BY {self.BEANS_EVENT_MEMBER_COL};
         '''
         
