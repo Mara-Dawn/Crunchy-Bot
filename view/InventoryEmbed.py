@@ -30,8 +30,8 @@ class InventoryEmbed(discord.Embed):
                     suffix = ''
                     if custom_color is not None:
                         suffix = f'[#{custom_color}]'
-                    item.add_to_embed(self, 61, count=count, name_suffix=suffix)
+                    item.add_to_embed(self, 54, count=count, name_suffix=suffix)
                 case _:
-                    item.add_to_embed(self, 61, count=count)
+                    item.add_to_embed(self, 54, count=count)
             
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")

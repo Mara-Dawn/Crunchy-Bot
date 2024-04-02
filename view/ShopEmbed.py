@@ -23,7 +23,7 @@ class ShopEmbed(discord.Embed):
         display = items[start_offset:end_offset]
         
         for item in display:
-            item.add_to_embed(self, 49)
+            item.add_to_embed(self, 44)
             
         self.set_image(url="attachment://shop.png")
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")
