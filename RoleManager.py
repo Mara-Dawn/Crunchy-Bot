@@ -75,6 +75,7 @@ class RoleManager():
         max_pos = 0
         for role in user_roles:
             max_pos = max(max_pos, role.position)
+        max_pos += 1
             
         max_pos = min(bot_max_pos, max_pos)
 
