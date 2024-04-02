@@ -353,7 +353,14 @@ class EventManager():
         user_rankings.set_spam_data(spam_count)
 
         guild_beans_balances = self.database.get_guild_beans_rankings(guild_id)
-
+        
+        lootbox_purchases = self.database.get_lootbox_purchases_by_guild(guild_id)
+        loot_box_item = self.bot.item_manager.get_item(guild_id, ItemType.LOOTBOX)
+        
+        for member_id, amount in lootbox_purchases.items():
+            if member_id in guild_beans_balances.keys():
+                guild_beans_balances[member_id] -= amount * loot_box_item.get_cost()
+            
         user_rankings.set_beans_data(guild_beans_balances)
         
         return user_rankings
