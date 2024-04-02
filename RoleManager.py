@@ -116,7 +116,10 @@ class RoleManager():
             if name_token_count <= 0:
                 await custom_role.delete(reason=f"Member ran out of name color tokens.")
                 return
-           
+
+            if member.get_role(custom_role.id) is None:
+                await member.add_roles(custom_role)
+            
             await custom_role.edit(color=color)
     
     async def get_timeout_role(self, guild: discord.Guild) -> discord.Role:
