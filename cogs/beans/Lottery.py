@@ -116,7 +116,7 @@ class Lottery(BeansGroup):
         response += f'\nThe draw happens every Saturday noon at 12 PM UTC. Next draw <t:{int(next_draw.timestamp())}:R>.'
         
         if participants > 0:
-            participant_list = ', '.join([BotUtil.get_name(self.bot, guild_id, user_id, max_len=50) + f'[{v}]' for k,v in lottery_data.items()])
+            participant_list = ', '.join([BotUtil.get_name(self.bot, guild_id, k, max_len=50) + f'[{v}]' for k,v in lottery_data.items()])
             participant_list = '```Participants: ' + participant_list + '```'
             response += participant_list
             
