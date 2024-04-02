@@ -925,18 +925,35 @@ class Database():
         command = f'''
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
-            AND {self.EVENT_GUILD_ID_COL} = {int(guild_id)}
-            WHERE {self.BEANS_EVENT_TYPE_COL} != '{BeansEventType.SHOP_PURCHASE.value}'
+            AND {self.EVENT_GUILD_ID_COL} = ?
+            WHERE {self.BEANS_EVENT_TYPE_COL} != ?
             GROUP BY {self.BEANS_EVENT_MEMBER_COL};
         '''
+        task = (guild_id, BeansEventType.SHOP_PURCHASE.value)
         
-        rows = self.__query_select(command)
+        rows = self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
         
-        output = { row[self.BEANS_EVENT_MEMBER_COL]: row[f'SUM({self.BEANS_EVENT_VALUE_COL})'] for row in rows }
+        return { row[self.BEANS_EVENT_MEMBER_COL]: row[f'SUM({self.BEANS_EVENT_VALUE_COL})'] for row in rows }
         
-        return output
+    
+    def get_lootbox_purchases_by_guild(self, guild_id: int) -> Dict[int,int]:
+        
+        command = f'''
+            SELECT {self.LOOTBOX_EVENT_MEMBER_COL}, COUNT({self.LOOTBOX_EVENT_TYPE_COL}) FROM {self.LOOTBOX_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
+            AND {self.EVENT_GUILD_ID_COL} = ?
+            WHERE {self.LOOTBOX_EVENT_TYPE_COL} = ?
+            GROUP BY {self.LOOTBOX_EVENT_MEMBER_COL};
+        '''
+        task = (guild_id, LootBoxEventType.BUY.value)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return {}
+        
+        return{ row[self.LOOTBOX_EVENT_MEMBER_COL]: row[f'COUNT({self.LOOTBOX_EVENT_TYPE_COL})'] for row in rows }
     
     def get_beans_daily_gamba_count(self, guild_id: int, user_id: int, type: BeansEventType, min_value: int, date: int) -> int:
         command = f'''
