@@ -8,7 +8,7 @@ from view.RankingType import RankingType
 class RankingEmbed(discord.Embed):
     
     TITLES = {
-        RankingType.BEANS: "Beans Rankings (no shop)",
+        RankingType.BEANS: "Beans Rankings (incl. gamba losses)",
         RankingType.SLAP: "Slap Rankings",
         RankingType.PET: "Pet Rankings",
         RankingType.FART: "Fart Rankings",

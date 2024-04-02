@@ -86,7 +86,7 @@ class Item():
             
         suffix = f'🅱️{self.get_cost()*amount_in_cart}'
         spacing = max_width - len(suffix)
-        info_block = f'```{description}\n\n{' '*spacing}{suffix}```'
+        info_block = f'```python\n"{description}"\n\n{' '*spacing}{suffix}```'
         
         embed = discord.Embed(title=title, description=info_block, color=color)
         
@@ -105,7 +105,7 @@ class Item():
         else:
             suffix = f'amount: {count}'
         spacing = max_width - len(suffix)
-        info_block = f'```{description}\n\n{' '*spacing}{suffix}```'
+        info_block = f'```python\n"{description}"\n\n{' '*spacing}{suffix}```'
         
         embed.add_field(name=title, value=info_block, inline=False)
         

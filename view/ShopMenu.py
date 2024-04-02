@@ -107,12 +107,12 @@ class ShopMenu(discord.ui.View):
                 if loot_box.get_item_type() is not None:
                     item = self.item_manager.get_item(guild_id, loot_box.get_item_type())
                     
-                view = LootBoxMenu(self.event_manager, self.database, self.logger, item, user_id=interaction.user.id)
+                view = LootBoxMenu(self.event_manager, self.database, self.logger, item, interaction=interaction, parent_view=self)
                 treasure_close_img = discord.File("./img/treasure_closed.jpg", "treasure_closed.jpg")
                 
                 message = await interaction.followup.send(f"", embed=embed, view=view, files=[treasure_close_img])
-                
-                self.refresh_ui(user_balance)
+                new_user_balance = self.database.get_member_beans(guild_id, member_id)
+                self.refresh_ui(new_user_balance)
                 await interaction.message.edit(view=self)
                 
                 loot_box.set_message_id(message.id)
