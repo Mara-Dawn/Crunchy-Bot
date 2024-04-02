@@ -99,7 +99,7 @@ class ColorSelectView(ShopConfirmView):
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
         
         new_user_balance = self.database.get_member_beans(guild_id, member_id)
-        success_message = f'You successfully bought {amount} **{self.item.get_name()}** for `🅱️{self.item.get_cost()}` beans.\n Remaining balance: `🅱️{new_user_balance}`'
+        success_message = f'You successfully bought {amount} **{self.item.get_name()}** for `🅱️{cost}` beans.\n Remaining balance: `🅱️{new_user_balance}`'
         
         await interaction.followup.send(success_message, ephemeral=True)
         
