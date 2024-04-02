@@ -11,12 +11,16 @@ from shop.Item import Item
 
 class LootBoxMenu(discord.ui.View):
     
-    def __init__(self, event_manager: EventManager, database: Database, logger: BotLogger, item: Item, user_id: int = None):
+    def __init__(self, event_manager: EventManager, database: Database, logger: BotLogger, item: Item, interaction: discord.Interaction = None, parent_view = None):
         self.database = database
         self.event_manager = event_manager
         self.item = item
         self.logger = logger
-        self.user_id = user_id
+        self.user_id = None
+        self.interaction = interaction
+        self.parent_view = parent_view
+        if interaction is not None:
+            self.user_id = interaction.user.id
         
         super().__init__(timeout=None)
         self.add_item(ClaimButton())
@@ -98,6 +102,12 @@ class LootBoxMenu(discord.ui.View):
         self.logger.log(interaction.guild_id, log_message, cog='Beans')
         
         await interaction.edit_original_response(embed=embed, view=None, attachments=[attachment])
+        
+        if self.interaction is not None:
+            new_user_balance = self.database.get_member_beans(guild_id, member_id)
+            message = await self.interaction.original_response()
+            self.parent_view.refresh_ui(new_user_balance)
+            await message.edit(view=self.parent_view)
         
 class ClaimButton(discord.ui.Button):
     
