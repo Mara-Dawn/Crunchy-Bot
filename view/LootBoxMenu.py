@@ -63,7 +63,7 @@ class LootBoxMenu(discord.ui.View):
         
         if loot_box.get_item_type() is not None:
             embed.add_field(name='Woah, a Shiny Item!', value='', inline=False)
-            self.item.add_to_embed(embed, 37, count=self.item.get_base_amount())
+            self.item.add_to_embed(embed, 33, count=self.item.get_base_amount())
             log_message += f' and 1x {self.item.get_name()}'
             
             self.event_manager.dispatch_inventory_event(
