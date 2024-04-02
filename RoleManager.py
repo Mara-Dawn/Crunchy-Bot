@@ -63,10 +63,20 @@ class RoleManager():
             reason=f"Custom color role for {user.display_name}."
         )
 
+        bot_member = guild.get_member(self.bot.user.id)
+        bot_roles = bot_member.roles
+    
+        bot_max_pos = 0
+        for role in bot_roles:
+            bot_max_pos = max(bot_max_pos, role.position)
+        bot_max_pos -= 1
+        
         user_roles = user.roles
         max_pos = 0
         for role in user_roles:
             max_pos = max(max_pos, role.position)
+            
+        max_pos = min(bot_max_pos, max_pos)
 
         await custom_role.edit(position=max_pos)
         

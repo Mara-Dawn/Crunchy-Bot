@@ -19,9 +19,9 @@ class ColorSelectView(ShopConfirmView):
         self.add_item(ColorInputButton(default_color))
         self.add_item(ConfirmButton())
         self.add_item(CancelButton())
-        
+        self.select_amount = AmountInput(suffix=' Week(s)')
         if item.get_allow_amount():
-            self.add_item(AmountInput(suffix=' Week(s)'))
+            self.add_item(self.select_amount)
         
     async def refresh_embed(self, interaction: discord.Interaction):
         message = await interaction.original_response()
@@ -38,15 +38,17 @@ class ColorSelectView(ShopConfirmView):
         if self.selected_amount > 1:
             embed.title = f'{self.selected_amount}x {embed.title}'
         if self.color is not None:
-            embed.title = f'{embed.title} [{self.color}]'
+            embed.title = f'{embed.title} [#{self.color}]'
             
-        await message.edit(embed=embed)
+        self.select_amount.options[self.selected_amount-1].default = True
+        await message.edit(embed=embed, view=self)
     
     async def set_color(self, interaction: discord.Interaction,  color: str):
         self.color = color.lstrip('#')
         await self.refresh_embed(interaction)
     
     async def set_amount(self, interaction: discord.Interaction, amount: int):
+        self.select_amount.options[self.selected_amount-1].default = False
         self.selected_amount = amount
         await self.refresh_embed(interaction)
     

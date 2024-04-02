@@ -27,8 +27,9 @@ class ShopConfirmView(discord.ui.View):
         self.add_item(ConfirmButton())
         self.add_item(CancelButton())
         
+        self.select_amount = AmountInput()
         if item.get_allow_amount():
-            self.add_item(AmountInput())
+            self.add_item(self.select_amount)
     
     async def submit(self, interaction: discord.Interaction):
         match self.type:
@@ -42,9 +43,12 @@ class ShopConfirmView(discord.ui.View):
         embed = self.item.get_embed(amount_in_cart=self.selected_amount)
         if self.selected_amount > 1:
             embed.title = f'{self.selected_amount}x {embed.title}'
-        await message.edit(embed=embed)
+            
+        self.select_amount.options[self.selected_amount-1].default = True
+        await message.edit(embed=embed, view=self)
     
     async def set_amount(self, interaction: discord.Interaction, amount: int):
+        self.select_amount.options[self.selected_amount-1].default = False
         self.selected_amount = amount
         await self.refresh_embed(interaction)
     
@@ -175,7 +179,7 @@ class AmountInput(discord.ui.Select):
         options = []
         
         for i in range(1,20):
-            options.append(discord.SelectOption(label=f'{i}{suffix}', value=i))
+            options.append(discord.SelectOption(label=f'{i}{suffix}', value=i, default=(i==1)))
 
         super().__init__(placeholder='Choose the amount.', min_values=1, max_values=1, options=options, row=0)
     
