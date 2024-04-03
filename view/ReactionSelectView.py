@@ -12,15 +12,13 @@ class ReactionSelectView(ShopResponseView):
     def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: Item):
         super().__init__(bot, interaction, parent, item)
 
-        self.add_item(UserPicker())
+        self.user_select = UserPicker()
+        self.amount_select = AmountInput(suffix=' x 10 Reactions')
+        self.reaction_input_button = ReactionInputButton()
+        self.confirm_button = ConfirmButton()
+        self.cancel_button = CancelButton()
         
-        self.select_amount = AmountInput(suffix=' x 10 Reactions')
-        if item.get_allow_amount():
-            self.add_item(self.select_amount)
-        
-        self.add_item(ReactionInputButton(self.bot))
-        self.add_item(ConfirmButton())
-        self.add_item(CancelButton())
+        self.refresh_elements()
         
     async def submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)

@@ -14,12 +14,13 @@ class ColorSelectView(ShopResponseView):
         super().__init__(bot, interaction, parent, item)
 
         default_color = bot.database.get_custom_color(interaction.guild_id, interaction.user.id)
-        self.add_item(ColorInputButton(default_color))
-        self.add_item(ConfirmButton())
-        self.add_item(CancelButton())
-        self.select_amount = AmountInput(suffix=' Week(s)')
-        if item.get_allow_amount():
-            self.add_item(self.select_amount)
+        
+        self.amount_select = AmountInput(suffix=' Week(s)')
+        self.color_input_button = ColorInputButton(default_color)
+        self.confirm_button = ConfirmButton()
+        self.cancel_button = CancelButton()
+        
+        self.refresh_elements()
 
     async def submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
