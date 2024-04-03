@@ -12,10 +12,11 @@ from view.InventoryEmbed import InventoryEmbed
 from view.LootBoxMenu import LootBoxMenu
 from view.ShopEmbed import ShopEmbed
 
+from view.ShopResponseView import ShopResponseView
 from view.ShopUserSelectView import ShopUserSelectView
 from view.ShopConfirmView import ShopConfirmView
-from view.ColorSelectView import ColorSelectView
-from view.ReactionSelectView import ReactionSelectView
+from view.ShopColorSelectView import ShopColorSelectView
+from view.ShopReactionSelectView import ShopReactionSelectView
 
 class ShopMenu(discord.ui.View):
     
@@ -29,7 +30,7 @@ class ShopMenu(discord.ui.View):
         self.logger = bot.logger
         self.current_page = 0
         self.selected: ItemType = None
-        super().__init__(timeout=200)
+        super().__init__(timeout=240)
         self.items = items
         self.items.sort(key=lambda x:x.get_cost())
         self.item_count = len(self.items)
@@ -74,10 +75,11 @@ class ShopMenu(discord.ui.View):
                 view_class_name = item.get_view_class()
                 
                 view_class = globals()[view_class_name]
-                view = view_class(self.bot, interaction, self, item)
+                view: ShopResponseView = view_class(self.bot, interaction, self, item)
                 
                 message = await interaction.followup.send(f"", embed=embed, view=view, ephemeral=True)
                 view.set_message(message)
+                await view.refresh_ui()
                 
                 self.refresh_ui(user_balance, disabled=True)
                 await interaction.message.edit(view=self)

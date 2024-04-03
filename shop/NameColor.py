@@ -27,7 +27,7 @@ class NameColor(Item):
             emoji = '🌈',
             cost = cost,
             value = 1,
-            view_class = 'ColorSelectView',
+            view_class = 'ShopColorSelectView',
             allow_amount = True,
             base_amount = 7,
             max_amount = None,
