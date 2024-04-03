@@ -7,3 +7,4 @@ class ItemTrigger(str, Enum):
     PET = UserInteraction.PET
     FART = UserInteraction.FART
     DAILY = 'daily'
+    USER_MESSAGE = 'user_message'

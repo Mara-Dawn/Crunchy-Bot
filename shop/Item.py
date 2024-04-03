@@ -77,9 +77,9 @@ class Item():
         return action in self.trigger
     
     def get_embed(self, color=discord.Colour.purple(), amount_in_cart: int = 1) -> discord.Embed:
-        title = f'{self.get_emoji()} {self.get_name()}'
+        title = f'> {self.get_emoji()} {self.get_name()} {self.get_emoji()}'
         description = self.get_description()
-        max_width = 60
+        max_width = 54
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += ' '*spacing

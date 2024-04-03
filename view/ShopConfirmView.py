@@ -8,22 +8,13 @@ from events.BeansEventType import BeansEventType
 from events.JailEventType import JailEventType
 from shop.Item import Item
 from shop.ItemType import ItemType
+from view.ShopResponseView import *
 
-class ShopConfirmView(discord.ui.View):
+class ShopConfirmView(ShopResponseView):
     
     def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: Item):
-        self.bot = bot
-        self.parent = parent
-        self.interaction = interaction
-        self.type = item.get_type()
-        self.item = item
-        self.selected_amount = 1
-        self.event_manager = bot.event_manager
-        self.item_manager = bot.item_manager
-        self.database = bot.database
-        self.logger = bot.logger
-        self.message = None
-        super().__init__(timeout=100)
+        super().__init__(bot, interaction, parent, item)
+        
         self.add_item(ConfirmButton())
         self.add_item(CancelButton())
         
@@ -38,22 +29,7 @@ class ShopConfirmView(discord.ui.View):
             case ItemType.JAIL_REDUCTION:
                 await self.jail_interaction(interaction)
     
-    async def refresh_embed(self, interaction: discord.Interaction):
-        message = await interaction.original_response()
-        embed = self.item.get_embed(amount_in_cart=self.selected_amount)
-        if self.selected_amount > 1:
-            embed.title = f'{self.selected_amount}x {embed.title}'
-            
-        self.select_amount.options[self.selected_amount-1].default = True
-        await message.edit(embed=embed, view=self)
-    
-    async def set_amount(self, interaction: discord.Interaction, amount: int):
-        self.select_amount.options[self.selected_amount-1].default = False
-        self.selected_amount = amount
-        await self.refresh_embed(interaction)
-    
     async def jail_interaction(self, interaction: discord.Interaction):
-        
         await interaction.response.defer(ephemeral=True)
         
         guild_id = interaction.guild_id
@@ -77,8 +53,6 @@ class ShopConfirmView(discord.ui.View):
                     await interaction.followup.send(f'You are currently not in jail.', ephemeral=True)
                     return
                 
-                log_message_suffix = f'and freed themselves from jail.'
-                message_suffix = f'freeing themselves from jail.'
                 jail_announcement = f'<@{member_id}> was released from Jail by bribing the mods with beans. ' + response
             case ItemType.JAIL_REDUCTION:
                 
@@ -110,9 +84,6 @@ class ShopConfirmView(discord.ui.View):
                     jail.get_id()
                 )
                 
-                log_message_suffix = f'and reduced their sentence by `{total_value}` minutes.'
-                message_suffix = f'reducing their sentence by `{total_value}` minutes.'
-                
                 jail_announcement = f'<@{member_id}> reduced their own sentence by `{total_value}` minutes by spending `🅱️{cost}` beans.'
                 new_remaining = self.event_manager.get_jail_remaining(jail)
                 jail_announcement += f'\n `{BotUtil.strfdelta(new_remaining, inputtype='minutes')}` still remain.'
@@ -129,73 +100,5 @@ class ShopConfirmView(discord.ui.View):
             -cost
         )
         
-        log_message = f'{interaction.user.display_name} bought {amount} {self.item.get_name()} for {cost} beans {log_message_suffix}'
-        self.logger.log(interaction.guild_id, log_message, cog='Shop')
-        
-        new_user_balance = self.database.get_member_beans(guild_id, member_id)
-        success_message = f'You successfully bought {amount} **{self.item.get_name()}** for `🅱️{cost}` beans, {message_suffix}\n Remaining balance: `🅱️{new_user_balance}`'
-        
-        await interaction.followup.send(success_message, ephemeral=True)
-        
         await jail_cog.announce(interaction.guild, jail_announcement)
-        
-        message = await self.interaction.original_response()
-        self.parent.refresh_ui(new_user_balance)
-        await message.edit(view=self.parent)
-        
-        message = await interaction.original_response()
-        await message.delete()
-    
-    def set_message(self, message: discord.Message):
-        self.message = message
-
-    async def on_timeout(self):
-        try:
-            await self.message.delete()
-        except:
-            pass
-        
-        guild_id = self.interaction.guild_id
-        member_id = self.interaction.user.id
-        user_balance = self.database.get_member_beans(guild_id, member_id)
-        
-        message = await self.interaction.original_response()
-        self.parent.refresh_ui(user_balance)
-        await message.edit(view=self.parent)
-        
-class ConfirmButton(discord.ui.Button):
-    
-    def __init__(self):
-        super().__init__(label='Confirm and Buy', style=discord.ButtonStyle.green, row=1)
-    
-    async def callback(self, interaction: discord.Interaction):
-        view: ShopConfirmView = self.view
-        
-        await view.submit(interaction)
-
-class AmountInput(discord.ui.Select):
-    
-    def __init__(self, suffix: str = ''):
-        options = []
-        
-        for i in range(1,20):
-            options.append(discord.SelectOption(label=f'{i}{suffix}', value=i, default=(i==1)))
-
-        super().__init__(placeholder='Choose the amount.', min_values=1, max_values=1, options=options, row=0)
-    
-    async def callback(self, interaction: discord.Interaction):
-        view: ShopConfirmView = self.view
-        await interaction.response.defer()
-        if await view.interaction_check(interaction):
-            await view.set_amount(interaction, int(self.values[0]))
-            
-
-class CancelButton(discord.ui.Button):
-    
-    def __init__(self):
-        super().__init__(label='Cancel', style=discord.ButtonStyle.grey, row=1)
-    
-    async def callback(self, interaction: discord.Interaction):
-        view: ShopConfirmView = self.view
-        
-        await view.on_timeout()
+        await self.finish_transaction(interaction)

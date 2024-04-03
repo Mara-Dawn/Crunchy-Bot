@@ -1,9 +1,11 @@
 import json
 import sqlite3
 import traceback
+import discord
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from sqlite3 import Error
+from discord.ext import commands
 from BotLogger import BotLogger
 from datalayer.LootBox import LootBox
 from datalayer.UserInventory import UserInventory
@@ -22,6 +24,7 @@ from events.QuoteEvent import QuoteEvent
 from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
 from shop.ItemType import ItemType
+from view.EmojiType import EmojiType
 
 class Database():    
     
@@ -238,9 +241,26 @@ class Database():
         PRIMARY KEY ({CUSTOM_COLOR_MEMBER_COL}, {CUSTOM_COLOR_GUILD_COL})
     );'''
     
-    def __init__(self, logger: BotLogger, db_file: str):
+    BULLY_REACT_TABLE = 'bullyreact'
+    BULLY_REACT_GUILD_COL = 'buli_guild_id'
+    BULLY_REACT_MEMBER_COL = 'buli_member_id'
+    BULLY_REACT_TARGET_COL = 'buli_target_id'
+    BULLY_REACT_EMOJI_TYPE_COL = 'buli_type'
+    BULLY_REACT_EMOJI_VALUE_COL = 'buli_value'
+    CREATE_BULLY_REACT_TABLE = f'''
+    CREATE TABLE if not exists {BULLY_REACT_TABLE} (
+        {BULLY_REACT_GUILD_COL} INTEGER, 
+        {BULLY_REACT_MEMBER_COL}  INTEGER,
+        {BULLY_REACT_TARGET_COL} INTEGER, 
+        {BULLY_REACT_EMOJI_TYPE_COL} TEXT,
+        {BULLY_REACT_EMOJI_VALUE_COL} TEXT,
+        PRIMARY KEY ({BULLY_REACT_GUILD_COL}, {BULLY_REACT_MEMBER_COL})
+    );'''
+    
+    def __init__(self, bot: commands.Bot, logger: BotLogger, db_file: str):
         
         self.conn = None
+        self.bot = bot
         self.logger = logger
         
         try:
@@ -264,6 +284,7 @@ class Database():
             c.execute(self.CREATE_LOOTBOX_TABLE)
             c.execute(self.CREATE_LOOTBOX_EVENT_TABLE)
             c.execute(self.CREATE_CUSTOM_COLOR_TABLE)
+            c.execute(self.CREATE_BULLY_REACT_TABLE)
             c.close()
             
         except Error as e:
@@ -533,6 +554,53 @@ class Database():
         
         return self.__query_insert(command, task)
     
+    def log_bully_react(self, guild_id: int, user_id: int, target_id: int, emoji_type: EmojiType, emoji: discord.Emoji|str) -> int:
+        command = f'''
+            INSERT INTO {self.BULLY_REACT_TABLE} (
+                {self.BULLY_REACT_GUILD_COL}, 
+                {self.BULLY_REACT_MEMBER_COL}, 
+                {self.BULLY_REACT_TARGET_COL}, 
+                {self.BULLY_REACT_EMOJI_TYPE_COL}, 
+                {self.BULLY_REACT_EMOJI_VALUE_COL}) 
+            VALUES (?, ?, ?, ?, ?) 
+            ON CONFLICT({self.BULLY_REACT_GUILD_COL}, {self.BULLY_REACT_MEMBER_COL}) 
+            DO UPDATE SET 
+            {self.BULLY_REACT_TARGET_COL}=excluded.{self.BULLY_REACT_TARGET_COL},
+            {self.BULLY_REACT_EMOJI_TYPE_COL}=excluded.{self.BULLY_REACT_EMOJI_TYPE_COL},
+            {self.BULLY_REACT_EMOJI_VALUE_COL}=excluded.{self.BULLY_REACT_EMOJI_VALUE_COL};
+        '''
+        
+        if emoji_type == EmojiType.CUSTOM:
+            emoji = str(emoji.id)
+        
+        task = (
+            guild_id,
+            user_id,
+            target_id,
+            emoji_type.value,
+            emoji
+        )
+        
+        return self.__query_insert(command, task)
+    
+    def get_bully_react(self, guild_id: int, user_id: int) -> Tuple[int,discord.Emoji|str]:
+        command = f'''
+            SELECT * FROM {self.BULLY_REACT_TABLE}
+            WHERE {self.BULLY_REACT_GUILD_COL} = ? 
+            AND {self.BULLY_REACT_MEMBER_COL} = ? LIMIT 1;
+        '''
+        task = (guild_id, user_id)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return None, None
+        
+        emoji = rows[0][self.BULLY_REACT_EMOJI_VALUE_COL]
+        if rows[0][self.BULLY_REACT_EMOJI_TYPE_COL] == EmojiType.CUSTOM.value:
+            emoji = discord.utils.get(self.bot.emojis, id=int(emoji))
+        
+        return rows[0][self.BULLY_REACT_TARGET_COL], emoji
+    
     def log_custom_color(self, guild_id: int, user_id: int, color: str) -> int:
         command = f'''
             INSERT INTO {self.CUSTOM_COLOR_TABLE} ({self.CUSTOM_COLOR_GUILD_COL}, {self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_COLOR_COL}) 
@@ -544,22 +612,6 @@ class Database():
             guild_id,
             user_id,
             color
-        )
-        
-        return self.__query_insert(command, task)
-    
-    def log_custom_role(self, guild_id: int, user_id: int, role_id: int) -> int:
-        command = f'''
-            INSERT INTO {self.CUSTOM_COLOR_TABLE} ({self.CUSTOM_COLOR_GUILD_COL}, {self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_ROLE_COL}) 
-            VALUES (?, ?, ?) 
-            ON CONFLICT({self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_GUILD_COL}) 
-            DO UPDATE SET {self.CUSTOM_COLOR_ROLE_COL}=excluded.{self.CUSTOM_COLOR_ROLE_COL}
-            WHERE excluded.{self.CUSTOM_COLOR_ROLE_COL} IS NOT NULL ;
-        '''
-        task = (
-            guild_id,
-            user_id,
-            role_id
         )
         
         return self.__query_insert(command, task)
@@ -577,6 +629,22 @@ class Database():
             return None
         
         return rows[0][self.CUSTOM_COLOR_COLOR_COL]
+    
+    def log_custom_role(self, guild_id: int, user_id: int, role_id: int) -> int:
+        command = f'''
+            INSERT INTO {self.CUSTOM_COLOR_TABLE} ({self.CUSTOM_COLOR_GUILD_COL}, {self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_ROLE_COL}) 
+            VALUES (?, ?, ?) 
+            ON CONFLICT({self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_GUILD_COL}) 
+            DO UPDATE SET {self.CUSTOM_COLOR_ROLE_COL}=excluded.{self.CUSTOM_COLOR_ROLE_COL}
+            WHERE excluded.{self.CUSTOM_COLOR_ROLE_COL} IS NOT NULL ;
+        '''
+        task = (
+            guild_id,
+            user_id,
+            role_id
+        )
+        
+        return self.__query_insert(command, task)
     
     def get_custom_role(self, guild_id: int, user_id: int) -> int:
         command = f'''

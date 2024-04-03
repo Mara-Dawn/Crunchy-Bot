@@ -1,5 +1,4 @@
 import datetime
-import re
 import discord
 
 from CrunchyBot import CrunchyBot
@@ -8,26 +7,32 @@ from shop.Item import Item
 from shop.ItemType import ItemType
 from view.ShopResponseView import *
 
-class ColorSelectView(ShopResponseView):
+class ReactionSelectView(ShopResponseView):
     
     def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: Item):
         super().__init__(bot, interaction, parent, item)
 
-        default_color = bot.database.get_custom_color(interaction.guild_id, interaction.user.id)
-        self.add_item(ColorInputButton(default_color))
-        self.add_item(ConfirmButton())
-        self.add_item(CancelButton())
-        self.select_amount = AmountInput(suffix=' Week(s)')
+        self.add_item(UserPicker())
+        
+        self.select_amount = AmountInput(suffix=' x 10 Reactions')
         if item.get_allow_amount():
             self.add_item(self.select_amount)
-
+        
+        self.add_item(ReactionInputButton(self.bot))
+        self.add_item(ConfirmButton())
+        self.add_item(CancelButton())
+        
     async def submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         
-        if self.selected_color is None:
-            await interaction.followup.send('Please select a color first.', ephemeral=True)
+        if self.selected_user is None:
+            await interaction.followup.send('Please select a user first.', ephemeral=True)
             return
         
+        if self.selected_emoji is None:
+            await interaction.followup.send('Please select a reaction emoji first.', ephemeral=True)
+            return
+
         guild_id = interaction.guild_id
         member_id = interaction.user.id
         user_balance = self.database.get_member_beans(guild_id, member_id)
@@ -48,9 +53,9 @@ class ColorSelectView(ShopResponseView):
         )
         
         match self.type:
-            case ItemType.NAME_COLOR:
+            case ItemType.REACTION_SPAM:
                 pass
-                self.database.log_custom_color(guild_id, member_id, self.selected_color)
+                self.database.log_bully_react(guild_id, member_id, self.selected_user.id, self.selected_emoji_type, self.selected_emoji)
                 await self.item.obtain(
                     role_manager=self.role_manager,
                     event_manager=self.event_manager,
@@ -65,3 +70,4 @@ class ColorSelectView(ShopResponseView):
                 return
         
         await self.finish_transaction(interaction)
+

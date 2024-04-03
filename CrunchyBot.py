@@ -21,7 +21,7 @@ class CrunchyBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         self.logger = BotLogger(self, self.LOG_FILE)
-        self.database = Database(self.logger, self.DB_FILE)
+        self.database = Database(self, self.logger, self.DB_FILE)
         self.settings = BotSettings(self,self.database, self.logger)
         self.role_manager = RoleManager(self, self.settings, self.database, self.logger)
         self.event_manager = EventManager(self, self.settings, self.database, self.logger)
@@ -34,6 +34,7 @@ class CrunchyBot(commands.Bot):
         await self.load_extension("cogs.beans.Shop")
         await self.load_extension("cogs.beans.Gamba")
         await self.load_extension("cogs.beans.Beans")
+        await self.load_extension("cogs.Bully")
         
     async def on_guild_join(self, guild):
         self.logger.log(guild.id,  "new guild registered.")

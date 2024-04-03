@@ -22,7 +22,7 @@ class NameColor(Item):
         super().__init__(
             name = 'Name Color Change',
             type = ItemType.NAME_COLOR,
-            group = ItemGroup.DAILY_USE,
+            group = ItemGroup.SUBSCRIPTION,
             description = 'Paint your discord name in your favourite color! Grab one weeks worth of color tokens. Each day, a token gets consumed until you run out.',
             emoji = '🌈',
             cost = cost,
