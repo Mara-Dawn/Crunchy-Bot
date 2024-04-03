@@ -13,7 +13,7 @@ class ReactionSpam(Item):
         self,
         cost: int|None
     ):
-        defaultcost = 150
+        defaultcost = 200
         
         if cost is None:
             cost = defaultcost

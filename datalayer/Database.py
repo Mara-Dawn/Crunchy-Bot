@@ -1080,7 +1080,7 @@ class Database():
             INNER JOIN {self.EVENT_TABLE} 
             ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INVENTORY_EVENT_TABLE}.{self.INVENTORY_EVENT_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = {int(guild_id)}
-            GROUP BY {self.INVENTORY_EVENT_ITEM_TYPE_COL};
+            GROUP BY {self.INVENTORY_EVENT_MEMBER_COL}, {self.INVENTORY_EVENT_ITEM_TYPE_COL};
         '''
         
         rows = self.__query_select(command)
