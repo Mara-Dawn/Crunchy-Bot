@@ -37,7 +37,7 @@ class ShopResponseView(discord.ui.View):
         self.amount_select: AmountInput = None
         self.reaction_input_button: ReactionInputButton = None
         
-        super().__init__(timeout=180)
+        super().__init__(timeout=600)
 
     async def submit(self, interaction: discord.Interaction):
         pass
@@ -108,9 +108,9 @@ class ShopResponseView(discord.ui.View):
         
         self.refresh_elements(disabled)
         
-        self.timeout = 180
+        self.timeout = 600
         if disabled:
-            self.timeout = 400
+            self.timeout = 1200
             
         await self.message.edit(embed=embed, view=self)
         
@@ -274,7 +274,7 @@ class ReactionInputView(ShopResponseView):
         user_emoji = None
         emoji_type = None
         
-        message = await interaction.channel.fetch_message(interaction.message.id)
+        message = await interaction.channel.fetch_message(self.message.id)
         
         for reaction in message.reactions:
             reactors = [user async for user in reaction.users()]
@@ -297,11 +297,11 @@ class ReactionInputView(ShopResponseView):
                 return
         
         await self.parent.set_emoji(user_emoji, emoji_type)
-        await self.message.delete()
+        await interaction.followup.delete_message(self.message.id)
         
     async def on_timeout(self):
         try:
             await self.message.delete()
+            await self.parent.refresh_ui()
         except:
             pass
-        await self.parent.refresh_ui()
