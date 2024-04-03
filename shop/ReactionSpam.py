@@ -26,7 +26,7 @@ class ReactionSpam(Item):
             emoji = '🤡',
             cost = cost,
             value = 1,
-            view_class = 'ReactionSelectView',
+            view_class = 'ShopReactionSelectView',
             allow_amount = True,
             base_amount = 10,
             max_amount = None,
