@@ -60,6 +60,10 @@ class Bully(commands.Cog):
                         if emoji is None:
                             continue
                         
+                        current_message = await message.channel.fetch_message(message.id)
+                        if emoji in [x.emoji for x in current_message.reactions]:
+                            continue
+                        
                         await message.add_reaction(emoji)
                         
                         await item.use(

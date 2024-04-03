@@ -4,6 +4,7 @@ from discord.ext import commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from BotUtil import BotUtil
+from datalayer.Quote import Quote
 from datalayer.UserJail import UserJail
 from datalayer.Database import Database
 from datalayer.UserInteraction import UserInteraction
@@ -11,6 +12,7 @@ from datalayer.UserRankings import UserRankings
 from datalayer.UserStats import UserStats
 from events.BeansEvent import BeansEvent
 from events.BeansEventType import BeansEventType
+from events.BotEvent import BotEvent
 from events.InteractionEvent import InteractionEvent
 from events.InventoryEvent import InventoryEvent
 from events.JailEvent import JailEvent
@@ -30,7 +32,13 @@ class EventManager():
         self.database = database
         self.logger = logger
         self.log_name = "Events"
-        
+    
+    def __log_event(self, event: BotEvent, member_id: int, *args):
+        type = event.get_type()
+        guild_id = event.get_guild_id()
+        arguments = ', '.join([str(x) for x in args])
+        self.logger.log(guild_id, f'{type.value} event was logged for {BotUtil.get_name(self.bot, guild_id, member_id, 30)}. Arguments: {arguments}', self.log_name)
+    
     def dispatch_interaction_event(self,
         timestamp: datetime.datetime, 
         guild_id: int, 
@@ -40,7 +48,7 @@ class EventManager():
     ):
         event = InteractionEvent(timestamp, guild_id, interaction_type, from_user, to_user)
         self.database.log_event(event)
-        self.logger.log(guild_id, f'Interaction event `{interaction_type}` was logged.', self.log_name)
+        self.__log_event(event, from_user, BotUtil.get_name(self.bot, guild_id, to_user, 30))
         
     def dispatch_timeout_event(self,
         timestamp: datetime.datetime,
@@ -50,7 +58,7 @@ class EventManager():
     ):
         event = TimeoutEvent(timestamp, guild_id, member, duration)
         self.database.log_event(event)
-        self.logger.log(guild_id, f'Timeout event was logged.', self.log_name)
+        self.__log_event(event, member, duration)
     
     def dispatch_spam_event(self,
         timestamp: datetime.datetime,
@@ -59,7 +67,7 @@ class EventManager():
     ):
         event = SpamEvent(timestamp, guild_id, member)
         self.database.log_event(event)
-        self.logger.log(guild_id, f'Spam event was logged.', self.log_name)
+        self.__log_event(event, member)
     
     def dispatch_jail_event(self,
         timestamp: datetime.datetime,
@@ -71,7 +79,7 @@ class EventManager():
     ):
         event = JailEvent(timestamp, guild_id, jail_event_type, caused_by, duration, jail_reference)
         self.database.log_event(event)
-        self.logger.log(guild_id, f'Jail event `{jail_event_type}` was logged for jail {jail_reference}.', self.log_name)
+        self.__log_event(event, caused_by, jail_event_type, duration, jail_reference)
         
         if jail_event_type is JailEventType.RELEASE:
             self.database.log_jail_release(jail_reference, int(timestamp.timestamp()))
@@ -80,11 +88,11 @@ class EventManager():
     def dispatch_quote_event(self,
         timestamp: datetime.datetime,
         guild_id: int, 
-        quote_id: int
+        quote: Quote
     ):
-        event = QuoteEvent(timestamp, guild_id, quote_id)
+        event = QuoteEvent(timestamp, guild_id, quote.get_id())
         self.database.log_event(event)
-        self.logger.log(guild_id, f'Quote event was logged.', self.log_name)
+        self.__log_event(event, quote.get_saved_by(), quote.get_member_name(), quote.get_message_content())
         
     def dispatch_beans_event(self,
         timestamp: datetime.datetime, 
@@ -95,7 +103,7 @@ class EventManager():
     ) -> int:
         event = BeansEvent(timestamp, guild_id, beans_event_type, member, value)
         id = self.database.log_event(event)
-        self.logger.log(guild_id, f'Beans event `{beans_event_type}` was logged. [{value}]', self.log_name)
+        self.__log_event(event, member, beans_event_type, f'[{value}]')
         return id
     
     def dispatch_inventory_event(self,
@@ -108,8 +116,8 @@ class EventManager():
     ):
         event = InventoryEvent(timestamp, guild_id, member_id, item_type, beans_event_id, amount)
         self.database.log_event(event)
-        self.logger.log(guild_id, f'Inventory event for {amount} `{item_type}` was logged.', self.log_name)
-    
+        self.__log_event(event, member_id, item_type, amount)
+        
     def dispatch_loot_box_event(self,
         timestamp: datetime.datetime, 
         guild_id: int,
@@ -119,7 +127,7 @@ class EventManager():
     ):
         event = LootBoxEvent(timestamp, guild_id, loot_box_id, member_id, loot_box_event_type)
         self.database.log_event(event)
-        self.logger.log(guild_id, f'Loot Box event of type {loot_box_event_type} was logged.', self.log_name)
+        self.__log_event(event, member_id, loot_box_event_type, loot_box_id)
     
     def get_jail_duration(self, jail: UserJail) -> int:
         events = self.database.get_jail_events_by_jail(jail.get_id())

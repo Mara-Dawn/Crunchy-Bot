@@ -109,7 +109,8 @@ class ShopResponseView(discord.ui.View):
             self.amount_select.options[self.selected_amount-1].default = True
         
         self.refresh_elements(disabled)
-        
+        if disabled:
+            self.timeout = 200
         await message.edit(embed=embed, view=self)
         
     async def set_amount(self, interaction: discord.Interaction, amount: int):
@@ -239,46 +240,6 @@ class ColorInputModal(discord.ui.Modal):
         
         await self.view.set_color(interaction, hex_string)
 
-class ReactionInputAltButton(discord.ui.Button):
-    
-    def __init__(self, bot: CrunchyBot):
-        super().__init__(label='Select Emoji', style=discord.ButtonStyle.green, row=2)
-        self.bot = bot
-    
-    async def callback(self, interaction: discord.Interaction):
-        view: ShopResponseView = self.view
-        if await view.interaction_check(interaction):
-            await interaction.response.send_modal(ReactionInputModal(self.view, self.bot))
-
-class ReactionInputModal(discord.ui.Modal):
-
-    def __init__(self, view: ShopResponseView, bot: CrunchyBot):
-        super().__init__(title='Reaction Emoji')
-        self.view = view
-        self.bot = bot
-        self.emoji = discord.ui.TextInput(
-            label='Enter the emoji name in text form.',
-            placeholder=':skull:'
-        )
-        self.add_item(self.emoji)
-        
-    async def on_submit(self, interaction: discord.Interaction): 
-        await interaction.response.defer()
-        emoji_name = self.emoji.value
-        emoji_name = emoji_name.strip(':')
-        
-        if emoji.is_emoji(emoji_name):
-            await self.view.set_emoji(interaction, emoji_name, EmojiType.DEFAULT)
-            return
-        
-        emoji_obj = discord.utils.get(self.bot.emojis, name=emoji_name)
-        
-        if emoji_obj is None:                      
-            await interaction.followup.send(f'Could not find emoji with name {emoji_name}.', ephemeral=True)
-            return
-        
-        await self.view.set_emoji(interaction, emoji_obj, EmojiType.CUSTOM)
-
 class ReactionInputButton(discord.ui.Button):
     
     def __init__(self):
@@ -326,6 +287,12 @@ class ReactionInputView(ShopResponseView):
         
         if user_emoji is None:
             await interaction.followup.send(f'Please react with any emoji.', ephemeral=True)
+            return
+        
+        emoji_obj = discord.utils.get(self.bot.emojis, name=user_emoji.name)
+        
+        if emoji_obj is None:                      
+            await interaction.followup.send(f'I do not have access to this emoji. I can only see the emojis of the servers i am a member of.', ephemeral=True)
             return
         
         await self.parent.set_emoji(self.interaction, user_emoji, emoji_type)
