@@ -132,7 +132,7 @@ class ShopMenu(discord.ui.View):
         
         # All other items get added to the inventory awaiting their trigger
         
-        await item.obtain(self.role_manager, self.event_manager, guild_id, member_id, beans_event_id=beans_event_id)
+        await item.obtain(self.role_manager, self.event_manager, guild_id, member_id, beans_event_id=beans_event_id, amount=item.get_base_amount())
         
         log_message = f'{interaction.user.display_name} bought {item.get_name()} for {item.get_cost()} beans.'
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
