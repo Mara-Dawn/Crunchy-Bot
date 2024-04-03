@@ -296,7 +296,7 @@ class ReactionInputView(ShopResponseView):
                 await interaction.followup.send(f'I do not have access to this emoji. I can only see the emojis of the servers i am a member of.', ephemeral=True)
                 return
         
-        await self.parent.set_emoji(self.interaction, user_emoji, emoji_type)
+        await self.parent.set_emoji(user_emoji, emoji_type)
         await self.message.delete()
         
     async def on_timeout(self):
