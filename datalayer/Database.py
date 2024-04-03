@@ -8,6 +8,7 @@ from sqlite3 import Error
 from discord.ext import commands
 from BotLogger import BotLogger
 from datalayer.LootBox import LootBox
+from datalayer.UserInteraction import UserInteraction
 from datalayer.UserInventory import UserInventory
 from datalayer.UserJail import UserJail
 from datalayer.Quote import Quote
@@ -896,13 +897,15 @@ class Database():
             return []
         return [InteractionEvent.from_db_row(row) for row in rows]
     
-    def get_guild_interaction_events(self, guild_id: int) -> List[InteractionEvent]:
+    def get_guild_interaction_events(self, guild_id: int, interaction_type: UserInteraction) -> List[InteractionEvent]:
         command = f'''
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
-            WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = {int(guild_id)};
+            WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = ?
+            AND {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_TYPE_COL} = ?;
         '''
-        rows = self.__query_select(command)
+        task = (guild_id, interaction_type.value)
+        rows = self.__query_select(command, task)
         if not rows: 
             return []
         return [InteractionEvent.from_db_row(row) for row in rows]
@@ -994,10 +997,10 @@ class Database():
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
             AND {self.EVENT_GUILD_ID_COL} = ?
-            WHERE {self.BEANS_EVENT_TYPE_COL} != ?
+            WHERE {self.BEANS_EVENT_TYPE_COL} NOT IN (?, ?)
             GROUP BY {self.BEANS_EVENT_MEMBER_COL};
         '''
-        task = (guild_id, BeansEventType.SHOP_PURCHASE.value)
+        task = (guild_id, BeansEventType.SHOP_PURCHASE.value, BeansEventType.USER_TRANSFER.value)
         
         rows = self.__query_select(command, task)
         if not rows or len(rows) < 1:
