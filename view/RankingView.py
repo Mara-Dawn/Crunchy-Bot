@@ -16,8 +16,6 @@ class RankingView(discord.ui.View):
 
     async def edit_page(self, interaction: discord.Interaction, type: RankingType):
         match type:
-            # case RankingType.BEANS:
-            #     image = "./img/beans_rankings.png"
             case _:
                 image = "./img/jail_wide.png"
         
