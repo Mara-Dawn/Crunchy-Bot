@@ -19,3 +19,4 @@ class ItemType(str, Enum):
     LOOTBOX = 'LootBoxItem'
     LOTTERY_TICKET = 'LotteryTicket'
     NAME_COLOR = 'NameColor'
+    REACTION_SPAM = 'ReactionSpam'

@@ -2,7 +2,7 @@ import datetime
 import random
 import discord
 
-from typing import Any, List
+from typing import Any, Dict, List
 from discord.ext import commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
@@ -32,8 +32,7 @@ from shop.Fartvantage import Fartvantage
 from shop.FartProtection import FartProtection
 from shop.LotteryTicket import LotteryTicket
 from shop.NameColor import NameColor
-
-
+from shop.ReactionSpam import ReactionSpam
 from shop.Arrest import Arrest
 from shop.Release import Release
 from shop.Bailout import Bailout
@@ -169,6 +168,25 @@ class ItemManager():
             output.append(item)
         
         return output
+    
+    async def get_guild_items_activated(self, guild_id: int, inventories: List[UserInventory], trigger: ItemTrigger) -> Dict[int,List[Item]]:
+        items = {}
+        
+        for inventory in inventories:
+            inventory_items = inventory.get_inventory_items()
+            for item_type, count in inventory_items.items():
+            
+                item = self.get_item(guild_id, item_type)
+                
+                if not item.activated(trigger):
+                    continue
+                
+                if inventory.get_member_id() not in items.keys():
+                    items[inventory.get_member_id()] = [item]
+                    continue
+                items[inventory.get_member_id()].append(item)
+                
+        return items
     
     async def use_items(self, guild_id: int, inventories: List[UserInventory], trigger: ItemTrigger):
         for inventory in inventories:

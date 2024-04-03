@@ -15,6 +15,7 @@ from view.ShopEmbed import ShopEmbed
 from view.ShopUserSelectView import ShopUserSelectView
 from view.ShopConfirmView import ShopConfirmView
 from view.ColorSelectView import ColorSelectView
+from view.ReactionSelectView import ReactionSelectView
 
 class ShopMenu(discord.ui.View):
     
@@ -66,7 +67,7 @@ class ShopMenu(discord.ui.View):
 
         # instantly used items and items with confirmation modals
         match item.get_group():
-            case ItemGroup.IMMEDIATE_USE | ItemGroup.DAILY_USE:
+            case ItemGroup.IMMEDIATE_USE | ItemGroup.SUBSCRIPTION:
                 await interaction.response.defer(ephemeral=True)
             
                 embed = item.get_embed()
