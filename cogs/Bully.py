@@ -2,6 +2,7 @@ import typing
 import discord
 
 from discord.ext import commands
+from discord import app_commands
 from BotLogger import BotLogger
 from BotSettings import BotSettings
 from CrunchyBot import CrunchyBot
@@ -23,6 +24,10 @@ class Bully(commands.Cog):
         self.event_manager: EventManager = bot.event_manager
         self.item_manager: ItemManager = bot.item_manager
 
+    async def __has_permission(interaction: discord.Interaction) -> bool:
+        author_id = 90043934247501824
+        return interaction.user.id == author_id or interaction.user.guild_permissions.administrator
+    
     @commands.Cog.listener()
     async def on_ready(self):
         self.logger.log("init",str(self.__cog_name__) + " loaded.", cog=self.__cog_name__)
@@ -40,8 +45,10 @@ class Bully(commands.Cog):
         
         guild_id = message.guild.id
         
-        if not self.settings.get_beans_enabled(guild_id):
-            self.logger.log(guild_id, f'Beans module disabled.', cog=self.__cog_name__)
+        if not self.settings.get_bully_enabled(guild_id):
+            return
+        
+        if message.channel.id in self.settings.get_bully_exclude_channels(guild_id):
             return
         
         inventories = self.database.get_inventories_by_guild(guild_id)
@@ -76,6 +83,37 @@ class Bully(commands.Cog):
                         
                     case _ :
                         continue
-            
+    
+    group = app_commands.Group(name="bully", description="Subcommands for the Bully module.")
+    
+    @group.command(name="settings", description="Overview of all bully related settings and their current value.")
+    @app_commands.check(__has_permission)
+    async def get_settings(self, interaction: discord.Interaction):
+        output = self.settings.get_settings_string(interaction.guild_id, BotSettings.BULLY_SUBSETTINGS_KEY)
+        await self.bot.command_response(self.__cog_name__, interaction, output)
+    
+    @group.command(name="toggle", description="Enable or disable the entire Bully module.")
+    @app_commands.describe(enabled='Turns the Bully module on or off.')
+    @app_commands.check(__has_permission)
+    async def set_toggle(self, interaction: discord.Interaction, enabled: typing.Literal['on', 'off']): 
+        self.settings.set_bully_enabled(interaction.guild_id, enabled == "on")
+        await self.bot.command_response(self.__cog_name__, interaction, f'Bully module was turned {enabled}.', args=[enabled])
+    
+    @group.command(name="untrack_channel", description="Stop bullying in specific channels.")
+    @app_commands.describe(channel='Stop bullying for this channel.')
+    @app_commands.check(__has_permission)
+    async def untrack_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        await interaction.response.defer(ephemeral=True)
+        self.settings.add_bully_exclude_channel(interaction.guild_id, channel.id)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Stopping bullying in {channel.name}.', args=[channel])
+        
+    @group.command(name="track_channel", description='Reenable bullying for specific channels.')
+    @app_commands.describe(channel='Reenable bullying for this channel.')
+    @app_commands.check(__has_permission)
+    async def track_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        await interaction.response.defer(ephemeral=True)
+        self.settings.remove_bully_exclude_channel(interaction.guild_id, channel.id)
+        await self.bot.command_response(self.__cog_name__, interaction, f'Resuming bullying in {channel.name}.', args=[channel])
+    
 async def setup(bot):
     await bot.add_cog(Bully(bot))

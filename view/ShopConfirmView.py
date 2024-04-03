@@ -22,6 +22,8 @@ class ShopConfirmView(ShopResponseView):
         self.refresh_elements()
         
     async def submit(self, interaction: discord.Interaction):
+        if not await self.start_transaction(interaction):
+            return
         match self.type:
             case ItemType.BAILOUT:
                 await self.jail_interaction(interaction)
@@ -29,19 +31,11 @@ class ShopConfirmView(ShopResponseView):
                 await self.jail_interaction(interaction)
     
     async def jail_interaction(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-        
         guild_id = interaction.guild_id
         member_id = interaction.user.id
-        user_balance = self.database.get_member_beans(guild_id, member_id)
-        
         amount = self.selected_amount
         cost = self.item.get_cost() * amount
-        
-        if user_balance < cost:
-            await interaction.followup.send('You dont have enough beans to buy that.', ephemeral=True)
-            return
-        
+
         jail_cog: Jail = self.bot.get_cog('Jail')
         
         match self.type:

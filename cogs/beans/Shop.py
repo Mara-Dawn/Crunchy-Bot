@@ -78,7 +78,8 @@ class Shop(commands.Cog):
         embed = ShopEmbed(self.bot, interaction, items)
         view = ShopMenu(self.bot, interaction, items)
         
-        await interaction.followup.send("",embed=embed, view=view, files=[shop_img, police_img])
+        message = await interaction.followup.send("",embed=embed, view=view, files=[shop_img, police_img])
+        view.set_message(message)
         
     @app_commands.command(name="inventory", description='See the items you have bought from the beans shop.')
     @app_commands.guild_only()

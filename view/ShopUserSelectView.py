@@ -20,6 +20,9 @@ class ShopUserSelectView(ShopResponseView):
         self.refresh_elements()
 
     async def submit(self, interaction: discord.Interaction):
+        if not await self.start_transaction(interaction):
+            return
+        
         match self.type:
             case ItemType.ARREST:
                 await self.jail_interaction(interaction)
@@ -29,24 +32,13 @@ class ShopUserSelectView(ShopResponseView):
                 await self.jail_interaction(interaction)
     
     async def jail_interaction(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-        
-        if self.selected_user is None:
-            await interaction.followup.send('Please select a user first.', ephemeral=True)
-            return
-        
         if self.selected_user.id == interaction.user.id and self.type == ItemType.RELEASE:
             await interaction.followup.send('You cannot free yourself using this item.', ephemeral=True)
             return
         
         guild_id = interaction.guild_id
         member_id = interaction.user.id
-        user_balance = self.database.get_member_beans(guild_id, member_id)
-        
-        if user_balance < self.item.get_cost():
-            await interaction.followup.send('You dont have enough beans to buy that.', ephemeral=True)
-            return
-        
+
         jail_cog: Jail = self.bot.get_cog('Jail')
         match self.type:
             case ItemType.ARREST:
@@ -74,12 +66,15 @@ class ShopUserSelectView(ShopResponseView):
                 await interaction.followup.send(f'Something went wrong, please contact a staff member.', ephemeral=True)
                 return
         
+        amount = self.selected_amount
+        cost = self.item.get_cost() * amount
+        
         self.event_manager.dispatch_beans_event(
             datetime.datetime.now(), 
             guild_id,
             BeansEventType.SHOP_PURCHASE, 
             member_id,
-            -self.item.get_cost()
+            -cost
         )
         
         await jail_cog.announce(interaction.guild, jail_announcement)
