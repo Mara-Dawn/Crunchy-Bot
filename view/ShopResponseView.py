@@ -1,18 +1,22 @@
 import re
+from typing import List
 import discord
 import emoji
 
 from CrunchyBot import CrunchyBot
 from shop.Item import Item
+from view import ShopMenu
 from view.EmojiType import EmojiType
 
 class ShopResponseView(discord.ui.View):
     
-    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: Item):
+    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent: ShopMenu, item: Item):
         self.bot = bot
         self.parent = parent
         self.interaction = interaction
-        self.type = item.get_type()
+        self.type = None
+        if item is not None:
+            self.type = item.get_type()
         self.item = item
         self.event_manager = bot.event_manager
         self.item_manager = bot.item_manager
@@ -27,10 +31,14 @@ class ShopResponseView(discord.ui.View):
         self.selected_emoji: discord.Emoji|str = None
         self.selected_emoji_type: EmojiType = None
         
-        self.select_amount: AmountInput = None
+        self.confirm_button: ConfirmButton = None
+        self.cancel_button: CancelButton = None
+        self.user_select: UserPicker = None
+        self.color_input_button: ColorInputButton = None
+        self.amount_select: AmountInput = None
+        self.reaction_input_button: ReactionInputButton = None
         
         super().__init__(timeout=180)
-
 
     async def submit(self, interaction: discord.Interaction):
         pass
@@ -56,7 +64,25 @@ class ShopResponseView(discord.ui.View):
         message = await interaction.original_response()
         await message.delete()
     
-    async def refresh_embed(self, interaction: discord.Interaction):
+    def refresh_elements(self, disabled: bool = False):
+        elements: List[discord.ui.Item] = [
+            self.user_select,
+            self.amount_select,
+            self.color_input_button,
+            self.reaction_input_button,
+            self.confirm_button,
+            self.cancel_button
+        ]
+        
+        self.clear_items()
+        for element in elements:
+            if element is self.amount_select and not self.item.get_allow_amount():
+                continue
+            if element is not None:
+                element.disabled = disabled
+                self.add_item(element)
+    
+    async def refresh_ui(self, interaction: discord.Interaction, disabled: bool = False):
         message = await interaction.original_response()
         color = discord.Colour.purple()
         if self.selected_color is not None:
@@ -79,32 +105,42 @@ class ShopResponseView(discord.ui.View):
             
         embed.title = f'> {embed.title}'
         
-        if self.select_amount is not None:
-            self.select_amount.options[self.selected_amount-1].default = True
-            
+        if self.amount_select is not None:
+            self.amount_select.options[self.selected_amount-1].default = True
+        
+        self.refresh_elements(disabled)
+        if disabled:
+            self.timeout = 200
         await message.edit(embed=embed, view=self)
         
     async def set_amount(self, interaction: discord.Interaction, amount: int):
-        self.select_amount.options[self.selected_amount-1].default = False
+        self.amount_select.options[self.selected_amount-1].default = False
         self.selected_amount = amount
-        await self.refresh_embed(interaction)
+        await self.refresh_ui(interaction)
 
     async def set_selected(self, interaction: discord.Interaction, member: discord.Member):
         self.selected_user = member
-        await self.refresh_embed(interaction)
+        await self.refresh_ui(interaction)
     
     async def set_color(self, interaction: discord.Interaction,  color: str):
         self.selected_color = color.lstrip('#')
-        await self.refresh_embed(interaction)
+        await self.refresh_ui(interaction)
     
     async def set_emoji(self, interaction: discord.Interaction, emoji: discord.Emoji|str, type: EmojiType):
         self.selected_emoji = emoji
         self.selected_emoji_type = type
-        await self.refresh_embed(interaction)
+        await self.refresh_ui(interaction)
     
     def set_message(self, message: discord.Message):
         self.message = message
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user == self.interaction.user:
+            return True
+        else:
+            await interaction.response.send_message(f"Only the author of the command can perform this action.", ephemeral=True)
+            return False
+    
     async def on_timeout(self):
         try:
             await self.message.delete()
@@ -127,7 +163,9 @@ class UserPicker(discord.ui.UserSelect):
     async def callback(self, interaction: discord.Interaction):
         view: ShopResponseView = self.view
         await interaction.response.defer()
-        await view.set_selected(interaction, self.values[0])
+        
+        if await view.interaction_check(interaction):
+            await view.set_selected(interaction, self.values[0])
 
 class CancelButton(discord.ui.Button):
     
@@ -137,17 +175,19 @@ class CancelButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         view: ShopResponseView = self.view
         
-        await view.on_timeout()
+        if await view.interaction_check(interaction):
+            await view.on_timeout()
 
 class ConfirmButton(discord.ui.Button):
     
-    def __init__(self):
-        super().__init__(label='Confirm and Buy', style=discord.ButtonStyle.green, row=2)
+    def __init__(self, label: str = 'Confirm and Buy'):
+        super().__init__(label=label, style=discord.ButtonStyle.green, row=2)
     
     async def callback(self, interaction: discord.Interaction):
         view: ShopResponseView = self.view
         
-        await view.submit(interaction)
+        if await view.interaction_check(interaction):
+            await view.submit(interaction)
 
 class AmountInput(discord.ui.Select):
     
@@ -172,7 +212,9 @@ class ColorInputButton(discord.ui.Button):
         self.default_color = default_color
     
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(ColorInputModal(self.view, self.default_color))
+        view: ShopResponseView = self.view
+        if await view.interaction_check(interaction):
+            await interaction.response.send_modal(ColorInputModal(self.view, self.default_color))
 
 class ColorInputModal(discord.ui.Modal):
 
@@ -200,38 +242,65 @@ class ColorInputModal(discord.ui.Modal):
 
 class ReactionInputButton(discord.ui.Button):
     
-    def __init__(self, bot: CrunchyBot):
+    def __init__(self):
         super().__init__(label='Select Emoji', style=discord.ButtonStyle.green, row=2)
-        self.bot = bot
     
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(ReactionInputModal(self.view, self.bot))
-
-class ReactionInputModal(discord.ui.Modal):
-
-    def __init__(self, view: ShopResponseView, bot: CrunchyBot):
-        super().__init__(title='Reaction Emoji')
-        self.view = view
-        self.bot = bot
-        self.emoji = discord.ui.TextInput(
-            label='Enter the emoji name in text form.',
-            placeholder=':skull:'
-        )
-        self.add_item(self.emoji)
-        
-    async def on_submit(self, interaction: discord.Interaction): 
         await interaction.response.defer()
-        emoji_name = self.emoji.value
-        emoji_name = emoji_name.strip(':')
+        parent: ShopResponseView = self.view
+        if await parent.interaction_check(interaction):
+            await parent.refresh_ui(interaction, disabled=True)
+            
+            content = f"<@{interaction.user.id}> please react to this message with the emoji of your choice."
+            view = ReactionInputView(parent.bot, interaction, parent, parent.item)
+            message = await interaction.followup.send(content, view=view)
+            view.set_message(message)
+
+class ReactionInputView(ShopResponseView):
+    
+    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: Item):
+        super().__init__(bot, interaction, parent, item)
+        self.parent: ShopResponseView = parent
         
-        if emoji.is_emoji(emoji_name):
-            await self.view.set_emoji(interaction, emoji_name, EmojiType.DEFAULT)
+        self.confirm_button = ConfirmButton("Confirm")
+        self.cancel_button = CancelButton()
+        
+        self.refresh_elements()
+    
+    async def submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        
+        user_emoji = None
+        emoji_type = None
+        
+        message = await interaction.channel.fetch_message(interaction.message.id)
+        
+        for reaction in message.reactions:
+            reactors = [user async for user in reaction.users()]
+            if interaction.user in reactors:
+                if user_emoji is not None:
+                    await interaction.followup.send(f'Please react with a single emoji.', ephemeral=True)
+                    return
+                
+                user_emoji = reaction.emoji
+                emoji_type = EmojiType.CUSTOM if reaction.is_custom_emoji() else EmojiType.DEFAULT
+        
+        if user_emoji is None:
+            await interaction.followup.send(f'Please react with any emoji.', ephemeral=True)
             return
         
-        emoji_obj = discord.utils.get(self.bot.emojis, name=emoji_name)
+        emoji_obj = discord.utils.get(self.bot.emojis, name=user_emoji.name)
         
         if emoji_obj is None:                      
-            await interaction.followup.send(f'Could not find emoji with name {emoji_name}.', ephemeral=True)
+            await interaction.followup.send(f'I do not have access to this emoji. I can only see the emojis of the servers i am a member of.', ephemeral=True)
             return
         
-        await self.view.set_emoji(interaction, emoji_obj, EmojiType.CUSTOM)
+        await self.parent.set_emoji(self.interaction, user_emoji, emoji_type)
+        await interaction.message.delete()
+        
+    async def on_timeout(self):
+        try:
+            await self.message.delete()
+        except:
+            pass
+        await self.parent.refresh_ui(self.interaction)

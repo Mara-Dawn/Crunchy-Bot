@@ -13,9 +13,11 @@ class ShopUserSelectView(ShopResponseView):
     def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: Item):
         super().__init__(bot, interaction, parent, item)
         
-        self.add_item(UserPicker())
-        self.add_item(ConfirmButton())
-        self.add_item(CancelButton())
+        self.user_select = UserPicker()
+        self.confirm_button = ConfirmButton()
+        self.cancel_button = CancelButton()
+        
+        self.refresh_elements()
 
     async def submit(self, interaction: discord.Interaction):
         match self.type:

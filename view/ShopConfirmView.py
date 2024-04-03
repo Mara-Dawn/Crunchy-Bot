@@ -15,13 +15,12 @@ class ShopConfirmView(ShopResponseView):
     def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, parent, item: Item):
         super().__init__(bot, interaction, parent, item)
         
-        self.add_item(ConfirmButton())
-        self.add_item(CancelButton())
+        self.amount_select = AmountInput()
+        self.confirm_button = ConfirmButton()
+        self.cancel_button = CancelButton()
         
-        self.select_amount = AmountInput()
-        if item.get_allow_amount():
-            self.add_item(self.select_amount)
-    
+        self.refresh_elements()
+        
     async def submit(self, interaction: discord.Interaction):
         match self.type:
             case ItemType.BAILOUT:
