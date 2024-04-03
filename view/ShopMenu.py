@@ -30,7 +30,7 @@ class ShopMenu(discord.ui.View):
         self.logger = bot.logger
         self.current_page = 0
         self.selected: ItemType = None
-        super().__init__(timeout=240)
+        super().__init__(timeout=600)
         self.items = items
         self.items.sort(key=lambda x:x.get_cost())
         self.item_count = len(self.items)
