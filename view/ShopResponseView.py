@@ -1,8 +1,10 @@
+import datetime
 import re
 from typing import List
 import discord
 
 from CrunchyBot import CrunchyBot
+from events.BeansEventType import BeansEventType
 from shop.Item import Item
 from view import ShopMenu
 from view.EmojiType import EmojiType
@@ -37,10 +39,45 @@ class ShopResponseView(discord.ui.View):
         self.amount_select: AmountInput = None
         self.reaction_input_button: ReactionInputButton = None
         
-        super().__init__(timeout=600)
+        super().__init__(timeout=200)
 
     async def submit(self, interaction: discord.Interaction):
         pass
+
+    async def start_transaction(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+        
+        if self.item is not None:
+            user_balance = self.database.get_member_beans(guild_id, member_id)
+            
+            amount = self.selected_amount
+            cost = self.item.get_cost() * amount
+            
+            if user_balance < cost:
+                await interaction.followup.send('You dont have enough beans to buy that.', ephemeral=True)
+                return False
+        
+        if self.selected_user is not None and self.selected_user.bot:
+            await interaction.followup.send(f"You cannot select bot users.", ephemeral=True)
+            return False
+
+        if self.user_select is not None and self.selected_user is None:
+            await interaction.followup.send('Please select a user first.', ephemeral=True)
+            return False
+        
+        if self.reaction_input_button is not None and self.selected_emoji is None:
+            await interaction.followup.send('Please select a reaction emoji first.', ephemeral=True)
+            return False
+        
+        if self.color_input_button is not None and self.selected_color is None:
+            await interaction.followup.send('Please select a color first.', ephemeral=True)
+            return False
+        
+        return True
+        
     
     async def finish_transaction(self, interaction: discord.Interaction):
         amount = self.selected_amount
@@ -108,9 +145,9 @@ class ShopResponseView(discord.ui.View):
         
         self.refresh_elements(disabled)
         
-        self.timeout = 600
+        self.timeout = 210
         if disabled:
-            self.timeout = 1200
+            self.timeout = 300
             
         await self.message.edit(embed=embed, view=self)
         

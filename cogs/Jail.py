@@ -139,7 +139,6 @@ class Jail(commands.Cog):
         return response, reduction
     
     async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction) -> str:
-        command = interaction.command
         guild_id = interaction.guild_id
         
         affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
@@ -153,11 +152,11 @@ class Jail(commands.Cog):
         affected_jail = affected_jails[0]
         response = '\n'
         
-        self.logger.debug(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
+        self.logger.debug(guild_id, f'{command_type}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
         
         user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text = await self.__get_item_modifiers(interaction, command_type)
         
-        if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name):
+        if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command_type):
             if bonus_attempt:
                 await bonus_attempt.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                 self.logger.log(interaction.guild_id, f'Item {bonus_attempt.get_name()} was used.', cog=self.__cog_name__)
