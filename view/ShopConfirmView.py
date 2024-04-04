@@ -44,7 +44,7 @@ class ShopConfirmView(ShopResponseView):
         users = []
         
         for user_id, amount in bean_data.items():
-            if amount >= 500:
+            if amount >= 100:
                 users.append(user_id)
         
         jails = self.database.get_active_jails_by_guild(guild_id)
