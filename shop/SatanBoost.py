@@ -4,26 +4,26 @@ from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from view.ShopCategory import ShopCategory
 
-class Fartvantage(Item):
+class SatanBoost(Item):
 
     def __init__(
         self,
         cost: int|None
     ):
-        defaultcost = 69
+        defaultcost = 2345
         
         if cost is None:
             cost = defaultcost
-        
+            
         super().__init__(
-            name = 'Fast Food Binge',
-            type = ItemType.FARTVANTAGE,
-            group = ItemGroup.ADVANTAGE,
+            name = 'Satan\'s Nuclear Hellfart',
+            type = ItemType.SATAN_FART,
+            group = ItemGroup.VALUE_MODIFIER,
             shop_category = ShopCategory.FART,
-            description = 'Couldn\'t hold back again, hm? Better go empty your bowels on some poor loser. Rolls your next fart twice and takes the better result.',
-            emoji = '🍔',
+            description = 'A x25 fart boost that sends a jailed person to the shadow realm but with a high risk of the farter being caught in the blast. 75% chance to jail yourself too with the same duration.',
+            emoji = '😈',
             cost = cost,
-            value = 2,
+            value = 25,
             view_class = None,
             allow_amount = False,
             base_amount = 1,

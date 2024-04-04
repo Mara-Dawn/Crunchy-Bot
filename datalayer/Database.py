@@ -12,6 +12,7 @@ from datalayer.UserInteraction import UserInteraction
 from datalayer.UserInventory import UserInventory
 from datalayer.UserJail import UserJail
 from datalayer.Quote import Quote
+from events.BatEvent import BatEvent
 from events.BeansEvent import BeansEvent
 from events.BeansEventType import BeansEventType
 from events.BotEvent import BotEvent
@@ -227,6 +228,17 @@ class Database():
         PRIMARY KEY ({LOOTBOX_EVENT_ID_COL})
     );'''
     
+    BAT_EVENT_TABLE = 'batevents'
+    BAT_EVENT_ID_COL = 'btev_event_id'
+    BAT_EVENT_USED_BY_COL = 'btev_used_by_id'
+    BAT_EVENT_TARGET_COL = 'btev_target_id'
+    CREATE_BAT_EVENT_TABLE = f'''
+    CREATE TABLE if not exists {BAT_EVENT_TABLE} (
+        {BAT_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {BAT_EVENT_USED_BY_COL} INTEGER, 
+        {BAT_EVENT_TARGET_COL} INTEGER, 
+        PRIMARY KEY ({BAT_EVENT_ID_COL})
+    );'''
     
     CUSTOM_COLOR_TABLE = 'customcolor'
     CUSTOM_COLOR_GUILD_COL = 'cuco_guild_id'
@@ -286,6 +298,7 @@ class Database():
             c.execute(self.CREATE_LOOTBOX_EVENT_TABLE)
             c.execute(self.CREATE_CUSTOM_COLOR_TABLE)
             c.execute(self.CREATE_BULLY_REACT_TABLE)
+            c.execute(self.CREATE_BAT_EVENT_TABLE)
             c.close()
             
         except Error as e:
@@ -486,6 +499,18 @@ class Database():
         
         return self.__query_insert(command, task)
     
+    def __create_bat_event(self, event_id: int, event: BatEvent) -> int:
+        command = f'''
+            INSERT INTO {self.BAT_EVENT_TABLE} (
+            {self.BAT_EVENT_ID_COL},
+            {self.BAT_EVENT_USED_BY_COL},
+            {self.BAT_EVENT_TARGET_COL})
+            VALUES (?, ?, ?);
+        '''
+        task = (event_id, event.get_used_by_id(), event.get_target_id())
+        
+        return self.__query_insert(command, task)
+    
     def log_event(self, event: BotEvent) -> int:
         event_id = self.__create_base_event(event)
         
@@ -510,6 +535,8 @@ class Database():
                 return self.__create_inventory_event(event_id, event)
             case EventType.LOOTBOX:
                 return self.__create_loot_box_event(event_id, event)
+            case EventType.BAT:
+                return self.__create_bat_event(event_id, event)
                 
     def log_quote(self, quote: Quote) -> int:
         command = f'''
@@ -1008,7 +1035,6 @@ class Database():
         
         return { row[self.BEANS_EVENT_MEMBER_COL]: row[f'SUM({self.BEANS_EVENT_VALUE_COL})'] for row in rows }
         
-    
     def get_lootbox_purchases_by_guild(self, guild_id: int) -> Dict[int,int]:
         
         command = f'''
@@ -1125,3 +1151,18 @@ class Database():
         
         items = { row[self.INVENTORY_EVENT_ITEM_TYPE_COL]: row[f'SUM({self.INVENTORY_EVENT_AMOUNT_COL})'] for row in rows if row[f'SUM({self.INVENTORY_EVENT_AMOUNT_COL})'] > 0}
         return UserInventory(guild_id, user_id, items)
+    
+    def get_last_bat_event_by_target(self, guild_id: int, target_user_id: int) -> BatEvent:
+        command = f'''
+            SELECT * FROM {self.BAT_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BAT_EVENT_TABLE}.{self.BAT_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND {self.BAT_EVENT_TARGET_COL} = ?
+            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
+        '''
+        task = (guild_id, target_user_id)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return None
+        return BatEvent.from_db_row(rows[0])

@@ -1,8 +1,10 @@
+import datetime
 import re
 from typing import List
 import discord
 
 from CrunchyBot import CrunchyBot
+from events.BeansEventType import BeansEventType
 from shop.Item import Item
 from view import ShopMenu
 from view.EmojiType import EmojiType
@@ -37,10 +39,45 @@ class ShopResponseView(discord.ui.View):
         self.amount_select: AmountInput = None
         self.reaction_input_button: ReactionInputButton = None
         
-        super().__init__(timeout=180)
+        super().__init__(timeout=200)
 
     async def submit(self, interaction: discord.Interaction):
         pass
+
+    async def start_transaction(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+        
+        if self.item is not None:
+            user_balance = self.database.get_member_beans(guild_id, member_id)
+            
+            amount = self.selected_amount
+            cost = self.item.get_cost() * amount
+            
+            if user_balance < cost:
+                await interaction.followup.send('You dont have enough beans to buy that.', ephemeral=True)
+                return False
+        
+        if self.selected_user is not None and self.selected_user.bot:
+            await interaction.followup.send(f"You cannot select bot users.", ephemeral=True)
+            return False
+
+        if self.user_select is not None and self.selected_user is None:
+            await interaction.followup.send('Please select a user first.', ephemeral=True)
+            return False
+        
+        if self.reaction_input_button is not None and self.selected_emoji is None:
+            await interaction.followup.send('Please select a reaction emoji first.', ephemeral=True)
+            return False
+        
+        if self.color_input_button is not None and self.selected_color is None:
+            await interaction.followup.send('Please select a color first.', ephemeral=True)
+            return False
+        
+        return True
+        
     
     async def finish_transaction(self, interaction: discord.Interaction):
         amount = self.selected_amount
@@ -48,7 +85,22 @@ class ShopResponseView(discord.ui.View):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
         
-        log_message = f'{interaction.user.display_name} bought {amount} {self.item.get_name()} for {cost} beans'
+        log_message = f'{interaction.user.display_name} bought {amount} {self.item.get_name()} for {cost} beans.'
+        
+        arguments = []
+        
+        if self.selected_user is not None:
+            arguments.append(f'selected_user: {self.selected_user.display_name}')
+        
+        if self.selected_color is not None:
+            arguments.append(f'selected_color: {self.selected_color}')
+            
+        if self.selected_emoji is not None:
+            arguments.append(f'selected_emoji: {str(self.selected_emoji)}')
+        
+        if len(arguments) > 0:
+            log_message += ' arguments[' + ', '.join(arguments) + ']'
+        
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
         
         new_user_balance = self.database.get_member_beans(guild_id, member_id)
@@ -108,9 +160,9 @@ class ShopResponseView(discord.ui.View):
         
         self.refresh_elements(disabled)
         
-        self.timeout = 180
+        self.timeout = 210
         if disabled:
-            self.timeout = 400
+            self.timeout = 300
             
         await self.message.edit(embed=embed, view=self)
         
@@ -145,17 +197,17 @@ class ShopResponseView(discord.ui.View):
     async def on_timeout(self):
         try:
             await self.message.delete()
+            
+            guild_id = self.interaction.guild_id
+            member_id = self.interaction.user.id
+            user_balance = self.database.get_member_beans(guild_id, member_id)
+            
+            message = await self.interaction.original_response()
+            self.parent.refresh_ui(user_balance)
+            await message.edit(view=self.parent)
         except:
-            pass
+            self.logger.log(self.interaction.guild_id, f'TIMEOUT: Interaction Lost.', cog='Shop')
         
-        guild_id = self.interaction.guild_id
-        member_id = self.interaction.user.id
-        user_balance = self.database.get_member_beans(guild_id, member_id)
-        
-        message = await self.interaction.original_response()
-        self.parent.refresh_ui(user_balance)
-        await message.edit(view=self.parent)
-
 class UserPicker(discord.ui.UserSelect):
     
     def __init__(self):
@@ -274,7 +326,7 @@ class ReactionInputView(ShopResponseView):
         user_emoji = None
         emoji_type = None
         
-        message = await interaction.channel.fetch_message(interaction.message.id)
+        message = await interaction.channel.fetch_message(self.message.id)
         
         for reaction in message.reactions:
             reactors = [user async for user in reaction.users()]
@@ -297,11 +349,11 @@ class ReactionInputView(ShopResponseView):
                 return
         
         await self.parent.set_emoji(user_emoji, emoji_type)
-        await self.message.delete()
+        await interaction.followup.delete_message(self.message.id)
         
     async def on_timeout(self):
         try:
             await self.message.delete()
+            await self.parent.refresh_ui()
         except:
-            pass
-        await self.parent.refresh_ui()
+            self.logger.log(self.interaction.guild_id, f'TIMEOUT: Interaction Lost.', cog='Shop')

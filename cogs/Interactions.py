@@ -1,3 +1,4 @@
+import datetime
 import discord
 
 from discord.ext import commands
@@ -56,6 +57,22 @@ class Interactions(commands.Cog):
         )
         self.bot.tree.add_command(self.ctx_menu)
     
+    async def __check_enabled(self, interaction: discord.Interaction) -> bool:
+        guild_id = interaction.guild_id
+        
+        if not self.settings.get_jail_enabled(guild_id):
+            await self.bot.command_response(self.__cog_name__, interaction, f'Jail module is currently disabled.')
+            return False
+        
+        stunned_remaining = self.event_manager.get_stunned_remaining(guild_id, interaction.user.id)
+        if stunned_remaining > 0:
+            timestamp_now = int(datetime.datetime.now().timestamp())
+            remaining = int(timestamp_now+stunned_remaining)
+            await self.bot.command_response(self.__cog_name__, interaction, f'You are currently stunned from a bat attack. Try again <t:{remaining}:R>')
+            return False
+        
+        return True
+    
     async def slap_context_menu(self, interaction: discord.Interaction, user: discord.Member):
         await self.__user_command_interaction(interaction, user, UserInteraction.SLAP)
     
@@ -102,6 +119,9 @@ class Interactions(commands.Cog):
         return embed
     
     async def __user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
+        if not await self.__check_enabled(interaction):
+            return 
+        
         command = interaction.command
         guild_id = interaction.guild_id
         invoker = interaction.user
@@ -112,7 +132,6 @@ class Interactions(commands.Cog):
         
         log_message = f'{interaction.user.name} used command `{command.name}` on {user.name}.'
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        
         
         embed = await self.__get_response_embed(command_type, interaction, user)
         response = self.__get_response(command_type, interaction, user)

@@ -2,6 +2,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class GigaFart(Item):
 
@@ -18,6 +19,7 @@ class GigaFart(Item):
             name = 'Shady 4am Chinese Takeout',
             type = ItemType.GIGA_FART,
             group = ItemGroup.VALUE_MODIFIER,
+            shop_category = ShopCategory.FART,
             description = 'Works better than any laxative and boosts the pressure of your next fart by x10. Try not to hurt yourself.',
             emoji = '💀',
             cost = cost,

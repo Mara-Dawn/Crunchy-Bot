@@ -21,7 +21,6 @@ from view.ShopReactionSelectView import ShopReactionSelectView
 class ShopMenu(discord.ui.View):
     
     def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, items: List[Item]):
-        self.interaction = interaction
         self.bot = bot
         self.event_manager = bot.event_manager
         self.item_manager = bot.item_manager
@@ -30,18 +29,22 @@ class ShopMenu(discord.ui.View):
         self.logger = bot.logger
         self.current_page = 0
         self.selected: ItemType = None
-        super().__init__(timeout=240)
+        super().__init__(timeout=300)
         self.items = items
-        self.items.sort(key=lambda x:x.get_cost())
         self.item_count = len(self.items)
         self.page_count = int(self.item_count / ShopEmbed.ITEMS_PER_PAGE) + (self.item_count % ShopEmbed.ITEMS_PER_PAGE > 0)
         
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
-        user_balance = self.database.get_member_beans(guild_id, member_id)
+        self.message = None
+        
+        self.guild_id = interaction.guild_id
+        self.member_id = interaction.user.id
+        user_balance = self.database.get_member_beans(self.guild_id, self.member_id)
         
         self.refresh_ui(user_balance)
-        
+    
+    def set_message(self, message: discord.Message):
+        self.message = message
+    
     async def buy(self, interaction: discord.Interaction):
         if not await self.interaction_check(interaction):
             return
@@ -132,7 +135,7 @@ class ShopMenu(discord.ui.View):
         
         # All other items get added to the inventory awaiting their trigger
         
-        await item.obtain(self.role_manager, self.event_manager, guild_id, member_id, beans_event_id=beans_event_id)
+        await item.obtain(self.role_manager, self.event_manager, guild_id, member_id, beans_event_id=beans_event_id, amount=item.get_base_amount())
         
         log_message = f'{interaction.user.display_name} bought {item.get_name()} for {item.get_cost()} beans.'
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
@@ -144,17 +147,13 @@ class ShopMenu(discord.ui.View):
         
         self.refresh_ui(new_user_balance)
         await interaction.message.edit(view=self)
-    
-        
+  
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         self.current_page = (self.current_page +(1 if right else -1)) % self.page_count
         start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
         
         embed = ShopEmbed(self.bot, interaction, self.items, start)
-
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
-        user_balance = self.database.get_member_beans(guild_id, member_id)
+        user_balance = self.database.get_member_beans(self.guild_id, self.member_id)
         
         self.refresh_ui(user_balance)
         self.selected = None
@@ -164,6 +163,11 @@ class ShopMenu(discord.ui.View):
         start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
         end = min((start + ShopEmbed.ITEMS_PER_PAGE), self.item_count)
         page_display = f'Page {self.current_page + 1}/{self.page_count}'
+        
+        self.timeout = 300
+        if disabled:
+            self.timeout = 360
+        
         self.clear_items()
         self.add_item(Dropdown(self.items[start:end], self.selected, disabled))
         self.add_item(PageButton("<", False, disabled))
@@ -177,7 +181,7 @@ class ShopMenu(discord.ui.View):
         await interaction.response.defer()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user == self.interaction.user:
+        if interaction.user.id == self.member_id:
             return True
         else:
             await interaction.response.send_message(f"Only the author of the command can perform this action.", ephemeral=True)
@@ -185,8 +189,10 @@ class ShopMenu(discord.ui.View):
     
     async def on_timeout(self):
         # remove buttons on timeout
-        message = await self.interaction.original_response()
-        await message.edit(view=None)
+        try:
+            await self.message.edit(view=None)
+        except:
+            pass
 
 class BuyButton(discord.ui.Button):
     

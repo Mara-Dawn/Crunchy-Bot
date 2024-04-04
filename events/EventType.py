@@ -9,3 +9,4 @@ class EventType(str, Enum):
     BEANS = 'beans'
     INVENTORY = 'inventory'
     LOOTBOX = 'loot_box'
+    BAT = 'bat'

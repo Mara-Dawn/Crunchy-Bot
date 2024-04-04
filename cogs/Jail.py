@@ -18,6 +18,7 @@ from events.EventManager import EventManager
 from events.JailEventType import JailEventType
 from shop.ItemGroup import ItemGroup
 from shop.ItemManager import ItemManager
+from shop.ItemType import ItemType
 from view.SettingsModal import SettingsModal
 
 class Jail(commands.Cog):
@@ -66,7 +67,7 @@ class Jail(commands.Cog):
             case UserInteraction.FART:
                 return f'User {user.display_name} already enjoyed {interaction.user.display_name}\'s farts. No extra time will be added.'
     
-    async def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction):
+    async def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction, already_interacted: bool):
         user_items = self.item_manager.get_user_items_activated_by_interaction(
             interaction.guild_id, 
             interaction.user.id, 
@@ -79,12 +80,27 @@ class Jail(commands.Cog):
         stabilized = False
         advantage = False
         bonus_attempt = False
-        
+        satan_boost = False
+        modifier_text = ''
         modifier_list = []
         
         for item in user_items:
+            if item.get_group() == ItemGroup.BONUS_ATTEMPT:
+                bonus_attempt = item
+                break
+        
+        if already_interacted and not bonus_attempt:
+            return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
+
+        for item in user_items:
             match item.get_group():
                 case ItemGroup.VALUE_MODIFIER:
+                    if item.get_type() == ItemType.SATAN_FART:
+                        affected_jails = self.database.get_active_jails_by_member(interaction.guild_id, interaction.user.id)
+                        if len(affected_jails) > 0:
+                            continue
+                        satan_boost = True
+                        
                     modifier = await item.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                     item_modifier += modifier
                     modifier_list.append(modifier)
@@ -94,16 +110,11 @@ class Jail(commands.Cog):
                     stabilized = await item.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                 case ItemGroup.ADVANTAGE:
                     advantage = await item.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
-                case ItemGroup.BONUS_ATTEMPT:
-                    bonus_attempt = item
-                    continue
                 case _:
                     continue
                     
             self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
             response += f'* {item.get_name()}\n'
-        
-        modifier_text = ''
         
         if item_modifier == 0:
             item_modifier = 1
@@ -112,7 +123,7 @@ class Jail(commands.Cog):
         else:
             modifier_text = '(' + '+'.join(str(x) for x in modifier_list) + ')'
             
-        return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text
+        return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
     
     async def __get_target_item_modifiers(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
         user_items = self.item_manager.get_user_items_activated_by_interaction(
@@ -139,7 +150,6 @@ class Jail(commands.Cog):
         return response, reduction
     
     async def user_command_interaction(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction) -> str:
-        command = interaction.command
         guild_id = interaction.guild_id
         
         affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
@@ -153,11 +163,13 @@ class Jail(commands.Cog):
         affected_jail = affected_jails[0]
         response = '\n'
         
-        self.logger.debug(guild_id, f'{command.name}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
+        self.logger.debug(guild_id, f'{command_type}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
         
-        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text = await self.__get_item_modifiers(interaction, command_type)
+        already_interacted = self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command_type)
         
-        if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command.name):
+        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost = await self.__get_item_modifiers(interaction, command_type, already_interacted)
+        
+        if already_interacted:
             if bonus_attempt:
                 await bonus_attempt.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                 self.logger.log(interaction.guild_id, f'Item {bonus_attempt.get_name()} was used.', cog=self.__cog_name__)
@@ -201,6 +213,15 @@ class Jail(commands.Cog):
         if is_crit:
             response += f'**CRITICAL HIT!!!** \n'
             amount = int(amount * crit_mod)
+        satan_release = False
+        if satan_boost and random.random() <= 0.75:
+            success = await self.jail_user(interaction.guild_id, interaction.user.id, interaction.user, amount)
+            
+            if not success:
+               satan_boost = False
+            
+            timestamp_now = int(datetime.datetime.now().timestamp())
+            satan_release = timestamp_now + (amount*60)
         
         if amount > 0:
             tartget_item_info, reduction = await self.__get_target_item_modifiers(interaction, user, command_type)
@@ -233,16 +254,20 @@ class Jail(commands.Cog):
             if not response:
                 response +=  f'Something went wrong, user {user.display_name} could not be released.'
         else:
+            time_readable = BotUtil.strfdelta(amount, inputtype='minutes')
             if amount >= 0:
-                response += f'Their jail sentence was increased by `{amount}` {damage_info} minutes. '
+                response += f'Their jail sentence was increased by `{time_readable}` {damage_info}. '
             elif amount < 0: 
-                response += f'Their jail sentence was reduced by `{abs(amount)}` {damage_info} minutes. '
+                response += f'Their jail sentence was reduced by `{abs(time_readable)}` {damage_info}. '
             
             time_now = datetime.datetime.now()
             self.event_manager.dispatch_jail_event(time_now, guild_id, command_type, interaction.user.id, amount, affected_jail.get_id())
             
             remaining = self.event_manager.get_jail_remaining(affected_jail)
             response += f'`{BotUtil.strfdelta(remaining, inputtype='minutes')}` still remain.'
+            
+        if satan_boost and satan_release:
+            response += f'\n<@{interaction.user.id}> pays the price of making a deal with the devil and goes to jail as well. They will be released <t:{satan_release}:R>.'
 
         return response
         

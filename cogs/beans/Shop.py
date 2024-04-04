@@ -41,6 +41,13 @@ class Shop(commands.Cog):
             await self.bot.command_response(self.__cog_name__, interaction, f'Shop commands cannot be used in this channel.')
             return False
         
+        stunned_remaining = self.event_manager.get_stunned_remaining(guild_id, interaction.user.id)
+        if stunned_remaining > 0:
+            timestamp_now = int(datetime.datetime.now().timestamp())
+            remaining = int(timestamp_now+stunned_remaining)
+            await self.bot.command_response(self.__cog_name__, interaction, f'You are currently stunned from a bat attack. Try again <t:{remaining}:R>')
+            return False
+        
         return True
 
     @commands.Cog.listener()
@@ -75,10 +82,13 @@ class Shop(commands.Cog):
         police_img = discord.File("./img/police.png", "police.png")
         items = self.item_manager.get_items(interaction.guild_id)
         
+        items = sorted(items, key=lambda x: (x.get_shop_category().value, x.get_cost()))
+        
         embed = ShopEmbed(self.bot, interaction, items)
         view = ShopMenu(self.bot, interaction, items)
         
-        await interaction.followup.send("",embed=embed, view=view, files=[shop_img, police_img])
+        message = await interaction.followup.send("",embed=embed, view=view, files=[shop_img, police_img])
+        view.set_message(message)
         
     @app_commands.command(name="inventory", description='See the items you have bought from the beans shop.')
     @app_commands.guild_only()
