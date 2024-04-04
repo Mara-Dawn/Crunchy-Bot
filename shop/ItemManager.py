@@ -38,8 +38,7 @@ from shop.Release import Release
 from shop.Bailout import Bailout
 from shop.JailReduction import JailReduction
 from shop.LootBoxItem import LootBoxItem
-
-
+from shop.ExplosiveFart import ExplosiveFart
 
 class ItemManager():
 
@@ -80,7 +79,8 @@ class ItemManager():
             ItemType.FART_STABILIZER,
             ItemType.FARTVANTAGE,
             ItemType.FARTVANTAGE,
-            ItemType.FARTVANTAGE
+            ItemType.FARTVANTAGE,
+            ItemType.EXPLOSIVE_FART
         ]
         
         weights = [self.get_item(guild_id, x).get_cost() for x in item_pool]

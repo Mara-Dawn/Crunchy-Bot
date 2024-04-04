@@ -20,3 +20,4 @@ class ItemType(str, Enum):
     LOTTERY_TICKET = 'LotteryTicket'
     NAME_COLOR = 'NameColor'
     REACTION_SPAM = 'ReactionSpam'
+    EXPLOSIVE_FART = 'ExplosiveFart'
