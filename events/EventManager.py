@@ -1,4 +1,5 @@
 import datetime
+from typing import Any, List, Tuple
 
 from discord.ext import commands
 from BotLogger import BotLogger
@@ -8,7 +9,6 @@ from datalayer.Quote import Quote
 from datalayer.UserJail import UserJail
 from datalayer.Database import Database
 from datalayer.UserInteraction import UserInteraction
-from datalayer.UserRankings import UserRankings
 from datalayer.UserStats import UserStats
 from events.BatEvent import BatEvent
 from events.BeansEvent import BeansEvent
@@ -24,6 +24,7 @@ from events.SpamEvent import SpamEvent
 from events.TimeoutEvent import TimeoutEvent
 from events.QuoteEvent import QuoteEvent
 from shop.ItemType import ItemType
+from view.RankingType import RankingType
 
 class EventManager():
 
@@ -307,97 +308,90 @@ class EventManager():
         user_stats.set_spam_score(spam_count)
      
         return user_stats
-
-    def get_user_rankings(self, guild_id: int):
-        guild_interaction_events = self.database.get_guild_interaction_events(guild_id)
-        
-        user_rankings = UserRankings()
-        
-        slap_list = {}
-        pet_list = {}
-        fart_list = {}
-        
-        slap_reciever_list = {}
-        pet_reciever_list = {}
-        fart_reciever_list = {}
-        
+    
+    def __get_ranking_data_by_type(self, guild_id: int, outgoing: bool, interaction_type: UserInteraction) -> List[Tuple[int, Any]]:
+        guild_interaction_events = self.database.get_guild_interaction_events(guild_id, interaction_type)
+        parsing_list = {}
+            
         for event in guild_interaction_events:
-            from_user_id = event.get_from_user()
-            to_user_id = event.get_to_user()
-            
-            match event.get_interaction_type():
-                case UserInteraction.SLAP:
-                    BotUtil.dict_append(slap_list, from_user_id, 1)
-                    BotUtil.dict_append(slap_reciever_list, to_user_id, 1)
-                case UserInteraction.PET:
-                    BotUtil.dict_append(pet_list, from_user_id, 1)
-                    BotUtil.dict_append(pet_reciever_list, to_user_id, 1)
-                case UserInteraction.FART:
-                    BotUtil.dict_append(fart_list, from_user_id, 1)
-                    BotUtil.dict_append(fart_reciever_list, to_user_id, 1)
-        
-        user_rankings.set_interaction_data(
-            slap_list,
-            pet_list,
-            fart_list,
-            slap_reciever_list,
-            pet_reciever_list,
-            fart_reciever_list
-        )
-        
-        guild_timeout_events = self.database.get_timeout_events_by_guild(guild_id)
-        
-        timeout_lengths = {}
-        timeout_count = {}
-        
-        for event in guild_timeout_events:
-            member_id = event.get_member()
-            
-            BotUtil.dict_append(timeout_lengths, member_id, event.get_duration())
-            BotUtil.dict_append(timeout_count, member_id, 1)
-            
-        user_rankings.set_timeout_data(
-            timeout_lengths,
-            timeout_count
-        )
-        
-        jail_data = self.database.get_jail_events_by_guild(guild_id)
-        
-        jail_lengths = {}
-        jail_count = {}
-        
-        for jail, events in jail_data.items():
-            for event in events:
-                jail_member = jail.get_member_id()
-                BotUtil.dict_append(jail_lengths, jail_member, event.get_duration())
-                
-                if event.get_jail_event_type() == JailEventType.JAIL:
-                    BotUtil.dict_append(jail_count, jail_member, 1)
-        
-        user_rankings.set_jail_data(
-            jail_lengths,
-            jail_count
-        )
-        
-        guild_spam_events = self.database.get_spam_events_by_guild(guild_id)
-        
-        spam_count = {}
-        
-        for event in guild_spam_events:
-            member_id = event.get_member()
-            BotUtil.dict_append(spam_count, member_id, 1)
-            
-        user_rankings.set_spam_data(spam_count)
+            user_id = event.get_to_user()
+            if outgoing: # True = from, False = to
+                user_id = event.get_from_user()
 
-        guild_beans_balances = self.database.get_guild_beans_rankings(guild_id)
-        
-        lootbox_purchases = self.database.get_lootbox_purchases_by_guild(guild_id)
-        loot_box_item = self.bot.item_manager.get_item(guild_id, ItemType.LOOTBOX)
-        
-        for member_id, amount in lootbox_purchases.items():
-            if member_id in guild_beans_balances.keys():
-                guild_beans_balances[member_id] -= amount * loot_box_item.get_cost()
-            
-        user_rankings.set_beans_data(guild_beans_balances)
-        
-        return user_rankings
+            BotUtil.dict_append(parsing_list, user_id, 1)
+
+        return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)    
+    
+    def get_user_rankings(self, guild_id: int, ranking_type: RankingType) -> List[Tuple[int, Any]]:
+        parsing_list = {}
+        match ranking_type:
+            case RankingType.SLAP:
+                return self.__get_ranking_data_by_type(guild_id, outgoing = True, interaction_type = UserInteraction.SLAP)
+            case RankingType.PET:
+                return self.__get_ranking_data_by_type(guild_id, outgoing = True, interaction_type = UserInteraction.PET)
+            case RankingType.FART:
+                return self.__get_ranking_data_by_type(guild_id, outgoing = True, interaction_type = UserInteraction.FART)
+            case RankingType.SLAP_RECIEVED:
+                return self.__get_ranking_data_by_type(guild_id, outgoing = False, interaction_type = UserInteraction.SLAP)
+            case RankingType.PET_RECIEVED:
+                return self.__get_ranking_data_by_type(guild_id, outgoing = False, interaction_type = UserInteraction.PET)
+            case RankingType.FART_RECIEVED:
+                return self.__get_ranking_data_by_type(guild_id, outgoing = False, interaction_type = UserInteraction.FART)
+            case RankingType.TIMEOUT_TOTAL:
+                guild_timeout_events = self.database.get_timeout_events_by_guild(guild_id)
+                for event in guild_timeout_events:
+                    user_id = event.get_member()
+                    BotUtil.dict_append(parsing_list, user_id, event.get_duration())
+                sorted_list = sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
+                converted = [(k, BotUtil.strfdelta(v, inputtype='seconds')) for (k,v) in sorted_list]
+                return converted
+            case RankingType.TIMEOUT_COUNT:
+                guild_timeout_events = self.database.get_timeout_events_by_guild(guild_id)
+                for event in guild_timeout_events:
+                    user_id = event.get_member()
+                    BotUtil.dict_append(parsing_list, user_id, 1)
+                return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
+            case RankingType.JAIL_TOTAL:
+                jail_data = self.database.get_jail_events_by_guild(guild_id)
+                for jail, events in jail_data.items():
+                    for event in events:
+                        user_id = jail.get_member_id()
+                        BotUtil.dict_append(parsing_list, user_id, event.get_duration())
+                sorted_list =  sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
+                converted = [(k, BotUtil.strfdelta(v, inputtype='minutes')) for (k,v) in sorted_list]
+                return converted
+            case RankingType.JAIL_COUNT:
+                jail_data = self.database.get_jail_events_by_guild(guild_id)
+                for jail, events in jail_data.items():
+                    for event in events:
+                        user_id = jail.get_member_id()
+                        if event.get_jail_event_type() == JailEventType.JAIL:
+                            BotUtil.dict_append(parsing_list, user_id, 1)
+                return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
+            case RankingType.SPAM_SCORE:
+                guild_spam_events = self.database.get_spam_events_by_guild(guild_id)
+                for event in guild_spam_events:
+                    user_id = event.get_member()
+                    BotUtil.dict_append(parsing_list, user_id, 1)
+                return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
+            case RankingType.BEANS:
+                parsing_list = self.database.get_guild_beans_rankings(guild_id)
+                lootbox_purchases = self.database.get_lootbox_purchases_by_guild(guild_id)
+                loot_box_item = self.bot.item_manager.get_item(guild_id, ItemType.LOOTBOX)
+                for user_id, amount in lootbox_purchases.items():
+                    if user_id in parsing_list.keys():
+                        parsing_list[user_id] -= amount * loot_box_item.get_cost()
+                sorted_list = sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
+                converted = [(k, f'🅱️{v}') for (k,v) in sorted_list]
+                return converted
+            case RankingType.MIMICS:
+                parsing_list = self.database.get_lootbox_mimics(guild_id)
+                return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
+            # case RankingType.TOTAL_GAMBAD_SPENT:
+            #     gamba_events = self.database.get_guild_beans_events(guild_id, [BeansEventType.GAMBA_COST])
+            #     for event in gamba_events:
+            #         user_id = event.get_member()
+            #         BotUtil.dict_append(parsing_list, user_id, abs(event.get_value()))
+            #     return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
+            # case RankingType.TOTAL_GAMBAD_WON:
+            #     pass

@@ -13,3 +13,6 @@ class RankingType(int, Enum):
     JAIL_COUNT = 9
     SPAM_SCORE = 10
     BEANS = 11
+    MIMICS = 12
+    TOTAL_GAMBAD_SPENT = 13
+    TOTAL_GAMBAD_WON = 14

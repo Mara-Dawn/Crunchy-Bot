@@ -1,28 +1,31 @@
+from typing import Any, List, Tuple
 import discord
 
 from BotUtil import BotUtil
 from CrunchyBot import CrunchyBot
-from datalayer.UserRankings import UserRankings
 from view.RankingType import RankingType
 
 class RankingEmbed(discord.Embed):
     
     TITLES = {
-        RankingType.BEANS: "Beans Rankings (incl. gamba losses)",
+        RankingType.BEANS: "Beans Rankings (excl. Shop/Transfers)",
+        RankingType.MIMICS: "Mimic Count Rankings",
         RankingType.SLAP: "Slap Rankings",
         RankingType.PET: "Pet Rankings",
         RankingType.FART: "Fart Rankings",
         RankingType.SLAP_RECIEVED: "Slaps Recieved Rankings",
-        RankingType.PET_RECIEVED: "Pets Recieved  Rankings",
-        RankingType.FART_RECIEVED: "Farts Recieved  Rankings",
+        RankingType.PET_RECIEVED: "Pets Recieved Rankings",
+        RankingType.FART_RECIEVED: "Farts Recieved Rankings",
         RankingType.TIMEOUT_TOTAL: "Total Timeout Duration Rankings",
         RankingType.TIMEOUT_COUNT: "Timeout Count Rankings",
         RankingType.JAIL_TOTAL: "Total Jail Duration Rankings",
         RankingType.JAIL_COUNT: "Jail Count Rankings",
         RankingType.SPAM_SCORE: "Spam Score Rankings",
+        RankingType.TOTAL_GAMBAD_SPENT: "Beans spent on Gamba Rankings",
+        RankingType.TOTAL_GAMBAD_WON: "Beans won from Gamba Rankings",
     }
     
-    def __init__(self, bot: CrunchyBot,  interaction: discord.Interaction, user_rankings: UserRankings, type: RankingType):
+    def __init__(self, bot: CrunchyBot,  interaction: discord.Interaction, type: RankingType, rankings: List[Tuple[int, Any]]):
         super().__init__(
             title=f"Leaderbords for {interaction.guild.name}",
             color=discord.Colour.purple(),
@@ -30,9 +33,8 @@ class RankingEmbed(discord.Embed):
         )
         
         leaderbord_msg = ''
-        data = user_rankings.get_rankings(type)
         rank = 1
-        for (id, amount) in data:
+        for (id, amount) in rankings:
             leaderbord_msg += f'**{rank}.** {BotUtil.get_name(bot, interaction.guild_id, id, 100)} `{amount}`\n'
             rank += 1
             if rank == 30:
