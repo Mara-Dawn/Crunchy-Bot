@@ -101,10 +101,10 @@ class Statistics(commands.Cog):
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         await interaction.response.defer()
         
-        ranking_data = self.event_manager.get_user_rankings(interaction.guild_id)
+        ranking_data = self.event_manager.get_user_rankings(interaction.guild_id, RankingType.BEANS)
         
-        embed = RankingEmbed(self.bot, interaction, ranking_data, RankingType.BEANS)
-        view = RankingView(self.bot, interaction, ranking_data)
+        embed = RankingEmbed(self.bot, interaction, RankingType.BEANS, ranking_data)
+        view = RankingView(self.bot, interaction)
         
         ranking_img = discord.File("./img/jail_wide.png", "ranking_img.png")
         police_img = discord.File("./img/police.png", "police.png")

@@ -1,16 +1,15 @@
 import discord
 
 from CrunchyBot import CrunchyBot
-from datalayer.UserRankings import UserRankings
 from view.RankingEmbed import RankingEmbed
 from view.RankingType import RankingType
 
 class RankingView(discord.ui.View):
     
-    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction, ranking_data: UserRankings):
+    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction):
         self.interaction = interaction
-        self.ranking_data = ranking_data
         self.bot = bot
+        self.event_manager = bot.event_manager
         super().__init__(timeout=100)
         self.add_item(Dropdown())
 
@@ -19,9 +18,10 @@ class RankingView(discord.ui.View):
             case _:
                 image = "./img/jail_wide.png"
         
+        ranking_data = self.event_manager.get_user_rankings(interaction.guild_id, type)
         ranking_img = discord.File(image, "ranking_img.png") 
         police_img = discord.File("./img/police.png", "police.png")
-        embed = RankingEmbed(self.bot, interaction, self.ranking_data, type)
+        embed = RankingEmbed(self.bot, interaction, type, ranking_data)
         await interaction.response.edit_message(embed=embed, view=self, attachments=[police_img, ranking_img])
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -44,7 +44,10 @@ class Dropdown(discord.ui.Select):
     
     def __init__(self):
         options = [
-            discord.SelectOption(label=RankingEmbed.TITLES[RankingType.BEANS], description='Who is the biggest beaner?', emoji='🅱️', value=RankingType.BEANS),
+            discord.SelectOption(label=RankingEmbed.TITLES[RankingType.BEANS], description='Who has the biggest bean?', emoji='🅱️', value=RankingType.BEANS),
+            # discord.SelectOption(label=RankingEmbed.TITLES[RankingType.TOTAL_GAMBAD_SPENT], description='Who is the biggest gamba addict?', emoji='🅱️', value=RankingType.TOTAL_GAMBAD_SPENT),
+            # discord.SelectOption(label=RankingEmbed.TITLES[RankingType.TOTAL_GAMBAD_WON], description='Who won the most beans?', emoji='🅱️', value=RankingType.TOTAL_GAMBAD_WON),
+            discord.SelectOption(label=RankingEmbed.TITLES[RankingType.MIMICS], description='Who gets vored the most?', emoji='🧰', value=RankingType.MIMICS),
             discord.SelectOption(label=RankingEmbed.TITLES[RankingType.SPAM_SCORE], description='Who is the biggest spammer?', emoji='📢', value=RankingType.SPAM_SCORE),
             discord.SelectOption(label=RankingEmbed.TITLES[RankingType.SLAP], description='Who slapped the most users?', emoji='✋', value=RankingType.SLAP),
             discord.SelectOption(label=RankingEmbed.TITLES[RankingType.PET], description='Who petted the most users?', emoji='🥰', value=RankingType.PET),
