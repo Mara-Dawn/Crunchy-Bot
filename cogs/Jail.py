@@ -66,7 +66,7 @@ class Jail(commands.Cog):
             case UserInteraction.FART:
                 return f'User {user.display_name} already enjoyed {interaction.user.display_name}\'s farts. No extra time will be added.'
     
-    async def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction):
+    async def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction, already_interacted: bool):
         user_items = self.item_manager.get_user_items_activated_by_interaction(
             interaction.guild_id, 
             interaction.user.id, 
@@ -79,9 +79,17 @@ class Jail(commands.Cog):
         stabilized = False
         advantage = False
         bonus_attempt = False
-        
+        modifier_text = ''
         modifier_list = []
         
+        for item in user_items:
+            if item.get_group() == ItemGroup.BONUS_ATTEMPT:
+                bonus_attempt = item
+                break
+        
+        if already_interacted and not bonus_attempt:
+            return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text
+
         for item in user_items:
             match item.get_group():
                 case ItemGroup.VALUE_MODIFIER:
@@ -94,16 +102,11 @@ class Jail(commands.Cog):
                     stabilized = await item.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                 case ItemGroup.ADVANTAGE:
                     advantage = await item.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
-                case ItemGroup.BONUS_ATTEMPT:
-                    bonus_attempt = item
-                    continue
                 case _:
                     continue
                     
             self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
             response += f'* {item.get_name()}\n'
-        
-        modifier_text = ''
         
         if item_modifier == 0:
             item_modifier = 1
@@ -154,9 +157,11 @@ class Jail(commands.Cog):
         
         self.logger.debug(guild_id, f'{command_type}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
         
-        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text = await self.__get_item_modifiers(interaction, command_type)
+        already_interacted = self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command_type)
         
-        if self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command_type):
+        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text = await self.__get_item_modifiers(interaction, command_type, already_interacted)
+        
+        if already_interacted:
             if bonus_attempt:
                 await bonus_attempt.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                 self.logger.log(interaction.guild_id, f'Item {bonus_attempt.get_name()} was used.', cog=self.__cog_name__)
