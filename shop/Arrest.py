@@ -1,6 +1,7 @@
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+
 class Arrest(Item):
 
     def __init__(

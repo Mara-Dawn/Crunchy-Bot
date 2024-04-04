@@ -18,6 +18,7 @@ from events.EventManager import EventManager
 from events.JailEventType import JailEventType
 from shop.ItemGroup import ItemGroup
 from shop.ItemManager import ItemManager
+from shop.ItemType import ItemType
 from view.SettingsModal import SettingsModal
 
 class Jail(commands.Cog):
@@ -79,6 +80,7 @@ class Jail(commands.Cog):
         stabilized = False
         advantage = False
         bonus_attempt = False
+        satan_boost = False
         modifier_text = ''
         modifier_list = []
         
@@ -88,11 +90,17 @@ class Jail(commands.Cog):
                 break
         
         if already_interacted and not bonus_attempt:
-            return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text
+            return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
 
         for item in user_items:
             match item.get_group():
                 case ItemGroup.VALUE_MODIFIER:
+                    if item.get_type() == ItemType.SATAN_FART:
+                        affected_jails = self.database.get_active_jails_by_member(interaction.guild_id, interaction.user.id)
+                        if len(affected_jails) > 0:
+                            continue
+                        satan_boost = True
+                        
                     modifier = await item.use(self.role_manager, self.event_manager, interaction.guild_id, interaction.user.id)
                     item_modifier += modifier
                     modifier_list.append(modifier)
@@ -115,7 +123,7 @@ class Jail(commands.Cog):
         else:
             modifier_text = '(' + '+'.join(str(x) for x in modifier_list) + ')'
             
-        return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text
+        return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
     
     async def __get_target_item_modifiers(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
         user_items = self.item_manager.get_user_items_activated_by_interaction(
@@ -159,7 +167,7 @@ class Jail(commands.Cog):
         
         already_interacted = self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command_type)
         
-        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text = await self.__get_item_modifiers(interaction, command_type, already_interacted)
+        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost = await self.__get_item_modifiers(interaction, command_type, already_interacted)
         
         if already_interacted:
             if bonus_attempt:
@@ -205,6 +213,15 @@ class Jail(commands.Cog):
         if is_crit:
             response += f'**CRITICAL HIT!!!** \n'
             amount = int(amount * crit_mod)
+        satan_release = False
+        if satan_boost and random.random() <= 0.75:
+            success = await self.jail_user(interaction.guild_id, interaction.user.id, interaction.user, amount)
+            
+            if not success:
+               satan_boost = False
+            
+            timestamp_now = int(datetime.datetime.now().timestamp())
+            satan_release = timestamp_now + (amount*60)
         
         if amount > 0:
             tartget_item_info, reduction = await self.__get_target_item_modifiers(interaction, user, command_type)
@@ -237,16 +254,20 @@ class Jail(commands.Cog):
             if not response:
                 response +=  f'Something went wrong, user {user.display_name} could not be released.'
         else:
+            time_readable = BotUtil.strfdelta(amount, inputtype='minutes')
             if amount >= 0:
-                response += f'Their jail sentence was increased by `{amount}` {damage_info} minutes. '
+                response += f'Their jail sentence was increased by `{time_readable}` {damage_info}. '
             elif amount < 0: 
-                response += f'Their jail sentence was reduced by `{abs(amount)}` {damage_info} minutes. '
+                response += f'Their jail sentence was reduced by `{abs(time_readable)}` {damage_info}. '
             
             time_now = datetime.datetime.now()
             self.event_manager.dispatch_jail_event(time_now, guild_id, command_type, interaction.user.id, amount, affected_jail.get_id())
             
             remaining = self.event_manager.get_jail_remaining(affected_jail)
             response += f'`{BotUtil.strfdelta(remaining, inputtype='minutes')}` still remain.'
+            
+        if satan_boost and satan_release:
+            response += f'\n<@{interaction.user.id}> pays the price of making a deal with the devil and goes to jail as well. They will be released <t:{satan_release}:R>.'
 
         return response
         

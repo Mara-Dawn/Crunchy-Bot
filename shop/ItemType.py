@@ -21,3 +21,5 @@ class ItemType(str, Enum):
     NAME_COLOR = 'NameColor'
     REACTION_SPAM = 'ReactionSpam'
     EXPLOSIVE_FART = 'ExplosiveFart'
+    ROULETTE_FART = 'RouletteFart'
+    SATAN_FART = 'SatanBoost'

@@ -25,6 +25,6 @@ class FartProtection(Item):
             view_class = None,
             allow_amount = False,
             base_amount = 5,
-            max_amount = None,
+            max_amount = 5,
             trigger = [ItemTrigger.FART, ItemTrigger.SLAP]
         )

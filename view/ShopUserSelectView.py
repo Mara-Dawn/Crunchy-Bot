@@ -1,4 +1,5 @@
 import datetime
+import random
 import discord
 
 from CrunchyBot import CrunchyBot
@@ -28,7 +29,7 @@ class ShopUserSelectView(ShopResponseView):
                 await self.jail_interaction(interaction)
             case ItemType.RELEASE:
                 await self.jail_interaction(interaction)
-            case ItemType.BAILOUT:
+            case ItemType.ROULETTE_FART:
                 await self.jail_interaction(interaction)
     
     async def jail_interaction(self, interaction: discord.Interaction):
@@ -61,6 +62,27 @@ class ShopUserSelectView(ShopResponseView):
                     return
                 
                 jail_announcement = f'<@{self.selected_user.id}> was generously released from Jail by <@{interaction.user.id}> using a **{self.item.get_name()}**. ' + response
+                
+            case ItemType.ROULETTE_FART:
+                duration = 30
+                
+                member = interaction.user
+                selected = self.selected_user
+                
+                timestamp_now = int(datetime.datetime.now().timestamp())
+                release = timestamp_now + (duration*60)
+                target = selected
+                jail_announcement = f'<@{selected.id}> was sentenced to Jail by <@{member_id}> using a **{self.item.get_name()}**. They will be released <t:{release}:R>.'
+                
+                if random.choice([True, False]):
+                    jail_announcement = f'<@{member_id}> shit themselves in an attempt to jail <@{selected.id}> using a **{self.item.get_name()}**, going to jail in their place. They will be released <t:{release}:R>.'
+                    target = member
+                
+                success = await jail_cog.jail_user(guild_id, member_id, target, duration)
+                
+                if not success:
+                    await interaction.followup.send(f'User {self.selected_user.display_name} is already in jail.', ephemeral=True)
+                    return
                 
             case _:
                 await interaction.followup.send(f'Something went wrong, please contact a staff member.', ephemeral=True)
