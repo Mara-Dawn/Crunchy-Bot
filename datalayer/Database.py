@@ -1166,3 +1166,37 @@ class Database():
         if not rows or len(rows) < 1:
             return None
         return BatEvent.from_db_row(rows[0])
+    
+    def get_lootbox_mimics(self, guild_id: int) -> Dict[int,int]:
+        
+        command = f'''
+            SELECT {self.LOOTBOX_EVENT_MEMBER_COL}, COUNT({self.LOOTBOX_BEANS_COL}) FROM {self.LOOTBOX_TABLE}
+            INNER JOIN {self.LOOTBOX_EVENT_TABLE} ON {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_LOOTBOX_ID_COL} = {self.LOOTBOX_TABLE}.{self.LOOTBOX_ID_COL}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND {self.LOOTBOX_BEANS_COL} < ? 
+            AND {self.LOOTBOX_EVENT_TYPE_COL} IN (?,?)
+            GROUP BY {self.LOOTBOX_EVENT_MEMBER_COL};
+        '''
+        task = (guild_id, 0, LootBoxEventType.CLAIM.value, LootBoxEventType.OPEN.value)
+        
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return {}
+        
+        return{ row[self.LOOTBOX_EVENT_MEMBER_COL]: row[f'COUNT({self.LOOTBOX_BEANS_COL})'] for row in rows }
+    
+    # def get_guild_beans_events(self, guild_id: int, event_types: List[BeansEventType]) -> List[BeansEvent]:
+    #     command = f''' 
+    #         SELECT * FROM {self.BEANS_EVENT_TABLE}
+    #         INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
+    #         WHERE {self.EVENT_GUILD_ID_COL} = ?
+    #         AND {self.BEANS_EVENT_TYPE_COL} IN (?);
+    #     '''
+    #     task = (guild_id, (a.value for a in event_types))
+        
+    #     rows = self.__query_select(command, task)
+    #     if not rows or len(rows) < 1:
+    #         return {}
+
+    #     return [BeansEvent.from_db_row(row) for row in rows]

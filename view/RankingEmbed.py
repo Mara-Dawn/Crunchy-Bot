@@ -9,17 +9,20 @@ class RankingEmbed(discord.Embed):
     
     TITLES = {
         RankingType.BEANS: "Beans Rankings (excl. Shop/Transfers)",
+        RankingType.MIMICS: "Mimic Count Rankings",
         RankingType.SLAP: "Slap Rankings",
         RankingType.PET: "Pet Rankings",
         RankingType.FART: "Fart Rankings",
         RankingType.SLAP_RECIEVED: "Slaps Recieved Rankings",
-        RankingType.PET_RECIEVED: "Pets Recieved  Rankings",
-        RankingType.FART_RECIEVED: "Farts Recieved  Rankings",
+        RankingType.PET_RECIEVED: "Pets Recieved Rankings",
+        RankingType.FART_RECIEVED: "Farts Recieved Rankings",
         RankingType.TIMEOUT_TOTAL: "Total Timeout Duration Rankings",
         RankingType.TIMEOUT_COUNT: "Timeout Count Rankings",
         RankingType.JAIL_TOTAL: "Total Jail Duration Rankings",
         RankingType.JAIL_COUNT: "Jail Count Rankings",
         RankingType.SPAM_SCORE: "Spam Score Rankings",
+        RankingType.TOTAL_GAMBAD_SPENT: "Beans spent on Gamba Rankings",
+        RankingType.TOTAL_GAMBAD_WON: "Beans won from Gamba Rankings",
     }
     
     def __init__(self, bot: CrunchyBot,  interaction: discord.Interaction, type: RankingType, rankings: List[Tuple[int, Any]]):

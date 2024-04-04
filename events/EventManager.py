@@ -384,3 +384,14 @@ class EventManager():
                 sorted_list = sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
                 converted = [(k, f'🅱️{v}') for (k,v) in sorted_list]
                 return converted
+            case RankingType.MIMICS:
+                parsing_list = self.database.get_lootbox_mimics(guild_id)
+                return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
+            # case RankingType.TOTAL_GAMBAD_SPENT:
+            #     gamba_events = self.database.get_guild_beans_events(guild_id, [BeansEventType.GAMBA_COST])
+            #     for event in gamba_events:
+            #         user_id = event.get_member()
+            #         BotUtil.dict_append(parsing_list, user_id, abs(event.get_value()))
+            #     return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
+            # case RankingType.TOTAL_GAMBAD_WON:
+            #     pass
