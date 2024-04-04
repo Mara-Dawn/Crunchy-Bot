@@ -20,7 +20,7 @@ class Bat(Item):
             group = ItemGroup.IMMEDIATE_USE,
             shop_category = ShopCategory.INTERACTION,
             description = 'Sneak up on someone and knock them out for 20 minutes, making them unable to use and buy items or gamba their beans.',
-            emoji = '😵',
+            emoji = '💫',
             cost = cost,
             value = 20,
             view_class = 'ShopUserSelectView',

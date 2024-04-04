@@ -3,7 +3,7 @@ import sqlite3
 import traceback
 import discord
 
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 from sqlite3 import Error
 from discord.ext import commands
 from BotLogger import BotLogger
@@ -350,7 +350,10 @@ class Database():
             output.append(new_row)
         
         return output
-                
+    
+    def __list_sanitizer(self, attribute_list: List[Any]) -> str:
+        return '(' + ','.join(['?' for x in range(len(attribute_list))]) + ')'
+              
     def get_setting(self, guild_id: int, module: str, key: str):
         command = f'''
             SELECT * FROM {self.SETTINGS_TABLE} 
@@ -1036,7 +1039,6 @@ class Database():
         return { row[self.BEANS_EVENT_MEMBER_COL]: row[f'SUM({self.BEANS_EVENT_VALUE_COL})'] for row in rows }
         
     def get_lootbox_purchases_by_guild(self, guild_id: int) -> Dict[int,int]:
-        
         command = f'''
             SELECT {self.LOOTBOX_EVENT_MEMBER_COL}, COUNT({self.LOOTBOX_EVENT_TYPE_COL}) FROM {self.LOOTBOX_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
@@ -1169,16 +1171,19 @@ class Database():
     
     def get_lootbox_mimics(self, guild_id: int) -> Dict[int,int]:
         
+        lootbox_types = [LootBoxEventType.CLAIM.value, LootBoxEventType.OPEN.value]
+        list_sanitized = self.__list_sanitizer(lootbox_types)
+        
         command = f'''
             SELECT {self.LOOTBOX_EVENT_MEMBER_COL}, COUNT({self.LOOTBOX_BEANS_COL}) FROM {self.LOOTBOX_TABLE}
             INNER JOIN {self.LOOTBOX_EVENT_TABLE} ON {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_LOOTBOX_ID_COL} = {self.LOOTBOX_TABLE}.{self.LOOTBOX_ID_COL}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND {self.LOOTBOX_BEANS_COL} < ? 
-            AND {self.LOOTBOX_EVENT_TYPE_COL} IN (?,?)
+            AND {self.LOOTBOX_EVENT_TYPE_COL} IN {list_sanitized}
             GROUP BY {self.LOOTBOX_EVENT_MEMBER_COL};
         '''
-        task = (guild_id, 0, LootBoxEventType.CLAIM.value, LootBoxEventType.OPEN.value)
+        task = (guild_id, 0, *lootbox_types)
         
         rows = self.__query_select(command, task)
         if not rows or len(rows) < 1:
