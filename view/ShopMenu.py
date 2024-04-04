@@ -164,6 +164,11 @@ class ShopMenu(discord.ui.View):
         start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
         end = min((start + ShopEmbed.ITEMS_PER_PAGE), self.item_count)
         page_display = f'Page {self.current_page + 1}/{self.page_count}'
+        
+        self.timeout = 300
+        if disabled:
+            self.timeout = 360
+        
         self.clear_items()
         self.add_item(Dropdown(self.items[start:end], self.selected, disabled))
         self.add_item(PageButton("<", False, disabled))
@@ -185,7 +190,10 @@ class ShopMenu(discord.ui.View):
     
     async def on_timeout(self):
         # remove buttons on timeout
-        await self.message.edit(view=None)
+        try:
+            await self.message.edit(view=None)
+        except:
+            pass
 
 class BuyButton(discord.ui.Button):
     
