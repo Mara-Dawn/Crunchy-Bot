@@ -6,6 +6,7 @@ from events.EventManager import EventManager
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class ReactionSpam(Item):
 
@@ -22,6 +23,7 @@ class ReactionSpam(Item):
             name = 'Bully for Hire',
             type = ItemType.REACTION_SPAM,
             group = ItemGroup.SUBSCRIPTION,
+            shop_category = ShopCategory.FUN,
             description = 'Hire a personal bully to react to every single message of your victim with an emoji of your choice. One purchase amounts to 10 message reactions. Only one bully can be active at a time.',
             emoji = '🤡',
             cost = cost,

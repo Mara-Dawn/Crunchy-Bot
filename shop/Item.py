@@ -7,6 +7,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from events.EventManager import EventManager
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class Item():
 
@@ -15,6 +16,7 @@ class Item():
         name: str, 
         type: ItemType,
         group: ItemGroup,
+        shop_category: ShopCategory,
         description: str,
         emoji: str,
         cost: int,
@@ -28,6 +30,7 @@ class Item():
         self.name = name
         self.type = type
         self.group = group
+        self.shop_category = shop_category
         self.description = description
         self.cost = cost
         self.value = value
@@ -46,6 +49,9 @@ class Item():
     
     def get_group(self) -> ItemGroup:
         return self.group
+    
+    def get_shop_category(self) -> ShopCategory:
+        return self.shop_category
     
     def get_description(self) -> str:
         return self.description

@@ -31,6 +31,13 @@ class LootBoxMenu(discord.ui.View):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
         
+        stunned_remaining = self.event_manager.get_stunned_remaining(guild_id, interaction.user.id)
+        if stunned_remaining > 0:
+            timestamp_now = int(datetime.datetime.now().timestamp())
+            remaining = int(timestamp_now+stunned_remaining)
+            await interaction.followup.send(f'You are currently stunned from a bat attack. Try again <t:{remaining}:R>', ephemeral=True)
+            return False
+        
         if self.user_id is not None and member_id != self.user_id:
             await interaction.followup.send(f'This is a personalized lootbox, only the owner can claim it.', ephemeral=True)
             return

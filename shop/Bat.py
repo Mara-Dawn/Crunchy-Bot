@@ -3,26 +3,26 @@ from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from view.ShopCategory import ShopCategory
 
-class Arrest(Item):
+class Bat(Item):
 
     def __init__(
         self,
         cost: int|None
     ):
-        defaultcost = 1000
+        defaultcost = 1337
         
         if cost is None:
             cost = defaultcost
             
         super().__init__(
-            name = 'Citizens Arrest',
-            type = ItemType.ARREST,
+            name = 'Baseball Bat',
+            type = ItemType.BAT,
             group = ItemGroup.IMMEDIATE_USE,
-            shop_category = ShopCategory.JAIL,
-            description = 'Take the law into your own hands and arrest a user of choice for 30 minutes.',
-            emoji = '🚨',
+            shop_category = ShopCategory.INTERACTION,
+            description = 'Sneak up on someone and knock them out for 20 minutes, making them unable to use and buy items or gamba their beans.',
+            emoji = '😵',
             cost = cost,
-            value = None,
+            value = 20,
             view_class = 'ShopUserSelectView',
             allow_amount = False,
             base_amount = 1,

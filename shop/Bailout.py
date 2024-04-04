@@ -1,6 +1,7 @@
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 class Bailout(Item):
 
     def __init__(
@@ -16,6 +17,7 @@ class Bailout(Item):
             name = 'Bribe the Mods',
             type = ItemType.BAILOUT,
             group = ItemGroup.IMMEDIATE_USE,
+            shop_category = ShopCategory.JAIL,
             description = 'Pay off the mods to let you out of jail early.',
             emoji = '🗿',
             cost = cost,

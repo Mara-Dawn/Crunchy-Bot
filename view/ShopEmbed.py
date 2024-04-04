@@ -19,7 +19,6 @@ class ShopEmbed(discord.Embed):
             description=description
         )
         end_offset = min((start_offset + self.ITEMS_PER_PAGE), len(items))
-        items.sort(key=lambda x:x.get_cost())
         display = items[start_offset:end_offset]
         
         for item in display:

@@ -2,6 +2,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class FartBoost(Item):
 
@@ -18,6 +19,7 @@ class FartBoost(Item):
             name = 'UK Breakfast Beans',
             type = ItemType.FART_BOOST,
             group = ItemGroup.VALUE_MODIFIER,
+            shop_category = ShopCategory.FART,
             description = 'Extremely dangerous, multiplies the power of your next fart by 3.',
             emoji = '🤢',
             cost = cost,

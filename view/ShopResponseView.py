@@ -85,7 +85,22 @@ class ShopResponseView(discord.ui.View):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
         
-        log_message = f'{interaction.user.display_name} bought {amount} {self.item.get_name()} for {cost} beans'
+        log_message = f'{interaction.user.display_name} bought {amount} {self.item.get_name()} for {cost} beans.'
+        
+        arguments = []
+        
+        if self.selected_user is not None:
+            arguments.append(f'selected_user: {self.selected_user.display_name}')
+        
+        if self.selected_color is not None:
+            arguments.append(f'selected_color: {self.selected_color}')
+            
+        if self.selected_emoji is not None:
+            arguments.append(f'selected_emoji: {str(self.selected_emoji)}')
+        
+        if len(arguments) > 0:
+            log_message += ' arguments[' + ', '.join(arguments) + ']'
+        
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
         
         new_user_balance = self.database.get_member_beans(guild_id, member_id)
@@ -182,17 +197,17 @@ class ShopResponseView(discord.ui.View):
     async def on_timeout(self):
         try:
             await self.message.delete()
+            
+            guild_id = self.interaction.guild_id
+            member_id = self.interaction.user.id
+            user_balance = self.database.get_member_beans(guild_id, member_id)
+            
+            message = await self.interaction.original_response()
+            self.parent.refresh_ui(user_balance)
+            await message.edit(view=self.parent)
         except:
-            pass
+            self.logger.log(self.interaction.guild_id, f'TIMEOUT: Interaction Lost.', cog='Shop')
         
-        guild_id = self.interaction.guild_id
-        member_id = self.interaction.user.id
-        user_balance = self.database.get_member_beans(guild_id, member_id)
-        
-        message = await self.interaction.original_response()
-        self.parent.refresh_ui(user_balance)
-        await message.edit(view=self.parent)
-
 class UserPicker(discord.ui.UserSelect):
     
     def __init__(self):
@@ -341,4 +356,4 @@ class ReactionInputView(ShopResponseView):
             await self.message.delete()
             await self.parent.refresh_ui()
         except:
-            pass
+            self.logger.log(self.interaction.guild_id, f'TIMEOUT: Interaction Lost.', cog='Shop')

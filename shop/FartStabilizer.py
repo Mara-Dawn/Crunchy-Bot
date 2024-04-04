@@ -2,6 +2,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class FartStabilizer(Item):
 
@@ -18,6 +19,7 @@ class FartStabilizer(Item):
             name = 'Ass ACOG',
             type = ItemType.FART_STABILIZER,
             group = ItemGroup.STABILIZER,
+            shop_category = ShopCategory.FART,
             description = 'Stabilizes your aim and increases your rectal precision. Your next fart cannot roll below 0.',
             emoji = '🔭',
             cost = cost,

@@ -2,6 +2,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class FartProtection(Item):
 
@@ -18,6 +19,7 @@ class FartProtection(Item):
             name = 'Your Uncle\'s old Hazmat Suit',
             type = ItemType.FART_PROTECTION,
             group = ItemGroup.PROTECTION,
+            shop_category = ShopCategory.INTERACTION,
             description = 'According to him his grandpa took it from a dead guy in ww2. The next 5 interactions negatively affecting your jailtime will be reduced by 50%',
             emoji = '☣',
             cost = cost,

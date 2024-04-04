@@ -1,6 +1,7 @@
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class JailReduction(Item):
 
@@ -17,6 +18,7 @@ class JailReduction(Item):
             name = 'Gaslight the Guards',
             type = ItemType.JAIL_REDUCTION,
             group = ItemGroup.IMMEDIATE_USE,
+            shop_category = ShopCategory.JAIL,
             description = 'Manipulate the mods into believing your jail sentence is actually 30 minutes shorter than it really is. (Cuts off at 30 minutes left)',
             emoji = '🥺',
             cost = cost,

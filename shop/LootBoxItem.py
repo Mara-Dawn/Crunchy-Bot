@@ -1,6 +1,7 @@
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class LootBoxItem(Item):
 
@@ -17,6 +18,7 @@ class LootBoxItem(Item):
             name = 'Random Treasure Chest',
             type = ItemType.LOOTBOX,
             group = ItemGroup.LOOTBOX,
+            shop_category = ShopCategory.FUN,
             description = 'No need to wait for loot box drops, just buy your own!',
             emoji = '🧰',
             cost = cost,

@@ -41,6 +41,7 @@ from shop.LootBoxItem import LootBoxItem
 from shop.ExplosiveFart import ExplosiveFart
 from shop.RouletteFart import RouletteFart
 from shop.SatanBoost import SatanBoost
+from shop.Bat import Bat
 
 class ItemManager():
 

@@ -23,3 +23,4 @@ class ItemType(str, Enum):
     EXPLOSIVE_FART = 'ExplosiveFart'
     ROULETTE_FART = 'RouletteFart'
     SATAN_FART = 'SatanBoost'
+    BAT = 'Bat'

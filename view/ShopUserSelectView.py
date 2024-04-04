@@ -31,6 +31,38 @@ class ShopUserSelectView(ShopResponseView):
                 await self.jail_interaction(interaction)
             case ItemType.ROULETTE_FART:
                 await self.jail_interaction(interaction)
+            case ItemType.BAT:
+                await self.bat_attack(interaction)
+    
+    async def bat_attack(self, interaction: discord.Interaction):
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+        target = self.selected_user
+        last_bat_event = self.database.get_last_bat_event_by_target(guild_id, target.id)
+        
+        last_bat_time = datetime.datetime.min
+        if last_bat_event is not None:
+            last_bat_time = last_bat_event.get_datetime()
+        
+        diff = datetime.datetime.now() - last_bat_time
+        if int(diff.total_seconds()/60) <= self.item.get_value():
+            await interaction.followup.send(f"Targeted user is already stunned by a previous bat attack.", ephemeral=True)
+            return
+        
+        self.event_manager.dispatch_bat_event(datetime.datetime.now(), guild_id, member_id, target.id)
+        
+        amount = self.selected_amount
+        cost = self.item.get_cost() * amount
+        
+        self.event_manager.dispatch_beans_event(
+            datetime.datetime.now(), 
+            guild_id,
+            BeansEventType.SHOP_PURCHASE, 
+            member_id,
+            -cost
+        )
+        
+        await self.finish_transaction(interaction)
     
     async def jail_interaction(self, interaction: discord.Interaction):
         if self.selected_user.id == interaction.user.id and self.type == ItemType.RELEASE:
@@ -56,7 +88,7 @@ class ShopUserSelectView(ShopResponseView):
                 
             case ItemType.RELEASE:
                 response = await jail_cog.release_user(guild_id, member_id, self.selected_user)
-        
+
                 if not response:
                     await interaction.followup.send(f'User {self.selected_user.display_name} is currently not in jail.', ephemeral=True)
                     return

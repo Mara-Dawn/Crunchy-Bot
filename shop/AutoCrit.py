@@ -2,6 +2,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class AutoCrit(Item):
 
@@ -18,6 +19,7 @@ class AutoCrit(Item):
             name = 'Magic Beans',
             type = ItemType.AUTO_CRIT,
             group = ItemGroup.AUTO_CRIT,
+            shop_category = ShopCategory.INTERACTION,
             description = 'Let these rainbow colored little beans guide your next slap, pet or fart to a guaranteed critical hit.',
             emoji = '💥',
             cost = cost,

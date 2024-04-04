@@ -43,6 +43,13 @@ class Gamba(commands.Cog):
             await self.bot.command_response(self.__cog_name__, interaction, f'Beans commands cannot be used in this channel.')
             return False
         
+        stunned_remaining = self.event_manager.get_stunned_remaining(guild_id, interaction.user.id)
+        if stunned_remaining > 0:
+            timestamp_now = int(datetime.datetime.now().timestamp())
+            remaining = int(timestamp_now+stunned_remaining)
+            await self.bot.command_response(self.__cog_name__, interaction, f'You are currently stunned from a bat attack. Try again <t:{remaining}:R>')
+            return False
+        
         return True
     
     @commands.Cog.listener()

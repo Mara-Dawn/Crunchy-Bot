@@ -2,6 +2,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class ExplosiveFart(Item):
 
@@ -22,6 +23,7 @@ class ExplosiveFart(Item):
             name = 'Explosive Diarrhea',
             type = ItemType.EXPLOSIVE_FART,
             group = ItemGroup.IMMEDIATE_USE,
+            shop_category = ShopCategory.JAIL,
             description = description,
             emoji = '😨',
             cost = cost,
