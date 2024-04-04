@@ -2,6 +2,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class SlapBoost(Item):
 
@@ -18,6 +19,7 @@ class SlapBoost(Item):
             name = 'Massive Bonking Hammer',
             type = ItemType.SLAP_BOOST,
             group = ItemGroup.VALUE_MODIFIER,
+            shop_category = ShopCategory.SLAP,
             description = 'For when someone has been extra horny. Powers up your next slap by 5x.',
             emoji = '🔨',
             cost = cost,

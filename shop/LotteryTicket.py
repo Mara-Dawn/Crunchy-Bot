@@ -1,10 +1,10 @@
 import datetime
 from RoleManager import RoleManager
-from datalayer.ItemTrigger import ItemTrigger
 from events.EventManager import EventManager
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class LotteryTicket(Item):
 
@@ -21,6 +21,7 @@ class LotteryTicket(Item):
             name = 'Lottery Ticket',
             type = ItemType.LOTTERY_TICKET,
             group = ItemGroup.LOTTERY,
+            shop_category = ShopCategory.FUN,
             description = 'Enter the Weekly Crunchy Bean Lottery© and win big! Max 3 tickets per person.',
             emoji = '🎫',
             cost = cost,

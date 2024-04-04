@@ -1,12 +1,12 @@
 import datetime
 
-import discord
 from RoleManager import RoleManager
 from datalayer.ItemTrigger import ItemTrigger
 from events.EventManager import EventManager
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class NameColor(Item):
 
@@ -23,6 +23,7 @@ class NameColor(Item):
             name = 'Name Color Change',
             type = ItemType.NAME_COLOR,
             group = ItemGroup.SUBSCRIPTION,
+            shop_category = ShopCategory.FUN,
             description = 'Paint your discord name in your favourite color! Grab one weeks worth of color tokens. Each day, a token gets consumed until you run out.',
             emoji = '🌈',
             cost = cost,

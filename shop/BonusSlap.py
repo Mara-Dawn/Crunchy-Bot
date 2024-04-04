@@ -2,6 +2,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class BonusSlap(Item):
 
@@ -18,6 +19,7 @@ class BonusSlap(Item):
             name = 'Bonus Slap',
             type = ItemType.BONUS_SLAP,
             group = ItemGroup.BONUS_ATTEMPT,
+            shop_category = ShopCategory.SLAP,
             description = 'Allows you to continue slapping a jailed person after using your guaranteed one.',
             emoji = '✋',
             cost = cost,

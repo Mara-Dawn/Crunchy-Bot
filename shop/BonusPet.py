@@ -2,6 +2,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class BonusPet(Item):
 
@@ -18,6 +19,7 @@ class BonusPet(Item):
             name = 'Bonus Pet',
             type = ItemType.BONUS_PET,
             group = ItemGroup.BONUS_ATTEMPT,
+            shop_category = ShopCategory.PET,
             description = 'Allows you to continue giving pets to a jailed person after using your guaranteed one.',
             emoji = '🥰',
             cost = cost,

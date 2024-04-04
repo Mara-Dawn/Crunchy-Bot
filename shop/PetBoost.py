@@ -2,6 +2,7 @@ from datalayer.ItemTrigger import ItemTrigger
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class PetBoost(Item):
 
@@ -18,6 +19,7 @@ class PetBoost(Item):
             name = 'Big Mama Bear Hug',
             type = ItemType.PET_BOOST,
             group = ItemGroup.VALUE_MODIFIER,
+            shop_category = ShopCategory.PET,
             description = 'When a normal pet just isnt enough. Powers up your next pet by 5x.',
             emoji = '🧸',
             cost = cost,

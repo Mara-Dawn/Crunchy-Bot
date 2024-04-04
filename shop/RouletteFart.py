@@ -3,28 +3,28 @@ from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
 from view.ShopCategory import ShopCategory
 
-class JailReduction(Item):
+class RouletteFart(Item):
 
     def __init__(
         self,
         cost: int|None
     ):
-        defaultcost = 100
+        defaultcost = 500
         
         if cost is None:
             cost = defaultcost
-
+            
         super().__init__(
-            name = 'Gaslight the Guards',
-            type = ItemType.JAIL_REDUCTION,
+            name = 'Russian Roulette',
+            type = ItemType.ROULETTE_FART,
             group = ItemGroup.IMMEDIATE_USE,
             shop_category = ShopCategory.JAIL,
-            description = 'Manipulate the mods into believing your jail sentence is actually 30 minutes shorter than it really is. (Cuts off at 30 minutes left)',
-            emoji = '🥺',
+            description = 'After a night of heavy drinking you decide to gamble on a fart to prank your friend. 50% chance to jail the target, 50% chance to shit yourself and go to jail instead. (30 minutes)',
+            emoji = '🔫',
             cost = cost,
-            value = 30,
-            view_class = 'ShopConfirmView',
-            allow_amount = True,
+            value = None,
+            view_class = 'ShopUserSelectView',
+            allow_amount = False,
             base_amount = 1,
             max_amount = None,
             trigger = None

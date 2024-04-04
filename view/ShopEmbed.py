@@ -6,7 +6,7 @@ from shop.Item import Item
 
 class ShopEmbed(discord.Embed):
     
-    ITEMS_PER_PAGE = 4
+    ITEMS_PER_PAGE = 5
     
     def __init__(self, bot: CrunchyBot,  interaction: discord.Interaction, items: List[Item], start_offset:int = 0):
         description = f'Spend your hard earned beans!\n'
@@ -19,7 +19,6 @@ class ShopEmbed(discord.Embed):
             description=description
         )
         end_offset = min((start_offset + self.ITEMS_PER_PAGE), len(items))
-        items.sort(key=lambda x:x.get_cost())
         display = items[start_offset:end_offset]
         
         for item in display:

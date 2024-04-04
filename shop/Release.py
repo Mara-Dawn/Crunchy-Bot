@@ -1,6 +1,7 @@
 from shop.Item import Item
 from shop.ItemGroup import ItemGroup
 from shop.ItemType import ItemType
+from view.ShopCategory import ShopCategory
 
 class Release(Item):
 
@@ -17,6 +18,7 @@ class Release(Item):
             name = 'Get out of Jail Fart',
             type = ItemType.RELEASE,
             group = ItemGroup.IMMEDIATE_USE,
+            shop_category = ShopCategory.JAIL,
             description = 'Due to dietary advancements your farts can now help a friend out of jail for one time only.',
             emoji = '🔑',
             cost = cost,

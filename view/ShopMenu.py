@@ -31,7 +31,6 @@ class ShopMenu(discord.ui.View):
         self.selected: ItemType = None
         super().__init__(timeout=300)
         self.items = items
-        self.items.sort(key=lambda x:x.get_cost())
         self.item_count = len(self.items)
         self.page_count = int(self.item_count / ShopEmbed.ITEMS_PER_PAGE) + (self.item_count % ShopEmbed.ITEMS_PER_PAGE > 0)
         

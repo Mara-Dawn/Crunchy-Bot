@@ -10,6 +10,7 @@ from datalayer.Database import Database
 from datalayer.UserInteraction import UserInteraction
 from datalayer.UserRankings import UserRankings
 from datalayer.UserStats import UserStats
+from events.BatEvent import BatEvent
 from events.BeansEvent import BeansEvent
 from events.BeansEventType import BeansEventType
 from events.BotEvent import BotEvent
@@ -128,6 +129,34 @@ class EventManager():
         event = LootBoxEvent(timestamp, guild_id, loot_box_id, member_id, loot_box_event_type)
         self.database.log_event(event)
         self.__log_event(event, member_id, loot_box_event_type, loot_box_id)
+    
+    def dispatch_bat_event(self,
+        timestamp: datetime.datetime, 
+        guild_id: int,
+        used_by_id: int,
+        target_id: int,
+    ):
+        event = BatEvent(timestamp, guild_id, used_by_id, target_id)
+        self.database.log_event(event)
+        self.__log_event(event, used_by_id, target_id)
+    
+    def get_stunned_remaining(self, guild_id: int, user_id: int) -> int:
+        last_bat_event = self.database.get_last_bat_event_by_target(guild_id, user_id)
+        
+        if last_bat_event is None:
+            return 0
+        
+        last_bat_time = last_bat_event.get_datetime()
+        bat_item = self.bot.item_manager.get_item(guild_id, ItemType.BAT)
+        
+        diff = datetime.datetime.now() - last_bat_time
+        duration = bat_item.get_value()
+        if int(diff.total_seconds()/60) <= bat_item.get_value():
+            release_timestamp = last_bat_time + datetime.timedelta(minutes=duration) 
+            remainder = release_timestamp - datetime.datetime.now()
+            return max(int(remainder.total_seconds()), 0)
+            
+        return 0
     
     def get_jail_duration(self, jail: UserJail) -> int:
         events = self.database.get_jail_events_by_jail(jail.get_id())
