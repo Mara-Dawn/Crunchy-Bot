@@ -1033,7 +1033,6 @@ class Database():
         return { row[self.BEANS_EVENT_MEMBER_COL]: row[f'SUM({self.BEANS_EVENT_VALUE_COL})'] for row in rows }
         
     def get_lootbox_purchases_by_guild(self, guild_id: int) -> Dict[int,int]:
-        
         command = f'''
             SELECT {self.LOOTBOX_EVENT_MEMBER_COL}, COUNT({self.LOOTBOX_EVENT_TYPE_COL}) FROM {self.LOOTBOX_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
