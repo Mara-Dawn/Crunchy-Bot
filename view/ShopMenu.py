@@ -107,14 +107,14 @@ class ShopMenu(discord.ui.View):
                 title = f"{interaction.user.display_name}'s Random Treasure Chest"
                 description = f"Only you can claim this, <@{interaction.user.id}>!"
                 embed = discord.Embed(title=title, description=description, color=discord.Colour.purple()) 
-                embed.set_image(url="attachment://treasure_closed.jpg")
+                embed.set_image(url="attachment://treasure_closed.png")
                 
                 item = None
                 if loot_box.get_item_type() is not None:
                     item = self.item_manager.get_item(guild_id, loot_box.get_item_type())
                     
                 view = LootBoxMenu(self.event_manager, self.database, self.logger, item, interaction=interaction, parent_view=self)
-                treasure_close_img = discord.File("./img/treasure_closed.jpg", "treasure_closed.jpg")
+                treasure_close_img = discord.File("./img/treasure_closed.png", "treasure_closed.png")
                 
                 message = await interaction.followup.send(f"", embed=embed, view=view, files=[treasure_close_img])
                 new_user_balance = self.database.get_member_beans(guild_id, member_id)

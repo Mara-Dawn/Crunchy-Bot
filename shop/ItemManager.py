@@ -117,13 +117,13 @@ class ItemManager():
         title = "A Random Treasure has Appeared"
         description = "Quick, claim it before anyone else does!"
         embed = discord.Embed(title=title, description=description, color=discord.Colour.purple()) 
-        embed.set_image(url="attachment://treasure_closed.jpg")
+        embed.set_image(url="attachment://treasure_closed.png")
         item = None
         if loot_box.get_item_type() is not None:
             item = self.get_item(guild.id, loot_box.get_item_type())
         view = LootBoxMenu(self.event_manager, self.database, self.logger, item)
         
-        treasure_close_img = discord.File("./img/treasure_closed.jpg", "treasure_closed.jpg")
+        treasure_close_img = discord.File("./img/treasure_closed.png", "treasure_closed.png")
         
         channel = guild.get_channel(channel_id)
         
