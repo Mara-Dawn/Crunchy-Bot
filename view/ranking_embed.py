@@ -1,8 +1,8 @@
 from typing import Any
 
 import discord
+from discord.ext import commands
 
-from bot import CrunchyBot
 from bot_util import BotUtil
 from view.types import RankingType
 
@@ -29,7 +29,7 @@ class RankingEmbed(discord.Embed):
 
     def __init__(
         self,
-        bot: CrunchyBot,
+        bot: commands.Bot,
         interaction: discord.Interaction,
         ranking_type: RankingType,
         rankings: list[tuple[int, Any]],

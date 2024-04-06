@@ -5,9 +5,9 @@ from discord.ext import commands
 
 from bot_util import BotUtil
 from control.controller import Controller
+from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
-from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.jail import UserJail
 from datalayer.stats import UserStats
@@ -30,6 +30,7 @@ class EventManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
+        self.item_manager: ItemManager = self.controller.get_service(ItemManager)
         self.log_name = "Events"
 
     async def listen_for_event(self, event: BotEvent):
@@ -365,9 +366,7 @@ class EventManager(Service):
                 lootbox_purchases = self.database.get_lootbox_purchases_by_guild(
                     guild_id
                 )
-                loot_box_item = self.bot.item_manager.get_item(
-                    guild_id, ItemType.LOOTBOX
-                )
+                loot_box_item = self.item_manager.get_item(guild_id, ItemType.LOOTBOX)
                 for user_id, amount in lootbox_purchases.items():
                     if user_id in parsing_list:
                         parsing_list[user_id] -= amount * loot_box_item.get_cost()

@@ -157,5 +157,7 @@ class LootBoxViewController(ViewController):
         if owner_id is not None:
             new_user_balance = self.database.get_member_beans(guild_id, member_id)
 
-            event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance)
+            event = UIEvent(
+                UIEventType.SHOP_USER_REFRESH, (member_id, new_user_balance)
+            )
             await self.controller.dispatch_ui_event(event)
