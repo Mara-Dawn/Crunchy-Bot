@@ -258,7 +258,7 @@ class Jail(commands.Cog):
             if amount >= 0:
                 response += f'Their jail sentence was increased by `{time_readable}` {damage_info}. '
             elif amount < 0: 
-                response += f'Their jail sentence was reduced by `{abs(time_readable)}` {damage_info}. '
+                response += f'Their jail sentence was reduced by `{time_readable}` {damage_info}. '
             
             time_now = datetime.datetime.now()
             self.event_manager.dispatch_jail_event(time_now, guild_id, command_type, interaction.user.id, amount, affected_jail.get_id())
