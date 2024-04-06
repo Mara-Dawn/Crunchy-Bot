@@ -1,17 +1,20 @@
 import datetime
-from typing import Any, List, Tuple
+from typing import Any
+
 from discord.ext import commands
+
 from bot_util import BotUtil
 from control.controller import Controller
-from control.service import Service
 from control.logger import BotLogger
-from datalayer.jail import UserJail
+from control.service import Service
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
-from datalayer.types import UserInteraction
+from datalayer.jail import UserJail
 from datalayer.stats import UserStats
+from datalayer.types import UserInteraction
 from events.bot_event import BotEvent
 from events.jail_event import JailEvent
-from events.types import JailEventType, EventType
+from events.types import EventType, JailEventType
 from items.types import ItemType
 from view.types import RankingType
 
@@ -27,7 +30,6 @@ class EventManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
-        self.settings_manager = None
         self.log_name = "Events"
 
     async def listen_for_event(self, event: BotEvent):
@@ -257,7 +259,7 @@ class EventManager(Service):
 
     def __get_ranking_data_by_type(
         self, guild_id: int, outgoing: bool, interaction_type: UserInteraction
-    ) -> List[Tuple[int, Any]]:
+    ) -> list[tuple[int, Any]]:
         guild_interaction_events = self.database.get_guild_interaction_events(
             guild_id, interaction_type
         )
@@ -274,7 +276,7 @@ class EventManager(Service):
 
     def get_user_rankings(
         self, guild_id: int, ranking_type: RankingType
-    ) -> List[Tuple[int, Any]]:
+    ) -> list[tuple[int, Any]]:
         parsing_list = {}
         match ranking_type:
             case RankingType.SLAP:
@@ -367,7 +369,7 @@ class EventManager(Service):
                     guild_id, ItemType.LOOTBOX
                 )
                 for user_id, amount in lootbox_purchases.items():
-                    if user_id in parsing_list.keys():
+                    if user_id in parsing_list:
                         parsing_list[user_id] -= amount * loot_box_item.get_cost()
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True

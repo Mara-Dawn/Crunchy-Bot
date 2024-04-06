@@ -1,6 +1,5 @@
 import datetime
-
-from typing import Any, Dict
+from typing import Any
 
 
 class UserJail:
@@ -59,7 +58,7 @@ class UserJail:
         )
 
     @staticmethod
-    def from_db_row(row: Dict[str, Any]) -> "UserJail":
+    def from_db_row(row: dict[str, Any]) -> "UserJail":
         from datalayer.database import Database
 
         if row is None:

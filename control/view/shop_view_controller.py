@@ -1,36 +1,26 @@
 import datetime
+
 import discord
 from discord.ext import commands
-from control.view.lootbox_view_controller import LootBoxViewController
-from control.view.shop_response_view_controller import ShopResponseViewController
-from control.view.view_controller import ViewController
+
 from control.controller import Controller
-from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
-from control.role_manager import RoleManager
-from control.settings import SettingsManager
+from control.view.view_controller import ViewController
 from datalayer.database import Database
 from events.beans_event import BeansEvent
-from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.lootbox_event import LootBoxEvent
-from events.ui_event import UIEvent
 from events.types import BeansEventType, LootBoxEventType, UIEventType
+from events.ui_event import UIEvent
 from items.types import ItemGroup, ItemType
 from view.inventory_embed import InventoryEmbed
 from view.lootbox_view import LootBoxView
+from view.shop_color_select_view import ShopColorSelectView  # noqa: F401
+from view.shop_confirm_view import ShopConfirmView  # noqa: F401
+from view.shop_reaction_select_view import ShopReactionSelectView  # noqa: F401
 from view.shop_response_view import ShopResponseView
-
-
-# needed for global access
-# pylint: disable=unused-import
-from view.shop_user_select_view import ShopUserSelectView
-from view.shop_confirm_view import ShopConfirmView
-from view.shop_color_select_view import ShopColorSelectView
-from view.shop_reaction_select_view import ShopReactionSelectView
-
-# pylint: enable=unused-import
+from view.shop_user_select_view import ShopUserSelectView  # noqa: F401
 
 
 class ShopViewController(ViewController):
@@ -39,29 +29,39 @@ class ShopViewController(ViewController):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        settings: SettingsManager,
         database: Database,
-        event_manager: EventManager,
-        role_manager: RoleManager,
-        item_manager: ItemManager,
         controller: Controller,
     ):
         super().__init__(
-            bot, logger, settings, database, event_manager, role_manager, item_manager
+            bot,
+            logger,
+            database,
         )
         self.controller = controller
+        self.item_manager: ItemManager = controller.get_service(ItemManager)
 
-    async def listen_for_event(self, event: BotEvent):
-        pass
+    async def listen_for_ui_event(self, event: UIEvent):
+        match event.get_type():
+            case UIEventType.SHOP_BUY:
+                interaction = event.get_payload()[0]
+                selected_item = event.get_payload()[1]
+                self.buy(interaction, selected_item, event.get_view_id())
+            case UIEventType.SHOP_CHANGED:
+                guild_id = event.get_payload()[0]
+                member_id = event.get_payload()[1]
+                self.refresh_ui(guild_id, member_id, event.get_view_id())
+            case UIEventType.SHOW_INVENTORY:
+                interaction = event.get_payload()
+                self.send_inventory_message()(interaction)
 
-    async def refresh_ui(self, interaction: discord.Interaction):
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
+    async def refresh_ui(self, guild_id: int, member_id: int, view_id: int):
         new_user_balance = self.database.get_member_beans(guild_id, member_id)
-        event = UIEvent(guild_id, member_id, UIEventType.REFRESH_SHOP, new_user_balance)
+        event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance, view_id)
         await self.controller.dispatch_ui_event(event)
 
-    async def buy(self, interaction: discord.Interaction, selected: ItemType):
+    async def buy(
+        self, interaction: discord.Interaction, selected: ItemType, view_id: int
+    ):
 
         if selected is None:
             await interaction.response.send_message(
@@ -86,7 +86,7 @@ class ShopViewController(ViewController):
         if item.get_max_amount() is not None:
             item_count = 0
 
-            if item.get_type() in inventory_items.keys():
+            if item.get_type() in inventory_items:
                 item_count = inventory_items[item.get_type()]
 
             if item_count >= item.get_max_amount():
@@ -105,17 +105,14 @@ class ShopViewController(ViewController):
                 view_class_name = item.get_view_class()
 
                 view_class = globals()[view_class_name]
-                view_controller = self.controller.get_view_controller(
-                    ShopResponseViewController
-                )
-                view: ShopResponseView = view_class(view_controller, interaction, item)
+                view: ShopResponseView = view_class(self.controller, interaction, item)
 
                 message = await interaction.followup.send(
                     "", embed=embed, view=view, ephemeral=True
                 )
                 await view.set_message(message)
 
-                event = UIEvent(guild_id, member_id, UIEventType.DISABLE_SHOP, True)
+                event = UIEvent(UIEventType.SHOP_DISABLE, True, view_id)
                 await self.controller.dispatch_ui_event(event)
 
                 return
@@ -149,10 +146,7 @@ class ShopViewController(ViewController):
                         guild_id, loot_box.get_item_type()
                     )
 
-                view_controller = self.controller.get_view_controller(
-                    LootBoxViewController
-                )
-                view = LootBoxView(view_controller, owner_id=interaction.user.id)
+                view = LootBoxView(self.controller, owner_id=interaction.user.id)
 
                 treasure_close_img = discord.File(
                     "./img/treasure_closed.jpg", "treasure_closed.jpg"
@@ -163,9 +157,7 @@ class ShopViewController(ViewController):
                 )
                 new_user_balance = self.database.get_member_beans(guild_id, member_id)
 
-                event = UIEvent(
-                    guild_id, member_id, UIEventType.REFRESH_SHOP, new_user_balance
-                )
+                event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance)
                 await self.controller.dispatch_ui_event(event)
 
                 loot_box.set_message_id(message.id)
@@ -200,11 +192,20 @@ class ShopViewController(ViewController):
 
         await interaction.response.send_message(success_message, ephemeral=True)
 
-        event = UIEvent(guild_id, member_id, UIEventType.REFRESH_SHOP, new_user_balance)
+        event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance, view_id)
         await self.controller.dispatch_ui_event(event)
 
-    def get_inventory_embed(self, interaction: discord.Interaction):
+    async def send_inventory_message(self, interaction: discord.Interaction):
         inventory = self.item_manager.get_user_inventory(
             interaction.guild_id, interaction.user.id
         )
-        return InventoryEmbed(inventory)
+
+        police_img = discord.File("./img/police.png", "police.png")
+
+        embed = InventoryEmbed(inventory)
+
+        await interaction.followup.send(
+            "", embed=embed, files=[police_img], ephemeral=True
+        )
+
+        return

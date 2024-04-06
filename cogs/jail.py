@@ -14,7 +14,7 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
-from control.settings import SettingsManager
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.jail import UserJail
 from datalayer.types import UserInteraction
@@ -29,13 +29,15 @@ class Jail(commands.Cog):
     
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
-        self.logger: BotLogger = bot.logger
-        self.settings: SettingsManager = bot.settings
-        self.database: Database = bot.database
-        self.event_manager: EventManager = bot.event_manager
-        self.role_manager: RoleManager = bot.role_manager
-        self.item_manager: ItemManager = bot.item_manager
         self.controller: Controller = bot.controller
+        self.logger: BotLogger = bot.logger
+        self.database: Database = bot.database
+        self.item_manager: ItemManager = self.controller.get_service(ItemManager)
+        self.event_manager: EventManager = self.controller.get_service(EventManager)
+        self.role_manager: RoleManager = self.controller.get_service(RoleManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -44,13 +46,13 @@ class Jail(commands.Cog):
     
     def __has_mod_permission(self, interaction: discord.Interaction) -> bool:
         author_id = 90043934247501824
-        roles = self.settings.get_jail_mod_roles(interaction.guild_id)
+        roles = self.settings_manager.get_jail_mod_roles(interaction.guild_id)
         is_mod = len(set([x.id for x in interaction.user.roles]).intersection(roles)) > 0
         return interaction.user.id == author_id or interaction.user.guild_permissions.administrator or is_mod
     
     async def __check_enabled(self, interaction: discord.Interaction):
         guild_id = interaction.guild_id
-        if not self.settings.get_jail_enabled(guild_id):
+        if not self.settings_manager.get_jail_enabled(guild_id):
             await self.bot.command_response(self.__cog_name__, interaction, 'Jail module is currently disabled.')
             return False
         return True
@@ -171,8 +173,8 @@ class Jail(commands.Cog):
         
         affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
         
-        jail_role = self.settings.get_jail_role(guild_id)
-        jail_channels = self.settings.get_jail_channels(guild_id)
+        jail_role = self.settings_manager.get_jail_role(guild_id)
+        jail_channels = self.settings_manager.get_jail_channels(guild_id)
         
         if not(len(affected_jails) > 0 and user.get_role(jail_role) is not None and interaction.channel_id in jail_channels):
             return ''
@@ -206,12 +208,12 @@ class Jail(commands.Cog):
         
         match command_type:
             case UserInteraction.SLAP:
-                amount = self.settings.get_jail_slap_time(interaction.guild_id)
+                amount = self.settings_manager.get_jail_slap_time(interaction.guild_id)
             case UserInteraction.PET:
-                amount = -self.settings.get_jail_pet_time(interaction.guild_id)
+                amount = -self.settings_manager.get_jail_pet_time(interaction.guild_id)
             case UserInteraction.FART:
-                min_amount = (0 if stabilized else self.settings.get_jail_fart_min(interaction.guild_id))
-                max_amount = self.settings.get_jail_fart_max(interaction.guild_id)
+                min_amount = (0 if stabilized else self.settings_manager.get_jail_fart_min(interaction.guild_id))
+                max_amount = self.settings_manager.get_jail_fart_max(interaction.guild_id)
                 amount = random.randint(min_amount, max_amount)
                 if advantage:
                     amount_advantage = random.randint(min_amount, max_amount)
@@ -224,8 +226,8 @@ class Jail(commands.Cog):
         amount = int(amount * item_modifier)
         amount = max(amount, -int(remaining+1))
         
-        crit_mod = self.settings.get_jail_base_crit_mod(interaction.guild_id)
-        crit_rate = self.settings.get_jail_base_crit_rate(interaction.guild_id)
+        crit_mod = self.settings_manager.get_jail_base_crit_mod(interaction.guild_id)
+        crit_rate = self.settings_manager.get_jail_base_crit_rate(interaction.guild_id)
         
         is_crit = (random.random() <= crit_rate) or auto_crit
         
@@ -295,7 +297,7 @@ class Jail(commands.Cog):
         active_jails = self.database.get_active_jails_by_guild(guild_id)
         jailed_members = [jail.get_member_id() for jail in active_jails]
         
-        jail_role = self.settings.get_jail_role(guild_id)
+        jail_role = self.settings_manager.get_jail_role(guild_id)
         
         if user.id in jailed_members or user.get_role(jail_role) is not None:
             return False
@@ -317,7 +319,7 @@ class Jail(commands.Cog):
         active_jails = self.database.get_active_jails_by_guild(guild_id)
         jailed_members = [jail.get_member_id() for jail in active_jails]
         
-        jail_role = self.settings.get_jail_role(guild_id)
+        jail_role = self.settings_manager.get_jail_role(guild_id)
         
         if user.id not in jailed_members or user.get_role(jail_role) is None:
             return False
@@ -339,7 +341,7 @@ class Jail(commands.Cog):
         return response
     
     async def announce(self, guild: discord.Guild, message: str, *args, **kwargs) -> str:
-        jail_channels = self.settings.get_jail_channels(guild.id)
+        jail_channels = self.settings_manager.get_jail_channels(guild.id)
         
         for channel_id in jail_channels:
             channel = guild.get_channel(channel_id)
@@ -364,8 +366,8 @@ class Jail(commands.Cog):
                 if remaining > 0:
                     continue
                     
-                jail_role = self.settings.get_jail_role(guild_id)
-                jail_channels = self.settings.get_jail_channels(guild_id)
+                jail_role = self.settings_manager.get_jail_role(guild_id)
+                jail_channels = self.settings_manager.get_jail_channels(guild_id)
                 
                 await member.remove_roles(member.get_role(jail_role))
                 
@@ -412,7 +414,7 @@ class Jail(commands.Cog):
                 
                 continue
             
-            jail_role = self.settings.get_jail_role(guild_id)
+            jail_role = self.settings_manager.get_jail_role(guild_id)
         
             if member.get_role(jail_role) is None:
                 self.logger.log("init",f'Member {member.name} did not have the jail role, applying jail role now.', cog=self.__cog_name__)
@@ -468,7 +470,7 @@ class Jail(commands.Cog):
             return
         
         guild_id = interaction.guild_id
-        jail_role = self.settings.get_jail_role(guild_id)
+        jail_role = self.settings_manager.get_jail_role(guild_id)
         
         if user.get_role(jail_role) is None:
             await self.bot.command_response(self.__cog_name__, interaction, f'User {user.display_name} is currently not in jail.', args=[user])
@@ -497,49 +499,49 @@ class Jail(commands.Cog):
     @group.command(name="settings", description="Overview of all jail related settings and their current value.")
     @app_commands.check(__has_permission)
     async def get_settings(self, interaction: discord.Interaction):
-        output = self.settings.get_settings_string(interaction.guild_id, SettingsManager.JAIL_SUBSETTINGS_KEY)
+        output = self.settings_manager.get_settings_string(interaction.guild_id, SettingsManager.JAIL_SUBSETTINGS_KEY)
         await self.bot.command_response(self.__cog_name__, interaction, output)
     
     @group.command(name="toggle", description="Enable or disable the entire jail module.")
     @app_commands.describe(enabled='Turns the jail module on or off.')
     @app_commands.check(__has_permission)
     async def set_toggle(self, interaction: discord.Interaction, enabled: Literal['on', 'off']): 
-        self.settings.set_jail_enabled(interaction.guild_id, enabled == "on")
+        self.settings_manager.set_jail_enabled(interaction.guild_id, enabled == "on")
         await self.bot.command_response(self.__cog_name__, interaction, f'Jail module was turned {enabled}.', args=[enabled])
     
     @group.command(name="add_channel", description='Enable jail interactions for a channel.')
     @app_commands.describe(channel='The jail channel.')
     @app_commands.check(__has_permission)
     async def add_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
-        self.settings.add_jail_channel(interaction.guild_id, channel.id)
+        self.settings_manager.add_jail_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Added {channel.name} to jail channels.', args=[channel.name])
         
     @group.command(name="remove_channel", description='Disable jail interactions for a channel.')
     @app_commands.describe(channel='Removes this channel from the jail channels.')
     @app_commands.check(__has_permission)
     async def remove_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
-        self.settings.remove_jail_channel(interaction.guild_id, channel.id)
+        self.settings_manager.remove_jail_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Removed {channel.name} from jail channels.', args=[channel.name])
     
     @group.command(name="add_mod_role", description='Add jail privileges to a role.')
     @app_commands.describe(role='This role will be allowed to jail users.')
     @app_commands.check(__has_permission)
     async def add_mod_role(self, interaction: discord.Interaction, role: discord.Role):
-        self.settings.add_jail_mod_role(interaction.guild_id, role.id)
+        self.settings_manager.add_jail_mod_role(interaction.guild_id, role.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Added {role.name} to jail moderators.', args=[role.name])
         
     @group.command(name="remove_mod_role", description='Remove jail privileges from a role.')
     @app_commands.describe(role='Removes role from jail mods.')
     @app_commands.check(__has_permission)
     async def remove_mod_role(self, interaction: discord.Interaction, role: discord.Role):
-        self.settings.remove_jail_mod_role(interaction.guild_id, role.id)
+        self.settings_manager.remove_jail_mod_role(interaction.guild_id, role.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Removed {role.name} from jail moderators.', args=[role.name])
     
     @group.command(name="set_jailed_role", description="Sets the role for jailed people.")
     @app_commands.describe(role='The role for jailed users.')
     @app_commands.check(__has_permission)
     async def set_jailed_role(self, interaction: discord.Interaction, role: discord.Role):
-        self.settings.set_jail_role(interaction.guild_id, role.id)
+        self.settings_manager.set_jail_role(interaction.guild_id, role.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Jail role was set to `{role.name}` .', args=[role.name])
 
     
@@ -547,7 +549,7 @@ class Jail(commands.Cog):
     @app_commands.check(__has_permission)
     async def setup(self, interaction: discord.Interaction):
         guild_id = interaction.guild_id
-        modal = SettingsModal(self.bot, self.settings, self.__cog_name__, interaction.command.name, "Settings for Jail Features")
+        modal = SettingsModal(self.bot, self.settings_manager, self.__cog_name__, interaction.command.name, "Settings for Jail Features")
         
         modal.add_field(guild_id, SettingsManager.JAIL_SUBSETTINGS_KEY, SettingsManager.JAIL_SLAP_TIME_KEY, int)
         modal.add_field(guild_id, SettingsManager.JAIL_SUBSETTINGS_KEY, SettingsManager.JAIL_PET_TIME_KEY, int)

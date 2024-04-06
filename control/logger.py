@@ -1,7 +1,7 @@
-import pathlib
 import logging
-
+import pathlib
 from logging.handlers import TimedRotatingFileHandler
+
 from discord.ext import commands
 
 

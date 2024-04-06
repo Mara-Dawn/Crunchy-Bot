@@ -13,7 +13,7 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
-from control.settings import SettingsManager
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from events.beans_event import BeansEvent
 from events.types import BeansEventType
@@ -26,12 +26,14 @@ class Gamba(commands.Cog):
     def __init__(self, bot: CrunchyBot) -> None:
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
-        self.event_manager: EventManager = bot.event_manager
-        self.role_manager: RoleManager = bot.role_manager
-        self.item_manager: ItemManager = bot.item_manager
         self.controller: Controller = bot.controller
+        self.item_manager: ItemManager = self.controller.get_service(ItemManager)
+        self.event_manager: EventManager = self.controller.get_service(EventManager)
+        self.role_manager: RoleManager = self.controller.get_service(RoleManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -44,13 +46,15 @@ class Gamba(commands.Cog):
     async def __check_enabled(self, interaction: discord.Interaction) -> bool:
         guild_id = interaction.guild_id
 
-        if not self.settings.get_beans_enabled(guild_id):
+        if not self.settings_manager.get_beans_enabled(guild_id):
             await self.bot.command_response(
                 self.__cog_name__, interaction, "Beans module is currently disabled."
             )
             return False
 
-        if interaction.channel_id not in self.settings.get_beans_channels(guild_id):
+        if interaction.channel_id not in self.settings_manager.get_beans_channels(
+            guild_id
+        ):
             await self.bot.command_response(
                 self.__cog_name__,
                 interaction,
@@ -92,9 +96,9 @@ class Gamba(commands.Cog):
 
         guild_id = interaction.guild_id
         user_id = interaction.user.id
-        beans_gamba_min = self.settings.get_beans_gamba_min(guild_id)
-        beans_gamba_max = self.settings.get_beans_gamba_max(guild_id)
-        default_cooldown = self.settings.get_beans_gamba_cooldown(guild_id)
+        beans_gamba_min = self.settings_manager.get_beans_gamba_min(guild_id)
+        beans_gamba_max = self.settings_manager.get_beans_gamba_max(guild_id)
+        default_cooldown = self.settings_manager.get_beans_gamba_cooldown(guild_id)
         timestamp_now = int(datetime.datetime.now().timestamp())
 
         if amount is not None and not (
@@ -110,7 +114,7 @@ class Gamba(commands.Cog):
 
         await interaction.response.defer()
 
-        default_amount = self.settings.get_beans_gamba_cost(guild_id)
+        default_amount = self.settings_manager.get_beans_gamba_cost(guild_id)
 
         if amount is None:
             amount = default_amount
@@ -252,11 +256,11 @@ class Gamba(commands.Cog):
         beans_bonus_amount = 0
         match user_daily_gamba_count:
             case 10:
-                beans_bonus_amount = self.settings.get_beans_bonus_amount_10(
+                beans_bonus_amount = self.settings_manager.get_beans_bonus_amount_10(
                     interaction.guild_id
                 )
             case 25:
-                beans_bonus_amount = self.settings.get_beans_bonus_amount_25(
+                beans_bonus_amount = self.settings_manager.get_beans_bonus_amount_25(
                     interaction.guild_id
                 )
 
@@ -307,7 +311,7 @@ class Gamba(commands.Cog):
         guild_id = interaction.guild_id
         modal = SettingsModal(
             self.bot,
-            self.settings,
+            self.settings_manager,
             self.__cog_name__,
             interaction.command.name,
             "Settings for Gamba related Features",

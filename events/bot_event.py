@@ -1,6 +1,7 @@
 import datetime
 from abc import ABC, abstractmethod
-from typing import Any, List
+from typing import Any
+
 from events.types import EventType
 
 
@@ -38,5 +39,5 @@ class BotEvent(ABC):
         pass
 
     @abstractmethod
-    def get_type_specific_args(self) -> List[Any]:
+    def get_type_specific_args(self) -> list[Any]:
         pass

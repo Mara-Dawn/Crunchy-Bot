@@ -1,5 +1,5 @@
-from typing import Dict, List
 import discord
+
 from items.item import Item
 from items.types import ItemType
 
@@ -11,8 +11,8 @@ class UserInventory:
         guild_id: int,
         member: int,
         member_display_name: str,
-        items: List[Item],
-        inventory: Dict[ItemType, int],
+        items: list[Item],
+        inventory: dict[ItemType, int],
         balance=int,
         custom_name_color: str = None,
         bully_target_name: str = None,
@@ -37,11 +37,11 @@ class UserInventory:
     def get_display_name(self) -> str:
         return self.member_display_name
 
-    def get_items(self) -> List[Item]:
+    def get_items(self) -> list[Item]:
         return self.items
 
     def get_item_count(self, item_type: ItemType) -> int:
-        if item_type not in self.inventory.keys():
+        if item_type not in self.inventory:
             return 0
 
         return self.inventory[item_type]

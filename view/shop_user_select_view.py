@@ -1,15 +1,22 @@
 import discord
-from items.item import Item
 
-# pylint: disable-next=unused-import,W0614,W0401
-from view.shop_response_view import *
+from control.controller import Controller
+from events.types import UIEventType
+from events.ui_event import UIEvent
+from items.item import Item
+from view.shop_response_view import (
+    CancelButton,
+    ConfirmButton,
+    ShopResponseView,
+    UserPicker,
+)
 
 
 class ShopUserSelectView(ShopResponseView):
 
     def __init__(
         self,
-        controller: ShopResponseViewController,
+        controller: Controller,
         interaction: discord.Interaction,
         item: Item,
     ):
@@ -22,4 +29,10 @@ class ShopUserSelectView(ShopResponseView):
         self.refresh_elements()
 
     async def submit(self, interaction: discord.Interaction):
-        self.controller.submit_user_view(interaction, self)
+        data = self.get_data()
+        event = UIEvent(
+            UIEventType.SHOP_RESPONSE_USER_SUBMIT,
+            (interaction, data),
+            self.parent_id,
+        )
+        await self.controller.dispatch_ui_event(event)

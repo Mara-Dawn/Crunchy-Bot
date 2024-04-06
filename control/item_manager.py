@@ -1,28 +1,28 @@
-from typing import Dict, List
 import datetime
 import random
+
 import discord
 from discord.ext import commands
+
 from bot_util import BotUtil
 from control.controller import Controller
-from control.service import Service
 from control.logger import BotLogger
-from control.view.lootbox_view_controller import LootBoxViewController
+from control.service import Service
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
-from datalayer.lootbox import LootBox
 from datalayer.inventory import UserInventory
+from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, UserInteraction
-from view.lootbox_view import LootBoxView
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.lootbox_event import LootBoxEvent
 from events.types import LootBoxEventType
-from items import Item
-from items.types import ItemType
 
 # needed for global access
-# pylint: disable-next=unused-import,W0614,W0401
-from items import *
+from items import *  # noqa: F403
+from items.item import Item
+from items.types import ItemType
+from view.lootbox_view import LootBoxView
 
 
 class ItemManager(Service):
@@ -36,7 +36,7 @@ class ItemManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
-        self.settings_manager = None
+        self.settings_manager = self.controller.get_service(SettingsManager)
         self.log_name = "Items"
 
     async def listen_for_event(self, event: BotEvent):
@@ -45,11 +45,11 @@ class ItemManager(Service):
     def get_item(self, guild_id: int, item_type: ItemType) -> Item:
 
         item = globals()[item_type]
-        instance = item(self.settings.get_shop_item_price(guild_id, item_type))
+        instance = item(self.settings_manager.get_shop_item_price(guild_id, item_type))
 
         return instance
 
-    def get_items(self, guild_id: int) -> List[Item]:
+    def get_items(self, guild_id: int) -> list[Item]:
         items = [x.value for x in ItemType]
         output = []
         for item_type in items:
@@ -73,7 +73,7 @@ class ItemManager(Service):
         ]
 
         weights = [self.get_item(guild_id, x).get_cost() for x in item_pool]
-        chance_for_item = self.settings.get_setting(
+        chance_for_item = self.settings_manager.get_setting(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_LOOTBOX_RARE_CHANCE_KEY,
@@ -82,12 +82,12 @@ class ItemManager(Service):
         chance_for_bonus_beans = 0.2
         random_item = None
 
-        min_beans = self.settings.get_setting(
+        min_beans = self.settings_manager.get_setting(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_LOOTBOX_MIN_BEANS_KEY,
         )
-        max_beans = self.settings.get_setting(
+        max_beans = self.settings_manager.get_setting(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_LOOTBOX_MAX_BEANS_KEY,
@@ -123,8 +123,7 @@ class ItemManager(Service):
         )
         embed.set_image(url="attachment://treasure_closed.jpg")
 
-        view_controller = self.controller.get_view_controller(LootBoxViewController)
-        view = LootBoxView(view_controller)
+        view = LootBoxView(self.controller)
 
         treasure_close_img = discord.File(
             "./img/treasure_closed.jpg", "treasure_closed.jpg"
@@ -153,7 +152,7 @@ class ItemManager(Service):
 
         inventory_items = []
 
-        for item_type in item_data.keys():
+        for item_type in item_data:
             item = self.get_item(guild_id, item_type)
             inventory_items.append(item)
 
@@ -179,7 +178,7 @@ class ItemManager(Service):
 
     def get_user_items_activated_by_interaction(
         self, guild_id: int, user_id: int, action: UserInteraction
-    ) -> List[Item]:
+    ) -> list[Item]:
         trigger = None
 
         match action:
@@ -194,7 +193,7 @@ class ItemManager(Service):
 
     def get_user_items_activated(
         self, guild_id: int, user_id: int, action: ItemTrigger
-    ) -> List[Item]:
+    ) -> list[Item]:
         inventory_items = self.database.get_item_counts_by_user(guild_id, user_id)
 
         output = []
@@ -212,9 +211,9 @@ class ItemManager(Service):
 
     async def get_guild_items_activated(
         self, guild_id: int, trigger: ItemTrigger
-    ) -> Dict[int, List[Item]]:
+    ) -> dict[int, list[Item]]:
         guild_item_counts = self.database.get_item_counts_by_guild(guild_id)
-        items: Dict[int, List[Item]] = {}
+        items: dict[int, list[Item]] = {}
 
         for user_id, item_counts in guild_item_counts.items():
             for item_type, count in item_counts.items():

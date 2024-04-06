@@ -25,8 +25,8 @@ class Lottery(BeansGroup):
 
     async def __draw_lottery(self, guild: discord.Guild) -> None:
         guild_id = guild.id
-        base_pot = self.settings.get_beans_lottery_base_amount(guild_id)
-        bean_channels = self.settings.get_beans_channels(guild_id)
+        base_pot = self.settings_manager.get_beans_lottery_base_amount(guild_id)
+        bean_channels = self.settings_manager.get_beans_channels(guild_id)
         allowed_mentions = discord.AllowedMentions(roles=True)
         lottery_data = self.database.get_lottery_data(guild_id)
         total_pot = base_pot
@@ -102,7 +102,7 @@ class Lottery(BeansGroup):
             return
 
         for guild in self.bot.guilds:
-            if not self.settings.get_beans_enabled(guild.id):
+            if not self.settings_manager.get_beans_enabled(guild.id):
                 self.logger.log("sys", "Beans module disabled.", cog=self.__cog_name__)
                 return
 
@@ -115,7 +115,7 @@ class Lottery(BeansGroup):
     @app_commands.guild_only()
     async def lottery(self, interaction: discord.Interaction):
         guild_id = interaction.guild_id
-        base_pot = self.settings.get_beans_lottery_base_amount(guild_id)
+        base_pot = self.settings_manager.get_beans_lottery_base_amount(guild_id)
 
         lottery_data = self.database.get_lottery_data(guild_id)
         total_pot = base_pot

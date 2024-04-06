@@ -1,5 +1,5 @@
-from typing import List
 import discord
+
 from items.item import Item
 
 
@@ -8,7 +8,7 @@ class ShopEmbed(discord.Embed):
     ITEMS_PER_PAGE = 5
 
     def __init__(
-        self, guild_name: str, user_id: int, items: List[Item], start_offset: int = 0
+        self, guild_name: str, user_id: int, items: list[Item], start_offset: int = 0
     ):
         description = "Spend your hard earned beans!\n"
         description += f"Only <@{user_id}> can interact here.\n"

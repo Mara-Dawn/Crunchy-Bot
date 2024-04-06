@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Dict
+from typing import Any  # noqa: UP035
 
 
 class Quote:
@@ -54,7 +54,7 @@ class Quote:
         return self.quote_id
 
     @staticmethod
-    def from_db_row(row: Dict[str, Any]) -> "Quote":
+    def from_db_row(row: dict[str, Any]) -> "Quote":
         from datalayer.database import Database
 
         if row is None:

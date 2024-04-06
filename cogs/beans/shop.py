@@ -10,7 +10,7 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
-from control.settings import SettingsManager
+from control.settings_manager import SettingsManager
 from control.view.shop_view_controller import ShopViewController
 from datalayer.database import Database
 from datalayer.types import ItemTrigger
@@ -25,11 +25,13 @@ class Shop(commands.Cog):
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
-        self.event_manager: EventManager = bot.event_manager
-        self.item_manager: ItemManager = bot.item_manager
         self.controller: Controller = bot.controller
+        self.item_manager: ItemManager = self.controller.get_service(ItemManager)
+        self.event_manager: EventManager = self.controller.get_service(EventManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -42,7 +44,7 @@ class Shop(commands.Cog):
     async def __check_enabled(self, interaction: discord.Interaction):
         guild_id = interaction.guild_id
 
-        if not self.settings.get_shop_enabled(guild_id):
+        if not self.settings_manager.get_shop_enabled(guild_id):
             await self.bot.command_response(
                 self.__cog_name__,
                 interaction,
@@ -50,7 +52,9 @@ class Shop(commands.Cog):
             )
             return False
 
-        if interaction.channel_id not in self.settings.get_beans_channels(guild_id):
+        if interaction.channel_id not in self.settings_manager.get_beans_channels(
+            guild_id
+        ):
             await self.bot.command_response(
                 self.__cog_name__,
                 interaction,
@@ -90,7 +94,7 @@ class Shop(commands.Cog):
         self.logger.log("sys", "Daily Item Check started.", cog=self.__cog_name__)
 
         for guild in self.bot.guilds:
-            if not self.settings.get_beans_enabled(guild.id):
+            if not self.settings_manager.get_beans_enabled(guild.id):
                 self.logger.log("sys", "Beans module disabled.", cog=self.__cog_name__)
                 return
 
@@ -163,7 +167,7 @@ class Shop(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def get_settings(self, interaction: discord.Interaction):
-        output = self.settings.get_settings_string(
+        output = self.settings_manager.get_settings_string(
             interaction.guild_id, SettingsManager.SHOP_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
@@ -177,7 +181,7 @@ class Shop(commands.Cog):
     async def set_toggle(
         self, interaction: discord.Interaction, enabled: Literal["on", "off"]
     ):
-        self.settings.set_shop_enabled(interaction.guild_id, enabled == "on")
+        self.settings_manager.set_shop_enabled(interaction.guild_id, enabled == "on")
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -198,7 +202,9 @@ class Shop(commands.Cog):
         item: ItemType,
         amount: app_commands.Range[int, 1],
     ):
-        self.settings.set_shop_item_price(interaction.guild_id, item.value, amount)
+        self.settings_manager.set_shop_item_price(
+            interaction.guild_id, item.value, amount
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,

@@ -1,19 +1,27 @@
 import discord
+
+from control.controller import Controller
+from events.types import UIEventType
+from events.ui_event import UIEvent
 from items.item import Item
+from view.shop_response_view import (
+    AmountInput,
+    CancelButton,
+    ConfirmButton,
+    ShopResponseView,
+)
 
-# pylint: disable-next=unused-import,W0614,W0401
-from view.shop_response_view import *
 
-
-class ShopConfirmView(ShopResponseView):
+class ShopConfirmView(ShopResponseView):  # noqa: F405
 
     def __init__(
         self,
-        controller: ShopResponseViewController,
+        controller: Controller,
         interaction: discord.Interaction,
         item: Item,
+        parent_id: int,
     ):
-        super().__init__(controller, interaction, item)
+        super().__init__(controller, interaction, item, parent_id)
 
         self.amount_select = AmountInput()
         self.confirm_button = ConfirmButton()
@@ -22,4 +30,10 @@ class ShopConfirmView(ShopResponseView):
         self.refresh_elements()
 
     async def submit(self, interaction: discord.Interaction):
-        self.controller.submit_confirm_view(interaction, self)
+        data = self.get_data()
+        event = UIEvent(
+            UIEventType.SHOP_RESPONSE_CONFIRM_SUBMIT,
+            (interaction, data),
+            self.parent_id,
+        )
+        await self.controller.dispatch_ui_event(event)

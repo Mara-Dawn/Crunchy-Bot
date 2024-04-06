@@ -1,12 +1,12 @@
-from typing import List, Type
 from discord.ext import commands
+
 from control.logger import BotLogger
-from control.settings import SettingsManager
 from control.service import Service
 from control.view.view_controller import ViewController
 from datalayer.database import Database
 from events.bot_event import BotEvent
 from events.ui_event import UIEvent
+from view.view_menu import ViewMenu
 
 
 class Controller:
@@ -16,21 +16,20 @@ class Controller:
         bot: commands.Bot,
         logger: BotLogger,
         database: Database,
-        settings: SettingsManager,
     ):
         self.bot = bot
         self.logger = logger
         self.database = database
-        self.settings = settings
 
-        self.services: List[Service] = []
-        self.view_controllers: List[ViewController] = []
+        self.services: list[Service] = []
+        self.view_controllers: list[ViewController] = []
+        self.views: list[ViewMenu] = []
 
-    def register_service(self, service: Service):
-        self.services.append(service)
+    def register_view(self, view: ViewMenu):
+        self.views.append(view)
 
-    def register_view_controller(self, view_controller: ViewController):
-        self.view_controllers.append(view_controller)
+    def detach_view(self, view: ViewMenu):
+        self.views.remove(view)
 
     async def dispatch_event(self, event: BotEvent):
         for service in self.services:
@@ -41,8 +40,19 @@ class Controller:
     async def dispatch_ui_event(self, event: UIEvent):
         for view_controller in self.view_controllers:
             await view_controller.listen_for_ui_event(event)
+        for view in self.views:
+            await view.listen_for_ui_event(event)
 
-    def get_view_controller(self, controller: Type[ViewController]) -> ViewController:
+    def get_service(self, service_class: type[Service]) -> Service:
+        for service in self.services:
+            if isinstance(service, service_class):
+                return service
+
+        new_service = service_class(self.bot, self.logger, self.database, self)
+        self.services.append(new_service)
+        return new_service
+
+    def get_view_controller(self, controller: type[ViewController]) -> ViewController:
         for view_controller in self.view_controllers:
             if isinstance(controller, view_controller):
                 return view_controller

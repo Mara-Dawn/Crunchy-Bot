@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 
 from bot import CrunchyBot
 from cogs.beans.beans_group import BeansGroup
-from control.settings import SettingsManager
+from control.settings_manager import SettingsManager
 from view.settings_modal import SettingsModal
 
 
@@ -27,12 +27,12 @@ class RandomLoot(BeansGroup):
         )
 
     def __reevaluate_next_lootbox(self, guild_id: int) -> None:
-        min_wait = self.settings.get_setting(
+        min_wait = self.settings_manager.get_setting(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_LOOTBOX_MIN_WAIT_KEY,
         )
-        max_wait = self.settings.get_setting(
+        max_wait = self.settings_manager.get_setting(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
@@ -76,7 +76,7 @@ class RandomLoot(BeansGroup):
             self.logger.log("sys", "Lootbox timeout reached.", cog=self.__cog_name__)
             self.__reevaluate_next_lootbox(guild.id)
 
-            bean_channels = self.settings.get_beans_channels(guild.id)
+            bean_channels = self.settings_manager.get_beans_channels(guild.id)
             if len(bean_channels) == 0:
                 continue
             await self.item_manager.drop_loot_box(guild, secrets.choice(bean_channels))
@@ -86,12 +86,12 @@ class RandomLoot(BeansGroup):
         self.logger.log("sys", "Lootbox before loop started.", cog=self.__cog_name__)
 
         for guild in self.bot.guilds:
-            min_wait = self.settings.get_setting(
+            min_wait = self.settings_manager.get_setting(
                 guild.id,
                 SettingsManager.BEANS_SUBSETTINGS_KEY,
                 SettingsManager.BEANS_LOOTBOX_MIN_WAIT_KEY,
             )
-            max_wait = self.settings.get_setting(
+            max_wait = self.settings_manager.get_setting(
                 guild.id,
                 SettingsManager.BEANS_SUBSETTINGS_KEY,
                 SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
@@ -133,7 +133,7 @@ class RandomLoot(BeansGroup):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def spawn_lootbox(self, interaction: discord.Interaction):
-        bean_channels = self.settings.get_beans_channels(interaction.guild_id)
+        bean_channels = self.settings_manager.get_beans_channels(interaction.guild_id)
         if len(bean_channels) == 0:
             await self.bot.command_response(
                 self.__cog_name__, interaction, "Error: No beans channel set."
@@ -157,7 +157,7 @@ class RandomLoot(BeansGroup):
         guild_id = interaction.guild_id
         modal = SettingsModal(
             self.bot,
-            self.settings,
+            self.settings_manager,
             self.__cog_name__,
             interaction.command.name,
             "Settings for Lootbox related Features",

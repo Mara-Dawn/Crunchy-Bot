@@ -11,7 +11,7 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
-from control.settings import SettingsManager
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.types import UserInteraction
 from events.interaction_event import InteractionEvent
@@ -23,11 +23,13 @@ class Interactions(commands.Cog):
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
-        self.event_manager: EventManager = bot.event_manager
-        self.item_manager: ItemManager = bot.item_manager
         self.controller: Controller = bot.controller
+        self.item_manager: ItemManager = self.controller.get_service(ItemManager)
+        self.event_manager: EventManager = self.controller.get_service(EventManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
 
         self.ctx_menu = app_commands.ContextMenu(
             name="Slap",
@@ -68,7 +70,7 @@ class Interactions(commands.Cog):
     async def __check_enabled(self, interaction: discord.Interaction) -> bool:
         guild_id = interaction.guild_id
 
-        if not self.settings.get_jail_enabled(guild_id):
+        if not self.settings_manager.get_jail_enabled(guild_id):
             await self.bot.command_response(
                 self.__cog_name__, interaction, "Jail module is currently disabled."
             )

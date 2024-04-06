@@ -1,10 +1,13 @@
 
-from typing import Any, List
+from typing import Any
+
 import discord
+
 from datalayer.types import ItemTrigger
 from items.types import ItemGroup, ItemType, ShopCategory
 
-class Item():
+
+class Item:
 
     def __init__(
         self,
@@ -20,7 +23,7 @@ class Item():
         allow_amount: bool = False,
         base_amount: int = 1,
         max_amount: int = None,
-        trigger: List[ItemTrigger] = None
+        trigger: list[ItemTrigger] = None
     ):
         self.name = name
         self.type = item_type
@@ -77,7 +80,9 @@ class Item():
             return False
         return action in self.trigger
     
-    def get_embed(self, color=discord.Colour.purple(), amount_in_cart: int = 1) -> discord.Embed:
+    def get_embed(self, color=None, amount_in_cart: int = 1) -> discord.Embed:
+        if color is None:
+            color=discord.Colour.purple()
         title = f'> {self.get_emoji()} {self.get_name()} {self.get_emoji()}'
         description = self.get_description()
         max_width = 54
@@ -101,10 +106,7 @@ class Item():
             spacing = max_width - len(description)
             description += ' '*spacing
             
-        if count is None:
-            suffix = f'🅱️{self.get_cost()}'
-        else:
-            suffix = f'amount: {count}'
+        suffix = f'🅱️{self.get_cost()}' if count is None else f'amount: {count}'
         spacing = max_width - len(suffix)
         info_block = f'```python\n"{description}"\n\n{' '*spacing}{suffix}```'
         

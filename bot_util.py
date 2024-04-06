@@ -1,5 +1,6 @@
-from typing import Any, Dict
 import json
+from typing import Any
+
 import requests
 from discord.ext import commands
 
@@ -61,8 +62,8 @@ class BotUtil:
         return name
 
     @staticmethod
-    def dict_append(dictionary: Dict, key: Any, value: Any, mode="add") -> None:
-        if key not in dictionary.keys():
+    def dict_append(dictionary: dict, key: Any, value: Any, mode="add") -> None:
+        if key not in dictionary:
             dictionary[key] = value
         else:
             match mode:
@@ -72,7 +73,7 @@ class BotUtil:
                     dictionary[key] += value
 
 
-class Tenor(object):
+class Tenor:
     def __init__(self, token) -> None:
         self.api_key = token
 

@@ -1,8 +1,10 @@
-from typing import List
+import contextlib
+
 import discord
-from control.view.shop_view_controller import ShopViewController
-from events.ui_event import UIEvent
+
+from control.controller import Controller
 from events.types import UIEventType
+from events.ui_event import UIEvent
 from items.item import Item
 from items.types import ItemType
 from view.shop_embed import ShopEmbed
@@ -13,9 +15,9 @@ class ShopView(ViewMenu):
 
     def __init__(
         self,
-        controller: ShopViewController,
+        controller: Controller,
         interaction: discord.Interaction,
-        items: List[Item],
+        items: list[Item],
         user_balance: int,
     ):
         super().__init__(timeout=300)
@@ -34,34 +36,42 @@ class ShopView(ViewMenu):
         self.message = None
         self.user_balance = user_balance
         self.controller.register_view(self)
-        self.controller.refresh_ui(interaction)
+        self.refresh_elements()
 
     async def listen_for_ui_event(self, event: UIEvent):
-        if (
-            event.get_guild_id() != self.guild_id
-            or event.get_member_id() != self.member_id
-        ):
+        if event.get_view_id() != self.id:
             return
 
         match event.get_type():
-            case UIEventType.REFRESH_SHOP:
+            case UIEventType.SHOP_REFRESH:
                 await self.refresh_ui(user_balance=event.get_payload(), disabled=False)
-            case UIEventType.DISABLE_SHOP:
+            case UIEventType.SHOP_DISABLE:
                 await self.refresh_ui(disabled=event.get_payload())
 
     def set_message(self, message: discord.Message):
         self.message = message
 
     async def buy(self, interaction: discord.Interaction):
-        if not await self.controller.interaction_check(interaction, self.member_id):
-            return
-        await self.controller.buy(interaction, self.selected)
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.SHOP_BUY,
+            (interaction, self.selected),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
 
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
+        await interaction.response.defer()
+        if not await self.interaction_check(interaction, self.member_id):
+            return
         self.current_page = (self.current_page + (1 if right else -1)) % self.page_count
         self.selected = None
-        self.controller.refresh_ui(interaction)
-        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.SHOP_CHANGED,
+            (self.guild_id, self.member_id),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
 
     def refresh_elements(self, user_balance: int = None, disabled: bool = False):
         start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
@@ -83,21 +93,18 @@ class ShopView(ViewMenu):
         self.refresh_elements(user_balance, disabled)
         start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
         embed = ShopEmbed(self.guild_name, self.member_id, self.items, start)
-        await self.message(embed=embed, view=self)
+        await self.message.edit(embed=embed, view=self)
 
     async def set_selected(self, interaction: discord.Interaction, item_type: ItemType):
         self.selected = item_type
         await interaction.response.defer()
 
-    # pylint: disable-next=arguments-differ
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return await self.controller.interaction_check(interaction, self.member_id)
+        super().interaction_check(interaction, self.member_id)
 
     async def on_timeout(self):
-        try:
+        with contextlib.suppress(discord.HTTPException):
             await self.message.edit(view=None)
-        except discord.HTTPException:
-            pass
         self.controller.detach_view(self)
 
 
@@ -140,8 +147,7 @@ class CurrentPageButton(discord.ui.Button):
 
 class BalanceButton(discord.ui.Button):
 
-    def __init__(self, controller: ShopViewController, balance: int):
-        self.controller = controller
+    def __init__(self, balance: int):
         self.balance = balance
         super().__init__(label=f"🅱️{balance}", style=discord.ButtonStyle.blurple, row=1)
 
@@ -150,18 +156,13 @@ class BalanceButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await interaction.response.defer(ephemeral=True)
-
-            police_img = discord.File("./img/police.png", "police.png")
-            embed = self.controller.get_inventory_embed(interaction)
-
-            await interaction.followup.send(
-                "", embed=embed, files=[police_img], ephemeral=True
-            )
+            event = UIEvent(UIEventType.SHOW_INVENTORY, interaction)
+            await view.controller.dispatch_ui_event(event)
 
 
 class Dropdown(discord.ui.Select):
 
-    def __init__(self, items: List[Item], selected: ItemType, disabled: bool = False):
+    def __init__(self, items: list[Item], selected: ItemType, disabled: bool = False):
 
         options = []
 

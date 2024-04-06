@@ -1,21 +1,31 @@
 import discord
-from items.item import Item
 
-# pylint: disable-next=unused-import,W0614,W0401
-from view.shop_response_view import *
+from control.controller import Controller
+from events.types import UIEventType
+from events.ui_event import UIEvent
+from items.item import Item
+from view.shop_response_view import (
+    AmountInput,
+    CancelButton,
+    ConfirmButton,
+    ReactionInputButton,
+    ShopResponseView,
+    UserPicker,
+)
+from view.types import EmojiType
 
 
 class ShopReactionSelectView(ShopResponseView):
 
     def __init__(
         self,
-        controller: ShopResponseViewController,
+        controller: Controller,
         interaction: discord.Interaction,
         item: Item,
     ):
         super().__init__(controller, interaction, item)
 
-        _, default_emoji = self.controller.get_bully_react(
+        _, default_emoji = self.controller.database.get_bully_react(
             interaction.guild_id, interaction.user.id
         )
 
@@ -33,4 +43,10 @@ class ShopReactionSelectView(ShopResponseView):
         self.refresh_elements()
 
     async def submit(self, interaction: discord.Interaction):
-        self.controller.submit_generic_view(interaction, self)
+        data = self.get_data()
+        event = UIEvent(
+            UIEventType.SHOP_RESPONSE_REACTION_SUBMIT,
+            (interaction, data),
+            self.parent_id,
+        )
+        await self.controller.dispatch_ui_event(event)

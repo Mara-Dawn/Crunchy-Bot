@@ -7,7 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from cogs.beans.beans_group import BeansGroup
-from control.settings import SettingsManager
+from control.settings_manager import SettingsManager
 from events.beans_event import BeansEvent
 from events.types import BeansEventType
 from view.settings_modal import SettingsModal
@@ -26,13 +26,15 @@ class BeansBasics(BeansGroup):
     async def __check_enabled(self, interaction: discord.Interaction) -> bool:
         guild_id = interaction.guild_id
 
-        if not self.settings.get_beans_enabled(guild_id):
+        if not self.settings_manager.get_beans_enabled(guild_id):
             await self.bot.command_response(
                 self.__cog_name__, interaction, "Beans module is currently disabled."
             )
             return False
 
-        if interaction.channel_id not in self.settings.get_beans_channels(guild_id):
+        if interaction.channel_id not in self.settings_manager.get_beans_channels(
+            guild_id
+        ):
             await self.bot.command_response(
                 self.__cog_name__,
                 interaction,
@@ -73,8 +75,8 @@ class BeansBasics(BeansGroup):
                 )
                 return
 
-        beans_daily_min = self.settings.get_beans_daily_min(guild_id)
-        beans_daily_max = self.settings.get_beans_daily_max(guild_id)
+        beans_daily_min = self.settings_manager.get_beans_daily_min(guild_id)
+        beans_daily_max = self.settings_manager.get_beans_daily_max(guild_id)
 
         amount = random.randint(beans_daily_min, beans_daily_max)
 
@@ -209,7 +211,7 @@ class BeansBasics(BeansGroup):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def get_settings(self, interaction: discord.Interaction) -> None:
-        output = self.settings.get_settings_string(
+        output = self.settings_manager.get_settings_string(
             interaction.guild_id, SettingsManager.BEANS_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
@@ -223,7 +225,7 @@ class BeansBasics(BeansGroup):
     async def set_toggle(
         self, interaction: discord.Interaction, enabled: typing.Literal["on", "off"]
     ) -> None:
-        self.settings.set_beans_enabled(interaction.guild_id, enabled == "on")
+        self.settings_manager.set_beans_enabled(interaction.guild_id, enabled == "on")
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -241,7 +243,7 @@ class BeansBasics(BeansGroup):
         guild_id = interaction.guild_id
         modal = SettingsModal(
             self.bot,
-            self.settings,
+            self.settings_manager,
             self.__cog_name__,
             interaction.command.name,
             "Settings for Daily Beans related Features",
@@ -288,7 +290,7 @@ class BeansBasics(BeansGroup):
     async def add_channel(
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ) -> None:
-        self.settings.add_beans_channel(interaction.guild_id, channel.id)
+        self.settings_manager.add_beans_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -304,7 +306,7 @@ class BeansBasics(BeansGroup):
     async def remove_channel(
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ) -> None:
-        self.settings.remove_beans_channel(interaction.guild_id, channel.id)
+        self.settings_manager.remove_beans_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(
             self.__cog_name__,
             interaction,

@@ -43,8 +43,18 @@ class LootBoxEventType(str, Enum):
 
 
 class UIEventType(str, Enum):
-    REFRESH_SHOP = "refresh_shop"
-    DISABLE_SHOP = "disable_shop"
-    REFRESH_SHOP_RESPONSE = "refresh_shop_response"
-    DISABLE_SHOP_RESPONSE = "disable_shop_response"
-    UPDATE_SHOP_RESPONSE_EMOJI = "update_shop_response_emoji"
+    STOP_INTERACTIONS = "stop_interactions"
+    SHOW_INVENTORY = "show_inventory"
+    SHOP_BUY = "shop_buy"
+    SHOP_CHANGED = "shop_changed"
+    SHOP_REFRESH = "refresh_shop"
+    SHOP_DISABLE = "disable_shop"
+    SHOP_RESPONSE_REFRESH = "refresh_shop_response"
+    SHOP_RESPONSE_DISABLE = "disable_shop_response"
+    SHOP_RESPONSE_EMOJI_UPDATE = "update_shop_response_emoji"
+    SHOP_RESPONSE_CONFIRM_SUBMIT = "shop_response_confirm_submit"
+    SHOP_RESPONSE_USER_SUBMIT = "shop_response_user_submit"
+    SHOP_RESPONSE_COLOR_SUBMIT = "shop_response_color_submit"
+    SHOP_RESPONSE_REACTION_SUBMIT = "shop_response_reaction_submit"
+    REACTION_SELECTED = "reaction_selected"
+    CLAIM_LOOTBOX = "claim_lootbox"

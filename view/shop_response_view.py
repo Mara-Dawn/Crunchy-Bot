@@ -1,9 +1,11 @@
+import contextlib
 import re
-from typing import List
+
 import discord
-from control.view.shop_response_view_controller import ShopResponseViewController
-from events.ui_event import UIEvent
+
+from control.controller import Controller
 from events.types import UIEventType
+from events.ui_event import UIEvent
 from items.item import Item
 from view.types import EmojiType
 from view.view_menu import ViewMenu
@@ -13,13 +15,15 @@ class ShopResponseView(ViewMenu):
 
     def __init__(
         self,
-        controller: ShopResponseViewController,
+        controller: Controller,
         interaction: discord.Interaction,
         item: Item,
+        parent_id: int,
     ):
         super().__init__(timeout=200)
 
         self.controller = controller
+        self.parent_id = parent_id
         self.type = None
         if item is not None:
             self.type = item.get_type()
@@ -45,18 +49,15 @@ class ShopResponseView(ViewMenu):
         self.controller.register_view(self)
 
     async def listen_for_ui_event(self, event: UIEvent):
-        if (
-            event.get_guild_id() != self.guild_id
-            or event.get_member_id() != self.member_id
-        ):
+        if event.get_view_id() != self.id:
             return
 
         match event.get_type():
-            case UIEventType.REFRESH_SHOP_RESPONSE:
+            case UIEventType.SHOP_RESPONSE_REFRESH:
                 await self.refresh_ui()
-            case UIEventType.DISABLE_SHOP_RESPONSE:
+            case UIEventType.SHOP_RESPONSE_DISABLE:
                 await self.refresh_ui(disabled=event.get_payload())
-            case UIEventType.UPDATE_SHOP_RESPONSE_EMOJI:
+            case UIEventType.SHOP_RESPONSE_EMOJI_UPDATE:
                 self.selected_emoji = event.get_payload()[0]
                 self.selected_emoji_type = event.get_payload()[1]
                 await self.refresh_ui()
@@ -65,7 +66,7 @@ class ShopResponseView(ViewMenu):
         pass
 
     def refresh_elements(self, disabled: bool = False):
-        elements: List[discord.ui.Item] = [
+        elements: list[discord.ui.Item] = [
             self.user_select,
             self.amount_select,
             self.color_input_button,
@@ -134,15 +135,34 @@ class ShopResponseView(ViewMenu):
 
     # pylint: disable-next=arguments-differ
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return await self.controller.interaction_check(interaction, self.member_id)
+        super().interaction_check(interaction, self.member_id)
+
+    def get_data(self):
+        return ShopResponseData(
+            item=self.item,
+            selected_user=self.selected_user,
+            selected_amount=self.selected_amount,
+            selected_color=self.selected_color,
+            selected_emoji=self.selected_emoji,
+            selected_emoji_type=self.selected_emoji_type,
+            confirm_button=self.confirm_button,
+            cancel_button=self.cancel_button,
+            user_select=self.user_select,
+            color_input_button=self.color_input_button,
+            amount_select=self.amount_select,
+            reaction_input_button=self.reaction_input_button,
+        )
 
     async def on_timeout(self):
-        try:
+        with contextlib.suppress(discord.NotFound):
             await self.message.delete()
-        except discord.NotFound:
-            pass
 
-        self.controller.refresh_shop_view(self.guild_id, self.member_id)
+        event = UIEvent(
+            UIEventType.SHOP_CHANGED,
+            (self.guild_id, self.member_id),
+            self.parent_id,
+        )
+        await self.controller.dispatch_ui_event(event)
         self.controller.detach_view(self)
 
 
@@ -271,29 +291,73 @@ class ReactionInputView(ShopResponseView):
 
     def __init__(
         self,
-        controller: ShopResponseViewController,
+        controller: Controller,
         interaction: discord.Interaction,
         item: Item,
+        parent_id: int,
     ):
-        super().__init__(controller, interaction, item)
-        self.controller = controller
+        super().__init__(controller, interaction, item, parent_id)
 
         self.confirm_button = ConfirmButton("Confirm")
         self.cancel_button = CancelButton()
 
         self.refresh_elements()
+        self.controller.register_view(self)
 
     async def listen_for_ui_event(self, event: UIEvent):
         pass
 
     async def submit(self, interaction: discord.Interaction):
-        self.controller.submit_reaction_selection(interaction, self.message)
+        if await self.interaction_check(interaction):
+            event = UIEvent(
+                UIEventType.REACTION_SELECTED,
+                (interaction, self.message),
+                self.parent_id,
+            )
+            await self.controller.dispatch_ui_event(event)
 
     async def on_timeout(self):
-        try:
+        with contextlib.suppress(discord.NotFound):
             await self.message.delete()
-        except discord.NotFound:
-            pass
 
-        self.controller.refresh_shop_response_view(self.guild_id, self.member_id)
+        event = UIEvent(
+            UIEventType.SHOP_RESPONSE_REFRESH,
+            None,
+            self.parent_id,
+        )
+        await self.controller.dispatch_ui_event(event)
         self.controller.detach_view(self)
+
+
+class ShopResponseData:
+    def __init__(
+        self,
+        item: Item,
+        selected_user: discord.Member,
+        selected_amount: int,
+        selected_color: str,
+        selected_emoji: discord.Emoji | str,
+        selected_emoji_type: EmojiType,
+        confirm_button: ConfirmButton,
+        cancel_button: CancelButton,
+        user_select: UserPicker,
+        color_input_button: ColorInputButton,
+        amount_select: AmountInput,
+        reaction_input_button: ReactionInputButton,
+    ):
+        self.item = item
+        self.type = None
+        if item is not None:
+            self.type = item.get_type()
+        self.selected_user = selected_user
+        self.selected_amount = selected_amount
+        self.selected_color = selected_color
+        self.selected_emoji = selected_emoji
+        self.selected_emoji_type = selected_emoji_type
+
+        self.confirm_button = confirm_button
+        self.cancel_button = cancel_button
+        self.user_select = user_select
+        self.color_input_button = color_input_button
+        self.amount_select = amount_select
+        self.reaction_input_button = reaction_input_button

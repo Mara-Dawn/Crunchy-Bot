@@ -8,7 +8,7 @@ from bot import CrunchyBot
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
-from control.settings import SettingsManager
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.quote import Quote
 from events.quote_event import QuoteEvent
@@ -20,10 +20,12 @@ class Quotes(commands.Cog):
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
-        self.event_manager: EventManager = bot.event_manager
         self.controller: Controller = bot.controller
+        self.event_manager: EventManager = self.controller.get_service(EventManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
 
         self.ctx_menu = app_commands.ContextMenu(
             name="Quote",

@@ -1,22 +1,20 @@
 import datetime
+
 import discord
 from discord.ext import commands
+
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
-from control.role_manager import RoleManager
-from control.settings import SettingsManager
 from control.view.view_controller import ViewController
 from datalayer.database import Database
 from events.beans_event import BeansEvent
-from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.lootbox_event import LootBoxEvent
-from events.ui_event import UIEvent
 from events.types import BeansEventType, LootBoxEventType, UIEventType
+from events.ui_event import UIEvent
 from items.types import ItemType
-from view.view_menu import ViewMenu
 
 
 class LootBoxViewController(ViewController):
@@ -25,25 +23,24 @@ class LootBoxViewController(ViewController):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        settings: SettingsManager,
         database: Database,
-        event_manager: EventManager,
-        role_manager: RoleManager,
-        item_manager: ItemManager,
         controller: Controller,
     ):
-        super().__init__(
-            bot, logger, settings, database, event_manager, role_manager, item_manager
-        )
+        super().__init__(bot, logger, database)
         self.controller = controller
+        self.item_manager: ItemManager = controller.get_service(ItemManager)
+        self.event_manager: EventManager = controller.get_service(EventManager)
 
-    async def listen_for_event(self, event: BotEvent):
-        pass
+    async def listen_for_ui_event(self, event: UIEvent):
+        match event.get_type():
+            case UIEventType.CLAIM_LOOTBOX:
+                interaction = event.get_payload()[0]
+                owner_id = event.get_payload()[1]
+                self.handle_lootbox_claim(interaction, owner_id, event.get_view_id())
 
     async def handle_lootbox_claim(
-        self, interaction: discord.Interaction, view: ViewMenu, owner_id: int = None
+        self, interaction: discord.Interaction, owner_id: int, view_id: int
     ):
-        await interaction.response.defer()
 
         guild_id = interaction.guild_id
         member_id = interaction.user.id
@@ -71,7 +68,8 @@ class LootBoxViewController(ViewController):
             )
             return
 
-        view.stop()
+        event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
+        await self.controller.dispatch_ui_event(event)
 
         message = await interaction.original_response()
         loot_box = self.database.get_loot_box_by_message_id(guild_id, message.id)
@@ -157,7 +155,5 @@ class LootBoxViewController(ViewController):
         if owner_id is not None:
             new_user_balance = self.database.get_member_beans(guild_id, member_id)
 
-            event = UIEvent(
-                guild_id, member_id, UIEventType.REFRESH_SHOP, new_user_balance
-            )
+            event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance)
             await self.controller.dispatch_ui_event(event)

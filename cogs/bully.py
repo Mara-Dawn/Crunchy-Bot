@@ -11,7 +11,7 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
-from control.settings import SettingsManager
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.types import ItemTrigger
 from events.inventory_event import InventoryEvent
@@ -23,12 +23,14 @@ class Bully(commands.Cog):
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
-        self.role_manager: RoleManager = bot.role_manager
-        self.event_manager: EventManager = bot.event_manager
-        self.item_manager: ItemManager = bot.item_manager
         self.controller: Controller = bot.controller
+        self.item_manager: ItemManager = self.controller.get_service(ItemManager)
+        self.event_manager: EventManager = self.controller.get_service(EventManager)
+        self.role_manager: RoleManager = self.controller.get_service(RoleManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -57,10 +59,12 @@ class Bully(commands.Cog):
 
         guild_id = message.guild.id
 
-        if not self.settings.get_bully_enabled(guild_id):
+        if not self.settings_manager.get_bully_enabled(guild_id):
             return
 
-        if message.channel.id in self.settings.get_bully_exclude_channels(guild_id):
+        if message.channel.id in self.settings_manager.get_bully_exclude_channels(
+            guild_id
+        ):
             return
 
         user_items = await self.item_manager.get_guild_items_activated(
@@ -112,7 +116,7 @@ class Bully(commands.Cog):
     )
     @app_commands.check(__has_permission)
     async def get_settings(self, interaction: discord.Interaction):
-        output = self.settings.get_settings_string(
+        output = self.settings_manager.get_settings_string(
             interaction.guild_id, SettingsManager.BULLY_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
@@ -125,7 +129,7 @@ class Bully(commands.Cog):
     async def set_toggle(
         self, interaction: discord.Interaction, enabled: typing.Literal["on", "off"]
     ):
-        self.settings.set_bully_enabled(interaction.guild_id, enabled == "on")
+        self.settings_manager.set_bully_enabled(interaction.guild_id, enabled == "on")
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -142,7 +146,9 @@ class Bully(commands.Cog):
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ):
         await interaction.response.defer(ephemeral=True)
-        self.settings.add_bully_exclude_channel(interaction.guild_id, channel.id)
+        self.settings_manager.add_bully_exclude_channel(
+            interaction.guild_id, channel.id
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -159,7 +165,9 @@ class Bully(commands.Cog):
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ):
         await interaction.response.defer(ephemeral=True)
-        self.settings.remove_bully_exclude_channel(interaction.guild_id, channel.id)
+        self.settings_manager.remove_bully_exclude_channel(
+            interaction.guild_id, channel.id
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,

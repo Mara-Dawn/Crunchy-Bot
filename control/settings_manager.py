@@ -1,9 +1,11 @@
-from typing import List
 from discord.ext import commands
+
+from control.controller import Controller
+from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
 from datalayer.settings import GuildSettings, ModuleSettings
-from control.logger import BotLogger
+from events.bot_event import BotEvent
 from items.types import ItemType
 
 
@@ -60,10 +62,16 @@ class SettingsManager(Service):
     BULLY_ENABLED_KEY = "bully_enabled"
     BULLY_EXCLUDED_CHANNELS_KEY = "bully_channels"
 
-    def __init__(self, bot: commands.Bot, database: Database, logger: BotLogger):
-        self.logger = logger
-        self.bot = bot
-        self.database = database
+    def __init__(
+        self,
+        bot: commands.Bot,
+        logger: BotLogger,
+        database: Database,
+        controller: Controller,
+    ):
+        super().__init__(bot, logger, database)
+        self.controller = controller
+        self.log_name = "Items"
 
         # defaults
         police_settings = ModuleSettings(self.POLICE_SUBSETTINGS_KEY, "Police")
@@ -227,6 +235,9 @@ class SettingsManager(Service):
         self.settings.add_module(shop_settings)
         self.settings.add_module(bully_settings)
 
+    async def listen_for_event(self, event: BotEvent) -> None:
+        pass
+
     def update_setting(self, guild: int, subsetting_key: str, key: str, value) -> None:
         self.database.update_setting(guild, subsetting_key, key, value)
 
@@ -251,7 +262,7 @@ class SettingsManager(Service):
 
         return module.get_title()
 
-    def handle_roles_value(self, guild_id: int, roles: List[int]) -> str:
+    def handle_roles_value(self, guild_id: int, roles: list[int]) -> str:
         return (
             " "
             + ", ".join([self.handle_role_value(guild_id, id) for id in roles])
@@ -266,7 +277,7 @@ class SettingsManager(Service):
             else " "
         )
 
-    def handle_channels_value(self, guild_id: int, channels: List[int]) -> str:
+    def handle_channels_value(self, guild_id: int, channels: list[int]) -> str:
         guild_obj = self.bot.get_guild(guild_id)
         return (
             " " + ", ".join([guild_obj.get_channel(id).name for id in channels]) + " "
@@ -313,7 +324,7 @@ class SettingsManager(Service):
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_ENABLED_KEY, enabled
         )
 
-    def get_police_naughty_roles(self, guild: int) -> List[int]:
+    def get_police_naughty_roles(self, guild: int) -> list[int]:
         return [
             int(x)
             for x in self.get_setting(
@@ -321,7 +332,7 @@ class SettingsManager(Service):
             )
         ]
 
-    def set_police_naughty_roles(self, guild: int, roles: List[int]) -> None:
+    def set_police_naughty_roles(self, guild: int, roles: list[int]) -> None:
         self.update_setting(
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles
         )
@@ -342,7 +353,7 @@ class SettingsManager(Service):
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles
         )
 
-    def get_police_exclude_channels(self, guild: int) -> List[int]:
+    def get_police_exclude_channels(self, guild: int) -> list[int]:
         return [
             int(x)
             for x in self.get_setting(
@@ -350,7 +361,7 @@ class SettingsManager(Service):
             )
         ]
 
-    def set_police_exclude_channels(self, guild: int, channels: List[int]) -> None:
+    def set_police_exclude_channels(self, guild: int, channels: list[int]) -> None:
         self.update_setting(
             guild,
             self.POLICE_SUBSETTINGS_KEY,
@@ -482,7 +493,7 @@ class SettingsManager(Service):
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY, role_id
         )
 
-    def get_jail_channels(self, guild: int) -> List[int]:
+    def get_jail_channels(self, guild: int) -> list[int]:
         return [
             int(x)
             for x in self.get_setting(
@@ -490,7 +501,7 @@ class SettingsManager(Service):
             )
         ]
 
-    def set_jail_channels(self, guild: int, channels: List[int]) -> None:
+    def set_jail_channels(self, guild: int, channels: list[int]) -> None:
         self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY, channels
         )
@@ -579,7 +590,7 @@ class SettingsManager(Service):
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_MOD_KEY, mod
         )
 
-    def get_jail_mod_roles(self, guild: int) -> List[int]:
+    def get_jail_mod_roles(self, guild: int) -> list[int]:
         return [
             int(x)
             for x in self.get_setting(
@@ -587,7 +598,7 @@ class SettingsManager(Service):
             )
         ]
 
-    def set_jail_mod_roles(self, guild: int, roles: List[int]) -> None:
+    def set_jail_mod_roles(self, guild: int, roles: list[int]) -> None:
         self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles
         )
@@ -660,7 +671,7 @@ class SettingsManager(Service):
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN_KEY, seconds
         )
 
-    def get_beans_channels(self, guild: int) -> List[int]:
+    def get_beans_channels(self, guild: int) -> list[int]:
         return [
             int(x)
             for x in self.get_setting(
@@ -771,7 +782,7 @@ class SettingsManager(Service):
             guild, self.BULLY_SUBSETTINGS_KEY, self.BULLY_ENABLED_KEY, enabled
         )
 
-    def get_bully_exclude_channels(self, guild: int) -> List[int]:
+    def get_bully_exclude_channels(self, guild: int) -> list[int]:
         return [
             int(x)
             for x in self.get_setting(
@@ -779,7 +790,7 @@ class SettingsManager(Service):
             )
         ]
 
-    def set_bully_exclude_channels(self, guild: int, channels: List[int]) -> None:
+    def set_bully_exclude_channels(self, guild: int, channels: list[int]) -> None:
         self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,

@@ -1,7 +1,7 @@
 import builtins
 from typing import Dict, Callable, List, Any, Tuple, Type
 import discord
-from control.settings import SettingsManager
+from control.settings_manager import SettingsManager
 from bot import CrunchyBot
 
 class SettingsModal(discord.ui.Modal):

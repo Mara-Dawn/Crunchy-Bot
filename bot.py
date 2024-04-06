@@ -4,11 +4,7 @@ import discord
 from discord.ext import commands
 
 from control.controller import Controller
-from control.event_manager import EventManager
-from control.item_manager import ItemManager
 from control.logger import BotLogger
-from control.role_manager import RoleManager
-from control.settings import SettingsManager
 from datalayer.database import Database
 
 
@@ -22,26 +18,8 @@ class CrunchyBot(commands.Bot):
         super().__init__(*args, **kwargs)
         self.logger = BotLogger(self, self.LOG_FILE)
         self.database = Database(self, self.logger, self.DB_FILE)
-        self.settings = SettingsManager(self, self.database, self.logger)
 
-        self.controller = Controller(self, self.logger, self.settings, self.database)
-
-        self.role_manager = RoleManager(
-            self, self.logger, self.settings, self.database, self.controller
-        )
-        self.event_manager = EventManager(
-            self, self.logger, self.settings, self.database, self.controller
-        )
-        self.item_manager = ItemManager(
-            self, self.logger, self.settings, self.database, self.controller
-        )
-
-        self.controller.register_service(self.role_manager)
-        self.controller.register_service(self.event_manager)
-        self.controller.register_service(self.item_manager)
-        self.controller.register_service(self.role_manager)
-        self.controller.register_service(self.event_manager)
-        self.controller.register_service(self.item_manager)
+        self.controller = Controller(self, self.logger, self.database)
 
     async def setup_hook(self) -> None:
         await self.load_extension("cogs.police")

@@ -1,10 +1,13 @@
 import traceback
+
 import discord
 from discord.ext import commands
-from datalayer.database import Database
+
 from control.controller import Controller
-from control.service import Service
 from control.logger import BotLogger
+from control.service import Service
+from control.settings_manager import SettingsManager
+from datalayer.database import Database
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.types import EventType
@@ -25,7 +28,7 @@ class RoleManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
-        self.settings_manager = None
+        self.settings_manager = self.controller.get_service(SettingsManager)
         self.log_name = "Roles"
 
     async def listen_for_event(self, event: BotEvent):
@@ -155,7 +158,7 @@ class RoleManager(Service):
 
         name_token_count = 0
 
-        if ItemType.NAME_COLOR in user_items.keys():
+        if ItemType.NAME_COLOR in user_items:
             name_token_count = user_items[ItemType.NAME_COLOR]
 
         if custom_role_id is None:
