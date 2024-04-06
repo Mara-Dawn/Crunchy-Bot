@@ -14,7 +14,7 @@ from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings import SettingsManager
-from datalayer.atabase import Database
+from datalayer.database import Database
 from datalayer.police_list import PoliceList
 from events.jail_event import JailEvent
 from events.spam_event import SpamEvent

@@ -15,7 +15,7 @@ from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings import SettingsManager
-from datalayer.atabase import Database
+from datalayer.database import Database
 from datalayer.jail import UserJail
 from datalayer.types import UserInteraction
 from events.inventory_event import InventoryEvent

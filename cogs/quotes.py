@@ -9,8 +9,8 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.settings import SettingsManager
-from datalayer.atabase import Database
-from datalayer.uote import Quote
+from datalayer.database import Database
+from datalayer.quote import Quote
 from events.quote_event import QuoteEvent
 from view.image_generator import ImageGenerator
 

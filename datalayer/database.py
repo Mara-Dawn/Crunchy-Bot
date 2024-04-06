@@ -9,8 +9,8 @@ from discord.ext import commands
 
 from control.logger import BotLogger
 from datalayer.jail import UserJail
-from datalayer.ootbox import LootBox
-from datalayer.uote import Quote
+from datalayer.lootbox import LootBox
+from datalayer.quote import Quote
 from datalayer.types import UserInteraction
 from events.bat_event import BatEvent
 from events.beans_event import BeansEvent, BeansEventType

@@ -12,7 +12,7 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.settings import SettingsManager
-from datalayer.atabase import Database
+from datalayer.database import Database
 from datalayer.types import UserInteraction
 from events.interaction_event import InteractionEvent
 from items.types import ItemType
