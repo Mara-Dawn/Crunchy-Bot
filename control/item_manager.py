@@ -121,12 +121,12 @@ class ItemManager(Service):
         embed = discord.Embed(
             title=title, description=description, color=discord.Colour.purple()
         )
-        embed.set_image(url="attachment://treasure_closed.jpg")
+        embed.set_image(url="attachment://treasure_closed.png")
 
         view = LootBoxView(self.controller)
 
         treasure_close_img = discord.File(
-            "./img/treasure_closed.jpg", "treasure_closed.jpg"
+            "./img/treasure_closed.png", "treasure_closed.png"
         )
 
         channel = guild.get_channel(channel_id)

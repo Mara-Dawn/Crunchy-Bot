@@ -286,7 +286,7 @@ class Gamba(commands.Cog):
         await self.controller.dispatch_event(event)
 
         cooldowntimer = int(default_cooldown * amount / default_amount)
-        if payout == 0:
+        if payout == 0 and amount > default_amount:
             cooldowntimer = int(default_cooldown)
         remaining = int(timestamp_now + cooldowntimer)
         timer = f"\nYou can gamble again <t:{remaining}:R>."

@@ -206,6 +206,11 @@ class ShopResponseViewController(ViewController):
                 jail_announcement = f'<@{shop_data.selected_user.id}> was sentenced to Jail by <@{member_id}> using a **{shop_data.item.get_name()}**. They will be released <t:{release}:R>.'
                 
             case ItemType.RELEASE:
+                affected_jails = self.database.get_active_jails_by_member(guild_id, member_id)
+                if len(affected_jails) > 0:
+                    await interaction.followup.send('You cannot use this while you are in jail.', ephemeral=True)
+                    return
+                
                 if shop_data.selected_user.id == interaction.user.id:
                     await interaction.followup.send('You cannot free yourself using this item.', ephemeral=True)
                     return
