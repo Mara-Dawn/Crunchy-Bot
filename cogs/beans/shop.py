@@ -11,7 +11,6 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
-from control.view.shop_view_controller import ShopViewController
 from datalayer.database import Database
 from datalayer.types import ItemTrigger
 from items.types import ItemType
@@ -119,12 +118,11 @@ class Shop(commands.Cog):
         items = sorted(items, key=lambda x: (x.get_shop_category().value, x.get_cost()))
 
         user_balance = self.database.get_member_beans(
-            interaction.guild.name, interaction.user.id
+            interaction.guild.id, interaction.user.id
         )
         embed = ShopEmbed(interaction.guild.name, interaction.user.id, items)
 
-        view_controller = self.controller.get_view_controller(ShopViewController)
-        view = ShopView(view_controller, interaction, items, user_balance)
+        view = ShopView(self.controller, interaction, items, user_balance)
 
         message = await interaction.followup.send(
             "", embed=embed, view=view, files=[shop_img, police_img]

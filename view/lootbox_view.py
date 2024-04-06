@@ -13,7 +13,8 @@ class LootBoxView(ViewMenu):
         self.controller = controller
         self.add_item(ClaimButton())
         self.owner_id = owner_id
-
+        self.controller_class = "LootBoxViewController"
+        self.controller_module = "lootbox_view_controller"
         self.controller.register_view(self)
 
     async def claim(self, interaction: discord.Interaction):
@@ -24,6 +25,9 @@ class LootBoxView(ViewMenu):
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return True
 
     async def listen_for_ui_event(self, event: UIEvent):
         if event.get_view_id() != self.id:

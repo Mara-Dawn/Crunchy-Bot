@@ -46,6 +46,8 @@ class ShopResponseView(ViewMenu):
         self.amount_select: AmountInput = None
         self.reaction_input_button: ReactionInputButton = None
 
+        self.controller_class = "ShopResponseViewController"
+        self.controller_module = "shop_response_view_controller"
         self.controller.register_view(self)
 
     async def listen_for_ui_event(self, event: UIEvent):
@@ -131,11 +133,6 @@ class ShopResponseView(ViewMenu):
 
     async def set_message(self, message: discord.Message):
         self.message = message
-        await self.refresh_ui()
-
-    # pylint: disable-next=arguments-differ
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        super().interaction_check(interaction, self.member_id)
 
     def get_data(self):
         return ShopResponseData(
@@ -282,7 +279,9 @@ class ReactionInputButton(discord.ui.Button):
             await parent.refresh_ui(disabled=True)
 
             content = f"<@{interaction.user.id}> please react to this message with the emoji of your choice."
-            view = ReactionInputView(parent.controller, interaction, parent.item)
+            view = ReactionInputView(
+                parent.controller, interaction, parent.item, parent.id
+            )
             message = await interaction.followup.send(content, view=view)
             await view.set_message(message)
 

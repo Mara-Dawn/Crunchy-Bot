@@ -1,9 +1,8 @@
 import datetime
+from typing import Any
 
-from typing import Any, Dict, List
 from events.bot_event import BotEvent
-from events.types import EventType
-from events.types import LootBoxEventType
+from events.types import EventType, LootBoxEventType
 
 
 class LootBoxEvent(BotEvent):
@@ -34,11 +33,11 @@ class LootBoxEvent(BotEvent):
     def get_causing_user_id(self) -> int:
         return self.member_id
 
-    def get_type_specific_args(self) -> List[Any]:
+    def get_type_specific_args(self) -> list[Any]:
         return [self.loot_box_id, self.loot_box_event_type]
 
     @staticmethod
-    def from_db_row(row: Dict[str, Any]) -> "LootBoxEvent":
+    def from_db_row(row: dict[str, Any]) -> "LootBoxEvent":
         from datalayer.database import Database
 
         if row is None:

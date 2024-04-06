@@ -1,6 +1,6 @@
 import datetime
+from typing import Any
 
-from typing import Any, Dict, List
 from events.bot_event import BotEvent
 from events.types import EventType
 from items.types import ItemType
@@ -34,11 +34,11 @@ class InventoryEvent(BotEvent):
     def get_causing_user_id(self) -> int:
         return self.member_id
 
-    def get_type_specific_args(self) -> List[Any]:
+    def get_type_specific_args(self) -> list[Any]:
         return [self.item_type, self.amount]
 
     @staticmethod
-    def from_db_row(row: Dict[str, Any]) -> "InventoryEvent":
+    def from_db_row(row: dict[str, Any]) -> "InventoryEvent":
         from datalayer.database import Database
 
         if row is None:

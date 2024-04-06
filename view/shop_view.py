@@ -35,6 +35,9 @@ class ShopView(ViewMenu):
 
         self.message = None
         self.user_balance = user_balance
+
+        self.controller_class = "ShopViewController"
+        self.controller_module = "shop_view_controller"
         self.controller.register_view(self)
         self.refresh_elements()
 
@@ -62,8 +65,6 @@ class ShopView(ViewMenu):
 
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         await interaction.response.defer()
-        if not await self.interaction_check(interaction, self.member_id):
-            return
         self.current_page = (self.current_page + (1 if right else -1)) % self.page_count
         self.selected = None
         event = UIEvent(
@@ -87,7 +88,7 @@ class ShopView(ViewMenu):
         self.add_item(BuyButton(disabled))
         self.add_item(PageButton(">", True, disabled))
         self.add_item(CurrentPageButton(page_display))
-        self.add_item(BalanceButton(self.controller, self.user_balance))
+        self.add_item(BalanceButton(self.user_balance))
 
     async def refresh_ui(self, user_balance: int = None, disabled: bool = False):
         self.refresh_elements(user_balance, disabled)
@@ -98,9 +99,6 @@ class ShopView(ViewMenu):
     async def set_selected(self, interaction: discord.Interaction, item_type: ItemType):
         self.selected = item_type
         await interaction.response.defer()
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        super().interaction_check(interaction, self.member_id)
 
     async def on_timeout(self):
         with contextlib.suppress(discord.HTTPException):

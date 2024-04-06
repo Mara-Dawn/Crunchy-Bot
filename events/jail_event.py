@@ -1,9 +1,8 @@
 import datetime
+from typing import Any
 
-from typing import Any, Dict, List
 from events.bot_event import BotEvent
-from events.types import EventType
-from events.types import JailEventType
+from events.types import EventType, JailEventType
 
 
 class JailEvent(BotEvent):
@@ -39,11 +38,11 @@ class JailEvent(BotEvent):
     def get_causing_user_id(self) -> int:
         return self.caused_by
 
-    def get_type_specific_args(self) -> List[Any]:
+    def get_type_specific_args(self) -> list[Any]:
         return [self.jail_event_type, self.duration, self.jail_reference]
 
     @staticmethod
-    def from_db_row(row: Dict[str, Any]) -> "JailEvent":
+    def from_db_row(row: dict[str, Any]) -> "JailEvent":
         from datalayer.database import Database
 
         if row is None:

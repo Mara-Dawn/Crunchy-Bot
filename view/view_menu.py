@@ -12,16 +12,17 @@ class ViewMenu(discord.ui.View, ABC):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.id = ViewMenu.class_counter
+        self.member_id = None
+        self.controller_class = None
+        self.controller_module = None
         ViewMenu.class_counter += 1
 
     @abstractmethod
     async def listen_for_ui_event(self, event: UIEvent):
         pass
 
-    async def interaction_check(
-        self, interaction: discord.Interaction, user_id: int
-    ) -> bool:
-        if interaction.user.id == user_id:
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.member_id:
             return True
         else:
             await interaction.response.send_message(

@@ -66,7 +66,7 @@ class Bailout(Item):
             item_type=ItemType.BAILOUT,
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
-            description="Pay off the mods to let you out of jail early.",
+            description="Pay off the mods with beans to let you out of jail early.",
             emoji="🗿",
             cost=cost,
             value=None,

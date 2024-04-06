@@ -1,5 +1,6 @@
 import datetime
-from typing import Any, Dict, List
+from typing import Any
+
 from events.bot_event import BotEvent
 from events.types import EventType
 
@@ -27,11 +28,11 @@ class TimeoutEvent(BotEvent):
     def get_causing_user_id(self) -> int:
         return self.member
 
-    def get_type_specific_args(self) -> List[Any]:
+    def get_type_specific_args(self) -> list[Any]:
         return [self.duration]
 
     @staticmethod
-    def from_db_row(row: Dict[str, Any]) -> "TimeoutEvent":
+    def from_db_row(row: dict[str, Any]) -> "TimeoutEvent":
         from datalayer.database import Database
 
         if row is None:

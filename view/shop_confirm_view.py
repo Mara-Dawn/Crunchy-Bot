@@ -27,9 +27,12 @@ class ShopConfirmView(ShopResponseView):  # noqa: F405
         self.confirm_button = ConfirmButton()
         self.cancel_button = CancelButton()
 
+        self.controller_class = "ShopResponseViewController"
+        self.controller_module = "shop_response_view_controller"
         self.refresh_elements()
 
     async def submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         data = self.get_data()
         event = UIEvent(
             UIEventType.SHOP_RESPONSE_CONFIRM_SUBMIT,

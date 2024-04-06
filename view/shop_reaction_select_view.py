@@ -22,8 +22,9 @@ class ShopReactionSelectView(ShopResponseView):
         controller: Controller,
         interaction: discord.Interaction,
         item: Item,
+        parent_id: int,
     ):
-        super().__init__(controller, interaction, item)
+        super().__init__(controller, interaction, item, parent_id)
 
         _, default_emoji = self.controller.database.get_bully_react(
             interaction.guild_id, interaction.user.id
@@ -40,9 +41,12 @@ class ShopReactionSelectView(ShopResponseView):
         self.confirm_button = ConfirmButton()
         self.cancel_button = CancelButton()
 
+        self.controller_class = "ShopResponseViewController"
+        self.controller_module = "shop_response_view_controller"
         self.refresh_elements()
 
     async def submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         data = self.get_data()
         event = UIEvent(
             UIEventType.SHOP_RESPONSE_REACTION_SUBMIT,

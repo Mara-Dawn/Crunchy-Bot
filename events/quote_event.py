@@ -1,5 +1,6 @@
 import datetime
-from typing import Any, List
+from typing import Any
+
 from events.bot_event import BotEvent
 from events.types import EventType
 
@@ -22,5 +23,5 @@ class QuoteEvent(BotEvent):
     def get_causing_user_id(self) -> int:
         return 0
 
-    def get_type_specific_args(self) -> List[Any]:
+    def get_type_specific_args(self) -> list[Any]:
         return []

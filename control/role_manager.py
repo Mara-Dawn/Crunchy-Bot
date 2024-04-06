@@ -37,7 +37,7 @@ class RoleManager(Service):
                 inventory_event: InventoryEvent = event
                 match inventory_event.get_item_type():
                     case ItemType.LOTTERY_TICKET:
-                        if inventory_event.get_amount >= 0:
+                        if inventory_event.get_amount() >= 0:
                             await self.add_lottery_role(
                                 inventory_event.get_guild_id(),
                                 inventory_event.get_member_id(),

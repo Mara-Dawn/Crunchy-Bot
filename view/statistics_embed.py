@@ -1,6 +1,7 @@
 import discord
-from bot_util import BotUtil
+
 from bot import CrunchyBot
+from bot_util import BotUtil
 from datalayer.stats import UserStats
 
 

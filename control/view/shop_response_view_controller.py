@@ -42,22 +42,21 @@ class ShopResponseViewController(ViewController):
             case UIEventType.REACTION_SELECTED:
                 interaction = event.get_payload()[0]
                 message = event.get_payload()[1]
-                self.submit_reaction_selection(interaction, message, event.get_view_id())
+                await self.submit_reaction_selection(interaction, message, event.get_view_id())
             case UIEventType.SHOP_RESPONSE_CONFIRM_SUBMIT:
                 interaction = event.get_payload()[0]
                 shop_data = event.get_payload()[1]
-                self.submit_confirm_view(interaction, shop_data, event.get_view_id())
+                await self.submit_confirm_view(interaction, shop_data, event.get_view_id())
             case UIEventType.SHOP_RESPONSE_USER_SUBMIT:
                 interaction = event.get_payload()[0]
                 shop_data = event.get_payload()[1]
-                self.submit_confirm_view(interaction, shop_data, event.get_view_id())
+                await self.submit_user_view(interaction, shop_data, event.get_view_id())
             case UIEventType.SHOP_RESPONSE_COLOR_SUBMIT | UIEventType.SHOP_RESPONSE_REACTION_SUBMIT:
                 interaction = event.get_payload()[0]
                 shop_data = event.get_payload()[1]
-                self.submit_generic_view(interaction, shop_data, event.get_view_id())
+                await self.submit_generic_view(interaction, shop_data, event.get_view_id())
                 
     async def start_transaction(self, interaction: discord.Interaction, shop_data: ShopResponseData) -> bool:
-        await interaction.response.defer(ephemeral=True)
         
         guild_id = interaction.guild_id
         member_id = interaction.user.id

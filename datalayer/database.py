@@ -504,15 +504,13 @@ class Database:
             {self.INVENTORY_EVENT_ID_COL},
             {self.INVENTORY_EVENT_MEMBER_COL},
             {self.INVENTORY_EVENT_ITEM_TYPE_COL},
-            {self.INVENTORY_EVENT_BEANS_EVENT_COL},
             {self.INVENTORY_EVENT_AMOUNT_COL})
-            VALUES (?, ?, ?, ?, ?);
+            VALUES (?, ?, ?, ?);
         """
         task = (
             event_id,
             event.get_member_id(),
             event.get_item_type(),
-            event.get_beans_event_id(),
             event.get_amount(),
         )
 

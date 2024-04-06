@@ -36,7 +36,9 @@ class LootBoxViewController(ViewController):
             case UIEventType.CLAIM_LOOTBOX:
                 interaction = event.get_payload()[0]
                 owner_id = event.get_payload()[1]
-                self.handle_lootbox_claim(interaction, owner_id, event.get_view_id())
+                await self.handle_lootbox_claim(
+                    interaction, owner_id, event.get_view_id()
+                )
 
     async def handle_lootbox_claim(
         self, interaction: discord.Interaction, owner_id: int, view_id: int

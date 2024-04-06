@@ -85,7 +85,7 @@ class Item:
             color=discord.Colour.purple()
         title = f'> {self.get_emoji()} {self.get_name()} {self.get_emoji()}'
         description = self.get_description()
-        max_width = 54
+        max_width = 53
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += ' '*spacing

@@ -36,7 +36,9 @@ class ItemManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
-        self.settings_manager = self.controller.get_service(SettingsManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
         self.log_name = "Items"
 
     async def listen_for_event(self, event: BotEvent):

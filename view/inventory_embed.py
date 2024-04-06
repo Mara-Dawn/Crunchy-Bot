@@ -12,13 +12,12 @@ class InventoryEmbed(discord.Embed):
             color=discord.Colour.purple(),
             description="All the items you currently own.",
         )
+        inventory_items = inventory.get_items()
 
-        inventory_items_counts = inventory.get_inventory_items_counts()
-
-        if len(inventory_items_counts) == 0:
+        if len(inventory_items) == 0:
             self.add_field(name="", value="There is nothing here.", inline=False)
 
-        for item in inventory.get_items():
+        for item in inventory_items:
             count = inventory.get_item_count(item.get_type())
             match item.get_type():
                 case ItemType.NAME_COLOR:

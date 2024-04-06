@@ -1,6 +1,6 @@
 import datetime
+from typing import Any
 
-from typing import Any, Dict, List
 from datalayer.types import UserInteraction
 from events.bot_event import BotEvent
 from events.types import EventType
@@ -34,11 +34,11 @@ class InteractionEvent(BotEvent):
     def get_causing_user_id(self) -> int:
         return self.from_user
 
-    def get_type_specific_args(self) -> List[Any]:
+    def get_type_specific_args(self) -> list[Any]:
         return [self.to_user, self.interaction_type]
 
     @staticmethod
-    def from_db_row(row: Dict[str, Any]) -> "InteractionEvent":
+    def from_db_row(row: dict[str, Any]) -> "InteractionEvent":
         from datalayer.database import Database
 
         if row is None:

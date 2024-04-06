@@ -2,7 +2,9 @@ import io
 import os
 import random
 import re
+
 from PIL import Image, ImageDraw, ImageFont
+
 from bot import CrunchyBot
 from datalayer.quote import Quote
 
@@ -126,10 +128,7 @@ class ImageGenerator:
 
         author_position = (self.image.width - 15, self.image.height - 15)
         author = self.bot.get_guild(guild_id).get_member(quote.get_member())
-        if author is None:
-            author_name = quote.get_member_name()
-        else:
-            author_name = author.display_name
+        author_name = quote.get_member_name() if author is None else author.display_name
 
         author_text = f"- {author_name}"
 

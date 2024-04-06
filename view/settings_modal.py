@@ -1,12 +1,16 @@
 import builtins
-from typing import Dict, Callable, List, Any, Tuple, Type
+from collections.abc import Callable
+from typing import Any
+
 import discord
-from control.settings_manager import SettingsManager
+
 from bot import CrunchyBot
+from control.settings_manager import SettingsManager
+
 
 class SettingsModal(discord.ui.Modal):
 
-    def __init__(self, bot: CrunchyBot, settings: SettingsManager, cog: str, command: str, title: str, callback: Callable = None, callback_arguments: List[Any] = None):
+    def __init__(self, bot: CrunchyBot, settings: SettingsManager, cog: str, command: str, title: str, callback: Callable = None, callback_arguments: list[Any] = None):
         super().__init__(title=title)
         
         self.settings = settings
@@ -15,13 +19,13 @@ class SettingsModal(discord.ui.Modal):
         self.cog = cog
         self.callback = callback
         self.callback_arguments = callback_arguments
-        self.id_map: Dict[str, discord.ui.TextInput] = {}
-        self.type_map: Dict[str, Type[Any]] = {}
-        self.input_settings_map: Dict[str, Tuple[str,str]] = {}
-        self.constraints: List[SettingsConstraint]  = []
-        self.allow_negative_map: Dict[str, bool] = {}
+        self.id_map: dict[str, discord.ui.TextInput] = {}
+        self.type_map: dict[str, type[Any]] = {}
+        self.input_settings_map: dict[str, tuple[str,str]] = {}
+        self.constraints: list[SettingsConstraint]  = []
+        self.allow_negative_map: dict[str, bool] = {}
     
-    def add_field(self, guild_id: int, subsetting_key: str, setting_key: str, value_type: Type[Any], allow_negative: bool = False):
+    def add_field(self, guild_id: int, subsetting_key: str, setting_key: str, value_type: type[Any], allow_negative: bool = False):
         label = self.settings.get_setting_title(subsetting_key, setting_key)
         default = self.settings.get_setting(guild_id, subsetting_key, setting_key)
         
@@ -34,11 +38,11 @@ class SettingsModal(discord.ui.Modal):
         self.id_map[field_id] = new_field
         self.add_item(new_field)
         
-    def add_constraint(self, parameters: List[Any], callback: Callable[[Any], bool], on_error_message: str):
+    def add_constraint(self, parameters: list[Any], callback: Callable[[Any], bool], on_error_message: str):
         new_constraint = SettingsConstraint(parameters, callback, on_error_message)
         self.constraints.append(new_constraint)
     
-    def __cast_value(self, value: str, value_type: Type[Any]) -> Any:
+    def __cast_value(self, value: str, value_type: type[Any]) -> Any:
         match value_type:
             case builtins.int:
                 if not value.lstrip('-').isdigit():
@@ -58,7 +62,7 @@ class SettingsModal(discord.ui.Modal):
     # pylint: disable-next=arguments-differ
     async def on_submit(self, interaction: discord.Interaction):
         
-        errors: List[discord.ui.TextInput] = []
+        errors: list[discord.ui.TextInput] = []
         
         for text_input_id, value_type in self.type_map.items():
             text_input = self.id_map[text_input_id]
@@ -95,9 +99,9 @@ class SettingsModal(discord.ui.Modal):
             self.callback(*self.callback_arguments)
         
         
-class SettingsConstraint():
+class SettingsConstraint:
     
-    def __init__(self, parameters: List[Any], callback: Callable[[Any], bool], on_error_message: str):
+    def __init__(self, parameters: list[Any], callback: Callable[[Any], bool], on_error_message: str):
         self.parameters = parameters
         self.callback = callback
         self.on_error_message = on_error_message

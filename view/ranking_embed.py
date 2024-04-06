@@ -1,7 +1,9 @@
-from typing import Any, List, Tuple
+from typing import Any
+
 import discord
-from bot_util import BotUtil
+
 from bot import CrunchyBot
+from bot_util import BotUtil
 from view.types import RankingType
 
 
@@ -30,7 +32,7 @@ class RankingEmbed(discord.Embed):
         bot: CrunchyBot,
         interaction: discord.Interaction,
         ranking_type: RankingType,
-        rankings: List[Tuple[int, Any]],
+        rankings: list[tuple[int, Any]],
     ):
         super().__init__(
             title=f"Leaderbords for {interaction.guild.name}",

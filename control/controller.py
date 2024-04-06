@@ -1,3 +1,5 @@
+import importlib
+
 from discord.ext import commands
 
 from control.logger import BotLogger
@@ -26,10 +28,17 @@ class Controller:
         self.views: list[ViewMenu] = []
 
     def register_view(self, view: ViewMenu):
+        class_name = view.controller_class
+        module_name = view.controller_module
+        controller_class = getattr(
+            importlib.import_module("control.view." + module_name), class_name
+        )
         self.views.append(view)
+        self.add_view_controller(controller_class)
 
     def detach_view(self, view: ViewMenu):
-        self.views.remove(view)
+        if view in self.views:
+            self.views.remove(view)
 
     async def dispatch_event(self, event: BotEvent):
         for service in self.services:
@@ -52,11 +61,10 @@ class Controller:
         self.services.append(new_service)
         return new_service
 
-    def get_view_controller(self, controller: type[ViewController]) -> ViewController:
+    def add_view_controller(self, controller: type[ViewController]) -> ViewController:
         for view_controller in self.view_controllers:
-            if isinstance(controller, view_controller):
-                return view_controller
+            if isinstance(view_controller, controller):
+                return
 
-        new_controller = controller(self.bot)
+        new_controller = controller(self.bot, self.logger, self.database, self)
         self.view_controllers.append(new_controller)
-        return new_controller

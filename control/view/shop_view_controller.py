@@ -9,6 +9,7 @@ from control.logger import BotLogger
 from control.view.view_controller import ViewController
 from datalayer.database import Database
 from events.beans_event import BeansEvent
+from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.lootbox_event import LootBoxEvent
 from events.types import BeansEventType, LootBoxEventType, UIEventType
@@ -40,19 +41,22 @@ class ShopViewController(ViewController):
         self.controller = controller
         self.item_manager: ItemManager = controller.get_service(ItemManager)
 
+    async def listen_for_event(self, event: BotEvent) -> None:
+        return await super().listen_for_event(event)
+
     async def listen_for_ui_event(self, event: UIEvent):
         match event.get_type():
             case UIEventType.SHOP_BUY:
                 interaction = event.get_payload()[0]
                 selected_item = event.get_payload()[1]
-                self.buy(interaction, selected_item, event.get_view_id())
+                await self.buy(interaction, selected_item, event.get_view_id())
             case UIEventType.SHOP_CHANGED:
                 guild_id = event.get_payload()[0]
                 member_id = event.get_payload()[1]
-                self.refresh_ui(guild_id, member_id, event.get_view_id())
+                await self.refresh_ui(guild_id, member_id, event.get_view_id())
             case UIEventType.SHOW_INVENTORY:
                 interaction = event.get_payload()
-                self.send_inventory_message()(interaction)
+                await self.send_inventory_message(interaction)
 
     async def refresh_ui(self, guild_id: int, member_id: int, view_id: int):
         new_user_balance = self.database.get_member_beans(guild_id, member_id)
@@ -64,7 +68,7 @@ class ShopViewController(ViewController):
     ):
 
         if selected is None:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "Please select an Item first.", ephemeral=True
             )
             return
@@ -76,7 +80,7 @@ class ShopViewController(ViewController):
         item = self.item_manager.get_item(guild_id, selected)
 
         if user_balance < item.get_cost():
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "You dont have enough beans to buy that.", ephemeral=True
             )
             return
@@ -90,7 +94,7 @@ class ShopViewController(ViewController):
                 item_count = inventory_items[item.get_type()]
 
             if item_count >= item.get_max_amount():
-                await interaction.response.send_message(
+                await interaction.followup.send(
                     f"You cannot own more than {item.get_max_amount()} items of this type.",
                     ephemeral=True,
                 )
@@ -99,13 +103,14 @@ class ShopViewController(ViewController):
         # instantly used items and items with confirmation modals
         match item.get_group():
             case ItemGroup.IMMEDIATE_USE | ItemGroup.SUBSCRIPTION:
-                await interaction.response.defer(ephemeral=True)
 
                 embed = item.get_embed()
                 view_class_name = item.get_view_class()
 
                 view_class = globals()[view_class_name]
-                view: ShopResponseView = view_class(self.controller, interaction, item)
+                view: ShopResponseView = view_class(
+                    self.controller, interaction, item, view_id
+                )
 
                 message = await interaction.followup.send(
                     "", embed=embed, view=view, ephemeral=True
@@ -129,7 +134,6 @@ class ShopViewController(ViewController):
         # directly purchasable items without inventory
         match item.get_group():
             case ItemGroup.LOOTBOX:
-                await interaction.response.defer()
 
                 loot_box = self.item_manager.create_loot_box(guild_id)
 
@@ -190,7 +194,7 @@ class ShopViewController(ViewController):
         new_user_balance = self.database.get_member_beans(guild_id, member_id)
         success_message = f"You successfully bought one **{item.get_name()}** for `🅱️{item.get_cost()}` beans. Remaining balance: `🅱️{new_user_balance}`\n Use */inventory* to check your inventory."
 
-        await interaction.response.send_message(success_message, ephemeral=True)
+        await interaction.followup.send(success_message, ephemeral=True)
 
         event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance, view_id)
         await self.controller.dispatch_ui_event(event)
