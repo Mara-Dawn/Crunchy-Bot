@@ -1,17 +1,19 @@
-from typing import Literal, Optional
+from typing import Literal
+
 import discord
 from discord import app_commands
 from discord.ext import commands
+
 from bot import CrunchyBot
-from datalayer.database import Database
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.settings import SettingsManager
+from datalayer.database import Database
 from view.ranking_embed import RankingEmbed
-from view.types import RankingType
 from view.ranking_view import RankingView
 from view.statistics_embed import StatisticsEmbed
+from view.types import RankingType
 
 
 class Statistics(commands.Cog):
@@ -36,7 +38,7 @@ class Statistics(commands.Cog):
         self,
         ctx: commands.Context,
         guilds: commands.Greedy[discord.Object],
-        spec: Optional[Literal["~", "*", "^"]] = None,
+        spec: Literal["~", "*", "^"] | None = None,
     ) -> None:
 
         mara = 90043934247501824
@@ -88,7 +90,7 @@ class Statistics(commands.Cog):
     async def stats(
         self,
         interaction: discord.Interaction,
-        user: Optional[discord.Member] = None,
+        user: discord.Member | None = None,
     ):
         await interaction.response.defer()
 

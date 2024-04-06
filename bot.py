@@ -1,13 +1,15 @@
 from typing import Any
+
 import discord
 from discord.ext import commands
-from datalayer.database import Database
+
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings import SettingsManager
+from datalayer.database import Database
 
 
 class CrunchyBot(commands.Bot):

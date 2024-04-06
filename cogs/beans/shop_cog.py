@@ -1,21 +1,23 @@
-from typing import Literal
 import datetime
+from typing import Literal
+
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
+
 from bot import CrunchyBot
-from datalayer.database import Database
-from datalayer.types import ItemTrigger
-from items.types import ItemType
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.settings import SettingsManager
 from control.view.shop_view_controller import ShopViewController
+from datalayer.database import Database
+from datalayer.types import ItemTrigger
+from items.types import ItemType
 from view.inventory_embed import InventoryEmbed
-from view.shop_view import ShopView
 from view.shop_embed import ShopEmbed
+from view.shop_view import ShopView
 
 
 class Shop(commands.Cog):

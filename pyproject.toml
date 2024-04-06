@@ -7,7 +7,31 @@
 requires-python = ">=3.12"
 
 [tool.ruff.lint]
-extend-select = [
-  "UP",  # pyupgrade
-  #"D",   # pydocstyle
+# extend-select = [
+#   "UP",  # pyupgrade
+#   "D",   # pydocstyle
+# ]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+ignore = [
+    # line-too-long
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"cogs/*" = [
+    # ignores 'Use `X | Y` for type annotations' because we need them for commands
+    "UP007",
 ]

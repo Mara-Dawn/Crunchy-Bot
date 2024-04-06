@@ -1,26 +1,29 @@
 
-from typing import Literal
 import datetime
 import random
+from typing import Literal
+
 import discord
 from discord import app_commands
-from discord.ext import tasks, commands
-from bot_util import BotUtil
+from discord.ext import commands, tasks
+
 from bot import CrunchyBot
-from datalayer.database import Database
-from datalayer.jail import UserJail
-from datalayer.types import UserInteraction
+from bot_util import BotUtil
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings import SettingsManager
+from datalayer.database import Database
+from datalayer.jail import UserJail
+from datalayer.types import UserInteraction
 from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
 from events.types import JailEventType
 from items.types import ItemGroup, ItemType
 from view.settings_modal import SettingsModal
+
 
 class Jail(commands.Cog):
     
@@ -281,7 +284,7 @@ class Jail(commands.Cog):
             await self.controller.dispatch_event(event)
             
             remaining = self.event_manager.get_jail_remaining(affected_jail)
-            response += f'`{BotUtil.strfdelta(remaining, inputtype='minutes')}` still remain.'
+            response += f'`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain.'
             
         if satan_boost and satan_release:
             response += f'\n<@{interaction.user.id}> pays the price of making a deal with the devil and goes to jail as well. They will be released <t:{satan_release}:R>.'

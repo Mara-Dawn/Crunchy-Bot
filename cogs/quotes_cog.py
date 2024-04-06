@@ -1,16 +1,18 @@
 import typing
+
 import discord
 from discord import app_commands
 from discord.ext import commands
+
 from bot import CrunchyBot
-from datalayer.database import Database
-from datalayer.quote import Quote
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.settings import SettingsManager
-from view.image_generator import ImageGenerator
+from datalayer.database import Database
+from datalayer.quote import Quote
 from events.quote_event import QuoteEvent
+from view.image_generator import ImageGenerator
 
 
 class Quotes(commands.Cog):

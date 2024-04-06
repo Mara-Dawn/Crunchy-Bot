@@ -1,14 +1,13 @@
-from typing import Optional
 import asyncio
 import datetime
 import random
+from typing import Optional
+
 import discord
-from discord.ext import commands
 from discord import app_commands
+from discord.ext import commands
+
 from bot import CrunchyBot
-from events.beans_event import BeansEvent
-from events.types import BeansEventType
-from items.types import ItemType
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
@@ -16,6 +15,9 @@ from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings import SettingsManager
 from datalayer.database import Database
+from events.beans_event import BeansEvent
+from events.types import BeansEventType
+from items.types import ItemType
 from view.settings_modal import SettingsModal
 
 
@@ -95,15 +97,16 @@ class Gamba(commands.Cog):
         default_cooldown = self.settings.get_beans_gamba_cooldown(guild_id)
         timestamp_now = int(datetime.datetime.now().timestamp())
 
-        if amount is not None:
-            if not (beans_gamba_min <= amount and amount <= beans_gamba_max):
-                await self.bot.command_response(
-                    self.__cog_name__,
-                    interaction,
-                    f"Between `🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}` you fucking monkey.",
-                    ephemeral=False,
-                )
-                return
+        if amount is not None and not (
+            beans_gamba_min <= amount and amount <= beans_gamba_max
+        ):
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                f"Between `🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}` you fucking monkey.",
+                ephemeral=False,
+            )
+            return
 
         await interaction.response.defer()
 

@@ -1,6 +1,3 @@
-from typing import Dict
-
-
 class Setting:
 
     def __init__(
@@ -33,7 +30,7 @@ class ModuleSettings:
     def __init__(self, key: str, name: str):
         self.name = name
         self.key = key
-        self.settings: Dict[str, Setting] = {}
+        self.settings: dict[str, Setting] = {}
 
     def get_name(self) -> str:
         return self.name
@@ -49,14 +46,14 @@ class ModuleSettings:
             return None
         return self.settings[key]
 
-    def get_settings(self) -> Dict[str, Setting]:
+    def get_settings(self) -> dict[str, Setting]:
         return self.settings
 
 
 class GuildSettings:
 
     def __init__(self):
-        self.settings: Dict[str, ModuleSettings] = {}
+        self.settings: dict[str, ModuleSettings] = {}
 
     def add_module(self, module_settings: ModuleSettings) -> ModuleSettings:
         self.settings[module_settings.get_key()] = module_settings
@@ -67,7 +64,7 @@ class GuildSettings:
 
         return self.settings[key]
 
-    def get_modules(self) -> Dict[str, ModuleSettings]:
+    def get_modules(self) -> dict[str, ModuleSettings]:
         return self.settings
 
     def get_default_setting(self, module: str, setting: str):

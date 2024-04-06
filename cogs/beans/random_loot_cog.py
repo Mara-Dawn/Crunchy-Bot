@@ -1,12 +1,14 @@
 import datetime
 import random
 import secrets
+
 import discord
-from discord.ext import commands, tasks
 from discord import app_commands
-from control.settings import SettingsManager
+from discord.ext import commands, tasks
+
 from bot import CrunchyBot
-from cogs.beans.beans_group import BeansGroup
+from cogs.beans.beans_group_cog import BeansGroup
+from control.settings import SettingsManager
 from view.settings_modal import SettingsModal
 
 

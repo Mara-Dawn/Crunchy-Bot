@@ -1,10 +1,12 @@
 import datetime
 import secrets
+
 import discord
-from discord.ext import commands, tasks
 from discord import app_commands
+from discord.ext import commands, tasks
+
 from bot_util import BotUtil
-from cogs.beans.beans_group import BeansGroup
+from cogs.beans.beans_group_cog import BeansGroup
 from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType
@@ -90,7 +92,7 @@ class Lottery(BeansGroup):
         self.lottery_task.start()
         self.logger.log("init", "Lottery loaded.", cog=self.__cog_name__)
 
-    @tasks.loop(time=datetime.time(hour=12, tzinfo=datetime.timezone.utc))
+    @tasks.loop(time=datetime.time(hour=12, tzinfo=datetime.UTC))
     async def lottery_task(self) -> None:
         self.logger.log("sys", "Lottery task started.", cog=self.__cog_name__)
 

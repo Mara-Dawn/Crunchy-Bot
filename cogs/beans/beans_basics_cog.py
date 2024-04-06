@@ -1,10 +1,12 @@
 import datetime
 import random
 import typing
+
 import discord
-from discord.ext import commands
 from discord import app_commands
-from cogs.beans.beans_group import BeansGroup
+from discord.ext import commands
+
+from cogs.beans.beans_group_cog import BeansGroup
 from control.settings import SettingsManager
 from events.beans_event import BeansEvent
 from events.types import BeansEventType
@@ -95,7 +97,7 @@ class BeansBasics(BeansGroup):
     async def balance(
         self,
         interaction: discord.Interaction,
-        user: typing.Optional[discord.Member] = None,
+        user: discord.Member | None = None,
     ) -> None:
         if not await self.__check_enabled(interaction):
             return

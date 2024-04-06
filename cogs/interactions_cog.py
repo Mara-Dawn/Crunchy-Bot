@@ -1,19 +1,21 @@
 import datetime
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-from bot_util import Tenor
+
 from bot import CrunchyBot
-from cogs.jail import Jail
-from datalayer.database import Database
-from datalayer.types import UserInteraction
+from bot_util import Tenor
+from cogs.jail_cog import Jail
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.settings import SettingsManager
-from items.types import ItemType
+from datalayer.database import Database
+from datalayer.types import UserInteraction
 from events.interaction_event import InteractionEvent
+from items.types import ItemType
 
 
 class Interactions(commands.Cog):
@@ -153,8 +155,9 @@ class Interactions(commands.Cog):
                 search = "headpats"
             case UserInteraction.FART:
                 search = "fart"
-
-        token = open(self.bot.TENOR_TOKEN_FILE, "r").readline()
+        token = ""
+        with open(self.bot.TENOR_TOKEN_FILE) as file:
+            token = file.readline()
         g = Tenor(token)
         gif = await g.random(tag=search)
         embed = discord.Embed(color=discord.Colour.purple())

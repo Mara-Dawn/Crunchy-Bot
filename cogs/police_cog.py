@@ -1,19 +1,21 @@
-from typing import Dict, Literal
 import asyncio
 import datetime
 import traceback
+from typing import Literal  # noqa: UP035
+
 import discord
 from discord import app_commands
 from discord.ext import commands
+
 from bot import CrunchyBot
-from cogs.jail import Jail
-from datalayer.database import Database
-from datalayer.police_list import PoliceList
+from cogs.jail_cog import Jail
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings import SettingsManager
+from datalayer.database import Database
+from datalayer.police_list import PoliceList
 from events.jail_event import JailEvent
 from events.spam_event import SpamEvent
 from events.timeout_event import TimeoutEvent
@@ -25,7 +27,7 @@ class Police(commands.Cog):
 
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
-        self.user_list: Dict[int, PoliceList] = {}
+        self.user_list: dict[int, PoliceList] = {}
         self.logger: BotLogger = bot.logger
         self.settings: SettingsManager = bot.settings
         self.event_manager: EventManager = bot.event_manager
@@ -252,19 +254,19 @@ class Police(commands.Cog):
 
         user_list.track_spam_message(author_id, message.created_at)
 
-        if user_node.spam_check(message_limit_interval, message_limit):
-            if user_node.check_spam_score_increase(
-                message_limit_interval, message_limit
-            ):
+        if user_node.spam_check(
+            message_limit_interval, message_limit
+        ) and user_node.check_spam_score_increase(
+            message_limit_interval, message_limit
+        ):
+            event = SpamEvent(datetime.datetime.now(), guild_id, author_id)
+            await self.controller.dispatch_event(event)
 
-                event = SpamEvent(datetime.datetime.now(), guild_id, author_id)
-                await self.controller.dispatch_event(event)
-
-                self.logger.log(
-                    guild_id,
-                    f"Spam counter increased for {message.author.name}",
-                    cog=self.__cog_name__,
-                )
+            self.logger.log(
+                guild_id,
+                f"Spam counter increased for {message.author.name}",
+                cog=self.__cog_name__,
+            )
 
         if bool(
             set([x.id for x in message.author.roles]).intersection(
