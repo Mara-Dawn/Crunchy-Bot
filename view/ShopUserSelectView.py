@@ -87,6 +87,11 @@ class ShopUserSelectView(ShopResponseView):
                 jail_announcement = f'<@{self.selected_user.id}> was sentenced to Jail by <@{member_id}> using a **{self.item.get_name()}**. They will be released <t:{release}:R>.'
                 
             case ItemType.RELEASE:
+                affected_jails = self.database.get_active_jails_by_member(guild_id, member_id)
+                if len(affected_jails) > 0:
+                    await interaction.followup.send('You cannot use this while you are in jail.', ephemeral=True)
+                    return
+                
                 response = await jail_cog.release_user(guild_id, member_id, self.selected_user)
 
                 if not response:
