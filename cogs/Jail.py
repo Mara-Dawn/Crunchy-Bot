@@ -254,7 +254,7 @@ class Jail(commands.Cog):
             if not response:
                 response +=  f'Something went wrong, user {user.display_name} could not be released.'
         else:
-            time_readable = BotUtil.strfdelta(amount, inputtype='minutes')
+            time_readable = BotUtil.strfdelta(abs(amount), inputtype='minutes')
             if amount >= 0:
                 response += f'Their jail sentence was increased by `{time_readable}` {damage_info}. '
             elif amount < 0: 
