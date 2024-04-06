@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from cogs.beans.beans_group_cog import BeansGroup
+from cogs.beans.beans_group import BeansGroup
 from control.settings import SettingsManager
 from events.beans_event import BeansEvent
 from events.types import BeansEventType

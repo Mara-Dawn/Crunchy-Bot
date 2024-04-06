@@ -7,7 +7,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot import CrunchyBot
-from cogs.beans.beans_group_cog import BeansGroup
+from cogs.beans.beans_group import BeansGroup
 from control.settings import SettingsManager
 from view.settings_modal import SettingsModal
 

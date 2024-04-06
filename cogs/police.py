@@ -8,13 +8,13 @@ from discord import app_commands
 from discord.ext import commands
 
 from bot import CrunchyBot
-from cogs.jail_cog import Jail
+from cogs.jail import Jail
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings import SettingsManager
-from datalayer.database import Database
+from datalayer.atabase import Database
 from datalayer.police_list import PoliceList
 from events.jail_event import JailEvent
 from events.spam_event import SpamEvent

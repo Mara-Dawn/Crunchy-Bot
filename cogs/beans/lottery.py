@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot_util import BotUtil
-from cogs.beans.beans_group_cog import BeansGroup
+from cogs.beans.beans_group import BeansGroup
 from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType

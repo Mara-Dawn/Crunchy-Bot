@@ -1,18 +1,19 @@
-from typing import Any, Dict, List, Tuple
 import json
 import sqlite3
 import traceback
 from sqlite3 import Error
+from typing import Any
+
 import discord
 from discord.ext import commands
+
 from control.logger import BotLogger
-from datalayer.lootbox import LootBox
-from datalayer.types import UserInteraction
 from datalayer.jail import UserJail
-from datalayer.quote import Quote
+from datalayer.ootbox import LootBox
+from datalayer.uote import Quote
+from datalayer.types import UserInteraction
 from events.bat_event import BatEvent
-from events.beans_event import BeansEvent
-from events.beans_event import BeansEventType
+from events.beans_event import BeansEvent, BeansEventType
 from events.bot_event import BotEvent
 from events.interaction_event import InteractionEvent
 from events.inventory_event import InventoryEvent
@@ -357,7 +358,7 @@ class Database:
 
         return output
 
-    def __list_sanitizer(self, attribute_list: List[Any]) -> str:
+    def __list_sanitizer(self, attribute_list: list[Any]) -> str:
         return "(" + ",".join(["?" for x in range(len(attribute_list))]) + ")"
 
     def get_setting(self, guild_id: int, module: str, key: str):
@@ -650,7 +651,7 @@ class Database:
 
     def get_bully_react(
         self, guild_id: int, user_id: int
-    ) -> Tuple[int, discord.Emoji | str]:
+    ) -> tuple[int, discord.Emoji | str]:
         command = f"""
             SELECT * FROM {self.BULLY_REACT_TABLE}
             WHERE {self.BULLY_REACT_GUILD_COL} = ? 
@@ -792,7 +793,7 @@ class Database:
 
         return self.__query_insert(command, task)
 
-    def get_active_jails(self) -> List[UserJail]:
+    def get_active_jails(self) -> list[UserJail]:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_RELEASED_ON_COL} IS NULL 
@@ -815,7 +816,7 @@ class Database:
 
         return UserJail.from_db_row(rows)
 
-    def get_jails_by_guild(self, guild_id: int) -> List[UserJail]:
+    def get_jails_by_guild(self, guild_id: int) -> list[UserJail]:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_GUILD_ID_COL} = {int(guild_id)};
@@ -825,7 +826,7 @@ class Database:
             return []
         return [UserJail.from_db_row(row) for row in rows]
 
-    def get_active_jails_by_guild(self, guild_id: int) -> List[UserJail]:
+    def get_active_jails_by_guild(self, guild_id: int) -> list[UserJail]:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_GUILD_ID_COL} = {int(guild_id)}
@@ -837,7 +838,7 @@ class Database:
             return []
         return [UserJail.from_db_row(row) for row in rows]
 
-    def get_active_jails_by_member(self, guild_id: int, user_id: int) -> List[UserJail]:
+    def get_active_jails_by_member(self, guild_id: int, user_id: int) -> list[UserJail]:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_MEMBER_COL} = ?
@@ -851,7 +852,7 @@ class Database:
             return []
         return [UserJail.from_db_row(row) for row in rows]
 
-    def get_jail_events_by_jail(self, jail_id: int) -> List[JailEvent]:
+    def get_jail_events_by_jail(self, jail_id: int) -> list[JailEvent]:
         command = f"""
             SELECT * FROM {self.JAIL_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
@@ -862,7 +863,7 @@ class Database:
             return []
         return [JailEvent.from_db_row(row) for row in rows]
 
-    def get_jail_events_by_user(self, user_id: int) -> List[JailEvent]:
+    def get_jail_events_by_user(self, user_id: int) -> list[JailEvent]:
         command = f"""
             SELECT * FROM {self.JAIL_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
@@ -873,7 +874,7 @@ class Database:
             return []
         return [JailEvent.from_db_row(row) for row in rows]
 
-    def get_jail_events_affecting_user(self, user_id: int) -> List[JailEvent]:
+    def get_jail_events_affecting_user(self, user_id: int) -> list[JailEvent]:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             INNER JOIN {self.JAIL_EVENT_TABLE} ON {self.JAIL_TABLE}.{self.JAIL_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_JAILREFERENCE_COL}
@@ -887,7 +888,7 @@ class Database:
 
     def get_jail_events_by_guild(
         self, guild_id: int
-    ) -> Dict[UserJail, List[JailEvent]]:
+    ) -> dict[UserJail, list[JailEvent]]:
         jails = self.get_jails_by_guild(guild_id)
         output = {}
         for jail in jails:
@@ -895,7 +896,7 @@ class Database:
 
         return output
 
-    def get_timeout_events_by_user(self, user_id: int) -> List[TimeoutEvent]:
+    def get_timeout_events_by_user(self, user_id: int) -> list[TimeoutEvent]:
         command = f"""
             SELECT * FROM {self.TIMEOUT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
@@ -906,7 +907,7 @@ class Database:
             return []
         return [TimeoutEvent.from_db_row(row) for row in rows]
 
-    def get_timeout_events_by_guild(self, guild_id: int) -> List[TimeoutEvent]:
+    def get_timeout_events_by_guild(self, guild_id: int) -> list[TimeoutEvent]:
         command = f"""
             SELECT * FROM {self.TIMEOUT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
@@ -917,7 +918,7 @@ class Database:
             return []
         return [TimeoutEvent.from_db_row(row) for row in rows]
 
-    def get_spam_events_by_user(self, user_id: int) -> List[SpamEvent]:
+    def get_spam_events_by_user(self, user_id: int) -> list[SpamEvent]:
         command = f"""
             SELECT * FROM {self.SPAM_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.SPAM_EVENT_TABLE}.{self.SPAM_EVENT_ID_COL}
@@ -928,7 +929,7 @@ class Database:
             return []
         return [SpamEvent.from_db_row(row) for row in rows]
 
-    def get_spam_events_by_guild(self, guild_id: int) -> List[SpamEvent]:
+    def get_spam_events_by_guild(self, guild_id: int) -> list[SpamEvent]:
         command = f"""
             SELECT * FROM {self.SPAM_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.SPAM_EVENT_TABLE}.{self.SPAM_EVENT_ID_COL}
@@ -939,7 +940,7 @@ class Database:
             return []
         return [SpamEvent.from_db_row(row) for row in rows]
 
-    def get_interaction_events_by_user(self, user_id: int) -> List[InteractionEvent]:
+    def get_interaction_events_by_user(self, user_id: int) -> list[InteractionEvent]:
         command = f"""
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
@@ -952,7 +953,7 @@ class Database:
 
     def get_interaction_events_affecting_user(
         self, user_id: int
-    ) -> List[InteractionEvent]:
+    ) -> list[InteractionEvent]:
         command = f"""
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
@@ -965,7 +966,7 @@ class Database:
 
     def get_guild_interaction_events(
         self, guild_id: int, interaction_type: UserInteraction
-    ) -> List[InteractionEvent]:
+    ) -> list[InteractionEvent]:
         command = f"""
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
@@ -1044,7 +1045,7 @@ class Database:
         output = rows[0][f"SUM({self.BEANS_EVENT_VALUE_COL})"]
         return output if output is not None else 0
 
-    def get_guild_beans(self, guild_id: int) -> Dict[int, int]:
+    def get_guild_beans(self, guild_id: int) -> dict[int, int]:
         command = f"""
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
@@ -1063,7 +1064,7 @@ class Database:
 
         return output
 
-    def get_guild_beans_rankings(self, guild_id: int) -> Dict[int, int]:
+    def get_guild_beans_rankings(self, guild_id: int) -> dict[int, int]:
         command = f"""
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
@@ -1086,7 +1087,7 @@ class Database:
             for row in rows
         }
 
-    def get_lootbox_purchases_by_guild(self, guild_id: int) -> Dict[int, int]:
+    def get_lootbox_purchases_by_guild(self, guild_id: int) -> dict[int, int]:
         command = f"""
             SELECT {self.LOOTBOX_EVENT_MEMBER_COL}, COUNT({self.LOOTBOX_EVENT_TYPE_COL}) FROM {self.LOOTBOX_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
@@ -1150,7 +1151,7 @@ class Database:
             return None
         return BeansEvent.from_db_row(rows[0])
 
-    def get_lottery_data(self, guild_id: int) -> Dict[int, int]:
+    def get_lottery_data(self, guild_id: int) -> dict[int, int]:
         command = f"""
             SELECT {self.INVENTORY_EVENT_MEMBER_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
@@ -1173,7 +1174,7 @@ class Database:
         }
         return rows
 
-    def get_item_counts_by_guild(self, guild_id: int) -> Dict[int, Dict[ItemType, int]]:
+    def get_item_counts_by_guild(self, guild_id: int) -> dict[int, dict[ItemType, int]]:
         command = f"""
             SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, {self.INVENTORY_EVENT_MEMBER_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
@@ -1202,7 +1203,7 @@ class Database:
 
     def get_item_counts_by_user(
         self, guild_id: int, user_id: int
-    ) -> Dict[ItemType, int]:
+    ) -> dict[ItemType, int]:
         command = f"""
             SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
@@ -1242,7 +1243,7 @@ class Database:
             return None
         return BatEvent.from_db_row(rows[0])
 
-    def get_lootbox_mimics(self, guild_id: int) -> Dict[int, int]:
+    def get_lootbox_mimics(self, guild_id: int) -> dict[int, int]:
 
         lootbox_types = [LootBoxEventType.CLAIM.value, LootBoxEventType.OPEN.value]
         list_sanitized = self.__list_sanitizer(lootbox_types)

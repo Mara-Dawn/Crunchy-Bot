@@ -12,7 +12,7 @@ from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.settings import SettingsManager
 from control.view.shop_view_controller import ShopViewController
-from datalayer.database import Database
+from datalayer.atabase import Database
 from datalayer.types import ItemTrigger
 from items.types import ItemType
 from view.inventory_embed import InventoryEmbed

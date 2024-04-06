@@ -9,7 +9,7 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.settings import SettingsManager
-from datalayer.database import Database
+from datalayer.atabase import Database
 from view.ranking_embed import RankingEmbed
 from view.ranking_view import RankingView
 from view.statistics_embed import StatisticsEmbed

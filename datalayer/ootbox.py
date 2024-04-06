@@ -38,7 +38,7 @@ class LootBox:
 
     @staticmethod
     def from_db_row(row: Dict[str, Any]) -> "LootBox":
-        from datalayer.database import Database
+        from datalayer.atabase import Database
 
         if row is None:
             return None
