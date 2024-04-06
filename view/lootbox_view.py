@@ -1,8 +1,7 @@
 import discord
-
-from control.view import LootBoxViewController
-from events import UIEvent
-from view import ViewMenu
+from control.view.lootbox_view_controller import LootBoxViewController
+from events.ui_event import UIEvent
+from view.view_menu import ViewMenu
 
 
 class LootBoxView(ViewMenu):
@@ -18,7 +17,7 @@ class LootBoxView(ViewMenu):
     async def claim(self, interaction: discord.Interaction):
         await self.controller.handle_lootbox_claim(interaction, self, self.owner_id)
 
-    def listen_for_ui_event(self, event: UIEvent):
+    async def listen_for_ui_event(self, event: UIEvent):
         pass
 
 

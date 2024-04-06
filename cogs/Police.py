@@ -6,18 +6,19 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from bot import CrunchyBot
-from cogs import Jail
-from datalayer import Database, PoliceList
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    RoleManager,
-    EventManager,
-)
-from events import JailEvent, SpamEvent, TimeoutEvent
+from cogs.jail import Jail
+from datalayer.database import Database
+from datalayer.police_list import PoliceList
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.logger import BotLogger
+from control.role_manager import RoleManager
+from control.settings import BotSettings
+from events.jail_event import JailEvent
+from events.spam_event import SpamEvent
+from events.timeout_event import TimeoutEvent
 from events.types import JailEventType
-from view import SettingsModal
+from view.settings_modal import SettingsModal
 
 
 class Police(commands.Cog):

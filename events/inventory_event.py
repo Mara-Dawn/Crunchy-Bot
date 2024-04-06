@@ -1,7 +1,7 @@
 import datetime
 
 from typing import Any, Dict, List
-from events import BotEvent
+from events.bot_event import BotEvent
 from events.types import EventType
 from items.types import ItemType
 

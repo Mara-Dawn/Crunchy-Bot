@@ -4,10 +4,11 @@ import typing
 import discord
 from discord.ext import commands
 from discord import app_commands
-from control import BotSettings
-from cogs.beans import BeansGroup
-from events import BeansEvent, BeansEventType
-from view import SettingsModal
+from cogs.beans.beans_group import BeansGroup
+from control.settings import BotSettings
+from events.beans_event import BeansEvent
+from events.types import BeansEventType
+from view.settings_modal import SettingsModal
 
 
 class BeansBasics(BeansGroup):

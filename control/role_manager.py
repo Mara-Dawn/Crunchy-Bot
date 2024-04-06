@@ -1,14 +1,13 @@
 import traceback
 import discord
 from discord.ext import commands
-from datalayer import Database
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    Service,
-)
-from events import BotEvent, InventoryEvent
+from datalayer.database import Database
+from control.controller import Controller
+from control.service import Service
+from control.logger import BotLogger
+from control.settings import BotSettings
+from events.bot_event import BotEvent
+from events.inventory_event import InventoryEvent
 from events.types import EventType
 from items.types import ItemType
 

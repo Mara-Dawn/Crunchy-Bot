@@ -1,12 +1,12 @@
 from typing import List
 import discord
-
-from control.view import ShopViewController
-from events import UIEvent
+from control.view.shop_view_controller import ShopViewController
+from events.ui_event import UIEvent
 from events.types import UIEventType
-from items import Item
+from items.item import Item
 from items.types import ItemType
-from view import ShopEmbed, ViewMenu
+from view.shop_embed import ShopEmbed
+from view.view_menu import ViewMenu
 
 
 class ShopView(ViewMenu):

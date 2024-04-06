@@ -3,15 +3,14 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from bot import CrunchyBot
-from datalayer import Database, Quote
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    EventManager,
-)
-from view import ImageGenerator
-from events import QuoteEvent
+from datalayer.database import Database
+from datalayer.quote import Quote
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.logger import BotLogger
+from control.settings import BotSettings
+from view.image_generator import ImageGenerator
+from events.quote_event import QuoteEvent
 
 
 class Quotes(commands.Cog):

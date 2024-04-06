@@ -3,13 +3,18 @@ import random
 from typing import Tuple
 import discord
 from bot_util import BotUtil
-from cogs import Jail
-from control.view import ViewController
-from events import BatEvent, BeansEvent, BotEvent, InventoryEvent, JailEvent, UIEvent
+from cogs.jail import Jail
+from control.view.view_controller import ViewController
+from events.beans_event import BeansEvent
+from events.bot_event import BotEvent
+from events.inventory_event import InventoryEvent
+from events.jail_event import JailEvent
+from events.ui_event import UIEvent
+from events.bat_event import BatEvent
 from events.types import BeansEventType, JailEventType, UIEventType
 from items.types import ItemType
 from view.types import EmojiType
-from view import ShopResponseView
+from view.shop_response_view import ShopResponseView
 
 class ShopResponseViewController(ViewController):
         

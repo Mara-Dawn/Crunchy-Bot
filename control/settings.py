@@ -1,8 +1,8 @@
 from typing import List
 from discord.ext import commands
-from datalayer import Database
+from datalayer.database import Database
 from datalayer.settings import GuildSettings, ModuleSettings
-from control import BotLogger
+from control.logger import BotLogger
 from items.types import ItemType
 
 

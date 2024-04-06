@@ -4,18 +4,18 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from bot import CrunchyBot
-from datalayer import Database
+from datalayer.database import Database
 from datalayer.types import ItemTrigger
 from items.types import ItemType
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    EventManager,
-    ItemManager,
-)
-from control.view import ShopViewController
-from view import InventoryEmbed, ShopView, ShopEmbed
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.settings import BotSettings
+from control.view.shop_view_controller import ShopViewController
+from view.inventory_embed import InventoryEmbed
+from view.shop_view import ShopView
+from view.shop_embed import ShopEmbed
 
 
 class Shop(commands.Cog):

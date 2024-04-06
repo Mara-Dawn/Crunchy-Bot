@@ -1,14 +1,12 @@
 from discord.ext import commands
 from bot import CrunchyBot
-from datalayer import Database
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    RoleManager,
-    EventManager,
-    ItemManager,
-)
+from datalayer.database import Database
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.role_manager import RoleManager
+from control.settings import BotSettings
 
 
 class BeansGroup(commands.GroupCog):

@@ -3,14 +3,15 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from bot import CrunchyBot
-from datalayer import Database
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    EventManager,
-)
-from view import RankingEmbed, RankingType, RankingView, StatisticsEmbed
+from datalayer.database import Database
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.logger import BotLogger
+from control.settings import BotSettings
+from view.ranking_embed import RankingEmbed
+from view.types import RankingType
+from view.ranking_view import RankingView
+from view.statistics_embed import StatisticsEmbed
 
 
 class Statistics(commands.Cog):

@@ -1,7 +1,7 @@
 import discord
 from bot_util import BotUtil
 from bot import CrunchyBot
-from datalayer import UserStats
+from datalayer.stats import UserStats
 
 
 class StatisticsEmbed(discord.Embed):

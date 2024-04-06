@@ -2,15 +2,17 @@ import datetime
 from typing import Any, List, Tuple
 from discord.ext import commands
 from bot_util import BotUtil
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    Service,
-)
-from datalayer import UserJail, Database, UserInteraction, UserStats
-from events import BotEvent, EventType, JailEvent
-from events.types import JailEventType
+from control.controller import Controller
+from control.service import Service
+from control.logger import BotLogger
+from control.settings import BotSettings
+from datalayer.jail import UserJail
+from datalayer.database import Database
+from datalayer.types import UserInteraction
+from datalayer.stats import UserStats
+from events.bot_event import BotEvent
+from events.jail_event import JailEvent
+from events.types import JailEventType, EventType
 from items.types import ItemType
 from view.types import RankingType
 

@@ -1,8 +1,6 @@
 from typing import Dict, List
-
 import discord
-
-from items import Item
+from items.item import Item
 from items.types import ItemType
 
 

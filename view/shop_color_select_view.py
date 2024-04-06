@@ -1,7 +1,6 @@
 import discord
-
-from control.view import ShopResponseViewController
-from items import Item
+from control.view.shop_response_view_controller import ShopResponseViewController
+from items.item import Item
 
 # pylint: disable-next=unused-import,W0614,W0401
 from view.shop_response_view import *

@@ -1,16 +1,14 @@
 import datetime
 import discord
-from control.view import ViewController
-from events import (
-    BeansEvent,
-    BotEvent,
-    InventoryEvent,
-    LootBoxEvent,
-    UIEvent,
-)
+from control.view.view_controller import ViewController
+from events.beans_event import BeansEvent
+from events.bot_event import BotEvent
+from events.inventory_event import InventoryEvent
+from events.lootbox_event import LootBoxEvent
+from events.ui_event import UIEvent
 from events.types import BeansEventType, LootBoxEventType, UIEventType
 from items.types import ItemType
-from view import ViewMenu
+from view.view_menu import ViewMenu
 
 
 class LootBoxViewController(ViewController):

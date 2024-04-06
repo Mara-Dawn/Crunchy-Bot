@@ -1,13 +1,12 @@
 import re
 from typing import List
 import discord
-
-from control.view import ShopResponseViewController
-from events import UIEvent
+from control.view.shop_response_view_controller import ShopResponseViewController
+from events.ui_event import UIEvent
 from events.types import UIEventType
-from items import Item
+from items.item import Item
 from view.types import EmojiType
-from view import ViewMenu
+from view.view_menu import ViewMenu
 
 
 class ShopResponseView(ViewMenu):

@@ -1,7 +1,6 @@
 from typing import List
 import discord
-
-from items import Item
+from items.item import Item
 
 
 class ShopEmbed(discord.Embed):

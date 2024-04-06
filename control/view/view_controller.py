@@ -1,18 +1,16 @@
 from typing import List
 import discord
 from bot import CrunchyBot
-from control import (
-    Service,
-    BotLogger,
-    BotSettings,
-    Controller,
-    RoleManager,
-    EventManager,
-    ItemManager,
-)
-from datalayer import Database
-from events import UIEvent
-from view import ViewMenu
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.role_manager import RoleManager
+from control.settings import BotSettings
+from control.service import Service
+from datalayer.database import Database
+from events.ui_event import UIEvent
+from view.view_menu import ViewMenu
 
 
 class ViewController(Service):

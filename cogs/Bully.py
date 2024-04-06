@@ -4,18 +4,16 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from bot import CrunchyBot
-from datalayer import Database
+from datalayer.database import Database
 from datalayer.types import ItemTrigger
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    RoleManager,
-    EventManager,
-    ItemManager,
-)
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.role_manager import RoleManager
+from control.settings import BotSettings
 from items.types import ItemType
-from events import InventoryEvent
+from events.inventory_event import InventoryEvent
 
 
 class Bully(commands.Cog):

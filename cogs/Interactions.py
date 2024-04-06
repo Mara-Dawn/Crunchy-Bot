@@ -4,18 +4,16 @@ from discord import app_commands
 from discord.ext import commands
 from bot_util import Tenor
 from bot import CrunchyBot
-from cogs import Jail
-from datalayer import Database
+from cogs.jail import Jail
+from datalayer.database import Database
 from datalayer.types import UserInteraction
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    EventManager,
-    ItemManager,
-)
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.settings import BotSettings
 from items.types import ItemType
-from events import InteractionEvent
+from events.interaction_event import InteractionEvent
 
 
 class Interactions(commands.Cog):

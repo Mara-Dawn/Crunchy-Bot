@@ -1,4 +1,4 @@
-from items import Item
+from items.item import Item
 from items.types import ItemGroup, ItemType, ShopCategory
 
 

@@ -1,6 +1,5 @@
 from typing import Any, List, Tuple
 import discord
-
 from bot_util import BotUtil
 from bot import CrunchyBot
 from view.types import RankingType

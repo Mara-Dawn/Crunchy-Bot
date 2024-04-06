@@ -5,21 +5,22 @@ import traceback
 from sqlite3 import Error
 import discord
 from discord.ext import commands
-from control import BotLogger
-from datalayer import LootBox, UserInteraction, UserJail, Quote
-from events import (
-    BatEvent,
-    BeansEvent,
-    BeansEventType,
-    BotEvent,
-    InteractionEvent,
-    InventoryEvent,
-    JailEvent,
-    LootBoxEvent,
-    QuoteEvent,
-    SpamEvent,
-    TimeoutEvent,
-)
+from control.logger import BotLogger
+from datalayer.lootbox import LootBox
+from datalayer.types import UserInteraction
+from datalayer.jail import UserJail
+from datalayer.quote import Quote
+from events.bat_event import BatEvent
+from events.beans_event import BeansEvent
+from events.beans_event import BeansEventType
+from events.bot_event import BotEvent
+from events.interaction_event import InteractionEvent
+from events.inventory_event import InventoryEvent
+from events.jail_event import JailEvent
+from events.lootbox_event import LootBoxEvent
+from events.quote_event import QuoteEvent
+from events.spam_event import SpamEvent
+from events.timeout_event import TimeoutEvent
 from events.types import EventType, LootBoxEventType
 from items.types import ItemType
 from view.types import EmojiType

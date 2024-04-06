@@ -1,4 +1,6 @@
-from cogs.beans import BeansBasics, Lottery, RandomLoot
+from cogs.beans.beans_basics import BeansBasics
+from cogs.beans.lottery import Lottery
+from cogs.beans.random_loot import RandomLoot
 
 
 class Beans(BeansBasics, Lottery, RandomLoot, group_name="beans"):

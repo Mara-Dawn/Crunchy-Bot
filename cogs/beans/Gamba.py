@@ -6,18 +6,17 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from bot import CrunchyBot
-from events import BeansEvent, BeansEventType
+from events.beans_event import BeansEvent
+from events.types import BeansEventType
 from items.types import ItemType
-from datalayer import Database
-from view import SettingsModal
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    RoleManager,
-    EventManager,
-    ItemManager,
-)
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.role_manager import RoleManager
+from control.settings import BotSettings
+from datalayer.database import Database
+from view.settings_modal import SettingsModal
 
 
 class Gamba(commands.Cog):

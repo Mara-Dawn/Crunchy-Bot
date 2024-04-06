@@ -1,23 +1,26 @@
 import datetime
 import discord
-from control.view import (
-    LootBoxViewController,
-    ShopResponseViewController,
-    ViewController,
-)
-from events import BeansEvent, BotEvent, InventoryEvent, LootBoxEvent, UIEvent
+from control.view.lootbox_view_controller import LootBoxViewController
+from control.view.shop_response_view_controller import ShopResponseViewController
+from control.view.view_controller import ViewController
+from events.beans_event import BeansEvent
+from events.bot_event import BotEvent
+from events.inventory_event import InventoryEvent
+from events.lootbox_event import LootBoxEvent
+from events.ui_event import UIEvent
 from events.types import BeansEventType, LootBoxEventType, UIEventType
 from items.types import ItemGroup, ItemType
-from view import InventoryEmbed, LootBoxView, ShopResponseView
+from view.inventory_embed import InventoryEmbed
+from view.lootbox_view import LootBoxView
+from view.shop_response_view import ShopResponseView
+
 
 # needed for global access
 # pylint: disable=unused-import
-from view import (
-    ShopUserSelectView,
-    ShopConfirmView,
-    ShopColorSelectView,
-    ShopReactionSelectView,
-)
+from view.shop_user_select_view import ShopUserSelectView
+from view.shop_confirm_view import ShopConfirmView
+from view.shop_color_select_view import ShopColorSelectView
+from view.shop_reaction_select_view import ShopReactionSelectView
 
 # pylint: enable=unused-import
 

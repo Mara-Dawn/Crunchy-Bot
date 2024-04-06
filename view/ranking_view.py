@@ -1,7 +1,7 @@
 import discord
 
 from bot import CrunchyBot
-from view import RankingEmbed
+from view.ranking_embed import RankingEmbed
 from view.types import RankingType
 
 

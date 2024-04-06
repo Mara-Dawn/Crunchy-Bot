@@ -7,20 +7,20 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from bot_util import BotUtil
 from bot import CrunchyBot
-from datalayer import Database, UserJail
+from datalayer.database import Database
+from datalayer.jail import UserJail
 from datalayer.types import UserInteraction
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    RoleManager,
-    EventManager,
-    ItemManager,
-)
-from events import InventoryEvent, JailEvent
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.role_manager import RoleManager
+from control.settings import BotSettings
+from events.inventory_event import InventoryEvent
+from events.jail_event import JailEvent
 from events.types import JailEventType
 from items.types import ItemGroup, ItemType
-from view import SettingsModal
+from view.settings_modal import SettingsModal
 
 class Jail(commands.Cog):
     

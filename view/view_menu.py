@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import discord
-from events import UIEvent
+from events.ui_event import UIEvent
 
 
 class ViewMenu(discord.ui.View, ABC):

@@ -1,7 +1,6 @@
 import datetime
 import collections
 import itertools
-
 from typing import Dict
 
 

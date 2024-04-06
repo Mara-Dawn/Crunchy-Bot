@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from control import Controller
-from events import BotEvent
+from control.controller import Controller
+from events.bot_event import BotEvent
 
 
 class Service(ABC):

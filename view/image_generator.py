@@ -4,7 +4,7 @@ import random
 import re
 from PIL import Image, ImageDraw, ImageFont
 from bot import CrunchyBot
-from datalayer import Quote
+from datalayer.quote import Quote
 
 
 class ImageGenerator:

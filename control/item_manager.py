@@ -4,17 +4,19 @@ import random
 import discord
 from discord.ext import commands
 from bot_util import BotUtil
-from control import (
-    BotLogger,
-    BotSettings,
-    Controller,
-    Service,
-)
-from control.view import LootBoxViewController
-from datalayer import Database, LootBox, UserInventory
+from control.controller import Controller
+from control.service import Service
+from control.logger import BotLogger
+from control.settings import BotSettings
+from control.view.lootbox_view_controller import LootBoxViewController
+from datalayer.database import Database
+from datalayer.lootbox import LootBox
+from datalayer.inventory import UserInventory
 from datalayer.types import ItemTrigger, UserInteraction
-from view import LootBoxView
-from events import BotEvent, InventoryEvent, LootBoxEvent
+from view.lootbox_view import LootBoxView
+from events.bot_event import BotEvent
+from events.inventory_event import InventoryEvent
+from events.lootbox_event import LootBoxEvent
 from events.types import LootBoxEventType
 from items import Item
 from items.types import ItemType

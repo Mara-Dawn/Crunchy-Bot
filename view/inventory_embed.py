@@ -1,6 +1,5 @@
 import discord
-
-from datalayer import UserInventory
+from datalayer.inventory import UserInventory
 from items.types import ItemType
 
 

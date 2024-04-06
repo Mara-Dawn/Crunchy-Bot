@@ -1,13 +1,12 @@
 from typing import List, Type
 from discord.ext import commands
-from control import (
-    BotLogger,
-    BotSettings,
-    Service,
-)
-from control.view import ViewController
-from datalayer import Database
-from events import UIEvent, BotEvent
+from control.logger import BotLogger
+from control.settings import BotSettings
+from control.service import Service
+from control.view.view_controller import ViewController
+from datalayer.database import Database
+from events.bot_event import BotEvent
+from events.ui_event import UIEvent
 
 
 class Controller:

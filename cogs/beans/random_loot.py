@@ -4,10 +4,10 @@ import secrets
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
-from control import BotSettings
+from control.settings import BotSettings
 from bot import CrunchyBot
-from cogs.beans import BeansGroup
-from view import SettingsModal
+from cogs.beans.beans_group import BeansGroup
+from view.settings_modal import SettingsModal
 
 
 class RandomLoot(BeansGroup):
