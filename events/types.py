@@ -48,6 +48,7 @@ class UIEventType(str, Enum):
     SHOP_BUY = "shop_buy"
     SHOP_CHANGED = "shop_changed"
     SHOP_REFRESH = "refresh_shop"
+    SHOP_USER_REFRESH = "refresh_user_shop"
     SHOP_DISABLE = "disable_shop"
     SHOP_RESPONSE_REFRESH = "refresh_shop_response"
     SHOP_RESPONSE_DISABLE = "disable_shop_response"

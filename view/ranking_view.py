@@ -1,16 +1,17 @@
 import discord
 
-from bot import CrunchyBot
+from control.controller import Controller
+from control.event_manager import EventManager
 from view.ranking_embed import RankingEmbed
 from view.types import RankingType
 
 
 class RankingView(discord.ui.View):
 
-    def __init__(self, bot: CrunchyBot, interaction: discord.Interaction):
+    def __init__(self, controller: Controller, interaction: discord.Interaction):
         self.interaction = interaction
-        self.bot = bot
-        self.event_manager = bot.event_manager
+        self.controller = controller
+        self.event_manager: EventManager = self.controller.get_service(EventManager)
         super().__init__(timeout=100)
         self.add_item(Dropdown())
 
@@ -26,7 +27,9 @@ class RankingView(discord.ui.View):
         )
         ranking_img = discord.File(image, "ranking_img.png")
         police_img = discord.File("./img/police.png", "police.png")
-        embed = RankingEmbed(self.bot, interaction, ranking_type, ranking_data)
+        embed = RankingEmbed(
+            self.controller.bot, interaction, ranking_type, ranking_data
+        )
         await interaction.response.edit_message(
             embed=embed, view=self, attachments=[police_img, ranking_img]
         )
@@ -36,11 +39,11 @@ class RankingView(discord.ui.View):
         if interaction.user == self.interaction.user:
             return True
         else:
-            emb = discord.Embed(
+            embed = discord.Embed(
                 description="Only the author of the command can perform this action.",
                 color=16711680,
             )
-            await interaction.response.send_message(embed=emb, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             return False
 
     async def on_timeout(self):

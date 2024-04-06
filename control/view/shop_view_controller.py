@@ -161,7 +161,7 @@ class ShopViewController(ViewController):
                 )
                 new_user_balance = self.database.get_member_beans(guild_id, member_id)
 
-                event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance)
+                event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance, view_id)
                 await self.controller.dispatch_ui_event(event)
 
                 loot_box.set_message_id(message.id)

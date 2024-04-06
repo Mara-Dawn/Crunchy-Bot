@@ -42,6 +42,14 @@ class ShopView(ViewMenu):
         self.refresh_elements()
 
     async def listen_for_ui_event(self, event: UIEvent):
+        match event.get_type():
+            case UIEventType.SHOP_USER_REFRESH:
+                user_id = event.get_payload()[0]
+                if user_id != self.member_id:
+                    return
+                user_balance = event.get_payload()[1]
+                await self.refresh_ui(user_balance=user_balance)
+
         if event.get_view_id() != self.id:
             return
 
