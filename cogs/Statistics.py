@@ -7,7 +7,7 @@ from datalayer.database import Database
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from view.ranking_embed import RankingEmbed
 from view.types import RankingType
 from view.ranking_view import RankingView
@@ -19,7 +19,7 @@ class Statistics(commands.Cog):
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: BotSettings = bot.settings
+        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
         self.controller: Controller = bot.controller

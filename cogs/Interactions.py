@@ -11,7 +11,7 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from items.types import ItemType
 from events.interaction_event import InteractionEvent
 
@@ -21,7 +21,7 @@ class Interactions(commands.Cog):
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: BotSettings = bot.settings
+        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
         self.item_manager: ItemManager = bot.item_manager

@@ -4,7 +4,7 @@ import secrets
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from bot import CrunchyBot
 from cogs.beans.beans_group import BeansGroup
 from view.settings_modal import SettingsModal
@@ -27,13 +27,13 @@ class RandomLoot(BeansGroup):
     def __reevaluate_next_lootbox(self, guild_id: int) -> None:
         min_wait = self.settings.get_setting(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_LOOTBOX_MIN_WAIT_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_LOOTBOX_MIN_WAIT_KEY,
         )
         max_wait = self.settings.get_setting(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_LOOTBOX_MAX_WAIT_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
         )
         next_drop_delay = random.randint(min_wait, max_wait)
         self.logger.log(
@@ -86,13 +86,13 @@ class RandomLoot(BeansGroup):
         for guild in self.bot.guilds:
             min_wait = self.settings.get_setting(
                 guild.id,
-                BotSettings.BEANS_SUBSETTINGS_KEY,
-                BotSettings.BEANS_LOOTBOX_MIN_WAIT_KEY,
+                SettingsManager.BEANS_SUBSETTINGS_KEY,
+                SettingsManager.BEANS_LOOTBOX_MIN_WAIT_KEY,
             )
             max_wait = self.settings.get_setting(
                 guild.id,
-                BotSettings.BEANS_SUBSETTINGS_KEY,
-                BotSettings.BEANS_LOOTBOX_MAX_WAIT_KEY,
+                SettingsManager.BEANS_SUBSETTINGS_KEY,
+                SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
             )
             next_drop_delay = random.randint(min_wait, max_wait)
             self.logger.log(
@@ -165,53 +165,53 @@ class RandomLoot(BeansGroup):
 
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_LOOTBOX_MIN_WAIT_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_LOOTBOX_MIN_WAIT_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_LOOTBOX_MAX_WAIT_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_LOOTBOX_MIN_BEANS_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_LOOTBOX_MIN_BEANS_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_LOOTBOX_MAX_BEANS_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_LOOTBOX_MAX_BEANS_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_LOOTBOX_RARE_CHANCE_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_LOOTBOX_RARE_CHANCE_KEY,
             float,
         )
 
         modal.add_constraint(
             [
-                BotSettings.BEANS_LOOTBOX_MIN_WAIT_KEY,
-                BotSettings.BEANS_LOOTBOX_MAX_WAIT_KEY,
+                SettingsManager.BEANS_LOOTBOX_MIN_WAIT_KEY,
+                SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
             ],
             lambda a, b: a <= b,
             "Minimum wait must be smaller than maximum.",
         )
         modal.add_constraint(
             [
-                BotSettings.BEANS_LOOTBOX_MIN_BEANS_KEY,
-                BotSettings.BEANS_LOOTBOX_MAX_BEANS_KEY,
+                SettingsManager.BEANS_LOOTBOX_MIN_BEANS_KEY,
+                SettingsManager.BEANS_LOOTBOX_MAX_BEANS_KEY,
             ],
             lambda a, b: a <= b,
             "Minimum beans must be smaller than maximum.",
         )
         modal.add_constraint(
-            [BotSettings.BEANS_LOOTBOX_RARE_CHANCE_KEY],
+            [SettingsManager.BEANS_LOOTBOX_RARE_CHANCE_KEY],
             lambda a: a >= 0 and a <= 1,
             "Chance must be between 0 and 1.",
         )

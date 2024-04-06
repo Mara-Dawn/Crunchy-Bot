@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from cogs.beans.beans_group import BeansGroup
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from events.beans_event import BeansEvent
 from events.types import BeansEventType
 from view.settings_modal import SettingsModal
@@ -208,7 +208,7 @@ class BeansBasics(BeansGroup):
     @app_commands.guild_only()
     async def get_settings(self, interaction: discord.Interaction) -> None:
         output = self.settings.get_settings_string(
-            interaction.guild_id, BotSettings.BEANS_SUBSETTINGS_KEY
+            interaction.guild_id, SettingsManager.BEANS_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
 
@@ -247,31 +247,31 @@ class BeansBasics(BeansGroup):
 
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_DAILY_MIN_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_DAILY_MIN_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_DAILY_MAX_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_DAILY_MAX_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_BONUS_CARD_AMOUNT_10_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_BONUS_CARD_AMOUNT_10_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_BONUS_CARD_AMOUNT_25_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_BONUS_CARD_AMOUNT_25_KEY,
             int,
         )
 
         modal.add_constraint(
-            [BotSettings.BEANS_DAILY_MIN_KEY, BotSettings.BEANS_DAILY_MAX_KEY],
+            [SettingsManager.BEANS_DAILY_MIN_KEY, SettingsManager.BEANS_DAILY_MAX_KEY],
             lambda a, b: a <= b,
             "Beans minimum must be smaller than Beans maximum.",
         )

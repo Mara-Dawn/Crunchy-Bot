@@ -1,0 +1,13 @@
+# quick notes:
+# # noqa: RULENAME to disable single lines
+# # ruff: noqa: RULENAME for entire files
+
+[project]
+# Support Python 3.10+.
+requires-python = ">=3.12"
+
+[tool.ruff.lint]
+extend-select = [
+  "UP",  # pyupgrade
+  #"D",   # pydocstyle
+]

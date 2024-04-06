@@ -13,7 +13,7 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from events.jail_event import JailEvent
 from events.spam_event import SpamEvent
 from events.timeout_event import TimeoutEvent
@@ -27,7 +27,7 @@ class Police(commands.Cog):
         self.bot = bot
         self.user_list: Dict[int, PoliceList] = {}
         self.logger: BotLogger = bot.logger
-        self.settings: BotSettings = bot.settings
+        self.settings: SettingsManager = bot.settings
         self.event_manager: EventManager = bot.event_manager
         self.role_manager: RoleManager = bot.role_manager
         self.database: Database = bot.database
@@ -323,7 +323,7 @@ class Police(commands.Cog):
     @app_commands.check(__has_permission)
     async def get_settings(self, interaction: discord.Interaction):
         output = self.settings.get_settings_string(
-            interaction.guild_id, BotSettings.POLICE_SUBSETTINGS_KEY
+            interaction.guild_id, SettingsManager.POLICE_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
 
@@ -467,32 +467,32 @@ class Police(commands.Cog):
 
         modal.add_field(
             guild_id,
-            BotSettings.POLICE_SUBSETTINGS_KEY,
-            BotSettings.POLICE_TIMEOUT_LENGTH_KEY,
+            SettingsManager.POLICE_SUBSETTINGS_KEY,
+            SettingsManager.POLICE_TIMEOUT_LENGTH_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.POLICE_SUBSETTINGS_KEY,
-            BotSettings.POLICE_MESSAGE_LIMIT_KEY,
+            SettingsManager.POLICE_SUBSETTINGS_KEY,
+            SettingsManager.POLICE_MESSAGE_LIMIT_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.POLICE_SUBSETTINGS_KEY,
-            BotSettings.POLICE_MESSAGE_LIMIT_INTERVAL_KEY,
+            SettingsManager.POLICE_SUBSETTINGS_KEY,
+            SettingsManager.POLICE_MESSAGE_LIMIT_INTERVAL_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.POLICE_SUBSETTINGS_KEY,
-            BotSettings.POLICE_TIMEOUTS_BEFORE_JAIL_KEY,
+            SettingsManager.POLICE_SUBSETTINGS_KEY,
+            SettingsManager.POLICE_TIMEOUTS_BEFORE_JAIL_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.POLICE_SUBSETTINGS_KEY,
-            BotSettings.POLICE_TIMEOUT_JAIL_DURATION_KEY,
+            SettingsManager.POLICE_SUBSETTINGS_KEY,
+            SettingsManager.POLICE_TIMEOUT_JAIL_DURATION_KEY,
             int,
         )
 

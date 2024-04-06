@@ -1,7 +1,7 @@
 from typing import List, Type
 from discord.ext import commands
 from control.logger import BotLogger
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from control.service import Service
 from control.view.view_controller import ViewController
 from datalayer.database import Database
@@ -16,7 +16,7 @@ class Controller:
         bot: commands.Bot,
         logger: BotLogger,
         database: Database,
-        settings: BotSettings,
+        settings: SettingsManager,
     ):
         self.bot = bot
         self.logger = logger

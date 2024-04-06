@@ -15,7 +15,7 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
 from events.types import JailEventType
@@ -27,7 +27,7 @@ class Jail(commands.Cog):
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: BotSettings = bot.settings
+        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
         self.role_manager: RoleManager = bot.role_manager
@@ -274,7 +274,7 @@ class Jail(commands.Cog):
             if amount >= 0:
                 response += f'Their jail sentence was increased by `{time_readable}` {damage_info}. '
             elif amount < 0: 
-                response += f'Their jail sentence was reduced by `{abs(time_readable)}` {damage_info}. '
+                response += f'Their jail sentence was reduced by `{time_readable}` {damage_info}. '
             
             time_now = datetime.datetime.now()
             event = JailEvent(time_now, guild_id, command_type, interaction.user.id, amount, affected_jail.get_id())
@@ -494,7 +494,7 @@ class Jail(commands.Cog):
     @group.command(name="settings", description="Overview of all jail related settings and their current value.")
     @app_commands.check(__has_permission)
     async def get_settings(self, interaction: discord.Interaction):
-        output = self.settings.get_settings_string(interaction.guild_id, BotSettings.JAIL_SUBSETTINGS_KEY)
+        output = self.settings.get_settings_string(interaction.guild_id, SettingsManager.JAIL_SUBSETTINGS_KEY)
         await self.bot.command_response(self.__cog_name__, interaction, output)
     
     @group.command(name="toggle", description="Enable or disable the entire jail module.")
@@ -546,14 +546,14 @@ class Jail(commands.Cog):
         guild_id = interaction.guild_id
         modal = SettingsModal(self.bot, self.settings, self.__cog_name__, interaction.command.name, "Settings for Jail Features")
         
-        modal.add_field(guild_id, BotSettings.JAIL_SUBSETTINGS_KEY, BotSettings.JAIL_SLAP_TIME_KEY, int)
-        modal.add_field(guild_id, BotSettings.JAIL_SUBSETTINGS_KEY, BotSettings.JAIL_PET_TIME_KEY, int)
-        modal.add_field(guild_id, BotSettings.JAIL_SUBSETTINGS_KEY, BotSettings.JAIL_FART_TIME_MIN_KEY, int, allow_negative=True)
-        modal.add_field(guild_id, BotSettings.JAIL_SUBSETTINGS_KEY, BotSettings.JAIL_FART_TIME_MAX_KEY, int)
-        modal.add_field(guild_id, BotSettings.JAIL_SUBSETTINGS_KEY, BotSettings.JAIL_BASE_CRIT_RATE_KEY, float)
+        modal.add_field(guild_id, SettingsManager.JAIL_SUBSETTINGS_KEY, SettingsManager.JAIL_SLAP_TIME_KEY, int)
+        modal.add_field(guild_id, SettingsManager.JAIL_SUBSETTINGS_KEY, SettingsManager.JAIL_PET_TIME_KEY, int)
+        modal.add_field(guild_id, SettingsManager.JAIL_SUBSETTINGS_KEY, SettingsManager.JAIL_FART_TIME_MIN_KEY, int, allow_negative=True)
+        modal.add_field(guild_id, SettingsManager.JAIL_SUBSETTINGS_KEY, SettingsManager.JAIL_FART_TIME_MAX_KEY, int)
+        modal.add_field(guild_id, SettingsManager.JAIL_SUBSETTINGS_KEY, SettingsManager.JAIL_BASE_CRIT_RATE_KEY, float)
         
-        modal.add_constraint([BotSettings.JAIL_FART_TIME_MIN_KEY, BotSettings.JAIL_FART_TIME_MAX_KEY], lambda a,b: a <= b , 'fart minimum must be smaller than fart maximum.')
-        modal.add_constraint([BotSettings.JAIL_BASE_CRIT_RATE_KEY], lambda a: a >= 0 and a <= 1 , 'crit rate must be between 0 and 1.')
+        modal.add_constraint([SettingsManager.JAIL_FART_TIME_MIN_KEY, SettingsManager.JAIL_FART_TIME_MAX_KEY], lambda a,b: a <= b , 'fart minimum must be smaller than fart maximum.')
+        modal.add_constraint([SettingsManager.JAIL_BASE_CRIT_RATE_KEY], lambda a: a >= 0 and a <= 1 , 'crit rate must be between 0 and 1.')
         
         await interaction.response.send_modal(modal) 
                 

@@ -1,12 +1,12 @@
 import builtins
 from typing import Dict, Callable, List, Any, Tuple, Type
 import discord
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from bot import CrunchyBot
 
 class SettingsModal(discord.ui.Modal):
 
-    def __init__(self, bot: CrunchyBot, settings: BotSettings, cog: str, command: str, title: str, callback: Callable = None, callback_arguments: List[Any] = None):
+    def __init__(self, bot: CrunchyBot, settings: SettingsManager, cog: str, command: str, title: str, callback: Callable = None, callback_arguments: List[Any] = None):
         super().__init__(title=title)
         
         self.settings = settings

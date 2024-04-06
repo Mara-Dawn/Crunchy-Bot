@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 import discord
 from discord.ext import commands
 from datalayer.database import Database
@@ -7,7 +7,7 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
-from control.settings import BotSettings
+from control.settings import SettingsManager
 
 
 class CrunchyBot(commands.Bot):
@@ -20,7 +20,7 @@ class CrunchyBot(commands.Bot):
         super().__init__(*args, **kwargs)
         self.logger = BotLogger(self, self.LOG_FILE)
         self.database = Database(self, self.logger, self.DB_FILE)
-        self.settings = BotSettings(self, self.database, self.logger)
+        self.settings = SettingsManager(self, self.database, self.logger)
 
         self.controller = Controller(self, self.logger, self.settings, self.database)
 
@@ -33,6 +33,13 @@ class CrunchyBot(commands.Bot):
         self.item_manager = ItemManager(
             self, self.logger, self.settings, self.database, self.controller
         )
+
+        self.controller.register_service(self.role_manager)
+        self.controller.register_service(self.event_manager)
+        self.controller.register_service(self.item_manager)
+        self.controller.register_service(self.role_manager)
+        self.controller.register_service(self.event_manager)
+        self.controller.register_service(self.item_manager)
 
     async def setup_hook(self) -> None:
         await self.load_extension("cogs.police")
@@ -56,7 +63,7 @@ class CrunchyBot(commands.Bot):
         module: str,
         interaction: discord.Interaction,
         message: str,
-        args: List[Any] = None,
+        args: list[Any] = None,
         ephemeral: bool = True,
     ) -> None:
         if args is None:
@@ -71,7 +78,7 @@ class CrunchyBot(commands.Bot):
         interaction: discord.Interaction,
         message: str,
         command: str,
-        args: List[Any] = None,
+        args: list[Any] = None,
         ephemeral: bool = True,
     ) -> None:
         if args is None:

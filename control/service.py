@@ -1,16 +1,22 @@
 from abc import ABC, abstractmethod
-
-from control.controller import Controller
+from discord.ext import commands
+from control.logger import BotLogger
+from datalayer.database import Database
 from events.bot_event import BotEvent
 
 
 class Service(ABC):
 
-    def __init__(self):
+    def __init__(
+        self,
+        bot: commands.Bot,
+        logger: BotLogger,
+        database: Database,
+    ):
         self.controller = None
-
-    def register_controller(self, controller: Controller) -> None:
-        self.controller = controller
+        self.bot = bot
+        self.logger = logger
+        self.database = database
 
     @abstractmethod
     async def listen_for_event(self, event: BotEvent) -> None:

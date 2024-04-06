@@ -14,7 +14,7 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from datalayer.database import Database
 from view.settings_modal import SettingsModal
 
@@ -24,7 +24,7 @@ class Gamba(commands.Cog):
     def __init__(self, bot: CrunchyBot) -> None:
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: BotSettings = bot.settings
+        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
         self.role_manager: RoleManager = bot.role_manager
@@ -312,31 +312,31 @@ class Gamba(commands.Cog):
 
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_GAMBA_DEFAULT_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_GAMBA_DEFAULT_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_GAMBA_COOLDOWN_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_GAMBA_COOLDOWN_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_GAMBA_MIN_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_GAMBA_MIN_KEY,
             int,
         )
         modal.add_field(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_GAMBA_MAX_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_GAMBA_MAX_KEY,
             int,
         )
 
         modal.add_constraint(
-            [BotSettings.BEANS_GAMBA_MIN_KEY, BotSettings.BEANS_GAMBA_MAX_KEY],
+            [SettingsManager.BEANS_GAMBA_MIN_KEY, SettingsManager.BEANS_GAMBA_MAX_KEY],
             lambda a, b: a <= b,
             "Gamba minimum must be smaller than gamba maximum.",
         )

@@ -11,7 +11,7 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from control.view.shop_view_controller import ShopViewController
 from view.inventory_embed import InventoryEmbed
 from view.shop_view import ShopView
@@ -23,7 +23,7 @@ class Shop(commands.Cog):
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: BotSettings = bot.settings
+        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
         self.event_manager: EventManager = bot.event_manager
         self.item_manager: ItemManager = bot.item_manager
@@ -162,7 +162,7 @@ class Shop(commands.Cog):
     @app_commands.guild_only()
     async def get_settings(self, interaction: discord.Interaction):
         output = self.settings.get_settings_string(
-            interaction.guild_id, BotSettings.SHOP_SUBSETTINGS_KEY
+            interaction.guild_id, SettingsManager.SHOP_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
 

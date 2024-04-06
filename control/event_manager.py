@@ -5,7 +5,6 @@ from bot_util import BotUtil
 from control.controller import Controller
 from control.service import Service
 from control.logger import BotLogger
-from control.settings import BotSettings
 from datalayer.jail import UserJail
 from datalayer.database import Database
 from datalayer.types import UserInteraction
@@ -24,18 +23,12 @@ class EventManager(Service):
         bot: commands.Bot,
         logger: BotLogger,
         database: Database,
-        settings: BotSettings,
         controller: Controller,
     ):
-        super().__init__()
-        self.bot = bot
-        self.logger = logger
-        self.database = database
-        self.settings = settings
+        super().__init__(bot, logger, database)
         self.controller = controller
+        self.settings_manager = None
         self.log_name = "Events"
-
-        self.controller.register_service(self)
 
     async def listen_for_event(self, event: BotEvent):
         match event.get_type():

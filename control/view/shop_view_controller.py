@@ -1,8 +1,16 @@
 import datetime
 import discord
+from discord.ext import commands
 from control.view.lootbox_view_controller import LootBoxViewController
 from control.view.shop_response_view_controller import ShopResponseViewController
 from control.view.view_controller import ViewController
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.role_manager import RoleManager
+from control.settings import SettingsManager
+from datalayer.database import Database
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
@@ -26,6 +34,22 @@ from view.shop_reaction_select_view import ShopReactionSelectView
 
 
 class ShopViewController(ViewController):
+
+    def __init__(
+        self,
+        bot: commands.Bot,
+        logger: BotLogger,
+        settings: SettingsManager,
+        database: Database,
+        event_manager: EventManager,
+        role_manager: RoleManager,
+        item_manager: ItemManager,
+        controller: Controller,
+    ):
+        super().__init__(
+            bot, logger, settings, database, event_manager, role_manager, item_manager
+        )
+        self.controller = controller
 
     async def listen_for_event(self, event: BotEvent):
         pass

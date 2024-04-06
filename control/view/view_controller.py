@@ -1,12 +1,11 @@
 from typing import List
 import discord
-from bot import CrunchyBot
-from control.controller import Controller
+from discord.ext import commands
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from control.service import Service
 from datalayer.database import Database
 from events.ui_event import UIEvent
@@ -15,16 +14,24 @@ from view.view_menu import ViewMenu
 
 class ViewController(Service):
 
-    def __init__(self, bot: CrunchyBot):
+    def __init__(
+        self,
+        bot: commands.Bot,
+        logger: BotLogger,
+        settings: SettingsManager,
+        database: Database,
+        event_manager: EventManager,
+        role_manager: RoleManager,
+        item_manager: ItemManager,
+    ):
         super().__init__()
         self.bot = bot
-        self.logger: BotLogger = bot.logger
-        self.settings: BotSettings = bot.settings
-        self.database: Database = bot.database
-        self.event_manager: EventManager = bot.event_manager
-        self.role_manager: RoleManager = bot.role_manager
-        self.item_manager: ItemManager = bot.item_manager
-        self.controller: Controller = bot.controller
+        self.logger = logger
+        self.settings = settings
+        self.database = database
+        self.event_manager = event_manager
+        self.role_manager = role_manager
+        self.item_manager = item_manager
         self.views: List[ViewMenu] = []
 
     def register_view(self, view: ViewMenu) -> None:

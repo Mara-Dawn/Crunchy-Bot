@@ -5,7 +5,6 @@ from datalayer.database import Database
 from control.controller import Controller
 from control.service import Service
 from control.logger import BotLogger
-from control.settings import BotSettings
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.types import EventType
@@ -22,18 +21,12 @@ class RoleManager(Service):
         bot: commands.Bot,
         logger: BotLogger,
         database: Database,
-        settings: BotSettings,
         controller: Controller,
     ):
-        super().__init__()
-        self.bot = bot
-        self.logger = logger
-        self.database = database
-        self.settings = settings
+        super().__init__(bot, logger, database)
         self.controller = controller
+        self.settings_manager = None
         self.log_name = "Roles"
-
-        self.controller.register_service(self)
 
     async def listen_for_event(self, event: BotEvent):
         match event.get_type():

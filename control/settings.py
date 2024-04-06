@@ -1,12 +1,13 @@
 from typing import List
 from discord.ext import commands
+from control.service import Service
 from datalayer.database import Database
 from datalayer.settings import GuildSettings, ModuleSettings
 from control.logger import BotLogger
 from items.types import ItemType
 
 
-class BotSettings:
+class SettingsManager(Service):
 
     DEFAULT_KEY = "defaults"
 

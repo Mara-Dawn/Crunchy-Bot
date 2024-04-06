@@ -7,7 +7,6 @@ from bot_util import BotUtil
 from control.controller import Controller
 from control.service import Service
 from control.logger import BotLogger
-from control.settings import BotSettings
 from control.view.lootbox_view_controller import LootBoxViewController
 from datalayer.database import Database
 from datalayer.lootbox import LootBox
@@ -33,18 +32,12 @@ class ItemManager(Service):
         bot: commands.Bot,
         logger: BotLogger,
         database: Database,
-        settings: BotSettings,
         controller: Controller,
     ):
-        super().__init__()
-        self.bot = bot
-        self.logger = logger
-        self.database = database
-        self.settings = settings
+        super().__init__(bot, logger, database)
         self.controller = controller
+        self.settings_manager = None
         self.log_name = "Items"
-
-        self.controller.register_service(self)
 
     async def listen_for_event(self, event: BotEvent):
         pass
@@ -82,8 +75,8 @@ class ItemManager(Service):
         weights = [self.get_item(guild_id, x).get_cost() for x in item_pool]
         chance_for_item = self.settings.get_setting(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_LOOTBOX_RARE_CHANCE_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_LOOTBOX_RARE_CHANCE_KEY,
         )
         mimic_chance = 0.1
         chance_for_bonus_beans = 0.2
@@ -91,13 +84,13 @@ class ItemManager(Service):
 
         min_beans = self.settings.get_setting(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_LOOTBOX_MIN_BEANS_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_LOOTBOX_MIN_BEANS_KEY,
         )
         max_beans = self.settings.get_setting(
             guild_id,
-            BotSettings.BEANS_SUBSETTINGS_KEY,
-            BotSettings.BEANS_LOOTBOX_MAX_BEANS_KEY,
+            SettingsManager.BEANS_SUBSETTINGS_KEY,
+            SettingsManager.BEANS_LOOTBOX_MAX_BEANS_KEY,
         )
 
         beans = random.randint(min_beans, max_beans)

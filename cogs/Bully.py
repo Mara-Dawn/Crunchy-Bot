@@ -11,7 +11,7 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
-from control.settings import BotSettings
+from control.settings import SettingsManager
 from items.types import ItemType
 from events.inventory_event import InventoryEvent
 
@@ -21,7 +21,7 @@ class Bully(commands.Cog):
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.settings: BotSettings = bot.settings
+        self.settings: SettingsManager = bot.settings
         self.database: Database = bot.database
         self.role_manager: RoleManager = bot.role_manager
         self.event_manager: EventManager = bot.event_manager
@@ -111,7 +111,7 @@ class Bully(commands.Cog):
     @app_commands.check(__has_permission)
     async def get_settings(self, interaction: discord.Interaction):
         output = self.settings.get_settings_string(
-            interaction.guild_id, BotSettings.BULLY_SUBSETTINGS_KEY
+            interaction.guild_id, SettingsManager.BULLY_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
 
