@@ -120,7 +120,7 @@ class LootBoxViewController(ViewController):
                 guild_id,
                 member_id,
                 loot_box.item_type,
-                0,
+                1,
                 item.base_amount,
             )
             await self.controller.dispatch_event(event)
