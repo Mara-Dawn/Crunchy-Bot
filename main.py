@@ -1,5 +1,6 @@
 import discord
 from discord import app_commands
+
 from bot import CrunchyBot
 
 TOKEN_FILE = "key.txt"
@@ -26,11 +27,9 @@ async def on_tree_error(
             f"Command is currently on cooldown! Try again in **{error.retry_after:.2f}** seconds!",
             ephemeral=True,
         )
-    elif isinstance(error, app_commands.MissingPermissions):
-        return await interaction.response.send_message(
-            "You're missing permissions to use that", ephemeral=True
-        )
-    elif isinstance(error, app_commands.errors.CheckFailure):
+    elif isinstance(
+        error, app_commands.MissingPermissions | app_commands.errors.CheckFailure
+    ):
         return await interaction.response.send_message(
             "You're missing permissions to use that", ephemeral=True
         )
@@ -49,5 +48,6 @@ async def on_tree_error(
 
 bot.tree.on_error = on_tree_error
 
-token = open(TOKEN_FILE, "r").readline()
-bot.run(token)
+with open(TOKEN_FILE) as file:
+    token = file.readline()
+    bot.run(token)
