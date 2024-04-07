@@ -14,7 +14,7 @@ from datalayer.stats import UserStats
 from datalayer.types import UserInteraction
 from events.bot_event import BotEvent
 from events.jail_event import JailEvent
-from events.types import EventType, JailEventType
+from events.types import BeansEventType, EventType, JailEventType
 from items.types import ItemType
 from view.types import RankingType
 
@@ -276,7 +276,7 @@ class EventManager(Service):
         self, guild_id: int, ranking_type: RankingType
     ) -> dict[str, Any]:
         parsing_list = {}
-        ranking_data = {}
+        ranking_data = []
         match ranking_type:
             case RankingType.SLAP:
                 ranking_data = self.__get_ranking_data_by_type(
@@ -371,21 +371,43 @@ class EventManager(Service):
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
-                converted = [(k, f"🅱️{v}") for (k, v) in sorted_list]
-                ranking_data = converted
+                ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
             case RankingType.MIMICS:
-                parsing_list = self.database.get_lootbox_mimics(guild_id)
-                ranking_data = sorted(
+                lootboxes = self.database.get_lootboxes_by_guild(guild_id)
+                total_dict = {}
+                for user_id, lootbox in lootboxes:
+                    if lootbox.beans < 0:
+                        BotUtil.dict_append(parsing_list, user_id, 1)
+                    BotUtil.dict_append(total_dict, user_id, 1)
+                mimic_data = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
-            # case RankingType.TOTAL_GAMBAD_SPENT:
-            #     gamba_events = self.database.get_guild_beans_events(guild_id, [BeansEventType.GAMBA_COST])
-            #     for event in gamba_events:
-            #         user_id = event.get_member()
-            #         BotUtil.dict_append(parsing_list, user_id, abs(event.get_value()))
-            #     return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
-            # case RankingType.TOTAL_GAMBAD_WON:
-            #     pass
+                for user_id, mimic_count in mimic_data:
+                    ranking_data.append(
+                        (user_id, f"{mimic_count}/{total_dict[user_id]}")
+                    )
+            case RankingType.TOTAL_GAMBAD_SPENT:
+                gamba_events = self.database.get_guild_beans_events(
+                    guild_id, [BeansEventType.GAMBA_COST]
+                )
+                for event in gamba_events:
+                    user_id = event.member_id
+                    BotUtil.dict_append(parsing_list, user_id, abs(event.value))
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
+            case RankingType.TOTAL_GAMBAD_WON:
+                gamba_events = self.database.get_guild_beans_events(
+                    guild_id, [BeansEventType.GAMBA_COST, BeansEventType.GAMBA_PAYOUT]
+                )
+                for event in gamba_events:
+                    user_id = event.member_id
+                    BotUtil.dict_append(parsing_list, user_id, event.value)
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
 
         return {
             BotUtil.get_name(self.bot, guild_id, user_id, 100): value

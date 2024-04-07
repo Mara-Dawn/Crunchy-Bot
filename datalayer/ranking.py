@@ -24,10 +24,22 @@ class Ranking:
             description="Who has the biggest bean?",
             emoji="🅱️",
         ),
+        RankingType.TOTAL_GAMBAD_SPENT: RankingDefinition(
+            type=RankingType.TOTAL_GAMBAD_SPENT,
+            title="Beans spent on Gamba Rankings",
+            description="Who has the biggest gamba addiction? (Beans spent on Gamba)",
+            emoji="🅱️",
+        ),
+        RankingType.TOTAL_GAMBAD_WON: RankingDefinition(
+            type=RankingType.TOTAL_GAMBAD_WON,
+            title="Beans won from Gamba Rankings",
+            description="Who won the most from their gamba addiciton?",
+            emoji="🅱️",
+        ),
         RankingType.MIMICS: RankingDefinition(
             type=RankingType.MIMICS,
             title="Mimic Count Rankings",
-            description="Who gets vored the most?",
+            description="Who gets vored the most? (Mimics/Total)",
             emoji="🧰",
         ),
         RankingType.SLAP: RankingDefinition(
@@ -96,16 +108,4 @@ class Ranking:
             description="Who is the biggest spammer?",
             emoji="📢",
         ),
-        # RankingType.TOTAL_GAMBAD_SPENT: RankingDefinition(
-        #     type=RankingType.TOTAL_GAMBAD_SPENT,
-        #     title="Beans spent on Gamba Rankings",
-        #     description="",
-        #     emoji="",
-        # ),
-        # RankingType.TOTAL_GAMBAD_WON: RankingDefinition(
-        #     type=RankingType.TOTAL_GAMBAD_WON,
-        #     title="Beans won from Gamba Rankings",
-        #     description="",
-        #     emoji="",
-        # ),
     }
