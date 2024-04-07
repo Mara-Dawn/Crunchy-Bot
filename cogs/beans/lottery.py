@@ -37,7 +37,7 @@ class Lottery(BeansGroup):
         for user_id, count in lottery_data.items():
             for _ in range(count):
                 ticket_pool.append(user_id)
-            total_pot += item.get_cost() * count
+            total_pot += item.cost * count
 
         lottery_role: discord.Role = await self.role_manager.get_lottery_role(guild)
 
@@ -82,7 +82,7 @@ class Lottery(BeansGroup):
 
         for user_id, count in lottery_data.items():
             event = InventoryEvent(
-                datetime.datetime.now(), guild_id, user_id, item.get_type(), -count
+                datetime.datetime.now(), guild_id, user_id, item.type, -count
             )
             await self.controller.dispatch_event(event)
 
@@ -123,7 +123,7 @@ class Lottery(BeansGroup):
         item = self.item_manager.get_item(guild_id, ItemType.LOTTERY_TICKET)
 
         for count in lottery_data.values():
-            total_pot += item.get_cost() * count
+            total_pot += item.cost * count
 
         today = datetime.datetime.now(datetime.UTC).date()
         saturday = today + datetime.timedelta((5 - today.weekday()) % 7)

@@ -32,25 +32,25 @@ class RoleManager(Service):
         self.log_name = "Roles"
 
     async def listen_for_event(self, event: BotEvent):
-        match event.get_type():
+        match event.type:
             case EventType.INVENTORY:
                 inventory_event: InventoryEvent = event
-                match inventory_event.get_item_type():
+                match inventory_event.item_type:
                     case ItemType.LOTTERY_TICKET:
-                        if inventory_event.get_amount() >= 0:
+                        if inventory_event.amount >= 0:
                             await self.add_lottery_role(
-                                inventory_event.get_guild_id(),
-                                inventory_event.get_member_id(),
+                                inventory_event.guild_id,
+                                inventory_event.member_id,
                             )
                         else:
                             await self.remove_lottery_role(
-                                inventory_event.get_guild_id(),
-                                inventory_event.get_member_id(),
+                                inventory_event.guild_id,
+                                inventory_event.member_id,
                             )
                     case ItemType.NAME_COLOR:
                         await self.update_username_color(
-                            inventory_event.get_guild_id(),
-                            inventory_event.get_member_id(),
+                            inventory_event.guild_id,
+                            inventory_event.member_id,
                         )
 
     async def get_lottery_role(self, guild: discord.Guild) -> discord.Role:

@@ -62,9 +62,7 @@ class Gamba(commands.Cog):
             )
             return False
 
-        stun_base_duration = self.item_manager.get_item(
-            guild_id, ItemType.BAT
-        ).get_value()
+        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
         stunned_remaining = self.event_manager.get_stunned_remaining(
             guild_id, interaction.user.id, stun_base_duration
         )
@@ -140,15 +138,15 @@ class Gamba(commands.Cog):
         if last_gamba_cost_event is not None:
 
             current_date = datetime.datetime.now()
-            last_gamba_beans_date = last_gamba_cost_event.get_datetime()
+            last_gamba_beans_date = last_gamba_cost_event.datetime
 
             delta = current_date - last_gamba_beans_date
             delta_seconds = delta.total_seconds()
 
-            last_gamba_amount = abs(last_gamba_cost_event.get_value())
+            last_gamba_amount = abs(last_gamba_cost_event.value)
             cooldown = default_cooldown
 
-            if last_gamba_payout_event.get_value() != 0:
+            if last_gamba_payout_event.value != 0:
                 # only go on cooldown when previous gamba was a win
                 cooldown = default_cooldown * (last_gamba_amount / default_amount)
 

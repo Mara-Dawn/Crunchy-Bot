@@ -107,7 +107,7 @@ class RandomLoot(BeansGroup):
             last_drop = datetime.datetime.now()
 
             if loot_box_event is not None:
-                last_drop = loot_box_event.get_datetime()
+                last_drop = loot_box_event.datetime
 
             diff = datetime.datetime.now() - last_drop
             self.logger.log(

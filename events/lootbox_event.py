@@ -11,30 +11,21 @@ class LootBoxEvent(BotEvent):
         self,
         timestamp: datetime.datetime,
         guild_id: int,
-        loot_box_id: int,
+        lootbox_id: int,
         member_id: int,
         loot_box_event_type: LootBoxEventType,
-        event_id: int = None,
+        id: int = None,
     ):
-        super().__init__(timestamp, guild_id, EventType.LOOTBOX, event_id)
-        self.loot_box_id = loot_box_id
+        super().__init__(timestamp, guild_id, EventType.LOOTBOX, id)
+        self.lootbox_id = lootbox_id
         self.member_id = member_id
         self.loot_box_event_type = loot_box_event_type
-
-    def get_loot_box_event_type(self) -> LootBoxEventType:
-        return self.loot_box_event_type
-
-    def get_member_id(self) -> int:
-        return self.member_id
-
-    def get_loot_box_id(self) -> int:
-        return self.loot_box_id
 
     def get_causing_user_id(self) -> int:
         return self.member_id
 
     def get_type_specific_args(self) -> list[Any]:
-        return [self.loot_box_id, self.loot_box_event_type]
+        return [self.lootbox_id, self.loot_box_event_type]
 
     @staticmethod
     def from_db_row(row: dict[str, Any]) -> "LootBoxEvent":
@@ -48,8 +39,8 @@ class LootBoxEvent(BotEvent):
                 row[Database.EVENT_TIMESTAMP_COL]
             ),
             guild_id=row[Database.EVENT_GUILD_ID_COL],
-            loot_box_id=row[Database.LOOTBOX_EVENT_LOOTBOX_ID_COL],
+            lootbox_id=row[Database.LOOTBOX_EVENT_LOOTBOX_ID_COL],
             member_id=row[Database.LOOTBOX_EVENT_MEMBER_COL],
             loot_box_event_type=row[Database.LOOTBOX_EVENT_TYPE_COL],
-            event_id=row[Database.EVENT_ID_COL],
+            id=row[Database.EVENT_ID_COL],
         )

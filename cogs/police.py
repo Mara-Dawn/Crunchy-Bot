@@ -83,7 +83,7 @@ class Police(commands.Cog):
                     )
                     return None
 
-                jail_id = affected_jails[0].get_id()
+                jail_id = affected_jails[0].id
 
                 time_now = datetime.datetime.now()
                 event = JailEvent(

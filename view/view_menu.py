@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import discord
 
+from control.types import ControllerType
 from events.ui_event import UIEvent
 
 
@@ -13,8 +14,7 @@ class ViewMenu(discord.ui.View, ABC):
         super().__init__(*args, **kwargs)
         self.id = ViewMenu.class_counter
         self.member_id = None
-        self.controller_class = None
-        self.controller_module = None
+        self.controller_type: ControllerType = None
         ViewMenu.class_counter += 1
 
     @abstractmethod

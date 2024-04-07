@@ -11,17 +11,14 @@ class SpamEvent(BotEvent):
         self,
         timestamp: datetime.datetime,
         guild_id: int,
-        member: int,
-        event_id: int = None,
+        member_id: int,
+        id: int = None,
     ):
-        super().__init__(timestamp, guild_id, EventType.SPAM, event_id)
-        self.member = member
-
-    def get_member(self) -> int:
-        return self.member
+        super().__init__(timestamp, guild_id, EventType.SPAM, id)
+        self.member_id = member_id
 
     def get_causing_user_id(self) -> int:
-        return self.member
+        return self.member_id
 
     def get_type_specific_args(self) -> list[Any]:
         return []
@@ -38,6 +35,6 @@ class SpamEvent(BotEvent):
                 row[Database.EVENT_TIMESTAMP_COL]
             ),
             guild_id=row[Database.EVENT_GUILD_ID_COL],
-            member=row[Database.SPAM_EVENT_MEMBER_COL],
-            event_id=row[Database.EVENT_ID_COL],
+            member_id=row[Database.SPAM_EVENT_MEMBER_COL],
+            id=row[Database.EVENT_ID_COL],
         )

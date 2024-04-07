@@ -34,16 +34,16 @@ class EventManager(Service):
         self.log_name = "Events"
 
     async def listen_for_event(self, event: BotEvent):
-        match event.get_type():
+        match event.type:
             case EventType.JAIL:
                 jail_event: JailEvent = event
-                if jail_event.get_jail_event_type() is JailEventType.RELEASE:
+                if jail_event.jail_event_type is JailEventType.RELEASE:
                     self.database.log_jail_release(
-                        jail_event.get_jail_id(), int(jail_event.get_timestamp())
+                        jail_event.jail_id, int(jail_event.get_timestamp())
                     )
                     self.logger.log(
-                        jail_event.get_guild_id(),
-                        f"Jail sentence `{jail_event.get_jail_id()}` marked as released.",
+                        jail_event.guild_id,
+                        f"Jail sentence `{jail_event.jail_id}` marked as released.",
                         self.log_name,
                     )
 
@@ -53,8 +53,8 @@ class EventManager(Service):
         self.__log_event(event, from_user, *args)
 
     def __log_event(self, event: BotEvent, member_id: int, *args):
-        event_type = event.get_type()
-        guild_id = event.get_guild_id()
+        event_type = event.type
+        guild_id = event.guild_id
         parsed_args = []
         for arg in args:
             try:
@@ -82,7 +82,7 @@ class EventManager(Service):
         if last_bat_event is None:
             return 0
 
-        last_bat_time = last_bat_event.get_datetime()
+        last_bat_time = last_bat_event.datetime
 
         diff = datetime.datetime.now() - last_bat_time
         if int(diff.total_seconds() / 60) <= base_duration:
@@ -95,16 +95,16 @@ class EventManager(Service):
         return 0
 
     def get_jail_duration(self, jail: UserJail) -> int:
-        events = self.database.get_jail_events_by_jail(jail.get_id())
+        events = self.database.get_jail_events_by_jail(jail.id)
         total_duration = 0
         for event in events:
-            total_duration += event.get_duration()
+            total_duration += event.duration
 
         return total_duration
 
     def get_jail_remaining(self, jail: UserJail) -> float:
         duration = self.get_jail_duration(jail)
-        release_timestamp = jail.get_jailed_on() + datetime.timedelta(minutes=duration)
+        release_timestamp = jail.jailed_on + datetime.timedelta(minutes=duration)
         remainder = release_timestamp - datetime.datetime.now()
         return max(remainder.total_seconds() / 60, 0)
 
@@ -114,10 +114,7 @@ class EventManager(Service):
         events = self.database.get_jail_events_by_user(user_id)
 
         for event in events:
-            if (
-                event.get_jail_id() == jail_id
-                and event.get_jail_event_type() == jail_event_type
-            ):
+            if event.jail_id == jail_id and event.jail_event_type == jail_event_type:
                 return True
 
         return False
@@ -135,13 +132,13 @@ class EventManager(Service):
         user_count_out = {}
 
         for event in events_out:
-            interaction_type = event.get_interaction_type()
+            interaction_type = event.interaction_type
 
             if interaction_type not in count_out:
                 continue
 
             count_out[interaction_type] += 1
-            member_id = event.get_to_user()
+            member_id = event.to_user_id
             if member_id not in user_count_out:
                 user_count_out[member_id] = {
                     UserInteraction.SLAP: 0,
@@ -164,10 +161,10 @@ class EventManager(Service):
         user_count_in = {}
 
         for event in events_in:
-            interaction_type = event.get_interaction_type()
+            interaction_type = event.interaction_type
 
             count_in[interaction_type] += 1
-            member_id = event.get_from_user()
+            member_id = event.from_user_id
             if member_id not in user_count_in:
                 user_count_in[member_id] = {
                     UserInteraction.SLAP: 0,
@@ -188,8 +185,8 @@ class EventManager(Service):
         total_reduced_from_self = 0
 
         for event in jail_events:
-            duration = event.get_duration()
-            if event.get_jail_event_type() in [
+            duration = event.duration
+            if event.jail_event_type in [
                 JailEventType.FART,
                 JailEventType.PET,
                 JailEventType.SLAP,
@@ -200,7 +197,7 @@ class EventManager(Service):
                     total_reduced_from_self += duration
 
             total_jail_duration += duration
-            jail_id = event.get_jail_id()
+            jail_id = event.jail_id
             if jail_id not in jail_stays:
                 jail_stays.append(jail_id)
 
@@ -214,8 +211,8 @@ class EventManager(Service):
         min_fart = None
 
         for event in jail_interaction_events:
-            duration = event.get_duration()
-            if event.get_jail_event_type() in [
+            duration = event.duration
+            if event.jail_event_type in [
                 JailEventType.FART,
                 JailEventType.PET,
                 JailEventType.SLAP,
@@ -226,7 +223,7 @@ class EventManager(Service):
                 else:
                     total_reduced_from_others += duration
 
-            if event.get_jail_event_type() == JailEventType.FART:
+            if event.jail_event_type == JailEventType.FART:
                 if max_fart is None or min_fart is None:
                     max_fart = duration
                     min_fart = duration
@@ -247,7 +244,7 @@ class EventManager(Service):
         timeout_count = len(timeout_events)
 
         for event in timeout_events:
-            total_timeout_duration += event.get_duration()
+            total_timeout_duration += event.duration
 
         user_stats.set_timeout_total(total_timeout_duration)
         user_stats.set_timeout_amount(timeout_count)
@@ -267,9 +264,9 @@ class EventManager(Service):
         parsing_list = {}
 
         for event in guild_interaction_events:
-            user_id = event.get_to_user()
+            user_id = event.to_user_id
             if outgoing:  # True = from, False = to
-                user_id = event.get_from_user()
+                user_id = event.from_user_id
 
             BotUtil.dict_append(parsing_list, user_id, 1)
 
@@ -309,8 +306,8 @@ class EventManager(Service):
                     guild_id
                 )
                 for event in guild_timeout_events:
-                    user_id = event.get_member()
-                    BotUtil.dict_append(parsing_list, user_id, event.get_duration())
+                    user_id = event.member_id
+                    BotUtil.dict_append(parsing_list, user_id, event.duration)
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
@@ -324,7 +321,7 @@ class EventManager(Service):
                     guild_id
                 )
                 for event in guild_timeout_events:
-                    user_id = event.get_member()
+                    user_id = event.member_id
                     BotUtil.dict_append(parsing_list, user_id, 1)
                 return sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
@@ -333,8 +330,8 @@ class EventManager(Service):
                 jail_data = self.database.get_jail_events_by_guild(guild_id)
                 for jail, events in jail_data.items():
                     for event in events:
-                        user_id = jail.get_member_id()
-                        BotUtil.dict_append(parsing_list, user_id, event.get_duration())
+                        user_id = jail.member_id
+                        BotUtil.dict_append(parsing_list, user_id, event.duration)
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
@@ -347,8 +344,8 @@ class EventManager(Service):
                 jail_data = self.database.get_jail_events_by_guild(guild_id)
                 for jail, events in jail_data.items():
                     for event in events:
-                        user_id = jail.get_member_id()
-                        if event.get_jail_event_type() == JailEventType.JAIL:
+                        user_id = jail.member_id
+                        if event.jail_event_type == JailEventType.JAIL:
                             BotUtil.dict_append(parsing_list, user_id, 1)
                 return sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
@@ -356,7 +353,7 @@ class EventManager(Service):
             case RankingType.SPAM_SCORE:
                 guild_spam_events = self.database.get_spam_events_by_guild(guild_id)
                 for event in guild_spam_events:
-                    user_id = event.get_member()
+                    user_id = event.member_id
                     BotUtil.dict_append(parsing_list, user_id, 1)
                 return sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
@@ -369,7 +366,7 @@ class EventManager(Service):
                 loot_box_item = self.item_manager.get_item(guild_id, ItemType.LOOTBOX)
                 for user_id, amount in lootbox_purchases.items():
                     if user_id in parsing_list:
-                        parsing_list[user_id] -= amount * loot_box_item.get_cost()
+                        parsing_list[user_id] -= amount * loot_box_item.cost
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )

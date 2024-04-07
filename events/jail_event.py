@@ -12,34 +12,22 @@ class JailEvent(BotEvent):
         timestamp: datetime.datetime,
         guild_id: int,
         jail_event_type: JailEventType,
-        caused_by: int,
+        caused_by_id: int,
         duration: int,
-        jail_reference: int,
-        event_id: int = None,
+        jail_id: int,
+        id: int = None,
     ):
-        super().__init__(timestamp, guild_id, EventType.JAIL, event_id)
+        super().__init__(timestamp, guild_id, EventType.JAIL, id)
         self.jail_event_type = jail_event_type
-        self.caused_by = caused_by
+        self.caused_by_id = caused_by_id
         self.duration = duration
-        self.jail_reference = jail_reference
-
-    def get_jail_event_type(self) -> JailEventType:
-        return self.jail_event_type
-
-    def get_caused_by(self) -> int:
-        return self.caused_by
-
-    def get_duration(self) -> int:
-        return self.duration
-
-    def get_jail_id(self) -> int:
-        return self.jail_reference
+        self.jail_id = jail_id
 
     def get_causing_user_id(self) -> int:
-        return self.caused_by
+        return self.caused_by_id
 
     def get_type_specific_args(self) -> list[Any]:
-        return [self.jail_event_type, self.duration, self.jail_reference]
+        return [self.jail_event_type, self.duration, self.jail_id]
 
     @staticmethod
     def from_db_row(row: dict[str, Any]) -> "JailEvent":
@@ -54,8 +42,8 @@ class JailEvent(BotEvent):
             ),
             guild_id=row[Database.EVENT_GUILD_ID_COL],
             jail_event_type=row[Database.JAIL_EVENT_TYPE_COL],
-            caused_by=row[Database.JAIL_EVENT_BY_COL],
+            caused_by_id=row[Database.JAIL_EVENT_BY_COL],
             duration=row[Database.JAIL_EVENT_DURATION_COL],
-            jail_reference=row[Database.JAIL_EVENT_JAILREFERENCE_COL],
-            event_id=row[Database.EVENT_ID_COL],
+            jail_id=row[Database.JAIL_EVENT_JAILREFERENCE_COL],
+            id=row[Database.EVENT_ID_COL],
         )

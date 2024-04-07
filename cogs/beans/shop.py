@@ -61,9 +61,7 @@ class Shop(commands.Cog):
             )
             return False
 
-        stun_base_duration = self.item_manager.get_item(
-            guild_id, ItemType.BAT
-        ).get_value()
+        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
         stunned_remaining = self.event_manager.get_stunned_remaining(
             guild_id, interaction.user.id, stun_base_duration
         )
@@ -115,7 +113,7 @@ class Shop(commands.Cog):
         police_img = discord.File("./img/police.png", "police.png")
         items = self.item_manager.get_items(interaction.guild_id)
 
-        items = sorted(items, key=lambda x: (x.get_shop_category().value, x.get_cost()))
+        items = sorted(items, key=lambda x: (x.shop_category.value, x.cost))
 
         user_balance = self.database.get_member_beans(
             interaction.guild.id, interaction.user.id

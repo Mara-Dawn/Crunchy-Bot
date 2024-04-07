@@ -64,7 +64,7 @@ class BeansBasics(BeansGroup):
         if last_daily_beans_event is not None:
 
             current_date = datetime.datetime.now().date()
-            last_daily_beans_date = last_daily_beans_event.get_datetime().date()
+            last_daily_beans_date = last_daily_beans_event.datetime.date()
 
             if current_date == last_daily_beans_date:
                 await self.bot.command_response(
@@ -137,7 +137,7 @@ class BeansBasics(BeansGroup):
             timestamp=datetime.datetime.now(),
             guild_id=guild_id,
             beans_event_type=BeansEventType.BALANCE_CHANGE,
-            member=user.id,
+            member_id=user.id,
             value=amount,
         )
         await self.controller.dispatch_event(event)

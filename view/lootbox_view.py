@@ -1,6 +1,7 @@
 import discord
 
 from control.controller import Controller
+from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.view_menu import ViewMenu
@@ -13,8 +14,8 @@ class LootBoxView(ViewMenu):
         self.controller = controller
         self.add_item(ClaimButton())
         self.owner_id = owner_id
-        self.controller_class = "LootBoxViewController"
-        self.controller_module = "lootbox_view_controller"
+
+        self.controller_type = ControllerType.LOOTBOX_VIEW
         self.controller.register_view(self)
 
     async def claim(self, interaction: discord.Interaction):
@@ -30,9 +31,9 @@ class LootBoxView(ViewMenu):
         return True
 
     async def listen_for_ui_event(self, event: UIEvent):
-        if event.get_view_id() != self.id:
+        if event.view_id != self.id:
             return
-        match event.get_type():
+        match event.type:
             case UIEventType.STOP_INTERACTIONS:
                 self.stop()
 

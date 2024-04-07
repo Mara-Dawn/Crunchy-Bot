@@ -73,7 +73,7 @@ class Bully(commands.Cog):
 
         for user_id, items in user_items.items():
             for item in items:
-                match item.get_type():
+                match item.type:
                     case ItemType.REACTION_SPAM:
 
                         target_id, emoji = self.database.get_bully_react(
@@ -98,7 +98,7 @@ class Bully(commands.Cog):
                             datetime.datetime.now(),
                             guild_id,
                             user_id,
-                            item.get_type(),
+                            item.type,
                             -1,
                         )
                         await self.controller.dispatch_event(event)
