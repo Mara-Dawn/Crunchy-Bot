@@ -59,3 +59,4 @@ class UIEventType(str, Enum):
     SHOP_RESPONSE_REACTION_SUBMIT = "shop_response_reaction_submit"
     REACTION_SELECTED = "reaction_selected"
     CLAIM_LOOTBOX = "claim_lootbox"
+    UPDATE_RANKINGS = "update_rankings"

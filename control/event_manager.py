@@ -274,31 +274,32 @@ class EventManager(Service):
 
     def get_user_rankings(
         self, guild_id: int, ranking_type: RankingType
-    ) -> list[tuple[int, Any]]:
+    ) -> dict[str, Any]:
         parsing_list = {}
+        ranking_data = {}
         match ranking_type:
             case RankingType.SLAP:
-                return self.__get_ranking_data_by_type(
+                ranking_data = self.__get_ranking_data_by_type(
                     guild_id, outgoing=True, interaction_type=UserInteraction.SLAP
                 )
             case RankingType.PET:
-                return self.__get_ranking_data_by_type(
+                ranking_data = self.__get_ranking_data_by_type(
                     guild_id, outgoing=True, interaction_type=UserInteraction.PET
                 )
             case RankingType.FART:
-                return self.__get_ranking_data_by_type(
+                ranking_data = self.__get_ranking_data_by_type(
                     guild_id, outgoing=True, interaction_type=UserInteraction.FART
                 )
             case RankingType.SLAP_RECIEVED:
-                return self.__get_ranking_data_by_type(
+                ranking_data = self.__get_ranking_data_by_type(
                     guild_id, outgoing=False, interaction_type=UserInteraction.SLAP
                 )
             case RankingType.PET_RECIEVED:
-                return self.__get_ranking_data_by_type(
+                ranking_data = self.__get_ranking_data_by_type(
                     guild_id, outgoing=False, interaction_type=UserInteraction.PET
                 )
             case RankingType.FART_RECIEVED:
-                return self.__get_ranking_data_by_type(
+                ranking_data = self.__get_ranking_data_by_type(
                     guild_id, outgoing=False, interaction_type=UserInteraction.FART
                 )
             case RankingType.TIMEOUT_TOTAL:
@@ -315,7 +316,7 @@ class EventManager(Service):
                     (k, BotUtil.strfdelta(v, inputtype="seconds"))
                     for (k, v) in sorted_list
                 ]
-                return converted
+                ranking_data = converted
             case RankingType.TIMEOUT_COUNT:
                 guild_timeout_events = self.database.get_timeout_events_by_guild(
                     guild_id
@@ -323,7 +324,7 @@ class EventManager(Service):
                 for event in guild_timeout_events:
                     user_id = event.member_id
                     BotUtil.dict_append(parsing_list, user_id, 1)
-                return sorted(
+                ranking_data = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
             case RankingType.JAIL_TOTAL:
@@ -339,7 +340,7 @@ class EventManager(Service):
                     (k, BotUtil.strfdelta(v, inputtype="minutes"))
                     for (k, v) in sorted_list
                 ]
-                return converted
+                ranking_data = converted
             case RankingType.JAIL_COUNT:
                 jail_data = self.database.get_jail_events_by_guild(guild_id)
                 for jail, events in jail_data.items():
@@ -347,7 +348,7 @@ class EventManager(Service):
                         user_id = jail.member_id
                         if event.jail_event_type == JailEventType.JAIL:
                             BotUtil.dict_append(parsing_list, user_id, 1)
-                return sorted(
+                ranking_data = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
             case RankingType.SPAM_SCORE:
@@ -355,7 +356,7 @@ class EventManager(Service):
                 for event in guild_spam_events:
                     user_id = event.member_id
                     BotUtil.dict_append(parsing_list, user_id, 1)
-                return sorted(
+                ranking_data = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
             case RankingType.BEANS:
@@ -371,10 +372,10 @@ class EventManager(Service):
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
                 converted = [(k, f"🅱️{v}") for (k, v) in sorted_list]
-                return converted
+                ranking_data = converted
             case RankingType.MIMICS:
                 parsing_list = self.database.get_lootbox_mimics(guild_id)
-                return sorted(
+                ranking_data = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
             # case RankingType.TOTAL_GAMBAD_SPENT:
@@ -385,3 +386,8 @@ class EventManager(Service):
             #     return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
             # case RankingType.TOTAL_GAMBAD_WON:
             #     pass
+
+        return {
+            BotUtil.get_name(self.bot, guild_id, user_id, 100): value
+            for user_id, value in ranking_data
+        }

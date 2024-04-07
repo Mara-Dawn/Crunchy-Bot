@@ -125,7 +125,7 @@ class Statistics(commands.Cog):
             interaction.guild_id, RankingType.BEANS
         )
 
-        embed = RankingEmbed(self.bot, interaction, RankingType.BEANS, ranking_data)
+        embed = RankingEmbed(interaction, RankingType.BEANS, ranking_data)
         view = RankingView(self.controller, interaction)
 
         ranking_img = discord.File("./img/jail_wide.png", "ranking_img.png")
