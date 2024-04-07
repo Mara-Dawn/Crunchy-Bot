@@ -36,6 +36,7 @@ class ShopView(ViewMenu):
 
         self.message = None
         self.user_balance = user_balance
+        self.disabled = False
 
         self.controller_type = ControllerType.SHOP_VIEW
         self.controller.register_view(self)
@@ -48,7 +49,7 @@ class ShopView(ViewMenu):
                 if user_id != self.member_id:
                     return
                 user_balance = event.payload[1]
-                await self.refresh_ui(user_balance=user_balance)
+                await self.refresh_ui(user_balance=user_balance, disabled=self.disabled)
 
         if event.view_id != self.id:
             return
@@ -89,6 +90,8 @@ class ShopView(ViewMenu):
 
         if user_balance is not None:
             self.user_balance = user_balance
+
+        self.disabled = disabled
 
         self.clear_items()
         self.add_item(Dropdown(self.items[start:end], self.selected, disabled))
