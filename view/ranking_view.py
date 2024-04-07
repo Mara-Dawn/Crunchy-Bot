@@ -18,9 +18,7 @@ class RankingView(discord.ui.View):
     async def edit_page(
         self, interaction: discord.Interaction, ranking_type: RankingType
     ):
-        match ranking_type:
-            case _:
-                image = "./img/jail_wide.png"
+        image = "./img/jail_wide.png"
 
         ranking_data = self.event_manager.get_user_rankings(
             interaction.guild_id, ranking_type

@@ -1,7 +1,6 @@
-import datetime
 import collections
+import datetime
 import itertools
-from typing import Dict
 
 
 class PoliceListNode:
@@ -67,7 +66,7 @@ class PoliceListNode:
 class PoliceList:
 
     def __init__(self):
-        self.users: Dict[int, PoliceListNode] = {}
+        self.users: dict[int, PoliceListNode] = {}
 
     def add_user(self, author_id: int) -> None:
         self.users[author_id] = PoliceListNode(author_id)

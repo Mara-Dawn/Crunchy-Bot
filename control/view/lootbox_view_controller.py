@@ -32,13 +32,11 @@ class LootBoxViewController(ViewController):
         self.event_manager: EventManager = controller.get_service(EventManager)
 
     async def listen_for_ui_event(self, event: UIEvent):
-        match event.get_type():
+        match event.type:
             case UIEventType.CLAIM_LOOTBOX:
-                interaction = event.get_payload()[0]
-                owner_id = event.get_payload()[1]
-                await self.handle_lootbox_claim(
-                    interaction, owner_id, event.get_view_id()
-                )
+                interaction = event.payload[0]
+                owner_id = event.payload[1]
+                await self.handle_lootbox_claim(interaction, owner_id, event.view_id)
 
     async def handle_lootbox_claim(
         self, interaction: discord.Interaction, owner_id: int, view_id: int
@@ -47,9 +45,7 @@ class LootBoxViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        stun_base_duration = self.item_manager.get_item(
-            guild_id, ItemType.BAT
-        ).get_value()
+        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
         stunned_remaining = self.event_manager.get_stunned_remaining(
             guild_id, interaction.user.id, stun_base_duration
         )
@@ -86,7 +82,7 @@ class LootBoxViewController(ViewController):
             title=title, description=description, color=discord.Colour.purple()
         )
 
-        beans = loot_box.get_beans()
+        beans = loot_box.beans
 
         if beans < 0:
             bean_balance = self.database.get_member_beans(guild_id, interaction.user.id)
@@ -111,22 +107,21 @@ class LootBoxViewController(ViewController):
 
         log_message = f"{interaction.user.display_name} claimed a loot box containing {beans} beans"
 
-        if loot_box.get_item_type() is not None:
+        if loot_box.item_type is not None:
             embed.add_field(name="Woah, a Shiny Item!", value="", inline=False)
 
-            item = self.item_manager.get_item(guild_id, loot_box.get_item_type())
+            item = self.item_manager.get_item(guild_id, loot_box.item_type)
 
-            item.add_to_embed(embed, 33, count=item.get_base_amount())
-
-            log_message += f" and 1x {item.get_name()}"
+            item.add_to_embed(embed, 43, count=item.base_amount)
+            log_message += f" and 1x {item.name}"
 
             event = InventoryEvent(
                 datetime.datetime.now(),
                 guild_id,
                 member_id,
-                loot_box.get_item_type(),
+                loot_box.item_type,
                 0,
-                item.get_base_amount(),
+                item.base_amount,
             )
             await self.controller.dispatch_event(event)
 
@@ -144,7 +139,7 @@ class LootBoxViewController(ViewController):
             event_type = LootBoxEventType.OPEN
 
         event = LootBoxEvent(
-            datetime.datetime.now(), guild_id, loot_box.get_id(), member_id, event_type
+            datetime.datetime.now(), guild_id, loot_box.id, member_id, event_type
         )
         await self.controller.dispatch_event(event)
 

@@ -404,7 +404,7 @@ class Database:
                 {self.EVENT_TYPE_COL}) 
                 VALUES (?, ?, ?);
             """
-        task = (event.get_timestamp(), event.get_guild_id(), event.get_type())
+        task = (event.get_timestamp(), event.guild_id, event.type)
 
         return self.__query_insert(command, task)
 
@@ -419,9 +419,9 @@ class Database:
         """
         task = (
             event_id,
-            event.get_interaction_type(),
-            event.get_from_user(),
-            event.get_to_user(),
+            event.interaction_type,
+            event.from_user_id,
+            event.to_user_id,
         )
 
         return self.__query_insert(command, task)
@@ -434,7 +434,7 @@ class Database:
             {self.TIMEOUT_EVENT_DURATION_COL})
             VALUES (?, ?, ?);
         """
-        task = (event_id, event.get_member(), event.get_duration())
+        task = (event_id, event.member_id, event.duration)
 
         return self.__query_insert(command, task)
 
@@ -445,7 +445,7 @@ class Database:
             {self.SPAM_EVENT_MEMBER_COL})
             VALUES (?, ?);
         """
-        task = (event_id, event.get_member())
+        task = (event_id, event.member_id)
 
         return self.__query_insert(command, task)
 
@@ -461,10 +461,10 @@ class Database:
         """
         task = (
             event_id,
-            event.get_jail_event_type(),
-            event.get_caused_by(),
-            event.get_duration(),
-            event.get_jail_id(),
+            event.jail_event_type,
+            event.caused_by_id,
+            event.duration,
+            event.jail_id,
         )
 
         return self.__query_insert(command, task)
@@ -476,7 +476,7 @@ class Database:
             {self.QUOTE_EVENT_REF_COL})
             VALUES (?, ?);
         """
-        task = (event_id, event.get_quote_id())
+        task = (event_id, event.quote_id)
 
         return self.__query_insert(command, task)
 
@@ -491,9 +491,9 @@ class Database:
         """
         task = (
             event_id,
-            event.get_member(),
-            event.get_beans_event_type(),
-            event.get_value(),
+            event.member_id,
+            event.beans_event_type,
+            event.value,
         )
 
         return self.__query_insert(command, task)
@@ -509,9 +509,9 @@ class Database:
         """
         task = (
             event_id,
-            event.get_member_id(),
-            event.get_item_type(),
-            event.get_amount(),
+            event.member_id,
+            event.item_type,
+            event.amount,
         )
 
         return self.__query_insert(command, task)
@@ -527,9 +527,9 @@ class Database:
         """
         task = (
             event_id,
-            event.get_loot_box_id(),
-            event.get_member_id(),
-            event.get_loot_box_event_type(),
+            event.lootbox_id,
+            event.member_id,
+            event.loot_box_event_type,
         )
 
         return self.__query_insert(command, task)
@@ -542,7 +542,7 @@ class Database:
             {self.BAT_EVENT_TARGET_COL})
             VALUES (?, ?, ?);
         """
-        task = (event_id, event.get_causing_user_id(), event.get_target_id())
+        task = (event_id, event.used_by_id, event.target_id)
 
         return self.__query_insert(command, task)
 
@@ -553,7 +553,7 @@ class Database:
             self.logger.error("DB", "Event creation error, id was NoneType")
             return None
 
-        match event.get_type():
+        match event.type:
             case EventType.INTERACTION:
                 return self.__create_interaction_event(event_id, event)
             case EventType.JAIL:
@@ -587,14 +587,14 @@ class Database:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?);
         """
         task = (
-            quote.get_guild_id(),
-            quote.get_member(),
-            quote.get_member_name(),
-            quote.get_saved_by(),
-            quote.get_message_id(),
-            quote.get_channel_id(),
+            quote.guild_id,
+            quote.member_id,
+            quote.member_name,
+            quote.saved_by,
+            quote.message_id,
+            quote.channel_id,
             quote.get_timestamp(),
-            quote.get_message_content(),
+            quote.message_content,
         )
 
         return self.__query_insert(command, task)
@@ -609,10 +609,10 @@ class Database:
             VALUES (?, ?, ?, ?);
         """
         task = (
-            loot_box.get_guild_id(),
-            loot_box.get_message_id(),
-            loot_box.get_item_type(),
-            loot_box.get_beans(),
+            loot_box.guild_id,
+            loot_box.message_id,
+            loot_box.item_type,
+            loot_box.beans,
         )
 
         return self.__query_insert(command, task)
@@ -724,7 +724,7 @@ class Database:
             SET {self.QUOTE_CHANNEL_COL} = ?
             WHERE {self.QUOTE_ID_COL} = ?;
         """
-        task = (channel_id, quote.get_id())
+        task = (channel_id, quote.id)
 
         return self.__query_insert(command, task)
 
@@ -773,8 +773,8 @@ class Database:
             VALUES (?, ?, ?);
         """
         task = (
-            jail.get_guild_id(),
-            jail.get_member_id(),
+            jail.guild_id,
+            jail.member_id,
             jail.get_jailed_on_timestamp(),
         )
 
@@ -890,7 +890,7 @@ class Database:
         jails = self.get_jails_by_guild(guild_id)
         output = {}
         for jail in jails:
-            output[jail] = self.get_jail_events_by_jail(jail.get_id())
+            output[jail] = self.get_jail_events_by_jail(jail.id)
 
         return output
 

@@ -13,29 +13,20 @@ class InteractionEvent(BotEvent):
         timestamp: datetime.datetime,
         guild_id: int,
         interaction_type: UserInteraction,
-        from_user: int,
-        to_user: int,
-        event_id: int = None,
+        from_user_id: int,
+        to_user_id: int,
+        id: int = None,
     ):
-        super().__init__(timestamp, guild_id, EventType.INTERACTION, event_id)
+        super().__init__(timestamp, guild_id, EventType.INTERACTION, id)
         self.interaction_type = interaction_type
-        self.from_user = from_user
-        self.to_user = to_user
-
-    def get_interaction_type(self) -> UserInteraction:
-        return self.interaction_type
-
-    def get_from_user(self) -> int:
-        return self.from_user
-
-    def get_to_user(self) -> int:
-        return self.to_user
+        self.from_user_id = from_user_id
+        self.to_user_id = to_user_id
 
     def get_causing_user_id(self) -> int:
-        return self.from_user
+        return self.from_user_id
 
     def get_type_specific_args(self) -> list[Any]:
-        return [self.to_user, self.interaction_type]
+        return [self.to_user_id, self.interaction_type]
 
     @staticmethod
     def from_db_row(row: dict[str, Any]) -> "InteractionEvent":
@@ -50,7 +41,7 @@ class InteractionEvent(BotEvent):
             ),
             guild_id=row[Database.EVENT_GUILD_ID_COL],
             interaction_type=row[Database.INTERACTION_EVENT_TYPE_COL],
-            from_user=row[Database.INTERACTION_EVENT_FROM_COL],
-            to_user=row[Database.INTERACTION_EVENT_TO_COL],
-            event_id=row[Database.EVENT_ID_COL],
+            from_user_id=row[Database.INTERACTION_EVENT_FROM_COL],
+            to_user_id=row[Database.INTERACTION_EVENT_TO_COL],
+            id=row[Database.EVENT_ID_COL],
         )

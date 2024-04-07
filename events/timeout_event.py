@@ -11,22 +11,16 @@ class TimeoutEvent(BotEvent):
         self,
         timestamp: datetime.datetime,
         guild_id: int,
-        member: int,
+        member_id: int,
         duration: int,
-        event_id: int = None,
+        id: int = None,
     ):
-        super().__init__(timestamp, guild_id, EventType.TIMEOUT, event_id)
-        self.member = member
+        super().__init__(timestamp, guild_id, EventType.TIMEOUT, id)
+        self.member_id = member_id
         self.duration = duration
 
-    def get_member(self) -> int:
-        return self.member
-
-    def get_duration(self) -> int:
-        return self.duration
-
     def get_causing_user_id(self) -> int:
-        return self.member
+        return self.member_id
 
     def get_type_specific_args(self) -> list[Any]:
         return [self.duration]
@@ -43,7 +37,7 @@ class TimeoutEvent(BotEvent):
                 row[Database.EVENT_TIMESTAMP_COL]
             ),
             guild_id=row[Database.EVENT_GUILD_ID_COL],
-            member=row[Database.TIMEOUT_EVENT_MEMBER_COL],
+            member_id=row[Database.TIMEOUT_EVENT_MEMBER_COL],
             duration=row[Database.TIMEOUT_EVENT_DURATION_COL],
-            event_id=row[Database.EVENT_ID_COL],
+            id=row[Database.EVENT_ID_COL],
         )

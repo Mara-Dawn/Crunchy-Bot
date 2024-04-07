@@ -76,9 +76,7 @@ class Interactions(commands.Cog):
             )
             return False
 
-        stun_base_duration = self.item_manager.get_item(
-            guild_id, ItemType.BAT
-        ).get_value()
+        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
         stunned_remaining = self.event_manager.get_stunned_remaining(
             guild_id, interaction.user.id, stun_base_duration
         )

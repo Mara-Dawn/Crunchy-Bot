@@ -27,8 +27,6 @@ class ShopUserSelectView(ShopResponseView):
         self.confirm_button = ConfirmButton()
         self.cancel_button = CancelButton()
 
-        self.controller_class = "ShopResponseViewController"
-        self.controller_module = "shop_response_view_controller"
         self.refresh_elements()
 
     async def submit(self, interaction: discord.Interaction):

@@ -93,7 +93,7 @@ class Jail(commands.Cog):
         modifier_list = []
         
         for item in user_items:
-            if item.get_group() == ItemGroup.BONUS_ATTEMPT:
+            if item.group == ItemGroup.BONUS_ATTEMPT:
                 bonus_attempt = item
                 break
         
@@ -101,37 +101,37 @@ class Jail(commands.Cog):
             return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
 
         for item in user_items:
-            match item.get_group():
+            match item.group:
                 case ItemGroup.VALUE_MODIFIER:
-                    if item.get_type() == ItemType.SATAN_FART:
+                    if item.type == ItemType.SATAN_FART:
                         affected_jails = self.database.get_active_jails_by_member(interaction.guild_id, interaction.user.id)
                         if len(affected_jails) > 0:
                             continue
                         satan_boost = True
                         
-                    modifier = item.get_value()
-                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.get_type(), -1)
+                    modifier = item.value
+                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.type, -1)
                     await self.controller.dispatch_event(event)
                     
                     item_modifier += modifier
                     modifier_list.append(modifier)
                 case ItemGroup.AUTO_CRIT:
-                    auto_crit = item.get_value()
-                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.get_type(), -1)
+                    auto_crit = item.value
+                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.type, -1)
                     await self.controller.dispatch_event(event)
                 case ItemGroup.STABILIZER:
-                    stabilized = item.get_value()
-                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.get_type(), -1)
+                    stabilized = item.value
+                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.type, -1)
                     await self.controller.dispatch_event(event)
                 case ItemGroup.ADVANTAGE:
-                    advantage = item.get_value()
-                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.get_type(), -1)
+                    advantage = item.value
+                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.type, -1)
                     await self.controller.dispatch_event(event)
                 case _:
                     continue
                     
-            self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
-            response += f'* {item.get_name()}\n'
+            self.logger.log(interaction.guild_id, f'Item {item.name} was used.', cog=self.__cog_name__)
+            response += f'* {item.name}\n'
         
         if item_modifier == 0:
             item_modifier = 1
@@ -152,19 +152,19 @@ class Jail(commands.Cog):
         reduction = 1
         for item in user_items:
             
-            if item.get_group() != ItemGroup.PROTECTION:
+            if item.group != ItemGroup.PROTECTION:
                 continue
             
-            match item.get_group():
+            match item.group:
                 case ItemGroup.PROTECTION:
-                    reduction *= item.get_value()
-                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.get_type(), -1)
+                    reduction *= item.value
+                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.type, -1)
                     await self.controller.dispatch_event(event)
                 case _:
                     continue
                 
-            self.logger.log(interaction.guild_id, f'Item {item.get_name()} was used.', cog=self.__cog_name__)
-            response += f'* {item.get_name()}\n'
+            self.logger.log(interaction.guild_id, f'Item {item.name} was used.', cog=self.__cog_name__)
+            response += f'* {item.name}\n'
             
         return response, reduction
     
@@ -184,17 +184,17 @@ class Jail(commands.Cog):
         
         self.logger.debug(guild_id, f'{command_type}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
         
-        already_interacted = self.event_manager.has_jail_event_from_user(affected_jail.get_id(), interaction.user.id, command_type)
+        already_interacted = self.event_manager.has_jail_event_from_user(affected_jail.id, interaction.user.id, command_type)
         
         user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost = await self.__get_item_modifiers(interaction, command_type, already_interacted)
         
         if already_interacted:
             if bonus_attempt:
-                event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, bonus_attempt.get_type(), -1)
+                event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, bonus_attempt.type, -1)
                 await self.controller.dispatch_event(event)
                 
-                self.logger.log(interaction.guild_id, f'Item {bonus_attempt.get_name()} was used.', cog=self.__cog_name__)
-                user_item_info += f'* {bonus_attempt.get_name()}\n'
+                self.logger.log(interaction.guild_id, f'Item {bonus_attempt.name} was used.', cog=self.__cog_name__)
+                user_item_info += f'* {bonus_attempt.name}\n'
             else:
                 self.logger.log(guild_id, self.__get_already_used_log_msg(command_type, interaction, user), cog=self.__cog_name__)
                 return self.__get_already_used_msg(command_type, user)
@@ -282,7 +282,7 @@ class Jail(commands.Cog):
                 response += f'Their jail sentence was reduced by `{time_readable}` {damage_info}. '
             
             time_now = datetime.datetime.now()
-            event = JailEvent(time_now, guild_id, command_type, interaction.user.id, amount, affected_jail.get_id())
+            event = JailEvent(time_now, guild_id, command_type, interaction.user.id, amount, affected_jail.id)
             await self.controller.dispatch_event(event)
             
             remaining = self.event_manager.get_jail_remaining(affected_jail)
@@ -295,7 +295,7 @@ class Jail(commands.Cog):
         
     async def jail_user(self, guild_id: int, jailed_by_id: int, user: discord.Member, duration: int) -> bool:
         active_jails = self.database.get_active_jails_by_guild(guild_id)
-        jailed_members = [jail.get_member_id() for jail in active_jails]
+        jailed_members = [jail.member_id for jail in active_jails]
         
         jail_role = self.settings_manager.get_jail_role(guild_id)
         
@@ -310,14 +310,14 @@ class Jail(commands.Cog):
         jail = self.database.log_jail_sentence(jail)
         
         time_now = datetime.datetime.now()
-        event = JailEvent(time_now, guild_id, JailEventType.JAIL, jailed_by_id, duration, jail.get_id())
+        event = JailEvent(time_now, guild_id, JailEventType.JAIL, jailed_by_id, duration, jail.id)
         await self.controller.dispatch_event(event)
         
         return True
     
     async def release_user(self, guild_id: int, released_by_id: int, user: discord.Member) -> str:
         active_jails = self.database.get_active_jails_by_guild(guild_id)
-        jailed_members = [jail.get_member_id() for jail in active_jails]
+        jailed_members = [jail.member_id for jail in active_jails]
         
         jail_role = self.settings_manager.get_jail_role(guild_id)
         
@@ -335,7 +335,7 @@ class Jail(commands.Cog):
             response = f'Their remaining sentence of `{BotUtil.strfdelta(remaining, inputtype='minutes')}` will be forgiven.'
 
             time_now = datetime.datetime.now()
-            event = JailEvent(time_now, guild_id, JailEventType.RELEASE, released_by_id, 0, jail.get_id())
+            event = JailEvent(time_now, guild_id, JailEventType.RELEASE, released_by_id, 0, jail.id)
             await self.controller.dispatch_event(event)
             
         return response
@@ -357,7 +357,7 @@ class Jail(commands.Cog):
             active_jails = self.database.get_active_jails_by_guild(guild_id)
             
             for jail in active_jails:
-                member = guild.get_member(jail.get_member_id())
+                member = guild.get_member(jail.member_id)
                 duration = self.event_manager.get_jail_duration(jail)
                 remaining = self.event_manager.get_jail_remaining(jail)
                 
@@ -374,7 +374,7 @@ class Jail(commands.Cog):
                 self.logger.log(guild_id, f'User {member.name} was released from jail after {BotUtil.strfdelta(duration, inputtype='minutes')}.', cog=self.__cog_name__)
                 
                 time_now = datetime.datetime.now()
-                event = JailEvent(time_now, guild_id, JailEventType.RELEASE, self.bot.user.id, 0, jail.get_id())
+                event = JailEvent(time_now, guild_id, JailEventType.RELEASE, self.bot.user.id, 0, jail.id)
                 await self.controller.dispatch_event(event)
                 
                 for channel_id in jail_channels:
@@ -399,8 +399,8 @@ class Jail(commands.Cog):
             self.logger.log("init",f'Found {len(jails)} ongoing jail sentences.', cog=self.__cog_name__)
         
         for jail in jails:
-            guild_id = jail.get_guild_id()
-            member_id = jail.get_member_id()
+            guild_id = jail.guild_id
+            member_id = jail.member_id
             member = None
             guild = self.bot.get_guild(guild_id)
             member = guild.get_member(member_id) if guild is not None else None
@@ -409,7 +409,7 @@ class Jail(commands.Cog):
                 self.logger.log("init",f'Member or guild not found, user {member_id} was marked as released.', cog=self.__cog_name__)
                 
                 time_now = datetime.datetime.now()
-                event = JailEvent(time_now, guild_id, JailEventType.RELEASE, self.bot.user.id, 0, jail.get_id())
+                event = JailEvent(time_now, guild_id, JailEventType.RELEASE, self.bot.user.id, 0, jail.id)
                 await self.controller.dispatch_event(event)
                 
                 continue

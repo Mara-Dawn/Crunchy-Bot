@@ -87,7 +87,7 @@ class ImageGenerator:
     def from_quote(self, quote: Quote) -> io.BytesIO:
         self.randomize()
         text = self.parse_text(quote)
-        guild_id = quote.get_guild_id()
+        guild_id = quote.guild_id
 
         max_text_width = self.image.width - (self.image.width // 10) * 2
         max_text_height = int(self.image.height * 1 / 3)
@@ -127,8 +127,8 @@ class ImageGenerator:
         )
 
         author_position = (self.image.width - 15, self.image.height - 15)
-        author = self.bot.get_guild(guild_id).get_member(quote.get_member())
-        author_name = quote.get_member_name() if author is None else author.display_name
+        author = self.bot.get_guild(guild_id).get_member(quote.member_id)
+        author_name = quote.member_name if author is None else author.display_name
 
         author_text = f"- {author_name}"
 
@@ -153,12 +153,12 @@ class ImageGenerator:
         return arr
 
     def parse_text(self, quote: Quote) -> str:
-        text = quote.get_message_content()
+        text = quote.message_content
         mention_pattern = re.compile(r"<@!?(\d+)>")
         mentions = mention_pattern.findall(text)
 
         for mention in mentions:
-            user = self.bot.get_guild(quote.get_guild_id()).get_member(int(mention))
+            user = self.bot.get_guild(quote.guild_id).get_member(int(mention))
             if user:
                 text = text.replace(f"<@{mention}>", f"{user.display_name}")
                 text = text.replace(f"<@!{mention}>", f"{user.display_name}")

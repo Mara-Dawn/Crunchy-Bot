@@ -38,23 +38,23 @@ class ShopResponseViewController(ViewController):
         self.event_manager: EventManager = controller.get_service(EventManager)
         
     async def listen_for_ui_event(self, event: UIEvent):
-        match event.get_type():
+        match event.type:
             case UIEventType.REACTION_SELECTED:
-                interaction = event.get_payload()[0]
-                message = event.get_payload()[1]
-                await self.submit_reaction_selection(interaction, message, event.get_view_id())
+                interaction = event.payload[0]
+                message = event.payload[1]
+                await self.submit_reaction_selection(interaction, message, event.view_id)
             case UIEventType.SHOP_RESPONSE_CONFIRM_SUBMIT:
-                interaction = event.get_payload()[0]
-                shop_data = event.get_payload()[1]
-                await self.submit_confirm_view(interaction, shop_data, event.get_view_id())
+                interaction = event.payload[0]
+                shop_data = event.payload[1]
+                await self.submit_confirm_view(interaction, shop_data, event.view_id)
             case UIEventType.SHOP_RESPONSE_USER_SUBMIT:
-                interaction = event.get_payload()[0]
-                shop_data = event.get_payload()[1]
-                await self.submit_user_view(interaction, shop_data, event.get_view_id())
+                interaction = event.payload[0]
+                shop_data = event.payload[1]
+                await self.submit_user_view(interaction, shop_data, event.view_id)
             case UIEventType.SHOP_RESPONSE_COLOR_SUBMIT | UIEventType.SHOP_RESPONSE_REACTION_SUBMIT:
-                interaction = event.get_payload()[0]
-                shop_data = event.get_payload()[1]
-                await self.submit_generic_view(interaction, shop_data, event.get_view_id())
+                interaction = event.payload[0]
+                shop_data = event.payload[1]
+                await self.submit_generic_view(interaction, shop_data, event.view_id)
                 
     async def start_transaction(self, interaction: discord.Interaction, shop_data: ShopResponseData) -> bool:
         
@@ -65,7 +65,7 @@ class ShopResponseViewController(ViewController):
             user_balance = self.database.get_member_beans(guild_id, member_id)
             
             amount = shop_data.selected_amount
-            cost = shop_data.item.get_cost() * amount
+            cost = shop_data.item.cost * amount
             
             if user_balance < cost:
                 await interaction.followup.send('You dont have enough beans to buy that.', ephemeral=True)
@@ -91,11 +91,11 @@ class ShopResponseViewController(ViewController):
     
     async def finish_transaction(self, interaction: discord.Interaction, shop_data: ShopResponseData, view_id: int):
         amount = shop_data.selected_amount
-        cost = shop_data.item.get_cost() * amount
+        cost = shop_data.item.cost * amount
         guild_id = interaction.guild_id
         member_id = interaction.user.id
         
-        log_message = f'{interaction.user.display_name} bought {amount} {shop_data.item.get_name()} for {cost} beans.'
+        log_message = f'{interaction.user.display_name} bought {amount} {shop_data.item.name} for {cost} beans.'
         
         arguments = []
         
@@ -114,7 +114,7 @@ class ShopResponseViewController(ViewController):
         self.logger.log(interaction.guild_id, log_message, cog='Shop')
         
         new_user_balance = self.database.get_member_beans(guild_id, member_id)
-        success_message = f'You successfully bought {amount} **{shop_data.item.get_name()}** for `🅱️{cost}` beans.\n Remaining balance: `🅱️{new_user_balance}`'
+        success_message = f'You successfully bought {amount} **{shop_data.item.name}** for `🅱️{cost}` beans.\n Remaining balance: `🅱️{new_user_balance}`'
         
         await interaction.followup.send(success_message, ephemeral=True)
         
@@ -187,11 +187,11 @@ class ShopResponseViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
         amount = shop_data.selected_amount
-        cost = shop_data.item.get_cost() * amount
+        cost = shop_data.item.cost * amount
 
         jail_cog: Jail = self.bot.get_cog('Jail')
         
-        match shop_data.item.get_type():
+        match shop_data.item.type:
             case ItemType.ARREST:
                 duration = 30
                 success = await jail_cog.jail_user(guild_id, member_id, shop_data.selected_user, duration)
@@ -202,7 +202,7 @@ class ShopResponseViewController(ViewController):
                 
                 timestamp_now = int(datetime.datetime.now().timestamp())
                 release = timestamp_now + (duration*60)
-                jail_announcement = f'<@{shop_data.selected_user.id}> was sentenced to Jail by <@{member_id}> using a **{shop_data.item.get_name()}**. They will be released <t:{release}:R>.'
+                jail_announcement = f'<@{shop_data.selected_user.id}> was sentenced to Jail by <@{member_id}> using a **{shop_data.item.name}**. They will be released <t:{release}:R>.'
                 
             case ItemType.RELEASE:
                 affected_jails = self.database.get_active_jails_by_member(guild_id, member_id)
@@ -220,7 +220,7 @@ class ShopResponseViewController(ViewController):
                     await interaction.followup.send(f'User {shop_data.selected_user.display_name} is currently not in jail.', ephemeral=True)
                     return
                 
-                jail_announcement = f'<@{shop_data.selected_user.id}> was generously released from Jail by <@{interaction.user.id}> using a **{shop_data.item.get_name()}**. ' + response
+                jail_announcement = f'<@{shop_data.selected_user.id}> was generously released from Jail by <@{interaction.user.id}> using a **{shop_data.item.name}**. ' + response
                 
             case ItemType.ROULETTE_FART:
                 duration = 30
@@ -231,10 +231,10 @@ class ShopResponseViewController(ViewController):
                 timestamp_now = int(datetime.datetime.now().timestamp())
                 release = timestamp_now + (duration*60)
                 target = selected
-                jail_announcement = f'<@{selected.id}> was sentenced to Jail by <@{member_id}> using a **{shop_data.item.get_name()}**. They will be released <t:{release}:R>.'
+                jail_announcement = f'<@{selected.id}> was sentenced to Jail by <@{member_id}> using a **{shop_data.item.name}**. They will be released <t:{release}:R>.'
                 
                 if random.choice([True, False]):
-                    jail_announcement = f'<@{member_id}> shit themselves in an attempt to jail <@{selected.id}> using a **{shop_data.item.get_name()}**, going to jail in their place. They will be released <t:{release}:R>.'
+                    jail_announcement = f'<@{member_id}> shit themselves in an attempt to jail <@{selected.id}> using a **{shop_data.item.name}**, going to jail in their place. They will be released <t:{release}:R>.'
                     target = member
                 
                 success = await jail_cog.jail_user(guild_id, member_id, target, duration)
@@ -262,7 +262,7 @@ class ShopResponseViewController(ViewController):
                 
                 remaining = int(self.event_manager.get_jail_remaining(jail))
                 
-                total_value = shop_data.item.get_value() * amount
+                total_value = shop_data.item.value * amount
                 
                 if remaining - total_value <= 0:
                     await interaction.followup.send('You cannot reduce your jail sentence by this much.', ephemeral=True)
@@ -271,7 +271,7 @@ class ShopResponseViewController(ViewController):
                 if remaining - total_value <= 30:
                     total_value -= (30 - (remaining - total_value))
                     
-                event = JailEvent(datetime.datetime.now(), guild_id, JailEventType.REDUCE, member_id, -total_value, jail.get_id())
+                event = JailEvent(datetime.datetime.now(), guild_id, JailEventType.REDUCE, member_id, -total_value, jail.id)
                 await self.controller.dispatch_event(event)
                 
                 jail_announcement = f'<@{member_id}> reduced their own sentence by `{total_value}` minutes by spending `🅱️{cost}` beans.'
@@ -296,10 +296,10 @@ class ShopResponseViewController(ViewController):
         
         last_bat_time = datetime.datetime.min
         if last_bat_event is not None:
-            last_bat_time = last_bat_event.get_datetime()
+            last_bat_time = last_bat_event.datetime
         
         diff = datetime.datetime.now() - last_bat_time
-        if int(diff.total_seconds()/60) <= shop_data.item.get_value():
+        if int(diff.total_seconds()/60) <= shop_data.item.value:
             await interaction.followup.send("Targeted user is already stunned by a previous bat attack.", ephemeral=True)
             return
         
@@ -307,7 +307,7 @@ class ShopResponseViewController(ViewController):
         await self.controller.dispatch_event(event)
         
         amount = shop_data.selected_amount
-        cost = shop_data.item.get_cost() * amount
+        cost = shop_data.item.cost * amount
         
         event = BeansEvent(datetime.datetime.now(), guild_id, BeansEventType.SHOP_PURCHASE, member_id, -cost)
         await self.controller.dispatch_event(event)
@@ -318,7 +318,7 @@ class ShopResponseViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
         amount = shop_data.selected_amount
-        cost = shop_data.item.get_cost() * amount
+        cost = shop_data.item.cost * amount
         
         bean_data = self.database.get_guild_beans(guild_id)
         users = []
@@ -330,7 +330,7 @@ class ShopResponseViewController(ViewController):
         jails = self.database.get_active_jails_by_guild(guild_id)
         
         for jail in jails:
-            jailed_member_id = jail.get_member_id()
+            jailed_member_id = jail.member_id
             if jailed_member_id in users:
                 users.remove(jailed_member_id)
         
@@ -369,7 +369,7 @@ class ShopResponseViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
         amount = shop_data.selected_amount
-        cost = shop_data.item.get_cost() * amount
+        cost = shop_data.item.cost * amount
 
         event = BeansEvent(datetime.datetime.now(), guild_id, BeansEventType.SHOP_PURCHASE, member_id, -cost)
         await self.controller.dispatch_event(event)
@@ -377,11 +377,11 @@ class ShopResponseViewController(ViewController):
         match shop_data.type:
             case ItemType.NAME_COLOR:
                 self.database.log_custom_color(guild_id, member_id, shop_data.selected_color)
-                event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, shop_data.type, shop_data.item.get_base_amount()*amount)
+                event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, shop_data.type, shop_data.item.base_amount*amount)
                 await self.controller.dispatch_event(event)
             case ItemType.REACTION_SPAM:
                 self.database.log_bully_react(guild_id, member_id, shop_data.selected_user.id, shop_data.selected_emoji_type, shop_data.selected_emoji)
-                event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, shop_data.type, shop_data.item.get_base_amount()*amount)
+                event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, shop_data.type, shop_data.item.base_amount*amount)
                 await self.controller.dispatch_event(event)
             case _:
                 await interaction.followup.send('Something went wrong, please contact a staff member.', ephemeral=True)

@@ -95,8 +95,8 @@ class Quotes(commands.Cog):
 
         result_image = discord.File(image, "img.png")
 
-        message_id = quote.get_message_id()
-        channel_id = quote.get_channel_id()
+        message_id = quote.message_id
+        channel_id = quote.channel_id
         url = ""
         message = None
         if channel_id is None:
@@ -125,7 +125,7 @@ class Quotes(commands.Cog):
                 url = message.jump_url
 
         await interaction.followup.send(
-            f"Check this Quote from <@{quote.get_member()}>: {url}",
+            f"Check this Quote from <@{quote.member_id}>: {url}",
             files=[result_image],
             silent=True,
         )

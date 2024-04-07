@@ -14,12 +14,3 @@ class UIEvent:
         self.type = ui_event_type
         self.payload = payload
         self.view_id = view_id
-
-    def get_view_id(self) -> int:
-        return self.view_id
-
-    def get_type(self) -> UIEventType:
-        return self.type
-
-    def get_payload(self) -> Any:
-        return self.payload

@@ -28,32 +28,8 @@ class UserInventory:
         self.bully_target_name = bully_target_name
         self.bully_emoji = bully_emoji
 
-    def get_guild_id(self) -> int:
-        return self.guild_id
-
-    def get_member_id(self) -> int:
-        return self.member
-
-    def get_display_name(self) -> str:
-        return self.member_display_name
-
-    def get_items(self) -> list[Item]:
-        return self.items
-
     def get_item_count(self, item_type: ItemType) -> int:
         if item_type not in self.inventory:
             return 0
 
         return self.inventory[item_type]
-
-    def get_balance(self) -> int:
-        return self.balance
-
-    def get_custom_name_color(self) -> str:
-        return self.custom_name_color
-
-    def get_bully_target_name(self) -> str:
-        return self.bully_target_name
-
-    def get_bully_emoji(self) -> discord.Emoji | str:
-        return self.bully_emoji

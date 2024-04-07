@@ -12,26 +12,17 @@ class BeansEvent(BotEvent):
         timestamp: datetime.datetime,
         guild_id: int,
         beans_event_type: BeansEventType,
-        member: int,
+        member_id: int,
         value: int,
-        event_id: int = None,
+        id: int = None,
     ):
-        super().__init__(timestamp, guild_id, EventType.BEANS, event_id)
+        super().__init__(timestamp, guild_id, EventType.BEANS, id)
         self.beans_event_type = beans_event_type
-        self.member = member
+        self.member_id = member_id
         self.value = value
 
-    def get_beans_event_type(self) -> BeansEventType:
-        return self.beans_event_type
-
-    def get_member(self) -> int:
-        return self.member
-
-    def get_value(self) -> int:
-        return self.value
-
     def get_causing_user_id(self) -> int:
-        return self.member
+        return self.member_id
 
     def get_type_specific_args(self) -> list[Any]:
         return [self.beans_event_type, self.value]
@@ -49,7 +40,7 @@ class BeansEvent(BotEvent):
             ),
             guild_id=row[Database.EVENT_GUILD_ID_COL],
             beans_event_type=row[Database.BEANS_EVENT_TYPE_COL],
-            member=row[Database.BEANS_EVENT_MEMBER_COL],
+            member_id=row[Database.BEANS_EVENT_MEMBER_COL],
             value=row[Database.BEANS_EVENT_VALUE_COL],
-            event_id=row[Database.EVENT_ID_COL],
+            id=row[Database.EVENT_ID_COL],
         )

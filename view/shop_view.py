@@ -3,6 +3,7 @@ import contextlib
 import discord
 
 from control.controller import Controller
+from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
@@ -36,28 +37,27 @@ class ShopView(ViewMenu):
         self.message = None
         self.user_balance = user_balance
 
-        self.controller_class = "ShopViewController"
-        self.controller_module = "shop_view_controller"
+        self.controller_type = ControllerType.SHOP_VIEW
         self.controller.register_view(self)
         self.refresh_elements()
 
     async def listen_for_ui_event(self, event: UIEvent):
-        match event.get_type():
+        match event.type:
             case UIEventType.SHOP_USER_REFRESH:
-                user_id = event.get_payload()[0]
+                user_id = event.payload[0]
                 if user_id != self.member_id:
                     return
-                user_balance = event.get_payload()[1]
+                user_balance = event.payload[1]
                 await self.refresh_ui(user_balance=user_balance)
 
-        if event.get_view_id() != self.id:
+        if event.view_id != self.id:
             return
 
-        match event.get_type():
+        match event.type:
             case UIEventType.SHOP_REFRESH:
-                await self.refresh_ui(user_balance=event.get_payload(), disabled=False)
+                await self.refresh_ui(user_balance=event.payload, disabled=False)
             case UIEventType.SHOP_DISABLE:
-                await self.refresh_ui(disabled=event.get_payload())
+                await self.refresh_ui(disabled=event.payload)
 
     def set_message(self, message: discord.Message):
         self.message = message
@@ -174,11 +174,11 @@ class Dropdown(discord.ui.Select):
 
         for item in items:
             option = discord.SelectOption(
-                label=item.get_name(),
+                label=item.name,
                 description="",
-                emoji=item.get_emoji(),
-                value=item.get_type(),
-                default=(selected == item.get_type()),
+                emoji=item.emoji,
+                value=item.type,
+                default=(selected == item.type),
             )
 
             options.append(option)

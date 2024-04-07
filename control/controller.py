@@ -4,6 +4,7 @@ from discord.ext import commands
 
 from control.logger import BotLogger
 from control.service import Service
+from control.types import ControllerModuleMap
 from control.view.view_controller import ViewController
 from datalayer.database import Database
 from events.bot_event import BotEvent
@@ -28,10 +29,13 @@ class Controller:
         self.views: list[ViewMenu] = []
 
     def register_view(self, view: ViewMenu):
-        class_name = view.controller_class
-        module_name = view.controller_module
+        controller_type = view.controller_type.value
+
         controller_class = getattr(
-            importlib.import_module("control.view." + module_name), class_name
+            importlib.import_module(
+                "control.view." + ControllerModuleMap.get_module(controller_type)
+            ),
+            controller_type,
         )
         self.views.append(view)
         self.add_view_controller(controller_class)

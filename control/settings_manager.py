@@ -260,7 +260,7 @@ class SettingsManager(Service):
         if module is None:
             return None
 
-        return module.get_title()
+        return module.title
 
     def handle_roles_value(self, guild_id: int, roles: list[int]) -> str:
         return (
@@ -296,19 +296,19 @@ class SettingsManager(Service):
             if cog != "" and module_key != cog:
                 continue
 
-            module_settings = module.get_settings()
-            output += f"\n## Module: {module.get_name()}\n"
+            module_settings = module.settings
+            output += f"\n## Module: {module.name}\n"
 
             for setting_key in module_settings:
 
                 setting = module_settings[setting_key]
                 value = self.get_setting(guild, module_key, setting_key)
 
-                if setting.get_handler() != "":
-                    handler = getattr(self, setting.get_handler())
+                if setting.handler != "":
+                    handler = getattr(self, setting.handler)
                     value = handler(guild, value)
 
-                output += f"{indent}{setting.get_title()}: `{value}`\n"
+                output += f"{indent}{setting.title}: `{value}`\n"
 
         return output
 

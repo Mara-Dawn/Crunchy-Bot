@@ -74,7 +74,7 @@ class ItemManager(Service):
             ItemType.SATAN_FART,
         ]
 
-        weights = [self.get_item(guild_id, x).get_cost() for x in item_pool]
+        weights = [self.get_item(guild_id, x).cost for x in item_pool]
         chance_for_item = self.settings_manager.get_setting(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
@@ -97,7 +97,7 @@ class ItemManager(Service):
 
         beans = random.randint(min_beans, max_beans)
         roll = random.random()
-
+        roll = 0.1
         if roll <= chance_for_item:
             weights = [1.0 / w for w in weights]
             sum_weights = sum(weights)
@@ -137,7 +137,7 @@ class ItemManager(Service):
             "", embed=embed, view=view, files=[treasure_close_img]
         )
 
-        loot_box.set_message_id(message.id)
+        loot_box.message_id = message.id
         loot_box_id = self.database.log_lootbox(loot_box)
 
         event = LootBoxEvent(
@@ -244,6 +244,6 @@ class ItemManager(Service):
                     continue
 
                 event = InventoryEvent(
-                    datetime.datetime.now(), guild_id, user_id, item.get_type(), -1
+                    datetime.datetime.now(), guild_id, user_id, item.type, -1
                 )
                 await self.controller.dispatch_event(event)

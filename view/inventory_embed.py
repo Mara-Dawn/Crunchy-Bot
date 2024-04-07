@@ -8,27 +8,27 @@ class InventoryEmbed(discord.Embed):
 
     def __init__(self, inventory: UserInventory):
         super().__init__(
-            title=f"Inventory of {inventory.get_display_name()}\nBeans: `🅱️{inventory.get_balance()}`",
+            title=f"Inventory of {inventory.member_display_name}\nBeans: `🅱️{inventory.balance}`",
             color=discord.Colour.purple(),
             description="All the items you currently own.",
         )
-        inventory_items = inventory.get_items()
+        inventory_items = inventory.items
 
         if len(inventory_items) == 0:
             self.add_field(name="", value="There is nothing here.", inline=False)
 
         for item in inventory_items:
-            count = inventory.get_item_count(item.get_type())
-            match item.get_type():
+            count = inventory.get_item_count(item.type)
+            match item.type:
                 case ItemType.NAME_COLOR:
                     suffix = ""
-                    custom_color = inventory.get_custom_name_color()
+                    custom_color = inventory.custom_name_color
                     if custom_color is not None:
                         suffix = f" #{custom_color}"
                     item.add_to_embed(self, 54, count=count, name_suffix=suffix)
                 case ItemType.REACTION_SPAM:
-                    emoji = inventory.get_bully_emoji()
-                    target_name = inventory.get_bully_target_name()
+                    emoji = inventory.bully_emoji
+                    target_name = inventory.bully_target_name
                     if emoji is None or target_name is None:
                         suffix = " - Error, please update settings"
                     else:

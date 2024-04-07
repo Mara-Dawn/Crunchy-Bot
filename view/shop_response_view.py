@@ -4,6 +4,7 @@ import re
 import discord
 
 from control.controller import Controller
+from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
@@ -26,7 +27,7 @@ class ShopResponseView(ViewMenu):
         self.parent_id = parent_id
         self.type = None
         if item is not None:
-            self.type = item.get_type()
+            self.type = item.type
         self.item = item
 
         self.message = None
@@ -46,22 +47,21 @@ class ShopResponseView(ViewMenu):
         self.amount_select: AmountInput = None
         self.reaction_input_button: ReactionInputButton = None
 
-        self.controller_class = "ShopResponseViewController"
-        self.controller_module = "shop_response_view_controller"
+        self.controller_type = ControllerType.SHOP_RESPONSE_VIEW
         self.controller.register_view(self)
 
     async def listen_for_ui_event(self, event: UIEvent):
-        if event.get_view_id() != self.id:
+        if event.view_id != self.id:
             return
 
-        match event.get_type():
+        match event.type:
             case UIEventType.SHOP_RESPONSE_REFRESH:
                 await self.refresh_ui()
             case UIEventType.SHOP_RESPONSE_DISABLE:
-                await self.refresh_ui(disabled=event.get_payload())
+                await self.refresh_ui(disabled=event.payload)
             case UIEventType.SHOP_RESPONSE_EMOJI_UPDATE:
-                self.selected_emoji = event.get_payload()[0]
-                self.selected_emoji_type = event.get_payload()[1]
+                self.selected_emoji = event.payload[0]
+                self.selected_emoji_type = event.payload[1]
                 await self.refresh_ui()
 
     async def submit(self, interaction: discord.Interaction):
@@ -79,7 +79,7 @@ class ShopResponseView(ViewMenu):
 
         self.clear_items()
         for element in elements:
-            if element is self.amount_select and not self.item.get_allow_amount():
+            if element is self.amount_select and not self.item.allow_amount:
                 continue
             if element is not None:
                 element.disabled = disabled
@@ -93,9 +93,7 @@ class ShopResponseView(ViewMenu):
 
         embed = self.item.get_embed(color=color, amount_in_cart=self.selected_amount)
 
-        embed.title = (
-            f"{self.item.get_emoji()} {self.item.get_name()} {self.item.get_emoji()}"
-        )
+        embed.title = f"{self.item.emoji} {self.item.name} {self.item.emoji}"
 
         if self.selected_amount > 1:
             embed.title = f"{self.selected_amount}x {embed.title}"
@@ -347,7 +345,7 @@ class ShopResponseData:
         self.item = item
         self.type = None
         if item is not None:
-            self.type = item.get_type()
+            self.type = item.type
         self.selected_user = selected_user
         self.selected_amount = selected_amount
         self.selected_color = selected_color
