@@ -109,7 +109,10 @@ class ShopResponseView(ViewMenu):
 
         self.refresh_elements(disabled)
 
-        await self.message.edit(embed=embed, view=self)
+        try:
+            await self.message.edit(embed=embed, view=self)
+        except discord.NotFound:
+            self.controller.detach_view(self)
 
     async def set_amount(self, amount: int):
         self.amount_select.options[self.selected_amount - 1].default = False
