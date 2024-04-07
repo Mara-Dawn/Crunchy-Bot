@@ -148,11 +148,3 @@ class LootBoxViewController(ViewController):
         await interaction.edit_original_response(
             embed=embed, view=None, attachments=[attachment]
         )
-
-        if owner_id is not None:
-            new_user_balance = self.database.get_member_beans(guild_id, member_id)
-
-            event = UIEvent(
-                UIEventType.SHOP_USER_REFRESH, (member_id, new_user_balance)
-            )
-            await self.controller.dispatch_ui_event(event)

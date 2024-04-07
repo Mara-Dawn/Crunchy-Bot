@@ -12,7 +12,7 @@ from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.lootbox_event import LootBoxEvent
-from events.types import BeansEventType, LootBoxEventType, UIEventType
+from events.types import BeansEventType, EventType, LootBoxEventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemGroup, ItemType
 from view.inventory_embed import InventoryEmbed
@@ -42,7 +42,19 @@ class ShopViewController(ViewController):
         self.item_manager: ItemManager = controller.get_service(ItemManager)
 
     async def listen_for_event(self, event: BotEvent) -> None:
-        return await super().listen_for_event(event)
+        match event.type:
+            case EventType.BEANS:
+                beans_event: BeansEvent = event
+                if beans_event.value == 0:
+                    return
+                new_user_balance = self.database.get_member_beans(
+                    beans_event.guild_id, beans_event.member_id
+                )
+                event = UIEvent(
+                    UIEventType.SHOP_USER_REFRESH,
+                    (beans_event.member_id, new_user_balance),
+                )
+                await self.controller.dispatch_ui_event(event)
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -159,9 +171,6 @@ class ShopViewController(ViewController):
                 )
                 new_user_balance = self.database.get_member_beans(guild_id, member_id)
 
-                event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance, view_id)
-                await self.controller.dispatch_ui_event(event)
-
                 loot_box.message_id = message.id
                 loot_box_id = self.database.log_lootbox(loot_box)
 
@@ -195,9 +204,6 @@ class ShopViewController(ViewController):
         success_message = f"You successfully bought one **{item.name}** for `🅱️{item.cost}` beans. Remaining balance: `🅱️{new_user_balance}`\n Use */inventory* to check your inventory."
 
         await interaction.followup.send(success_message, ephemeral=True)
-
-        event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance, view_id)
-        await self.controller.dispatch_ui_event(event)
 
     async def send_inventory_message(self, interaction: discord.Interaction):
         inventory = self.item_manager.get_user_inventory(
