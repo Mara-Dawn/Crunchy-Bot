@@ -5,3 +5,11 @@ repos:
   hooks:
     # Run the linter.
     - id: ruff
+- repo: local
+  hooks:
+    - id: custom-script-file
+      name: custom-script-file
+      entry: check_todos.sh
+      language: script
+      types: [python]
+      pass_filenames: false
