@@ -105,7 +105,10 @@ class ShopView(ViewMenu):
         self.refresh_elements(user_balance, disabled)
         start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
         embed = ShopEmbed(self.guild_name, self.member_id, self.items, start)
-        await self.message.edit(embed=embed, view=self)
+        try:
+            await self.message.edit(embed=embed, view=self)
+        except discord.NotFound:
+            self.controller.detach_view(self)
 
     async def set_selected(self, interaction: discord.Interaction, item_type: ItemType):
         self.selected = item_type
