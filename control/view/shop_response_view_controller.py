@@ -118,7 +118,10 @@ class ShopResponseViewController(ViewController):
         
         await interaction.followup.send(success_message, ephemeral=True)
         
-        event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance, view_id)
+        user_items = self.database.get_item_counts_by_user(guild_id, member_id)
+        event = UIEvent(
+            UIEventType.SHOP_REFRESH, (new_user_balance, user_items), view_id
+        )
         await self.controller.dispatch_ui_event(event)
         
         message = await interaction.original_response()

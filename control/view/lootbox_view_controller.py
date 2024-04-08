@@ -112,7 +112,7 @@ class LootBoxViewController(ViewController):
 
             item = self.item_manager.get_item(guild_id, loot_box.item_type)
 
-            item.add_to_embed(embed, 43, count=item.base_amount)
+            item.add_to_embed(embed, 43, count=item.base_amount, show_price=False)
             log_message += f" and 1x {item.name}"
 
             event = InventoryEvent(

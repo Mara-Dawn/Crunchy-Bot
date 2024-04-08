@@ -107,7 +107,7 @@ class Shop(commands.Cog):
             f"{interaction.user.name} used command `{interaction.command.name}`."
         )
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
 
         shop_img = discord.File("./img/shop.png", "shop.png")
         police_img = discord.File("./img/police.png", "police.png")
@@ -118,14 +118,18 @@ class Shop(commands.Cog):
         user_balance = self.database.get_member_beans(
             interaction.guild.id, interaction.user.id
         )
+        user_items = self.database.get_item_counts_by_user(
+            interaction.guild.id, interaction.user.id
+        )
         embed = ShopEmbed(interaction.guild.name, interaction.user.id, items)
 
-        view = ShopView(self.controller, interaction, items, user_balance)
+        view = ShopView(self.controller, interaction, items)
 
         message = await interaction.followup.send(
-            "", embed=embed, view=view, files=[shop_img, police_img]
+            "", embed=embed, view=view, files=[shop_img, police_img], ephemeral=True
         )
         view.set_message(message)
+        await view.refresh_ui(user_balance=user_balance, user_items=user_items)
 
     @app_commands.command(
         name="inventory",

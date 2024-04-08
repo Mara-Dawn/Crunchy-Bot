@@ -59,16 +59,27 @@ class Item:
         
         return embed
     
-    def add_to_embed(self, embed: discord.Embed, max_width: int, count: int=None, name_suffix: str='') -> None:
+    def add_to_embed(self, embed: discord.Embed, max_width: int, count: int=None, show_price: bool = False, name_suffix: str='') -> None:
         title = f'> ~*  {self.emoji} {self.name} {self.emoji}  *~ {name_suffix}'
         description = self.description
         
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += ' '*spacing
-            
-        suffix = f'🅱️{self.cost}' if count is None else f'amount: {count}'
-        spacing = max_width - len(suffix)
-        info_block = f'```python\n"{description}"\n\n{' '*spacing}{suffix}```'
+        prefix = ''
+        suffix = ''
+        
+        if show_price:
+            if count is None:
+                suffix = f'🅱️{self.cost}'
+            else:
+                prefix = f'owned: {count}'
+                suffix = f'🅱️{self.cost}'
+        else:
+            if count is not None:
+                suffix = f'amount: {count}'
+
+        spacing = max_width - len(prefix) - len(suffix)
+        info_block = f'```python\n"{description}"\n\n{prefix}{' '*spacing}{suffix}```'
         
         embed.add_field(name=title, value=info_block, inline=False)

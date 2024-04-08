@@ -19,7 +19,6 @@ class ShopView(ViewMenu):
         controller: Controller,
         interaction: discord.Interaction,
         items: list[Item],
-        user_balance: int,
     ):
         super().__init__(timeout=300)
         self.controller = controller
@@ -35,7 +34,8 @@ class ShopView(ViewMenu):
         )
 
         self.message = None
-        self.user_balance = user_balance
+        self.user_balance = 0
+        self.user_items: dict[ItemType, int] = {}
         self.disabled = False
 
         self.controller_type = ControllerType.SHOP_VIEW
@@ -49,14 +49,23 @@ class ShopView(ViewMenu):
                 if user_id != self.member_id:
                     return
                 user_balance = event.payload[1]
-                await self.refresh_ui(user_balance=user_balance, disabled=self.disabled)
+                user_items = event.payload[2]
+                await self.refresh_ui(
+                    user_balance=user_balance,
+                    user_items=user_items,
+                    disabled=self.disabled,
+                )
 
         if event.view_id != self.id:
             return
 
         match event.type:
             case UIEventType.SHOP_REFRESH:
-                await self.refresh_ui(user_balance=event.payload, disabled=False)
+                user_balance = event.payload[0]
+                user_items = event.payload[1]
+                await self.refresh_ui(
+                    user_balance=user_balance, user_items=user_items, disabled=False
+                )
             case UIEventType.SHOP_DISABLE:
                 await self.refresh_ui(disabled=event.payload)
 
@@ -101,10 +110,22 @@ class ShopView(ViewMenu):
         self.add_item(CurrentPageButton(page_display))
         self.add_item(BalanceButton(self.user_balance))
 
-    async def refresh_ui(self, user_balance: int = None, disabled: bool = False):
+    async def refresh_ui(
+        self, user_balance: int = None, user_items=None, disabled: bool = False
+    ):
         self.refresh_elements(user_balance, disabled)
         start = ShopEmbed.ITEMS_PER_PAGE * self.current_page
-        embed = ShopEmbed(self.guild_name, self.member_id, self.items, start)
+
+        if user_items is not None:
+            self.user_items = user_items
+
+        embed = ShopEmbed(
+            guild_name=self.guild_name,
+            user_id=self.member_id,
+            items=self.items,
+            user_items=self.user_items,
+            start_offset=start,
+        )
         try:
             await self.message.edit(embed=embed, view=self)
         except discord.NotFound:
