@@ -158,7 +158,7 @@ class Jail(commands.Cog):
             match item.group:
                 case ItemGroup.PROTECTION:
                     reduction *= item.value
-                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, item.type, -1)
+                    event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, user.id, item.type, -1)
                     await self.controller.dispatch_event(event)
                 case _:
                     continue
