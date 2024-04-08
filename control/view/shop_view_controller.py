@@ -52,7 +52,19 @@ class ShopViewController(ViewController):
                 )
                 event = UIEvent(
                     UIEventType.SHOP_USER_REFRESH,
-                    (beans_event.member_id, new_user_balance),
+                    (beans_event.member_id, new_user_balance, None),
+                )
+                await self.controller.dispatch_ui_event(event)
+            case EventType.INVENTORY:
+                beans_event: InventoryEvent = event
+                if beans_event.amount == 0:
+                    return
+                user_items = self.database.get_item_counts_by_user(
+                    beans_event.guild_id, beans_event.member_id
+                )
+                event = UIEvent(
+                    UIEventType.SHOP_USER_REFRESH,
+                    (beans_event.member_id, None, user_items),
                 )
                 await self.controller.dispatch_ui_event(event)
 
@@ -72,7 +84,10 @@ class ShopViewController(ViewController):
 
     async def refresh_ui(self, guild_id: int, member_id: int, view_id: int):
         new_user_balance = self.database.get_member_beans(guild_id, member_id)
-        event = UIEvent(UIEventType.SHOP_REFRESH, new_user_balance, view_id)
+        user_items = self.database.get_item_counts_by_user(guild_id, member_id)
+        event = UIEvent(
+            UIEventType.SHOP_REFRESH, (new_user_balance, user_items), view_id
+        )
         await self.controller.dispatch_ui_event(event)
 
     async def buy(
