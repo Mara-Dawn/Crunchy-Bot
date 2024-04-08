@@ -111,7 +111,7 @@ class ShopResponseView(ViewMenu):
 
         try:
             await self.message.edit(embed=embed, view=self)
-        except discord.NotFound:
+        except (discord.NotFound, discord.HTTPException):
             self.controller.detach_view(self)
 
     async def set_amount(self, amount: int):
