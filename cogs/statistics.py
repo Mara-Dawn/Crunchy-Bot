@@ -114,12 +114,11 @@ class Statistics(commands.Cog):
     @app_commands.command(name="rankings", description="Crunchy user rankings.")
     @app_commands.guild_only()
     async def rankings(self, interaction: discord.Interaction):
-
+        await interaction.response.defer()
         log_message = (
             f"{interaction.user.name} used command `{interaction.command.name}`."
         )
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        await interaction.response.defer()
 
         ranking_data = self.event_manager.get_user_rankings(
             interaction.guild_id, RankingType.BEANS
