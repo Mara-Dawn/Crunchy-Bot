@@ -314,6 +314,42 @@ class BeansBasics(BeansGroup):
             args=[channel.name],
         )
 
+    @app_commands.command(
+        name="add_mod_channel",
+        description="Enable this channel to recieve mod notifications.",
+    )
+    @app_commands.describe(channel="The new mod channel.")
+    @app_commands.check(__has_permission)
+    async def add_mod_channel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ) -> None:
+        self.settings_manager.add_mod_channel(interaction.guild_id, channel.id)
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Added {channel.name} to mod channels.",
+            args=[channel.name],
+        )
+
+    @app_commands.command(
+        name="remove_mod_channel",
+        description="Disable mod notifications for a channel.",
+    )
+    @app_commands.describe(
+        channel="Removes this channel from recieving mod notifications."
+    )
+    @app_commands.check(__has_permission)
+    async def remove_mod_channel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ) -> None:
+        self.settings_manager.remove_mod_channel(interaction.guild_id, channel.id)
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Removed {channel.name} from mod channels.",
+            args=[channel.name],
+        )
+
 
 async def setup(bot):
     await bot.add_cog(BeansBasics(bot))

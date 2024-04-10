@@ -11,6 +11,7 @@ class EventType(str, Enum):
     INVENTORY = "inventory"
     LOOTBOX = "loot_box"
     BAT = "bat"
+    PREDICTION = "prediction"
 
 
 class BeansEventType(str, Enum):
@@ -42,6 +43,14 @@ class LootBoxEventType(str, Enum):
     OPEN = "open"
 
 
+class PredictionEventType(str, Enum):
+    SUBMIT = "submit"
+    APPROVE = "approve"
+    DENY = "deny"
+    PLACE_BET = "place_bet"
+    RESOLVE = "resolve"
+
+
 class UIEventType(str, Enum):
     STOP_INTERACTIONS = "stop_interactions"
     SHOW_INVENTORY = "show_inventory"
@@ -57,6 +66,7 @@ class UIEventType(str, Enum):
     SHOP_RESPONSE_USER_SUBMIT = "shop_response_user_submit"
     SHOP_RESPONSE_COLOR_SUBMIT = "shop_response_color_submit"
     SHOP_RESPONSE_REACTION_SUBMIT = "shop_response_reaction_submit"
+    SHOP_RESPONSE_PREDICTION_SUBMIT = "shop_response_prediction_submit"
     REACTION_SELECTED = "reaction_selected"
     CLAIM_LOOTBOX = "claim_lootbox"
     UPDATE_RANKINGS = "update_rankings"

@@ -10,6 +10,7 @@ from discord.ext import commands
 from control.logger import BotLogger
 from datalayer.jail import UserJail
 from datalayer.lootbox import LootBox
+from datalayer.prediction import Prediction
 from datalayer.quote import Quote
 from datalayer.types import UserInteraction
 from events.bat_event import BatEvent
@@ -19,6 +20,7 @@ from events.interaction_event import InteractionEvent
 from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
 from events.lootbox_event import LootBoxEvent
+from events.prediction_event import PredictionEvent
 from events.quote_event import QuoteEvent
 from events.spam_event import SpamEvent
 from events.timeout_event import TimeoutEvent
@@ -269,6 +271,50 @@ class Database:
         PRIMARY KEY ({BULLY_REACT_GUILD_COL}, {BULLY_REACT_MEMBER_COL})
     );"""
 
+    PREDICTION_TABLE = "predictions"
+    PREDICTION_ID_COL = "pred_id"
+    PREDICTION_GUILD_COL = "pred_guild_id"
+    PREDICTION_AUTHOR_COL = "pred_author_id"
+    PREDICTION_CONTENT_COL = "pred_content"
+    PREDICTION_APPROVED_COL = "pred_approved"
+    CREATE_PREDICTION_TABLE = f"""
+    CREATE TABLE if not exists {PREDICTION_TABLE} (
+        {PREDICTION_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
+        {PREDICTION_GUILD_COL} INTEGER,
+        {PREDICTION_AUTHOR_COL} INTEGER,
+        {PREDICTION_CONTENT_COL} TEXT,
+        {PREDICTION_APPROVED_COL} INTEGER
+    );"""
+
+    PREDICTION_OUTCOME_TABLE = "predictionoutcomes"
+    PREDICTION_OUTCOME_ID_COL = "proc_id"
+    PREDICTION_OUTCOME_PREDICTION_ID_COL = "proc_prediction_id"
+    PREDICTION_OUTCOME_CONTENT_COL = "proc_content"
+    CREATE_PREDICTION_OUTCOME_TABLE = f"""
+    CREATE TABLE if not exists {PREDICTION_OUTCOME_TABLE} (
+        {PREDICTION_OUTCOME_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
+        {PREDICTION_OUTCOME_PREDICTION_ID_COL} INTEGER REFERENCES {PREDICTION_TABLE} ({PREDICTION_ID_COL}),
+        {PREDICTION_OUTCOME_CONTENT_COL} TEXT
+    );"""
+
+    PREDICTION_EVENT_TABLE = "predictionevents"
+    PREDICTION_EVENT_ID_COL = "prev_event_id"
+    PREDICTION_EVENT_PREDICTION_ID_COL = "prev_prediction_id"
+    PREDICTION_EVENT_OUTCOME_ID_COL = "prev_outcome_id"
+    PREDICTION_EVENT_MEMBER_ID_COL = "prev_member_id"
+    PREDICTION_EVENT_TYPE_COL = "prev_type"
+    PREDICTION_EVENT_AMOUNT_COL = "prev_amount"
+    CREATE_PREDICTION_EVENT_TABLE = f"""
+    CREATE TABLE if not exists {PREDICTION_EVENT_TABLE} (
+        {PREDICTION_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {PREDICTION_EVENT_PREDICTION_ID_COL} INTEGER REFERENCES {PREDICTION_TABLE} ({PREDICTION_ID_COL}), 
+        {PREDICTION_EVENT_OUTCOME_ID_COL} INTEGER REFERENCES {PREDICTION_OUTCOME_TABLE} ({PREDICTION_OUTCOME_ID_COL}), 
+        {PREDICTION_EVENT_MEMBER_ID_COL} INTEGER, 
+        {PREDICTION_EVENT_TYPE_COL} TEXT, 
+        {PREDICTION_EVENT_AMOUNT_COL} INTEGER, 
+        PRIMARY KEY ({PREDICTION_EVENT_ID_COL})
+    );"""
+
     def __init__(self, bot: commands.Bot, logger: BotLogger, db_file: str):
 
         self.conn = None
@@ -300,6 +346,9 @@ class Database:
             c.execute(self.CREATE_CUSTOM_COLOR_TABLE)
             c.execute(self.CREATE_BULLY_REACT_TABLE)
             c.execute(self.CREATE_BAT_EVENT_TABLE)
+            c.execute(self.CREATE_PREDICTION_TABLE)
+            c.execute(self.CREATE_PREDICTION_OUTCOME_TABLE)
+            c.execute(self.CREATE_PREDICTION_EVENT_TABLE)
             c.close()
 
         except Error as e:
@@ -546,6 +595,28 @@ class Database:
 
         return self.__query_insert(command, task)
 
+    def __create_prediction_event(self, event_id: int, event: PredictionEvent) -> int:
+        command = f"""
+            INSERT INTO {self.PREDICTION_EVENT_TABLE} (
+            {self.PREDICTION_EVENT_ID_COL},
+            {self.PREDICTION_EVENT_PREDICTION_ID_COL},
+            {self.PREDICTION_EVENT_OUTCOME_ID_COL},
+            {self.PREDICTION_EVENT_MEMBER_ID_COL},
+            {self.PREDICTION_EVENT_TYPE_COL},
+            {self.PREDICTION_EVENT_AMOUNT_COL})
+            VALUES (?, ?, ?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.prediction_id,
+            event.outcome_id,
+            event.member_id,
+            event.prediction_event_type,
+            event.amount,
+        )
+
+        return self.__query_insert(command, task)
+
     def log_event(self, event: BotEvent) -> int:
         event_id = self.__create_base_event(event)
 
@@ -572,6 +643,8 @@ class Database:
                 return self.__create_loot_box_event(event_id, event)
             case EventType.BAT:
                 return self.__create_bat_event(event_id, event)
+            case EventType.PREDICTION:
+                return self.__create_prediction_event(event_id, event)
 
     def log_quote(self, quote: Quote) -> int:
         command = f"""
@@ -717,6 +790,39 @@ class Database:
             return None
 
         return rows[0][self.CUSTOM_COLOR_ROLE_COL]
+
+    def log_prediction(self, prediction: Prediction) -> int:
+        command = f"""
+            INSERT INTO {self.PREDICTION_TABLE} (
+            {self.PREDICTION_GUILD_COL},
+            {self.PREDICTION_AUTHOR_COL},
+            {self.PREDICTION_CONTENT_COL},
+            {self.PREDICTION_APPROVED_COL}) 
+            VALUES (?, ?, ?, ?);
+        """
+        task = (
+            prediction.guild_id,
+            prediction.author_id,
+            prediction.content,
+            False,
+        )
+
+        prediction_id = self.__query_insert(command, task)
+
+        for outcome in prediction.outcomes:
+            command = f"""
+                INSERT INTO {self.PREDICTION_OUTCOME_TABLE} (
+                {self.PREDICTION_OUTCOME_PREDICTION_ID_COL},
+                {self.PREDICTION_OUTCOME_CONTENT_COL}) 
+                VALUES (?, ?);
+            """
+            task = (
+                prediction_id,
+                outcome,
+            )
+            self.__query_insert(command, task)
+
+        return prediction_id
 
     def fix_quote(self, quote: Quote, channel_id: int) -> int:
         command = f"""

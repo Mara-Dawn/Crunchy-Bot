@@ -19,7 +19,12 @@ from view.inventory_embed import InventoryEmbed
 from view.lootbox_view import LootBoxView
 from view.shop_color_select_view import ShopColorSelectView  # noqa: F401
 from view.shop_confirm_view import ShopConfirmView  # noqa: F401
+from view.shop_prediction_submission_view import (
+    ShopPredictionSubmissionView,  # noqa: F401
+)
 from view.shop_reaction_select_view import ShopReactionSelectView  # noqa: F401
+
+# noqa: F401
 from view.shop_response_view import ShopResponseView
 from view.shop_user_select_view import ShopUserSelectView  # noqa: F401
 
