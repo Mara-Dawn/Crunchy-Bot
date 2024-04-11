@@ -45,6 +45,7 @@ class Controller:
             self.views.remove(view)
 
     async def dispatch_event(self, event: BotEvent):
+
         for service in self.services:
             await service.listen_for_event(event)
         for view_controller in self.view_controllers:

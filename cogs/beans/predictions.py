@@ -7,10 +7,12 @@ from discord.ext import commands
 
 from cogs.beans.beans_group import BeansGroup
 from control.settings_manager import SettingsManager
+from datalayer.types import PredictionState
 from items.types import ItemType
-from view.inventory_embed import InventoryEmbed
-from view.shop_embed import ShopEmbed
-from view.shop_view import ShopView
+from view.prediction_embed import PredictionEmbed
+from view.prediction_moderation_embed import PredictionModerationEmbed
+from view.prediction_moderation_view import PredictionModerationView
+from view.prediction_view import PredictionView
 
 
 class Predictions(BeansGroup):
@@ -78,10 +80,10 @@ class Predictions(BeansGroup):
         self.logger.log("init", "Predictions loaded.", cog=self.__cog_name__)
 
     @app_commands.command(
-        name="predictions", description="Bet your beans on various predictions."
+        name="prediction", description="Bet your beans on various predictions."
     )
     @app_commands.guild_only()
-    async def predictions(self, interaction: discord.Interaction):
+    async def prediction(self, interaction: discord.Interaction):
         if not await self.__check_enabled(interaction):
             return
 
@@ -91,27 +93,32 @@ class Predictions(BeansGroup):
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         await interaction.response.defer(ephemeral=True)
 
-        shop_img = discord.File("./img/shop.png", "shop.png")
         police_img = discord.File("./img/police.png", "police.png")
-        items = self.item_manager.get_items(interaction.guild_id)
+        menu_img = discord.File("./img/jail_wide.png", "menu_img.png")
 
-        items = sorted(items, key=lambda x: (x.shop_category.value, x.cost))
-
+        prediction_stats = self.database.get_prediction_stats_by_guild(
+            interaction.guild_id, [PredictionState.APPROVED]
+        )
         user_balance = self.database.get_member_beans(
             interaction.guild.id, interaction.user.id
         )
-        user_items = self.database.get_item_counts_by_user(
+        user_bets = self.database.get_prediction_bets_by_user(
             interaction.guild.id, interaction.user.id
         )
-        embed = ShopEmbed(interaction.guild.name, interaction.user.id, items)
 
-        view = ShopView(self.controller, interaction, items)
+        embed = PredictionEmbed(interaction.guild.name, prediction_stats)
+
+        view = PredictionView(self.controller, interaction, prediction_stats)
 
         message = await interaction.followup.send(
-            "", embed=embed, view=view, files=[shop_img, police_img], ephemeral=True
+            content="",
+            embed=embed,
+            view=view,
+            files=[police_img, menu_img],
+            ephemeral=True,
         )
         view.set_message(message)
-        await view.refresh_ui(user_balance=user_balance, user_items=user_items)
+        await view.refresh_ui(user_balance=user_balance, user_bets=user_bets)
 
     @app_commands.command(
         name="prediction_moderation",
@@ -122,7 +129,7 @@ class Predictions(BeansGroup):
         if not await self.__check_enabled(interaction):
             return
 
-        if not await self.__has_mod_permission(interaction):
+        if not self.__has_mod_permission(interaction):
             raise app_commands.MissingPermissions([])
 
         log_message = (
@@ -132,14 +139,25 @@ class Predictions(BeansGroup):
         await interaction.response.defer(ephemeral=True)
 
         police_img = discord.File("./img/police.png", "police.png")
+        menu_img = discord.File("./img/jail_wide.png", "menu_img.png")
 
-        member_id = interaction.user.id
-        guild_id = interaction.guild_id
+        prediction_stats = self.database.get_prediction_stats_by_guild(
+            interaction.guild_id
+        )
 
-        inventory = self.item_manager.get_user_inventory(guild_id, member_id)
-        embed = InventoryEmbed(inventory)
+        embed = PredictionModerationEmbed(interaction.guild.name, prediction_stats)
 
-        await interaction.followup.send("", embed=embed, files=[police_img])
+        view = PredictionModerationView(self.controller, interaction, prediction_stats)
+
+        message = await interaction.followup.send(
+            content="",
+            embed=embed,
+            view=view,
+            files=[police_img, menu_img],
+            ephemeral=True,
+        )
+        view.set_message(message)
+        await view.refresh_ui()
 
     group = app_commands.Group(
         name="predictions", description="Subcommands for the Beans Predictions module."

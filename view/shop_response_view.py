@@ -6,6 +6,7 @@ import discord
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.prediction import Prediction
+from datalayer.types import PredictionState
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
@@ -137,13 +138,16 @@ class ShopResponseView(ViewMenu):
 
     async def submit_prediction(self, prediction: str, outcomes: list[str]):
         prediction_object = Prediction(
-            self.guild_id, self.member_id, prediction, outcomes
+            self.guild_id,
+            self.member_id,
+            prediction,
+            outcomes,
+            PredictionState.SUBMITTED,
         )
 
         event = UIEvent(
             UIEventType.SHOP_RESPONSE_PREDICTION_SUBMIT,
             prediction_object,
-            self.parent_id,
         )
         await self.controller.dispatch_ui_event(event)
         await self.on_timeout()
@@ -373,16 +377,20 @@ class SubmissionInputModal(discord.ui.Modal):
             required = True
             if i >= 2:
                 required = False
-            outcome = discord.ui.TextInput(label=f"Outcome {i+1}:", required=required)
+            outcome = discord.ui.TextInput(
+                label=f"Outcome {i+1}:", required=required, custom_id=str(i)
+            )
             self.outcomes.append(outcome)
             self.add_item(outcome)
 
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer()
         prediction = self.prediction.value
-        outcomes = [
-            outcome.value for outcome in self.outcomes if len(outcome.value) > 0
-        ]
+        outcomes = {
+            int(outcome.custom_id): outcome.value
+            for outcome in self.outcomes
+            if len(outcome.value) > 0
+        }
 
         if len(prediction) < 5:
             await interaction.followup.send("Prediction too short.", ephemeral=True)

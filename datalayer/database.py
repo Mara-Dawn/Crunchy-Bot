@@ -7,12 +7,14 @@ from typing import Any
 import discord
 from discord.ext import commands
 
+from bot_util import BotUtil
 from control.logger import BotLogger
 from datalayer.jail import UserJail
 from datalayer.lootbox import LootBox
 from datalayer.prediction import Prediction
+from datalayer.prediction_stats import PredictionStats
 from datalayer.quote import Quote
-from datalayer.types import UserInteraction
+from datalayer.types import PredictionState, UserInteraction
 from events.bat_event import BatEvent
 from events.beans_event import BeansEvent, BeansEventType
 from events.bot_event import BotEvent
@@ -24,7 +26,7 @@ from events.prediction_event import PredictionEvent
 from events.quote_event import QuoteEvent
 from events.spam_event import SpamEvent
 from events.timeout_event import TimeoutEvent
-from events.types import EventType, LootBoxEventType
+from events.types import EventType, LootBoxEventType, PredictionEventType
 from items.types import ItemType
 from view.types import EmojiType
 
@@ -273,17 +275,19 @@ class Database:
 
     PREDICTION_TABLE = "predictions"
     PREDICTION_ID_COL = "pred_id"
-    PREDICTION_GUILD_COL = "pred_guild_id"
+    PREDICTION_GUILD_ID_COL = "pred_guild_id"
     PREDICTION_AUTHOR_COL = "pred_author_id"
     PREDICTION_CONTENT_COL = "pred_content"
-    PREDICTION_APPROVED_COL = "pred_approved"
+    PREDICTION_STATE_COL = "pred_state"
+    PREDICTION_MOD_ID_COL = "pred_moderator_id"
     CREATE_PREDICTION_TABLE = f"""
     CREATE TABLE if not exists {PREDICTION_TABLE} (
         {PREDICTION_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
-        {PREDICTION_GUILD_COL} INTEGER,
+        {PREDICTION_GUILD_ID_COL} INTEGER,
         {PREDICTION_AUTHOR_COL} INTEGER,
         {PREDICTION_CONTENT_COL} TEXT,
-        {PREDICTION_APPROVED_COL} INTEGER
+        {PREDICTION_STATE_COL} INTEGER,
+        {PREDICTION_MOD_ID_COL} INTEGER
     );"""
 
     PREDICTION_OUTCOME_TABLE = "predictionoutcomes"
@@ -794,22 +798,24 @@ class Database:
     def log_prediction(self, prediction: Prediction) -> int:
         command = f"""
             INSERT INTO {self.PREDICTION_TABLE} (
-            {self.PREDICTION_GUILD_COL},
+            {self.PREDICTION_GUILD_ID_COL},
             {self.PREDICTION_AUTHOR_COL},
             {self.PREDICTION_CONTENT_COL},
-            {self.PREDICTION_APPROVED_COL}) 
-            VALUES (?, ?, ?, ?);
+            {self.PREDICTION_STATE_COL},
+            {self.PREDICTION_MOD_ID_COL}) 
+            VALUES (?, ?, ?, ?, ?);
         """
         task = (
             prediction.guild_id,
             prediction.author_id,
             prediction.content,
-            False,
+            prediction.state,
+            prediction.moderator_id,
         )
 
         prediction_id = self.__query_insert(command, task)
 
-        for outcome in prediction.outcomes:
+        for outcome in prediction.outcomes.values():
             command = f"""
                 INSERT INTO {self.PREDICTION_OUTCOME_TABLE} (
                 {self.PREDICTION_OUTCOME_PREDICTION_ID_COL},
@@ -819,6 +825,38 @@ class Database:
             task = (
                 prediction_id,
                 outcome,
+            )
+            self.__query_insert(command, task)
+
+        return prediction_id
+
+    def update_prediction(self, prediction: Prediction) -> int:
+        command = f"""
+            UPDATE {self.PREDICTION_TABLE} SET (
+            {self.PREDICTION_CONTENT_COL},
+            {self.PREDICTION_STATE_COL},
+            {self.PREDICTION_MOD_ID_COL}) 
+            = (?, ?, ?)
+            WHERE {self.PREDICTION_ID_COL} = ?
+        """
+        task = (
+            prediction.content,
+            prediction.state,
+            prediction.moderator_id,
+            prediction.id,
+        )
+
+        prediction_id = self.__query_insert(command, task)
+
+        for id, outcome in prediction.outcomes.items():
+            command = f"""
+                UPDATE {self.PREDICTION_OUTCOME_TABLE} SET 
+                {self.PREDICTION_OUTCOME_CONTENT_COL} = ?
+                WHERE {self.PREDICTION_OUTCOME_ID_COL} = ?
+            """
+            task = (
+                outcome,
+                id,
             )
             self.__query_insert(command, task)
 
@@ -1329,6 +1367,207 @@ class Database:
             for row in rows
             if row[f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"] > 0
         }
+
+    def get_predictions_by_guild(
+        self, guild_id: int, states: list[PredictionState] = None
+    ) -> list[Prediction]:
+
+        if states is None:
+            states = [x.value for x in PredictionState]
+        else:
+            states = [x.value for x in states]
+
+        list_sanitized = self.__list_sanitizer(states)
+
+        command = f"""
+            SELECT * FROM {self.PREDICTION_TABLE} 
+            WHERE {self.PREDICTION_GUILD_ID_COL} = ?
+            AND {self.PREDICTION_STATE_COL} IN {list_sanitized};
+        """
+
+        task = (guild_id, *states)
+
+        prediction_rows = self.__query_select(command, task)
+        if not prediction_rows or len(prediction_rows) < 1:
+            return None
+
+        predictions = []
+
+        for row in prediction_rows:
+            command = f"""
+                SELECT * FROM {self.PREDICTION_OUTCOME_TABLE} 
+                WHERE {self.PREDICTION_OUTCOME_PREDICTION_ID_COL} = {int(row[self.PREDICTION_ID_COL])};
+            """
+
+            outcome_rows = self.__query_select(command)
+            if not outcome_rows or len(outcome_rows) < 1:
+                continue
+
+            prediction = Prediction.from_db_row(row, outcome_rows)
+            predictions.append(prediction)
+
+        return predictions
+
+    def get_prediction_bets(self, predictions: list[Prediction]) -> dict[int, int]:
+        if predictions is None:
+            return None
+
+        prediction_ids = [prediction.id for prediction in predictions]
+        list_sanitized = self.__list_sanitizer(prediction_ids)
+
+        command = f"""
+            SELECT *, SUM({self.PREDICTION_EVENT_AMOUNT_COL}) FROM {self.PREDICTION_EVENT_TABLE}
+            WHERE {self.PREDICTION_EVENT_TYPE_COL} = ?
+            AND {self.PREDICTION_EVENT_PREDICTION_ID_COL} IN {list_sanitized}
+            GROUP BY {self.PREDICTION_EVENT_OUTCOME_ID_COL}
+            ;
+        """
+
+        task = (PredictionEventType.PLACE_BET, *prediction_ids)
+
+        bet_rows = self.__query_select(command, task)
+        if not bet_rows or len(bet_rows) < 1:
+            return None
+
+        return {
+            row[self.PREDICTION_EVENT_OUTCOME_ID_COL]: row[
+                f"SUM({self.PREDICTION_EVENT_AMOUNT_COL})"
+            ]
+            for row in bet_rows
+        }
+
+    def get_prediction_bets_by_outcome(self, outcome_id: int) -> dict[int, int]:
+
+        command = f"""
+            SELECT * FROM {self.PREDICTION_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.PREDICTION_EVENT_TABLE}.{self.PREDICTION_EVENT_ID_COL}
+            WHERE {self.PREDICTION_EVENT_TYPE_COL} = ?
+            AND {self.PREDICTION_EVENT_OUTCOME_ID_COL} = ?;
+        """
+
+        task = (PredictionEventType.PLACE_BET, outcome_id)
+
+        bet_rows = self.__query_select(command, task)
+        if not bet_rows or len(bet_rows) < 1:
+            return {}
+
+        output = {}
+
+        for row in bet_rows:
+            user_id = row[self.PREDICTION_EVENT_MEMBER_ID_COL]
+            amount = row[self.PREDICTION_EVENT_AMOUNT_COL]
+
+            if user_id not in output:
+                output[user_id] = amount
+                continue
+
+            output[user_id] += amount
+
+        return output
+
+    def get_prediction_bets_by_id(self, prediction_id: int) -> dict[int, int]:
+
+        command = f"""
+            SELECT * FROM {self.PREDICTION_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.PREDICTION_EVENT_TABLE}.{self.PREDICTION_EVENT_ID_COL}
+            WHERE {self.PREDICTION_EVENT_TYPE_COL} = ?
+            AND {self.PREDICTION_EVENT_PREDICTION_ID_COL} = ?;
+        """
+
+        task = (PredictionEventType.PLACE_BET, prediction_id)
+
+        bet_rows = self.__query_select(command, task)
+        if not bet_rows or len(bet_rows) < 1:
+            return {}
+
+        output = {}
+
+        for row in bet_rows:
+            user_id = row[self.PREDICTION_EVENT_MEMBER_ID_COL]
+            amount = row[self.PREDICTION_EVENT_AMOUNT_COL]
+
+            if user_id not in output:
+                output[user_id] = amount
+                continue
+
+            output[user_id] += amount
+
+        return output
+
+    def get_prediction_bets_by_user(
+        self, guild_id: int, member_id: int
+    ) -> dict[int, tuple[int, int]]:
+
+        command = f"""
+            SELECT * FROM {self.PREDICTION_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.PREDICTION_EVENT_TABLE}.{self.PREDICTION_EVENT_ID_COL}
+            WHERE {self.PREDICTION_EVENT_TYPE_COL} = ?
+            AND {self.PREDICTION_EVENT_MEMBER_ID_COL} = ?
+            AND {self.EVENT_GUILD_ID_COL} = ?;
+        """
+
+        task = (PredictionEventType.PLACE_BET, member_id, guild_id)
+
+        bet_rows = self.__query_select(command, task)
+        if not bet_rows or len(bet_rows) < 1:
+            return {}
+
+        return {
+            row[self.PREDICTION_EVENT_PREDICTION_ID_COL]: (
+                row[self.PREDICTION_EVENT_OUTCOME_ID_COL],
+                row[self.PREDICTION_EVENT_AMOUNT_COL],
+            )
+            for row in bet_rows
+        }
+
+    def get_prediction_stats_by_prediction(
+        self, prediction: Prediction
+    ) -> PredictionStats:
+        prediction_bets = self.get_prediction_bets([prediction])
+
+        bets = None
+        if prediction_bets is not None:
+            bets = {
+                outcome_id: bet
+                for outcome_id, bet in prediction_bets.items()
+                if outcome_id in prediction.outcomes
+            }
+
+        author_name = BotUtil.get_name(
+            self.bot, prediction.guild_id, prediction.author_id, 40
+        )
+        mod_name = BotUtil.get_name(
+            self.bot, prediction.guild_id, prediction.moderator_id, 30
+        )
+        stats = PredictionStats(prediction, bets, author_name, mod_name)
+        return stats
+
+    def get_prediction_stats_by_guild(
+        self, guild_id: int, states: list[PredictionState] = None
+    ) -> list[PredictionStats]:
+        predictions = self.get_predictions_by_guild(guild_id, states)
+
+        if predictions is None:
+            return []
+
+        prediction_bets = self.get_prediction_bets(predictions)
+
+        prediction_stats = []
+
+        for prediction in predictions:
+            bets = None
+            if prediction_bets is not None:
+                bets = {
+                    outcome_id: bet
+                    for outcome_id, bet in prediction_bets.items()
+                    if outcome_id in prediction.outcomes
+                }
+
+            author_name = BotUtil.get_name(self.bot, guild_id, prediction.author_id, 40)
+            mod_name = BotUtil.get_name(self.bot, guild_id, prediction.moderator_id, 30)
+            stats = PredictionStats(prediction, bets, author_name, mod_name)
+            prediction_stats.append(stats)
+        return prediction_stats
 
     def get_last_bat_event_by_target(
         self, guild_id: int, target_user_id: int

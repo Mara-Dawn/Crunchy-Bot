@@ -16,7 +16,12 @@ from datalayer.types import UserInteraction
 from events.bot_event import BotEvent
 from events.jail_event import JailEvent
 from events.prediction_event import PredictionEvent
-from events.types import BeansEventType, EventType, JailEventType, PredictionEventType
+from events.types import (
+    BeansEventType,
+    EventType,
+    JailEventType,
+    PredictionEventType,
+)
 from items.types import ItemType
 from view.types import RankingType
 
@@ -53,9 +58,35 @@ class EventManager(Service):
                     )
             case EventType.PREDICTION:
                 prediction_event: PredictionEvent = event
+
                 match prediction_event.prediction_event_type:
                     case PredictionEventType.SUBMIT:
                         notification = f"<@{prediction_event.member_id}> has submitted a new potential Beans Prediction! Check it out with `/beans prediction_moderation`."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
+                    case PredictionEventType.DENY:
+                        notification = f"<@{prediction_event.member_id}> has denied Beans Prediction nr. **{prediction_event.prediction_id}**."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
+                    case PredictionEventType.APPROVE:
+                        notification = f"<@{prediction_event.member_id}> has approved Beans Prediction nr. **{prediction_event.prediction_id}**."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
+                    case PredictionEventType.EDIT:
+                        notification = f"<@{prediction_event.member_id}> made changes to Beans Prediction nr. **{prediction_event.prediction_id}**."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
+                    case PredictionEventType.RESOLVE:
+                        notification = f"<@{prediction_event.member_id}> initiated payout for Beans Prediction nr. **{prediction_event.prediction_id}**."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
+                    case PredictionEventType.REFUND:
+                        notification = f"<@{prediction_event.member_id}> ended and refunded Beans Prediction nr. **{prediction_event.prediction_id}**."
                         await self.mod_notification(
                             prediction_event.guild_id, notification
                         )

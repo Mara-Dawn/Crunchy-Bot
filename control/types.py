@@ -6,6 +6,9 @@ class ControllerType(str, Enum):
     SHOP_RESPONSE_VIEW = "ShopResponseViewController"
     LOOTBOX_VIEW = "LootBoxViewController"
     RANKING_VIEW = "RankingViewController"
+    PREDICTION_MODERATION_VIEW = "PredictionModerationViewController"
+    PREDICTION_INTERACTION_VIEW = "PredictionInteractionViewController"
+    PREDICTION_VIEW = "PredictionViewController"
 
 
 class ControllerModuleMap(str, Enum):
@@ -17,6 +20,9 @@ class ControllerModuleMap(str, Enum):
             ControllerType.SHOP_RESPONSE_VIEW: "shop_response_view_controller",
             ControllerType.LOOTBOX_VIEW: "lootbox_view_controller",
             ControllerType.RANKING_VIEW: "ranking_view_controller",
+            ControllerType.PREDICTION_MODERATION_VIEW: "prediction_moderation_view_controller",
+            ControllerType.PREDICTION_INTERACTION_VIEW: "prediction_interaction_view_controller",
+            ControllerType.PREDICTION_VIEW: "prediction_view_controller",
         }
 
         return map[controller_type]
