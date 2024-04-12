@@ -1520,6 +1520,22 @@ class Database:
             for row in bet_rows
         }
 
+    def get_prediction_winning_outcome(self, prediction_id: int) -> int:
+        command = f"""
+            SELECT * FROM {self.PREDICTION_EVENT_TABLE}
+            WHERE {self.PREDICTION_EVENT_TYPE_COL} = ?
+            AND {self.PREDICTION_EVENT_PREDICTION_ID_COL} = ?
+            LIMIT 1;
+        """
+
+        task = (PredictionEventType.RESOLVE, prediction_id)
+
+        bet_rows = self.__query_select(command, task)
+        if not bet_rows or len(bet_rows) < 1:
+            return None
+
+        return bet_rows[0][self.PREDICTION_EVENT_OUTCOME_ID_COL]
+
     def get_prediction_stats_by_prediction(
         self, prediction: Prediction
     ) -> PredictionStats:
@@ -1539,7 +1555,10 @@ class Database:
         mod_name = BotUtil.get_name(
             self.bot, prediction.guild_id, prediction.moderator_id, 30
         )
-        stats = PredictionStats(prediction, bets, author_name, mod_name)
+        winning_outcome_id = self.get_prediction_winning_outcome(prediction.id)
+        stats = PredictionStats(
+            prediction, bets, author_name, mod_name, winning_outcome_id
+        )
         return stats
 
     def get_prediction_stats_by_guild(
@@ -1565,7 +1584,8 @@ class Database:
 
             author_name = BotUtil.get_name(self.bot, guild_id, prediction.author_id, 40)
             mod_name = BotUtil.get_name(self.bot, guild_id, prediction.moderator_id, 30)
-            stats = PredictionStats(prediction, bets, author_name, mod_name)
+            winning_outcome_id = self.get_prediction_winning_outcome(prediction.id)
+            stats = PredictionStats(prediction, bets, author_name, mod_name, winning_outcome_id)
             prediction_stats.append(stats)
         return prediction_stats
 

@@ -6,6 +6,7 @@ from discord.ext import commands
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
+from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.prediction import Prediction
@@ -33,6 +34,7 @@ class PredictionInteractionViewController(ViewController):
         )
         self.controller = controller
         self.event_manager: EventManager = controller.get_service(EventManager)
+        self.settings_manager: SettingsManager = controller.get_service(SettingsManager)
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -234,6 +236,12 @@ class PredictionInteractionViewController(ViewController):
                 message = f"Congratulations, you correclty predicted the outcome '**{outcome_text}**' for '**{prediction_text}**' on {interaction.guild.name}!"
                 message += f"```python\nInitial bet: 🅱️{amount}\nOdds: 1:{odds_text}\n-----------------------\nPayout:🅱️{payout}```"
                 await user.send(message)
+
+        bean_channels = self.settings_manager.get_beans_channels(interaction.guild_id)
+        announcement = f"The prediction '**{prediction_text}**' has come to a close!\n The winning outcome is '**{outcome_text}**' with winning odds of 1:{odds_text}.\n A total of `🅱️{sum(prediction_stats.bets.values())}` has been paid out."
+        for channel_id in bean_channels:
+            channel = interaction.guild.get_channel(channel_id)
+            await channel.send(announcement)
 
         success_message = "You successfully resolved your selected Prediction. The winners were paid out."
         await interaction.followup.send(success_message, ephemeral=True)

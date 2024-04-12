@@ -167,11 +167,6 @@ class PredictionInteractionView(ViewMenu):
                 self.add_item(element)
 
     async def refresh_ui(self, disabled: bool = False):
-        # embed = self.prediction.get_embed(moderator=self.is_moderator)
-
-        # if not self.is_moderator and self.selected_bet_amount is not None:
-        #     embed.title = f"You bet {self.selected_bet_amount} beans\n{embed.title}"
-
         if self.outcome_select is not None:
             for option in self.outcome_select.options:
                 if int(option.value) == self.selected_outcome:
