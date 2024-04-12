@@ -123,8 +123,11 @@ class PredictionView(ViewMenu):
 
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         await interaction.response.defer()
-        self.selected_idx = (self.selected_idx + 1) % len(self.predictions)
-        self.selected = self.predictions[self.selected_idx].prediction.id
+
+        self.selected_idx = 0
+        if len(self.predictions) > 0:
+            self.selected_idx = (self.selected_idx + 1) % len(self.predictions)
+            self.selected = self.predictions[self.selected_idx].prediction.id
 
         event = UIEvent(
             UIEventType.PREDICTION_CHANGED,
@@ -188,13 +191,15 @@ class PredictionView(ViewMenu):
         head_embed = PredictionEmbed(
             guild_name=self.guild_name,
         )
+        embeds = [head_embed]
         user_bet = None
-        if self.user_bets is not None and selected.prediction.id in self.user_bets:
-            user_bet = self.user_bets[selected.prediction.id]
-        prediction_embed = selected.get_embed(user_bet)
+        if selected is not None:
+            if self.user_bets is not None and selected.prediction.id in self.user_bets:
+                user_bet = self.user_bets[selected.prediction.id]
+            embeds.append(selected.get_embed(user_bet))
 
         try:
-            await self.message.edit(embeds=[head_embed, prediction_embed], view=self)
+            await self.message.edit(embeds=embeds, view=self)
         except discord.NotFound:
             self.controller.detach_view(self)
 

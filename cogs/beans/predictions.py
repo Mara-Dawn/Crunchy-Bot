@@ -37,7 +37,9 @@ class Predictions(BeansGroup):
             or is_mod
         )
 
-    async def __check_enabled(self, interaction: discord.Interaction):
+    async def __check_enabled(
+        self, interaction: discord.Interaction, all_channels: bool = False
+    ):
         guild_id = interaction.guild_id
 
         if not self.settings_manager.get_predictions_enabled(guild_id):
@@ -48,8 +50,10 @@ class Predictions(BeansGroup):
             )
             return False
 
-        if interaction.channel_id not in self.settings_manager.get_beans_channels(
-            guild_id
+        if (
+            not all_channels
+            and interaction.channel_id
+            not in self.settings_manager.get_beans_channels(guild_id)
         ):
             await self.bot.command_response(
                 self.__cog_name__,
