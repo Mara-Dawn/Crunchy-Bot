@@ -42,6 +42,7 @@ class PredictionInteractionView(ViewMenu):
         self.deny_button: DenyButton = None
         self.refund_button: RefundButton = None
         self.approve_button: ApproveButton = None
+        self.lock_button: LockButton = None
         self.outcome_select: OutcomeSelect = None
         self.bet_input_button: BetInputButton = None
         self.edit_button: EditButton = None
@@ -57,8 +58,18 @@ class PredictionInteractionView(ViewMenu):
                     self.edit_button = EditButton(prediction.prediction)
                 case PredictionState.APPROVED:
                     self.outcome_select = OutcomeSelect(prediction.prediction.outcomes)
+                    self.lock_button = LockButton()
                     self.select_win_button = SelectWinnerButton()
                     self.refund_button = RefundButton()
+                    if interaction.user.id == 90043934247501824:
+                        self.edit_button = EditButton(prediction.prediction)
+                case PredictionState.LOCKED:
+                    self.outcome_select = OutcomeSelect(prediction.prediction.outcomes)
+                    self.select_win_button = SelectWinnerButton()
+                    self.refund_button = RefundButton()
+                    self.edit_button = EditButton(prediction.prediction)
+                    if interaction.user.id == 90043934247501824:
+                        self.edit_button = EditButton(prediction.prediction)
                 case PredictionState.DENIED:
                     self.edit_button = EditButton(prediction.prediction)
                     self.approve_button = ApproveButton()
@@ -132,6 +143,15 @@ class PredictionInteractionView(ViewMenu):
         )
         await self.controller.dispatch_ui_event(event)
 
+    async def lock_in(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.PREDICTION_INTERACTION_LOCK,
+            (interaction, self.prediction.prediction),
+            self.parent_id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     async def on_cancel(self, interaction: discord.Interaction):
         await interaction.response.defer()
         event = UIEvent(
@@ -146,6 +166,7 @@ class PredictionInteractionView(ViewMenu):
             self.outcome_select,
             self.bet_input_button,
             self.confirm_button,
+            self.lock_button,
             self.select_win_button,
             self.approve_button,
             self.edit_button,
@@ -248,6 +269,18 @@ class CancelButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.on_cancel(interaction)
+
+
+class LockButton(discord.ui.Button):
+
+    def __init__(self, label: str = "Lock in"):
+        super().__init__(label=label, style=discord.ButtonStyle.blurple, row=2)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: PredictionInteractionView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.lock_in(interaction)
 
 
 class ConfirmButton(discord.ui.Button):

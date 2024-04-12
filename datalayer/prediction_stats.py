@@ -1,6 +1,7 @@
 import discord
 
 from datalayer.prediction import Prediction
+from datalayer.types import PredictionState
 
 
 class PredictionStats:
@@ -40,7 +41,12 @@ class PredictionStats:
         self, user_bet: tuple[int, int] = None, moderator: bool = False
     ) -> discord.Embed:
         color = discord.Colour.purple()
-        title = f"> {self.prediction.content} "
+
+        locked = ""
+        if self.prediction.state == PredictionState.LOCKED:
+            locked = "🔒 [LOCKED] 🔒"
+
+        title = f"> {self.prediction.content} {locked}"
         embed = discord.Embed(title=title, description="", color=color)
 
         max_width = 56

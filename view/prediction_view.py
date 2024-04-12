@@ -5,7 +5,7 @@ import discord
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.prediction_stats import PredictionStats
-from datalayer.types import PredictionState
+from datalayer.types import PredictionState, PredictionStateSort
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.prediction_embed import PredictionEmbed
@@ -32,6 +32,7 @@ class PredictionView(ViewMenu):
         self.all_predictions = predictions
         self.predictions: list[PredictionState] = []
         self.__filter_predictions()
+        self.__sort_predictions()
 
         self.selected: int = None
         self.selected_idx = 0
@@ -81,11 +82,21 @@ class PredictionView(ViewMenu):
             case UIEventType.PREDICTION_DISABLE:
                 await self.refresh_ui(disabled=event.payload)
 
+    def __sort_predictions(self):
+        self.predictions = sorted(
+            self.predictions,
+            key=lambda x: (
+                PredictionStateSort.get_prio(x.prediction.state),
+                -x.prediction.id,
+            ),
+        )
+
     def __filter_predictions(self):
         self.predictions = [
             prediction
             for prediction in self.all_predictions
-            if prediction.prediction.state == PredictionState.APPROVED
+            if prediction.prediction.state
+            in [PredictionState.APPROVED, PredictionState.LOCKED]
         ]
         self.item_count = len(self.predictions)
         self.page_count = int(
@@ -177,6 +188,7 @@ class PredictionView(ViewMenu):
             self.all_predictions = predictions
 
         self.__filter_predictions()
+        self.__sort_predictions()
 
         selected_stats = [
             (idx, prediction)

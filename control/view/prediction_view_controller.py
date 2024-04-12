@@ -6,6 +6,7 @@ from control.logger import BotLogger
 from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.prediction_stats import PredictionStats
+from datalayer.types import PredictionState
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.prediction_event import PredictionEvent
@@ -98,6 +99,12 @@ class PredictionViewController(ViewController):
         if selected is None:
             await interaction.followup.send(
                 "Please select a prediction first.", ephemeral=True
+            )
+            return
+
+        if selected.prediction.state == PredictionState.LOCKED:
+            await interaction.followup.send(
+                "This prediction is already locked in.", ephemeral=True
             )
             return
 
