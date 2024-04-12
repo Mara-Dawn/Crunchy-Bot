@@ -18,6 +18,7 @@ class ItemTrigger(str, Enum):
 class PredictionState(str, Enum):
     SUBMITTED = "Submitted"
     APPROVED = "Approved"
+    LOCKED = "Locked"
     DENIED = "Denied"
     DONE = "Done"
     REFUNDED = "Refunded"
@@ -30,9 +31,10 @@ class PredictionStateSort(int, Enum):
         map = {
             PredictionState.SUBMITTED: 0,
             PredictionState.APPROVED: 1,
-            PredictionState.DENIED: 2,
-            PredictionState.DONE: 3,
-            PredictionState.REFUNDED: 4,
+            PredictionState.LOCKED: 2,
+            PredictionState.DENIED: 3,
+            PredictionState.DONE: 4,
+            PredictionState.REFUNDED: 5,
         }
 
         return map[prediction_state]

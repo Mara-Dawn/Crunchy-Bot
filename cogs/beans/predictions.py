@@ -98,7 +98,7 @@ class Predictions(BeansGroup):
         await interaction.response.defer(ephemeral=True)
 
         prediction_stats = self.database.get_prediction_stats_by_guild(
-            interaction.guild_id, [PredictionState.APPROVED]
+            interaction.guild_id, [PredictionState.APPROVED, PredictionState.LOCKED]
         )
         user_balance = self.database.get_member_beans(
             interaction.guild.id, interaction.user.id

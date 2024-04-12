@@ -109,7 +109,10 @@ class PredictionModerationView(ViewMenu):
 
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         await interaction.response.defer()
-        self.current_page = (self.current_page + (1 if right else -1)) % self.page_count
+        if self.page_count > 0:
+            self.current_page = (
+                self.current_page + (1 if right else -1)
+            ) % self.page_count
         self.selected = None
         event = UIEvent(
             UIEventType.PREDICTION_MODERATION_CHANGED,
