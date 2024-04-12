@@ -350,6 +350,46 @@ class BeansBasics(BeansGroup):
             args=[channel.name],
         )
 
+    @app_commands.command(
+        name="add_notification_channel",
+        description="Enable this channel to recieve beans notifications.",
+    )
+    @app_commands.describe(channel="The new beans notification channel.")
+    @app_commands.check(__has_permission)
+    async def add_notification_channel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ) -> None:
+        self.settings_manager.add_beans_notification_channel(
+            interaction.guild_id, channel.id
+        )
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Added {channel.name} to beans notification channels.",
+            args=[channel.name],
+        )
+
+    @app_commands.command(
+        name="remove_notification_channel",
+        description="Disable beans notifications for a channel.",
+    )
+    @app_commands.describe(
+        channel="Removes this channel from recieving beans notifications."
+    )
+    @app_commands.check(__has_permission)
+    async def remove_notification_channel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ) -> None:
+        self.settings_manager.remove_beans_notification_channel(
+            interaction.guild_id, channel.id
+        )
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Removed {channel.name} from beans notification channels.",
+            args=[channel.name],
+        )
+
 
 async def setup(bot):
     await bot.add_cog(BeansBasics(bot))

@@ -1,3 +1,5 @@
+import datetime
+
 import discord
 from discord.ext import commands
 
@@ -5,18 +7,18 @@ from control.controller import Controller
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
 from datalayer.database import Database
-from datalayer.prediction_stats import PredictionStats
+from datalayer.prediction import Prediction
 from datalayer.types import PredictionState
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.prediction_event import PredictionEvent
 from events.types import (
+    BeansEventType,
     EventType,
     PredictionEventType,
     UIEventType,
 )
 from events.ui_event import UIEvent
-from view.prediction_interaction_view import PredictionInteractionView
 
 
 class PredictionViewController(ViewController):
@@ -92,29 +94,78 @@ class PredictionViewController(ViewController):
                     UIEventType.PREDICTION_REFRESH, prediction_stats, event.view_id
                 )
                 await self.controller.dispatch_ui_event(event)
+            case UIEventType.PREDICTION_PLACE_BET:
+                interaction = event.payload[0]
+                prediction = event.payload[1]
+                selected_outcome = event.payload[2]
+                selected_bet_amount = event.payload[3]
+                await self.submit_bet(
+                    interaction,
+                    prediction,
+                    selected_outcome,
+                    selected_bet_amount,
+                    event.view_id,
+                )
 
-    async def select(
-        self, interaction: discord.Interaction, selected: PredictionStats, view_id: int
+    async def submit_bet(
+        self,
+        interaction: discord.Interaction,
+        prediction: Prediction,
+        selected_outcome_id: int,
+        selected_bet_amount: int,
+        view_id: int,
     ):
-        if selected is None:
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        if prediction is None:
             await interaction.followup.send(
                 "Please select a prediction first.", ephemeral=True
             )
             return
 
-        if selected.prediction.state == PredictionState.LOCKED:
+        if prediction.state == PredictionState.LOCKED:
             await interaction.followup.send(
                 "This prediction is already locked in.", ephemeral=True
             )
             return
 
-        view = PredictionInteractionView(
-            self.controller, interaction, selected, view_id, False
+        if selected_outcome_id is None:
+            await interaction.followup.send("Please select an outcome.", ephemeral=True)
+            return False
+
+        if selected_bet_amount is None or int(selected_bet_amount) <= 0:
+            await interaction.followup.send(
+                "Please place your bet first.", ephemeral=True
+            )
+            return False
+
+        user_balance = self.database.get_member_beans(guild_id, member_id)
+
+        if user_balance < selected_bet_amount:
+            await interaction.followup.send(
+                "You dont have enough beans for this bet.", ephemeral=True
+            )
+            return False
+
+        timestamp = datetime.datetime.now()
+
+        event = PredictionEvent(
+            timestamp,
+            guild_id,
+            prediction.id,
+            member_id,
+            PredictionEventType.PLACE_BET,
+            selected_outcome_id,
+            selected_bet_amount,
         )
+        await self.controller.dispatch_event(event)
 
-        message = await interaction.original_response()
-
-        await message.edit(view=view)
-
-        await view.set_message(message)
-        await view.refresh_ui()
+        event = BeansEvent(
+            timestamp,
+            guild_id,
+            BeansEventType.PREDICTION_BET,
+            member_id,
+            -selected_bet_amount,
+        )
+        await self.controller.dispatch_event(event)
