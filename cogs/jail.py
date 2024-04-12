@@ -75,7 +75,7 @@ class Jail(commands.Cog):
             case UserInteraction.FART:
                 return f'User {user.display_name} already enjoyed {interaction.user.display_name}\'s farts. No extra time will be added.'
     
-    async def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction, already_interacted: bool):
+    async def __get_item_modifiers(self, interaction: discord.Interaction, command_type: UserInteraction, already_interacted: bool, self_target: bool):
         user_items = self.item_manager.get_user_items_activated_by_interaction(
             interaction.guild_id, 
             interaction.user.id, 
@@ -96,9 +96,12 @@ class Jail(commands.Cog):
             if item.group == ItemGroup.BONUS_ATTEMPT:
                 bonus_attempt = item
                 break
+            
+        if self_target:
+            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
         
         if already_interacted and not bonus_attempt:
-            return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
+            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
 
         for item in user_items:
             match item.group:
@@ -185,8 +188,9 @@ class Jail(commands.Cog):
         self.logger.debug(guild_id, f'{command_type}: targeted user {user.name} is in jail.', cog=self.__cog_name__)
         
         already_interacted = self.event_manager.has_jail_event_from_user(affected_jail.id, interaction.user.id, command_type)
+        self_target = interaction.user.id == user.id
         
-        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost = await self.__get_item_modifiers(interaction, command_type, already_interacted)
+        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost = await self.__get_item_modifiers(interaction, command_type, already_interacted, self_target)
         
         if already_interacted:
             if bonus_attempt:

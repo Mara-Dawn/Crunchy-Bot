@@ -92,6 +92,7 @@ class UIEventType(str, Enum):
     PREDICTION_INTERACTION_REFUND = "refund_prediction_interaction"
     PREDICTION_INTERACTION_APPROVE = "approve_prediction_interaction"
     PREDICTION_INTERACTION_LOCK = "lock_prediction_interaction"
+    PREDICTION_INTERACTION_UNLOCK = "unlock_prediction_interaction"
     PREDICTION_INTERACTION_EDIT = "edit_prediction_interaction"
     PREDICTION_INTERACTION_CONFIRM_OUTCOME = "confirm_prediction_outcome_interaction"
     PREDICTION_INTERACTION_PARENT_CHANGED = "prediction_interaction_parent_changed"
