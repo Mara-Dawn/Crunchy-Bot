@@ -124,10 +124,13 @@ class PredictionView(ViewMenu):
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         await interaction.response.defer()
 
-        self.selected_idx = 0
         if len(self.predictions) > 0:
-            self.selected_idx = (self.selected_idx + 1) % len(self.predictions)
+            self.selected_idx = (self.selected_idx + (1 if right else -1)) % len(
+                self.predictions
+            )
             self.selected = self.predictions[self.selected_idx].prediction.id
+        else:
+            self.selected_idx = 0
 
         event = UIEvent(
             UIEventType.PREDICTION_CHANGED,

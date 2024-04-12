@@ -126,7 +126,7 @@ class Predictions(BeansGroup):
     )
     @app_commands.guild_only()
     async def prediction_moderation(self, interaction: discord.Interaction):
-        if not await self.__check_enabled(interaction):
+        if not await self.__check_enabled(interaction, all_channels=True):
             return
 
         if not self.__has_mod_permission(interaction):
