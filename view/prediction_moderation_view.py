@@ -127,7 +127,7 @@ class PredictionModerationView(ViewMenu):
 
         self.clear_items()
         self.add_item(FilterDropdown(self.filter, disabled))
-        if len(self.predictions) > 0:
+        if len(self.predictions[start:end]) > 0:
             self.add_item(
                 SelectDropdown(self.predictions[start:end], self.selected, disabled)
             )
@@ -149,15 +149,22 @@ class PredictionModerationView(ViewMenu):
         self.__filter_predictions()
 
         self.refresh_elements(disabled)
-        start = PredictionModerationEmbed.ITEMS_PER_PAGE * self.current_page
 
-        embed = PredictionModerationEmbed(
-            guild_name=self.guild_name,
-            predictions=self.predictions,
-            start_offset=start,
+        embed = PredictionModerationEmbed(guild_name=self.guild_name)
+
+        embeds = [embed]
+
+        start = PredictionModerationEmbed.ITEMS_PER_PAGE * self.current_page
+        end_offset = min(
+            (start + PredictionModerationEmbed.ITEMS_PER_PAGE), len(self.predictions)
         )
+        display = self.predictions[start:end_offset]
+
+        for prediction in display:
+            embeds.append(prediction.get_embed(moderator=True))
+
         try:
-            await self.message.edit(embed=embed, view=self)
+            await self.message.edit(embeds=embeds, view=self)
         except discord.NotFound:
             self.controller.detach_view(self)
 

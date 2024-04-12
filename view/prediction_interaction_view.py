@@ -38,7 +38,7 @@ class PredictionInteractionView(ViewMenu):
 
         self.confirm_button: ConfirmButton = None
         self.select_win_button: SelectWinnerButton = None
-        self.cancel_button: CancelButton = None
+        self.cancel_button: CancelModerationButton = None
         self.deny_button: DenyButton = None
         self.refund_button: RefundButton = None
         self.approve_button: ApproveButton = None
@@ -62,12 +62,13 @@ class PredictionInteractionView(ViewMenu):
                 case PredictionState.DENIED:
                     self.edit_button = EditButton(prediction.prediction)
                     self.approve_button = ApproveButton()
+
+            self.cancel_button: CancelModerationButton = CancelModerationButton()
         elif prediction.prediction.state == PredictionState.APPROVED:
             self.outcome_select = OutcomeSelect(prediction.prediction.outcomes)
             self.bet_input_button = BetInputButton()
             self.confirm_button = ConfirmButton()
-
-        self.cancel_button: CancelButton = CancelButton()
+            self.cancel_button: CancelButton = CancelButton()
 
         self.refresh_elements()
 
@@ -131,6 +132,15 @@ class PredictionInteractionView(ViewMenu):
         )
         await self.controller.dispatch_ui_event(event)
 
+    async def on_cancel(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.PREDICTION_INTERACTION_CANCEL,
+            (interaction),
+            self.parent_id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     def refresh_elements(self, disabled: bool = False):
         elements: list[discord.ui.Item] = [
             self.outcome_select,
@@ -144,6 +154,12 @@ class PredictionInteractionView(ViewMenu):
             self.cancel_button,
         ]
 
+        if self.bet_input_button is not None:
+            if not self.is_moderator and self.selected_bet_amount is not None:
+                self.bet_input_button.label = f"Your bet: 🅱️{self.selected_bet_amount}"
+            else:
+                self.bet_input_button.label = "Enter your Bet"
+
         self.clear_items()
         for element in elements:
             if element is not None:
@@ -151,10 +167,10 @@ class PredictionInteractionView(ViewMenu):
                 self.add_item(element)
 
     async def refresh_ui(self, disabled: bool = False):
-        embed = self.prediction.get_embed(moderator=self.is_moderator)
+        # embed = self.prediction.get_embed(moderator=self.is_moderator)
 
-        if not self.is_moderator and self.selected_bet_amount is not None:
-            embed.title = f"{embed.title} - you bet {self.selected_bet_amount} beans"
+        # if not self.is_moderator and self.selected_bet_amount is not None:
+        #     embed.title = f"You bet {self.selected_bet_amount} beans\n{embed.title}"
 
         if self.outcome_select is not None:
             for option in self.outcome_select.options:
@@ -164,7 +180,7 @@ class PredictionInteractionView(ViewMenu):
         self.refresh_elements(disabled)
 
         try:
-            await self.message.edit(embed=embed, view=self)
+            await self.message.edit(view=self)
         except (discord.NotFound, discord.HTTPException):
             self.controller.detach_view(self)
 
@@ -215,7 +231,7 @@ class PredictionInteractionView(ViewMenu):
         self.controller.detach_view(self)
 
 
-class CancelButton(discord.ui.Button):
+class CancelModerationButton(discord.ui.Button):
 
     def __init__(self):
         super().__init__(label="Cancel", style=discord.ButtonStyle.red, row=2)
@@ -225,6 +241,18 @@ class CancelButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.on_timeout()
+
+
+class CancelButton(discord.ui.Button):
+
+    def __init__(self):
+        super().__init__(label="Cancel", style=discord.ButtonStyle.red, row=2)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: PredictionInteractionView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.on_cancel(interaction)
 
 
 class ConfirmButton(discord.ui.Button):
@@ -292,8 +320,16 @@ class OutcomeSelect(discord.ui.Select):
     def __init__(self, outcomes: dict[int, str]):
         options = []
 
+        outcome_prefixes = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
+        outcome_nr = 0
+
         for id, text in outcomes.items():
-            options.append(discord.SelectOption(label=text, value=id))
+            options.append(
+                discord.SelectOption(
+                    label=text, value=id, emoji=outcome_prefixes[outcome_nr]
+                )
+            )
+            outcome_nr += 1  # noqa: SIM113
 
         super().__init__(
             placeholder="Choose an outcome.",

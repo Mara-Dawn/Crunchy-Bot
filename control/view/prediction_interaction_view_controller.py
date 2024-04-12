@@ -14,6 +14,7 @@ from events.beans_event import BeansEvent
 from events.prediction_event import PredictionEvent
 from events.types import BeansEventType, PredictionEventType, UIEventType
 from events.ui_event import UIEvent
+from view.prediction_view import PredictionView
 
 
 class PredictionInteractionViewController(ViewController):
@@ -72,6 +73,38 @@ class PredictionInteractionViewController(ViewController):
                     selected_bet_amount,
                     event.view_id,
                 )
+            case UIEventType.PREDICTION_INTERACTION_CANCEL:
+                interaction = event.payload
+                await self.cancel_interaction(
+                    interaction,
+                    event.view_id,
+                )
+
+    async def cancel_interaction(
+        self,
+        interaction: discord.Interaction,
+        view_id: int,
+    ):
+        message = await interaction.original_response()
+
+        prediction_stats = self.database.get_prediction_stats_by_guild(
+            interaction.guild_id, [PredictionState.APPROVED]
+        )
+        user_balance = self.database.get_member_beans(
+            interaction.guild.id, interaction.user.id
+        )
+        user_bets = self.database.get_prediction_bets_by_user(
+            interaction.guild.id, interaction.user.id
+        )
+
+        view = self.controller.get_view(view_id)
+        if view is None:
+            view = PredictionView(self.controller, interaction, prediction_stats)
+
+        await message.edit(view=view)
+
+        view.set_message(message)
+        await view.refresh_ui(user_balance=user_balance, user_bets=user_bets)
 
     async def submit_bet(
         self,
@@ -124,15 +157,26 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        success_message = "You successfully placed your bet. Good luck!"
-        await interaction.followup.send(success_message, ephemeral=True)
-
-        prediction_stats = self.database.get_prediction_stats_by_guild(guild_id)
-        event = UIEvent(UIEventType.PREDICTION_REFRESH_ALL, prediction_stats)
-        await self.controller.dispatch_ui_event(event)
+        prediction_stats = self.database.get_prediction_stats_by_guild(
+            interaction.guild_id, [PredictionState.APPROVED]
+        )
+        user_balance = self.database.get_member_beans(
+            interaction.guild.id, interaction.user.id
+        )
+        user_bets = self.database.get_prediction_bets_by_user(
+            interaction.guild.id, interaction.user.id
+        )
 
         message = await interaction.original_response()
-        await message.delete()
+
+        view = self.controller.get_view(view_id)
+        if view is None:
+            view = PredictionView(self.controller, interaction, prediction_stats)
+
+        await message.edit(view=view)
+
+        view.set_message(message)
+        await view.refresh_ui(user_balance=user_balance, user_bets=user_bets)
 
     async def confirm_outcome(
         self,

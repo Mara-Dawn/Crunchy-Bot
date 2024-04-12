@@ -30,17 +30,18 @@ class PredictionView(ViewMenu):
 
         self.filter: list[PredictionState] = [PredictionState.APPROVED]
         self.all_predictions = predictions
-        self.predictions = []
+        self.predictions: list[PredictionState] = []
         self.__filter_predictions()
 
         self.selected: int = None
+        self.selected_idx = 0
+        if len(self.predictions) > 0:
+            self.selected = self.predictions[self.selected_idx].prediction.id
+
         self.user_balance: int = 0
         self.user_bets: dict[int, tuple[int, int]] = {}
 
         self.item_count = len(self.predictions)
-        self.page_count = int(self.item_count / PredictionEmbed.ITEMS_PER_PAGE) + (
-            self.item_count % PredictionEmbed.ITEMS_PER_PAGE > 0
-        )
 
         self.message = None
         self.disabled = False
@@ -118,13 +119,13 @@ class PredictionView(ViewMenu):
             (interaction, selected),
             self.id,
         )
-        self.selected = None
         await self.controller.dispatch_ui_event(event)
 
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         await interaction.response.defer()
-        self.current_page = (self.current_page + (1 if right else -1)) % self.page_count
-        self.selected = None
+        self.selected_idx = (self.selected_idx + 1) % len(self.predictions)
+        self.selected = self.predictions[self.selected_idx].prediction.id
+
         event = UIEvent(
             UIEventType.PREDICTION_CHANGED,
             self.guild_id,
@@ -137,9 +138,7 @@ class PredictionView(ViewMenu):
         user_balance: int = None,
         disabled: bool = False,
     ):
-        start = PredictionModerationEmbed.ITEMS_PER_PAGE * self.current_page
-        end = min((start + PredictionModerationEmbed.ITEMS_PER_PAGE), self.item_count)
-        page_display = f"Page {self.current_page + 1}/{max(1,self.page_count)}"
+        page_display = f"Prediction {self.selected_idx + 1}/{len(self.predictions)}"
 
         self.disabled = disabled
 
@@ -148,9 +147,7 @@ class PredictionView(ViewMenu):
 
         self.clear_items()
         if len(self.predictions) > 0:
-            self.add_item(
-                SelectDropdown(self.predictions[start:end], self.selected, disabled)
-            )
+            self.add_item(SelectDropdown(self.predictions, self.selected, disabled))
         self.add_item(PageButton("<", False, disabled))
         self.add_item(SelectButton(disabled))
         self.add_item(PageButton(">", True, disabled))
@@ -175,23 +172,36 @@ class PredictionView(ViewMenu):
 
         self.__filter_predictions()
 
-        self.refresh_elements(user_balance, disabled)
-        start = PredictionEmbed.ITEMS_PER_PAGE * self.current_page
+        selected_stats = [
+            (idx, prediction)
+            for idx, prediction in enumerate(self.predictions)
+            if prediction.prediction.id == self.selected
+        ]
 
-        embed = PredictionEmbed(
+        selected: PredictionStats = None
+        if len(selected_stats) > 0:
+            self.selected_idx = selected_stats[0][0]
+            selected = selected_stats[0][1]
+
+        self.refresh_elements(user_balance, disabled)
+
+        head_embed = PredictionEmbed(
             guild_name=self.guild_name,
-            predictions=self.predictions,
-            user_bets=self.user_bets,
-            start_offset=start,
         )
+        user_bet = None
+        if self.user_bets is not None and selected.prediction.id in self.user_bets:
+            user_bet = self.user_bets[selected.prediction.id]
+        prediction_embed = selected.get_embed(user_bet)
+
         try:
-            await self.message.edit(embed=embed, view=self)
+            await self.message.edit(embeds=[head_embed, prediction_embed], view=self)
         except discord.NotFound:
             self.controller.detach_view(self)
 
     async def set_selected(self, interaction: discord.Interaction, prediction_id: int):
         await interaction.response.defer()
         self.selected = prediction_id
+        await self.refresh_ui()
 
     async def on_timeout(self):
         with contextlib.suppress(discord.HTTPException):
@@ -218,7 +228,7 @@ class SelectButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         super().__init__(
-            label="Place a Bet",
+            label="Select",
             style=discord.ButtonStyle.green,
             row=2,
             disabled=disabled,

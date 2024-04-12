@@ -66,6 +66,12 @@ class Controller:
         self.services.append(new_service)
         return new_service
 
+    def get_view(self, id: int) -> ViewMenu:
+        for view in self.views:
+            if view.id == id:
+                return view
+        return None
+
     def add_view_controller(self, controller: type[ViewController]) -> ViewController:
         for view_controller in self.view_controllers:
             if isinstance(view_controller, controller):

@@ -93,9 +93,6 @@ class Predictions(BeansGroup):
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         await interaction.response.defer(ephemeral=True)
 
-        police_img = discord.File("./img/police.png", "police.png")
-        menu_img = discord.File("./img/jail_wide.png", "menu_img.png")
-
         prediction_stats = self.database.get_prediction_stats_by_guild(
             interaction.guild_id, [PredictionState.APPROVED]
         )
@@ -106,7 +103,7 @@ class Predictions(BeansGroup):
             interaction.guild.id, interaction.user.id
         )
 
-        embed = PredictionEmbed(interaction.guild.name, prediction_stats)
+        embed = PredictionEmbed(interaction.guild.name)
 
         view = PredictionView(self.controller, interaction, prediction_stats)
 
@@ -114,7 +111,6 @@ class Predictions(BeansGroup):
             content="",
             embed=embed,
             view=view,
-            files=[police_img, menu_img],
             ephemeral=True,
         )
         view.set_message(message)
@@ -138,14 +134,11 @@ class Predictions(BeansGroup):
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         await interaction.response.defer(ephemeral=True)
 
-        police_img = discord.File("./img/police.png", "police.png")
-        menu_img = discord.File("./img/jail_wide.png", "menu_img.png")
-
         prediction_stats = self.database.get_prediction_stats_by_guild(
             interaction.guild_id
         )
 
-        embed = PredictionModerationEmbed(interaction.guild.name, prediction_stats)
+        embed = PredictionModerationEmbed(interaction.guild.name)
 
         view = PredictionModerationView(self.controller, interaction, prediction_stats)
 
@@ -153,7 +146,6 @@ class Predictions(BeansGroup):
             content="",
             embed=embed,
             view=view,
-            files=[police_img, menu_img],
             ephemeral=True,
         )
         view.set_message(message)

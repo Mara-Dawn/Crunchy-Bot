@@ -94,6 +94,7 @@ class UIEventType(str, Enum):
     PREDICTION_INTERACTION_CONFIRM_OUTCOME = "confirm_prediction_outcome_interaction"
     PREDICTION_INTERACTION_PARENT_CHANGED = "prediction_interaction_parent_changed"
     PREDICTION_INTERACTION_PLACE_BET = "place_bet_prediction_interaction"
+    PREDICTION_INTERACTION_CANCEL = "cancel_prediction_interaction"
 
     PREDICTION_REFRESH = "refresh_prediction"
     PREDICTION_DISABLE = "disable_prediction"

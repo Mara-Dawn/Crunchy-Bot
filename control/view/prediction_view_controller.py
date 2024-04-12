@@ -101,16 +101,13 @@ class PredictionViewController(ViewController):
             )
             return
 
-        embed = selected.get_embed()
         view = PredictionInteractionView(
             self.controller, interaction, selected, view_id, False
         )
 
-        message = await interaction.followup.send(
-            "", embed=embed, view=view, ephemeral=True
-        )
+        message = await interaction.original_response()
+
+        await message.edit(view=view)
+
         await view.set_message(message)
         await view.refresh_ui()
-
-        event = UIEvent(UIEventType.PREDICTION_DISABLE, True, view_id)
-        await self.controller.dispatch_ui_event(event)
