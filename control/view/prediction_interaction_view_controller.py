@@ -232,7 +232,7 @@ class PredictionInteractionViewController(ViewController):
         bean_channels = self.settings_manager.get_beans_notification_channels(
             interaction.guild_id
         )
-        announcement = f"**This predicktion has been locked in!**\n> {prediction.content}\nNo more bets will be accepted. The winners will be paid out once an outcome is achieved. Good luck!\nYou can also submit your own prediction ideas in the `/shop`."
+        announcement = f"**This prediction has been locked in!**\n> {prediction.content}\nNo more bets will be accepted. The winners will be paid out once an outcome is achieved. Good luck!\nYou can also submit your own prediction ideas in the `/shop`."
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)
             await channel.send(announcement)
@@ -270,7 +270,7 @@ class PredictionInteractionViewController(ViewController):
         bean_channels = self.settings_manager.get_beans_notification_channels(
             interaction.guild_id
         )
-        announcement = f"**This predicktion has been unlocked again!**\n> {prediction.content}\nYou can start betting on it again for now. Good luck!\nYou can also submit your own prediction ideas in the `/shop`."
+        announcement = f"**This prediction has been unlocked again!**\n> {prediction.content}\nYou can start betting on it again for now. Good luck!\nYou can also submit your own prediction ideas in the `/shop`."
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)
             await channel.send(announcement)
