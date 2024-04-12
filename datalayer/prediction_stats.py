@@ -32,6 +32,8 @@ class PredictionStats:
             return 0
 
         total = sum(self.bets.values())
+        if total == 0:
+            return 0
         return 1 / (bets / total)
 
     def get_embed(

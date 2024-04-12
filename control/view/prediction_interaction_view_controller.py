@@ -303,6 +303,12 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
+        bean_channels = self.settings_manager.get_beans_channels(interaction.guild_id)
+        announcement = f"**A new prediction has been approved!**\n> {prediction.content}\n Use `/beans prediction` to bet your beans on the outcomes. You can also submit your own prediction ideas in the `/shop`."
+        for channel_id in bean_channels:
+            channel = interaction.guild.get_channel(channel_id)
+            await channel.send(announcement)
+
         success_message = (
             "You successfully approved your selected prediction submission."
         )
