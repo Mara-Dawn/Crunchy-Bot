@@ -13,6 +13,9 @@ class SettingsManager(Service):
 
     DEFAULT_KEY = "defaults"
 
+    GENERAL_SUBSETTINGS_KEY = "general"
+    GENERAL_MOD_CHANNELS_KEY = "general_mod_channels"
+
     POLICE_SUBSETTINGS_KEY = "police"
     POLICE_ENABLED_KEY = "police_enabled"
     POLICE_NAUGHTY_ROLES_KEY = "naughty_roles"
@@ -62,6 +65,10 @@ class SettingsManager(Service):
     BULLY_ENABLED_KEY = "bully_enabled"
     BULLY_EXCLUDED_CHANNELS_KEY = "bully_channels"
 
+    PREDICTIONS_SUBSETTINGS_KEY = "predictions"
+    PREDICTIONS_ENABLED_KEY = "predictions_enabled"
+    PREDICTIONS_MOD_ROLES_KEY = "predictions_roles"
+
     def __init__(
         self,
         bot: commands.Bot,
@@ -74,6 +81,14 @@ class SettingsManager(Service):
         self.log_name = "Items"
 
         # defaults
+        general_settings = ModuleSettings(self.GENERAL_SUBSETTINGS_KEY, name="General")
+        general_settings.add_setting(
+            self.GENERAL_MOD_CHANNELS_KEY,
+            [],
+            "Moderator only channels to see notifications.",
+            "handle_channels_value",
+        )
+
         police_settings = ModuleSettings(self.POLICE_SUBSETTINGS_KEY, "Police")
         police_settings.add_setting(self.POLICE_ENABLED_KEY, True, "Module Enabled")
         police_settings.add_setting(
@@ -228,12 +243,27 @@ class SettingsManager(Service):
             "handle_channels_value",
         )
 
+        prediction_settings = ModuleSettings(
+            self.PREDICTIONS_SUBSETTINGS_KEY, "Bean Predictions"
+        )
+        prediction_settings.add_setting(
+            self.PREDICTIONS_ENABLED_KEY, True, "Module Enabled"
+        )
+        prediction_settings.add_setting(
+            self.PREDICTIONS_MOD_ROLES_KEY,
+            [],
+            "Roles with moderation permissions for predictions.",
+            "handle_roles_value",
+        )
+
         self.settings = GuildSettings()
+        self.settings.add_module(general_settings)
         self.settings.add_module(police_settings)
         self.settings.add_module(jail_settings)
         self.settings.add_module(beans_settings)
         self.settings.add_module(shop_settings)
         self.settings.add_module(bully_settings)
+        self.settings.add_module(prediction_settings)
 
     async def listen_for_event(self, event: BotEvent) -> None:
         pass
@@ -311,6 +341,32 @@ class SettingsManager(Service):
                 output += f"{indent}{setting.title}: `{value}`\n"
 
         return output
+
+    # General Settings
+
+    def get_mod_channels(self, guild: int) -> list[int]:
+        return [
+            int(x)
+            for x in self.get_setting(
+                guild, self.GENERAL_SUBSETTINGS_KEY, self.GENERAL_MOD_CHANNELS_KEY
+            )
+        ]
+
+    def add_mod_channel(self, guild: int, channel: int) -> None:
+        channels = self.get_mod_channels(guild)
+        if channel not in channels:
+            channels.append(channel)
+        self.update_setting(
+            guild, self.GENERAL_SUBSETTINGS_KEY, self.GENERAL_MOD_CHANNELS_KEY, channels
+        )
+
+    def remove_mod_channel(self, guild: int, channel: int) -> None:
+        channels = self.get_mod_channels(guild)
+        if channel in channels:
+            channels.remove(channel)
+        self.update_setting(
+            guild, self.GENERAL_SUBSETTINGS_KEY, self.GENERAL_MOD_CHANNELS_KEY, channels
+        )
 
     # Police Settings
 
@@ -818,4 +874,49 @@ class SettingsManager(Service):
             self.BULLY_SUBSETTINGS_KEY,
             self.BULLY_EXCLUDED_CHANNELS_KEY,
             channels,
+        )
+
+    # Predictions Settings
+
+    def get_predictions_enabled(self, guild: int) -> bool:
+        return self.get_setting(
+            guild, self.PREDICTIONS_SUBSETTINGS_KEY, self.PREDICTIONS_ENABLED_KEY
+        )
+
+    def set_predictions_enabled(self, guild: int, enabled: bool) -> None:
+        self.update_setting(
+            guild,
+            self.PREDICTIONS_SUBSETTINGS_KEY,
+            self.PREDICTIONS_ENABLED_KEY,
+            enabled,
+        )
+
+    def get_predictions_mod_roles(self, guild: int) -> list[int]:
+        return [
+            int(x)
+            for x in self.get_setting(
+                guild, self.PREDICTIONS_SUBSETTINGS_KEY, self.PREDICTIONS_MOD_ROLES_KEY
+            )
+        ]
+
+    def add_predictions_mod_role(self, guild: int, role: int) -> None:
+        roles = self.get_predictions_mod_roles(guild)
+        if role not in roles:
+            roles.append(role)
+        self.update_setting(
+            guild,
+            self.PREDICTIONS_SUBSETTINGS_KEY,
+            self.PREDICTIONS_MOD_ROLES_KEY,
+            roles,
+        )
+
+    def remove_predictions_mod_role(self, guild: int, role: int) -> None:
+        roles = self.get_jail_mod_roles(guild)
+        if role not in roles:
+            roles.remove(role)
+        self.update_setting(
+            guild,
+            self.PREDICTIONS_SUBSETTINGS_KEY,
+            self.PREDICTIONS_MOD_ROLES_KEY,
+            roles,
         )

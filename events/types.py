@@ -11,6 +11,7 @@ class EventType(str, Enum):
     INVENTORY = "inventory"
     LOOTBOX = "loot_box"
     BAT = "bat"
+    PREDICTION = "prediction"
 
 
 class BeansEventType(str, Enum):
@@ -23,6 +24,9 @@ class BeansEventType(str, Enum):
     BALANCE_CHANGE = "balance_change"
     SHOP_PURCHASE = "shop_purchase"
     USER_TRANSFER = "user_transfer"
+    PREDICTION_BET = "prediction_bet"
+    PREDICTION_PAYOUT = "prediction_payout"
+    PREDICTION_REFUND = "prediction_refund"
 
 
 class JailEventType(str, Enum):
@@ -42,6 +46,16 @@ class LootBoxEventType(str, Enum):
     OPEN = "open"
 
 
+class PredictionEventType(str, Enum):
+    SUBMIT = "submit"
+    APPROVE = "approve"
+    DENY = "deny"
+    EDIT = "edit"
+    PLACE_BET = "place_bet"
+    RESOLVE = "resolve"
+    REFUND = "refund"
+
+
 class UIEventType(str, Enum):
     STOP_INTERACTIONS = "stop_interactions"
     SHOW_INVENTORY = "show_inventory"
@@ -57,6 +71,33 @@ class UIEventType(str, Enum):
     SHOP_RESPONSE_USER_SUBMIT = "shop_response_user_submit"
     SHOP_RESPONSE_COLOR_SUBMIT = "shop_response_color_submit"
     SHOP_RESPONSE_REACTION_SUBMIT = "shop_response_reaction_submit"
+    SHOP_RESPONSE_PREDICTION_SUBMIT = "shop_response_prediction_submit"
     REACTION_SELECTED = "reaction_selected"
     CLAIM_LOOTBOX = "claim_lootbox"
     UPDATE_RANKINGS = "update_rankings"
+
+    PREDICTION_REFRESH_ALL = "refresh_prediction_all"
+    PREDICTION_USER_REFRESH = "refresh_user_prediction"
+
+    PREDICTION_MODERATION_REFRESH_ALL = "refresh_prediction_moderation_all"
+    PREDICTION_MODERATION_REFRESH = "refresh_prediction_moderation"
+    PREDICTION_MODERATION_DISABLE = "disable_prediction_moderation"
+    PREDICTION_MODERATION_CHANGED = "prediction_moderation_changed"
+    PREDICTION_MODERATION_EDIT = "edit_prediction_moderation"
+
+    PREDICTION_INTERACTION_REFRESH = "refresh_prediction_interaction"
+    PREDICTION_INTERACTION_DISABLE = "disable_prediction_interaction"
+    PREDICTION_INTERACTION_DENY = "deny_prediction_interaction"
+    PREDICTION_INTERACTION_REFUND = "refund_prediction_interaction"
+    PREDICTION_INTERACTION_APPROVE = "approve_prediction_interaction"
+    PREDICTION_INTERACTION_EDIT = "edit_prediction_interaction"
+    PREDICTION_INTERACTION_CONFIRM_OUTCOME = "confirm_prediction_outcome_interaction"
+    PREDICTION_INTERACTION_PARENT_CHANGED = "prediction_interaction_parent_changed"
+    PREDICTION_INTERACTION_PLACE_BET = "place_bet_prediction_interaction"
+    PREDICTION_INTERACTION_CANCEL = "cancel_prediction_interaction"
+
+    PREDICTION_REFRESH = "refresh_prediction"
+    PREDICTION_DISABLE = "disable_prediction"
+    PREDICTION_CHANGED = "prediction_changed"
+    PREDICTION_SELECT = "select_prediction"
+    PREDICTION_BET_REFRESH = "prediction_bet_refresh"

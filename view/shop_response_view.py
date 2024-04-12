@@ -5,6 +5,8 @@ import discord
 
 from control.controller import Controller
 from control.types import ControllerType
+from datalayer.prediction import Prediction
+from datalayer.types import PredictionState
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
@@ -46,6 +48,7 @@ class ShopResponseView(ViewMenu):
         self.color_input_button: ColorInputButton = None
         self.amount_select: AmountInput = None
         self.reaction_input_button: ReactionInputButton = None
+        self.submission_button: SubmissionInputButton = None
 
         self.controller_type = ControllerType.SHOP_RESPONSE_VIEW
         self.controller.register_view(self)
@@ -73,6 +76,7 @@ class ShopResponseView(ViewMenu):
             self.amount_select,
             self.color_input_button,
             self.reaction_input_button,
+            self.submission_button,
             self.confirm_button,
             self.cancel_button,
         ]
@@ -131,6 +135,22 @@ class ShopResponseView(ViewMenu):
         self.selected_emoji = emoji
         self.selected_emoji_type = emoji_type
         await self.refresh_ui()
+
+    async def submit_prediction(self, prediction: str, outcomes: list[str]):
+        prediction_object = Prediction(
+            self.guild_id,
+            self.member_id,
+            prediction,
+            outcomes,
+            PredictionState.SUBMITTED,
+        )
+
+        event = UIEvent(
+            UIEventType.SHOP_RESPONSE_PREDICTION_SUBMIT,
+            prediction_object,
+        )
+        await self.controller.dispatch_ui_event(event)
+        await self.on_timeout()
 
     async def set_message(self, message: discord.Message):
         self.message = message
@@ -327,6 +347,67 @@ class ReactionInputView(ShopResponseView):
         )
         await self.controller.dispatch_ui_event(event)
         self.controller.detach_view(self)
+
+
+class SubmissionInputButton(discord.ui.Button):
+
+    def __init__(self):
+        super().__init__(
+            label="Enter your Prediction", style=discord.ButtonStyle.green, row=2
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ShopResponseView = self.view
+        if await view.interaction_check(interaction):
+            await interaction.response.send_modal(SubmissionInputModal(self.view))
+
+
+class SubmissionInputModal(discord.ui.Modal):
+
+    def __init__(self, view: ShopResponseView):
+        super().__init__(title="Choose a Color")
+        self.view = view
+        self.prediction = discord.ui.TextInput(
+            label="Prediction:", placeholder="Enter your Prediction here."
+        )
+        self.add_item(self.prediction)
+        self.outcomes: list[discord.ui.TextInput] = []
+
+        for i in range(4):
+            required = True
+            if i >= 2:
+                required = False
+            outcome = discord.ui.TextInput(
+                label=f"Outcome {i+1}:", required=required, custom_id=str(i)
+            )
+            self.outcomes.append(outcome)
+            self.add_item(outcome)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        prediction = self.prediction.value
+        outcomes = {
+            int(outcome.custom_id): outcome.value
+            for outcome in self.outcomes
+            if len(outcome.value) > 0
+        }
+
+        if len(prediction) < 5:
+            await interaction.followup.send("Prediction too short.", ephemeral=True)
+            return
+
+        if len(outcomes) < 2:
+            await interaction.followup.send(
+                "Please submit at least two possible outcomes.", ephemeral=True
+            )
+            return
+
+        await interaction.followup.send(
+            "Thank you for your submission, it will be reviewed by the mods.",
+            ephemeral=True,
+        )
+
+        await self.view.submit_prediction(prediction, outcomes)
 
 
 class ShopResponseData:

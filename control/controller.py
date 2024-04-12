@@ -45,6 +45,7 @@ class Controller:
             self.views.remove(view)
 
     async def dispatch_event(self, event: BotEvent):
+
         for service in self.services:
             await service.listen_for_event(event)
         for view_controller in self.view_controllers:
@@ -64,6 +65,12 @@ class Controller:
         new_service = service_class(self.bot, self.logger, self.database, self)
         self.services.append(new_service)
         return new_service
+
+    def get_view(self, id: int) -> ViewMenu:
+        for view in self.views:
+            if view.id == id:
+                return view
+        return None
 
     def add_view_controller(self, controller: type[ViewController]) -> ViewController:
         for view_controller in self.view_controllers:

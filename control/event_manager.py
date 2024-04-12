@@ -8,13 +8,20 @@ from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.jail import UserJail
 from datalayer.stats import UserStats
 from datalayer.types import UserInteraction
 from events.bot_event import BotEvent
 from events.jail_event import JailEvent
-from events.types import BeansEventType, EventType, JailEventType
+from events.prediction_event import PredictionEvent
+from events.types import (
+    BeansEventType,
+    EventType,
+    JailEventType,
+    PredictionEventType,
+)
 from items.types import ItemType
 from view.types import RankingType
 
@@ -31,6 +38,9 @@ class EventManager(Service):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.item_manager: ItemManager = self.controller.get_service(ItemManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
         self.log_name = "Events"
 
     async def listen_for_event(self, event: BotEvent):
@@ -46,6 +56,40 @@ class EventManager(Service):
                         f"Jail sentence `{jail_event.jail_id}` marked as released.",
                         self.log_name,
                     )
+            case EventType.PREDICTION:
+                prediction_event: PredictionEvent = event
+
+                match prediction_event.prediction_event_type:
+                    case PredictionEventType.SUBMIT:
+                        notification = f"<@{prediction_event.member_id}> has submitted a new potential Beans Prediction! Check it out with `/beans prediction_moderation`."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
+                    case PredictionEventType.DENY:
+                        notification = f"<@{prediction_event.member_id}> has denied Beans Prediction nr. **{prediction_event.prediction_id}**."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
+                    case PredictionEventType.APPROVE:
+                        notification = f"<@{prediction_event.member_id}> has approved Beans Prediction nr. **{prediction_event.prediction_id}**."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
+                    case PredictionEventType.EDIT:
+                        notification = f"<@{prediction_event.member_id}> made changes to Beans Prediction nr. **{prediction_event.prediction_id}**."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
+                    case PredictionEventType.RESOLVE:
+                        notification = f"<@{prediction_event.member_id}> initiated payout for Beans Prediction nr. **{prediction_event.prediction_id}**."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
+                    case PredictionEventType.REFUND:
+                        notification = f"<@{prediction_event.member_id}> ended and refunded Beans Prediction nr. **{prediction_event.prediction_id}**."
+                        await self.mod_notification(
+                            prediction_event.guild_id, notification
+                        )
 
         from_user = event.get_causing_user_id()
         args = event.get_type_specific_args()
@@ -59,7 +103,7 @@ class EventManager(Service):
         for arg in args:
             try:
                 potential_user_id = int(arg)
-            except ValueError:
+            except (ValueError, TypeError):
                 potential_user_id = None
             if potential_user_id is not None:
                 name = BotUtil.get_name(self.bot, guild_id, potential_user_id, 30)
@@ -73,6 +117,16 @@ class EventManager(Service):
             f"{event_type.value} event was logged for {BotUtil.get_name(self.bot, guild_id, member_id, 30)}. Arguments: {arguments}",
             self.log_name,
         )
+
+    async def mod_notification(self, guild_id: int, message: str):
+        for channel_id in self.settings_manager.get_mod_channels(guild_id):
+            guild = self.bot.get_guild(guild_id)
+            if guild is None:
+                continue
+            channel = guild.get_channel(channel_id)
+            if channel is None:
+                continue
+            await channel.send(message)
 
     def get_stunned_remaining(
         self, guild_id: int, user_id: int, base_duration: int

@@ -534,7 +534,7 @@ class Jail(commands.Cog):
     @app_commands.describe(role='Removes role from jail mods.')
     @app_commands.check(__has_permission)
     async def remove_mod_role(self, interaction: discord.Interaction, role: discord.Role):
-        self.settings_manager.remove_jail_mod_role(interaction.guild_id, role.id)
+        self.settings_manager.remove_predictions_mod_role(interaction.guild_id, role.id)
         await self.bot.command_response(self.__cog_name__, interaction, f'Removed {role.name} from jail moderators.', args=[role.name])
     
     @group.command(name="set_jailed_role", description="Sets the role for jailed people.")

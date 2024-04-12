@@ -16,12 +16,12 @@ class CrunchyBot(commands.Bot):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.logger = BotLogger(self, self.LOG_FILE)
-        self.database = Database(self, self.logger, self.DB_FILE)
-
-        self.controller = Controller(self, self.logger, self.database)
 
     async def setup_hook(self) -> None:
+        self.logger = BotLogger(self, self.LOG_FILE)
+        self.database = Database(self, self.logger, self.DB_FILE)
+        self.controller = Controller(self, self.logger, self.database)
+
         await self.load_extension("cogs.police")
         await self.load_extension("cogs.jail")
         await self.load_extension("cogs.interactions")

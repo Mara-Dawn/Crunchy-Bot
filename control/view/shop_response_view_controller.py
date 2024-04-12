@@ -11,11 +11,13 @@ from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
 from datalayer.database import Database
+from datalayer.prediction import Prediction
 from events.bat_event import BatEvent
 from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
-from events.types import BeansEventType, JailEventType, UIEventType
+from events.prediction_event import PredictionEvent
+from events.types import BeansEventType, JailEventType, PredictionEventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemType
 from view.shop_response_view import ShopResponseData
@@ -55,6 +57,8 @@ class ShopResponseViewController(ViewController):
                 interaction = event.payload[0]
                 shop_data = event.payload[1]
                 await self.submit_generic_view(interaction, shop_data, event.view_id)
+            case UIEventType.SHOP_RESPONSE_PREDICTION_SUBMIT:
+                await self.submit_prediction(event.payload)
                 
     async def start_transaction(self, interaction: discord.Interaction, shop_data: ShopResponseData) -> bool:
         
@@ -391,3 +395,8 @@ class ShopResponseViewController(ViewController):
                 return
         
         await self.finish_transaction(interaction, shop_data, view_id)
+
+    async def submit_prediction(self, prediction: Prediction):
+        prediction_id = self.database.log_prediction(prediction)
+        event = PredictionEvent(datetime.datetime.now(), prediction.guild_id, prediction_id, prediction.author_id, PredictionEventType.SUBMIT)
+        await self.controller.dispatch_event(event)
