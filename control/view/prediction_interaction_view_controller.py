@@ -71,18 +71,6 @@ class PredictionInteractionViewController(ViewController):
                 await self.end_and_refund_submission(
                     interaction, prediction, event.view_id
                 )
-            case UIEventType.PREDICTION_INTERACTION_PLACE_BET:
-                interaction = event.payload[0]
-                prediction = event.payload[1]
-                selected_outcome = event.payload[2]
-                selected_bet_amount = event.payload[3]
-                await self.submit_bet(
-                    interaction,
-                    prediction,
-                    selected_outcome,
-                    selected_bet_amount,
-                    event.view_id,
-                )
             case UIEventType.PREDICTION_INTERACTION_CANCEL:
                 interaction = event.payload
                 await self.cancel_interaction(
@@ -106,78 +94,6 @@ class PredictionInteractionViewController(ViewController):
         user_bets = self.database.get_prediction_bets_by_user(
             interaction.guild.id, interaction.user.id
         )
-
-        view = self.controller.get_view(view_id)
-        if view is None:
-            view = PredictionView(self.controller, interaction, prediction_stats)
-
-        await message.edit(view=view)
-
-        view.set_message(message)
-        await view.refresh_ui(user_balance=user_balance, user_bets=user_bets)
-
-    async def submit_bet(
-        self,
-        interaction: discord.Interaction,
-        prediction: Prediction,
-        selected_outcome_id: int,
-        selected_bet_amount: int,
-        view_id: int,
-    ):
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
-
-        if selected_outcome_id is None:
-            await interaction.followup.send("Please select an outcome.", ephemeral=True)
-            return False
-
-        if selected_bet_amount is None or int(selected_bet_amount) <= 0:
-            await interaction.followup.send(
-                "Please place your bet first.", ephemeral=True
-            )
-            return False
-
-        user_balance = self.database.get_member_beans(guild_id, member_id)
-
-        if user_balance < selected_bet_amount:
-            await interaction.followup.send(
-                "You dont have enough beans for this bet.", ephemeral=True
-            )
-            return False
-
-        timestamp = datetime.datetime.now()
-
-        event = PredictionEvent(
-            timestamp,
-            guild_id,
-            prediction.id,
-            member_id,
-            PredictionEventType.PLACE_BET,
-            selected_outcome_id,
-            selected_bet_amount,
-        )
-        await self.controller.dispatch_event(event)
-
-        event = BeansEvent(
-            timestamp,
-            guild_id,
-            BeansEventType.PREDICTION_BET,
-            member_id,
-            -selected_bet_amount,
-        )
-        await self.controller.dispatch_event(event)
-
-        prediction_stats = self.database.get_prediction_stats_by_guild(
-            interaction.guild_id, [PredictionState.APPROVED]
-        )
-        user_balance = self.database.get_member_beans(
-            interaction.guild.id, interaction.user.id
-        )
-        user_bets = self.database.get_prediction_bets_by_user(
-            interaction.guild.id, interaction.user.id
-        )
-
-        message = await interaction.original_response()
 
         view = self.controller.get_view(view_id)
         if view is None:
@@ -245,7 +161,9 @@ class PredictionInteractionViewController(ViewController):
                 message += f"```python\nInitial bet: 🅱️{amount}\nOdds: 1:{odds_text}\n-----------------------\nPayout:🅱️{payout}```"
                 await user.send(message)
 
-        bean_channels = self.settings_manager.get_beans_channels(interaction.guild_id)
+        bean_channels = self.settings_manager.get_beans_notification_channels(
+            interaction.guild_id
+        )
         announcement = f"The prediction '**{prediction_text}**' has come to a close!\n The winning outcome is '**{outcome_text}**' with winning odds of 1:{odds_text}.\n A total of `🅱️{sum(prediction_stats.bets.values())}` has been paid out."
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)
@@ -311,7 +229,9 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        bean_channels = self.settings_manager.get_beans_channels(interaction.guild_id)
+        bean_channels = self.settings_manager.get_beans_notification_channels(
+            interaction.guild_id
+        )
         announcement = f"**This predicktion has been locked in!**\n> {prediction.content}\nNo more bets will be accepted. The winners will be paid out once an outcome is achieved. Good luck!\nYou can also submit your own prediction ideas in the `/shop`."
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)
@@ -347,7 +267,9 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        bean_channels = self.settings_manager.get_beans_channels(interaction.guild_id)
+        bean_channels = self.settings_manager.get_beans_notification_channels(
+            interaction.guild_id
+        )
         announcement = f"**This predicktion has been unlocked again!**\n> {prediction.content}\nYou can start betting on it again for now. Good luck!\nYou can also submit your own prediction ideas in the `/shop`."
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)
@@ -385,7 +307,9 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        bean_channels = self.settings_manager.get_beans_channels(interaction.guild_id)
+        bean_channels = self.settings_manager.get_beans_notification_channels(
+            interaction.guild_id
+        )
         announcement = f"**A new prediction has been approved!**\n> {prediction.content}\nUse `/beans prediction` to bet your beans on the outcomes. You can also submit your own prediction ideas in the `/shop`."
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)

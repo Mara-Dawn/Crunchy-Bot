@@ -57,6 +57,7 @@ class SettingsManager(Service):
     BEANS_LOOTBOX_MIN_BEANS_KEY = "beans_lootbox_min_beans"
     BEANS_LOOTBOX_MAX_BEANS_KEY = "beans_lootbox_max_beans"
     BEANS_LOOTBOX_RARE_CHANCE_KEY = "beans_lootbox_rare_chance"
+    BEANS_NOTIFICATION_CHANNELS_KEY = "beans_notification_channels"
 
     SHOP_SUBSETTINGS_KEY = "shop"
     SHOP_ENABLED_KEY = "shop_enabled"
@@ -229,6 +230,12 @@ class SettingsManager(Service):
             self.BEANS_LOOTBOX_RARE_CHANCE_KEY,
             0.2,
             "Chance for a rare lootbox to spawn",
+        )
+        beans_settings.add_setting(
+            self.BEANS_NOTIFICATION_CHANNELS_KEY,
+            [],
+            "Channels for recieving bean notifications",
+            "handle_channels_value",
         )
 
         shop_settings = ModuleSettings(self.SHOP_SUBSETTINGS_KEY, "Beans Shop")
@@ -808,6 +815,36 @@ class SettingsManager(Service):
             self.BEANS_SUBSETTINGS_KEY,
             self.BEANS_LOTTERY_BASE_AMOUNT_KEY,
             amount,
+        )
+
+    def get_beans_notification_channels(self, guild: int) -> list[int]:
+        return [
+            int(x)
+            for x in self.get_setting(
+                guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_NOTIFICATION_CHANNELS_KEY
+            )
+        ]
+
+    def add_beans_notification_channel(self, guild: int, channel: int) -> None:
+        channels = self.get_beans_notification_channels(guild)
+        if channel not in channels:
+            channels.append(channel)
+        self.update_setting(
+            guild,
+            self.BEANS_SUBSETTINGS_KEY,
+            self.BEANS_NOTIFICATION_CHANNELS_KEY,
+            channels,
+        )
+
+    def remove_beans_notification_channel(self, guild: int, channel: int) -> None:
+        channels = self.get_beans_notification_channels(guild)
+        if channel in channels:
+            channels.remove(channel)
+        self.update_setting(
+            guild,
+            self.BEANS_SUBSETTINGS_KEY,
+            self.BEANS_NOTIFICATION_CHANNELS_KEY,
+            channels,
         )
 
     # Shop Settings

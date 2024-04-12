@@ -34,9 +34,7 @@ class PredictionInteractionView(ViewMenu):
         self.guild_id = interaction.guild_id
 
         self.selected_outcome: int = None
-        self.selected_bet_amount: int = None
 
-        self.confirm_button: ConfirmButton = None
         self.select_win_button: SelectWinnerButton = None
         self.cancel_button: CancelModerationButton = None
         self.deny_button: DenyButton = None
@@ -45,43 +43,36 @@ class PredictionInteractionView(ViewMenu):
         self.lock_button: LockButton = None
         self.unlock_button: UnlockButton = None
         self.outcome_select: OutcomeSelect = None
-        self.bet_input_button: BetInputButton = None
         self.edit_button: EditButton = None
 
         self.controller_type = ControllerType.PREDICTION_INTERACTION_VIEW
         self.controller.register_view(self)
 
-        if self.is_moderator:
-            match prediction.prediction.state:
-                case PredictionState.SUBMITTED:
-                    self.deny_button = DenyButton()
-                    self.approve_button = ApproveButton()
+        match prediction.prediction.state:
+            case PredictionState.SUBMITTED:
+                self.deny_button = DenyButton()
+                self.approve_button = ApproveButton()
+                self.edit_button = EditButton(prediction.prediction)
+            case PredictionState.APPROVED:
+                self.outcome_select = OutcomeSelect(prediction.prediction.outcomes)
+                self.lock_button = LockButton()
+                self.select_win_button = SelectWinnerButton()
+                self.refund_button = RefundButton()
+                if interaction.user.id == 90043934247501824:
                     self.edit_button = EditButton(prediction.prediction)
-                case PredictionState.APPROVED:
-                    self.outcome_select = OutcomeSelect(prediction.prediction.outcomes)
-                    self.lock_button = LockButton()
-                    self.select_win_button = SelectWinnerButton()
-                    self.refund_button = RefundButton()
-                    if interaction.user.id == 90043934247501824:
-                        self.edit_button = EditButton(prediction.prediction)
-                case PredictionState.LOCKED:
-                    self.outcome_select = OutcomeSelect(prediction.prediction.outcomes)
-                    self.unlock_button = UnlockButton()
-                    self.select_win_button = SelectWinnerButton()
-                    self.refund_button = RefundButton()
+            case PredictionState.LOCKED:
+                self.outcome_select = OutcomeSelect(prediction.prediction.outcomes)
+                self.unlock_button = UnlockButton()
+                self.select_win_button = SelectWinnerButton()
+                self.refund_button = RefundButton()
+                self.edit_button = EditButton(prediction.prediction)
+                if interaction.user.id == 90043934247501824:
                     self.edit_button = EditButton(prediction.prediction)
-                    if interaction.user.id == 90043934247501824:
-                        self.edit_button = EditButton(prediction.prediction)
-                case PredictionState.DENIED:
-                    self.edit_button = EditButton(prediction.prediction)
-                    self.approve_button = ApproveButton()
+            case PredictionState.DENIED:
+                self.edit_button = EditButton(prediction.prediction)
+                self.approve_button = ApproveButton()
 
-            self.cancel_button: CancelModerationButton = CancelModerationButton()
-        elif prediction.prediction.state == PredictionState.APPROVED:
-            self.outcome_select = OutcomeSelect(prediction.prediction.outcomes)
-            self.bet_input_button = BetInputButton()
-            self.confirm_button = ConfirmButton()
-            self.cancel_button: CancelButton = CancelButton()
+        self.cancel_button: CancelModerationButton = CancelModerationButton()
 
         self.refresh_elements()
 
@@ -94,20 +85,6 @@ class PredictionInteractionView(ViewMenu):
                 await self.refresh_ui()
             case UIEventType.PREDICTION_INTERACTION_DISABLE:
                 await self.refresh_ui(disabled=event.payload)
-
-    async def submit_bet(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        event = UIEvent(
-            UIEventType.PREDICTION_INTERACTION_PLACE_BET,
-            (
-                interaction,
-                self.prediction.prediction,
-                self.selected_outcome,
-                self.selected_bet_amount,
-            ),
-            self.parent_id,
-        )
-        await self.controller.dispatch_ui_event(event)
 
     async def confirm_outcome(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -175,8 +152,6 @@ class PredictionInteractionView(ViewMenu):
     def refresh_elements(self, disabled: bool = False):
         elements: list[discord.ui.Item] = [
             self.outcome_select,
-            self.bet_input_button,
-            self.confirm_button,
             self.lock_button,
             self.unlock_button,
             self.select_win_button,
@@ -186,12 +161,6 @@ class PredictionInteractionView(ViewMenu):
             self.refund_button,
             self.cancel_button,
         ]
-
-        if self.bet_input_button is not None:
-            if not self.is_moderator and self.selected_bet_amount is not None:
-                self.bet_input_button.label = f"Your bet: 🅱️{self.selected_bet_amount}"
-            else:
-                self.bet_input_button.label = "Enter your Bet"
 
         self.clear_items()
         for element in elements:
@@ -238,10 +207,6 @@ class PredictionInteractionView(ViewMenu):
             self.parent_id,
         )
         await self.controller.dispatch_ui_event(event)
-
-    async def set_bet_amount(self, bet_amount: int):
-        self.selected_bet_amount = bet_amount
-        await self.refresh_ui()
 
     async def set_message(self, message: discord.Message):
         self.message = message
@@ -305,18 +270,6 @@ class UnlockButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.unlock(interaction)
-
-
-class ConfirmButton(discord.ui.Button):
-
-    def __init__(self, label: str = "Submit"):
-        super().__init__(label=label, style=discord.ButtonStyle.green, row=2)
-
-    async def callback(self, interaction: discord.Interaction):
-        view: PredictionInteractionView = self.view
-
-        if await view.interaction_check(interaction):
-            await view.submit_bet(interaction)
 
 
 class SelectWinnerButton(discord.ui.Button):
@@ -480,46 +433,3 @@ class EditModal(discord.ui.Modal):
         )
 
         await self.view.edit_prediction(interaction, new_prediction)
-
-
-class BetInputButton(discord.ui.Button):
-
-    def __init__(self):
-        super().__init__(label="Enter your Bet", style=discord.ButtonStyle.green, row=2)
-
-    async def callback(self, interaction: discord.Interaction):
-        view: PredictionInteractionView = self.view
-        if await view.interaction_check(interaction):
-            await interaction.response.send_modal(BetInputModal(self.view))
-
-
-class BetInputModal(discord.ui.Modal):
-
-    def __init__(self, view: PredictionInteractionView):
-        super().__init__(title="Place your Bet")
-        self.view = view
-
-        self.amount = discord.ui.TextInput(
-            label="Beans",
-            placeholder="Enter how many beans you want to bet.",
-        )
-        self.add_item(self.amount)
-
-    # pylint: disable-next=arguments-differ
-    async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        bet_amount = self.amount.value
-        error = False
-        try:
-            bet_amount = int(bet_amount)
-            error = bet_amount < 0
-        except ValueError:
-            error = True
-
-        if error:
-            await interaction.followup.send(
-                "Please enter a valid amount of beans above 0.", ephemeral=True
-            )
-            return
-
-        await self.view.set_bet_amount(bet_amount)

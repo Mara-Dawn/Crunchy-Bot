@@ -41,11 +41,11 @@ class PredictionView(ViewMenu):
 
         self.user_balance: int = 0
         self.user_bets: dict[int, tuple[int, int]] = {}
+        self.selected_outcome: int = None
 
         self.item_count = len(self.predictions)
 
         self.message = None
-        self.disabled = False
 
         self.controller_type = ControllerType.PREDICTION_VIEW
         self.controller.register_view(self)
@@ -65,9 +65,7 @@ class PredictionView(ViewMenu):
                     return
                 user_bets = event.payload[1]
                 user_balance = event.payload[2]
-                await self.refresh_ui(
-                    user_bets=user_bets, user_balance=user_balance, disabled=False
-                )
+                await self.refresh_ui(user_bets=user_bets, user_balance=user_balance)
             case UIEventType.PREDICTION_REFRESH_ALL:
                 predictions = event.payload
                 await self.refresh_ui(predictions=predictions)
@@ -78,9 +76,21 @@ class PredictionView(ViewMenu):
         match event.type:
             case UIEventType.PREDICTION_REFRESH:
                 predictions = event.payload
-                await self.refresh_ui(predictions=predictions, disabled=False)
-            case UIEventType.PREDICTION_DISABLE:
-                await self.refresh_ui(disabled=event.payload)
+                await self.refresh_ui(predictions=predictions)
+            case UIEventType.PREDICTION_FULL_REFRESH:
+                user_bets = event.payload[1]
+                user_balance = event.payload[2]
+                await self.refresh_ui(user_bets=user_bets, user_balance=user_balance)
+
+    def __get_selected_prediction_stats(self):
+        selected_stats = [
+            (idx, prediction)
+            for idx, prediction in enumerate(self.predictions)
+            if prediction.prediction.id == self.selected
+        ]
+        if len(selected_stats) > 0:
+            return selected_stats[0][0], selected_stats[0][1]
+        return 0, None
 
     def __sort_predictions(self):
         self.predictions = sorted(
@@ -106,8 +116,10 @@ class PredictionView(ViewMenu):
     def set_message(self, message: discord.Message):
         self.message = message
 
-    async def select(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+    async def submit_bet(
+        self, interaction: discord.Interaction, selected_bet_amount: int
+    ):
+        _, prediction_stats = self.__get_selected_prediction_stats()
 
         if self.selected in self.user_bets:
             await interaction.followup.send(
@@ -115,26 +127,21 @@ class PredictionView(ViewMenu):
             )
             return
 
-        selected_stats = [
-            prediction
-            for prediction in self.predictions
-            if prediction.prediction.id == self.selected
-        ]
-
-        selected = None
-        if len(selected_stats) > 0:
-            selected = selected_stats[0]
-
         event = UIEvent(
-            UIEventType.PREDICTION_SELECT,
-            (interaction, selected),
+            UIEventType.PREDICTION_PLACE_BET,
+            (
+                interaction,
+                prediction_stats.prediction,
+                self.selected_outcome,
+                selected_bet_amount,
+            ),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
 
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         await interaction.response.defer()
-
+        self.selected_outcome = None
         if len(self.predictions) > 0:
             self.selected_idx = (self.selected_idx + (1 if right else -1)) % len(
                 self.predictions
@@ -153,21 +160,28 @@ class PredictionView(ViewMenu):
     def refresh_elements(
         self,
         user_balance: int = None,
-        disabled: bool = False,
     ):
         page_display = f"Prediction {self.selected_idx + 1}/{len(self.predictions)}"
-
-        self.disabled = disabled
 
         if user_balance is not None:
             self.user_balance = user_balance
 
+        _, selected_prediction_stats = self.__get_selected_prediction_stats()
+
         self.clear_items()
-        if len(self.predictions) > 0:
-            self.add_item(SelectDropdown(self.predictions, self.selected, disabled))
-        self.add_item(PageButton("<", False, disabled))
-        self.add_item(SelectButton(disabled))
-        self.add_item(PageButton(">", True, disabled))
+
+        if selected_prediction_stats is not None:
+            outcome_select = OutcomeSelect(
+                selected_prediction_stats.prediction.outcomes
+            )
+            for option in outcome_select.options:
+                if int(option.value) == self.selected_outcome:
+                    option.default = True
+
+            self.add_item(outcome_select)
+        self.add_item(PageButton("<", False))
+        self.add_item(BetInputButton())
+        self.add_item(PageButton(">", True))
         self.add_item(CurrentPageButton(page_display))
         self.add_item(BalanceButton(self.user_balance))
 
@@ -176,10 +190,7 @@ class PredictionView(ViewMenu):
         user_balance: int = None,
         user_bets: dict[int, tuple[int, int]] = None,
         predictions: list[PredictionStats] = None,
-        disabled: bool = None,
     ):
-        if disabled is None:
-            disabled = self.disabled
 
         if user_bets is not None:
             self.user_bets = user_bets
@@ -190,18 +201,14 @@ class PredictionView(ViewMenu):
         self.__filter_predictions()
         self.__sort_predictions()
 
-        selected_stats = [
-            (idx, prediction)
-            for idx, prediction in enumerate(self.predictions)
-            if prediction.prediction.id == self.selected
-        ]
+        idx, selected_stats = self.__get_selected_prediction_stats()
 
         selected: PredictionStats = None
-        if len(selected_stats) > 0:
-            self.selected_idx = selected_stats[0][0]
-            selected = selected_stats[0][1]
+        if selected_stats is not None:
+            self.selected_idx = idx
+            selected = selected_stats
 
-        self.refresh_elements(user_balance, disabled)
+        self.refresh_elements(user_balance)
 
         head_embed = PredictionEmbed(
             guild_name=self.guild_name,
@@ -218,9 +225,8 @@ class PredictionView(ViewMenu):
         except discord.NotFound:
             self.controller.detach_view(self)
 
-    async def set_selected(self, interaction: discord.Interaction, prediction_id: int):
-        await interaction.response.defer()
-        self.selected = prediction_id
+    async def set_outcome(self, outcome_id: int):
+        self.selected_outcome = outcome_id
         await self.refresh_ui()
 
     async def on_timeout(self):
@@ -242,23 +248,6 @@ class BalanceButton(discord.ui.Button):
             await interaction.response.defer(ephemeral=True)
             event = UIEvent(UIEventType.SHOW_INVENTORY, interaction)
             await view.controller.dispatch_ui_event(event)
-
-
-class SelectButton(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False):
-        super().__init__(
-            label="Select",
-            style=discord.ButtonStyle.green,
-            row=2,
-            disabled=disabled,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: PredictionView = self.view
-
-        if await view.interaction_check(interaction):
-            await view.select(interaction)
 
 
 class PageButton(discord.ui.Button):
@@ -284,41 +273,75 @@ class CurrentPageButton(discord.ui.Button):
         )
 
 
-class SelectDropdown(discord.ui.Select):
+class OutcomeSelect(discord.ui.Select):
 
-    def __init__(
-        self, items: list[PredictionStats], selected: int, disabled: bool = False
-    ):
-
+    def __init__(self, outcomes: dict[int, str]):
         options = []
 
-        for item in items:
-            label = (
-                (item.prediction.content[:96] + "..")
-                if len(item.prediction.content) > 96
-                else item.prediction.content
-            )
+        outcome_prefixes = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
+        outcome_nr = 0
 
-            option = discord.SelectOption(
-                label=label,
-                description="",
-                value=item.prediction.id,
-                default=(item.prediction.id == selected),
+        for id, text in outcomes.items():
+            options.append(
+                discord.SelectOption(
+                    label=text, value=id, emoji=outcome_prefixes[outcome_nr]
+                )
             )
-
-            options.append(option)
+            outcome_nr += 1  # noqa: SIM113
 
         super().__init__(
-            placeholder="Select a Prediction",
+            placeholder="Choose an outcome.",
             min_values=1,
             max_values=1,
             options=options,
-            row=1,
-            disabled=disabled,
+            row=0,
         )
 
     async def callback(self, interaction: discord.Interaction):
         view: PredictionView = self.view
-
+        await interaction.response.defer()
         if await view.interaction_check(interaction):
-            await view.set_selected(interaction, int(self.values[0]))
+            await view.set_outcome(int(self.values[0]))
+
+
+class BetInputButton(discord.ui.Button):
+
+    def __init__(self):
+        super().__init__(label="Place your Bet", style=discord.ButtonStyle.green, row=2)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: PredictionView = self.view
+        if await view.interaction_check(interaction):
+            await interaction.response.send_modal(BetInputModal(self.view))
+
+
+class BetInputModal(discord.ui.Modal):
+
+    def __init__(self, view: PredictionView):
+        super().__init__(title="Place your Bet")
+        self.view = view
+
+        self.amount = discord.ui.TextInput(
+            label="Beans",
+            placeholder="Enter how many beans you want to bet.",
+        )
+        self.add_item(self.amount)
+
+    # pylint: disable-next=arguments-differ
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        bet_amount = self.amount.value
+        error = False
+        try:
+            bet_amount = int(bet_amount)
+            error = bet_amount < 0
+        except ValueError:
+            error = True
+
+        if error:
+            await interaction.followup.send(
+                "Please enter a valid amount of beans above 0.", ephemeral=True
+            )
+            return
+
+        await self.view.submit_bet(interaction, bet_amount)
