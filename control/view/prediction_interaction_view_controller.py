@@ -57,6 +57,10 @@ class PredictionInteractionViewController(ViewController):
                 interaction = event.payload[0]
                 prediction = event.payload[1]
                 await self.lock_prediction(interaction, prediction, event.view_id)
+            case UIEventType.PREDICTION_INTERACTION_UNLOCK:
+                interaction = event.payload[0]
+                prediction = event.payload[1]
+                await self.unlock_prediction(interaction, prediction, event.view_id)
             case UIEventType.PREDICTION_INTERACTION_EDIT:
                 interaction = event.payload[0]
                 new_prediction = event.payload[1]
@@ -314,6 +318,44 @@ class PredictionInteractionViewController(ViewController):
             await channel.send(announcement)
 
         success_message = "You successfully locked your selected prediction submission."
+        await interaction.followup.send(success_message, ephemeral=True)
+
+        prediction = self.database.get_prediction_stats_by_guild(guild_id)
+        event = UIEvent(UIEventType.PREDICTION_MODERATION_REFRESH, prediction, view_id)
+        await self.controller.dispatch_ui_event(event)
+
+        message = await interaction.original_response()
+        await message.delete()
+
+    async def unlock_prediction(
+        self, interaction: discord.Interaction, prediction: Prediction, view_id: int
+    ):
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        prediction.state = PredictionState.APPROVED
+        prediction.moderator_id = member_id
+
+        self.database.update_prediction(prediction)
+
+        event = PredictionEvent(
+            datetime.datetime.now(),
+            guild_id,
+            prediction.id,
+            member_id,
+            PredictionEventType.APPROVE,
+        )
+        await self.controller.dispatch_event(event)
+
+        bean_channels = self.settings_manager.get_beans_channels(interaction.guild_id)
+        announcement = f"**This predicktion has been unlocked again!**\n> {prediction.content}\nYou can start betting on it again for now. Good luck!\nYou can also submit your own prediction ideas in the `/shop`."
+        for channel_id in bean_channels:
+            channel = interaction.guild.get_channel(channel_id)
+            await channel.send(announcement)
+
+        success_message = (
+            "You successfully unlocked your selected prediction submission."
+        )
         await interaction.followup.send(success_message, ephemeral=True)
 
         prediction = self.database.get_prediction_stats_by_guild(guild_id)
