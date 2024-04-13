@@ -26,7 +26,7 @@ class Quote:
         self.message_content = message_content
         self.id = id
 
-    def get_timestamp(self) -> datetime.datetime:
+    def get_timestamp(self) -> float:
         return int(self.datetime.timestamp())
 
     @staticmethod

@@ -58,38 +58,27 @@ class EventManager(Service):
                     )
             case EventType.PREDICTION:
                 prediction_event: PredictionEvent = event
-
+                notification = None
                 match prediction_event.prediction_event_type:
                     case PredictionEventType.SUBMIT:
                         notification = f"<@{prediction_event.member_id}> has submitted a new potential Beans Prediction! Check it out with `/beans prediction_moderation`."
-                        await self.mod_notification(
-                            prediction_event.guild_id, notification
-                        )
                     case PredictionEventType.DENY:
                         notification = f"<@{prediction_event.member_id}> has denied Beans Prediction nr. **{prediction_event.prediction_id}**."
-                        await self.mod_notification(
-                            prediction_event.guild_id, notification
-                        )
                     case PredictionEventType.APPROVE:
                         notification = f"<@{prediction_event.member_id}> has approved Beans Prediction nr. **{prediction_event.prediction_id}**."
-                        await self.mod_notification(
-                            prediction_event.guild_id, notification
-                        )
+                    case PredictionEventType.LOCK:
+                        notification = f"<@{prediction_event.member_id}> has locked Prediction nr. **{prediction_event.prediction_id}**."
+                    case PredictionEventType.UNLOCK:
+                        notification = f"<@{prediction_event.member_id}> has unlocked Prediction nr. **{prediction_event.prediction_id}**."
                     case PredictionEventType.EDIT:
                         notification = f"<@{prediction_event.member_id}> made changes to Beans Prediction nr. **{prediction_event.prediction_id}**."
-                        await self.mod_notification(
-                            prediction_event.guild_id, notification
-                        )
                     case PredictionEventType.RESOLVE:
                         notification = f"<@{prediction_event.member_id}> initiated payout for Beans Prediction nr. **{prediction_event.prediction_id}**."
-                        await self.mod_notification(
-                            prediction_event.guild_id, notification
-                        )
                     case PredictionEventType.REFUND:
                         notification = f"<@{prediction_event.member_id}> ended and refunded Beans Prediction nr. **{prediction_event.prediction_id}**."
-                        await self.mod_notification(
-                            prediction_event.guild_id, notification
-                        )
+
+                if notification is not None:
+                    await self.mod_notification(prediction_event.guild_id, notification)
 
         from_user = event.get_causing_user_id()
         args = event.get_type_specific_args()

@@ -49,7 +49,8 @@ class LootBoxEventType(str, Enum):
 class PredictionEventType(str, Enum):
     SUBMIT = "submit"
     APPROVE = "approve"
-    LOCK = "approve"
+    LOCK = "lock"
+    UNLOCK = "unlock"
     DENY = "deny"
     EDIT = "edit"
     PLACE_BET = "place_bet"
@@ -87,7 +88,6 @@ class UIEventType(str, Enum):
     PREDICTION_MODERATION_EDIT = "edit_prediction_moderation"
 
     PREDICTION_INTERACTION_REFRESH = "refresh_prediction_interaction"
-    PREDICTION_INTERACTION_DISABLE = "disable_prediction_interaction"
     PREDICTION_INTERACTION_DENY = "deny_prediction_interaction"
     PREDICTION_INTERACTION_REFUND = "refund_prediction_interaction"
     PREDICTION_INTERACTION_APPROVE = "approve_prediction_interaction"
@@ -96,7 +96,6 @@ class UIEventType(str, Enum):
     PREDICTION_INTERACTION_EDIT = "edit_prediction_interaction"
     PREDICTION_INTERACTION_CONFIRM_OUTCOME = "confirm_prediction_outcome_interaction"
     PREDICTION_INTERACTION_PARENT_CHANGED = "prediction_interaction_parent_changed"
-    PREDICTION_INTERACTION_CANCEL = "cancel_prediction_interaction"
 
     PREDICTION_REFRESH = "refresh_prediction"
     PREDICTION_FULL_REFRESH = "refresh_prediction_full"

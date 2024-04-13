@@ -80,7 +80,6 @@ class Shop(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        # pylint: disable-next=no-member
         self.daily_collection_task.start()
         self.logger.log(
             "init", str(self.__cog_name__) + " loaded.", cog=self.__cog_name__

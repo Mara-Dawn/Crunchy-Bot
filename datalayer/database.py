@@ -277,6 +277,8 @@ class Database:
     PREDICTION_ID_COL = "pred_id"
     PREDICTION_GUILD_ID_COL = "pred_guild_id"
     PREDICTION_AUTHOR_COL = "pred_author_id"
+    PREDICTION_LOCK_TIMESTAMP_COL = "pred_lock_timestamp"
+    PREDICTION_COMMENT_COL = "pred_comment"
     PREDICTION_CONTENT_COL = "pred_content"
     PREDICTION_STATE_COL = "pred_state"
     PREDICTION_MOD_ID_COL = "pred_moderator_id"
@@ -287,6 +289,8 @@ class Database:
         {PREDICTION_AUTHOR_COL} INTEGER,
         {PREDICTION_CONTENT_COL} TEXT,
         {PREDICTION_STATE_COL} INTEGER,
+        {PREDICTION_LOCK_TIMESTAMP_COL} INTEGER,
+        {PREDICTION_COMMENT_COL} TEXT,
         {PREDICTION_MOD_ID_COL} INTEGER
     );"""
 
@@ -330,6 +334,20 @@ class Database:
             self.logger.log(
                 "DB", f"Loaded DB version {sqlite3.version} from {db_file}."
             )
+
+            # command = f"""
+            #     ALTER TABLE {self.PREDICTION_TABLE}
+            #     ADD COLUMN {self.PREDICTION_LOCK_TIMESTAMP_COL} INTEGER;
+            # """
+
+            # self.__query_insert(command)
+
+            # command = f"""
+            #     ALTER TABLE {self.PREDICTION_TABLE}
+            #     ADD COLUMN {self.PREDICTION_COMMENT_COL} TEXT;
+            # """
+
+            # self.__query_insert(command)
 
             c = self.conn.cursor()
 
@@ -802,7 +820,9 @@ class Database:
             {self.PREDICTION_AUTHOR_COL},
             {self.PREDICTION_CONTENT_COL},
             {self.PREDICTION_STATE_COL},
-            {self.PREDICTION_MOD_ID_COL}) 
+            {self.PREDICTION_MOD_ID_COL},
+            {self.PREDICTION_LOCK_TIMESTAMP_COL},
+            {self.PREDICTION_COMMENT_COL}) 
             VALUES (?, ?, ?, ?, ?);
         """
         task = (
@@ -811,6 +831,8 @@ class Database:
             prediction.content,
             prediction.state,
             prediction.moderator_id,
+            prediction.get_timestamp(),
+            prediction.comment,
         )
 
         prediction_id = self.__query_insert(command, task)
@@ -835,14 +857,18 @@ class Database:
             UPDATE {self.PREDICTION_TABLE} SET (
             {self.PREDICTION_CONTENT_COL},
             {self.PREDICTION_STATE_COL},
-            {self.PREDICTION_MOD_ID_COL}) 
-            = (?, ?, ?)
+            {self.PREDICTION_MOD_ID_COL},
+            {self.PREDICTION_LOCK_TIMESTAMP_COL},
+            {self.PREDICTION_COMMENT_COL}) 
+            = (?, ?, ?, ?, ?)
             WHERE {self.PREDICTION_ID_COL} = ?
         """
         task = (
             prediction.content,
             prediction.state,
             prediction.moderator_id,
+            prediction.get_timestamp(),
+            prediction.comment,
             prediction.id,
         )
 
@@ -1368,6 +1394,31 @@ class Database:
             if row[f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"] > 0
         }
 
+    def get_prediction_by_id(self, prediction_id: int) -> Prediction:
+
+        command = f"""
+            SELECT * FROM {self.PREDICTION_TABLE} 
+            WHERE {self.PREDICTION_ID_COL} = {int(prediction_id)}
+            LIMIT 1;
+        """
+
+        prediction_rows = self.__query_select(command)
+        if not prediction_rows or len(prediction_rows) < 1:
+            return None
+
+        prediction_row = prediction_rows[0]
+
+        command = f"""
+            SELECT * FROM {self.PREDICTION_OUTCOME_TABLE} 
+            WHERE {self.PREDICTION_OUTCOME_PREDICTION_ID_COL} = {int(prediction_row[self.PREDICTION_ID_COL])};
+        """
+
+        outcome_rows = self.__query_select(command)
+        if not outcome_rows or len(outcome_rows) < 1:
+            return None
+
+        return Prediction.from_db_row(prediction_row, outcome_rows)
+
     def get_predictions_by_guild(
         self, guild_id: int, states: list[PredictionState] = None
     ) -> list[Prediction]:
@@ -1585,7 +1636,9 @@ class Database:
             author_name = BotUtil.get_name(self.bot, guild_id, prediction.author_id, 40)
             mod_name = BotUtil.get_name(self.bot, guild_id, prediction.moderator_id, 30)
             winning_outcome_id = self.get_prediction_winning_outcome(prediction.id)
-            stats = PredictionStats(prediction, bets, author_name, mod_name, winning_outcome_id)
+            stats = PredictionStats(
+                prediction, bets, author_name, mod_name, winning_outcome_id
+            )
             prediction_stats.append(stats)
         return prediction_stats
 

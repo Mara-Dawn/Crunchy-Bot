@@ -59,7 +59,7 @@ class PredictionModerationView(ViewMenu):
         match event.type:
             case UIEventType.PREDICTION_MODERATION_REFRESH:
                 predictions = event.payload
-                await self.refresh_ui(predictions=predictions, disabled=False)
+                await self.refresh_ui(predictions=predictions)
             case UIEventType.PREDICTION_MODERATION_DISABLE:
                 await self.refresh_ui(disabled=event.payload)
 

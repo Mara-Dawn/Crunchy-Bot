@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 
 import discord
 
@@ -18,7 +19,7 @@ class PredictionInteractionView(ViewMenu):
         self,
         controller: Controller,
         interaction: discord.Interaction,
-        prediction: PredictionStats,
+        prediction_stats: PredictionStats,
         parent_id: int,
         moderator: bool = False,
     ):
@@ -26,7 +27,7 @@ class PredictionInteractionView(ViewMenu):
 
         self.controller = controller
         self.parent_id = parent_id
-        self.prediction = prediction
+        self.prediction_stats = prediction_stats
 
         self.message = None
         self.is_moderator = moderator
@@ -34,6 +35,9 @@ class PredictionInteractionView(ViewMenu):
         self.guild_id = interaction.guild_id
 
         self.selected_outcome: int = None
+
+        self.controller_type = ControllerType.PREDICTION_INTERACTION_VIEW
+        self.controller.register_view(self)
 
         self.select_win_button: SelectWinnerButton = None
         self.cancel_button: CancelModerationButton = None
@@ -44,54 +48,30 @@ class PredictionInteractionView(ViewMenu):
         self.unlock_button: UnlockButton = None
         self.outcome_select: OutcomeSelect = None
         self.edit_button: EditButton = None
-
-        self.controller_type = ControllerType.PREDICTION_INTERACTION_VIEW
-        self.controller.register_view(self)
-
-        match prediction.prediction.state:
-            case PredictionState.SUBMITTED:
-                self.deny_button = DenyButton()
-                self.approve_button = ApproveButton()
-                self.edit_button = EditButton(prediction.prediction)
-            case PredictionState.APPROVED:
-                self.outcome_select = OutcomeSelect(prediction.prediction.outcomes)
-                self.lock_button = LockButton()
-                self.select_win_button = SelectWinnerButton()
-                self.refund_button = RefundButton()
-                if interaction.user.id == 90043934247501824:
-                    self.edit_button = EditButton(prediction.prediction)
-            case PredictionState.LOCKED:
-                self.outcome_select = OutcomeSelect(prediction.prediction.outcomes)
-                self.unlock_button = UnlockButton()
-                self.select_win_button = SelectWinnerButton()
-                self.refund_button = RefundButton()
-                self.edit_button = EditButton(prediction.prediction)
-                if interaction.user.id == 90043934247501824:
-                    self.edit_button = EditButton(prediction.prediction)
-            case PredictionState.DENIED:
-                self.edit_button = EditButton(prediction.prediction)
-                self.approve_button = ApproveButton()
-
-        self.cancel_button: CancelModerationButton = CancelModerationButton()
+        self.add_timestamp_button: AddLockTimestampButton = None
+        self.add_comment_button: AddCommentButton = None
 
         self.refresh_elements()
 
     async def listen_for_ui_event(self, event: UIEvent):
-        if event.view_id != self.id:
-            return
-
         match event.type:
             case UIEventType.PREDICTION_INTERACTION_REFRESH:
+                prediction_stats: PredictionStats = event.payload
+
+                if (
+                    self.prediction_stats.prediction.id
+                    == prediction_stats.prediction.id
+                ):
+                    self.prediction_stats = prediction_stats
+
                 await self.refresh_ui()
-            case UIEventType.PREDICTION_INTERACTION_DISABLE:
-                await self.refresh_ui(disabled=event.payload)
 
     async def confirm_outcome(self, interaction: discord.Interaction):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.PREDICTION_INTERACTION_CONFIRM_OUTCOME,
-            (interaction, self.prediction.prediction, self.selected_outcome),
-            self.parent_id,
+            (interaction, self.prediction_stats.prediction, self.selected_outcome),
+            self.id,
         )
         await self.controller.dispatch_ui_event(event)
 
@@ -99,8 +79,8 @@ class PredictionInteractionView(ViewMenu):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.PREDICTION_INTERACTION_DENY,
-            (interaction, self.prediction.prediction),
-            self.parent_id,
+            (interaction, self.prediction_stats.prediction),
+            self.id,
         )
         await self.controller.dispatch_ui_event(event)
 
@@ -108,8 +88,8 @@ class PredictionInteractionView(ViewMenu):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.PREDICTION_INTERACTION_REFUND,
-            (interaction, self.prediction.prediction),
-            self.parent_id,
+            (interaction, self.prediction_stats.prediction),
+            self.id,
         )
         await self.controller.dispatch_ui_event(event)
 
@@ -117,8 +97,8 @@ class PredictionInteractionView(ViewMenu):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.PREDICTION_INTERACTION_APPROVE,
-            (interaction, self.prediction.prediction),
-            self.parent_id,
+            (interaction, self.prediction_stats.prediction),
+            self.id,
         )
         await self.controller.dispatch_ui_event(event)
 
@@ -126,8 +106,8 @@ class PredictionInteractionView(ViewMenu):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.PREDICTION_INTERACTION_UNLOCK,
-            (interaction, self.prediction.prediction),
-            self.parent_id,
+            (interaction, self.prediction_stats.prediction),
+            self.id,
         )
         await self.controller.dispatch_ui_event(event)
 
@@ -135,21 +115,88 @@ class PredictionInteractionView(ViewMenu):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.PREDICTION_INTERACTION_LOCK,
-            (interaction, self.prediction.prediction),
-            self.parent_id,
+            (interaction, self.prediction_stats.prediction),
+            self.id,
         )
         await self.controller.dispatch_ui_event(event)
 
-    async def on_cancel(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+    async def edit_prediction(
+        self, interaction: discord.Interaction, new_prediction: Prediction
+    ):
         event = UIEvent(
-            UIEventType.PREDICTION_INTERACTION_CANCEL,
-            (interaction),
-            self.parent_id,
+            UIEventType.PREDICTION_INTERACTION_EDIT,
+            (interaction, new_prediction),
+            self.id,
         )
         await self.controller.dispatch_ui_event(event)
 
     def refresh_elements(self, disabled: bool = False):
+
+        self.select_win_button = None
+        self.cancel_button = None
+        self.deny_button = None
+        self.refund_button = None
+        self.approve_button = None
+        self.lock_button = None
+        self.unlock_button = None
+        self.outcome_select = None
+        self.edit_button = None
+        self.add_timestamp_button = None
+        self.add_comment_button = None
+
+        match self.prediction_stats.prediction.state:
+            case PredictionState.SUBMITTED:
+                self.deny_button = DenyButton()
+                self.approve_button = ApproveButton()
+                self.edit_button = EditButton(self.prediction_stats.prediction)
+                self.add_timestamp_button = AddLockTimestampButton(
+                    self.prediction_stats.prediction
+                )
+                self.add_comment_button = AddCommentButton(
+                    self.prediction_stats.prediction
+                )
+            case PredictionState.APPROVED:
+                self.outcome_select = OutcomeSelect(
+                    self.prediction_stats.prediction.outcomes
+                )
+                self.lock_button = LockButton()
+                self.select_win_button = SelectWinnerButton()
+                self.refund_button = RefundButton()
+                self.add_timestamp_button = AddLockTimestampButton(
+                    self.prediction_stats.prediction
+                )
+                self.add_comment_button = AddCommentButton(
+                    self.prediction_stats.prediction
+                )
+                if self.member_id == 90043934247501824:
+                    self.edit_button = EditButton(self.prediction_stats.prediction)
+            case PredictionState.LOCKED:
+                self.outcome_select = OutcomeSelect(
+                    self.prediction_stats.prediction.outcomes
+                )
+                self.unlock_button = UnlockButton()
+                self.select_win_button = SelectWinnerButton()
+                self.refund_button = RefundButton()
+                self.edit_button = EditButton(self.prediction_stats.prediction)
+                self.add_comment_button = AddCommentButton(
+                    self.prediction_stats.prediction
+                )
+                if self.member_id == 90043934247501824:
+                    self.edit_button = EditButton(self.prediction_stats.prediction)
+            case PredictionState.DENIED:
+                self.edit_button = EditButton(self.prediction_stats.prediction)
+                self.approve_button = ApproveButton()
+                self.add_comment_button = AddCommentButton(
+                    self.prediction_stats.prediction
+                )
+
+        self.cancel_button: CancelModerationButton = CancelModerationButton()
+
+        if self.outcome_select is not None:
+            for option in self.outcome_select.options:
+                if int(option.value) == self.selected_outcome:
+                    option.default = True
+
         elements: list[discord.ui.Item] = [
             self.outcome_select,
             self.lock_button,
@@ -159,6 +206,8 @@ class PredictionInteractionView(ViewMenu):
             self.edit_button,
             self.deny_button,
             self.refund_button,
+            self.add_timestamp_button,
+            self.add_comment_button,
             self.cancel_button,
         ]
 
@@ -169,15 +218,12 @@ class PredictionInteractionView(ViewMenu):
                 self.add_item(element)
 
     async def refresh_ui(self, disabled: bool = False):
-        if self.outcome_select is not None:
-            for option in self.outcome_select.options:
-                if int(option.value) == self.selected_outcome:
-                    option.default = True
-
         self.refresh_elements(disabled)
 
+        embed = self.prediction_stats.get_embed(moderator=True)
+
         try:
-            await self.message.edit(view=self)
+            await self.message.edit(embed=embed, view=self)
         except (discord.NotFound, discord.HTTPException):
             self.controller.detach_view(self)
 
@@ -198,16 +244,6 @@ class PredictionInteractionView(ViewMenu):
         await self.controller.dispatch_ui_event(event)
         await self.on_timeout()
 
-    async def edit_prediction(
-        self, interaction: discord.Interaction, new_prediction: Prediction
-    ):
-        event = UIEvent(
-            UIEventType.PREDICTION_INTERACTION_EDIT,
-            (interaction, new_prediction),
-            self.parent_id,
-        )
-        await self.controller.dispatch_ui_event(event)
-
     async def set_message(self, message: discord.Message):
         self.message = message
 
@@ -227,7 +263,7 @@ class PredictionInteractionView(ViewMenu):
 class CancelModerationButton(discord.ui.Button):
 
     def __init__(self):
-        super().__init__(label="Cancel", style=discord.ButtonStyle.red, row=2)
+        super().__init__(label="Back", style=discord.ButtonStyle.grey, row=2)
 
     async def callback(self, interaction: discord.Interaction):
         view: PredictionInteractionView = self.view
@@ -236,22 +272,10 @@ class CancelModerationButton(discord.ui.Button):
             await view.on_timeout()
 
 
-class CancelButton(discord.ui.Button):
-
-    def __init__(self):
-        super().__init__(label="Cancel", style=discord.ButtonStyle.red, row=2)
-
-    async def callback(self, interaction: discord.Interaction):
-        view: PredictionInteractionView = self.view
-
-        if await view.interaction_check(interaction):
-            await view.on_cancel(interaction)
-
-
 class LockButton(discord.ui.Button):
 
     def __init__(self, label: str = "Lock"):
-        super().__init__(label=label, style=discord.ButtonStyle.blurple, row=2)
+        super().__init__(label=label, style=discord.ButtonStyle.blurple, row=3)
 
     async def callback(self, interaction: discord.Interaction):
         view: PredictionInteractionView = self.view
@@ -263,7 +287,7 @@ class LockButton(discord.ui.Button):
 class UnlockButton(discord.ui.Button):
 
     def __init__(self, label: str = "Unlock"):
-        super().__init__(label=label, style=discord.ButtonStyle.blurple, row=2)
+        super().__init__(label=label, style=discord.ButtonStyle.blurple, row=3)
 
     async def callback(self, interaction: discord.Interaction):
         view: PredictionInteractionView = self.view
@@ -351,6 +375,101 @@ class OutcomeSelect(discord.ui.Select):
             await view.set_outcome(int(self.values[0]))
 
 
+class AddLockTimestampButton(discord.ui.Button):
+    def __init__(self, prediction: Prediction):
+        super().__init__(
+            label="Set Lock Timestamp", style=discord.ButtonStyle.blurple, row=3
+        )
+        self.prediction = prediction
+
+    async def callback(self, interaction: discord.Interaction):
+        view: PredictionInteractionView = self.view
+        if await view.interaction_check(interaction):
+            await interaction.response.send_modal(
+                AddLockTimestampModal(self.view, self.prediction)
+            )
+
+
+class AddLockTimestampModal(discord.ui.Modal):
+
+    def __init__(self, view: PredictionInteractionView, prediction: Prediction):
+        title = "Set Lock Timestamp"
+        super().__init__(title=title)
+
+        self.format = "%d/%m/%Y %H:%M"
+        self.view = view
+        self.old_prediction = prediction
+
+        self.timestamp = discord.ui.TextInput(
+            label="Timestamp (UTC - 24h format):",
+            placeholder="DD/MM/YYYY HH:MM",
+        )
+
+        old_timestamp = prediction.lock_datetime
+        if old_timestamp is not None:
+            self.timestamp.default = old_timestamp.strftime(self.format)
+        else:
+            self.timestamp.default = datetime.datetime.now().strftime(self.format)
+
+        self.add_item(self.timestamp)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        try:
+            timestamp = datetime.datetime.strptime(self.timestamp.value, self.format)
+        except ValueError:
+            await interaction.followup.send(
+                "Please enter a valid timestamp.", ephemeral=True
+            )
+            return
+
+        prediction = self.old_prediction
+        prediction.lock_datetime = timestamp
+
+        await self.view.edit_prediction(interaction, prediction)
+
+
+class AddCommentButton(discord.ui.Button):
+    def __init__(self, prediction: Prediction):
+        super().__init__(label="Add Comment", style=discord.ButtonStyle.grey, row=3)
+        self.prediction = prediction
+
+    async def callback(self, interaction: discord.Interaction):
+        view: PredictionInteractionView = self.view
+        if await view.interaction_check(interaction):
+            await interaction.response.send_modal(
+                AddCommentModal(self.view, self.prediction)
+            )
+
+
+class AddCommentModal(discord.ui.Modal):
+
+    def __init__(self, view: PredictionInteractionView, prediction: Prediction):
+        title = "Add or Edit Comment"
+        super().__init__(title=title)
+
+        self.view = view
+        self.old_prediction = prediction
+
+        self.comment = discord.ui.TextInput(
+            label="Comment:",
+            placeholder="Add a comment here.",
+        )
+
+        old_comment = prediction.comment
+        if old_comment is not None:
+            self.comment.default = old_comment
+
+        self.add_item(self.comment)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        prediction = self.old_prediction
+        prediction.comment = self.comment.value
+        await self.view.edit_prediction(interaction, prediction)
+
+
 class EditButton(discord.ui.Button):
     def __init__(self, prediction: Prediction = None):
         super().__init__(label="Edit", style=discord.ButtonStyle.grey, row=2)
@@ -423,13 +542,8 @@ class EditModal(discord.ui.Modal):
             await self.view.submit_prediction(prediction_content, outcomes)
             return
 
-        new_prediction = Prediction(
-            self.old_prediction.guild_id,
-            self.old_prediction.author_id,
-            prediction_content,
-            outcomes,
-            self.old_prediction.state,
-            id=self.old_prediction.id,
-        )
+        prediction = self.old_prediction
+        prediction.content = prediction_content
+        prediction.outcomes = outcomes
 
-        await self.view.edit_prediction(interaction, new_prediction)
+        await self.view.edit_prediction(interaction, prediction)
