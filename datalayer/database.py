@@ -335,19 +335,19 @@ class Database:
                 "DB", f"Loaded DB version {sqlite3.version} from {db_file}."
             )
 
-            # command = f"""
-            #     ALTER TABLE {self.PREDICTION_TABLE}
-            #     ADD COLUMN {self.PREDICTION_LOCK_TIMESTAMP_COL} INTEGER;
-            # """
+            command = f"""
+                ALTER TABLE {self.PREDICTION_TABLE}
+                ADD COLUMN {self.PREDICTION_LOCK_TIMESTAMP_COL} INTEGER;
+            """
 
-            # self.__query_insert(command)
+            self.__query_insert(command)
 
-            # command = f"""
-            #     ALTER TABLE {self.PREDICTION_TABLE}
-            #     ADD COLUMN {self.PREDICTION_COMMENT_COL} TEXT;
-            # """
+            command = f"""
+                ALTER TABLE {self.PREDICTION_TABLE}
+                ADD COLUMN {self.PREDICTION_COMMENT_COL} TEXT;
+            """
 
-            # self.__query_insert(command)
+            self.__query_insert(command)
 
             c = self.conn.cursor()
 
@@ -823,7 +823,7 @@ class Database:
             {self.PREDICTION_MOD_ID_COL},
             {self.PREDICTION_LOCK_TIMESTAMP_COL},
             {self.PREDICTION_COMMENT_COL}) 
-            VALUES (?, ?, ?, ?, ?);
+            VALUES (?, ?, ?, ?, ?, ?, ?);
         """
         task = (
             prediction.guild_id,
@@ -1550,11 +1550,12 @@ class Database:
     ) -> dict[int, tuple[int, int]]:
 
         command = f"""
-            SELECT * FROM {self.PREDICTION_EVENT_TABLE}
+            SELECT *, SUM({self.PREDICTION_EVENT_AMOUNT_COL}) FROM {self.PREDICTION_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.PREDICTION_EVENT_TABLE}.{self.PREDICTION_EVENT_ID_COL}
             WHERE {self.PREDICTION_EVENT_TYPE_COL} = ?
             AND {self.PREDICTION_EVENT_MEMBER_ID_COL} = ?
-            AND {self.EVENT_GUILD_ID_COL} = ?;
+            AND {self.EVENT_GUILD_ID_COL} = ?
+            GROUP BY {self.PREDICTION_EVENT_OUTCOME_ID_COL};
         """
 
         task = (PredictionEventType.PLACE_BET, member_id, guild_id)
@@ -1566,7 +1567,7 @@ class Database:
         return {
             row[self.PREDICTION_EVENT_PREDICTION_ID_COL]: (
                 row[self.PREDICTION_EVENT_OUTCOME_ID_COL],
-                row[self.PREDICTION_EVENT_AMOUNT_COL],
+                row[f"SUM({self.PREDICTION_EVENT_AMOUNT_COL})"],
             )
             for row in bet_rows
         }

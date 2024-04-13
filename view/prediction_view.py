@@ -121,12 +121,6 @@ class PredictionView(ViewMenu):
     ):
         _, prediction_stats = self.__get_selected_prediction_stats()
 
-        if self.selected in self.user_bets:
-            await interaction.followup.send(
-                "You already placed a bet for this prediction.", ephemeral=True
-            )
-            return
-
         event = UIEvent(
             UIEventType.PREDICTION_PLACE_BET,
             (
@@ -171,16 +165,27 @@ class PredictionView(ViewMenu):
         self.clear_items()
 
         if selected_prediction_stats is not None:
+
+            disabled = False
+            if self.selected in self.user_bets:
+                disabled = True
+                self.selected_outcome = self.user_bets[self.selected][0]
+
             outcome_select = OutcomeSelect(
-                selected_prediction_stats.prediction.outcomes
+                selected_prediction_stats.prediction.outcomes, disabled=disabled
             )
             for option in outcome_select.options:
                 if int(option.value) == self.selected_outcome:
                     option.default = True
 
             self.add_item(outcome_select)
+
+        bet_label = "Place your Bet"
+        if self.selected in self.user_bets:
+            bet_label = "Bet More"
+
         self.add_item(PageButton("<", False))
-        self.add_item(BetInputButton())
+        self.add_item(BetInputButton(bet_label))
         self.add_item(PageButton(">", True))
         self.add_item(CurrentPageButton(page_display))
         self.add_item(BalanceButton(self.user_balance))
@@ -275,7 +280,7 @@ class CurrentPageButton(discord.ui.Button):
 
 class OutcomeSelect(discord.ui.Select):
 
-    def __init__(self, outcomes: dict[int, str]):
+    def __init__(self, outcomes: dict[int, str], disabled: bool = False):
         options = []
 
         outcome_prefixes = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
@@ -294,6 +299,7 @@ class OutcomeSelect(discord.ui.Select):
             min_values=1,
             max_values=1,
             options=options,
+            disabled=disabled,
             row=0,
         )
 
@@ -306,8 +312,8 @@ class OutcomeSelect(discord.ui.Select):
 
 class BetInputButton(discord.ui.Button):
 
-    def __init__(self):
-        super().__init__(label="Place your Bet", style=discord.ButtonStyle.green, row=2)
+    def __init__(self, label: str = "Place your Bet"):
+        super().__init__(label=label, style=discord.ButtonStyle.green, row=2)
 
     async def callback(self, interaction: discord.Interaction):
         view: PredictionView = self.view
