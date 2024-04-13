@@ -335,20 +335,6 @@ class Database:
                 "DB", f"Loaded DB version {sqlite3.version} from {db_file}."
             )
 
-            command = f"""
-                ALTER TABLE {self.PREDICTION_TABLE}
-                ADD COLUMN {self.PREDICTION_LOCK_TIMESTAMP_COL} INTEGER;
-            """
-
-            self.__query_insert(command)
-
-            command = f"""
-                ALTER TABLE {self.PREDICTION_TABLE}
-                ADD COLUMN {self.PREDICTION_COMMENT_COL} TEXT;
-            """
-
-            self.__query_insert(command)
-
             c = self.conn.cursor()
 
             c.execute(self.CREATE_SETTINGS_TABLE)
