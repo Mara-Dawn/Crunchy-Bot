@@ -360,7 +360,7 @@ class JailReduction(Item):
 class LootBoxItem(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 150
+        defaultcost = 100
 
         if cost is None:
             cost = defaultcost

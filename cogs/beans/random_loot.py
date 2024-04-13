@@ -177,24 +177,6 @@ class RandomLoot(BeansGroup):
             SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
             int,
         )
-        modal.add_field(
-            guild_id,
-            SettingsManager.BEANS_SUBSETTINGS_KEY,
-            SettingsManager.BEANS_LOOTBOX_MIN_BEANS_KEY,
-            int,
-        )
-        modal.add_field(
-            guild_id,
-            SettingsManager.BEANS_SUBSETTINGS_KEY,
-            SettingsManager.BEANS_LOOTBOX_MAX_BEANS_KEY,
-            int,
-        )
-        modal.add_field(
-            guild_id,
-            SettingsManager.BEANS_SUBSETTINGS_KEY,
-            SettingsManager.BEANS_LOOTBOX_RARE_CHANCE_KEY,
-            float,
-        )
 
         modal.add_constraint(
             [
@@ -203,19 +185,6 @@ class RandomLoot(BeansGroup):
             ],
             lambda a, b: a <= b,
             "Minimum wait must be smaller than maximum.",
-        )
-        modal.add_constraint(
-            [
-                SettingsManager.BEANS_LOOTBOX_MIN_BEANS_KEY,
-                SettingsManager.BEANS_LOOTBOX_MAX_BEANS_KEY,
-            ],
-            lambda a, b: a <= b,
-            "Minimum beans must be smaller than maximum.",
-        )
-        modal.add_constraint(
-            [SettingsManager.BEANS_LOOTBOX_RARE_CHANCE_KEY],
-            lambda a: a >= 0 and a <= 1,
-            "Chance must be between 0 and 1.",
         )
 
         await interaction.response.send_modal(modal)

@@ -54,9 +54,6 @@ class SettingsManager(Service):
     BEANS_LOTTERY_BASE_AMOUNT_KEY = "beans_lottery_base_amount"
     BEANS_LOOTBOX_MIN_WAIT_KEY = "beans_lootbox_min_wait"
     BEANS_LOOTBOX_MAX_WAIT_KEY = "beans_lootbox_max_wait"
-    BEANS_LOOTBOX_MIN_BEANS_KEY = "beans_lootbox_min_beans"
-    BEANS_LOOTBOX_MAX_BEANS_KEY = "beans_lootbox_max_beans"
-    BEANS_LOOTBOX_RARE_CHANCE_KEY = "beans_lootbox_rare_chance"
     BEANS_NOTIFICATION_CHANNELS_KEY = "beans_notification_channels"
 
     SHOP_SUBSETTINGS_KEY = "shop"
@@ -213,23 +210,8 @@ class SettingsManager(Service):
         )
         beans_settings.add_setting(
             self.BEANS_LOOTBOX_MAX_WAIT_KEY,
-            120,
+            60,
             "Max delay between loot box spawns (minutes)",
-        )
-        beans_settings.add_setting(
-            self.BEANS_LOOTBOX_MIN_BEANS_KEY,
-            10,
-            "Min amount of beans found in a loot box",
-        )
-        beans_settings.add_setting(
-            self.BEANS_LOOTBOX_MAX_BEANS_KEY,
-            100,
-            "Max amount of beans found in a loot box",
-        )
-        beans_settings.add_setting(
-            self.BEANS_LOOTBOX_RARE_CHANCE_KEY,
-            0.2,
-            "Chance for a rare lootbox to spawn",
         )
         beans_settings.add_setting(
             self.BEANS_NOTIFICATION_CHANNELS_KEY,
