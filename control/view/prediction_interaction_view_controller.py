@@ -12,10 +12,11 @@ from datalayer.database import Database
 from datalayer.prediction import Prediction
 from datalayer.types import PredictionState
 from events.beans_event import BeansEvent
+from events.bot_event import BotEvent
 from events.prediction_event import PredictionEvent
-from events.types import BeansEventType, PredictionEventType, UIEventType
+from events.types import BeansEventType, EventType, PredictionEventType, UIEventType
 from events.ui_event import UIEvent
-from view.prediction_view import PredictionView
+from view.prediction_interaction_view import PredictionInteractionView
 
 
 class PredictionInteractionViewController(ViewController):
@@ -35,6 +36,22 @@ class PredictionInteractionViewController(ViewController):
         self.controller = controller
         self.event_manager: EventManager = controller.get_service(EventManager)
         self.settings_manager: SettingsManager = controller.get_service(SettingsManager)
+
+    async def listen_for_event(self, event: BotEvent) -> None:
+        match event.type:
+            case EventType.PREDICTION:
+                prediction_event: PredictionEvent = event
+                prediction = self.database.get_prediction_by_id(
+                    prediction_event.prediction_id
+                )
+                prediction_stats = self.database.get_prediction_stats_by_prediction(
+                    prediction
+                )
+                event = UIEvent(
+                    UIEventType.PREDICTION_INTERACTION_REFRESH,
+                    prediction_stats,
+                )
+                await self.controller.dispatch_ui_event(event)
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -71,38 +88,20 @@ class PredictionInteractionViewController(ViewController):
                 await self.end_and_refund_submission(
                     interaction, prediction, event.view_id
                 )
-            case UIEventType.PREDICTION_INTERACTION_CANCEL:
-                interaction = event.payload
-                await self.cancel_interaction(
-                    interaction,
-                    event.view_id,
-                )
 
-    async def cancel_interaction(
-        self,
-        interaction: discord.Interaction,
-        view_id: int,
+    async def __refresh_view(
+        self, interaction: discord.Interaction, prediction: Prediction, view_id: int
     ):
-        message = await interaction.original_response()
+        view: PredictionInteractionView = self.controller.get_view(view_id)
 
-        prediction_stats = self.database.get_prediction_stats_by_guild(
-            interaction.guild_id, [PredictionState.APPROVED]
-        )
-        user_balance = self.database.get_member_beans(
-            interaction.guild.id, interaction.user.id
-        )
-        user_bets = self.database.get_prediction_bets_by_user(
-            interaction.guild.id, interaction.user.id
-        )
-
-        view = self.controller.get_view(view_id)
         if view is None:
-            view = PredictionView(self.controller, interaction, prediction_stats)
+            message = await interaction.original_response()
+            await message.delete()
 
-        await message.edit(view=view)
+        prediction_stats = self.database.get_prediction_stats_by_prediction(prediction)
+        view.prediction_stats = prediction_stats
 
-        view.set_message(message)
-        await view.refresh_ui(user_balance=user_balance, user_bets=user_bets)
+        await view.refresh_ui()
 
     async def confirm_outcome(
         self,
@@ -172,12 +171,7 @@ class PredictionInteractionViewController(ViewController):
         success_message = "You successfully resolved your selected Prediction. The winners were paid out."
         await interaction.followup.send(success_message, ephemeral=True)
 
-        prediction = self.database.get_prediction_stats_by_guild(guild_id)
-        event = UIEvent(UIEventType.PREDICTION_MODERATION_REFRESH, prediction, view_id)
-        await self.controller.dispatch_ui_event(event)
-
-        message = await interaction.original_response()
-        await message.delete()
+        await self.__refresh_view(interaction, prediction, view_id)
 
     async def deny_submission(
         self, interaction: discord.Interaction, prediction: Prediction, view_id: int
@@ -202,12 +196,7 @@ class PredictionInteractionViewController(ViewController):
         success_message = "You successfully denied your selected prediction submission."
         await interaction.followup.send(success_message, ephemeral=True)
 
-        prediction = self.database.get_prediction_stats_by_guild(guild_id)
-        event = UIEvent(UIEventType.PREDICTION_MODERATION_REFRESH, prediction, view_id)
-        await self.controller.dispatch_ui_event(event)
-
-        message = await interaction.original_response()
-        await message.delete()
+        await self.__refresh_view(interaction, prediction, view_id)
 
     async def lock_prediction(
         self, interaction: discord.Interaction, prediction: Prediction, view_id: int
@@ -240,12 +229,7 @@ class PredictionInteractionViewController(ViewController):
         success_message = "You successfully locked your selected prediction submission."
         await interaction.followup.send(success_message, ephemeral=True)
 
-        prediction = self.database.get_prediction_stats_by_guild(guild_id)
-        event = UIEvent(UIEventType.PREDICTION_MODERATION_REFRESH, prediction, view_id)
-        await self.controller.dispatch_ui_event(event)
-
-        message = await interaction.original_response()
-        await message.delete()
+        await self.__refresh_view(interaction, prediction, view_id)
 
     async def unlock_prediction(
         self, interaction: discord.Interaction, prediction: Prediction, view_id: int
@@ -263,7 +247,7 @@ class PredictionInteractionViewController(ViewController):
             guild_id,
             prediction.id,
             member_id,
-            PredictionEventType.APPROVE,
+            PredictionEventType.UNLOCK,
         )
         await self.controller.dispatch_event(event)
 
@@ -280,12 +264,7 @@ class PredictionInteractionViewController(ViewController):
         )
         await interaction.followup.send(success_message, ephemeral=True)
 
-        prediction = self.database.get_prediction_stats_by_guild(guild_id)
-        event = UIEvent(UIEventType.PREDICTION_MODERATION_REFRESH, prediction, view_id)
-        await self.controller.dispatch_ui_event(event)
-
-        message = await interaction.original_response()
-        await message.delete()
+        await self.__refresh_view(interaction, prediction, view_id)
 
     async def approve_submission(
         self, interaction: discord.Interaction, prediction: Prediction, view_id: int
@@ -320,12 +299,7 @@ class PredictionInteractionViewController(ViewController):
         )
         await interaction.followup.send(success_message, ephemeral=True)
 
-        prediction = self.database.get_prediction_stats_by_guild(guild_id)
-        event = UIEvent(UIEventType.PREDICTION_MODERATION_REFRESH, prediction, view_id)
-        await self.controller.dispatch_ui_event(event)
-
-        message = await interaction.original_response()
-        await message.delete()
+        await self.__refresh_view(interaction, prediction, view_id)
 
     async def edit_prediction(
         self,
@@ -352,14 +326,7 @@ class PredictionInteractionViewController(ViewController):
         )
         await interaction.followup.send(success_message, ephemeral=True)
 
-        updated_prediction = self.database.get_prediction_stats_by_guild(guild_id)
-        event = UIEvent(
-            UIEventType.PREDICTION_MODERATION_REFRESH, updated_prediction, view_id
-        )
-        await self.controller.dispatch_ui_event(event)
-
-        message = await interaction.original_response()
-        await message.delete()
+        await self.__refresh_view(interaction, updated_prediction, view_id)
 
     async def end_and_refund_submission(
         self, interaction: discord.Interaction, prediction: Prediction, view_id: int
@@ -404,9 +371,4 @@ class PredictionInteractionViewController(ViewController):
         )
         await interaction.followup.send(success_message, ephemeral=True)
 
-        prediction = self.database.get_prediction_stats_by_guild(guild_id)
-        event = UIEvent(UIEventType.PREDICTION_MODERATION_REFRESH, prediction, view_id)
-        await self.controller.dispatch_ui_event(event)
-
-        message = await interaction.original_response()
-        await message.delete()
+        await self.__refresh_view(interaction, prediction, view_id)

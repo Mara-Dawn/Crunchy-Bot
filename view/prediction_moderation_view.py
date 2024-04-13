@@ -59,7 +59,7 @@ class PredictionModerationView(ViewMenu):
         match event.type:
             case UIEventType.PREDICTION_MODERATION_REFRESH:
                 predictions = event.payload
-                await self.refresh_ui(predictions=predictions, disabled=False)
+                await self.refresh_ui(predictions=predictions)
             case UIEventType.PREDICTION_MODERATION_DISABLE:
                 await self.refresh_ui(disabled=event.payload)
 
@@ -128,6 +128,9 @@ class PredictionModerationView(ViewMenu):
 
         self.disabled = disabled
 
+        if len(self.predictions) > 0 and self.selected is None:
+            self.selected = self.predictions[start:end][0].prediction.id
+
         self.clear_items()
         self.add_item(FilterDropdown(self.filter, disabled))
         if len(self.predictions[start:end]) > 0:
@@ -176,6 +179,8 @@ class PredictionModerationView(ViewMenu):
     ):
         await interaction.response.defer()
         self.filter = filter
+        self.current_page = 0
+        self.selected = None
         await self.refresh_ui()
 
     async def set_selected(self, interaction: discord.Interaction, prediction_id: int):
@@ -287,7 +292,6 @@ class SelectDropdown(discord.ui.Select):
     ):
 
         options = []
-
         for item in items:
             label = (
                 (item.prediction.content[:96] + "..")

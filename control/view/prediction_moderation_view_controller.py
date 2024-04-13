@@ -70,6 +70,8 @@ class PredictionModerationViewController(ViewController):
             UIEventType.PREDICTION_MODERATION_REFRESH, prediction_stats, view_id
         )
         await self.controller.dispatch_ui_event(event)
+        event = UIEvent(UIEventType.PREDICTION_MODERATION_DISABLE, False, view_id)
+        await self.controller.dispatch_ui_event(event)
 
     async def edit(
         self, interaction: discord.Interaction, selected: PredictionStats, view_id: int
@@ -80,7 +82,7 @@ class PredictionModerationViewController(ViewController):
             )
             return
 
-        embed = selected.get_embed()
+        embed = selected.get_embed(moderator=True)
         view = PredictionInteractionView(
             self.controller, interaction, selected, view_id, True
         )

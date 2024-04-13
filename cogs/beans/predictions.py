@@ -3,11 +3,13 @@ from typing import Literal
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from cogs.beans.beans_group import BeansGroup
 from control.settings_manager import SettingsManager
 from datalayer.types import PredictionState
+from events.prediction_event import PredictionEvent
+from events.types import PredictionEventType
 from items.types import ItemType
 from view.prediction_embed import PredictionEmbed
 from view.prediction_moderation_embed import PredictionModerationEmbed
@@ -81,7 +83,68 @@ class Predictions(BeansGroup):
 
     @commands.Cog.listener("on_ready")
     async def on_ready_prediction(self) -> None:
+        self.prediction_timeout_check.start()
         self.logger.log("init", "Predictions loaded.", cog=self.__cog_name__)
+
+    @tasks.loop(seconds=60)
+    async def prediction_timeout_check(self):
+        self.logger.log(
+            "sys", "prediction timeout check task started", cog=self.__cog_name__
+        )
+
+        for guild in self.bot.guilds:
+            guild_id = guild.id
+            self.logger.log(
+                guild_id,
+                f"prediction timeout for guild {guild.name}.",
+                cog=self.__cog_name__,
+            )
+
+            active_predictions = self.database.get_predictions_by_guild(
+                guild_id, [PredictionState.APPROVED]
+            )
+
+            if active_predictions is None:
+                continue
+
+            for prediction in active_predictions:
+                time_now = datetime.datetime.now()
+                lock_in_datetime = prediction.lock_datetime
+
+                if lock_in_datetime is None:
+                    continue
+
+                remainder = lock_in_datetime - time_now
+                remainder = int(max(remainder.total_seconds() / 60, 0))
+
+                self.logger.log(
+                    guild_id,
+                    f"prediction timeout check for {prediction.content}. Remaining: {remainder}",
+                    cog=self.__cog_name__,
+                )
+
+                if time_now > lock_in_datetime:
+
+                    prediction.state = PredictionState.LOCKED
+                    prediction.lock_datetime = None
+                    self.database.update_prediction(prediction)
+
+                    event = PredictionEvent(
+                        datetime.datetime.now(),
+                        guild_id,
+                        prediction.id,
+                        self.bot.user.id,
+                        PredictionEventType.LOCK,
+                    )
+                    await self.controller.dispatch_event(event)
+
+                    bean_channels = (
+                        self.settings_manager.get_beans_notification_channels(guild_id)
+                    )
+                    announcement = f"**This prediction has been locked in!**\n> {prediction.content}\nNo more bets will be accepted. The winners will be paid out once an outcome is achieved. Good luck!\nYou can also submit your own prediction ideas in the `/shop`."
+                    for channel_id in bean_channels:
+                        channel = guild.get_channel(channel_id)
+                        await channel.send(announcement)
 
     @app_commands.command(
         name="prediction", description="Bet your beans on various predictions."
