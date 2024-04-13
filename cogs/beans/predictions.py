@@ -95,7 +95,7 @@ class Predictions(BeansGroup):
             f"{interaction.user.name} used command `{interaction.command.name}`."
         )
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=False)
 
         prediction_stats = self.database.get_prediction_stats_by_guild(
             interaction.guild_id, [PredictionState.APPROVED, PredictionState.LOCKED]
@@ -115,7 +115,7 @@ class Predictions(BeansGroup):
             content="",
             embed=embed,
             view=view,
-            ephemeral=True,
+            ephemeral=False,
         )
         view.set_message(message)
         await view.refresh_ui(user_balance=user_balance, user_bets=user_bets)
