@@ -75,41 +75,46 @@ class ItemManager(Service):
         ]
 
         weights = [self.get_item(guild_id, x).cost for x in item_pool]
-        chance_for_item = self.settings_manager.get_setting(
-            guild_id,
-            SettingsManager.BEANS_SUBSETTINGS_KEY,
-            SettingsManager.BEANS_LOOTBOX_RARE_CHANCE_KEY,
-        )
+
+        # Spawn Chances
         mimic_chance = 0.1
-        chance_for_bonus_beans = 0.2
+        chance_for_item = 0.2
+        medium_chest_chance = 0.2
+        large_chest_chance = 0.01
         random_item = None
 
-        min_beans = self.settings_manager.get_setting(
-            guild_id,
-            SettingsManager.BEANS_SUBSETTINGS_KEY,
-            SettingsManager.BEANS_LOOTBOX_MIN_BEANS_KEY,
-        )
-        max_beans = self.settings_manager.get_setting(
-            guild_id,
-            SettingsManager.BEANS_SUBSETTINGS_KEY,
-            SettingsManager.BEANS_LOOTBOX_MAX_BEANS_KEY,
-        )
-
-        beans = random.randint(min_beans, max_beans)
+        # Chest Ranges
+        small_min_beans = 40
+        small_max_beans = 80
+        medium_min_beans = 200
+        medium_max_beans = 300
+        large_min_beans = 700
+        large_max_beans = 900
+        small_beans_reward = random.randint(small_min_beans, small_max_beans)
+        medium_beans_reward = random.randint(medium_min_beans, medium_max_beans)
+        large_beans_reward = random.randint(large_min_beans, large_max_beans)
         roll = random.random()
-        
-        if roll <= chance_for_item:
+
+        if roll <= mimic_chance:
+            beans = -small_beans_reward
+        elif roll > mimic_chance and roll <= (mimic_chance + chance_for_item):
             weights = [1.0 / w for w in weights]
             sum_weights = sum(weights)
             weights = [w / sum_weights for w in weights]
             random_item = random.choices(item_pool, weights=weights)[0]
-        elif roll > chance_for_item and roll <= (
-            chance_for_item + chance_for_bonus_beans
+            beans = small_beans_reward
+        elif roll > (mimic_chance + chance_for_item) and roll <= (
+            mimic_chance + chance_for_item + medium_chest_chance
         ):
-            beans = random.randint(min_beans * 10, max_beans * 10)
-        elif roll > 1 - mimic_chance:
-            beans = -beans
-
+            beans = medium_beans_reward
+        elif roll > (mimic_chance + chance_for_item + medium_chest_chance) and roll <= (
+            mimic_chance + chance_for_item + medium_chest_chance + large_chest_chance
+        ):
+            beans = large_beans_reward
+        elif roll > (
+            mimic_chance + chance_for_item + medium_chest_chance + large_chest_chance
+        ):
+            beans = small_beans_reward
         return LootBox(guild_id, random_item, beans)
 
     async def drop_loot_box(self, guild: discord.Guild, channel_id: int):
