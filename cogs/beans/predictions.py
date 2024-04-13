@@ -88,13 +88,13 @@ class Predictions(BeansGroup):
 
     @tasks.loop(seconds=60)
     async def prediction_timeout_check(self):
-        self.logger.log(
+        self.logger.debug(
             "sys", "prediction timeout check task started", cog=self.__cog_name__
         )
 
         for guild in self.bot.guilds:
             guild_id = guild.id
-            self.logger.log(
+            self.logger.debug(
                 guild_id,
                 f"prediction timeout for guild {guild.name}.",
                 cog=self.__cog_name__,
@@ -117,7 +117,7 @@ class Predictions(BeansGroup):
                 remainder = lock_in_datetime - time_now
                 remainder = int(max(remainder.total_seconds() / 60, 0))
 
-                self.logger.log(
+                self.logger.debug(
                     guild_id,
                     f"prediction timeout check for {prediction.content}. Remaining: {remainder}",
                     cog=self.__cog_name__,
