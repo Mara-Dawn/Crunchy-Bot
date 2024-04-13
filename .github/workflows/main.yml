@@ -12,3 +12,4 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - run: rsync -a /home/mara/actions-runner/_work/Crunchy-Patrol/ /home/mara/Bot/
