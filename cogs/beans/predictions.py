@@ -183,6 +183,25 @@ class Predictions(BeansGroup):
     )
 
     @group.command(
+        name="reload_overview",
+        description="Reloads prediction overview.",
+    )
+    @app_commands.guild_only()
+    async def reload_overview(self, interaction: discord.Interaction):
+        if not await self.__check_enabled(interaction, all_channels=True):
+            return
+
+        if not self.__has_mod_permission(interaction):
+            raise app_commands.MissingPermissions([])
+
+        await interaction.response.defer()
+        await self.prediction_manager.refresh_prediction_messages(interaction.guild_id)
+
+        await self.bot.command_response(
+            self.__cog_name__, interaction, "Successfully reloaded predictions."
+        )
+
+    @group.command(
         name="settings",
         description="Overview of all beans prediction related settings and their current value.",
     )
