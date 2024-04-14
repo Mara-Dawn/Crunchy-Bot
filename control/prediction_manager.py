@@ -6,7 +6,7 @@ from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
-from datalayer.types import PredictionState
+from datalayer.types import PredictionState, PredictionStateSort
 from events.bot_event import BotEvent
 from events.prediction_event import PredictionEvent
 from events.types import EventType, PredictionEventType, UIEventType
@@ -74,6 +74,14 @@ class PredictionManager(Service):
             guild_id, [PredictionState.APPROVED, PredictionState.LOCKED]
         )
 
+        prediction_stats = sorted(
+            prediction_stats,
+            key=lambda x: (
+                PredictionStateSort.get_prio(x.prediction.state),
+                -x.prediction.id,
+            ),
+        )
+
         guild = self.bot.get_guild(guild_id)
 
         for channel_id in prediction_channels:
@@ -108,15 +116,12 @@ class PredictionManager(Service):
             interaction.guild.id, interaction.user.id
         )
 
-        embed = PredictionEmbed(interaction.guild.name)
-
         view = PredictionView(
             self.controller, interaction, prediction_stats, selected=prediction_id
         )
 
         message = await interaction.followup.send(
             content="",
-            embed=embed,
             view=view,
             ephemeral=True,
         )
