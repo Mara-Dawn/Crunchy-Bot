@@ -6,7 +6,7 @@ from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
-from datalayer.types import PredictionState
+from datalayer.types import PredictionState, PredictionStateSort
 from events.bot_event import BotEvent
 from events.prediction_event import PredictionEvent
 from events.types import EventType, PredictionEventType, UIEventType
@@ -72,6 +72,14 @@ class PredictionManager(Service):
 
         prediction_stats = self.database.get_prediction_stats_by_guild(
             guild_id, [PredictionState.APPROVED, PredictionState.LOCKED]
+        )
+
+        prediction_stats = sorted(
+            prediction_stats,
+            key=lambda x: (
+                PredictionStateSort.get_prio(x.prediction.state),
+                -x.prediction.id,
+            ),
         )
 
         guild = self.bot.get_guild(guild_id)

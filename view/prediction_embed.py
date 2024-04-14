@@ -17,7 +17,7 @@ class PredictionEmbed(discord.Embed):
         message = (
             "Browse through the different predictions below and place your bets. "
             "\nYou can see the amount of beans already placed below each outcome."
-            "\nThe odds will tell you, how much of your initial bet will be paid out if that option wins."
+            "\nThe odds will tell you how big your payout is gonna be relative to your bet."
         )
 
         self.add_field(
