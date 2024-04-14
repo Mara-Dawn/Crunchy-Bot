@@ -5,6 +5,7 @@ from discord.ext import commands
 
 from control.controller import Controller
 from control.logger import BotLogger
+from control.prediction_manager import PredictionManager
 from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.prediction import Prediction
@@ -36,6 +37,9 @@ class PredictionViewController(ViewController):
             database,
         )
         self.controller = controller
+        self.prediction_manager: PredictionManager = self.controller.get_service(
+            PredictionManager
+        )
 
     async def listen_for_event(self, event: BotEvent) -> None:
         match event.type:
@@ -106,6 +110,31 @@ class PredictionViewController(ViewController):
                     selected_bet_amount,
                     event.view_id,
                 )
+            case UIEventType.PREDICTION_OPEN_UI:
+                interaction = event.payload[0]
+                prediction: Prediction = event.payload[1]
+                if prediction is None:
+                    await self.open_ui(interaction, None)
+                    return
+                await self.open_ui(interaction, prediction.id)
+            case UIEventType.PREDICTION_PREDICTION_SUBMIT:
+                await self.submit_prediction(event.payload)
+
+    async def open_ui(self, interaction: discord.Interaction, prediction_id: int):
+        await self.prediction_manager.post_prediction_interface(
+            interaction, prediction_id
+        )
+
+    async def submit_prediction(self, prediction: Prediction):
+        prediction_id = self.database.log_prediction(prediction)
+        event = PredictionEvent(
+            datetime.datetime.now(),
+            prediction.guild_id,
+            prediction_id,
+            prediction.author_id,
+            PredictionEventType.SUBMIT,
+        )
+        await self.controller.dispatch_event(event)
 
     async def submit_bet(
         self,
@@ -117,6 +146,19 @@ class PredictionViewController(ViewController):
     ):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
+
+        user_bets = self.database.get_prediction_bets_by_user(
+            interaction.guild_id, interaction.user.id
+        )
+
+        if prediction.id in user_bets:
+            user_prediction_bets = user_bets[prediction.id]
+            if user_prediction_bets[0] != selected_outcome_id:
+                await interaction.followup.send(
+                    "You cannot bet on other outcomes once you placed your bet for a prediction.\nYou may bet additional beans on your previously selected outcome though.\nUse `/beans prediction` for a better overview of your current bets.",
+                    ephemeral=True,
+                )
+                return
 
         if prediction is None:
             await interaction.followup.send(

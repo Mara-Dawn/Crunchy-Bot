@@ -11,10 +11,6 @@ from datalayer.types import PredictionState
 from events.prediction_event import PredictionEvent
 from events.types import PredictionEventType
 from items.types import ItemType
-from view.prediction_embed import PredictionEmbed
-from view.prediction_moderation_embed import PredictionModerationEmbed
-from view.prediction_moderation_view import PredictionModerationView
-from view.prediction_view import PredictionView
 
 
 class Predictions(BeansGroup):
@@ -84,6 +80,10 @@ class Predictions(BeansGroup):
     @commands.Cog.listener("on_ready")
     async def on_ready_prediction(self) -> None:
         self.prediction_timeout_check.start()
+
+        for guild in self.bot.guilds:
+            await self.prediction_manager.refresh_prediction_messages(guild.id)
+
         self.logger.log("init", "Predictions loaded.", cog=self.__cog_name__)
 
     @tasks.loop(seconds=60)
@@ -158,30 +158,7 @@ class Predictions(BeansGroup):
             f"{interaction.user.name} used command `{interaction.command.name}`."
         )
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        await interaction.response.defer(ephemeral=False)
-
-        prediction_stats = self.database.get_prediction_stats_by_guild(
-            interaction.guild_id, [PredictionState.APPROVED, PredictionState.LOCKED]
-        )
-        user_balance = self.database.get_member_beans(
-            interaction.guild.id, interaction.user.id
-        )
-        user_bets = self.database.get_prediction_bets_by_user(
-            interaction.guild.id, interaction.user.id
-        )
-
-        embed = PredictionEmbed(interaction.guild.name)
-
-        view = PredictionView(self.controller, interaction, prediction_stats)
-
-        message = await interaction.followup.send(
-            content="",
-            embed=embed,
-            view=view,
-            ephemeral=False,
-        )
-        view.set_message(message)
-        await view.refresh_ui(user_balance=user_balance, user_bets=user_bets)
+        await self.prediction_manager.post_prediction_interface(interaction)
 
     @app_commands.command(
         name="prediction_moderation",
@@ -199,24 +176,7 @@ class Predictions(BeansGroup):
             f"{interaction.user.name} used command `{interaction.command.name}`."
         )
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-        await interaction.response.defer(ephemeral=True)
-
-        prediction_stats = self.database.get_prediction_stats_by_guild(
-            interaction.guild_id
-        )
-
-        embed = PredictionModerationEmbed(interaction.guild.name)
-
-        view = PredictionModerationView(self.controller, interaction, prediction_stats)
-
-        message = await interaction.followup.send(
-            content="",
-            embed=embed,
-            view=view,
-            ephemeral=True,
-        )
-        view.set_message(message)
-        await view.refresh_ui()
+        await self.prediction_manager.post_prediction_moderation_interface(interaction)
 
     group = app_commands.Group(
         name="predictions", description="Subcommands for the Beans Predictions module."
@@ -284,6 +244,46 @@ class Predictions(BeansGroup):
             interaction,
             f"Removed {role.name} from prediction moderators.",
             args=[role.name],
+        )
+
+    @group.command(
+        name="add_predictions_channel",
+        description="Add a channel where the prediction overview is gonna be displayed.",
+    )
+    @app_commands.describe(
+        channel="This channel will be added to the predictions channels."
+    )
+    @app_commands.check(__has_permission)
+    async def add_predictions_channel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ):
+        self.settings_manager.add_predictions_channel(interaction.guild_id, channel.id)
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Added {channel.name} to prediction channels.",
+            args=[channel.name],
+        )
+
+    @group.command(
+        name="remove_predictions_channel",
+        description="Add a channel where the prediction overview is gonna be displayed.",
+    )
+    @app_commands.describe(
+        channel="This channel will be removed from the predictions channels."
+    )
+    @app_commands.check(__has_permission)
+    async def remove_predictions_channel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ):
+        self.settings_manager.remove_predictions_channel(
+            interaction.guild_id, channel.id
+        )
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Removed {channel.name} from prediction channels.",
+            args=[channel.name],
         )
 
 
