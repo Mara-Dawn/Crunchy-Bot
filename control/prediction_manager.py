@@ -108,15 +108,12 @@ class PredictionManager(Service):
             interaction.guild.id, interaction.user.id
         )
 
-        embed = PredictionEmbed(interaction.guild.name)
-
         view = PredictionView(
             self.controller, interaction, prediction_stats, selected=prediction_id
         )
 
         message = await interaction.followup.send(
             content="",
-            embed=embed,
             view=view,
             ephemeral=True,
         )
