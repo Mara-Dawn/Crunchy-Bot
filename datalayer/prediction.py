@@ -28,10 +28,15 @@ class Prediction:
         self.comment = comment
         self.id = id
 
-    def get_timestamp(self) -> float:
+    def get_timestamp_sort(self) -> float:
         if self.lock_datetime is None:
             max_date = datetime.datetime.max
             return max_date.replace(tzinfo=datetime.UTC).timestamp()
+        return int(self.lock_datetime.timestamp())
+
+    def get_timestamp(self) -> float:
+        if self.lock_datetime is None:
+            return None
         return int(self.lock_datetime.timestamp())
 
     @staticmethod

@@ -68,7 +68,7 @@ class PredictionModerationView(ViewMenu):
             self.all_predictions,
             key=lambda x: (
                 PredictionStateSort.get_prio(x.prediction.state),
-                x.prediction.get_timestamp(),
+                x.prediction.get_timestamp_sort(),
                 -x.prediction.id,
             ),
         )
