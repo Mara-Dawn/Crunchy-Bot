@@ -97,6 +97,7 @@ class PredictionView(ViewMenu):
             self.predictions,
             key=lambda x: (
                 PredictionStateSort.get_prio(x.prediction.state),
+                x.prediction.get_timestamp(),
                 -x.prediction.id,
             ),
         )

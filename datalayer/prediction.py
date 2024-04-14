@@ -30,7 +30,8 @@ class Prediction:
 
     def get_timestamp(self) -> float:
         if self.lock_datetime is None:
-            return None
+            max_date = datetime.datetime.max
+            return max_date.replace(tzinfo=datetime.UTC).timestamp()
         return int(self.lock_datetime.timestamp())
 
     @staticmethod
