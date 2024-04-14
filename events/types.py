@@ -104,3 +104,7 @@ class UIEventType(str, Enum):
     PREDICTION_SELECT = "select_prediction"
     PREDICTION_PLACE_BET = "place_bet_prediction"
     PREDICTION_BET_REFRESH = "prediction_bet_refresh"
+    PREDICTION_OPEN_UI = "prediction_open_ui"
+    PREDICTION_PREDICTION_SUBMIT = "prediction_prediction_submit"
+
+    PREDICTION_OVERVIEW_REFRESH = "prediction_overview_refresh"

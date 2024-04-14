@@ -365,7 +365,7 @@ class SubmissionInputButton(discord.ui.Button):
 class SubmissionInputModal(discord.ui.Modal):
 
     def __init__(self, view: ShopResponseView):
-        super().__init__(title="Choose a Color")
+        super().__init__(title="Prediction Submission")
         self.view = view
         self.prediction = discord.ui.TextInput(
             label="Prediction:", placeholder="Enter your Prediction here."

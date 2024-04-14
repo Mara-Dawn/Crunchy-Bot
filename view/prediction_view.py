@@ -8,7 +8,6 @@ from datalayer.prediction_stats import PredictionStats
 from datalayer.types import PredictionState, PredictionStateSort
 from events.types import UIEventType
 from events.ui_event import UIEvent
-from view.prediction_embed import PredictionEmbed
 from view.prediction_moderation_embed import PredictionModerationEmbed
 from view.view_menu import ViewMenu
 
@@ -20,6 +19,7 @@ class PredictionView(ViewMenu):
         controller: Controller,
         interaction: discord.Interaction,
         predictions: list[PredictionStats],
+        selected: int = None,
     ):
         super().__init__(timeout=300)
         self.controller = controller
@@ -34,9 +34,9 @@ class PredictionView(ViewMenu):
         self.__filter_predictions()
         self.__sort_predictions()
 
-        self.selected: int = None
+        self.selected: int = selected
         self.selected_idx = 0
-        if len(self.predictions) > 0:
+        if len(self.predictions) > 0 and self.selected is None:
             self.selected = self.predictions[self.selected_idx].prediction.id
 
         self.user_balance: int = 0
@@ -214,19 +214,15 @@ class PredictionView(ViewMenu):
             selected = selected_stats
 
         self.refresh_elements(user_balance)
-
-        head_embed = PredictionEmbed(
-            guild_name=self.guild_name,
-        )
-        embeds = [head_embed]
+        embed = None
         user_bet = None
         if selected is not None:
             if self.user_bets is not None and selected.prediction.id in self.user_bets:
                 user_bet = self.user_bets[selected.prediction.id]
-            embeds.append(selected.get_embed(user_bet))
+            embed = selected.get_embed(user_bet)
 
         try:
-            await self.message.edit(embeds=embeds, view=self)
+            await self.message.edit(embed=embed, view=self)
         except (discord.NotFound, discord.HTTPException):
             self.controller.detach_view(self)
 

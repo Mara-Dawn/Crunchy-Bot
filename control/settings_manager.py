@@ -66,6 +66,7 @@ class SettingsManager(Service):
     PREDICTIONS_SUBSETTINGS_KEY = "predictions"
     PREDICTIONS_ENABLED_KEY = "predictions_enabled"
     PREDICTIONS_MOD_ROLES_KEY = "predictions_roles"
+    PREDICTIONS_CHANNELS_KEY = "predictions_channels"
 
     def __init__(
         self,
@@ -243,6 +244,12 @@ class SettingsManager(Service):
             [],
             "Roles with moderation permissions for predictions.",
             "handle_roles_value",
+        )
+        prediction_settings.add_setting(
+            self.PREDICTIONS_CHANNELS_KEY,
+            [],
+            "Channels used to show current predictions.",
+            "handle_channels_value",
         )
 
         self.settings = GuildSettings()
@@ -938,4 +945,34 @@ class SettingsManager(Service):
             self.PREDICTIONS_SUBSETTINGS_KEY,
             self.PREDICTIONS_MOD_ROLES_KEY,
             roles,
+        )
+
+    def get_predictions_channels(self, guild: int) -> list[int]:
+        return [
+            int(x)
+            for x in self.get_setting(
+                guild, self.PREDICTIONS_SUBSETTINGS_KEY, self.PREDICTIONS_CHANNELS_KEY
+            )
+        ]
+
+    def add_predictions_channel(self, guild: int, channel: int) -> None:
+        channels = self.get_predictions_channels(guild)
+        if channel not in channels:
+            channels.append(channel)
+        self.update_setting(
+            guild,
+            self.PREDICTIONS_SUBSETTINGS_KEY,
+            self.PREDICTIONS_CHANNELS_KEY,
+            channels,
+        )
+
+    def remove_predictions_channel(self, guild: int, channel: int) -> None:
+        channels = self.get_predictions_channels(guild)
+        if channel in channels:
+            channels.remove(channel)
+        self.update_setting(
+            guild,
+            self.PREDICTIONS_SUBSETTINGS_KEY,
+            self.PREDICTIONS_CHANNELS_KEY,
+            channels,
         )
