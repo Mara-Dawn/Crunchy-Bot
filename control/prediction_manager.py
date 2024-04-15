@@ -50,7 +50,6 @@ class PredictionManager(Service):
                         | PredictionEventType.REFUND
                         | PredictionEventType.LOCK
                         | PredictionEventType.UNLOCK
-                        | PredictionEventType.EDIT
                     ):
                         await self.refresh_prediction_messages(
                             prediction_event.guild_id
