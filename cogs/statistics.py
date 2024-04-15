@@ -2,7 +2,7 @@ from typing import Literal
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from bot import CrunchyBot
 from control.controller import Controller
@@ -30,8 +30,22 @@ class Statistics(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        self.system_monitor.start()
         self.logger.log(
             "init", str(self.__cog_name__) + " loaded.", cog=self.__cog_name__
+        )
+
+    @tasks.loop(minutes=30)
+    async def system_monitor(self):
+
+        view_count = len(self.controller.views)
+        view_controller_count = len(self.controller.view_controllers)
+        service_count = len(self.controller.services)
+
+        self.logger.log(
+            "sys",
+            f"Controller stats: {service_count} services, {view_controller_count} view controllers, {view_count} views",
+            cog=self.__cog_name__,
         )
 
     @commands.command()
