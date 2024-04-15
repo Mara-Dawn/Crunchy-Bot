@@ -19,10 +19,11 @@ class PredictionEmbed(discord.Embed):
             "\nYou can see the amount of beans already placed below each outcome."
             "\nThe odds will tell you how big your payout is gonna be relative to your bet."
         )
+        important_info = "**New: When a prediction submitted by you is paid out, you will be rewarded with beans worth 5% of the total pot!**"
 
         self.add_field(
             name="",
-            value=f"```{message}```",
+            value=f"```{message}```\n\n{important_info}",
             inline=False,
         )
         self.set_author(name="Crunchy Patrol")
