@@ -1,5 +1,6 @@
 import importlib
 
+import discord
 from discord.ext import commands
 
 from control.logger import BotLogger
@@ -43,6 +44,21 @@ class Controller:
     def detach_view(self, view: ViewMenu):
         if view in self.views:
             self.views.remove(view)
+
+    def detach_view_by_id(self, view_id: int):
+        for view in self.views:
+            if view.id == view_id:
+                self.views.remove(view)
+
+    async def execute_garbage_collection(self):
+        for view in self.views:
+            if view.message is None:
+                continue
+
+            try:
+                await view.message.edit()
+            except (discord.NotFound, discord.HTTPException):
+                self.views.remove(view)
 
     async def dispatch_event(self, event: BotEvent):
 

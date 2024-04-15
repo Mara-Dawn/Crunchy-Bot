@@ -21,7 +21,6 @@ class PredictionOverviewView(ViewMenu):
         self.controller = controller
 
         self.prediction_stats = prediction_stats
-        self.message = None
 
         self.controller_type = ControllerType.PREDICTION_VIEW
         self.controller.register_view(self)
@@ -38,9 +37,6 @@ class PredictionOverviewView(ViewMenu):
                 ):
                     return
                 await self.refresh_ui(prediction_stats)
-
-    def set_message(self, message: discord.Message):
-        self.message = message
 
     def refresh_elements(self):
 

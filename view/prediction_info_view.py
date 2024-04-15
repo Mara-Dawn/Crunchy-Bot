@@ -20,8 +20,6 @@ class PredictionInfoView(ViewMenu):
         super().__init__(timeout=None)
         self.controller = controller
 
-        self.message = None
-
         self.controller_type = ControllerType.PREDICTION_VIEW
         self.controller.register_view(self)
 
@@ -30,9 +28,6 @@ class PredictionInfoView(ViewMenu):
 
     async def listen_for_ui_event(self, event: UIEvent):
         pass
-
-    def set_message(self, message: discord.Message):
-        self.message = message
 
     async def send_response(self, interaction: discord.Interaction):
         event = UIEvent(

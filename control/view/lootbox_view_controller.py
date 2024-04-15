@@ -69,6 +69,8 @@ class LootBoxViewController(ViewController):
         event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
         await self.controller.dispatch_ui_event(event)
 
+        self.controller.detach_view_by_id(view_id)
+
         message = await interaction.original_response()
         loot_box = self.database.get_loot_box_by_message_id(guild_id, message.id)
 

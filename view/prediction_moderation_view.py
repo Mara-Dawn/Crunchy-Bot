@@ -40,7 +40,6 @@ class PredictionModerationView(ViewMenu):
             self.item_count / PredictionModerationEmbed.ITEMS_PER_PAGE
         ) + (self.item_count % PredictionModerationEmbed.ITEMS_PER_PAGE > 0)
 
-        self.message = None
         self.disabled = False
 
         self.controller_type = ControllerType.PREDICTION_MODERATION_VIEW
@@ -83,9 +82,6 @@ class PredictionModerationView(ViewMenu):
         self.page_count = int(
             self.item_count / PredictionModerationEmbed.ITEMS_PER_PAGE
         ) + (self.item_count % PredictionModerationEmbed.ITEMS_PER_PAGE > 0)
-
-    def set_message(self, message: discord.Message):
-        self.message = message
 
     async def edit(self, interaction: discord.Interaction):
         await interaction.response.defer()
