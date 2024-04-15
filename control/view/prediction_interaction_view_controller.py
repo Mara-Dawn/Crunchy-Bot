@@ -160,10 +160,28 @@ class PredictionInteractionViewController(ViewController):
                 message += f"```python\nInitial bet: 🅱️{amount}\nOdds: 1:{odds_text}\n-----------------------\nPayout:🅱️{payout}```"
                 await user.send(message)
 
+        total = sum(prediction_stats.bets.values())
+
+        author = self.bot.get_user(prediction.author_id)
+        if author is not None:
+            payout = int(total * 0.05)
+            event = BeansEvent(
+                datetime.datetime.now(),
+                guild_id,
+                BeansEventType.PREDICTION_PAYOUT,
+                author.id,
+                payout,
+            )
+            await self.controller.dispatch_event(event)
+
+            message = f"Your submitted prediction '**{prediction_text}**' has come to a close and the winners have been paid out! Here is your reward for a successfull submission:"
+            message += f"```python\nTotal Pot: 🅱️{total}\nReward: 5%\n-----------------------\nPayout:🅱️{payout}```"
+            await user.send(message)
+
         bean_channels = self.settings_manager.get_beans_notification_channels(
             interaction.guild_id
         )
-        announcement = f"The prediction '**{prediction_text}**' has come to a close!\n The winning outcome is '**{outcome_text}**' with winning odds of 1:{odds_text}.\n A total of `🅱️{sum(prediction_stats.bets.values())}` has been paid out."
+        announcement = f"The prediction '**{prediction_text}**' has come to a close!\n The winning outcome is '**{outcome_text}**' with winning odds of 1:{odds_text}.\n A total of `🅱️{total}` has been paid out."
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)
             await channel.send(announcement)
