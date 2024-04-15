@@ -203,7 +203,7 @@ class TotalPotButton(discord.ui.Button):
         self.pot = pot
         super().__init__(
             label=f"Total Pot: 🅱️{pot}",
-            style=discord.ButtonStyle.blurple,
+            style=discord.ButtonStyle.grey,
             row=0,
             custom_id=f"TotalPotButton:{prediction_id}",
         )

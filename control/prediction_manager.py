@@ -139,6 +139,9 @@ class PredictionManager(Service):
                 head_view = PredictionInfoView(self.controller)
                 self.bot.add_view(head_view, message_id=message.id)
                 head_view.set_message(message)
+                head_view.reload_elements()
+                head_embed = PredictionEmbed(guild.name)
+                await message.edit(embed=head_embed)
                 break
 
             for stats in prediction_stats:
