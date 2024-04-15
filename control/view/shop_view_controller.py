@@ -147,7 +147,7 @@ class ShopViewController(ViewController):
                 message = await interaction.followup.send(
                     "", embed=embed, view=view, ephemeral=True
                 )
-                await view.set_message(message)
+                view.set_message(message)
                 await view.refresh_ui()
 
                 event = UIEvent(UIEventType.SHOP_DISABLE, True, view_id)

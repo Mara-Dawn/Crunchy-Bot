@@ -305,6 +305,18 @@ class Database:
         {PREDICTION_OUTCOME_CONTENT_COL} TEXT
     );"""
 
+    PREDICTION_OVERVIEW_TABLE = "predictionoverviews"
+    PREDICTION_OVERVIEW_MESSAGE_ID_COL = "prov_message_id"
+    PREDICTION_OVERVIEW_CHANNEL_ID_COL = "prov_channel_id"
+    PREDICTION_OVERVIEW_PREDICTION_ID_COL = "prov_prediction_id"
+    CREATE_PREDICTION_OVERVIEW_TABLE = f"""
+    CREATE TABLE if not exists {PREDICTION_OVERVIEW_TABLE} (
+        {PREDICTION_OVERVIEW_MESSAGE_ID_COL} INTEGER,
+        {PREDICTION_OVERVIEW_CHANNEL_ID_COL} INTEGER,
+        {PREDICTION_OVERVIEW_PREDICTION_ID_COL} INTEGER REFERENCES {PREDICTION_TABLE} ({PREDICTION_ID_COL}),
+        PRIMARY KEY ({PREDICTION_OVERVIEW_MESSAGE_ID_COL}, {PREDICTION_OVERVIEW_CHANNEL_ID_COL})
+    );"""
+
     PREDICTION_EVENT_TABLE = "predictionevents"
     PREDICTION_EVENT_ID_COL = "prev_event_id"
     PREDICTION_EVENT_PREDICTION_ID_COL = "prev_prediction_id"
@@ -357,6 +369,7 @@ class Database:
             c.execute(self.CREATE_PREDICTION_TABLE)
             c.execute(self.CREATE_PREDICTION_OUTCOME_TABLE)
             c.execute(self.CREATE_PREDICTION_EVENT_TABLE)
+            c.execute(self.CREATE_PREDICTION_OVERVIEW_TABLE)
             c.close()
 
         except Error as e:
@@ -873,6 +886,48 @@ class Database:
             self.__query_insert(command, task)
 
         return prediction_id
+
+    def clear_prediction_overview_messages(self, channel_id: int) -> int:
+        command = f"""
+            DELETE FROM {self.PREDICTION_OVERVIEW_TABLE}
+            WHERE {self.PREDICTION_OVERVIEW_CHANNEL_ID_COL} = {int(channel_id)}
+        """
+
+        channel_id = self.__query_insert(command)
+
+        return channel_id
+
+    def add_prediction_overview_message(
+        self, prediction_id: int, message_id: int, channel_id: int
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.PREDICTION_OVERVIEW_TABLE} 
+            ({self.PREDICTION_OVERVIEW_MESSAGE_ID_COL}, 
+            {self.PREDICTION_OVERVIEW_CHANNEL_ID_COL}, 
+            {self.PREDICTION_OVERVIEW_PREDICTION_ID_COL})
+            VALUES (?, ?, ?);
+        """
+        task = (message_id, channel_id, prediction_id)
+
+        insert_id = self.__query_insert(command, task)
+
+        return insert_id
+
+    def get_prediction_overview_message(
+        self, prediction_id: int, channel_id: int
+    ) -> int:
+        command = f"""
+            SELECT * FROM {self.PREDICTION_OVERVIEW_TABLE}
+            WHERE {self.PREDICTION_OVERVIEW_PREDICTION_ID_COL} = ?
+            and {self.PREDICTION_OVERVIEW_CHANNEL_ID_COL} = ? LIMIT 1
+        """
+        task = (prediction_id, channel_id)
+
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return None
+
+        return rows[0][self.PREDICTION_OVERVIEW_MESSAGE_ID_COL]
 
     def fix_quote(self, quote: Quote, channel_id: int) -> int:
         command = f"""

@@ -21,7 +21,6 @@ class PredictionOverviewView(ViewMenu):
         self.controller = controller
 
         self.prediction_stats = prediction_stats
-        self.message = None
 
         self.controller_type = ControllerType.PREDICTION_VIEW
         self.controller.register_view(self)
@@ -39,9 +38,6 @@ class PredictionOverviewView(ViewMenu):
                     return
                 await self.refresh_ui(prediction_stats)
 
-    def set_message(self, message: discord.Message):
-        self.message = message
-
     def refresh_elements(self):
 
         self.clear_items()
@@ -49,7 +45,10 @@ class PredictionOverviewView(ViewMenu):
         for idx, outcome in enumerate(self.prediction_stats.prediction.outcomes):
             self.add_item(
                 BetInputButton(
-                    idx, outcome, self.prediction_stats.prediction.outcomes[outcome]
+                    idx,
+                    outcome,
+                    self.prediction_stats.prediction.outcomes[outcome],
+                    self.prediction_stats.prediction.id,
                 )
             )
 
@@ -57,6 +56,7 @@ class PredictionOverviewView(ViewMenu):
         self.add_item(
             TotalPotButton(
                 pot=total,
+                prediction_id=self.prediction_stats.prediction.id,
             )
         )
 
@@ -138,7 +138,9 @@ class InfoButton(discord.ui.Button):
 
 class BetInputButton(discord.ui.Button):
 
-    def __init__(self, label: int, outcome_id: int, outcome_text: str):
+    def __init__(
+        self, label: int, outcome_id: int, outcome_text: str, prediction_id: int
+    ):
 
         outcome_prefixes = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
         self.outcome_id = outcome_id
@@ -147,6 +149,7 @@ class BetInputButton(discord.ui.Button):
             label=f"Bet On {outcome_prefixes[label]}",
             style=discord.ButtonStyle.green,
             row=0,
+            custom_id=f"BetInputButton:{label}:{prediction_id}",
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -160,7 +163,10 @@ class BetInputButton(discord.ui.Button):
 class BetInputModal(discord.ui.Modal):
 
     def __init__(
-        self, view: PredictionOverviewView, outcome_id: int, outcome_text: str
+        self,
+        view: PredictionOverviewView,
+        outcome_id: int,
+        outcome_text: str,
     ):
         super().__init__(title="Place your Bet")
         self.view = view
@@ -193,12 +199,13 @@ class BetInputModal(discord.ui.Modal):
 
 class TotalPotButton(discord.ui.Button):
 
-    def __init__(self, pot: int):
+    def __init__(self, pot: int, prediction_id: int):
         self.pot = pot
         super().__init__(
             label=f"Total Pot: 🅱️{pot}",
             style=discord.ButtonStyle.blurple,
             row=0,
+            custom_id=f"TotalPotButton:{prediction_id}",
         )
 
     async def callback(self, interaction: discord.Interaction):

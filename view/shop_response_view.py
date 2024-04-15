@@ -32,7 +32,6 @@ class ShopResponseView(ViewMenu):
             self.type = item.type
         self.item = item
 
-        self.message = None
         self.member_id = interaction.user.id
         self.guild_id = interaction.guild_id
 
@@ -152,9 +151,6 @@ class ShopResponseView(ViewMenu):
         await self.controller.dispatch_ui_event(event)
         await self.on_timeout()
 
-    async def set_message(self, message: discord.Message):
-        self.message = message
-
     def get_data(self):
         return ShopResponseData(
             item=self.item,
@@ -228,7 +224,7 @@ class AmountInput(discord.ui.Select):
     def __init__(self, suffix: str = ""):
         options = []
 
-        for i in range(1, 20):
+        for i in range(1, 26):
             options.append(
                 discord.SelectOption(label=f"{i}{suffix}", value=i, default=(i == 1))
             )
@@ -304,7 +300,7 @@ class ReactionInputButton(discord.ui.Button):
                 parent.controller, interaction, parent.item, parent.id
             )
             message = await interaction.followup.send(content, view=view)
-            await view.set_message(message)
+            view.set_message(message)
 
 
 class ReactionInputView(ShopResponseView):

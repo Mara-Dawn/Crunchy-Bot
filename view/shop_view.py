@@ -69,9 +69,6 @@ class ShopView(ViewMenu):
             case UIEventType.SHOP_DISABLE:
                 await self.refresh_ui(disabled=event.payload)
 
-    def set_message(self, message: discord.Message):
-        self.message = message
-
     async def buy(self, interaction: discord.Interaction):
         await interaction.response.defer()
         event = UIEvent(

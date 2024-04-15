@@ -15,11 +15,15 @@ class ViewMenu(discord.ui.View, ABC):
         self.id = ViewMenu.class_counter
         self.member_id = None
         self.controller_type: ControllerType = None
+        self.message: discord.Message = None
         ViewMenu.class_counter += 1
 
     @abstractmethod
     async def listen_for_ui_event(self, event: UIEvent):
         pass
+
+    def set_message(self, message: discord.Message):
+        self.message = message
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id == self.member_id:

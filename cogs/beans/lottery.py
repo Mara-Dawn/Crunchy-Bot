@@ -88,7 +88,6 @@ class Lottery(BeansGroup):
 
     @commands.Cog.listener("on_ready")
     async def on_ready_lottery(self) -> None:
-        # pylint: disable-next=no-member
         self.lottery_task.start()
         self.logger.log("init", "Lottery loaded.", cog=self.__cog_name__)
 

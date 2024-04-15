@@ -2,7 +2,7 @@ from typing import Literal
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from bot import CrunchyBot
 from control.controller import Controller
@@ -30,8 +30,33 @@ class Statistics(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        self.system_monitor.start()
         self.logger.log(
             "init", str(self.__cog_name__) + " loaded.", cog=self.__cog_name__
+        )
+
+    @tasks.loop(minutes=30)
+    async def system_monitor(self):
+
+        view_count = len(self.controller.views)
+        view_controller_count = len(self.controller.view_controllers)
+        service_count = len(self.controller.services)
+
+        await self.controller.execute_garbage_collection()
+
+        new_view_count = len(self.controller.views)
+
+        if view_count != new_view_count:
+            self.logger.log(
+                "sys",
+                f"Cleaned up {view_count-new_view_count} orphan views.",
+                cog=self.__cog_name__,
+            )
+
+        self.logger.log(
+            "sys",
+            f"Controller stats: {service_count} services, {view_controller_count} view controllers, {new_view_count} views",
+            cog=self.__cog_name__,
         )
 
     @commands.command()
@@ -129,9 +154,10 @@ class Statistics(commands.Cog):
 
         ranking_img = discord.File("./img/jail_wide.png", "ranking_img.png")
         police_img = discord.File("./img/police.png", "police.png")
-        await interaction.followup.send(
+        message = await interaction.followup.send(
             "", embed=embed, view=view, files=[police_img, ranking_img]
         )
+        view.set_message(message)
 
 
 async def setup(bot):

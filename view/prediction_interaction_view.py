@@ -29,7 +29,6 @@ class PredictionInteractionView(ViewMenu):
         self.parent_id = parent_id
         self.prediction_stats = prediction_stats
 
-        self.message = None
         self.is_moderator = moderator
         self.member_id = interaction.user.id
         self.guild_id = interaction.guild_id
@@ -243,9 +242,6 @@ class PredictionInteractionView(ViewMenu):
         event = UIEvent(UIEventType.SHOP_RESPONSE_PREDICTION_SUBMIT, prediction_object)
         await self.controller.dispatch_ui_event(event)
         await self.on_timeout()
-
-    async def set_message(self, message: discord.Message):
-        self.message = message
 
     async def on_timeout(self):
         with contextlib.suppress(discord.NotFound):

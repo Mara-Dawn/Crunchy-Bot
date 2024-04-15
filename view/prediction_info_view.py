@@ -20,8 +20,6 @@ class PredictionInfoView(ViewMenu):
         super().__init__(timeout=None)
         self.controller = controller
 
-        self.message = None
-
         self.controller_type = ControllerType.PREDICTION_VIEW
         self.controller.register_view(self)
 
@@ -30,9 +28,6 @@ class PredictionInfoView(ViewMenu):
 
     async def listen_for_ui_event(self, event: UIEvent):
         pass
-
-    def set_message(self, message: discord.Message):
-        self.message = message
 
     async def send_response(self, interaction: discord.Interaction):
         event = UIEvent(
@@ -76,6 +71,7 @@ class OverviewButton(discord.ui.Button):
             label="Manage Your Current Bets",
             style=discord.ButtonStyle.green,
             row=0,
+            custom_id="OverviewButton",
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -87,7 +83,10 @@ class SubmissionInputButton(discord.ui.Button):
 
     def __init__(self):
         super().__init__(
-            label="Submit A New Prediction Idea", style=discord.ButtonStyle.grey, row=0
+            label="Submit A New Prediction Idea",
+            style=discord.ButtonStyle.grey,
+            row=0,
+            custom_id="SubmissionInputButton",
         )
 
     async def callback(self, interaction: discord.Interaction):
