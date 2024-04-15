@@ -143,6 +143,9 @@ class PredictionInteractionViewController(ViewController):
         prediction_text = prediction.content
         outcome_text = prediction.outcomes[selected_outcome_id]
         for user_id, amount in winners.items():
+            if user_id == self.bot.user.id:
+                continue
+
             payout = int(amount * odds)
             event = BeansEvent(
                 datetime.datetime.now(),
@@ -303,6 +306,22 @@ class PredictionInteractionViewController(ViewController):
             PredictionEventType.APPROVE,
         )
         await self.controller.dispatch_event(event)
+
+        base_pot = 1000
+        outcome_count = len(prediction.outcomes)
+        outcome_base_pot = int(base_pot / outcome_count)
+
+        for outcome_id in prediction.outcomes:
+            event = PredictionEvent(
+                datetime.datetime.now(),
+                guild_id,
+                prediction.id,
+                self.bot.user.id,
+                PredictionEventType.PLACE_BET,
+                outcome_id,
+                outcome_base_pot,
+            )
+            await self.controller.dispatch_event(event)
 
         bean_channels = self.settings_manager.get_beans_notification_channels(
             interaction.guild_id
