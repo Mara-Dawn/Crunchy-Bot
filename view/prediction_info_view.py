@@ -23,11 +23,15 @@ class PredictionInfoView(ViewMenu):
         self.controller_type = ControllerType.PREDICTION_VIEW
         self.controller.register_view(self)
 
-        self.add_item(OverviewButton())
-        self.add_item(SubmissionInputButton())
+        self.reload_elements()
 
     async def listen_for_ui_event(self, event: UIEvent):
         pass
+
+    def reload_elements(self):
+        self.clear_items()
+        self.add_item(OverviewButton())
+        self.add_item(SubmissionInputButton())
 
     async def send_response(self, interaction: discord.Interaction):
         event = UIEvent(
@@ -84,7 +88,7 @@ class SubmissionInputButton(discord.ui.Button):
     def __init__(self):
         super().__init__(
             label="Submit A New Prediction Idea",
-            style=discord.ButtonStyle.grey,
+            style=discord.ButtonStyle.blurple,
             row=0,
             custom_id="SubmissionInputButton",
         )
