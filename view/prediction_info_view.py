@@ -71,6 +71,7 @@ class OverviewButton(discord.ui.Button):
             label="Manage Your Current Bets",
             style=discord.ButtonStyle.green,
             row=0,
+            custom_id="OverviewButton",
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -82,7 +83,10 @@ class SubmissionInputButton(discord.ui.Button):
 
     def __init__(self):
         super().__init__(
-            label="Submit A New Prediction Idea", style=discord.ButtonStyle.grey, row=0
+            label="Submit A New Prediction Idea",
+            style=discord.ButtonStyle.grey,
+            row=0,
+            custom_id="SubmissionInputButton",
         )
 
     async def callback(self, interaction: discord.Interaction):

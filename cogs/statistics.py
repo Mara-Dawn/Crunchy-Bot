@@ -35,7 +35,7 @@ class Statistics(commands.Cog):
             "init", str(self.__cog_name__) + " loaded.", cog=self.__cog_name__
         )
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(minutes=30)
     async def system_monitor(self):
 
         view_count = len(self.controller.views)

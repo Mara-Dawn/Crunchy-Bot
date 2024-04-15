@@ -48,6 +48,9 @@ class PredictionManager(Service):
                         PredictionEventType.APPROVE
                         | PredictionEventType.RESOLVE
                         | PredictionEventType.REFUND
+                        | PredictionEventType.LOCK
+                        | PredictionEventType.UNLOCK
+                        | PredictionEventType.EDIT
                     ):
                         await self.refresh_prediction_messages(
                             prediction_event.guild_id
@@ -91,6 +94,9 @@ class PredictionManager(Service):
                 continue
 
             await channel.purge()
+
+            self.database.clear_prediction_overview_messages(channel_id)
+
             head_embed = PredictionEmbed(guild.name)
             head_view = PredictionInfoView(self.controller)
             message = await channel.send(content="", embed=head_embed, view=head_view)
@@ -99,6 +105,59 @@ class PredictionManager(Service):
             for stats in prediction_stats:
                 view = PredictionOverviewView(self.controller, stats)
                 message = await channel.send(content="", view=view)
+                view.set_message(message)
+                await view.refresh_ui()
+                self.database.add_prediction_overview_message(
+                    stats.prediction.id, message.id, channel_id
+                )
+
+    async def init_existing_prediction_messages(self, guild_id: int):
+
+        prediction_stats = self.database.get_prediction_stats_by_guild(
+            guild_id, [PredictionState.APPROVED, PredictionState.LOCKED]
+        )
+
+        prediction_channels = self.settings_manager.get_predictions_channels(guild_id)
+
+        guild = self.bot.get_guild(guild_id)
+
+        for channel_id in prediction_channels:
+            channel = guild.get_channel(channel_id)
+            if channel is None:
+                continue
+
+            async for message in channel.history(limit=100, oldest_first=True):
+                if message.author != self.bot.user or message.embeds is None:
+                    await self.refresh_prediction_messages(guild_id)
+                    return
+
+                embed_title = message.embeds[0].title
+                if embed_title[:16] != "Bean Predictions":
+                    await self.refresh_prediction_messages(guild_id)
+                    return
+
+                head_view = PredictionInfoView(self.controller)
+                self.bot.add_view(head_view, message_id=message.id)
+                head_view.set_message(message)
+                break
+
+            for stats in prediction_stats:
+                message_id = self.database.get_prediction_overview_message(
+                    stats.prediction.id, channel_id
+                )
+                if message_id is None:
+                    await self.refresh_prediction_messages(guild_id)
+                    return
+
+                try:
+                    message = await channel.fetch_message(message_id)
+                except (discord.NotFound, discord.HTTPException):
+                    await self.refresh_prediction_messages(guild_id)
+                    return
+
+                view = PredictionOverviewView(self.controller, stats)
+                self.bot.add_view(view, message_id=message_id)
+
                 view.set_message(message)
                 await view.refresh_ui()
 

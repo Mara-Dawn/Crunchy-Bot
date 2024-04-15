@@ -82,7 +82,7 @@ class Predictions(BeansGroup):
         self.prediction_timeout_check.start()
 
         for guild in self.bot.guilds:
-            await self.prediction_manager.refresh_prediction_messages(guild.id)
+            await self.prediction_manager.init_existing_prediction_messages(guild.id)
 
         self.logger.log("init", "Predictions loaded.", cog=self.__cog_name__)
 
