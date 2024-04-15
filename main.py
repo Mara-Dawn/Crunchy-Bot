@@ -12,7 +12,7 @@ intents.members = True
 intents.emojis_and_stickers = True
 intents.reactions = True
 
-activity = discord.Activity(type=discord.ActivityType.watching, name="this monkey zoo")
+activity = discord.Activity(type=discord.ActivityType.playing, name="with your beans")
 
 bot = CrunchyBot(
     command_prefix="/", intents=intents, activity=activity, help_command=None

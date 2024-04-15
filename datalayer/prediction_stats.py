@@ -44,12 +44,13 @@ class PredictionStats:
 
         locked = ""
         embed_description = ""
-        if self.prediction.state == PredictionState.LOCKED:
-            locked = " 🔒 "
-            embed_description = "This prediction has been locked in."
 
         if self.prediction.comment is not None:
             embed_description += f"\n{self.prediction.comment}"
+
+        if self.prediction.state == PredictionState.LOCKED:
+            locked = " 🔒 "
+            embed_description = "This prediction has been locked in."
 
         if (
             self.prediction.lock_datetime is not None

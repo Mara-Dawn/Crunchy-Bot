@@ -57,7 +57,6 @@ class PredictionInfoView(ViewMenu):
             prediction_object,
         )
         await self.controller.dispatch_ui_event(event)
-        await self.on_timeout()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return True
