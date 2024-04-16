@@ -55,7 +55,7 @@ class AIManager(Service):
 
         chat_completion = await self.client.chat.completions.create(
             messages=chat_log.get_request_data(),
-            model="gpt-3.5-turbo",
+            model="gpt-4-turbo",
             max_tokens=max_tokens,
         )
         response = chat_completion.choices[0].message.content
@@ -78,14 +78,15 @@ class AIManager(Service):
                 )
 
         user_message = (
-            f"{message.author.display_name} says the following:" + message.clean_content
+            f"I am {message.author.display_name} and i say the following:"
+            + message.clean_content
         )
 
         self.chat_logs[author_id].add_user_message(user_message)
 
         chat_completion = await self.client.chat.completions.create(
             messages=self.chat_logs[author_id].get_request_data(),
-            model="gpt-3.5-turbo",
+            model="gpt-4-turbo",
         )
         response = chat_completion.choices[0].message.content
 
