@@ -77,7 +77,11 @@ class AIManager(Service):
                     reference_message.content
                 )
 
-        self.chat_logs[author_id].add_user_message(message.content)
+        user_message = (
+            f"{message.author.display_name} says the following:" + message.content
+        )
+
+        self.chat_logs[author_id].add_user_message(user_message)
 
         chat_completion = await self.client.chat.completions.create(
             messages=self.chat_logs[author_id].get_request_data(),
