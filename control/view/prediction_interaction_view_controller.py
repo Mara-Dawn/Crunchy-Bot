@@ -388,6 +388,8 @@ class PredictionInteractionViewController(ViewController):
         data = self.database.get_prediction_bets_by_id(prediction.id)
 
         for user_id, amount in data.items():
+            if user_id == self.bot.user.id:
+                continue
             event = BeansEvent(
                 datetime.datetime.now(),
                 guild_id,
