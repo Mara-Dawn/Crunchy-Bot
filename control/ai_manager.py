@@ -78,7 +78,8 @@ class AIManager(Service):
                 )
 
         user_message = (
-            f"{message.author.display_name} says the following:" + message.content
+            f"{message.author.display_name} says the following, please answer in direct speech:"
+            + message.clean_content
         )
 
         self.chat_logs[author_id].add_user_message(user_message)
