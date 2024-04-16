@@ -179,7 +179,7 @@ class PredictionInteractionViewController(ViewController):
 
             message = f"Your submitted prediction '**{prediction_text}**' has come to a close and the winners have been paid out! Here is your reward for a successfull submission:"
             message += f"```python\nTotal Pot: 🅱️{total}\nReward: 5%\n-----------------------\nPayout:🅱️{payout}```"
-            await user.send(message)
+            await author.send(message)
 
         bean_channels = self.settings_manager.get_beans_notification_channels(
             interaction.guild_id

@@ -8,6 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from bot import CrunchyBot
+from control.ai_manager import AIManager
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
@@ -34,6 +35,7 @@ class Gamba(commands.Cog):
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
         )
+        self.ai_manager: AIManager = self.controller.get_service(AIManager)
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -102,10 +104,20 @@ class Gamba(commands.Cog):
         if amount is not None and not (
             beans_gamba_min <= amount and amount <= beans_gamba_max
         ):
+            prompt = (
+                f"I tried to bet more than `🅱️{beans_gamba_max}` or less than `🅱️{beans_gamba_min} beans,"
+                " which is not acceptable. Please tell me what i did wrong and keep the formatting between"
+                " the backticks (including them) like in my message. Also keep it short."
+            )
+            response = await self.ai_manager.prompt(prompt, max_tokens=60)
+
+            if response is None or len(response) == 0:
+                response = f"Between `🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}` you fucking monkey."
+
             await self.bot.command_response(
                 self.__cog_name__,
                 interaction,
-                f"Between `🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}` you fucking monkey.",
+                response,
                 ephemeral=False,
             )
             return
@@ -120,10 +132,20 @@ class Gamba(commands.Cog):
         current_balance = self.database.get_member_beans(guild_id, user_id)
 
         if current_balance < amount:
+
+            prompt = (
+                "I tried to bet beans but i dont have any,"
+                " which is not acceptable. Please tell me what i did wrong. Also keep it short, 30 words or less."
+            )
+            response = await self.ai_manager.prompt(prompt)
+
+            if response is None or len(response) == 0:
+                response = "You're out of beans, idiot."
+
             await self.bot.command_response(
                 self.__cog_name__,
                 interaction,
-                "You're out of beans, idiot.",
+                response,
                 ephemeral=False,
             )
             return
@@ -154,10 +176,23 @@ class Gamba(commands.Cog):
                 remaining = cooldown - delta_seconds
                 cooldowntimer = int(timestamp_now + remaining)
 
+                prompt = (
+                    f"tell me that my gamble is still on cooldown, using this expression: '<t:{cooldowntimer}:R>'."
+                    " Use it in a sentence like you would in place of 'in 10 minutes' or ' 'in 5 hours', for example "
+                    f" 'YOu may try again <t:{cooldowntimer}:R>'"
+                    " I am an idiot for trying to gamba while its on cooldown, so please tell me off for it. Also keep it short, 30 words or less."
+                )
+                response = await self.ai_manager.prompt(prompt)
+
+                if response is None or len(response) == 0:
+                    response = (
+                        f"Gamba is on cooldown. Try again in <t:{cooldowntimer}:R>.",
+                    )
+
                 await self.bot.command_response(
                     self.__cog_name__,
                     interaction,
-                    f"Gamba is on cooldown. Try again in <t:{cooldowntimer}:R>.",
+                    response,
                     ephemeral=False,
                 )
                 message = await interaction.original_response()
@@ -204,25 +239,46 @@ class Gamba(commands.Cog):
         # (0.33*2)+(0.15*3)+(0.019*10)+(0.001*100)
         result = random.random()
 
+        prompt = "I tried to bet my beans on the beans gamble,"
         if result <= loss:
             final_display = 0
-            final = "\nYou lost. It is what it is."
+            final = "You lost. It is what it is."
+            prompt += "but i lost them all. Please make fun of me."
         elif result > loss and result <= (loss + doubling):
             final_display = 1
             payout = amount * 2
-            final = f"\nYou won! Your payout is `🅱️{payout}` beans."
+            final = f"You won! Your payout is `🅱️{payout}` beans."
+            prompt += f"and i won `🅱️{payout}` beans, which is a small amount. Please congratulate me, but not too much."
         elif result > (loss + doubling) and result <= (loss + doubling + tripling):
             final_display = 2
             payout = amount * 3
-            final = f"\nWow you got lucky! Your payout is `🅱️{payout}` beans."
+            final = f"Wow you got lucky! Your payout is `🅱️{payout}` beans."
+            prompt += f"and i won `🅱️{payout}` beans, which is amoderate amount. Please congratulate me."
         elif result > (loss + doubling + tripling) and result <= (1 - jackpot):
             final_display = 3
             payout = amount * 10
-            final = f"\n**BIG WIN!** Your payout is `🅱️{payout}` beans."
+            final = f"**BIG WIN!** Your payout is `🅱️{payout}` beans."
+            prompt += f"and i won `🅱️{payout}` beans, which is a large amount."
+            prompt += " Please congratulate me a lot and freak out a little because it is so rare."
         elif result > (1 - jackpot) and result <= 1:
             final_display = 4
             payout = amount * 100
-            final = f"\n**JACKPOT!!!** Your payout is `🅱️{payout}` beans."
+            final = f"**JACKPOT!!!** Your payout is `🅱️{payout}` beans."
+            prompt += f"and i hit the jackpot! Now im rich, i got  `🅱️{payout}` beans as a payout! "
+            prompt += "Please congratulate me a lot and praise me. Completely freak out about it and break character a little."
+
+        if result > loss:
+            prompt += " please mention the amount of beans i won."
+            prompt += " please keep the formatting between the backticks (including them) like in my message."
+
+        prompt += " Also keep it super concise, 25 words or less preferably unless its a jackpot, and refer to the gamble as gamba."
+
+        final_ai = await self.ai_manager.prompt(prompt)
+
+        if final_ai is not None and len(response) > 0:
+            final = final_ai
+
+        final = "\n" + final
 
         display = display_values[0]
         await self.bot.command_response(

@@ -31,6 +31,7 @@ class CrunchyBot(commands.Bot):
         await self.load_extension("cogs.beans.gamba")
         await self.load_extension("cogs.beans.beans")
         await self.load_extension("cogs.bully")
+        await self.load_extension("cogs.chat")
 
     async def on_guild_join(self, guild):
         self.logger.log(guild.id, "new guild registered.")
