@@ -43,7 +43,7 @@ class AIManager(Service):
             "Use gender neutral language as much as possible."
         )
 
-        self.client = AsyncOpenAI(api_key=self.token)
+        self.client = AsyncOpenAI(api_key=self.token.strip("\n "))
         self.chat_logs: dict[int, ChatLog] = {}
 
     async def listen_for_event(self, event: BotEvent) -> str:
