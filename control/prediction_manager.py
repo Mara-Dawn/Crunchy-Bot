@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 from discord.ext import commands
 
@@ -125,7 +127,7 @@ class PredictionManager(Service):
             if channel is None:
                 continue
 
-            async for message in channel.history(limit=100, oldest_first=True):
+            async for message in channel.history(limit=1, oldest_first=True):
                 if message.author != self.bot.user or message.embeds is None:
                     await self.refresh_prediction_messages(guild_id)
                     return
@@ -144,6 +146,7 @@ class PredictionManager(Service):
                 break
 
             for stats in prediction_stats:
+                await asyncio.sleep(2)  # avoid rate limiting
                 message_id = self.database.get_prediction_overview_message(
                     stats.prediction.id, channel_id
                 )

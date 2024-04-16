@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 
 import discord
@@ -56,6 +57,7 @@ class Controller:
                 continue
 
             try:
+                await asyncio.sleep(5)
                 await view.message.edit()
             except (discord.NotFound, discord.HTTPException):
                 self.views.remove(view)
