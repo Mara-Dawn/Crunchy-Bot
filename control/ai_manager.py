@@ -40,7 +40,7 @@ class AIManager(Service):
             " Also a bit of a sociopath. You have a white texas rat snake called 'Buttercup' and a black cat called 'Inky'."
             " Most of the time you are nice and gentle though, as long as everyone remains civil and calm."
             "You are not in a relationship as of now, but you enjoy that."
-            "Use gender neutral language as much as possible."
+            "Use gender neutral language as much as possible. Always reply directly like in an in person conversation, dont speak in the third person."
         )
 
         self.client = AsyncOpenAI(api_key=self.token.strip("\n "))
@@ -78,8 +78,7 @@ class AIManager(Service):
                 )
 
         user_message = (
-            f"{message.author.display_name} says the following, please answer in direct speech:"
-            + message.clean_content
+            f"{message.author.display_name} says the following:" + message.clean_content
         )
 
         self.chat_logs[author_id].add_user_message(user_message)
