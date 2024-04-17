@@ -101,7 +101,7 @@ class LootBoxViewController(ViewController):
                     inline=False,
                 )
                 jail_cog: Jail = self.bot.get_cog("Jail")
-                jail_announcement = f"<@{member_id}> delved too deep looking for treasure and discovered a wormhole that teleported them straight into jail"
+                jail_announcement = f"<@{member_id}> delved too deep looking for treasure and got sucked into a wormhole that teleported them into jail."
                 duration = 2 * 60
                 member = interaction.guild.get_member(member_id)
                 success = await jail_cog.jail_user(
@@ -119,7 +119,7 @@ class LootBoxViewController(ViewController):
                     )
                     await self.controller.dispatch_event(event)
                     added_time = int(duration / 60)
-                    jail_announcement = f"<@{member_id}> in trying to escape jail came across a suspiciously large looking chest, peering inside they got sucked back into their jail cell.\n`{added_time} hours` has been added to their jail sentence."
+                    jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{added_time} hours` has been added to their jail sentence."
                     await jail_cog.announce(interaction.guild, jail_announcement)
                 else:
                     timestamp_now = int(datetime.datetime.now().timestamp())
