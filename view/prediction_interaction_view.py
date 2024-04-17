@@ -47,6 +47,7 @@ class PredictionInteractionView(ViewMenu):
         self.unlock_button: UnlockButton = None
         self.outcome_select: OutcomeSelect = None
         self.edit_button: EditButton = None
+        self.resubmit_button: ResubmitButton = None
         self.add_timestamp_button: AddLockTimestampButton = None
         self.add_comment_button: AddCommentButton = None
 
@@ -119,6 +120,29 @@ class PredictionInteractionView(ViewMenu):
         )
         await self.controller.dispatch_ui_event(event)
 
+    async def resubmit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        old_prediction = self.prediction_stats.prediction
+
+        prediction_object = Prediction(
+            interaction.guild_id,
+            interaction.user.id,
+            old_prediction.content,
+            old_prediction.outcomes,
+            PredictionState.SUBMITTED,
+            moderator_id=None,
+            lock_datetime=None,
+            comment=old_prediction.comment,
+        )
+
+        event = UIEvent(
+            UIEventType.PREDICTION_INTERACTION_RESUBMIT,
+            (interaction, prediction_object),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     async def edit_prediction(
         self, interaction: discord.Interaction, new_prediction: Prediction
     ):
@@ -140,6 +164,7 @@ class PredictionInteractionView(ViewMenu):
         self.unlock_button = None
         self.outcome_select = None
         self.edit_button = None
+        self.resubmit_button = None
         self.add_timestamp_button = None
         self.add_comment_button = None
 
@@ -188,6 +213,8 @@ class PredictionInteractionView(ViewMenu):
                 self.add_comment_button = AddCommentButton(
                     self.prediction_stats.prediction
                 )
+            case PredictionState.DONE | PredictionState.REFUNDED:
+                self.resubmit_button = ResubmitButton()
 
         self.cancel_button: CancelModerationButton = CancelModerationButton()
 
@@ -205,6 +232,7 @@ class PredictionInteractionView(ViewMenu):
             self.edit_button,
             self.deny_button,
             self.refund_button,
+            self.resubmit_button,
             self.add_timestamp_button,
             self.add_comment_button,
             self.cancel_button,
@@ -326,6 +354,18 @@ class ApproveButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.approve_submission(interaction)
+
+
+class ResubmitButton(discord.ui.Button):
+
+    def __init__(self, label: str = "Resubmit"):
+        super().__init__(label=label, style=discord.ButtonStyle.green, row=2)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: PredictionInteractionView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.resubmit(interaction)
 
 
 class RefundButton(discord.ui.Button):

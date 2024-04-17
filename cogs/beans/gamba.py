@@ -179,7 +179,7 @@ class Gamba(commands.Cog):
                 prompt = (
                     f"tell me that my gamble is still on cooldown, using this expression: '<t:{cooldowntimer}:R>'."
                     " Use it in a sentence like you would in place of 'in 10 minutes' or ' 'in 5 hours', for example "
-                    f" 'YOu may try again <t:{cooldowntimer}:R>'"
+                    f" 'You may try again <t:{cooldowntimer}:R>'"
                     " I am an idiot for trying to gamba while its on cooldown, so please tell me off for it. Also keep it short, 30 words or less."
                 )
                 response = await self.ai_manager.prompt(prompt)
