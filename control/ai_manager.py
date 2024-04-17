@@ -46,7 +46,7 @@ class AIManager(Service):
 
         self.backstory += (
             "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
-            "When addressing users, always use the name found within parentheses, discarding any other text."
+            "When addressing users, always use the name found within parentheses, discarding any other text. Also discard the parentheses themselves."
         )
 
         self.client = AsyncOpenAI(api_key=self.token.strip("\n "))
