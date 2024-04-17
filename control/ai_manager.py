@@ -17,6 +17,7 @@ class AIManager(Service):
     KEY_FILE = "openai.txt"
     TOKEN_SUMMARIZE_LIMIT = 2500
     TOKEN_SUMMARIZE_THRESHOLD = 2000
+    DISCORD_MESSAGE_MAX_LENGTH = 1950
 
     def __init__(
         self,
@@ -55,6 +56,34 @@ class AIManager(Service):
 
     async def listen_for_event(self, event: BotEvent) -> str:
         pass
+
+    async def __dynamic_response(self, message: discord.Message, response_text: str):
+        if len(response_text) < self.DISCORD_MESSAGE_MAX_LENGTH:
+            await message.reply(response_text)
+            return
+
+        messages = []
+        remaining_text = response_text
+        while remaining_text != "":
+            if len(remaining_text) <= self.DISCORD_MESSAGE_MAX_LENGTH:
+                messages.append(remaining_text)
+                break
+            chunk = remaining_text[: self.DISCORD_MESSAGE_MAX_LENGTH]
+
+            newline = chunk.rfind("\n")
+            if newline > 0:
+                messages.append(remaining_text[:newline])
+                remaining_text = remaining_text[newline:]
+                continue
+
+            space = chunk.rfind(" ")
+            if space > 0:
+                messages.append(remaining_text[:space])
+                remaining_text = remaining_text[space:]
+                continue
+
+        for message_text in messages:
+            await message.reply(message_text)
 
     async def prompt(self, text_prompt: str, max_tokens: int = None):
         chat_log = ChatLog(self.backstory)
@@ -99,7 +128,7 @@ class AIManager(Service):
 
         self.chat_logs[author_id].add_assistant_message(response)
 
-        await message.reply(response)
+        await self.__dynamic_response(message, response)
 
     async def respond(self, message: discord.Message):
         channel_id = message.channel.id
@@ -131,7 +160,7 @@ class AIManager(Service):
 
         self.channel_logs[channel_id].add_assistant_message(response)
 
-        await message.reply(response)
+        await self.__dynamic_response(message, response)
 
         token_count = self.channel_logs[channel_id].get_token_count()
 
