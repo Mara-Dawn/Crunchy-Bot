@@ -104,6 +104,7 @@ class PredictionManager(Service):
             head_view.set_message(message)
 
             for stats in prediction_stats:
+                await asyncio.sleep(2)  # avoid rate limiting
                 view = PredictionOverviewView(self.controller, stats)
                 message = await channel.send(content="", view=view)
                 view.set_message(message)
@@ -146,7 +147,7 @@ class PredictionManager(Service):
                 break
 
             for stats in prediction_stats:
-                await asyncio.sleep(2)  # avoid rate limiting
+                await asyncio.sleep(5)  # avoid rate limiting
                 message_id = self.database.get_prediction_overview_message(
                     stats.prediction.id, channel_id
                 )
