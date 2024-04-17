@@ -170,7 +170,7 @@ class PredictionInteractionViewController(ViewController):
         total = sum(prediction_stats.bets.values())
 
         author = self.bot.get_user(prediction.author_id)
-        if author is not None:
+        if author is not None and author.id != self.bot.user.id:
             payout = int(total * 0.05)
             event = BeansEvent(
                 datetime.datetime.now(),
@@ -348,6 +348,7 @@ class PredictionInteractionViewController(ViewController):
         prediction: Prediction,
         view_id: int,
     ):
+        prediction.author_id = self.bot.user.id
         prediction_id = self.database.log_prediction(prediction)
         event = PredictionEvent(
             datetime.datetime.now(),
@@ -358,12 +359,12 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        prediction.id = prediction_id
+        new_prediction = self.database.get_prediction_by_id(prediction_id)
 
         success_message = "You successfully resubmitted your selected prediction."
         await interaction.followup.send(success_message, ephemeral=True)
 
-        await self.__refresh_view(interaction, prediction, view_id)
+        await self.__refresh_view(interaction, new_prediction, view_id)
 
     async def edit_prediction(
         self,
