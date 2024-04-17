@@ -88,6 +88,10 @@ class PredictionInteractionViewController(ViewController):
                 await self.end_and_refund_submission(
                     interaction, prediction, event.view_id
                 )
+            case UIEventType.PREDICTION_INTERACTION_RESUBMIT:
+                interaction = event.payload[0]
+                prediction = event.payload[1]
+                await self.resubmit_prediction(interaction, prediction, event.view_id)
 
     async def __refresh_view(
         self, interaction: discord.Interaction, prediction: Prediction, view_id: int
@@ -334,6 +338,29 @@ class PredictionInteractionViewController(ViewController):
         success_message = (
             "You successfully approved your selected prediction submission."
         )
+        await interaction.followup.send(success_message, ephemeral=True)
+
+        await self.__refresh_view(interaction, prediction, view_id)
+
+    async def resubmit_prediction(
+        self,
+        interaction: discord.Interaction,
+        prediction: Prediction,
+        view_id: int,
+    ):
+        prediction_id = self.database.log_prediction(prediction)
+        event = PredictionEvent(
+            datetime.datetime.now(),
+            prediction.guild_id,
+            prediction_id,
+            prediction.author_id,
+            PredictionEventType.SUBMIT,
+        )
+        await self.controller.dispatch_event(event)
+
+        prediction.id = prediction_id
+
+        success_message = "You successfully resubmitted your selected prediction."
         await interaction.followup.send(success_message, ephemeral=True)
 
         await self.__refresh_view(interaction, prediction, view_id)
