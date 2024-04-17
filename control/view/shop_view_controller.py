@@ -188,7 +188,11 @@ class ShopViewController(ViewController):
                 )
 
                 message = await interaction.followup.send(
-                    "", embed=embed, view=view, files=[treasure_close_img]
+                    "",
+                    embed=embed,
+                    view=view,
+                    files=[treasure_close_img],
+                    ephemeral=True,
                 )
                 new_user_balance = self.database.get_member_beans(guild_id, member_id)
 

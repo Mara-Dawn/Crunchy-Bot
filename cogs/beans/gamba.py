@@ -195,18 +195,18 @@ class Gamba(commands.Cog):
                     response,
                     ephemeral=False,
                 )
-                # message = await interaction.original_response()
-                # channel_id = message.channel.id
-                # message_id = message.id
+                message = await interaction.original_response()
+                channel_id = message.channel.id
+                message_id = message.id
 
-                # await asyncio.sleep(remaining)
+                await asyncio.sleep(remaining)
 
-                # message = (
-                #     await self.bot.get_guild(guild_id)
-                #     .get_channel(channel_id)
-                #     .fetch_message(message_id)
-                # )
-                # await message.delete()
+                message = (
+                    await self.bot.get_guild(guild_id)
+                    .get_channel(channel_id)
+                    .fetch_message(message_id)
+                )
+                await message.delete()
                 return
 
         event = BeansEvent(
