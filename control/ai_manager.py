@@ -47,6 +47,7 @@ class AIManager(Service):
 
         self.backstory += (
             "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
+            "Each message will lead with the name of the user delimited with XML tags. Leave both the tags and their content out of your response."
             "When addressing users, always use the name found within parentheses, discarding any other text. Also discard the parentheses themselves."
         )
 
@@ -147,7 +148,7 @@ class AIManager(Service):
                 )
 
         user_message = (
-            f"I am {message.author.display_name} and i say: " + message.clean_content
+            f"<user>{message.author.display_name}</user>" + message.clean_content
         )
 
         self.channel_logs[channel_id].add_user_message(user_message)

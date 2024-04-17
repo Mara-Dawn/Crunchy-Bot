@@ -105,6 +105,7 @@ class Gamba(commands.Cog):
             beans_gamba_min <= amount and amount <= beans_gamba_max
         ):
             prompt = (
+                f"<user>{interaction.user.display_name}</user>"
                 f"I tried to bet more than `🅱️{beans_gamba_max}` or less than `🅱️{beans_gamba_min} beans,"
                 " which is not acceptable. Please tell me what i did wrong and keep the formatting between"
                 " the backticks (including them) like in my message. Also keep it short."
@@ -134,6 +135,7 @@ class Gamba(commands.Cog):
         if current_balance < amount:
 
             prompt = (
+                f"<user>{interaction.user.display_name}</user>"
                 "I tried to bet beans but i dont have any,"
                 " which is not acceptable. Please tell me what i did wrong. Also keep it short, 30 words or less."
             )
@@ -177,6 +179,7 @@ class Gamba(commands.Cog):
                 cooldowntimer = int(timestamp_now + remaining)
 
                 prompt = (
+                    f"<user>{interaction.user.display_name}</user>"
                     f"tell me that my gamble is still on cooldown, using this expression: '<t:{cooldowntimer}:R>'."
                     " Use it in a sentence like you would in place of 'in 10 minutes' or ' 'in 5 hours', for example "
                     f" 'You may try again <t:{cooldowntimer}:R>'"
@@ -239,7 +242,8 @@ class Gamba(commands.Cog):
         # (0.33*2)+(0.15*3)+(0.019*10)+(0.001*100)
         result = random.random()
 
-        prompt = "I tried to bet my beans on the beans gamble,"
+        prompt = f"<user>{interaction.user.display_name}</user>"
+        prompt += "I tried to bet my beans on the beans gamble,"
         if result <= loss:
             final_display = 0
             final = "You lost. It is what it is."
