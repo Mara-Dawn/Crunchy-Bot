@@ -123,6 +123,9 @@ class ShopView(ViewMenu):
             user_items=self.user_items,
             start_offset=start,
         )
+        if self.message is None:
+            return
+
         try:
             await self.message.edit(embed=embed, view=self)
         except (discord.NotFound, discord.HTTPException):
