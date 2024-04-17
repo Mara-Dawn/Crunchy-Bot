@@ -55,7 +55,7 @@ class AIManager(Service):
 
         chat_completion = await self.client.chat.completions.create(
             messages=chat_log.get_request_data(),
-            model="gpt-4-turbo",
+            model="gpt-3.5-turbo",
             max_tokens=max_tokens,
         )
         response = chat_completion.choices[0].message.content
