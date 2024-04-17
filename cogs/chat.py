@@ -69,7 +69,11 @@ class Chat(commands.Cog):
             return
 
         beans_channels = self.settings_manager.get_beans_channels(message.guild.id)
-        if message.channel.id not in beans_channels:
+        jail_channels = self.settings_manager.get_jail_channels(message.guild.id)
+        if (
+            message.channel.id not in beans_channels
+            and message.channel.id not in jail_channels
+        ):
             return
 
         await self.ai_manager.respond(message)
