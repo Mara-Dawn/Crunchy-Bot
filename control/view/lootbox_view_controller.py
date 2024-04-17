@@ -3,6 +3,7 @@ import datetime
 import discord
 from discord.ext import commands
 
+from bot_util import BotUtil
 from cogs.jail import Jail
 from control.controller import Controller
 from control.event_manager import EventManager
@@ -109,17 +110,19 @@ class LootBoxViewController(ViewController):
                 )
                 if not success:
                     time_now = datetime.datetime.now()
+                    affected_jails = self.database.get_active_jails_by_member(guild_id, member.id)
+                    affected_jail = affected_jails[0]
                     event = JailEvent(
                         time_now,
                         guild_id,
                         JailEventType.INCREASE,
                         self.bot.user.id,
                         duration,
-                        member_id,
+                        affected_jails[0].id,
                     )
                     await self.controller.dispatch_event(event)
-                    added_time = int(duration / 60)
-                    jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{added_time} hours` has been added to their jail sentence."
+                    remaining = self.event_manager.get_jail_remaining(affected_jail)
+                    jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` has been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
                     await jail_cog.announce(interaction.guild, jail_announcement)
                 else:
                     timestamp_now = int(datetime.datetime.now().timestamp())

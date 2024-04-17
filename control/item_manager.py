@@ -96,6 +96,7 @@ class ItemManager(Service):
         large_beans_reward = random.randint(large_min_beans, large_max_beans)
         roll = random.random()
         # (0.62*60)+(0.2*300)+(0.1*-60)+(0.05*800)+(0.03*(-800)) - cost 100
+
         if roll <= mimic_chance:
             beans = -small_beans_reward
         elif roll > mimic_chance and roll <= (mimic_chance + chance_for_item):
