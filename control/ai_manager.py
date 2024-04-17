@@ -15,6 +15,8 @@ from events.bot_event import BotEvent
 class AIManager(Service):
 
     KEY_FILE = "openai.txt"
+    TOKEN_SUMMARIZE_LIMIT = 2500
+    TOKEN_SUMMARIZE_THRESHOLD = 2000
 
     def __init__(
         self,
@@ -43,12 +45,13 @@ class AIManager(Service):
         )
 
         self.backstory += (
-            "Use gender neutral language as much as possible. Always reply directly like in an in person conversation, dont speak in the third person. "
-            "If someones name contains parentheses, use the part between them to refer to them. "
+            "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
+            "When addressing users, always use the name found within parentheses, discarding any other text."
         )
 
         self.client = AsyncOpenAI(api_key=self.token.strip("\n "))
         self.chat_logs: dict[int, ChatLog] = {}
+        self.channel_logs: dict[int, ChatLog] = {}
 
     async def listen_for_event(self, event: BotEvent) -> str:
         pass
@@ -65,7 +68,7 @@ class AIManager(Service):
         response = chat_completion.choices[0].message.content
         return response
 
-    async def respond(self, message: discord.Message):
+    async def respond_user(self, message: discord.Message):
         author_id = message.author.id
 
         if author_id not in self.chat_logs:
@@ -98,6 +101,71 @@ class AIManager(Service):
 
         await message.reply(response)
 
+    async def respond(self, message: discord.Message):
+        channel_id = message.channel.id
+
+        if channel_id not in self.channel_logs:
+            self.channel_logs[channel_id] = ChatLog(self.backstory)
+
+        if message.reference is not None:
+            reference_message = await message.channel.fetch_message(
+                message.reference.message_id
+            )
+
+            if reference_message is not None:
+                self.channel_logs[channel_id].add_assistant_message(
+                    reference_message.content
+                )
+
+        user_message = (
+            f"I am {message.author.display_name} and i say: " + message.clean_content
+        )
+
+        self.channel_logs[channel_id].add_user_message(user_message)
+
+        chat_completion = await self.client.chat.completions.create(
+            messages=self.channel_logs[channel_id].get_request_data(),
+            model="gpt-4-turbo",
+        )
+        response = chat_completion.choices[0].message.content
+
+        self.channel_logs[channel_id].add_assistant_message(response)
+
+        await message.reply(response)
+
+        token_count = self.channel_logs[channel_id].get_token_count()
+
+        self.logger.log(
+            message.guild.id,
+            f"Token Count for conversation in {channel_id}: {token_count}",
+            cog=self.log_name,
+        )
+        if token_count > self.TOKEN_SUMMARIZE_LIMIT:
+
+            chat_completion = await self.client.chat.completions.create(
+                messages=self.channel_logs[channel_id].summarize(
+                    self.TOKEN_SUMMARIZE_THRESHOLD
+                ),
+                model="gpt-4-turbo",
+            )
+
+            response = chat_completion.choices[0].message.content
+
+            self.logger.log(
+                message.guild.id,
+                f"Summarizing previous conversation in {channel_id}:\n {response}",
+                cog=self.log_name,
+            )
+
+            self.channel_logs[channel_id].add_summary(response)
+            token_count = self.channel_logs[channel_id].get_token_count()
+
+            self.logger.log(
+                message.guild.id,
+                f"Token Count after summary for {channel_id}: {token_count}",
+                cog=self.log_name,
+            )
+
     def clean_up_logs(self, max_age: int) -> int:
         cleanup_list = []
         now = datetime.datetime.now()
@@ -110,4 +178,19 @@ class AIManager(Service):
         for user_id in cleanup_list:
             del self.chat_logs[user_id]
 
-        return len(cleanup_list)
+        cleaned_count = len(cleanup_list)
+
+        cleanup_list = []
+
+        for channel_id, chat_log in self.channel_logs.items():
+            age_delta = now - chat_log.get_last_message_timestamp()
+            age_in_minutes = age_delta.total_seconds() / 60
+            if age_in_minutes > max_age:
+                cleanup_list.append(channel_id)
+
+        for channel_id in cleanup_list:
+            del self.channel_logs[channel_id]
+
+        cleaned_count += len(cleanup_list)
+
+        return cleaned_count
