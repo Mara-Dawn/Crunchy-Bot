@@ -5,7 +5,6 @@ import discord
 from discord.ext import commands
 
 from bot_util import BotUtil
-from cogs.beans import shop
 from cogs.jail import Jail
 from control.controller import Controller
 from control.event_manager import EventManager
@@ -111,16 +110,16 @@ class LootBoxViewController(ViewController):
                 )
                 if not success:
                     time_now = datetime.datetime.now()
-                    members = self.database.get_active_jails_by_member(guild_id, member.id)
-                    if len(members) > 0:
-                        member = members[0]
+                    affected_jails = self.database.get_active_jails_by_member(guild_id, member.id)
+                    if len(affected_jails) > 0:
+                        member = affected_jails[0]
                         event = JailEvent(
                             time_now,
                             guild_id,
                             JailEventType.INCREASE,
                             self.bot.user.id,
                             duration,
-                            members[0].id,
+                            affected_jails[0].id,
                         )
                         await self.controller.dispatch_event(event)
                         remaining = self.event_manager.get_jail_remaining(member)
@@ -130,7 +129,7 @@ class LootBoxViewController(ViewController):
                         self.logger.error(
                         guild_id,
                         "User already jailed but no active jail was found.",
-                        shop,
+                        "Shop",
                         )
                 else:
                     timestamp_now = int(datetime.datetime.now().timestamp())
