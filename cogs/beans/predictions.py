@@ -141,7 +141,11 @@ class Predictions(BeansGroup):
                     bean_channels = (
                         self.settings_manager.get_beans_notification_channels(guild_id)
                     )
-                    announcement = f"**This prediction has been locked in!**\n> {prediction.content}\nNo more bets will be accepted. The winners will be paid out once an outcome is achieved. Good luck!\nYou can also submit your own prediction ideas in the `/shop`."
+                    announcement = (
+                        f"**This prediction has been locked in!**\n> {prediction.content}\nNo more bets will be accepted. "
+                        "The winners will be paid out once an outcome is achieved. Good luck!\nYou can also submit your own "
+                        "prediction ideas in the overview channel or in the `/shop`."
+                    )
                     for channel_id in bean_channels:
                         channel = guild.get_channel(channel_id)
                         await channel.send(announcement)
