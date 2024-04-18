@@ -1,5 +1,6 @@
 # My own stuff
 *.txt
+!requirements.txt
 *.json
 *.log*
 *.sqlite
