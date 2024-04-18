@@ -78,22 +78,24 @@ class ItemManager(Service):
 
         # Spawn Chances
         mimic_chance = 0.1
-        chance_for_item = 0.2
+        chance_for_item = 0.12
         medium_chest_chance = 0.2
-        large_chest_chance = 0.01
+        large_chest_chance = 0.05
+        super_mimic_chance = 0.03
         random_item = None
 
         # Chest Ranges
         small_min_beans = 40
         small_max_beans = 80
         medium_min_beans = 200
-        medium_max_beans = 300
+        medium_max_beans = 400
         large_min_beans = 700
         large_max_beans = 900
         small_beans_reward = random.randint(small_min_beans, small_max_beans)
         medium_beans_reward = random.randint(medium_min_beans, medium_max_beans)
         large_beans_reward = random.randint(large_min_beans, large_max_beans)
         roll = random.random()
+        # (0.62*60)+(0.2*300)+(0.1*-60)+(0.05*800)+(0.03*(-800)) - cost 100
 
         if roll <= mimic_chance:
             beans = -small_beans_reward
@@ -111,6 +113,16 @@ class ItemManager(Service):
             mimic_chance + chance_for_item + medium_chest_chance + large_chest_chance
         ):
             beans = large_beans_reward
+        elif roll > (
+            mimic_chance + chance_for_item + medium_chest_chance + large_chest_chance
+        ) and roll <= (
+            mimic_chance
+            + chance_for_item
+            + medium_chest_chance
+            + large_chest_chance
+            + super_mimic_chance
+        ):
+            beans = -large_beans_reward
         elif roll > (
             mimic_chance + chance_for_item + medium_chest_chance + large_chest_chance
         ):

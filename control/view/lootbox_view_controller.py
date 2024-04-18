@@ -1,8 +1,11 @@
 import datetime
+import random
 
 import discord
 from discord.ext import commands
 
+from bot_util import BotUtil
+from cogs.jail import Jail
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
@@ -11,8 +14,9 @@ from control.view.view_controller import ViewController
 from datalayer.database import Database
 from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
+from events.jail_event import JailEvent
 from events.lootbox_event import LootBoxEvent
-from events.types import BeansEventType, LootBoxEventType, UIEventType
+from events.types import BeansEventType, JailEventType, LootBoxEventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemType
 
@@ -79,7 +83,7 @@ class LootBoxViewController(ViewController):
             title = f"{interaction.user.display_name}'s Random Treasure Chest"
 
         description = f"This treasure was claimed by: \n <@{member_id}>"
-        description += "\n\nThey slowly open the chest and reveal..."
+        description += "\n\nYou slowly open the chest and reveal..."
         embed = discord.Embed(
             title=title, description=description, color=discord.Colour.purple()
         )
@@ -87,15 +91,57 @@ class LootBoxViewController(ViewController):
         beans = loot_box.beans
 
         if beans < 0:
-            bean_balance = self.database.get_member_beans(guild_id, interaction.user.id)
+            bean_balance = self.database.get_member_beans(guild_id, member_id)
+            beans_taken = beans
             if bean_balance + beans < 0:
                 beans = -bean_balance
-
-            embed.add_field(
-                name="Oh no, it's a Mimic!",
-                value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them.",
-                inline=False,
-            )
+            if beans_taken < -100:
+                embed.add_field(
+                    name="Oh no, it's a LARGE Mimic!",
+                    value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
+                    inline=False,
+                )
+                jail_cog: Jail = self.bot.get_cog("Jail")
+                jail_announcement = f"<@{member_id}> delved too deep looking for treasure and got sucked into a wormhole that teleported them into jail."
+                duration = random.randint(1*60, 3*60)
+                member = interaction.user
+                success = await jail_cog.jail_user(
+                    guild_id, self.bot.user.id, member, duration
+                )
+                if not success:
+                    time_now = datetime.datetime.now()
+                    affected_jails = self.database.get_active_jails_by_member(guild_id, member.id)
+                    if len(affected_jails) > 0:
+                        member = affected_jails[0]
+                        event = JailEvent(
+                            time_now,
+                            guild_id,
+                            JailEventType.INCREASE,
+                            self.bot.user.id,
+                            duration,
+                            affected_jails[0].id,
+                        )
+                        await self.controller.dispatch_event(event)
+                        remaining = self.event_manager.get_jail_remaining(member)
+                        jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` has been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
+                        await jail_cog.announce(interaction.guild, jail_announcement)
+                    else:
+                        self.logger.error(
+                        guild_id,
+                        "User already jailed but no active jail was found.",
+                        "Shop",
+                        )
+                else:
+                    timestamp_now = int(datetime.datetime.now().timestamp())
+                    release = timestamp_now + (duration * 60)
+                    jail_announcement += f"\nThey will be released <t:{release}:R>."
+                    await jail_cog.announce(interaction.guild, jail_announcement)
+            else:
+                embed.add_field(
+                    name="Oh no, it's a Mimic!",
+                    value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them.",
+                    inline=False,
+                )
             embed.set_image(url="attachment://mimic.gif")
             attachment = discord.File("./img/mimic.gif", "mimic.gif")
         else:
