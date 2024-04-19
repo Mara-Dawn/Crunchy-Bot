@@ -7,7 +7,7 @@
 .VSCodeCounter/
 tmp/
 fonts/meh/
-!.devcontainer/
+!.devcontainer/devcontainer.json
 
 
 # Byte-compiled / optimized / DLL files
