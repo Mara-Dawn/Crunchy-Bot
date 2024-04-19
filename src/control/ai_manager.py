@@ -1,6 +1,7 @@
 import datetime
 
 import discord
+from cogs.jail import Jail
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -17,6 +18,11 @@ class AIManager(Service):
     TOKEN_SUMMARIZE_LIMIT = 2500
     TOKEN_SUMMARIZE_THRESHOLD = 2000
     DISCORD_MESSAGE_MAX_LENGTH = 1950
+    JAIL_COMMAND_MESSAGE = "You are going to jail"
+    JAIL_RELEASE_COMMAND_MESSAGE = "You are released form jail"
+    JAIL_COMMAND_DURATION = 30
+    JAILED = "jailed"
+    NOT_JAILED = "free"
 
     def __init__(
         self,
@@ -47,8 +53,13 @@ class AIManager(Service):
 
         self.backstory += (
             "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
-            "Each message will lead with the name of the user delimited with XML tags. Leave both the tags and their content out of your response."
+            "Each message will lead with the name of the user delimited with 'user' XML tags. Leave both the tags and their content out of your response."
             "When addressing users, always use the name found within parentheses, discarding any other text. Also discard the parentheses themselves."
+            "Each message will contain information wether the user is currently jailed or not, delimited with the 'jailed' XML tags. "
+            f"'{self.JAILED}' means they are in jail. while '{self.NOT_JAILED}' means they are free. The following is your only way to change this: "
+            f"You may jail people with these exact words: '{self.JAIL_COMMAND_MESSAGE}'. Only use this extremely rarely for really bad offenders. "
+            f"You may release jailed people with these exact words: '{self.JAIL_RELEASE_COMMAND_MESSAGE}'. You should almost never use this, only when "
+            "they beg you to release them of a long time. And even then it should be a one in onehundred chance."
         )
 
         self.client = AsyncOpenAI(api_key=self.token.strip("\n "))
@@ -59,6 +70,33 @@ class AIManager(Service):
         pass
 
     async def __dynamic_response(self, message: discord.Message, response_text: str):
+        jail_cog: Jail = self.bot.get_cog("Jail")
+
+        if self.JAIL_COMMAND_MESSAGE.lower() in response_text.lower():
+            jail_announcement = (
+                f"<@{message.author.id}> was sentenced to Jail by <@{self.bot.user.id}>"
+            )
+            duration = self.JAIL_COMMAND_DURATION
+            member = message.author
+            success = await jail_cog.jail_user(
+                message.guild.id, self.bot.user.id, member, duration
+            )
+            if success:
+                timestamp_now = int(datetime.datetime.now().timestamp())
+                release = timestamp_now + (duration * 60)
+                jail_announcement += f"\nThey will be released <t:{release}:R>."
+                await jail_cog.announce(message.guild, jail_announcement)
+
+        if self.JAIL_RELEASE_COMMAND_MESSAGE.lower() in response_text.lower():
+            jail_announcement = f"<@{message.author.id}> was released from Jail by <@{self.bot.user.id}>"
+            member = message.author
+            response = await jail_cog.release_user(
+                message.guild.id, self.bot.user.id, member
+            )
+            if response:
+                jail_announcement += response
+                await jail_cog.announce(message.guild, jail_announcement)
+
         if len(response_text) < self.DISCORD_MESSAGE_MAX_LENGTH:
             await message.reply(response_text)
             return
@@ -146,9 +184,17 @@ class AIManager(Service):
                 self.channel_logs[channel_id].add_assistant_message(
                     reference_message.content
                 )
+        active_jails = self.database.get_active_jails_by_member(
+            message.guild.id, message.author.id
+        )
+        jail_state = self.NOT_JAILED
+
+        if len(active_jails) > 0:
+            jail_state = self.JAILED
 
         user_message = (
-            f"<user>{message.author.display_name}</user>" + message.clean_content
+            f"<user>{message.author.display_name}</user>"
+            f"<jailed>{jail_state}</jailed>" + message.clean_content
         )
 
         self.channel_logs[channel_id].add_user_message(user_message)
