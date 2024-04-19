@@ -9,7 +9,7 @@ repos:
   hooks:
     - id: custom-script-file
       name: custom-script-file
-      entry: check_todos.sh
+      entry: precommit.sh
       language: script
       types: [python]
       pass_filenames: false
