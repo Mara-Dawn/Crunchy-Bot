@@ -1,0 +1,6 @@
+discord.py==2.3.2
+openai==1.21.2
+Pillow==10.3.0
+Requests==2.31.0
+tiktoken==0.6.0
+pre-commit==3.7.0

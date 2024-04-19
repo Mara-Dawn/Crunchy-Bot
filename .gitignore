@@ -1,11 +1,14 @@
 # My own stuff
 *.txt
+!requirements.txt
 *.json
 *.log*
 *.sqlite
 .VSCodeCounter/
 tmp/
 fonts/meh/
+!.devcontainer/devcontainer.json
+!.vscode/launch.json
 
 
 # Byte-compiled / optimized / DLL files
