@@ -15,8 +15,7 @@ COPY . /app
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
-EXPOSE 5678
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 # ENTRYPOINT ["python", "src/main.py"]
-CMD /bin/bash -c './entrypoint.sh'
+CMD python src/main.py
