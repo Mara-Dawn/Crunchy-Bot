@@ -190,7 +190,7 @@ class PredictionInteractionViewController(ViewController):
         announcement = (
             "**Prediction Results:\n**"
             f"The prediction '**{prediction_text}**' has come to a close!\n The winning outcome is '**{outcome_text}**' "
-            "with winning odds of 1:{odds_text}.\n A total of `🅱️{total}` has been paid out."
+            f"with winning odds of 1:{odds_text}.\n A total of `🅱️{total}` has been paid out."
         )
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)
