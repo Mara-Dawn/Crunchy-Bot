@@ -8,6 +8,7 @@
 tmp/
 fonts/meh/
 !.devcontainer/devcontainer.json
+!.vscode/launch.json
 
 
 # Byte-compiled / optimized / DLL files
