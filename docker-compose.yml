@@ -1,7 +1,5 @@
-version: '3.4'
-
 services:
-  devcontainer:
+  discord-bot:
     image: discord-bot
     build:
       context: .

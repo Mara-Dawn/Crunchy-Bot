@@ -1,8 +1,6 @@
-version: '3.4'
-
 services:
   devcontainer:
-    image: discord-bot
+    image: devcontainer
     build:
       context: .
       dockerfile: ./Dockerfile
