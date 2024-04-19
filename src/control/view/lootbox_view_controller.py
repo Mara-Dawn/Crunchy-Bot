@@ -53,7 +53,7 @@ class LootBoxViewController(ViewController):
             guild_id, interaction.user.id, stun_base_duration
         )
 
-        if stunned_remaining > 0:
+        if stunned_remaining > 0 and owner_id is not None:
             timestamp_now = int(datetime.datetime.now().timestamp())
             remaining = int(timestamp_now + stunned_remaining)
             await interaction.followup.send(
