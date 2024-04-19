@@ -6,5 +6,6 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+    command: ["sh", "-c", "echo 'heey'"]
     volumes:
       - .:/app
