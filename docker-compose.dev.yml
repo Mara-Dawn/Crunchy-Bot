@@ -8,3 +8,5 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - .:/app
+    tty: true
+    command: sleep infinity
