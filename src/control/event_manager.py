@@ -2,11 +2,6 @@ import datetime
 from typing import Any
 
 from bot_util import BotUtil
-from control.controller import Controller
-from control.item_manager import ItemManager
-from control.logger import BotLogger
-from control.service import Service
-from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.jail import UserJail
 from datalayer.stats import UserStats
@@ -23,6 +18,12 @@ from events.types import (
 )
 from items.types import ItemType
 from view.types import RankingType
+
+from control.controller import Controller
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.service import Service
+from control.settings_manager import SettingsManager
 
 
 class EventManager(Service):

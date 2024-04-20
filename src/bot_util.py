@@ -25,20 +25,25 @@ class BotUtil:
         if remainder <= 0:
             return "0 minutes"
 
-        possible_fields = ("weeks", "days", "hours", "minutes", "seconds")
+        possible_fields = ("week", "day", "hour", "minute", "second")
         constants = {
-            "weeks": 604800,
-            "days": 86400,
-            "hours": 3600,
-            "minutes": 60,
-            "seconds": 1,
+            "week": 604800,
+            "day": 86400,
+            "hour": 3600,
+            "minute": 60,
+            "second": 1,
         }
         output = []
         for field in possible_fields:
             result, remainder = divmod(remainder, constants[field])
 
+            suffix = ""
+
+            if result > 1:
+                suffix = "s"
+
             if result > 0:
-                output.append(str(result) + " " + field)
+                output.append(str(result) + " " + field + suffix)
 
         if len(output) <= 1:
             return "".join(output)
