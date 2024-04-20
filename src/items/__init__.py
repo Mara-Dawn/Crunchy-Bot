@@ -369,7 +369,7 @@ class LootBoxItem(Item):
             name="Random Treasure Chest",
             item_type=ItemType.LOOTBOX,
             group=ItemGroup.LOOTBOX,
-            shop_category=ShopCategory.FUN,
+            shop_category=ShopCategory.LOOTBOX,
             description="No need to wait for loot box drops, just buy your own!",
             emoji="🧰",
             cost=cost,
@@ -377,6 +377,31 @@ class LootBoxItem(Item):
             view_class=None,
             allow_amount=False,
             base_amount=1,
+            max_amount=None,
+            trigger=None,
+        )
+
+
+class LootBoxItemBundle(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 500
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Random Treasure Chest x5",
+            item_type=ItemType.LOOTBOX_BUNDLE,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.LOOTBOX,
+            description="Too addicted? Just buy 5 at once! You'll have to open them one by one though.",
+            emoji="🧰",
+            cost=cost,
+            value=None,
+            view_class=None,
+            allow_amount=False,
+            base_amount=5,
             max_amount=None,
             trigger=None,
         )

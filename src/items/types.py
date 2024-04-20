@@ -18,6 +18,7 @@ class ItemType(str, Enum):
     RELEASE = "Release"
     BAILOUT = "Bailout"
     LOOTBOX = "LootBoxItem"
+    LOOTBOX_BUNDLE = "LootBoxItemBundle"
     LOTTERY_TICKET = "LotteryTicket"
     NAME_COLOR = "NameColor"
     REACTION_SPAM = "ReactionSpam"
@@ -42,9 +43,10 @@ class ItemGroup(str, Enum):
 
 
 class ShopCategory(int, Enum):
-    FUN = 0
-    INTERACTION = 1
-    SLAP = 2
-    PET = 3
-    FART = 4
-    JAIL = 5
+    LOOTBOX = 0
+    FUN = 1
+    INTERACTION = 2
+    SLAP = 3
+    PET = 4
+    FART = 5
+    JAIL = 6

@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import random
+import re
 
 import discord
 from bot import CrunchyBot
@@ -86,9 +87,7 @@ class Gamba(commands.Cog):
 
     @app_commands.command(name="gamba", description="Gamba away your beans.")
     @app_commands.guild_only()
-    async def gamba(
-        self, interaction: discord.Interaction, amount: int | None = None
-    ):
+    async def gamba(self, interaction: discord.Interaction, amount: int | None = None):
         if not await self.__check_enabled(interaction):
             return
 
@@ -225,45 +224,70 @@ class Gamba(commands.Cog):
             "\n**0x**",
             "\n**2x**🎲",
             "\n**3x**🎲🎲",
-            "\n**10x**🎲🎲🎲",
-            "\n**100x**🎲🎲🎲🎲",
+            "\n**5x**🎲🎲🎲",
+            "\n**10x**🎲🎲🎲🎲",
+            "\n**100x**🎲🎲🎲🎲🎲",
         ]
 
         payout = 0
 
-        loss = 0.50
-        doubling = 0.33
-        tripling = 0.15
-        # tenfold = 0.019
+        loss = 0.53
+        times_two = 0.27
+        times_three = 0.14
+        times_five = 0.05
+        # times_ten = 0.009
         jackpot = 0.001
 
-        # (0.33*2)+(0.15*3)+(0.019*10)+(0.001*100)
+        # (0.27*2)+(0.14*3)+(0.05*5)+(0.009*10)+(0.001*100)
         result = random.random()
 
-        prompt = f"<user>{interaction.user.display_name}</user>"
+        name_result = re.findall(r"\(+(.*?)\)", interaction.user.display_name)
+
+        name = interaction.user.display_name
+        title = ""
+        if len(name_result) > 0:
+            name = name_result[0]
+            title_result = re.findall(r"\(+.*?\)(.*)", interaction.user.display_name)
+
+            if len(title_result) > 0:
+                title = title_result[0].strip()
+
+        prompt = f"My name is {name} "
+        if len(title) > 0:
+            prompt += f"and i am {title}"
+        prompt += ". I tried to bet my beans on the beans gamble,"
         prompt += "I tried to bet my beans on the beans gamble,"
         if result <= loss:
             final_display = 0
             final = "You lost. It is what it is."
             prompt += "but i lost them all. Please make fun of me."
-        elif result > loss and result <= (loss + doubling):
+        elif result > loss and result <= (loss + times_two):
             final_display = 1
             payout = amount * 2
             final = f"You won! Your payout is `🅱️{payout}` beans."
             prompt += f"and i won `🅱️{payout}` beans, which is a small amount. Please congratulate me, but not too much."
-        elif result > (loss + doubling) and result <= (loss + doubling + tripling):
+        elif result > (loss + times_two) and result <= (loss + times_two + times_three):
             final_display = 2
             payout = amount * 3
             final = f"Wow you got lucky! Your payout is `🅱️{payout}` beans."
             prompt += f"and i won `🅱️{payout}` beans, which is amoderate amount. Please congratulate me."
-        elif result > (loss + doubling + tripling) and result <= (1 - jackpot):
+        elif result > (loss + times_two + times_three) and result <= (
+            loss + times_two + times_three + times_five
+        ):
             final_display = 3
+            payout = amount * 5
+            final = f"Your luck is amazing! Your payout is `🅱️{payout}` beans."
+            prompt += f"and i won `🅱️{payout}` beans, which is a large amount. Please congratulate me."
+        elif result > (loss + times_two + times_three + times_five) and result <= (
+            1 - jackpot
+        ):
+            final_display = 4
             payout = amount * 10
             final = f"**BIG WIN!** Your payout is `🅱️{payout}` beans."
-            prompt += f"and i won `🅱️{payout}` beans, which is a large amount."
+            prompt += f"and i won `🅱️{payout}` beans, which is a massive amount."
             prompt += " Please congratulate me a lot and freak out a little because it is so rare."
         elif result > (1 - jackpot) and result <= 1:
-            final_display = 4
+            final_display = 5
             payout = amount * 100
             final = f"**JACKPOT!!!** Your payout is `🅱️{payout}` beans."
             prompt += f"and i hit the jackpot! Now im rich, i got  `🅱️{payout}` beans as a payout! "
@@ -290,10 +314,10 @@ class Gamba(commands.Cog):
         message = await interaction.original_response()
         i = 0
         current = i
-        while i <= 10 or current != final_display:
+        while i <= 12 or current != final_display:
             current = i % len(display_values)
             display = display_values[current]
-            await asyncio.sleep((1 / 20) * i)
+            await asyncio.sleep((1 / 30) * i * 2)
             await message.edit(content=response + display)
             i += 1
 
