@@ -1,15 +1,21 @@
 import datetime
+import re
 
 import discord
+from bot_util import BotUtil
 from cogs.jail import Jail
-from control.controller import Controller
-from control.logger import BotLogger
-from control.service import Service
 from datalayer.chat_log import ChatLog
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
+from events.jail_event import JailEvent
+from events.types import JailEventType
 from openai import AsyncOpenAI
+
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.logger import BotLogger
+from control.service import Service
 
 
 class AIManager(Service):
@@ -20,6 +26,7 @@ class AIManager(Service):
     DISCORD_MESSAGE_MAX_LENGTH = 1950
     JAIL_COMMAND_MESSAGE = "You are going to jail"
     JAIL_RELEASE_COMMAND_MESSAGE = "You are released form jail"
+    JAIL_EXTEND_COMMAND_MESSAGE = "Your jail sentence will be extended"
     JAIL_COMMAND_DURATION = 30
     JAILED = "jailed"
     NOT_JAILED = "free"
@@ -34,6 +41,7 @@ class AIManager(Service):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.log_name = "AI"
+        self.event_manager: EventManager = self.controller.get_service(EventManager)
 
         self.token = ""
         with open(self.KEY_FILE) as file:
@@ -51,15 +59,17 @@ class AIManager(Service):
             "You are not in a relationship as of now, but you enjoy that. "
         )
 
-        self.backstory += (
+        self.backstory_extended = (
             "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
-            "Each message will lead with the name of the user delimited with 'user' XML tags. Leave both the tags and their content out of your response."
-            "When addressing users, always use the name found within parentheses, discarding any other text. Also discard the parentheses themselves."
+            "Each message will lead with the name of the user delimited with <user> XML tags. If they have information about themselves, "
+            "it comes after the name within <info> XML tags. Leave both the tags and their content out of your response. Never use the symbol @ in front of a name when adressing someone. "
+            "When addressing users, always use their name. You may use their info as part of the conversation, especially to make fun of them. "
             "Each message will contain information wether the user is currently jailed or not, delimited with the 'jailed' XML tags. "
             f"'{self.JAILED}' means they are in jail. while '{self.NOT_JAILED}' means they are free. The following is your only way to change this: "
             f"You may jail people with these exact words: '{self.JAIL_COMMAND_MESSAGE}'. Only use this extremely rarely for really bad offenders. "
             f"You may release jailed people with these exact words: '{self.JAIL_RELEASE_COMMAND_MESSAGE}'. You should almost never use this, only when "
-            "they beg you to release them of a long time. And even then it should be a one in onehundred chance."
+            "they beg you to release them of a long time. And even then it should be a one in onehundred chance. "
+            f"If someone missbehaves but is already in jail, you may extend their jail stay with these exact words: '{self.JAIL_EXTEND_COMMAND_MESSAGE}'"
         )
 
         self.client = AsyncOpenAI(api_key=self.token.strip("\n "))
@@ -96,6 +106,33 @@ class AIManager(Service):
             if response:
                 jail_announcement += response
                 await jail_cog.announce(message.guild, jail_announcement)
+
+        if self.JAIL_EXTEND_COMMAND_MESSAGE.lower() in response_text.lower():
+            time_now = datetime.datetime.now()
+            affected_jails = self.database.get_active_jails_by_member(message.guild.id, message.author.id)
+            if len(affected_jails) > 0:
+                
+                event = JailEvent(
+                    time_now,
+                    message.guild.id,
+                    JailEventType.INCREASE,
+                    self.bot.user.id,
+                    self.JAIL_COMMAND_DURATION,
+                    affected_jails[0].id,
+                )
+                await self.controller.dispatch_event(event)
+                remaining = self.event_manager.get_jail_remaining(affected_jails[0])
+                jail_announcement = (
+                    f"<@{self.bot.user.id}> increased <@{message.author.id}>'s jail sentence by `{BotUtil.strfdelta(self.JAIL_COMMAND_DURATION, inputtype="minutes")}`. "
+                    f"`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
+                )
+                await jail_cog.announce(message.guild, jail_announcement)
+            else:
+                self.logger.error(
+                message.guild.id,
+                "User already jailed but no active jail was found.",
+                "AI",
+                )
 
         if len(response_text) < self.DISCORD_MESSAGE_MAX_LENGTH:
             await message.reply(response_text)
@@ -136,44 +173,11 @@ class AIManager(Service):
         response = chat_completion.choices[0].message.content
         return response
 
-    async def respond_user(self, message: discord.Message):
-        author_id = message.author.id
-
-        if author_id not in self.chat_logs:
-            self.chat_logs[author_id] = ChatLog(self.backstory)
-
-        if message.reference is not None:
-            reference_message = await message.channel.fetch_message(
-                message.reference.message_id
-            )
-
-            if reference_message is not None:
-                self.chat_logs[author_id].add_assistant_message(
-                    reference_message.content
-                )
-
-        user_message = (
-            f"I am {message.author.display_name} and i say the following:"
-            + message.clean_content
-        )
-
-        self.chat_logs[author_id].add_user_message(user_message)
-
-        chat_completion = await self.client.chat.completions.create(
-            messages=self.chat_logs[author_id].get_request_data(),
-            model="gpt-4-turbo",
-        )
-        response = chat_completion.choices[0].message.content
-
-        self.chat_logs[author_id].add_assistant_message(response)
-
-        await self.__dynamic_response(message, response)
-
     async def respond(self, message: discord.Message):
         channel_id = message.channel.id
 
         if channel_id not in self.channel_logs:
-            self.channel_logs[channel_id] = ChatLog(self.backstory)
+            self.channel_logs[channel_id] = ChatLog(self.backstory + self.backstory_extended)
 
         if message.reference is not None:
             reference_message = await message.channel.fetch_message(
@@ -192,10 +196,21 @@ class AIManager(Service):
         if len(active_jails) > 0:
             jail_state = self.JAILED
 
-        user_message = (
-            f"<user>{message.author.display_name}</user>"
-            f"<jailed>{jail_state}</jailed>" + message.clean_content
-        )
+        name_result = re.findall(r"\(+(.*?)\)", message.author.display_name)
+
+        name = message.author.display_name
+        title = ""
+        if len(name_result) > 0:
+            name = name_result[0]
+            title_result = re.findall(r"\(+.*?\)(.*)", message.author.display_name)
+
+            if len(title_result) > 0:
+                title = title_result[0].strip()
+
+        user_message = f"<user>{name}</user>"
+        if len(title) > 0:
+            user_message += f"<info>{title}</info>"
+        user_message += f"<jailed>{jail_state}</jailed>" + message.clean_content
 
         self.channel_logs[channel_id].add_user_message(user_message)
 

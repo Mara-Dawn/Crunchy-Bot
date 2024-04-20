@@ -4,11 +4,6 @@ import random
 import discord
 from bot_util import BotUtil
 from cogs.jail import Jail
-from control.controller import Controller
-from control.event_manager import EventManager
-from control.item_manager import ItemManager
-from control.logger import BotLogger
-from control.view.view_controller import ViewController
 from datalayer.database import Database
 from discord.ext import commands
 from events.beans_event import BeansEvent
@@ -18,6 +13,12 @@ from events.lootbox_event import LootBoxEvent
 from events.types import BeansEventType, JailEventType, LootBoxEventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemType
+
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.view.view_controller import ViewController
 
 
 class LootBoxViewController(ViewController):
@@ -111,7 +112,6 @@ class LootBoxViewController(ViewController):
                     time_now = datetime.datetime.now()
                     affected_jails = self.database.get_active_jails_by_member(guild_id, member.id)
                     if len(affected_jails) > 0:
-                        member = affected_jails[0]
                         event = JailEvent(
                             time_now,
                             guild_id,
@@ -121,8 +121,8 @@ class LootBoxViewController(ViewController):
                             affected_jails[0].id,
                         )
                         await self.controller.dispatch_event(event)
-                        remaining = self.event_manager.get_jail_remaining(member)
-                        jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` has been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
+                        remaining = self.event_manager.get_jail_remaining(affected_jails[0])
+                        jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` have been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
                         await jail_cog.announce(interaction.guild, jail_announcement)
                     else:
                         self.logger.error(
