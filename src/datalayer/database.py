@@ -1,4 +1,3 @@
-import contextlib
 import datetime
 import json
 import sqlite3
@@ -351,12 +350,6 @@ class Database:
                 "DB", f"Loaded DB version {sqlite3.version} from {db_file}."
             )
 
-            command = f"""
-                ALTER TABLE {self.BAT_EVENT_TABLE}
-                ADD COLUMN {self.BAT_EVENT_DURATION_COL} INTEGER;
-            """
-            with contextlib.suppress(Exception):
-                self.__query_insert(command)
             c = self.conn.cursor()
 
             c.execute(self.CREATE_SETTINGS_TABLE)
