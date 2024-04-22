@@ -1,10 +1,6 @@
 import asyncio
 
 import discord
-from control.controller import Controller
-from control.logger import BotLogger
-from control.service import Service
-from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.types import PredictionState, PredictionStateSort
 from discord.ext import commands
@@ -21,6 +17,11 @@ from view.prediction_moderation_embed import PredictionModerationEmbed
 from view.prediction_moderation_view import PredictionModerationView
 from view.prediction_overview_view import PredictionOverviewView
 from view.prediction_view import PredictionView
+
+from control.controller import Controller
+from control.logger import BotLogger
+from control.service import Service
+from control.settings_manager import SettingsManager
 
 
 class PredictionManager(Service):

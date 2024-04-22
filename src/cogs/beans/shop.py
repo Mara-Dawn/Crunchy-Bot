@@ -109,7 +109,7 @@ class Shop(commands.Cog):
 
         shop_img = discord.File("./img/shop.png", "shop.png")
         police_img = discord.File("./img/police.png", "police.png")
-        items = self.item_manager.get_items(interaction.guild_id)
+        items = self.item_manager.get_shop_items(interaction.guild_id)
 
         items = sorted(items, key=lambda x: (x.shop_category.value, x.cost))
 

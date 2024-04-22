@@ -1,4 +1,5 @@
 from datalayer.types import ItemTrigger
+
 from items.item import Item
 from items.types import ItemGroup, ItemType, ShopCategory
 
@@ -125,6 +126,7 @@ class BonusFart(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
+            weight=150,
         )
 
 
@@ -150,6 +152,33 @@ class BonusPet(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.PET],
+            weight=150,
+        )
+
+
+class UltraPet(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 900
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="The Most Gentle Pet Ever",
+            item_type=ItemType.ULTRA_PET,
+            group=ItemGroup.MAJOR_ACTION,
+            shop_category=ShopCategory.PET,
+            description="You feel a weird tingle in your hand, almost as if the next person to recieve your pets will be instantly freed from jail.",
+            emoji="😳",
+            cost=cost,
+            value=True,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.PET],
+            lootbox_exclusive=True,
         )
 
 
@@ -175,6 +204,33 @@ class BonusSlap(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
+            weight=150,
+        )
+
+
+class UltraSlap(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 3000
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Infinity and Beyond Glove",
+            item_type=ItemType.ULTRA_SLAP,
+            group=ItemGroup.MAJOR_ACTION,
+            shop_category=ShopCategory.SLAP,
+            description="This glove will slap people into another dimension, completely annihilating them and erasing their existence. Your next slap will stun your target for 5 hours. Only works against jailed people.",
+            emoji="🥊",
+            cost=cost,
+            value=60 * 5,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.SLAP],
+            lootbox_exclusive=True,
         )
 
 
@@ -204,6 +260,32 @@ class ExplosiveFart(Item):
             base_amount=1,
             max_amount=None,
             trigger=None,
+        )
+
+
+class UltraFartBoost(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 1500
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Nuclear Lunch Codes",
+            item_type=ItemType.ULTRA_FART_BOOST,
+            group=ItemGroup.VALUE_MODIFIER,
+            shop_category=ShopCategory.FART,
+            description="You try to cook a nice lunch, but your cooking skills are so abysmal that the brave souls who 'agreed' to eat it have a near death experience. Powers up your next Fart by x50.",
+            emoji="🤮",
+            cost=cost,
+            value=50,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.FART],
+            lootbox_exclusive=True,
         )
 
 
@@ -255,6 +337,21 @@ class FartProtection(Item):
             max_amount=5,
             trigger=[ItemTrigger.FART, ItemTrigger.SLAP],
         )
+
+
+class AdvancedFartProtection(FartProtection):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 700
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(cost)
+        self.base_amount = 25
+        self.name = self.name + " x5"
+        self.description = "A poor paranoid soul sewed 5 hazmat suits into one, making this one much stronger than what you would usually find in a store."
+        self.lootbox_exclusive = True
 
 
 class FartStabilizer(Item):

@@ -4,15 +4,19 @@ from enum import Enum
 class ItemType(str, Enum):
     AUTO_CRIT = "AutoCrit"
     FART_BOOST = "FartBoost"
+    ULTRA_FART_BOOST = "UltraFartBoost"
     PET_BOOST = "PetBoost"
     SLAP_BOOST = "SlapBoost"
     BONUS_FART = "BonusFart"
     BONUS_PET = "BonusPet"
+    ULTRA_PET = "UltraPet"
     BONUS_SLAP = "BonusSlap"
+    ULTRA_SLAP = "UltraSlap"
     GIGA_FART = "GigaFart"
     FART_STABILIZER = "FartStabilizer"
     FARTVANTAGE = "Fartvantage"
     FART_PROTECTION = "FartProtection"
+    ADVANCED_FART_PROTECTION = "AdvancedFartProtection"
     JAIL_REDUCTION = "JailReduction"
     ARREST = "Arrest"
     RELEASE = "Release"
@@ -40,6 +44,7 @@ class ItemGroup(str, Enum):
     IMMEDIATE_USE = "immediate_use"
     LOOTBOX = "loot_box"
     SUBSCRIPTION = "subscription"
+    MAJOR_ACTION = "major_action"
 
 
 class ShopCategory(int, Enum):

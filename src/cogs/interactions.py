@@ -3,7 +3,6 @@ import datetime
 import discord
 from bot import CrunchyBot
 from bot_util import Tenor
-from cogs.jail import Jail
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
@@ -15,6 +14,8 @@ from discord import app_commands
 from discord.ext import commands
 from events.interaction_event import InteractionEvent
 from items.types import ItemType
+
+from cogs.jail import Jail
 
 
 class Interactions(commands.Cog):

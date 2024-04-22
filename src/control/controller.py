@@ -2,15 +2,16 @@ import asyncio
 import importlib
 
 import discord
-from control.logger import BotLogger
-from control.service import Service
-from control.types import ControllerModuleMap
-from control.view.view_controller import ViewController
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
 from events.ui_event import UIEvent
 from view.view_menu import ViewMenu
+
+from control.logger import BotLogger
+from control.service import Service
+from control.types import ControllerModuleMap
+from control.view.view_controller import ViewController
 
 
 class Controller:

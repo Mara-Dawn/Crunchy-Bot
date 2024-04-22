@@ -3,10 +3,10 @@ from typing import Any
 
 from bot_util import BotUtil
 from datalayer.database import Database
-from datalayer.jail import UserJail
 from datalayer.stats import UserStats
 from datalayer.types import UserInteraction
 from discord.ext import commands
+from events.bat_event import BatEvent
 from events.bot_event import BotEvent
 from events.jail_event import JailEvent
 from events.prediction_event import PredictionEvent
@@ -120,36 +120,27 @@ class EventManager(Service):
     def get_stunned_remaining(
         self, guild_id: int, user_id: int, base_duration: int
     ) -> int:
-        last_bat_event = self.database.get_last_bat_event_by_target(guild_id, user_id)
+        last_bat_event: BatEvent = self.database.get_last_bat_event_by_target(
+            guild_id, user_id
+        )
 
         if last_bat_event is None:
             return 0
 
         last_bat_time = last_bat_event.datetime
+        last_bat_duration = last_bat_event.duration
+        if last_bat_duration is None:
+            last_bat_duration = base_duration
 
         diff = datetime.datetime.now() - last_bat_time
-        if int(diff.total_seconds() / 60) <= base_duration:
+        if int(diff.total_seconds() / 60) <= last_bat_duration:
             release_timestamp = last_bat_time + datetime.timedelta(
-                minutes=base_duration
+                minutes=last_bat_duration
             )
             remainder = release_timestamp - datetime.datetime.now()
             return max(int(remainder.total_seconds()), 0)
 
         return 0
-
-    def get_jail_duration(self, jail: UserJail) -> int:
-        events = self.database.get_jail_events_by_jail(jail.id)
-        total_duration = 0
-        for event in events:
-            total_duration += event.duration
-
-        return total_duration
-
-    def get_jail_remaining(self, jail: UserJail) -> float:
-        duration = self.get_jail_duration(jail)
-        release_timestamp = jail.jailed_on + datetime.timedelta(minutes=duration)
-        remainder = release_timestamp - datetime.datetime.now()
-        return max(remainder.total_seconds() / 60, 0)
 
     def has_jail_event_from_user(
         self, jail_id: int, user_id: int, jail_event_type: JailEventType
@@ -404,8 +395,10 @@ class EventManager(Service):
                 )
             case RankingType.BEANS:
                 parsing_list = self.database.get_guild_beans_rankings(guild_id)
+                # only subtract lootboxes until patch where beans got removed.
                 lootbox_purchases = self.database.get_lootbox_purchases_by_guild(
-                    guild_id
+                    guild_id,
+                    datetime.datetime(year=2024, month=4, day=22, hour=14).timestamp(),
                 )
                 loot_box_item = self.item_manager.get_item(guild_id, ItemType.LOOTBOX)
                 for user_id, amount in lootbox_purchases.items():

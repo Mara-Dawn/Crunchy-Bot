@@ -1,3 +1,5 @@
+import contextlib
+import datetime
 import json
 import sqlite3
 import traceback
@@ -7,12 +9,6 @@ from typing import Any
 import discord
 from bot_util import BotUtil
 from control.logger import BotLogger
-from datalayer.jail import UserJail
-from datalayer.lootbox import LootBox
-from datalayer.prediction import Prediction
-from datalayer.prediction_stats import PredictionStats
-from datalayer.quote import Quote
-from datalayer.types import PredictionState, UserInteraction
 from discord.ext import commands
 from events.bat_event import BatEvent
 from events.beans_event import BeansEvent, BeansEventType
@@ -28,6 +24,13 @@ from events.timeout_event import TimeoutEvent
 from events.types import EventType, LootBoxEventType, PredictionEventType
 from items.types import ItemType
 from view.types import EmojiType
+
+from datalayer.jail import UserJail
+from datalayer.lootbox import LootBox
+from datalayer.prediction import Prediction
+from datalayer.prediction_stats import PredictionStats
+from datalayer.quote import Quote
+from datalayer.types import PredictionState, UserInteraction
 
 
 class Database:
@@ -234,11 +237,13 @@ class Database:
     BAT_EVENT_ID_COL = "btev_event_id"
     BAT_EVENT_USED_BY_COL = "btev_used_by_id"
     BAT_EVENT_TARGET_COL = "btev_target_id"
+    BAT_EVENT_DURATION_COL = "btev_duration_id"
     CREATE_BAT_EVENT_TABLE = f"""
     CREATE TABLE if not exists {BAT_EVENT_TABLE} (
         {BAT_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
         {BAT_EVENT_USED_BY_COL} INTEGER, 
         {BAT_EVENT_TARGET_COL} INTEGER, 
+        {BAT_EVENT_DURATION_COL} INTEGER, 
         PRIMARY KEY ({BAT_EVENT_ID_COL})
     );"""
 
@@ -346,6 +351,12 @@ class Database:
                 "DB", f"Loaded DB version {sqlite3.version} from {db_file}."
             )
 
+            command = f"""
+                ALTER TABLE {self.BAT_EVENT_TABLE}
+                ADD COLUMN {self.BAT_EVENT_DURATION_COL} INTEGER;
+            """
+            with contextlib.suppress(Exception):
+                self.__query_insert(command)
             c = self.conn.cursor()
 
             c.execute(self.CREATE_SETTINGS_TABLE)
@@ -608,10 +619,11 @@ class Database:
             INSERT INTO {self.BAT_EVENT_TABLE} (
             {self.BAT_EVENT_ID_COL},
             {self.BAT_EVENT_USED_BY_COL},
-            {self.BAT_EVENT_TARGET_COL})
-            VALUES (?, ?, ?);
+            {self.BAT_EVENT_TARGET_COL},
+            {self.BAT_EVENT_DURATION_COL})
+            VALUES (?, ?, ?, ?);
         """
-        task = (event_id, event.used_by_id, event.target_id)
+        task = (event_id, event.used_by_id, event.target_id, event.duration)
 
         return self.__query_insert(command, task)
 
@@ -1295,15 +1307,21 @@ class Database:
             for row in rows
         }
 
-    def get_lootbox_purchases_by_guild(self, guild_id: int) -> dict[int, int]:
+    def get_lootbox_purchases_by_guild(
+        self, guild_id: int, until: int = None
+    ) -> dict[int, int]:
         command = f"""
             SELECT {self.LOOTBOX_EVENT_MEMBER_COL}, COUNT({self.LOOTBOX_EVENT_TYPE_COL}) FROM {self.LOOTBOX_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
             AND {self.EVENT_GUILD_ID_COL} = ?
             WHERE {self.LOOTBOX_EVENT_TYPE_COL} = ?
+            AND {self.EVENT_TIMESTAMP_COL} < ?
             GROUP BY {self.LOOTBOX_EVENT_MEMBER_COL};
         """
-        task = (guild_id, LootBoxEventType.BUY.value)
+        if until is None:
+            until = datetime.datetime.now().timestamp()
+
+        task = (guild_id, LootBoxEventType.BUY.value, until)
 
         rows = self.__query_select(command, task)
         if not rows or len(rows) < 1:
