@@ -3,7 +3,6 @@ import re
 
 import discord
 from bot_util import BotUtil
-from cogs.jail import Jail
 from datalayer.chat_log import ChatLog
 from datalayer.database import Database
 from discord.ext import commands
@@ -13,7 +12,7 @@ from events.types import JailEventType
 from openai import AsyncOpenAI
 
 from control.controller import Controller
-from control.event_manager import EventManager
+from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.service import Service
 
@@ -41,7 +40,7 @@ class AIManager(Service):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.log_name = "AI"
-        self.event_manager: EventManager = self.controller.get_service(EventManager)
+        self.jail_manager: JailManager = self.controller.get_service(JailManager)
 
         self.token = ""
         with open(self.KEY_FILE) as file:
@@ -68,7 +67,7 @@ class AIManager(Service):
             f"'{self.JAILED}' means they are in jail. while '{self.NOT_JAILED}' means they are free. The following is your only way to change this: "
             f"You may jail people with these exact words: '{self.JAIL_COMMAND_MESSAGE}'. Only use this extremely rarely for really bad offenders. "
             f"You may release jailed people with these exact words: '{self.JAIL_RELEASE_COMMAND_MESSAGE}'. You should almost never use this, only when "
-            "they beg you to release them of a long time. And even then it should be a one in onehundred chance. "
+            "they beg you to release them for a long time. And even then it should be a one in onehundred chance. "
             f"If someone missbehaves but is already in jail, you may extend their jail stay with these exact words: '{self.JAIL_EXTEND_COMMAND_MESSAGE}'"
         )
 
@@ -80,32 +79,30 @@ class AIManager(Service):
         pass
 
     async def __dynamic_response(self, message: discord.Message, response_text: str):
-        jail_cog: Jail = self.bot.get_cog("Jail")
-
         if self.JAIL_COMMAND_MESSAGE.lower() in response_text.lower():
             jail_announcement = (
                 f"<@{message.author.id}> was sentenced to Jail by <@{self.bot.user.id}>"
             )
             duration = self.JAIL_COMMAND_DURATION
             member = message.author
-            success = await jail_cog.jail_user(
+            success = await self.jail_manager.jail_user(
                 message.guild.id, self.bot.user.id, member, duration
             )
             if success:
                 timestamp_now = int(datetime.datetime.now().timestamp())
                 release = timestamp_now + (duration * 60)
                 jail_announcement += f"\nThey will be released <t:{release}:R>."
-                await jail_cog.announce(message.guild, jail_announcement)
+                await self.jail_manager.announce(message.guild, jail_announcement)
 
         if self.JAIL_RELEASE_COMMAND_MESSAGE.lower() in response_text.lower():
             jail_announcement = f"<@{message.author.id}> was released from Jail by <@{self.bot.user.id}>"
             member = message.author
-            response = await jail_cog.release_user(
+            response = await self.jail_manager.release_user(
                 message.guild.id, self.bot.user.id, member
             )
             if response:
                 jail_announcement += response
-                await jail_cog.announce(message.guild, jail_announcement)
+                await self.jail_manager.announce(message.guild, jail_announcement)
 
         if self.JAIL_EXTEND_COMMAND_MESSAGE.lower() in response_text.lower():
             time_now = datetime.datetime.now()
@@ -121,12 +118,12 @@ class AIManager(Service):
                     affected_jails[0].id,
                 )
                 await self.controller.dispatch_event(event)
-                remaining = self.event_manager.get_jail_remaining(affected_jails[0])
+                remaining = self.jail_manager.get_jail_remaining(affected_jails[0])
                 jail_announcement = (
                     f"<@{self.bot.user.id}> increased <@{message.author.id}>'s jail sentence by `{BotUtil.strfdelta(self.JAIL_COMMAND_DURATION, inputtype="minutes")}`. "
                     f"`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
                 )
-                await jail_cog.announce(message.guild, jail_announcement)
+                await self.jail_manager.announce(message.guild, jail_announcement)
             else:
                 self.logger.error(
                 message.guild.id,

@@ -9,11 +9,11 @@ from bot_util import BotUtil
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
+from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
-from datalayer.jail import UserJail
 from datalayer.types import UserInteraction
 from discord import app_commands
 from discord.ext import commands, tasks
@@ -34,6 +34,7 @@ class Jail(commands.Cog):
         self.item_manager: ItemManager = self.controller.get_service(ItemManager)
         self.event_manager: EventManager = self.controller.get_service(EventManager)
         self.role_manager: RoleManager = self.controller.get_service(RoleManager)
+        self.jail_manager: JailManager = self.controller.get_service(JailManager)
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
         )
@@ -90,17 +91,22 @@ class Jail(commands.Cog):
         satan_boost = False
         modifier_text = ''
         modifier_list = []
+        major_actions = []
         
         for item in user_items:
             if item.group == ItemGroup.BONUS_ATTEMPT:
                 bonus_attempt = item
-                break
+            if item.group == ItemGroup.MAJOR_ACTION:
+                major_actions.append(item)
             
         if self_target:
-            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
+            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, []
+        
+        if len(major_actions) > 0:
+            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_actions
         
         if already_interacted and not bonus_attempt:
-            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
+            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_actions
 
         for item in user_items:
             match item.group:
@@ -142,7 +148,7 @@ class Jail(commands.Cog):
         else:
             modifier_text = '(' + '+'.join(str(x) for x in modifier_list) + ')'
             
-        return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost
+        return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_actions
     
     async def __get_target_item_modifiers(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
         user_items = self.item_manager.get_user_items_activated_by_interaction(
@@ -189,8 +195,11 @@ class Jail(commands.Cog):
         already_interacted = self.event_manager.has_jail_event_from_user(affected_jail.id, interaction.user.id, command_type)
         self_target = interaction.user.id == user.id
         
-        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost = await self.__get_item_modifiers(interaction, command_type, already_interacted, self_target)
+        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_actions = await self.__get_item_modifiers(interaction, command_type, already_interacted, self_target)
         
+        if len(major_actions) > 0:
+            return await self.item_manager.handle_major_action_items(major_actions, interaction.user, user)
+
         if already_interacted:
             if bonus_attempt:
                 event = InventoryEvent(datetime.datetime.now(), interaction.guild_id, interaction.user.id, bonus_attempt.type, -1)
@@ -225,7 +234,7 @@ class Jail(commands.Cog):
         
         initial_amount = amount
         
-        remaining = self.event_manager.get_jail_remaining(affected_jail)
+        remaining = self.jail_manager.get_jail_remaining(affected_jail)
         amount = int(amount * item_modifier)
         amount = max(amount, -int(remaining+1))
         
@@ -239,7 +248,7 @@ class Jail(commands.Cog):
             amount = int(amount * crit_mod)
         satan_release = False
         if satan_boost and random.random() <= 0.75:
-            success = await self.jail_user(interaction.guild_id, interaction.user.id, interaction.user, amount)
+            success = await self.jail_manager.jail_user(interaction.guild_id, interaction.user.id, interaction.user, amount)
             
             if not success:
                satan_boost = False
@@ -273,7 +282,7 @@ class Jail(commands.Cog):
         
         if amount == 0 and is_crit:
             response += f'{interaction.user.display_name} farted so hard, they blew {user.display_name} out of Jail. They are free!\n'
-            response += await self.release_user(guild_id, interaction.user.id, user)
+            response += await self.jail_manager.release_user(guild_id, interaction.user.id, user)
             
             if not response:
                 response +=  f'Something went wrong, user {user.display_name} could not be released.'
@@ -288,67 +297,13 @@ class Jail(commands.Cog):
             event = JailEvent(time_now, guild_id, command_type, interaction.user.id, amount, affected_jail.id)
             await self.controller.dispatch_event(event)
             
-            remaining = self.event_manager.get_jail_remaining(affected_jail)
+            remaining = self.jail_manager.get_jail_remaining(affected_jail)
             response += f'`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain.'
             
         if satan_boost and satan_release:
             response += f'\n<@{interaction.user.id}> pays the price of making a deal with the devil and goes to jail as well. They will be released <t:{satan_release}:R>.'
 
         return response
-        
-    async def jail_user(self, guild_id: int, jailed_by_id: int, user: discord.Member, duration: int) -> bool:
-        active_jails = self.database.get_active_jails_by_guild(guild_id)
-        jailed_members = [jail.member_id for jail in active_jails]
-        
-        jail_role = self.settings_manager.get_jail_role(guild_id)
-        
-        if user.id in jailed_members or user.get_role(jail_role) is not None:
-            return False
-        
-        await user.add_roles(self.bot.get_guild(guild_id).get_role(jail_role))
-        
-        time_now = datetime.datetime.now()
-        jail = UserJail(guild_id, user.id, time_now)
-        
-        jail = self.database.log_jail_sentence(jail)
-        
-        time_now = datetime.datetime.now()
-        event = JailEvent(time_now, guild_id, JailEventType.JAIL, jailed_by_id, duration, jail.id)
-        await self.controller.dispatch_event(event)
-        
-        return True
-    
-    async def release_user(self, guild_id: int, released_by_id: int, user: discord.Member) -> str:
-        active_jails = self.database.get_active_jails_by_guild(guild_id)
-        jailed_members = [jail.member_id for jail in active_jails]
-        
-        jail_role = self.settings_manager.get_jail_role(guild_id)
-        
-        if user.id not in jailed_members or user.get_role(jail_role) is None:
-            return False
-        
-        
-        await user.remove_roles(user.get_role(jail_role))
-        
-        affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
-                
-        if len(affected_jails) > 0:
-            jail = affected_jails[0]
-            remaining = self.event_manager.get_jail_remaining(jail)
-            response = f'Their remaining sentence of `{BotUtil.strfdelta(remaining, inputtype='minutes')}` will be forgiven.'
-
-            time_now = datetime.datetime.now()
-            event = JailEvent(time_now, guild_id, JailEventType.RELEASE, released_by_id, 0, jail.id)
-            await self.controller.dispatch_event(event)
-            
-        return response
-    
-    async def announce(self, guild: discord.Guild, message: str, *args, **kwargs) -> str:
-        jail_channels = self.settings_manager.get_jail_channels(guild.id)
-        
-        for channel_id in jail_channels:
-            channel = guild.get_channel(channel_id)
-            await channel.send(message, *args, **kwargs)
     
     @tasks.loop(seconds=20)
     async def jail_check(self):
@@ -361,8 +316,8 @@ class Jail(commands.Cog):
             
             for jail in active_jails:
                 member = guild.get_member(jail.member_id)
-                duration = self.event_manager.get_jail_duration(jail)
-                remaining = self.event_manager.get_jail_remaining(jail)
+                duration = self.jail_manager.get_jail_duration(jail)
+                remaining = self.jail_manager.get_jail_remaining(jail)
                 
                 self.logger.debug(guild_id, f'Jail Check for {member.name}. Duration: {duration}, Remaining: {remaining}', cog=self.__cog_name__)
                 
@@ -423,7 +378,7 @@ class Jail(commands.Cog):
                 self.logger.log("init",f'Member {member.name} did not have the jail role, applying jail role now.', cog=self.__cog_name__)
                 await member.add_roles(self.bot.get_guild(guild_id).get_role(jail_role))
                 
-            remaining = self.event_manager.get_jail_remaining(jail)
+            remaining = self.jail_manager.get_jail_remaining(jail)
             
             self.logger.log("init",f'Continuing jail sentence of {member.name} in {guild.name}. Remaining duration: {BotUtil.strfdelta(remaining, inputtype='minutes')}', cog=self.__cog_name__)
         
@@ -447,7 +402,7 @@ class Jail(commands.Cog):
         
         guild_id = interaction.guild_id
         
-        success = await self.jail_user(guild_id, interaction.user.id, user, duration)
+        success = await self.jail_manager.jail_user(guild_id, interaction.user.id, user, duration)
         
         if not success:
             await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} is already in jail.', args=[user.name, duration])
@@ -456,7 +411,7 @@ class Jail(commands.Cog):
         timestamp_now = int(datetime.datetime.now().timestamp())
         release = timestamp_now + (duration*60)
         
-        await self.announce(interaction.guild, f'<@{user.id}> was sentenced to Jail by <@{interaction.user.id}> . They will be released <t:{release}:R>.', delete_after=(duration*60))
+        await self.jail_manager.announce(interaction.guild, f'<@{user.id}> was sentenced to Jail by <@{interaction.user.id}> . They will be released <t:{release}:R>.', delete_after=(duration*60))
         
         await self.bot.command_response(self.__cog_name__, interaction, f'User {user.name} jailed successfully.', args=[user.name, duration])
 
@@ -481,11 +436,11 @@ class Jail(commands.Cog):
 
         if interaction.user.guild_permissions.administrator and interaction.user.id == user.id:
             response = f'<@{interaction.user.id}> tried to abuse their mod privileges by freeing themselves with admin powers. BUT NOT THIS TIME!'
-            await self.announce(interaction.guild, response)
+            await self.jail_manager.announce(interaction.guild, response)
             await self.bot.command_response(self.__cog_name__, interaction, 'lmao', args=[user])
             return
         
-        response = await self.release_user(guild_id, interaction.user.id, user)
+        response = await self.jail_manager.release_user(guild_id, interaction.user.id, user)
         
         if not response:
             await self.bot.command_response(self.__cog_name__, interaction, f'Something went wrong, user {user.display_name} could not be released.', args=[user])
@@ -493,7 +448,7 @@ class Jail(commands.Cog):
         
         response = f'<@{user.id}> was released from Jail by <@{interaction.user.id}>. ' + response
 
-        await self.announce(interaction.guild, response)
+        await self.jail_manager.announce(interaction.guild, response)
         
         await self.bot.command_response(self.__cog_name__, interaction, f'User {user.display_name} released successfully.', args=[user])
 

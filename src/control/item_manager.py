@@ -3,15 +3,12 @@ import random
 
 import discord
 from bot_util import BotUtil
-from control.controller import Controller
-from control.logger import BotLogger
-from control.service import Service
-from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.inventory import UserInventory
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, UserInteraction
 from discord.ext import commands
+from events.bat_event import BatEvent
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.lootbox_event import LootBoxEvent
@@ -22,6 +19,12 @@ from items import *  # noqa: F403
 from items.item import Item
 from items.types import ItemType
 from view.lootbox_view import LootBoxView
+
+from control.controller import Controller
+from control.jail_manager import JailManager
+from control.logger import BotLogger
+from control.service import Service
+from control.settings_manager import SettingsManager
 
 
 class ItemManager(Service):
@@ -38,6 +41,7 @@ class ItemManager(Service):
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
         )
+        self.jail_manager: JailManager = self.controller.get_service(JailManager)
         self.log_name = "Items"
 
     async def listen_for_event(self, event: BotEvent):
@@ -50,11 +54,13 @@ class ItemManager(Service):
 
         return instance
 
-    def get_items(self, guild_id: int) -> list[Item]:
+    def get_shop_items(self, guild_id: int) -> list[Item]:
         items = [x.value for x in ItemType]
         output = []
         for item_type in items:
-            output.append(self.get_item(guild_id, item_type))
+            item = self.get_item(guild_id, item_type)
+            if not item.lootbox_exclusive:
+                output.append(item)
 
         return output
 
@@ -71,61 +77,41 @@ class ItemManager(Service):
             ItemType.FART_STABILIZER,
             ItemType.FARTVANTAGE,
             ItemType.SATAN_FART,
+            ItemType.ADVANCED_FART_PROTECTION,
+            ItemType.ULTRA_FART_BOOST,
         ]
 
-        weights = [self.get_item(guild_id, x).cost for x in item_pool]
+        weights = [self.get_item(guild_id, x).weight for x in item_pool]
 
         # Spawn Chances
         mimic_chance = 0.1
-        chance_for_item = 0.13
-        medium_chest_chance = 0.2
         large_chest_chance = 0.04
         super_mimic_chance = 0.03
-        random_item = None
 
         # Chest Ranges
-        small_min_beans = 40
-        small_max_beans = 90
-        medium_min_beans = 200
-        medium_max_beans = 400
-        large_min_beans = 700
-        large_max_beans = 900
+        small_min_beans = 30
+        small_max_beans = 80
+        large_min_beans = 500
+        large_max_beans = 800
         small_beans_reward = random.randint(small_min_beans, small_max_beans)
-        medium_beans_reward = random.randint(medium_min_beans, medium_max_beans)
         large_beans_reward = random.randint(large_min_beans, large_max_beans)
         roll = random.random()
-        # (0.63*65)+(0.2*300)+(0.1*-65)+(0.04*800)+(0.03*(-800)) - cost 100
 
+        random_item = None
         if roll <= mimic_chance:
             beans = -small_beans_reward
-        elif roll > mimic_chance and roll <= (mimic_chance + chance_for_item):
+        elif roll > mimic_chance and roll <= (mimic_chance + large_chest_chance):
+            beans = large_beans_reward
+        elif roll > (mimic_chance + large_chest_chance) and roll <= (
+            mimic_chance + large_chest_chance + super_mimic_chance
+        ):
+            beans = -large_beans_reward
+        elif roll > (mimic_chance + large_chest_chance + super_mimic_chance):
+            beans = 0
             weights = [1.0 / w for w in weights]
             sum_weights = sum(weights)
             weights = [w / sum_weights for w in weights]
             random_item = random.choices(item_pool, weights=weights)[0]
-            beans = small_beans_reward
-        elif roll > (mimic_chance + chance_for_item) and roll <= (
-            mimic_chance + chance_for_item + medium_chest_chance
-        ):
-            beans = medium_beans_reward
-        elif roll > (mimic_chance + chance_for_item + medium_chest_chance) and roll <= (
-            mimic_chance + chance_for_item + medium_chest_chance + large_chest_chance
-        ):
-            beans = large_beans_reward
-        elif roll > (
-            mimic_chance + chance_for_item + medium_chest_chance + large_chest_chance
-        ) and roll <= (
-            mimic_chance
-            + chance_for_item
-            + medium_chest_chance
-            + large_chest_chance
-            + super_mimic_chance
-        ):
-            beans = -large_beans_reward
-        elif roll > (
-            mimic_chance + chance_for_item + medium_chest_chance + large_chest_chance
-        ):
-            beans = small_beans_reward
         return LootBox(guild_id, random_item, beans)
 
     async def drop_loot_box(self, guild: discord.Guild, channel_id: int):
@@ -226,6 +212,52 @@ class ItemManager(Service):
             output.append(item)
 
         return output
+
+    async def handle_major_action_items(
+        self, items: list[Item], member: discord.Member, target_user: discord.Member
+    ):
+        response = ""
+        for item in items:
+            match item.type:
+                case ItemType.ULTRA_PET:
+                    release_msg = await self.jail_manager.release_user(
+                        member.guild.id, member.id, target_user
+                    )
+                    if not release_msg:
+                        continue
+                    response += (
+                        f"\n\n**{item.emoji} {item.name} {item.emoji} was used.**\n"
+                    )
+                    response += f"<@{target_user.id}> was released from Jail."
+                    response += release_msg + "\n"
+                    event = InventoryEvent(
+                        datetime.datetime.now(),
+                        member.guild.id,
+                        member.id,
+                        item.type,
+                        -1,
+                    )
+                    await self.controller.dispatch_event(event)
+                    self.logger.log(
+                        member.guild.id,
+                        f"Item {item.name} was used.",
+                        cog=self.log_name,
+                    )
+                case ItemType.ULTRA_SLAP:
+                    event = BatEvent(
+                        datetime.datetime.now(),
+                        member.guild.id,
+                        member.id,
+                        target_user.id,
+                        item.value,
+                    )
+                    await self.controller.dispatch_event(event)
+                    response += (
+                        f"\n\n**{item.emoji} {item.name} {item.emoji} was used.**\n"
+                    )
+                    response += f"<@{target_user.id}> was erased from this dimension and will be stunned for `{BotUtil.strfdelta(item.value, inputtype='minutes')}`."
+                    response += "\n"
+        return response
 
     async def get_guild_items_activated(
         self, guild_id: int, trigger: ItemTrigger

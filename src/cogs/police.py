@@ -5,9 +5,9 @@ from typing import Literal  # noqa: UP035
 
 import discord
 from bot import CrunchyBot
-from cogs.jail import Jail
 from control.controller import Controller
 from control.event_manager import EventManager
+from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
@@ -32,6 +32,7 @@ class Police(commands.Cog):
         self.controller: Controller = bot.controller
         self.event_manager: EventManager = self.controller.get_service(EventManager)
         self.role_manager: RoleManager = self.controller.get_service(RoleManager)
+        self.jail_manager: JailManager = self.controller.get_service(JailManager)
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
         )
@@ -58,9 +59,8 @@ class Police(commands.Cog):
                 f"Timeout jail threshold reached for {user.name}",
                 cog=self.__cog_name__,
             )
-            jail_cog: Jail = self.bot.get_cog("Jail")
             duration = self.settings_manager.get_police_timeout_jail_duration(guild_id)
-            success = await jail_cog.jail_user(
+            success = await self.jail_manager.jail_user(
                 guild_id, self.bot.user.id, user, duration
             )
             timestamp_now = int(datetime.datetime.now().timestamp())
@@ -295,8 +295,7 @@ class Police(commands.Cog):
                 response = await self.__jail_check(guild_id, message.author)
 
                 if response is not None:
-                    jail_cog: Jail = self.bot.get_cog("Jail")
-                    await jail_cog.announce(message.guild, response)
+                    await self.jail_manager.announce(message.guild, response)
                 else:
                     duration = self.settings_manager.get_police_timeout(guild_id)
                     self.bot.loop.create_task(

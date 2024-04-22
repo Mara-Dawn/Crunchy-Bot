@@ -3,7 +3,6 @@ import random
 
 import discord
 from bot_util import BotUtil
-from cogs.jail import Jail
 from datalayer.database import Database
 from discord.ext import commands
 from events.beans_event import BeansEvent
@@ -17,6 +16,7 @@ from items.types import ItemType
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
+from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
 
@@ -34,6 +34,7 @@ class LootBoxViewController(ViewController):
         self.controller = controller
         self.item_manager: ItemManager = controller.get_service(ItemManager)
         self.event_manager: EventManager = controller.get_service(EventManager)
+        self.jail_manager: JailManager = self.controller.get_service(JailManager)
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -88,6 +89,9 @@ class LootBoxViewController(ViewController):
             title=title, description=description, color=discord.Colour.purple()
         )
 
+        embed.set_image(url="attachment://treasure_open.png")
+        attachment = discord.File("./img/treasure_open.png", "treasure_open.png")
+
         beans = loot_box.beans
 
         if beans < 0:
@@ -101,11 +105,10 @@ class LootBoxViewController(ViewController):
                     value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
                     inline=False,
                 )
-                jail_cog: Jail = self.bot.get_cog("Jail")
                 jail_announcement = f"<@{member_id}> delved too deep looking for treasure and got sucked into a wormhole that teleported them into jail."
                 duration = random.randint(1*60, 3*60)
                 member = interaction.user
-                success = await jail_cog.jail_user(
+                success = await self.jail_manager.jail_user(
                     guild_id, self.bot.user.id, member, duration
                 )
                 if not success:
@@ -121,9 +124,9 @@ class LootBoxViewController(ViewController):
                             affected_jails[0].id,
                         )
                         await self.controller.dispatch_event(event)
-                        remaining = self.event_manager.get_jail_remaining(affected_jails[0])
+                        remaining = self.jail_manager.get_jail_remaining(affected_jails[0])
                         jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` have been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
-                        await jail_cog.announce(interaction.guild, jail_announcement)
+                        await self.jail_manager.announce(interaction.guild, jail_announcement)
                     else:
                         self.logger.error(
                         guild_id,
@@ -134,7 +137,7 @@ class LootBoxViewController(ViewController):
                     timestamp_now = int(datetime.datetime.now().timestamp())
                     release = timestamp_now + (duration * 60)
                     jail_announcement += f"\nThey will be released <t:{release}:R>."
-                    await jail_cog.announce(interaction.guild, jail_announcement)
+                    await self.jail_manager.announce(interaction.guild, jail_announcement)
             else:
                 embed.add_field(
                     name="Oh no, it's a Mimic!",
@@ -143,14 +146,12 @@ class LootBoxViewController(ViewController):
                 )
             embed.set_image(url="attachment://mimic.gif")
             attachment = discord.File("./img/mimic.gif", "mimic.gif")
-        else:
+        elif beans > 0:
             embed.add_field(
                 name="A Bunch of Beans!",
                 value=f"A whole  `🅱️{beans}` of them.",
                 inline=False,
             )
-            embed.set_image(url="attachment://treasure_open.png")
-            attachment = discord.File("./img/treasure_open.png", "treasure_open.png")
 
         log_message = f"{interaction.user.display_name} claimed a loot box containing {beans} beans"
 
@@ -166,20 +167,20 @@ class LootBoxViewController(ViewController):
                 datetime.datetime.now(),
                 guild_id,
                 member_id,
-                loot_box.item_type,
-                1,
+                item.type,
                 item.base_amount,
             )
             await self.controller.dispatch_event(event)
 
-        event = BeansEvent(
-            datetime.datetime.now(),
-            guild_id,
-            BeansEventType.LOOTBOX_PAYOUT,
-            member_id,
-            beans,
-        )
-        await self.controller.dispatch_event(event)
+        if beans != 0:
+            event = BeansEvent(
+                datetime.datetime.now(),
+                guild_id,
+                BeansEventType.LOOTBOX_PAYOUT,
+                member_id,
+                beans,
+            )
+            await self.controller.dispatch_event(event)
 
         event_type = LootBoxEventType.CLAIM
         if owner_id is not None:

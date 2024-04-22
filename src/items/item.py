@@ -1,5 +1,6 @@
 import discord
 from datalayer.types import ItemTrigger
+
 from items.types import ItemGroup, ItemType, ShopCategory
 
 
@@ -19,7 +20,9 @@ class Item:
         allow_amount: bool = False,
         base_amount: int = 1,
         max_amount: int = None,
-        trigger: list[ItemTrigger] = None
+        trigger: list[ItemTrigger] = None,
+        lootbox_exclusive: bool = False,
+        weight: int = None
     ):
         self.name = name
         self.type = item_type
@@ -34,6 +37,10 @@ class Item:
         self.base_amount = base_amount
         self.max_amount = max_amount
         self.trigger = trigger
+        self.lootbox_exclusive = lootbox_exclusive
+        self.weight = weight
+        if self.weight is None:
+            self.weight = max(self.cost, 100)
     
     def activated(self, action: ItemTrigger):
         if self.trigger is None:

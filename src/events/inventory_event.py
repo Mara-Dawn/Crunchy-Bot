@@ -1,9 +1,10 @@
 import datetime
 from typing import Any
 
+from items.types import ItemType
+
 from events.bot_event import BotEvent
 from events.types import EventType
-from items.types import ItemType
 
 
 class InventoryEvent(BotEvent):

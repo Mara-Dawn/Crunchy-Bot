@@ -3,11 +3,6 @@ import random
 
 import discord
 from bot_util import BotUtil
-from cogs.jail import Jail
-from control.controller import Controller
-from control.event_manager import EventManager
-from control.logger import BotLogger
-from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.prediction import Prediction
 from discord.ext import commands
@@ -21,6 +16,12 @@ from events.ui_event import UIEvent
 from items.types import ItemType
 from view.shop_response_view import ShopResponseData
 from view.types import EmojiType
+
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.jail_manager import JailManager
+from control.logger import BotLogger
+from control.view.view_controller import ViewController
 
 
 class ShopResponseViewController(ViewController):
@@ -37,6 +38,7 @@ class ShopResponseViewController(ViewController):
         )
         self.controller = controller
         self.event_manager: EventManager = controller.get_service(EventManager)
+        self.jail_manager: JailManager = self.controller.get_service(JailManager)
         
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -195,12 +197,10 @@ class ShopResponseViewController(ViewController):
         amount = shop_data.selected_amount
         cost = shop_data.item.cost * amount
 
-        jail_cog: Jail = self.bot.get_cog('Jail')
-        
         match shop_data.item.type:
             case ItemType.ARREST:
                 duration = 30
-                success = await jail_cog.jail_user(guild_id, member_id, shop_data.selected_user, duration)
+                success = await self.jail_manager.jail_user(guild_id, member_id, shop_data.selected_user, duration)
                 
                 if not success:
                     await interaction.followup.send(f'User {shop_data.selected_user.display_name} is already in jail.', ephemeral=True)
@@ -220,7 +220,7 @@ class ShopResponseViewController(ViewController):
                     await interaction.followup.send('You cannot free yourself using this item.', ephemeral=True)
                     return
                 
-                response = await jail_cog.release_user(guild_id, member_id, shop_data.selected_user)
+                response = await self.jail_manager.release_user(guild_id, member_id, shop_data.selected_user)
 
                 if not response:
                     await interaction.followup.send(f'User {shop_data.selected_user.display_name} is currently not in jail.', ephemeral=True)
@@ -243,13 +243,13 @@ class ShopResponseViewController(ViewController):
                     jail_announcement = f'<@{member_id}> shit themselves in an attempt to jail <@{selected.id}> using a **{shop_data.item.name}**, going to jail in their place. They will be released <t:{release}:R>.'
                     target = member
                 
-                success = await jail_cog.jail_user(guild_id, member_id, target, duration)
+                success = await self.jail_manager.jail_user(guild_id, member_id, target, duration)
                 
                 if not success:
                     await interaction.followup.send(f'User {shop_data.selected_user.display_name} is already in jail.', ephemeral=True)
                     return
             case ItemType.BAILOUT:
-                response = await jail_cog.release_user(guild_id, member_id, interaction.user)
+                response = await self.jail_manager.release_user(guild_id, member_id, interaction.user)
         
                 if not response:
                     await interaction.followup.send('You are currently not in jail.', ephemeral=True)
@@ -266,7 +266,7 @@ class ShopResponseViewController(ViewController):
                     
                 jail = affected_jails[0]
                 
-                remaining = int(self.event_manager.get_jail_remaining(jail))
+                remaining = int(self.jail_manager.get_jail_remaining(jail))
                 
                 total_value = shop_data.item.value * amount
                 
@@ -281,7 +281,7 @@ class ShopResponseViewController(ViewController):
                 await self.controller.dispatch_event(event)
                 
                 jail_announcement = f'<@{member_id}> reduced their own sentence by `{total_value}` minutes by spending `🅱️{cost}` beans.'
-                new_remaining = self.event_manager.get_jail_remaining(jail)
+                new_remaining = self.jail_manager.get_jail_remaining(jail)
                 jail_announcement += f'\n `{BotUtil.strfdelta(new_remaining, inputtype='minutes')}` still remain.'
                 
             case _:
@@ -291,7 +291,7 @@ class ShopResponseViewController(ViewController):
         event = BeansEvent(datetime.datetime.now(), guild_id, BeansEventType.SHOP_PURCHASE, member_id, -cost)
         await self.controller.dispatch_event(event)
         
-        await jail_cog.announce(interaction.guild, jail_announcement)
+        await self.jail_manager.announce(interaction.guild, jail_announcement)
         await self.finish_transaction(interaction, shop_data, view_id)
        
     async def bat_attack(self, interaction: discord.Interaction, shop_data: ShopResponseData, view_id: int):
@@ -309,7 +309,7 @@ class ShopResponseViewController(ViewController):
             await interaction.followup.send("Targeted user is already stunned by a previous bat attack.", ephemeral=True)
             return
         
-        event = BatEvent(datetime.datetime.now(), guild_id, member_id, target.id)
+        event = BatEvent(datetime.datetime.now(), guild_id, member_id, target.id, shop_data.item.value)
         await self.controller.dispatch_event(event)
         
         amount = shop_data.selected_amount
@@ -341,10 +341,9 @@ class ShopResponseViewController(ViewController):
                 users.remove(jailed_member_id)
         
         victims = random.sample(users, min(5, len(users)))
-        jail_cog: Jail = self.bot.get_cog('Jail')
         
         jail_announcement = f'After committing unspeakable atrocities, <@{member_id}> caused innocent bystanders to be banished into the abyss.'
-        await jail_cog.announce(interaction.guild, jail_announcement)
+        await self.jail_manager.announce(interaction.guild, jail_announcement)
         
         for victim in victims:
             duration = random.randint(5*60, 10*60)
@@ -353,7 +352,7 @@ class ShopResponseViewController(ViewController):
             if member is None:
                 continue
             
-            success = await jail_cog.jail_user(guild_id, member_id, member, duration)
+            success = await self.jail_manager.jail_user(guild_id, member_id, member, duration)
 
             if not success:
                 continue
@@ -361,7 +360,7 @@ class ShopResponseViewController(ViewController):
             timestamp_now = int(datetime.datetime.now().timestamp())
             release = timestamp_now + (duration*60)
             jail_announcement = f'<@{victim}> was sentenced to Jail. They will be released <t:{release}:R>.'
-            await jail_cog.announce(interaction.guild, jail_announcement)
+            await self.jail_manager.announce(interaction.guild, jail_announcement)
         
         event = BeansEvent(datetime.datetime.now(), guild_id, BeansEventType.SHOP_PURCHASE, member_id, -cost)
         await self.controller.dispatch_event(event)
