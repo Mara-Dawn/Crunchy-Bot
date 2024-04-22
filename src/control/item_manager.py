@@ -79,6 +79,8 @@ class ItemManager(Service):
             ItemType.SATAN_FART,
             ItemType.ADVANCED_FART_PROTECTION,
             ItemType.ULTRA_FART_BOOST,
+            ItemType.ULTRA_PET,
+            ItemType.ULTRA_SLAP,
         ]
 
         weights = [self.get_item(guild_id, x).weight for x in item_pool]
