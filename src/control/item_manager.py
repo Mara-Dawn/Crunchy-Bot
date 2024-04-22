@@ -109,6 +109,7 @@ class ItemManager(Service):
         large_beans_reward = random.randint(large_min_beans, large_max_beans)
         roll = random.random()
 
+        beans = 0
         random_item = None
         if roll <= mimic_chance:
             beans = -small_beans_reward
@@ -123,7 +124,6 @@ class ItemManager(Service):
         ) and roll <= (
             mimic_chance + large_chest_chance + super_mimic_chance + lucky_item_chance
         ):
-            beans = 0
             weights = [1.0 / w for w in lucky_weights]
             sum_weights = sum(weights)
             weights = [w / sum_weights for w in weights]

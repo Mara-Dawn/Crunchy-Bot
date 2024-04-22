@@ -1,10 +1,6 @@
 import datetime
 
 import discord
-from control.controller import Controller
-from control.item_manager import ItemManager
-from control.logger import BotLogger
-from control.view.view_controller import ViewController
 from datalayer.database import Database
 from discord.ext import commands
 from events.beans_event import BeansEvent
@@ -26,6 +22,11 @@ from view.shop_reaction_select_view import ShopReactionSelectView  # noqa: F401
 # noqa: F401
 from view.shop_response_view import ShopResponseView
 from view.shop_user_select_view import ShopUserSelectView  # noqa: F401
+
+from control.controller import Controller
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.view.view_controller import ViewController
 
 
 class ShopViewController(ViewController):
