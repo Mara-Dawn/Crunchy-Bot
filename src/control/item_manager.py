@@ -83,12 +83,22 @@ class ItemManager(Service):
             ItemType.ULTRA_SLAP,
         ]
 
+        lucky_item_pool = [
+            ItemType.SATAN_FART,
+            ItemType.ADVANCED_FART_PROTECTION,
+            ItemType.ULTRA_FART_BOOST,
+            ItemType.ULTRA_PET,
+            ItemType.ULTRA_SLAP,
+        ]
+
         weights = [self.get_item(guild_id, x).weight for x in item_pool]
+        lucky_weights = [self.get_item(guild_id, x).weight for x in lucky_item_pool]
 
         # Spawn Chances
         mimic_chance = 0.1
         large_chest_chance = 0.04
         super_mimic_chance = 0.03
+        lucky_item_chance = 0.02
 
         # Chest Ranges
         small_min_beans = 30
@@ -108,8 +118,19 @@ class ItemManager(Service):
             mimic_chance + large_chest_chance + super_mimic_chance
         ):
             beans = -large_beans_reward
-        elif roll > (mimic_chance + large_chest_chance + super_mimic_chance):
+        elif roll > (
+            mimic_chance + large_chest_chance + super_mimic_chance
+        ) and roll <= (
+            mimic_chance + large_chest_chance + super_mimic_chance + lucky_item_chance
+        ):
             beans = 0
+            weights = [1.0 / w for w in lucky_weights]
+            sum_weights = sum(weights)
+            weights = [w / sum_weights for w in weights]
+            random_item = random.choices(lucky_item_pool, weights=weights)[0]
+        elif roll > (
+            mimic_chance + large_chest_chance + super_mimic_chance + lucky_item_chance
+        ):
             weights = [1.0 / w for w in weights]
             sum_weights = sum(weights)
             weights = [w / sum_weights for w in weights]
