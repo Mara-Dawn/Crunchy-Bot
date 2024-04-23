@@ -9,3 +9,7 @@ except Error as e:
 finally:
     if conn:
         conn.close()
+
+files = ["key.txt", "tenor.txt", "openai.txt"]
+for file in files:
+    tmp = open(file, "w+")
