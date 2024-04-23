@@ -9,6 +9,7 @@ services:
       - ./key.txt:/app/Crunchy-Bot/key.txt
       - ./openai.txt:/app/Crunchy-Bot/openai.txt
       - ./tenor.txt:/app/Crunchy-Bot/tenor.txt
+      - ./log:/app/Crunchy-Bot/log
     command: > 
       sh -cx "git pull
       && python src/main.py"
