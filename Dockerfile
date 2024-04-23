@@ -17,5 +17,3 @@ WORKDIR /app
 RUN git clone https://github.com/Mara-Dawn/Crunchy-Bot
 
 WORKDIR /app/Crunchy-Bot
-# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD python src/main.py
