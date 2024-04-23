@@ -10,7 +10,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      /home/mara/actions-runner/_work/Crunchy-Bot/Crunchy-Bot/Dockerfile
       - run: rsync -a /home/mara/actions-runner/_work/Crunchy-Bot/Crunchy-Bot/Dockerfile /home/mara/Bot/Crunchy-Bot/
       - run: rsync -a /home/mara/actions-runner/_work/Crunchy-Bot/Crunchy-Bot/docker-compose.yml /home/mara/Bot/Crunchy-Bot/
       - run: rsync -a /home/mara/actions-runner/_work/Crunchy-Bot/Crunchy-Bot/requirements.txt /home/mara/Bot/Crunchy-Bot/
