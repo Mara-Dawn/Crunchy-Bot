@@ -5,4 +5,10 @@ services:
       context: .
       dockerfile: ./Dockerfile
     volumes:
-      - .:/app
+      - ./database.sqlite:/app/Crunchy-Bot/database.sqlite
+      - ./key.txt:/app/Crunchy-Bot/key.txt
+      - ./openai.txt:/app/Crunchy-Bot/openai.txt
+      - ./tenor.txt:/app/Crunchy-Bot/tenor.txt
+    command: > 
+      sh -cx "git pull
+      && python src/main.py"

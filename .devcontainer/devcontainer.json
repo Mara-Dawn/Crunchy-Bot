@@ -3,9 +3,9 @@
 {
 	"name": "Python Crunchy Bot Dev",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"dockerComposeFile": "../docker-compose.dev.yml",
+	"dockerComposeFile": "./docker-compose.dev.yml",
     "service": "devcontainer",
-    "workspaceFolder": "/app",
+    "workspaceFolder": "/app/Crunchy-Bot",
 	
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
@@ -36,7 +36,7 @@
 			}
 		}
 	},
-	"postCreateCommand": "pre-commit install --install-hooks"
+	"initializeCommand": "python .devcontainer/init_db.py"
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
