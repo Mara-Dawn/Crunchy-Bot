@@ -1,0 +1,8 @@
+# For more information, please refer to https://aka.ms/vscode-docker-python
+# This container creates an empty database file if no db exists yet.
+FROM python:3.12
+
+WORKDIR /app/Crunchy-Bot
+COPY init_db.py .
+RUN python init_db.py
+RUN rm init_db.py
