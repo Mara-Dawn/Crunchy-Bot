@@ -13,12 +13,9 @@ COPY requirements.txt .
 RUN python -m pip install -r requirements.txt
 
 WORKDIR /app
-COPY . /app
 
-RUN git init .
-RUN pre-commit install-hooks
-RUN rm -rf .git
+RUN git clone https://github.com/Mara-Dawn/Crunchy-Bot
 
+WORKDIR /app/Crunchy-Bot
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-# ENTRYPOINT ["python", "src/main.py"]
 CMD python src/main.py

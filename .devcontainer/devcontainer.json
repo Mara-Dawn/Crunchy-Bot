@@ -5,7 +5,7 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"dockerComposeFile": "../docker-compose.dev.yml",
     "service": "devcontainer",
-    "workspaceFolder": "/app",
+    "workspaceFolder": "/app/Crunchy-Bot",
 	
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
@@ -32,11 +32,12 @@
 				"[python]": {
 					"editor.defaultFormatter": "ms-python.black-formatter",
 					"editor.formatOnSave": true
-				}
+				},
+				// "git.autofetch": false
 			}
 		}
-	},
-	"postCreateCommand": "pre-commit install --install-hooks"
+	}//
+	//"postCreateCommand": "pre-commit install --install-hooks"
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"

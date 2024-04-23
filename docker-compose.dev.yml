@@ -3,8 +3,11 @@ services:
     image: devcontainer
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: ./Dockerfile.dev
     volumes:
-      - .:/app
+      - ./database.sqlite:/app/Crunchy-Bot/database.sqlite
+      - ./key.txt:/app/Crunchy-Bot/key.txt
+      - ./openai.txt:/app/Crunchy-Bot/openai.txt
+      - ./tenor.txt:/app/Crunchy-Bot/tenor.txt
     tty: true
     command: sleep infinity
