@@ -9,7 +9,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cargo --help
 
 # Install pip requirements
-COPY requirements.txt .
+COPY ../requirements.txt .
 RUN python -m pip install -r requirements.txt
 
 WORKDIR /app

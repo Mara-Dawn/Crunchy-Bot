@@ -3,7 +3,7 @@ services:
     image: devcontainer
     build:
       context: .
-      dockerfile: ./Dockerfile.dev
+      dockerfile: ./Dockerfile
     volumes:
       - ./../database.sqlite:/app/Crunchy-Bot/database.sqlite
       - ./../key.txt:/app/Crunchy-Bot/key.txt
