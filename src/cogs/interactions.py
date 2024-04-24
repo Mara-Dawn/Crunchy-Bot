@@ -13,7 +13,7 @@ from datalayer.types import UserInteraction
 from discord import app_commands
 from discord.ext import commands
 from events.interaction_event import InteractionEvent
-from items.types import ItemType
+from items.types import ItemGroup, ItemType
 
 from cogs.jail import Jail
 
@@ -192,6 +192,21 @@ class Interactions(commands.Cog):
 
         embed = await self.__get_response_embed(command_type)
         response = self.__get_response(command_type, interaction, user)
+
+        user_items = self.item_manager.get_user_items_activated_by_interaction(
+            interaction.guild_id, interaction.user.id, command_type
+        )
+
+        major_actions = []
+
+        for item in user_items:
+            if item.group == ItemGroup.MAJOR_ACTION:
+                major_actions.append(item)
+
+        if len(major_actions) > 0:
+            response += await self.item_manager.handle_major_action_items(
+                major_actions, interaction.user, user
+            )
 
         jail_cog: Jail = self.bot.get_cog("Jail")
         response += await jail_cog.user_command_interaction(

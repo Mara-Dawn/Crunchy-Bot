@@ -10,8 +10,10 @@ class ItemType(str, Enum):
     BONUS_FART = "BonusFart"
     BONUS_PET = "BonusPet"
     ULTRA_PET = "UltraPet"
+    PENETRATING_PET = "PenetratingPet"
     BONUS_SLAP = "BonusSlap"
     ULTRA_SLAP = "UltraSlap"
+    SWAP_SLAP = "SwapSlap"
     GIGA_FART = "GigaFart"
     FART_STABILIZER = "FartStabilizer"
     FARTVANTAGE = "Fartvantage"
@@ -44,6 +46,7 @@ class ItemGroup(str, Enum):
     IMMEDIATE_USE = "immediate_use"
     LOOTBOX = "loot_box"
     SUBSCRIPTION = "subscription"
+    MAJOR_JAIL_ACTION = "major_jail_action"
     MAJOR_ACTION = "major_action"
 
 
