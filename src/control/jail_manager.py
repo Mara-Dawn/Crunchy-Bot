@@ -37,6 +37,16 @@ class JailManager(Service):
     async def listen_for_event(self, event: BotEvent):
         pass
 
+    def get_active_jail(self, guild_id: int, user: discord.Member) -> UserJail:
+        affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
+        
+        jail_role = self.settings_manager.get_jail_role(guild_id)
+        
+        if not(len(affected_jails) > 0 and user.get_role(jail_role) is not None):
+            return None
+        
+        return affected_jails[0]
+
     def get_jail_duration(self, jail: UserJail) -> int:
         events = self.database.get_jail_events_by_jail(jail.id)
         total_duration = 0

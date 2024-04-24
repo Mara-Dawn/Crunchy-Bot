@@ -1,11 +1,12 @@
-from control.controller import Controller
-from control.logger import BotLogger
-from control.service import Service
 from datalayer.database import Database
 from datalayer.settings import GuildSettings, ModuleSettings
 from discord.ext import commands
 from events.bot_event import BotEvent
 from items.types import ItemType
+
+from control.controller import Controller
+from control.logger import BotLogger
+from control.service import Service
 
 
 class SettingsManager(Service):
@@ -200,7 +201,7 @@ class SettingsManager(Service):
         )
         beans_settings.add_setting(
             self.BEANS_LOTTERY_BASE_AMOUNT_KEY,
-            1500,
+            5000,
             "Base pot for weekly beans lottery",
         )
         beans_settings.add_setting(

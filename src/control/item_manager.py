@@ -81,6 +81,8 @@ class ItemManager(Service):
             ItemType.ULTRA_FART_BOOST,
             ItemType.ULTRA_PET,
             ItemType.ULTRA_SLAP,
+            ItemType.PENETRATING_PET,
+            ItemType.SWAP_SLAP,
         ]
 
         lucky_item_pool = [
@@ -89,6 +91,8 @@ class ItemManager(Service):
             ItemType.ULTRA_FART_BOOST,
             ItemType.ULTRA_PET,
             ItemType.ULTRA_SLAP,
+            ItemType.PENETRATING_PET,
+            ItemType.SWAP_SLAP,
         ]
 
         weights = [self.get_item(guild_id, x).weight for x in item_pool]
@@ -241,6 +245,7 @@ class ItemManager(Service):
     ):
         response = ""
         for item in items:
+            item_text = ""
             match item.type:
                 case ItemType.ULTRA_PET:
                     release_msg = await self.jail_manager.release_user(
@@ -248,24 +253,10 @@ class ItemManager(Service):
                     )
                     if not release_msg:
                         continue
-                    response += (
-                        f"\n\n**{item.emoji} {item.name} {item.emoji} was used.**\n"
-                    )
-                    response += f"<@{target_user.id}> was released from Jail."
-                    response += release_msg + "\n"
-                    event = InventoryEvent(
-                        datetime.datetime.now(),
-                        member.guild.id,
-                        member.id,
-                        item.type,
-                        -1,
-                    )
-                    await self.controller.dispatch_event(event)
-                    self.logger.log(
-                        member.guild.id,
-                        f"Item {item.name} was used.",
-                        cog=self.log_name,
-                    )
+
+                    item_text += f"<@{target_user.id}> was released from Jail."
+                    item_text += release_msg + "\n"
+
                 case ItemType.ULTRA_SLAP:
                     event = BatEvent(
                         datetime.datetime.now(),
@@ -275,11 +266,80 @@ class ItemManager(Service):
                         item.value,
                     )
                     await self.controller.dispatch_event(event)
-                    response += (
-                        f"\n\n**{item.emoji} {item.name} {item.emoji} was used.**\n"
+
+                    item_text += f"<@{target_user.id}> was erased from this dimension and will be stunned for `{BotUtil.strfdelta(item.value, inputtype='minutes')}`."
+                    item_text += "\n"
+
+                case ItemType.PENETRATING_PET:
+                    item_count = 0
+                    inventory_items = self.database.get_item_counts_by_user(
+                        member.guild.id, target_user.id
                     )
-                    response += f"<@{target_user.id}> was erased from this dimension and will be stunned for `{BotUtil.strfdelta(item.value, inputtype='minutes')}`."
-                    response += "\n"
+
+                    protection_type = ItemType.FART_PROTECTION
+
+                    if protection_type in inventory_items:
+                        item_count = inventory_items[protection_type]
+
+                    if item_count <= 0:
+                        continue
+
+                    event = InventoryEvent(
+                        datetime.datetime.now(),
+                        member.guild.id,
+                        target_user.id,
+                        protection_type,
+                        -item_count,
+                    )
+                    await self.controller.dispatch_event(event)
+
+                    item_text += f"<@{target_user.id}> was touched by <@{member.id}>'s greasy gamer hands. All of their protection melts away, exposing them to the elements."
+                    item_text += "\n"
+
+                case ItemType.SWAP_SLAP:
+                    target_jail = self.jail_manager.get_active_jail(
+                        member.guild.id, target_user
+                    )
+
+                    if target_jail is not None:
+                        continue
+
+                    jail = self.jail_manager.get_active_jail(member.guild.id, member)
+
+                    if jail is None:
+                        continue
+
+                    remaining = self.jail_manager.get_jail_remaining(jail)
+
+                    await self.jail_manager.release_user(
+                        member.guild.id, member.id, member
+                    )
+
+                    await self.jail_manager.jail_user(
+                        member.guild.id, member.id, target_user, remaining
+                    )
+
+                    item_text += f"<@{member.id}> pulls a Uno Reverse Card on <@{target_user.id}>, swapping places with them in jail.\n"
+                    item_text += f"They will have to sit out the remaining sentence of `{BotUtil.strfdelta(remaining, inputtype='minutes')}`."
+                    item_text += "\n"
+
+            response += f"\n\n**{item.emoji} {item.name} {item.emoji} was used.**\n"
+            response += item_text
+
+            event = InventoryEvent(
+                datetime.datetime.now(),
+                member.guild.id,
+                member.id,
+                item.type,
+                -1,
+            )
+            await self.controller.dispatch_event(event)
+
+            self.logger.log(
+                member.guild.id,
+                f"Item {item.name} was used.",
+                cog=self.log_name,
+            )
         return response
 
     async def get_guild_items_activated(

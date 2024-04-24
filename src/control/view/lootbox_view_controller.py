@@ -163,14 +163,26 @@ class LootBoxViewController(ViewController):
             item.add_to_embed(embed, 43, count=item.base_amount, show_price=False)
             log_message += f" and 1x {item.name}"
 
-            event = InventoryEvent(
-                datetime.datetime.now(),
-                guild_id,
-                member_id,
-                item.type,
-                item.base_amount,
-            )
-            await self.controller.dispatch_event(event)
+            amount = item.base_amount
+
+            if item.max_amount is not None:
+                item_count = 0
+
+                inventory_items = self.database.get_item_counts_by_user(guild_id, member_id)
+                if item.type in inventory_items:
+                    item_count = inventory_items[item.type]
+
+                amount = min(item.base_amount, (item.max_amount - item_count))
+
+            if amount != 0:
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    member_id,
+                    item.type,
+                    amount,
+                )
+                await self.controller.dispatch_event(event)
 
         if beans != 0:
             event = BeansEvent(

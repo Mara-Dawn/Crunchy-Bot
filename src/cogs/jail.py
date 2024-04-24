@@ -91,22 +91,22 @@ class Jail(commands.Cog):
         satan_boost = False
         modifier_text = ''
         modifier_list = []
-        major_actions = []
+        major_jail_actions = []
+            
+        if self_target:
+            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_jail_actions
         
         for item in user_items:
             if item.group == ItemGroup.BONUS_ATTEMPT:
                 bonus_attempt = item
-            if item.group == ItemGroup.MAJOR_ACTION:
-                major_actions.append(item)
-            
-        if self_target:
-            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, []
-        
-        if len(major_actions) > 0:
-            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_actions
+            if item.group == ItemGroup.MAJOR_JAIL_ACTION:
+                major_jail_actions.append(item)
+
+        if len(major_jail_actions) > 0:
+            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_jail_actions
         
         if already_interacted and not bonus_attempt:
-            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_actions
+            return response, 1, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_jail_actions
 
         for item in user_items:
             match item.group:
@@ -148,7 +148,7 @@ class Jail(commands.Cog):
         else:
             modifier_text = '(' + '+'.join(str(x) for x in modifier_list) + ')'
             
-        return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_actions
+        return response, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_jail_actions
     
     async def __get_target_item_modifiers(self, interaction: discord.Interaction, user: discord.Member, command_type: UserInteraction):
         user_items = self.item_manager.get_user_items_activated_by_interaction(
@@ -195,10 +195,10 @@ class Jail(commands.Cog):
         already_interacted = self.event_manager.has_jail_event_from_user(affected_jail.id, interaction.user.id, command_type)
         self_target = interaction.user.id == user.id
         
-        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_actions = await self.__get_item_modifiers(interaction, command_type, already_interacted, self_target)
+        user_item_info, item_modifier, auto_crit, stabilized, advantage, bonus_attempt, modifier_text, satan_boost, major_jail_actions = await self.__get_item_modifiers(interaction, command_type, already_interacted, self_target)
         
-        if len(major_actions) > 0:
-            return await self.item_manager.handle_major_action_items(major_actions, interaction.user, user)
+        if len(major_jail_actions) > 0:
+            return await self.item_manager.handle_major_action_items(major_jail_actions, interaction.user, user)
 
         if already_interacted:
             if bonus_attempt:
