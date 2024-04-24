@@ -167,10 +167,36 @@ class UltraPet(Item):
         super().__init__(
             name="The Most Gentle Pet Ever",
             item_type=ItemType.ULTRA_PET,
-            group=ItemGroup.MAJOR_ACTION,
+            group=ItemGroup.MAJOR_JAIL_ACTION,
             shop_category=ShopCategory.PET,
             description="You feel a weird tingle in your hand, almost as if the next person to recieve your pets will be instantly freed from jail.",
             emoji="😳",
+            cost=cost,
+            value=True,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.PET],
+            lootbox_exclusive=True,
+        )
+
+
+class PenetratingPet(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 2000
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Gamer Hands Pet",
+            item_type=ItemType.PENETRATING_PET,
+            group=ItemGroup.MAJOR_JAIL_ACTION,
+            shop_category=ShopCategory.PET,
+            description="Years of hardcore sweaty gaming, dorito dust and a lack of hygiene turned your hands into incredibly effective weapons. Your next pet instantly dissolves any protection the target might have had.",
+            emoji="🎮",
             cost=cost,
             value=True,
             view_class=None,
@@ -208,6 +234,32 @@ class BonusSlap(Item):
         )
 
 
+class SwapSlap(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 8000
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="No U",
+            item_type=ItemType.SWAP_SLAP,
+            group=ItemGroup.MAJOR_ACTION,
+            shop_category=ShopCategory.SLAP,
+            description="Limited edition uno reverse card. If you are jailed, your next slap against a non jailed user will make them trade places with you.",
+            emoji="🔁",
+            cost=cost,
+            value=None,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.SLAP],
+            lootbox_exclusive=True,
+        )
+
+
 class UltraSlap(Item):
 
     def __init__(self, cost: int | None):
@@ -221,7 +273,7 @@ class UltraSlap(Item):
             item_type=ItemType.ULTRA_SLAP,
             group=ItemGroup.MAJOR_ACTION,
             shop_category=ShopCategory.SLAP,
-            description="This glove will slap people into another dimension, completely annihilating them and erasing their existence. Your next slap will stun your target for 5 hours. Only works against jailed people.",
+            description="This glove will slap people into another dimension, completely annihilating them and erasing their existence. Your next slap will stun your target for 5 hours.",
             emoji="🥊",
             cost=cost,
             value=60 * 5,
@@ -342,15 +394,16 @@ class FartProtection(Item):
 class AdvancedFartProtection(FartProtection):
 
     def __init__(self, cost: int | None):
-        defaultcost = 700
+        defaultcost = 1500
 
         if cost is None:
             cost = defaultcost
 
         super().__init__(cost)
-        self.base_amount = 25
-        self.name = self.name + " x5"
-        self.description = "A poor paranoid soul sewed 5 hazmat suits into one, making this one much stronger than what you would usually find in a store."
+        self.base_amount = 15
+        self.max_amount = 30
+        self.name = self.name + " x3"
+        self.description = "A poor paranoid soul sewed 5 hazmat suits into one, making this one much stronger than what you would usually find in a store. (caps out at 25 stacks)"
         self.lootbox_exclusive = True
 
 

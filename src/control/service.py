@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 
-from control.logger import BotLogger
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
+
+from control.logger import BotLogger
 
 
 class Service(ABC):
