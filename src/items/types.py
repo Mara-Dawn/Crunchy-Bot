@@ -35,6 +35,11 @@ class ItemType(str, Enum):
     PREDICTION_SUBMISSION = "PredictionSubmission"
 
 
+class ItemState(str, Enum):
+    ENABLED = "enabled"
+    DISABLED = "disabled"
+
+
 class ItemGroup(str, Enum):
     VALUE_MODIFIER = "value_modifier"
     AUTO_CRIT = "auto_crit"

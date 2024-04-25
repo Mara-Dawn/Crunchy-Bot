@@ -22,3 +22,9 @@ class RankingType(int, Enum):
     MIMICS = 12
     TOTAL_GAMBAD_SPENT = 13
     TOTAL_GAMBAD_WON = 14
+
+
+class ActionType(str, Enum):
+    ENABLE_ACTION = "Enable"
+    DISABLE_ACTION = "Disable"
+    DEFAULT_ACTION = "Action"

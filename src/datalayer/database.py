@@ -21,7 +21,7 @@ from events.quote_event import QuoteEvent
 from events.spam_event import SpamEvent
 from events.timeout_event import TimeoutEvent
 from events.types import EventType, LootBoxEventType, PredictionEventType
-from items.types import ItemType
+from items.types import ItemState, ItemType
 from view.types import EmojiType
 
 from datalayer.jail import UserJail
@@ -185,6 +185,20 @@ class Database:
         {BEANS_EVENT_TYPE_COL} TEXT,
         {BEANS_EVENT_VALUE_COL} INTEGER,
         PRIMARY KEY ({BEANS_EVENT_ID_COL})
+    );"""
+
+    INVENTORY_ITEM_TABLE = "inventoryitems"
+    INVENTORY_ITEM_GUILD_COL = "init_guild_id"
+    INVENTORY_ITEM_MEMBER_COL = "init_member_id"
+    INVENTORY_ITEM_ITEM_TYPE_COL = "init_item_type"
+    INVENTORY_ITEM_STATE_COL = "init_item_state"
+    CREATE_INVENTORY_ITEM_TABLE = f"""
+    CREATE TABLE if not exists {INVENTORY_ITEM_TABLE} (
+        {INVENTORY_ITEM_GUILD_COL} INTEGER, 
+        {INVENTORY_ITEM_MEMBER_COL} INTEGER, 
+        {INVENTORY_ITEM_ITEM_TYPE_COL} TEXT, 
+        {INVENTORY_ITEM_STATE_COL} TEXT,
+        PRIMARY KEY ({INVENTORY_ITEM_GUILD_COL}, {INVENTORY_ITEM_MEMBER_COL}, {INVENTORY_ITEM_ITEM_TYPE_COL})
     );"""
 
     INVENTORY_EVENT_TABLE = "inventoryevents"
@@ -373,6 +387,7 @@ class Database:
             c.execute(self.CREATE_PREDICTION_OUTCOME_TABLE)
             c.execute(self.CREATE_PREDICTION_EVENT_TABLE)
             c.execute(self.CREATE_PREDICTION_OVERVIEW_TABLE)
+            c.execute(self.CREATE_INVENTORY_ITEM_TABLE)
             c.close()
 
         except Error as e:
@@ -714,6 +729,49 @@ class Database:
         )
 
         return self.__query_insert(command, task)
+
+    def log_item_state(
+        self,
+        guild_id: int,
+        user_id: int,
+        item_type: ItemType,
+        item_state: ItemState,
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.INVENTORY_ITEM_TABLE} (
+                {self.INVENTORY_ITEM_GUILD_COL}, 
+                {self.INVENTORY_ITEM_MEMBER_COL}, 
+                {self.INVENTORY_ITEM_ITEM_TYPE_COL}, 
+                {self.INVENTORY_ITEM_STATE_COL}) 
+            VALUES (?, ?, ?, ?) 
+            ON CONFLICT({self.INVENTORY_ITEM_GUILD_COL}, {self.INVENTORY_ITEM_MEMBER_COL}, {self.INVENTORY_ITEM_ITEM_TYPE_COL}) 
+            DO UPDATE SET 
+            {self.INVENTORY_ITEM_STATE_COL}=excluded.{self.INVENTORY_ITEM_STATE_COL};
+        """
+        task = (guild_id, user_id, item_type.value, item_state.value)
+
+        return self.__query_insert(command, task)
+
+    def get_user_item_states(
+        self, guild_id: int, user_id: int
+    ) -> dict[ItemType, ItemState]:
+        command = f"""
+            SELECT * FROM {self.INVENTORY_ITEM_TABLE}
+            WHERE {self.INVENTORY_ITEM_GUILD_COL} = ? 
+            AND {self.INVENTORY_ITEM_MEMBER_COL} = ?;
+        """
+        task = (guild_id, user_id)
+
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return {}
+
+        return {
+            ItemType(row[self.INVENTORY_ITEM_ITEM_TYPE_COL]): ItemState(
+                row[self.INVENTORY_ITEM_STATE_COL]
+            )
+            for row in rows
+        }
 
     def log_bully_react(
         self,

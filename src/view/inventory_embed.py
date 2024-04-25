@@ -1,6 +1,6 @@
 import discord
 from datalayer.inventory import UserInventory
-from items.types import ItemType
+from items.types import ItemState, ItemType
 
 
 class InventoryEmbed(discord.Embed):
@@ -18,13 +18,16 @@ class InventoryEmbed(discord.Embed):
 
         for item in inventory_items:
             count = inventory.get_item_count(item.type)
+            disabled = inventory.get_item_state(item.type) is ItemState.DISABLED
             match item.type:
                 case ItemType.NAME_COLOR:
                     suffix = ""
                     custom_color = inventory.custom_name_color
                     if custom_color is not None:
                         suffix = f" #{custom_color}"
-                    item.add_to_embed(self, 54, count=count, name_suffix=suffix)
+                    item.add_to_embed(
+                        self, 54, count=count, name_suffix=suffix, disabled=disabled
+                    )
                 case ItemType.REACTION_SPAM:
                     emoji = inventory.bully_emoji
                     target_name = inventory.bully_target_name
@@ -32,8 +35,10 @@ class InventoryEmbed(discord.Embed):
                         suffix = " - Error, please update settings"
                     else:
                         suffix = f" {target_name} | {str(emoji)}"
-                    item.add_to_embed(self, 54, count=count, name_suffix=suffix)
+                    item.add_to_embed(
+                        self, 54, count=count, name_suffix=suffix, disabled=disabled
+                    )
                 case _:
-                    item.add_to_embed(self, 54, count=count)
+                    item.add_to_embed(self, 54, count=count, disabled=disabled)
 
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")

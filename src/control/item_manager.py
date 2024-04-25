@@ -17,7 +17,7 @@ from events.types import LootBoxEventType
 # needed for global access
 from items import *  # noqa: F403
 from items.item import Item
-from items.types import ItemType
+from items.types import ItemState, ItemType
 from view.lootbox_view import LootBoxView
 
 from control.controller import Controller
@@ -192,6 +192,7 @@ class ItemManager(Service):
         target_id, bully_emoji = self.database.get_bully_react(guild_id, user_id)
         bully_target_name = BotUtil.get_name(self.bot, guild_id, target_id, 30)
         display_name = BotUtil.get_name(self.bot, guild_id, user_id, 30)
+        item_states = self.database.get_user_item_states(guild_id, user_id)
 
         inventory = UserInventory(
             guild_id=guild_id,
@@ -199,6 +200,7 @@ class ItemManager(Service):
             member_display_name=display_name,
             items=inventory_items,
             inventory=item_data,
+            item_states=item_states,
             balance=balance,
             custom_name_color=custom_name_color,
             bully_target_name=bully_target_name,
@@ -227,9 +229,17 @@ class ItemManager(Service):
     ) -> list[Item]:
         inventory_items = self.database.get_item_counts_by_user(guild_id, user_id)
 
+        item_states = self.database.get_user_item_states(guild_id, user_id)
+
         output = []
 
         for item_type, _ in inventory_items.items():
+
+            if (
+                item_type in item_states
+                and item_states[item_type] == ItemState.DISABLED
+            ):
+                continue
 
             item = self.get_item(guild_id, item_type)
 

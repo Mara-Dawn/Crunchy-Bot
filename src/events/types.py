@@ -23,6 +23,7 @@ class BeansEventType(str, Enum):
     LOOTBOX_PAYOUT = "loot_box_payout"
     BALANCE_CHANGE = "balance_change"
     SHOP_PURCHASE = "shop_purchase"
+    SHOP_BUYBACK = "shop_buyback"
     USER_TRANSFER = "user_transfer"
     PREDICTION_BET = "prediction_bet"
     PREDICTION_PAYOUT = "prediction_payout"
@@ -109,3 +110,8 @@ class UIEventType(str, Enum):
     PREDICTION_PREDICTION_SUBMIT = "prediction_prediction_submit"
 
     PREDICTION_OVERVIEW_REFRESH = "prediction_overview_refresh"
+
+    INVENTORY_REFRESH = "inventory_refresh"
+    INVENTORY_USER_REFRESH = "inventory_user_refresh"
+    INVENTORY_ITEM_ACTION = "inventory_item_action"
+    INVENTORY_SELL = "inventory_sell"

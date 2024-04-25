@@ -22,7 +22,8 @@ class Item:
         max_amount: int = None,
         trigger: list[ItemTrigger] = None,
         lootbox_exclusive: bool = False,
-        weight: int = None
+        weight: int = None,
+        sellable: bool = False
     ):
         self.name = name
         self.type = item_type
@@ -41,6 +42,7 @@ class Item:
         self.weight = weight
         if self.weight is None:
             self.weight = max(self.cost, 100)
+        self.sellable = sellable
     
     def activated(self, action: ItemTrigger):
         if self.trigger is None:
@@ -65,7 +67,7 @@ class Item:
         
         return embed
     
-    def add_to_embed(self, embed: discord.Embed, max_width: int, count: int=None, show_price: bool = False, name_suffix: str='') -> None:
+    def add_to_embed(self, embed: discord.Embed, max_width: int, count: int=None, show_price: bool = False, name_suffix: str='', disabled: bool = False) -> None:
         title = f'> ~*  {self.emoji} {self.name} {self.emoji}  *~ {name_suffix}'
         description = self.description
         
@@ -83,6 +85,8 @@ class Item:
                 suffix = f'🅱️{self.cost}'
         else:
             if count is not None:
+                if disabled:
+                    prefix = "[DISABLED]"
                 suffix = f'amount: {count}'
 
         spacing = max_width - len(prefix) - len(suffix)
