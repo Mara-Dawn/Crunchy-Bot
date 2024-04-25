@@ -14,6 +14,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from items.types import ItemType
 from view.inventory_embed import InventoryEmbed
+from view.inventory_view import InventoryView
 from view.shop_embed import ShopEmbed
 from view.shop_view import ShopView
 
@@ -151,8 +152,14 @@ class Shop(commands.Cog):
 
         inventory = self.item_manager.get_user_inventory(guild_id, member_id)
         embed = InventoryEmbed(inventory)
+        view = InventoryView(self.controller, interaction, inventory)
 
-        await interaction.followup.send("", embed=embed, files=[police_img])
+        message = await interaction.followup.send(
+            "", embed=embed, view=view, files=[police_img]
+        )
+
+        view.set_message(message)
+        await view.refresh_ui()
 
     group = app_commands.Group(
         name="beansshop", description="Subcommands for the Beans Shop module."

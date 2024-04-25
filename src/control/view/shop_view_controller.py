@@ -11,6 +11,7 @@ from events.types import BeansEventType, EventType, LootBoxEventType, UIEventTyp
 from events.ui_event import UIEvent
 from items.types import ItemGroup, ItemType
 from view.inventory_embed import InventoryEmbed
+from view.inventory_view import InventoryView
 from view.lootbox_view import LootBoxView
 from view.shop_color_select_view import ShopColorSelectView  # noqa: F401
 from view.shop_confirm_view import ShopConfirmView  # noqa: F401
@@ -245,9 +246,12 @@ class ShopViewController(ViewController):
         police_img = discord.File("./img/police.png", "police.png")
 
         embed = InventoryEmbed(inventory)
+        view = InventoryView(self.controller, interaction, inventory)
 
-        await interaction.followup.send(
-            "", embed=embed, files=[police_img], ephemeral=True
+        message = await interaction.followup.send(
+            "", embed=embed, view=view, files=[police_img], ephemeral=True
         )
+        view.set_message(message)
+        await view.refresh_ui()
 
         return

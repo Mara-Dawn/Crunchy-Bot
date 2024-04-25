@@ -51,6 +51,7 @@ class AutoCrit(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART, ItemTrigger.PET, ItemTrigger.SLAP],
+            sellable=True,
         )
 
 
@@ -127,6 +128,7 @@ class BonusFart(Item):
             max_amount=None,
             trigger=[ItemTrigger.FART],
             weight=150,
+            sellable=True,
         )
 
 
@@ -153,6 +155,7 @@ class BonusPet(Item):
             max_amount=None,
             trigger=[ItemTrigger.PET],
             weight=150,
+            sellable=True,
         )
 
 
@@ -179,6 +182,7 @@ class UltraPet(Item):
             max_amount=None,
             trigger=[ItemTrigger.PET],
             lootbox_exclusive=True,
+            sellable=True,
         )
 
 
@@ -205,6 +209,7 @@ class PenetratingPet(Item):
             max_amount=None,
             trigger=[ItemTrigger.PET],
             lootbox_exclusive=True,
+            sellable=True,
         )
 
 
@@ -231,6 +236,7 @@ class BonusSlap(Item):
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
             weight=150,
+            sellable=True,
         )
 
 
@@ -257,6 +263,7 @@ class SwapSlap(Item):
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
             lootbox_exclusive=True,
+            sellable=True,
         )
 
 
@@ -283,6 +290,7 @@ class UltraSlap(Item):
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
             lootbox_exclusive=True,
+            sellable=True,
         )
 
 
@@ -338,6 +346,7 @@ class UltraFartBoost(Item):
             max_amount=None,
             trigger=[ItemTrigger.FART],
             lootbox_exclusive=True,
+            sellable=True,
         )
 
 
@@ -363,6 +372,7 @@ class FartBoost(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
+            sellable=True,
         )
 
 
@@ -388,6 +398,7 @@ class FartProtection(Item):
             base_amount=5,
             max_amount=5,
             trigger=[ItemTrigger.FART, ItemTrigger.SLAP],
+            sellable=True,
         )
 
 
@@ -429,6 +440,7 @@ class FartStabilizer(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
+            sellable=True,
         )
 
 
@@ -454,6 +466,7 @@ class Fartvantage(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
+            sellable=True,
         )
 
 
@@ -479,6 +492,7 @@ class GigaFart(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
+            sellable=True,
         )
 
 
@@ -629,6 +643,7 @@ class PetBoost(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.PET],
+            sellable=True,
         )
 
 
@@ -729,6 +744,7 @@ class SatanBoost(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
+            sellable=True,
         )
 
 
@@ -754,6 +770,7 @@ class SlapBoost(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
+            sellable=True,
         )
 
 
