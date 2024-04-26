@@ -4,11 +4,12 @@ import secrets
 
 import discord
 from bot import CrunchyBot
-from cogs.beans.beans_group import BeansGroup
 from control.settings_manager import SettingsManager
 from discord import app_commands
 from discord.ext import commands, tasks
 from view.settings_modal import SettingsModal
+
+from cogs.beans.beans_group import BeansGroup
 
 
 class RandomLoot(BeansGroup):
@@ -95,12 +96,6 @@ class RandomLoot(BeansGroup):
                 SettingsManager.BEANS_SUBSETTINGS_KEY,
                 SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
             )
-            next_drop_delay = random.randint(min_wait, max_wait)
-            self.logger.log(
-                guild.id,
-                f"Random drop delay: {next_drop_delay} minutes.",
-                cog=self.__cog_name__,
-            )
 
             loot_box_event = self.database.get_last_loot_box_event(guild.id)
             last_drop = datetime.datetime.now()
@@ -109,12 +104,22 @@ class RandomLoot(BeansGroup):
                 last_drop = loot_box_event.datetime
 
             diff = datetime.datetime.now() - last_drop
+            diff_minutes = int(diff.total_seconds() / 60)
             self.logger.log(
                 guild.id,
-                f"Last loot box drop was {int(diff.total_seconds()/60)} minutes ago.",
+                f"Last loot box drop was {diff_minutes} minutes ago.",
                 cog=self.__cog_name__,
             )
 
+            if diff_minutes < max_wait:
+                min_wait = max(min_wait, diff_minutes)
+
+            next_drop_delay = random.randint(min_wait, max_wait)
+            self.logger.log(
+                guild.id,
+                f"Random drop delay: {next_drop_delay} minutes.",
+                cog=self.__cog_name__,
+            )
             next_drop = last_drop + datetime.timedelta(minutes=next_drop_delay)
             diff = next_drop - datetime.datetime.now()
             self.logger.log(
