@@ -62,31 +62,52 @@ class InventoryViewController(ViewController):
                 interaction = event.payload[0]
                 item_type = event.payload[1]
                 amount = event.payload[2]
-                await self.sell(interaction, item_type, amount, event.view_id)
+                sell_until = event.payload[3]
+                await self.sell(
+                    interaction, item_type, amount, sell_until, event.view_id
+                )
 
     async def sell(
         self,
         interaction: discord.Interaction,
         item_type: ItemType,
         amount: int,
+        sell_until: bool,
         view_id: int,
     ):
-
         guild_id = interaction.guild_id
         user_id = interaction.user.id
+        inventory = self.item_manager.get_user_inventory(guild_id, user_id)
+
+        item_owned = inventory.get_item_count(item_type)
+
+        if not sell_until and item_owned < amount:
+            await interaction.followup.send(
+                "You dont have this many items to sell.",
+                ephemeral=True,
+            )
+            return
+
+        sell_amount = amount
+
+        if sell_until:
+            sell_amount = max(0, item_owned - amount)
+
+        if sell_amount == 0:
+            return
 
         event = InventoryEvent(
             datetime.datetime.now(),
             guild_id,
             user_id,
             item_type,
-            -amount,
+            -sell_amount,
         )
         await self.controller.dispatch_event(event)
 
         item = self.item_manager.get_item(guild_id, item_type)
 
-        beans = amount * int(
+        beans = sell_amount * int(
             (item.cost * UserInventory.SELL_MODIFIER) / item.base_amount
         )
         event = BeansEvent(
@@ -97,10 +118,6 @@ class InventoryViewController(ViewController):
             beans,
         )
         await self.controller.dispatch_event(event)
-
-        inventory = self.item_manager.get_user_inventory(guild_id, user_id)
-        event = UIEvent(UIEventType.INVENTORY_REFRESH, inventory, view_id)
-        await self.controller.dispatch_ui_event(event)
 
     async def item_action(
         self,

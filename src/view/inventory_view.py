@@ -68,15 +68,14 @@ class InventoryView(ViewMenu):
         await self.controller.dispatch_ui_event(event)
 
     async def sell_selected_item(
-        self, interaction: discord.Interaction, all: bool = False
+        self,
+        interaction: discord.Interaction,
+        amount: int = 1,
+        sell_until: bool = False,
     ):
-        await interaction.response.defer()
-        sell_amount = 1
-        if all:
-            sell_amount = self.inventory.get_item_count(self.selected)
         event = UIEvent(
             UIEventType.INVENTORY_SELL,
-            (interaction, self.selected, sell_amount),
+            (interaction, self.selected, amount, sell_until),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -169,7 +168,7 @@ class SellButton(discord.ui.Button):
     def __init__(self, disabled: bool = False):
         super().__init__(
             label="Sell Single",
-            style=discord.ButtonStyle.green,
+            style=discord.ButtonStyle.grey,
             row=1,
             disabled=disabled,
         )
@@ -178,6 +177,7 @@ class SellButton(discord.ui.Button):
         view: InventoryView = self.view
 
         if await view.interaction_check(interaction):
+            await interaction.response.defer()
             await view.sell_selected_item(interaction)
 
 
@@ -185,14 +185,80 @@ class SellAllButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         super().__init__(
-            label="Sell All", style=discord.ButtonStyle.green, row=1, disabled=disabled
+            label="Sell Amount",
+            style=discord.ButtonStyle.grey,
+            row=1,
+            disabled=disabled,
         )
 
     async def callback(self, interaction: discord.Interaction):
         view: InventoryView = self.view
 
         if await view.interaction_check(interaction):
-            await view.sell_selected_item(interaction, all=True)
+            await interaction.response.send_modal(SellAllModal(self.view))
+
+
+class SellAllModal(discord.ui.Modal):
+
+    def __init__(self, view: InventoryView):
+        super().__init__(title="Specify how much you want to sell.")
+        self.view = view
+
+        self.amount = discord.ui.TextInput(
+            label="Specify an amount to sell:",
+            placeholder="Sell amount",
+            required=False,
+        )
+        self.add_item(self.amount)
+        self.amount_left = discord.ui.TextInput(
+            label="OR sell all until you have this many left:",
+            placeholder="Sell until amount left",
+            required=False,
+        )
+        self.add_item(self.amount_left)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        sell_amount_str = self.amount.value
+        sell_until_str = self.amount_left.value
+
+        if len(sell_amount_str) == 0 and len(sell_until_str) == 0:
+            await interaction.followup.send(
+                "Please specify either a sell amount or a sell until value.",
+                ephemeral=True,
+            )
+            return
+
+        if len(sell_amount_str) > 0 and len(sell_until_str) > 0:
+            await interaction.followup.send(
+                "You can only specify either sell amount or sell until, not both.",
+                ephemeral=True,
+            )
+            return
+
+        sell_until = False
+
+        amount = sell_amount_str
+        if len(amount) == 0:
+            amount = sell_until_str
+            sell_until = True
+
+        error = False
+        try:
+            amount = int(amount)
+            error = amount < 0
+        except ValueError:
+            error = True
+
+        if error:
+            await interaction.followup.send(
+                "Please enter a valid amount above 0.", ephemeral=True
+            )
+            return
+
+        await self.view.sell_selected_item(
+            interaction, amount=amount, sell_until=sell_until
+        )
 
 
 class BalanceButton(discord.ui.Button):

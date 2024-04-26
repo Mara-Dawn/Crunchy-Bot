@@ -7,6 +7,7 @@ from datalayer.prediction_stats import PredictionStats
 from datalayer.types import PredictionState, PredictionStateSort
 from events.types import UIEventType
 from events.ui_event import UIEvent
+
 from view.prediction_moderation_embed import PredictionModerationEmbed
 from view.view_menu import ViewMenu
 
