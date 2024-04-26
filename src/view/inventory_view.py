@@ -217,7 +217,6 @@ class SellAllModal(discord.ui.Modal):
         )
         self.add_item(self.amount_left)
 
-    # pylint: disable-next=arguments-differ
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer()
         sell_amount_str = self.amount.value
