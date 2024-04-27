@@ -574,7 +574,7 @@ class LootBoxItemBundle(Item):
 class LotteryTicket(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 100
+        defaultcost = 150
 
         if cost is None:
             cost = defaultcost
@@ -771,29 +771,4 @@ class SlapBoost(Item):
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
             sellable=True,
-        )
-
-
-class PredictionSubmission(Item):
-
-    def __init__(self, cost: int | None):
-        defaultcost = 0
-
-        if cost is None:
-            cost = defaultcost
-
-        super().__init__(
-            name="Prediction Gamba Idea",
-            item_type=ItemType.PREDICTION_SUBMISSION,
-            group=ItemGroup.IMMEDIATE_USE,
-            shop_category=ShopCategory.FUN,
-            description="Submit an idea for a prediction that people can bet on with beans. Submissions will be reviewed and eventually paid out by a moderator. '/beans predictions' for further information.",
-            emoji="🅱️",
-            cost=cost,
-            value=None,
-            view_class="ShopPredictionSubmissionView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
         )

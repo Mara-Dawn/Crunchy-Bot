@@ -223,4 +223,4 @@ class Dropdown(discord.ui.Select):
         view: ShopView = self.view
 
         if await view.interaction_check(interaction):
-            await view.set_selected(interaction, self.values[0])
+            await view.set_selected(interaction, ItemType(self.values[0]))

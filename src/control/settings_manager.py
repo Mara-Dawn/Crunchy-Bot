@@ -847,10 +847,10 @@ class SettingsManager(Service):
         )
 
     def get_shop_item_price(self, guild: int, item_type: ItemType) -> int:
-        return self.get_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type)
+        return self.get_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type.value)
 
     def set_shop_item_price(self, guild: int, item_type: ItemType, amount: int) -> None:
-        self.update_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type, amount)
+        self.update_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type.value, amount)
 
     # Bully Settings
 

@@ -1,11 +1,6 @@
 import datetime
 
 import discord
-from control.controller import Controller
-from control.event_manager import EventManager
-from control.logger import BotLogger
-from control.settings_manager import SettingsManager
-from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.prediction import Prediction
 from datalayer.types import PredictionState
@@ -16,6 +11,12 @@ from events.prediction_event import PredictionEvent
 from events.types import BeansEventType, EventType, PredictionEventType, UIEventType
 from events.ui_event import UIEvent
 from view.prediction_interaction_view import PredictionInteractionView
+
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.logger import BotLogger
+from control.settings_manager import SettingsManager
+from control.view.view_controller import ViewController
 
 
 class PredictionInteractionViewController(ViewController):
@@ -252,7 +253,7 @@ class PredictionInteractionViewController(ViewController):
         announcement = (
             f"**This prediction has been locked in!**\n> {prediction.content}\nNo more bets will be accepted. "
             "The winners will be paid out once an outcome is achieved. Good luck!\nYou can also submit your own "
-            "prediction ideas in the overview channel or in the `/shop`."
+            "prediction ideas in the overview channel."
         )
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)
@@ -289,7 +290,7 @@ class PredictionInteractionViewController(ViewController):
         announcement = (
             f"**This prediction has been unlocked again!**\n> {prediction.content}\n"
             "You can start betting on it again for now. Good luck!\n"
-            "You can also submit your own prediction ideas in the `/shop`."
+            "You can also submit your own prediction ideas in the overview channel."
         )
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)
@@ -344,7 +345,7 @@ class PredictionInteractionViewController(ViewController):
         announcement = (
             f"**A new prediction has been approved!**\n> {prediction.content}\n"
             "Use `/beans prediction` to bet your beans on the outcomes. "
-            "You can also submit your own prediction ideas in the `/shop`."
+            "You can also submit your own prediction ideas in the overview channel."
         )
         for channel_id in bean_channels:
             channel = interaction.guild.get_channel(channel_id)
