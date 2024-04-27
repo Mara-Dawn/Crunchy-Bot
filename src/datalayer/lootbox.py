@@ -29,7 +29,11 @@ class LootBox:
         return LootBox(
             guild_id=int(row[Database.LOOTBOX_GUILD_COL]),
             message_id=int(row[Database.LOOTBOX_MESSAGE_ID_COL]),
-            item_type=ItemType(row[Database.LOOTBOX_ITEM_TYPE_COL]),
+            item_type=(
+                ItemType(row[Database.LOOTBOX_ITEM_TYPE_COL])
+                if row[Database.LOOTBOX_ITEM_TYPE_COL] in ItemType
+                else None
+            ),
             beans=int(row[Database.LOOTBOX_BEANS_COL]),
             id=int(row[Database.LOOTBOX_ID_COL]),
         )
