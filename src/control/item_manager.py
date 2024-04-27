@@ -8,7 +8,6 @@ from datalayer.inventory import UserInventory
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, UserInteraction
 from discord.ext import commands
-from events.bat_event import BatEvent
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.lootbox_event import LootBoxEvent
@@ -21,7 +20,6 @@ from items.types import ItemState, ItemType
 from view.lootbox_view import LootBoxView
 
 from control.controller import Controller
-from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
@@ -41,7 +39,6 @@ class ItemManager(Service):
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
         )
-        self.jail_manager: JailManager = self.controller.get_service(JailManager)
         self.log_name = "Items"
 
     async def listen_for_event(self, event: BotEvent):
@@ -55,7 +52,7 @@ class ItemManager(Service):
         return instance
 
     def get_shop_items(self, guild_id: int) -> list[Item]:
-        items = [x.value for x in ItemType]
+        items = [x for x in ItemType]
         output = []
         for item_type in items:
             item = self.get_item(guild_id, item_type)
@@ -249,108 +246,6 @@ class ItemManager(Service):
             output.append(item)
 
         return output
-
-    async def handle_major_action_items(
-        self, items: list[Item], member: discord.Member, target_user: discord.Member
-    ):
-        response = ""
-        for item in items:
-            item_text = ""
-            match item.type:
-                case ItemType.ULTRA_PET:
-                    release_msg = await self.jail_manager.release_user(
-                        member.guild.id, member.id, target_user
-                    )
-                    if not release_msg:
-                        continue
-
-                    item_text += f"<@{target_user.id}> was released from Jail."
-                    item_text += release_msg + "\n"
-
-                case ItemType.ULTRA_SLAP:
-                    event = BatEvent(
-                        datetime.datetime.now(),
-                        member.guild.id,
-                        member.id,
-                        target_user.id,
-                        item.value,
-                    )
-                    await self.controller.dispatch_event(event)
-
-                    item_text += f"<@{target_user.id}> was erased from this dimension and will be stunned for `{BotUtil.strfdelta(item.value, inputtype='minutes')}`."
-                    item_text += "\n"
-
-                case ItemType.PENETRATING_PET:
-                    item_count = 0
-                    inventory_items = self.database.get_item_counts_by_user(
-                        member.guild.id, target_user.id
-                    )
-
-                    protection_type = ItemType.FART_PROTECTION
-
-                    if protection_type in inventory_items:
-                        item_count = inventory_items[protection_type]
-
-                    if item_count <= 0:
-                        continue
-
-                    event = InventoryEvent(
-                        datetime.datetime.now(),
-                        member.guild.id,
-                        target_user.id,
-                        protection_type,
-                        -item_count,
-                    )
-                    await self.controller.dispatch_event(event)
-
-                    item_text += f"<@{target_user.id}> was touched by <@{member.id}>'s greasy gamer hands. All of their protection melts away, exposing them to the elements."
-                    item_text += "\n"
-
-                case ItemType.SWAP_SLAP:
-                    target_jail = self.jail_manager.get_active_jail(
-                        member.guild.id, target_user
-                    )
-
-                    if target_jail is not None:
-                        continue
-
-                    jail = self.jail_manager.get_active_jail(member.guild.id, member)
-
-                    if jail is None:
-                        continue
-
-                    remaining = self.jail_manager.get_jail_remaining(jail)
-
-                    await self.jail_manager.release_user(
-                        member.guild.id, member.id, member
-                    )
-
-                    await self.jail_manager.jail_user(
-                        member.guild.id, member.id, target_user, remaining
-                    )
-
-                    item_text += f"<@{member.id}> pulls a Uno Reverse Card on <@{target_user.id}>, swapping places with them in jail.\n"
-                    item_text += f"They will have to sit out the remaining sentence of `{BotUtil.strfdelta(remaining, inputtype='minutes')}`."
-                    item_text += "\n"
-
-            response += f"\n\n**{item.emoji} {item.name} {item.emoji} was used.**\n"
-            response += item_text
-
-            event = InventoryEvent(
-                datetime.datetime.now(),
-                member.guild.id,
-                member.id,
-                item.type,
-                -1,
-            )
-            await self.controller.dispatch_event(event)
-
-            self.logger.log(
-                member.guild.id,
-                f"Item {item.name} was used.",
-                cog=self.log_name,
-            )
-        return response
 
     async def get_guild_items_activated(
         self, guild_id: int, trigger: ItemTrigger

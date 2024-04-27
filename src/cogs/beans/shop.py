@@ -5,6 +5,7 @@ import discord
 from bot import CrunchyBot
 from control.controller import Controller
 from control.event_manager import EventManager
+from control.interaction_manager import InteractionManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
@@ -30,6 +31,9 @@ class Shop(commands.Cog):
         self.event_manager: EventManager = self.controller.get_service(EventManager)
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
+        )
+        self.item_handler: InteractionManager = self.controller.get_service(
+            InteractionManager
         )
 
     @staticmethod
@@ -194,22 +198,42 @@ class Shop(commands.Cog):
             args=[enabled],
         )
 
+    async def shop_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        choices = [
+            app_commands.Choice(name=enum.value, value=enum)
+            for enum in ItemType
+            if current.lower() in enum.value.lower()
+        ][:25]
+        return choices
+
     @group.command(name="price", description="Adjust item prices for the beans shop.")
     @app_commands.describe(
         item="The item you are about to change.",
         amount="The new price for the specified item.",
     )
     @app_commands.check(__has_permission)
+    @app_commands.autocomplete(item=shop_autocomplete)
     @app_commands.guild_only()
     async def price(
         self,
         interaction: discord.Interaction,
-        item: ItemType,
+        item: str,
         amount: app_commands.Range[int, 1],
     ):
-        self.settings_manager.set_shop_item_price(
-            interaction.guild_id, item.value, amount
-        )
+        if item not in ItemType._value2member_map_:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Item not found.",
+                args=[item, amount],
+            )
+            return
+
+        item = ItemType(item)
+
+        self.settings_manager.set_shop_item_price(interaction.guild_id, item, amount)
         await self.bot.command_response(
             self.__cog_name__,
             interaction,

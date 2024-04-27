@@ -1467,7 +1467,7 @@ class Database:
         transformed = {}
         for row in rows:
             user_id = row[self.INVENTORY_EVENT_MEMBER_COL]
-            item_type = row[self.INVENTORY_EVENT_ITEM_TYPE_COL]
+            item_type = ItemType(row[self.INVENTORY_EVENT_ITEM_TYPE_COL])
             amount = row[f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"]
             if amount <= 0:
                 continue
@@ -1496,7 +1496,7 @@ class Database:
             return {}
 
         return {
-            row[self.INVENTORY_EVENT_ITEM_TYPE_COL]: row[
+            ItemType(row[self.INVENTORY_EVENT_ITEM_TYPE_COL]): row[
                 f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"
             ]
             for row in rows

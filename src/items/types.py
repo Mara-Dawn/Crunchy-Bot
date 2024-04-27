@@ -32,7 +32,6 @@ class ItemType(str, Enum):
     ROULETTE_FART = "RouletteFart"
     SATAN_FART = "SatanBoost"
     BAT = "Bat"
-    PREDICTION_SUBMISSION = "PredictionSubmission"
 
 
 class ItemState(str, Enum):

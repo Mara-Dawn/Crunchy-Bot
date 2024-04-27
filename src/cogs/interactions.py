@@ -5,7 +5,9 @@ from bot import CrunchyBot
 from bot_util import Tenor
 from control.controller import Controller
 from control.event_manager import EventManager
+from control.interaction_manager import InteractionManager
 from control.item_manager import ItemManager
+from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
@@ -14,8 +16,6 @@ from discord import app_commands
 from discord.ext import commands
 from events.interaction_event import InteractionEvent
 from items.types import ItemGroup, ItemType
-
-from cogs.jail import Jail
 
 
 class Interactions(commands.Cog):
@@ -30,6 +30,10 @@ class Interactions(commands.Cog):
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
         )
+        self.interaction_manager: InteractionManager = self.controller.get_service(
+            InteractionManager
+        )
+        self.jail_manager: JailManager = self.controller.get_service(JailManager)
 
         self.ctx_menu = app_commands.ContextMenu(
             name="Slap",
@@ -93,21 +97,25 @@ class Interactions(commands.Cog):
 
         return True
 
+    @app_commands.checks.cooldown(1, 10)
     async def slap_context_menu(
         self, interaction: discord.Interaction, user: discord.Member
     ):
         await self.__user_command_interaction(interaction, user, UserInteraction.SLAP)
 
+    @app_commands.checks.cooldown(1, 10)
     async def pet_context_menu(
         self, interaction: discord.Interaction, user: discord.Member
     ):
         await self.__user_command_interaction(interaction, user, UserInteraction.PET)
 
+    @app_commands.checks.cooldown(1, 10)
     async def fart_context_menu(
         self, interaction: discord.Interaction, user: discord.Member
     ):
         await self.__user_command_interaction(interaction, user, UserInteraction.FART)
 
+    @app_commands.checks.cooldown(1, 10)
     async def slap_msg_context_menu(
         self, interaction: discord.Interaction, message: discord.Message
     ):
@@ -115,6 +123,7 @@ class Interactions(commands.Cog):
             interaction, message.author, UserInteraction.SLAP
         )
 
+    @app_commands.checks.cooldown(1, 10)
     async def pet_msg_context_menu(
         self, interaction: discord.Interaction, message: discord.Message
     ):
@@ -122,6 +131,7 @@ class Interactions(commands.Cog):
             interaction, message.author, UserInteraction.PET
         )
 
+    @app_commands.checks.cooldown(1, 10)
     async def fart_msg_context_menu(
         self, interaction: discord.Interaction, message: discord.Message
     ):
@@ -184,7 +194,6 @@ class Interactions(commands.Cog):
             interaction.created_at, guild_id, command_type, invoker.id, user.id
         )
         await self.controller.dispatch_event(event)
-
         log_message = (
             f"{interaction.user.name} used command `{command.name}` on {user.name}."
         )
@@ -198,20 +207,25 @@ class Interactions(commands.Cog):
         )
 
         major_actions = []
+        has_major_jail_actions = False
 
         for item in user_items:
-            if item.group == ItemGroup.MAJOR_ACTION:
-                major_actions.append(item)
+            match item.group:
+                case ItemGroup.MAJOR_ACTION:
+                    major_actions.append(item)
+                case ItemGroup.MAJOR_JAIL_ACTION:
+                    major_actions.append(item)
+                    has_major_jail_actions = True
 
         if len(major_actions) > 0:
-            response += await self.item_manager.handle_major_action_items(
+            response += await self.interaction_manager.handle_major_action_items(
                 major_actions, interaction.user, user
             )
 
-        jail_cog: Jail = self.bot.get_cog("Jail")
-        response += await jail_cog.user_command_interaction(
-            interaction, user, command_type
-        )
+        if not has_major_jail_actions:
+            response += await self.interaction_manager.user_command_interaction(
+                interaction, user, command_type, user_items
+            )
 
         await interaction.channel.send(response)
         await interaction.followup.send(embed=embed)
@@ -222,6 +236,7 @@ class Interactions(commands.Cog):
             "init", str(self.__cog_name__) + " loaded.", cog=self.__cog_name__
         )
 
+    # SLash Commands
     @app_commands.command(name="slap", description="Slap someone.")
     @app_commands.describe(
         user="Slap this bitch.",
