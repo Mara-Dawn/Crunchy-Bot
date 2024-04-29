@@ -103,7 +103,7 @@ class InteractionManager(Service):
                 response,
             )
 
-        if already_interacted and modifiers.bonus_attempt is not None:
+        if already_interacted and modifiers.bonus_attempt is None:
             return (
                 modifiers,
                 response,
