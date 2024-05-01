@@ -243,7 +243,7 @@ class BonusSlap(Item):
 class SwapSlap(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 8000
+        defaultcost = 6000
 
         if cost is None:
             cost = defaultcost
@@ -831,7 +831,7 @@ class SlapBoost(Item):
 class NoLimitGamba(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 10000
+        defaultcost = 8000
 
         if cost is None:
             cost = defaultcost
@@ -857,7 +857,7 @@ class NoLimitGamba(Item):
 class NoCooldownGamba(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 5000
+        defaultcost = 4000
 
         if cost is None:
             cost = defaultcost
