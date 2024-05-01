@@ -6,7 +6,6 @@ from bot_util import BotUtil
 from datalayer.database import Database
 from discord.ext import commands
 from events.beans_event import BeansEvent
-from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
 from events.lootbox_event import LootBoxEvent
 from events.types import BeansEventType, JailEventType, LootBoxEventType, UIEventType

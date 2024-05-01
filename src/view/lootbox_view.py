@@ -3,6 +3,7 @@ from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
+
 from view.view_menu import ViewMenu
 
 

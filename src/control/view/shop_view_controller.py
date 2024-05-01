@@ -6,13 +6,11 @@ from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
-from events.lootbox_event import LootBoxEvent
-from events.types import BeansEventType, EventType, LootBoxEventType, UIEventType
+from events.types import BeansEventType, EventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemGroup, ItemType
 from view.inventory_embed import InventoryEmbed
 from view.inventory_view import InventoryView
-from view.lootbox_view import LootBoxView
 from view.shop_color_select_view import ShopColorSelectView  # noqa: F401
 from view.shop_confirm_view import ShopConfirmView  # noqa: F401
 from view.shop_prediction_submission_view import (
