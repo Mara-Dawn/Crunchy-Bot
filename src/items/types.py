@@ -33,6 +33,7 @@ class ItemType(str, Enum):
     ROULETTE_FART = "RouletteFart"
     SATAN_FART = "SatanBoost"
     BAT = "Bat"
+    CATGIRL = "CatGirl"
 
 
 class ItemState(str, Enum):

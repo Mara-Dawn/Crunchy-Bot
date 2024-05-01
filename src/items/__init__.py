@@ -599,6 +599,32 @@ class PocketMimic(Item):
         )
 
 
+class CatGirl(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 2500
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Useless Cat Girl",
+            item_type=ItemType.CATGIRL,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.LOOTBOX,
+            description="She is lazy, sleeply, does nothing all day and apparently lives in your inventory now.",
+            emoji="🐱",
+            cost=cost,
+            value=None,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=None,
+            lootbox_exclusive=True,
+        )
+
+
 class LotteryTicket(Item):
 
     def __init__(self, cost: int | None):
