@@ -852,3 +852,29 @@ class NoLimitGamba(Item):
             trigger=[ItemTrigger.GAMBA],
             controllable=True,
         )
+
+
+class NoCooldownGamba(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 5000
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Instant Gamba",
+            item_type=ItemType.INSTANT_GAMBA,
+            group=ItemGroup.GAMBA,
+            shop_category=ShopCategory.FUN,
+            description="Allows you to ignore the cooldown on your next gamba.",
+            emoji="🎰",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.GAMBA],
+            controllable=True,
+        )

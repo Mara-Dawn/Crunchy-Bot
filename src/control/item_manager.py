@@ -86,6 +86,7 @@ class ItemManager(Service):
             ItemType.MIMIC,
             ItemType.CATGIRL,
             ItemType.UNLIMITED_GAMBA,
+            ItemType.INSTANT_GAMBA,
         ]
 
         lucky_item_pool = [
@@ -99,6 +100,7 @@ class ItemManager(Service):
             ItemType.MIMIC,
             ItemType.CATGIRL,
             ItemType.UNLIMITED_GAMBA,
+            ItemType.INSTANT_GAMBA,
         ]
 
         weights = [self.get_item(guild_id, x).weight for x in item_pool]
