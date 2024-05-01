@@ -559,7 +559,7 @@ class LootBoxItemBundle(Item):
             item_type=ItemType.LOOTBOX_BUNDLE,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
-            description="Too addicted? Just buy 5 at once! You'll have to open them one by one though.",
+            description="Too addicted? Just buy 5 at once! All neatly contained within a single Box.",
             emoji="🧰",
             cost=cost,
             value=None,

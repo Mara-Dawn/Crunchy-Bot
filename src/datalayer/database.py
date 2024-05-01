@@ -221,15 +221,28 @@ class Database:
     LOOTBOX_ID_COL = "lobo_id"
     LOOTBOX_GUILD_COL = "lobo_guild_id"
     LOOTBOX_MESSAGE_ID_COL = "lobo_message_id_id"
-    LOOTBOX_ITEM_TYPE_COL = "lobo_item_type"
+    LOOTBOX_ITEM_TYPE_COL_OLD = "lobo_item_type"  # deprecated, legacy
     LOOTBOX_BEANS_COL = "lobo_beans"
     CREATE_LOOTBOX_TABLE = f"""
     CREATE TABLE if not exists {LOOTBOX_TABLE} (
         {LOOTBOX_ID_COL}  INTEGER PRIMARY KEY AUTOINCREMENT,
         {LOOTBOX_GUILD_COL} INTEGER, 
         {LOOTBOX_MESSAGE_ID_COL} INTEGER, 
-        {LOOTBOX_ITEM_TYPE_COL} TEXT, 
+        {LOOTBOX_ITEM_TYPE_COL_OLD} TEXT, 
         {LOOTBOX_BEANS_COL} INTEGER
+    );"""
+
+    LOOTBOX_ITEM_TABLE = "lootboxitem"
+    LOOTBOX_ITEM_ID_COL = "loit_id"
+    LOOTBOX_ITEM_LOOTBOX_ID_COL = "loit_lootbox_id"
+    LOOTBOX_ITEM_TYPE_COL = "loit_item_type"
+    LOOTBOX_ITEM_AMOUNT_COL = "loit_item_amount"
+    CREATE_LOOTBOX_ITEM_TABLE = f"""
+    CREATE TABLE if not exists {LOOTBOX_ITEM_TABLE} (
+        {LOOTBOX_ITEM_ID_COL}  INTEGER PRIMARY KEY AUTOINCREMENT,
+        {LOOTBOX_ITEM_LOOTBOX_ID_COL} INTEGER REFERENCES {LOOTBOX_TABLE} ({LOOTBOX_ID_COL}), 
+        {LOOTBOX_ITEM_TYPE_COL} TEXT,
+        {LOOTBOX_ITEM_AMOUNT_COL} INTEGER 
     );"""
 
     LOOTBOX_EVENT_TABLE = "lootboxevents"
@@ -388,6 +401,7 @@ class Database:
             c.execute(self.CREATE_PREDICTION_EVENT_TABLE)
             c.execute(self.CREATE_PREDICTION_OVERVIEW_TABLE)
             c.execute(self.CREATE_INVENTORY_ITEM_TABLE)
+            c.execute(self.CREATE_LOOTBOX_ITEM_TABLE)
             c.close()
 
         except Error as e:
@@ -717,18 +731,31 @@ class Database:
             INSERT INTO {self.LOOTBOX_TABLE} (
             {self.LOOTBOX_GUILD_COL},
             {self.LOOTBOX_MESSAGE_ID_COL},
-            {self.LOOTBOX_ITEM_TYPE_COL},
             {self.LOOTBOX_BEANS_COL}) 
-            VALUES (?, ?, ?, ?);
+            VALUES (?, ?, ?);
         """
         task = (
             loot_box.guild_id,
             loot_box.message_id,
-            loot_box.item_type,
             loot_box.beans,
         )
 
-        return self.__query_insert(command, task)
+        lootbox_id = self.__query_insert(command, task)
+
+        for item_type, amount in loot_box.items.items():
+
+            command = f"""
+                INSERT INTO {self.LOOTBOX_ITEM_TABLE} (
+                {self.LOOTBOX_ITEM_LOOTBOX_ID_COL},
+                {self.LOOTBOX_ITEM_TYPE_COL}, 
+                {self.LOOTBOX_ITEM_AMOUNT_COL})
+                VALUES (?, ?, ?);
+            """
+
+            task = (lootbox_id, item_type.value, amount)
+            self.__query_insert(command, task)
+
+        return lootbox_id
 
     def log_item_state(
         self,
@@ -1274,6 +1301,22 @@ class Database:
             return None
         return Quote.from_db_row(rows[0])
 
+    def get_lootbox_items(self, lootbox_id: int) -> list[ItemType]:
+        command = f""" 
+            SELECT * FROM {self.LOOTBOX_ITEM_TABLE} 
+            WHERE {self.LOOTBOX_ITEM_LOOTBOX_ID_COL} = {int(lootbox_id)};
+        """
+        rows = self.__query_select(command)
+        if not rows:
+            return []
+
+        return {
+            ItemType(row[self.LOOTBOX_ITEM_TYPE_COL]): int(
+                row[self.LOOTBOX_ITEM_AMOUNT_COL]
+            )
+            for row in rows
+        }
+
     def get_loot_box_by_message_id(self, guild_id: int, message_id: int) -> LootBox:
         command = f""" 
             SELECT * FROM {self.LOOTBOX_TABLE} 
@@ -1285,7 +1328,10 @@ class Database:
         rows = self.__query_select(command, task)
         if not rows:
             return None
-        return LootBox.from_db_row(rows[0])
+
+        items = self.get_lootbox_items(rows[0][self.LOOTBOX_ID_COL])
+
+        return LootBox.from_db_row(rows[0], items)
 
     def get_last_loot_box_event(self, guild_id: int):
         command = f"""
@@ -1788,7 +1834,12 @@ class Database:
             return {}
 
         return [
-            (row[self.LOOTBOX_EVENT_MEMBER_COL], LootBox.from_db_row(row))
+            (
+                row[self.LOOTBOX_EVENT_MEMBER_COL],
+                LootBox.from_db_row(
+                    row, self.get_lootbox_items(row[self.LOOTBOX_ID_COL])
+                ),
+            )
             for row in rows
         ]
 

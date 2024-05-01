@@ -146,6 +146,7 @@ class LootBoxViewController(ViewController):
                 )
             embed.set_image(url="attachment://mimic.gif")
             attachment = discord.File("./img/mimic.gif", "mimic.gif")
+
         elif beans > 0:
             embed.add_field(
                 name="A Bunch of Beans!",
@@ -155,35 +156,17 @@ class LootBoxViewController(ViewController):
 
         log_message = f"{interaction.user.display_name} claimed a loot box containing {beans} beans"
 
-        if loot_box.item_type is not None:
-            embed.add_field(name="Woah, a Shiny Item!", value="", inline=False)
+        if loot_box.items is not None and len(loot_box.items) > 0:
+            embed.add_field(name="Woah, Shiny Items!", value="", inline=False)
 
-            item = self.item_manager.get_item(guild_id, loot_box.item_type)
+            for item_type, amount in loot_box.items.items():
+                item = self.item_manager.get_item(guild_id, item_type)
+                item_count = item.base_amount * amount
+                item.add_to_embed(embed, 43, count=item_count, show_price=False)
+                log_message += f" and {item_count}x {item.name}"
 
-            item.add_to_embed(embed, 43, count=item.base_amount, show_price=False)
-            log_message += f" and 1x {item.name}"
-
-            amount = item.base_amount
-
-            if item.max_amount is not None:
-                item_count = 0
-
-                inventory_items = self.database.get_item_counts_by_user(guild_id, member_id)
-                if item.type in inventory_items:
-                    item_count = inventory_items[item.type]
-
-                amount = min(item.base_amount, (item.max_amount - item_count))
-
-            if amount != 0:
-                event = InventoryEvent(
-                    datetime.datetime.now(),
-                    guild_id,
-                    member_id,
-                    item.type,
-                    amount,
-                )
-                await self.controller.dispatch_event(event)
-
+                await self.item_manager.give_item(guild_id, member_id, item, item_count)
+                
         if beans != 0:
             event = BeansEvent(
                 datetime.datetime.now(),
