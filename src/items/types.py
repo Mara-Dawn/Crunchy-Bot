@@ -25,6 +25,7 @@ class ItemType(str, Enum):
     BAILOUT = "Bailout"
     LOOTBOX = "LootBoxItem"
     LOOTBOX_BUNDLE = "LootBoxItemBundle"
+    MIMIC = "PocketMimic"
     LOTTERY_TICKET = "LotteryTicket"
     NAME_COLOR = "NameColor"
     REACTION_SPAM = "ReactionSpam"

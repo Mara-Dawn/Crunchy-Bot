@@ -24,6 +24,14 @@ class PredictionState(str, Enum):
     REFUNDED = "Refunded"
 
 
+class LootboxType(Enum):
+    SMALL_MIMIC = 1
+    LARGE_MIMIC = 2
+    REGULAR = 3
+    BEANS = 4
+    LUCKY_ITEM = 5
+
+
 class PredictionStateSort(int, Enum):
 
     @staticmethod

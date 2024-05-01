@@ -56,7 +56,7 @@ class InventoryView(ViewMenu):
                 inventory = event.payload
                 await self.refresh_ui(inventory=inventory)
 
-    async def toggle_selected_item(
+    async def selected_item_action(
         self, interaction: discord.Interaction, action_type: ActionType
     ):
         await interaction.response.defer()
@@ -83,18 +83,23 @@ class InventoryView(ViewMenu):
     def refresh_elements(self, disabled: bool = False):
         selected_state = self.inventory.get_item_state(self.selected)
 
-        button_action = ActionType.DEFAULT_ACTION
-
         match selected_state:
             case ItemState.ENABLED:
                 button_action = ActionType.DISABLE_ACTION
+                if self.inventory.get_item_useable(self.selected):
+                    button_action = ActionType.USE_ACTION
             case ItemState.DISABLED:
                 button_action = ActionType.ENABLE_ACTION
 
-        sellable_items = [item for item in self.inventory.items if item.sellable]
+        if self.selected is None:
+            button_action = ActionType.DEFAULT_ACTION
+
+        controllable_items = [
+            item for item in self.inventory.items if item.controllable or item.useable
+        ]
 
         self.clear_items()
-        self.add_item(Dropdown(sellable_items, self.selected))
+        self.add_item(Dropdown(controllable_items, self.selected))
         self.add_item(ActionButton(button_action, disabled))
         self.add_item(SellButton(disabled))
         self.add_item(SellAllButton(disabled))
@@ -146,6 +151,8 @@ class ActionButton(discord.ui.Button):
                 color = discord.ButtonStyle.green
             case ActionType.DISABLE_ACTION:
                 color = discord.ButtonStyle.red
+            case ActionType.USE_ACTION:
+                color = discord.ButtonStyle.green
             case _:
                 color = discord.ButtonStyle.grey
 
@@ -160,7 +167,7 @@ class ActionButton(discord.ui.Button):
         view: InventoryView = self.view
 
         if await view.interaction_check(interaction):
-            await view.toggle_selected_item(interaction, self.action_type)
+            await view.selected_item_action(interaction, self.action_type)
 
 
 class SellButton(discord.ui.Button):

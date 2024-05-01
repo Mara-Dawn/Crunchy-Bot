@@ -28,3 +28,4 @@ class ActionType(str, Enum):
     ENABLE_ACTION = "Enable"
     DISABLE_ACTION = "Disable"
     DEFAULT_ACTION = "Action"
+    USE_ACTION = "Use"

@@ -37,6 +37,13 @@ class UserInventory:
 
         return self.item_states[item_type]
 
+    def get_item_useable(self, item_type: ItemType) -> bool:
+        for item in self.items:
+            if item.type == item_type:
+                return item.useable
+
+        return False
+
     def get_item_count(self, item_type: ItemType) -> int:
         if item_type not in self.inventory:
             return 0

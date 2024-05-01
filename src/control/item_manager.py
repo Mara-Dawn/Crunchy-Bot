@@ -1,12 +1,13 @@
 import datetime
 import random
+import secrets
 
 import discord
 from bot_util import BotUtil
 from datalayer.database import Database
 from datalayer.inventory import UserInventory
 from datalayer.lootbox import LootBox
-from datalayer.types import ItemTrigger, UserInteraction
+from datalayer.types import ItemTrigger, LootboxType, UserInteraction
 from discord.ext import commands
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
@@ -61,7 +62,9 @@ class ItemManager(Service):
 
         return output
 
-    def create_loot_box(self, guild_id: int, size: int = 1) -> LootBox:
+    def create_loot_box(
+        self, guild_id: int, size: int = 1, force_type: LootboxType = None
+    ) -> LootBox:
         item_pool = [
             ItemType.AUTO_CRIT,
             ItemType.FART_BOOST,
@@ -80,6 +83,7 @@ class ItemManager(Service):
             ItemType.ULTRA_SLAP,
             ItemType.PENETRATING_PET,
             ItemType.SWAP_SLAP,
+            ItemType.MIMIC,
         ]
 
         lucky_item_pool = [
@@ -90,6 +94,7 @@ class ItemManager(Service):
             ItemType.ULTRA_SLAP,
             ItemType.PENETRATING_PET,
             ItemType.SWAP_SLAP,
+            ItemType.MIMIC,
         ]
 
         weights = [self.get_item(guild_id, x).weight for x in item_pool]
@@ -105,7 +110,7 @@ class ItemManager(Service):
         # Spawn Chances
         mimic_chance = 0.1
         large_chest_chance = 0.04
-        super_mimic_chance = 0.03
+        large_mimic_chance = 0.03
         lucky_item_chance = 0.02
 
         # Chest Ranges
@@ -116,8 +121,32 @@ class ItemManager(Service):
         beans = 0
         random_items = {}
 
+        force_roll = None
+
+        if force_type is not None:
+            match force_type:
+                case LootboxType.SMALL_MIMIC:
+                    force_roll = mimic_chance
+                case LootboxType.BEANS:
+                    force_roll = mimic_chance + large_chest_chance
+                case LootboxType.LARGE_MIMIC:
+                    force_roll = mimic_chance + large_chest_chance + large_mimic_chance
+                case LootboxType.LUCKY_ITEM:
+                    force_roll = (
+                        mimic_chance
+                        + large_chest_chance
+                        + large_mimic_chance
+                        + lucky_item_chance
+                    )
+                case LootboxType.REGULAR:
+                    force_roll = 1
+
         for _ in range(size):
             roll = random.random()
+
+            if force_roll is not None:
+                roll = force_roll
+
             small_beans_reward = random.randint(small_min_beans, small_max_beans)
             large_beans_reward = random.randint(large_min_beans, large_max_beans)
 
@@ -126,15 +155,15 @@ class ItemManager(Service):
             elif roll > mimic_chance and roll <= (mimic_chance + large_chest_chance):
                 beans += large_beans_reward
             elif roll > (mimic_chance + large_chest_chance) and roll <= (
-                mimic_chance + large_chest_chance + super_mimic_chance
+                mimic_chance + large_chest_chance + large_mimic_chance
             ):
                 beans += -large_beans_reward
             elif roll > (
-                mimic_chance + large_chest_chance + super_mimic_chance
+                mimic_chance + large_chest_chance + large_mimic_chance
             ) and roll <= (
                 mimic_chance
                 + large_chest_chance
-                + super_mimic_chance
+                + large_mimic_chance
                 + lucky_item_chance
             ):
                 item_type = random.choices(lucky_item_pool, weights=lucky_weights)[0]
@@ -142,7 +171,7 @@ class ItemManager(Service):
             elif roll > (
                 mimic_chance
                 + large_chest_chance
-                + super_mimic_chance
+                + large_mimic_chance
                 + lucky_item_chance
             ):
                 item_type = random.choices(item_pool, weights=weights)[0]
@@ -150,11 +179,13 @@ class ItemManager(Service):
 
         return LootBox(guild_id, random_items, beans)
 
-    async def drop_loot_box(self, guild: discord.Guild, channel_id: int):
+    async def drop_loot_box(
+        self, guild: discord.Guild, channel_id: int, force_type: LootboxType = None
+    ):
         log_message = f"Loot box was dropped in {guild.name}."
         self.logger.log(guild.id, log_message, cog="Beans")
 
-        loot_box = self.create_loot_box(guild.id)
+        loot_box = self.create_loot_box(guild.id, force_type=force_type)
 
         title = "A Random Treasure has Appeared"
         description = "Quick, claim it before anyone else does!"
@@ -349,7 +380,7 @@ class ItemManager(Service):
 
         return items
 
-    async def use_items(self, guild_id: int, trigger: ItemTrigger):
+    async def consume_trigger_items(self, guild_id: int, trigger: ItemTrigger):
         guild_item_counts = self.database.get_item_counts_by_guild(guild_id)
 
         for user_id, item_counts in guild_item_counts.items():
@@ -364,3 +395,22 @@ class ItemManager(Service):
                     datetime.datetime.now(), guild_id, user_id, item.type, -1
                 )
                 await self.controller.dispatch_event(event)
+
+    async def use_item(self, guild: discord.Guild, user_id: int, item_type: ItemType):
+        guild_id = guild.id
+
+        event = InventoryEvent(
+            datetime.datetime.now(), guild_id, user_id, item_type, -1
+        )
+        await self.controller.dispatch_event(event)
+
+        match item_type:
+            case ItemType.MIMIC:
+                bean_channels = self.settings_manager.get_beans_channels(guild_id)
+                if len(bean_channels) == 0:
+                    return
+                await self.drop_loot_box(
+                    guild,
+                    secrets.choice(bean_channels),
+                    force_type=LootboxType.LARGE_MIMIC,
+                )
