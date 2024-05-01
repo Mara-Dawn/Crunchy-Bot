@@ -133,10 +133,12 @@ class InventoryViewController(ViewController):
         match item_action:
             case ActionType.DISABLE_ACTION:
                 item_state = ItemState.DISABLED
+                self.database.log_item_state(guild_id, user_id, item_type, item_state)
             case ActionType.ENABLE_ACTION:
                 item_state = ItemState.ENABLED
-
-        self.database.log_item_state(guild_id, user_id, item_type, item_state)
+                self.database.log_item_state(guild_id, user_id, item_type, item_state)
+            case ActionType.USE_ACTION:
+                await self.item_manager.use_item(interaction.guild, user_id, item_type)
 
         inventory = self.item_manager.get_user_inventory(guild_id, user_id)
 

@@ -1,12 +1,13 @@
 import datetime
 import random
+import secrets
 
 import discord
 from bot_util import BotUtil
 from datalayer.database import Database
 from datalayer.inventory import UserInventory
 from datalayer.lootbox import LootBox
-from datalayer.types import ItemTrigger, UserInteraction
+from datalayer.types import ItemTrigger, LootboxType, UserInteraction
 from discord.ext import commands
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
@@ -61,7 +62,9 @@ class ItemManager(Service):
 
         return output
 
-    def create_loot_box(self, guild_id: int) -> LootBox:
+    def create_loot_box(
+        self, guild_id: int, size: int = 1, force_type: LootboxType = None
+    ) -> LootBox:
         item_pool = [
             ItemType.AUTO_CRIT,
             ItemType.FART_BOOST,
@@ -80,6 +83,9 @@ class ItemManager(Service):
             ItemType.ULTRA_SLAP,
             ItemType.PENETRATING_PET,
             ItemType.SWAP_SLAP,
+            ItemType.MIMIC,
+            ItemType.CATGIRL,
+            ItemType.UNLIMITED_GAMBA,
         ]
 
         lucky_item_pool = [
@@ -90,15 +96,25 @@ class ItemManager(Service):
             ItemType.ULTRA_SLAP,
             ItemType.PENETRATING_PET,
             ItemType.SWAP_SLAP,
+            ItemType.MIMIC,
+            ItemType.CATGIRL,
+            ItemType.UNLIMITED_GAMBA,
         ]
 
         weights = [self.get_item(guild_id, x).weight for x in item_pool]
+        weights = [1.0 / w for w in weights]
+        sum_weights = sum(weights)
+        weights = [w / sum_weights for w in weights]
+
         lucky_weights = [self.get_item(guild_id, x).weight for x in lucky_item_pool]
+        lucky_weights = [1.0 / w for w in lucky_weights]
+        sum_lucky_weights = sum(lucky_weights)
+        lucky_weights = [w / sum_lucky_weights for w in lucky_weights]
 
         # Spawn Chances
         mimic_chance = 0.1
         large_chest_chance = 0.04
-        super_mimic_chance = 0.03
+        large_mimic_chance = 0.03
         lucky_item_chance = 0.02
 
         # Chest Ranges
@@ -106,43 +122,74 @@ class ItemManager(Service):
         small_max_beans = 80
         large_min_beans = 500
         large_max_beans = 800
-        small_beans_reward = random.randint(small_min_beans, small_max_beans)
-        large_beans_reward = random.randint(large_min_beans, large_max_beans)
-        roll = random.random()
-
         beans = 0
-        random_item = None
-        if roll <= mimic_chance:
-            beans = -small_beans_reward
-        elif roll > mimic_chance and roll <= (mimic_chance + large_chest_chance):
-            beans = large_beans_reward
-        elif roll > (mimic_chance + large_chest_chance) and roll <= (
-            mimic_chance + large_chest_chance + super_mimic_chance
-        ):
-            beans = -large_beans_reward
-        elif roll > (
-            mimic_chance + large_chest_chance + super_mimic_chance
-        ) and roll <= (
-            mimic_chance + large_chest_chance + super_mimic_chance + lucky_item_chance
-        ):
-            weights = [1.0 / w for w in lucky_weights]
-            sum_weights = sum(weights)
-            weights = [w / sum_weights for w in weights]
-            random_item = random.choices(lucky_item_pool, weights=weights)[0]
-        elif roll > (
-            mimic_chance + large_chest_chance + super_mimic_chance + lucky_item_chance
-        ):
-            weights = [1.0 / w for w in weights]
-            sum_weights = sum(weights)
-            weights = [w / sum_weights for w in weights]
-            random_item = random.choices(item_pool, weights=weights)[0]
-        return LootBox(guild_id, random_item, beans)
+        random_items = {}
 
-    async def drop_loot_box(self, guild: discord.Guild, channel_id: int):
+        force_roll = None
+
+        if force_type is not None:
+            match force_type:
+                case LootboxType.SMALL_MIMIC:
+                    force_roll = mimic_chance
+                case LootboxType.BEANS:
+                    force_roll = mimic_chance + large_chest_chance
+                case LootboxType.LARGE_MIMIC:
+                    force_roll = mimic_chance + large_chest_chance + large_mimic_chance
+                case LootboxType.LUCKY_ITEM:
+                    force_roll = (
+                        mimic_chance
+                        + large_chest_chance
+                        + large_mimic_chance
+                        + lucky_item_chance
+                    )
+                case LootboxType.REGULAR:
+                    force_roll = 1
+
+        for _ in range(size):
+            roll = random.random()
+
+            if force_roll is not None:
+                roll = force_roll
+
+            small_beans_reward = random.randint(small_min_beans, small_max_beans)
+            large_beans_reward = random.randint(large_min_beans, large_max_beans)
+
+            if roll <= mimic_chance:
+                beans += -small_beans_reward
+            elif roll > mimic_chance and roll <= (mimic_chance + large_chest_chance):
+                beans += large_beans_reward
+            elif roll > (mimic_chance + large_chest_chance) and roll <= (
+                mimic_chance + large_chest_chance + large_mimic_chance
+            ):
+                beans += -large_beans_reward
+            elif roll > (
+                mimic_chance + large_chest_chance + large_mimic_chance
+            ) and roll <= (
+                mimic_chance
+                + large_chest_chance
+                + large_mimic_chance
+                + lucky_item_chance
+            ):
+                item_type = random.choices(lucky_item_pool, weights=lucky_weights)[0]
+                BotUtil.dict_append(random_items, item_type, 1)
+            elif roll > (
+                mimic_chance
+                + large_chest_chance
+                + large_mimic_chance
+                + lucky_item_chance
+            ):
+                item_type = random.choices(item_pool, weights=weights)[0]
+                BotUtil.dict_append(random_items, item_type, 1)
+
+        return LootBox(guild_id, random_items, beans)
+
+    async def drop_loot_box(
+        self, guild: discord.Guild, channel_id: int, force_type: LootboxType = None
+    ):
         log_message = f"Loot box was dropped in {guild.name}."
         self.logger.log(guild.id, log_message, cog="Beans")
 
-        loot_box = self.create_loot_box(guild.id)
+        loot_box = self.create_loot_box(guild.id, force_type=force_type)
 
         title = "A Random Treasure has Appeared"
         description = "Quick, claim it before anyone else does!"
@@ -172,6 +219,51 @@ class ItemManager(Service):
             loot_box_id,
             self.bot.user.id,
             LootBoxEventType.DROP,
+        )
+        await self.controller.dispatch_event(event)
+
+    async def drop_private_loot_box(
+        self, interaction: discord.Interaction, size: int = 1
+    ):
+        member_id = interaction.user.id
+        guild_id = interaction.guild_id
+
+        log_message = f"Loot box was dropped in {interaction.guild.name}."
+        self.logger.log(guild_id, log_message, cog="Beans")
+
+        loot_box = self.create_loot_box(guild_id, size=size)
+
+        title = f"{interaction.user.display_name}'s Random Treasure Chest"
+        description = f"Only you can claim this, <@{member_id}>!"
+        embed = discord.Embed(
+            title=title,
+            description=description,
+            color=discord.Colour.purple(),
+        )
+        embed.set_image(url="attachment://treasure_closed.png")
+
+        view = LootBoxView(self.controller, owner_id=interaction.user.id)
+
+        treasure_close_img = discord.File(
+            "./img/treasure_closed.png", "treasure_closed.png"
+        )
+
+        message = await interaction.followup.send(
+            "",
+            embed=embed,
+            view=view,
+            files=[treasure_close_img],
+            ephemeral=True,
+        )
+        loot_box.message_id = message.id
+        loot_box_id = self.database.log_lootbox(loot_box)
+
+        event = LootBoxEvent(
+            datetime.datetime.now(),
+            guild_id,
+            loot_box_id,
+            interaction.user.id,
+            LootBoxEventType.BUY,
         )
         await self.controller.dispatch_event(event)
 
@@ -247,6 +339,30 @@ class ItemManager(Service):
 
         return output
 
+    async def give_item(
+        self, guild_id: int, member_id: int, item: Item, amount: int = 1
+    ):
+        total_amount = item.base_amount * amount
+
+        if item.max_amount is not None:
+            item_count = 0
+
+            inventory_items = self.database.get_item_counts_by_user(guild_id, member_id)
+            if item.type in inventory_items:
+                item_count = inventory_items[item.type]
+
+            total_amount = min(total_amount, (item.max_amount - item_count))
+
+        if total_amount != 0:
+            event = InventoryEvent(
+                datetime.datetime.now(),
+                guild_id,
+                member_id,
+                item.type,
+                total_amount,
+            )
+            await self.controller.dispatch_event(event)
+
     async def get_guild_items_activated(
         self, guild_id: int, trigger: ItemTrigger
     ) -> dict[int, list[Item]]:
@@ -268,7 +384,7 @@ class ItemManager(Service):
 
         return items
 
-    async def use_items(self, guild_id: int, trigger: ItemTrigger):
+    async def consume_trigger_items(self, guild_id: int, trigger: ItemTrigger):
         guild_item_counts = self.database.get_item_counts_by_guild(guild_id)
 
         for user_id, item_counts in guild_item_counts.items():
@@ -283,3 +399,22 @@ class ItemManager(Service):
                     datetime.datetime.now(), guild_id, user_id, item.type, -1
                 )
                 await self.controller.dispatch_event(event)
+
+    async def use_item(self, guild: discord.Guild, user_id: int, item_type: ItemType):
+        guild_id = guild.id
+
+        event = InventoryEvent(
+            datetime.datetime.now(), guild_id, user_id, item_type, -1
+        )
+        await self.controller.dispatch_event(event)
+
+        match item_type:
+            case ItemType.MIMIC:
+                bean_channels = self.settings_manager.get_beans_channels(guild_id)
+                if len(bean_channels) == 0:
+                    return
+                await self.drop_loot_box(
+                    guild,
+                    secrets.choice(bean_channels),
+                    force_type=LootboxType.LARGE_MIMIC,
+                )

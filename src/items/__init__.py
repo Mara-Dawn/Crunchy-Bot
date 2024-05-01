@@ -51,7 +51,7 @@ class AutoCrit(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART, ItemTrigger.PET, ItemTrigger.SLAP],
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -128,7 +128,7 @@ class BonusFart(Item):
             max_amount=None,
             trigger=[ItemTrigger.FART],
             weight=150,
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -155,7 +155,7 @@ class BonusPet(Item):
             max_amount=None,
             trigger=[ItemTrigger.PET],
             weight=150,
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -182,7 +182,7 @@ class UltraPet(Item):
             max_amount=None,
             trigger=[ItemTrigger.PET],
             lootbox_exclusive=True,
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -209,7 +209,7 @@ class PenetratingPet(Item):
             max_amount=None,
             trigger=[ItemTrigger.PET],
             lootbox_exclusive=True,
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -236,7 +236,7 @@ class BonusSlap(Item):
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
             weight=150,
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -263,7 +263,7 @@ class SwapSlap(Item):
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
             lootbox_exclusive=True,
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -290,7 +290,7 @@ class UltraSlap(Item):
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
             lootbox_exclusive=True,
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -346,7 +346,7 @@ class UltraFartBoost(Item):
             max_amount=None,
             trigger=[ItemTrigger.FART],
             lootbox_exclusive=True,
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -372,7 +372,7 @@ class FartBoost(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -398,7 +398,7 @@ class FartProtection(Item):
             base_amount=5,
             max_amount=5,
             trigger=[ItemTrigger.FART, ItemTrigger.SLAP],
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -440,7 +440,7 @@ class FartStabilizer(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -466,7 +466,7 @@ class Fartvantage(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -492,7 +492,7 @@ class GigaFart(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -559,7 +559,7 @@ class LootBoxItemBundle(Item):
             item_type=ItemType.LOOTBOX_BUNDLE,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
-            description="Too addicted? Just buy 5 at once! You'll have to open them one by one though.",
+            description="Too addicted? Just buy 5 at once! All neatly contained within a single Box.",
             emoji="🧰",
             cost=cost,
             value=None,
@@ -568,6 +568,60 @@ class LootBoxItemBundle(Item):
             base_amount=5,
             max_amount=None,
             trigger=None,
+        )
+
+
+class PocketMimic(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 2500
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Pocket Mimic",
+            item_type=ItemType.MIMIC,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.LOOTBOX,
+            description="Use this item from your inventory to spawn a large mimic. It will look like a regular chest spawn to other people.",
+            emoji="🧰",
+            cost=cost,
+            value=None,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=None,
+            controllable=True,
+            lootbox_exclusive=True,
+            useable=True,
+        )
+
+
+class CatGirl(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 2500
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Useless Cat Girl",
+            item_type=ItemType.CATGIRL,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.LOOTBOX,
+            description="She is lazy, sleeply, does nothing all day and apparently lives in your inventory now.",
+            emoji="🐱",
+            cost=cost,
+            value=None,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=None,
+            lootbox_exclusive=True,
         )
 
 
@@ -643,7 +697,7 @@ class PetBoost(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.PET],
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -744,7 +798,7 @@ class SatanBoost(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
-            sellable=True,
+            controllable=True,
         )
 
 
@@ -770,5 +824,31 @@ class SlapBoost(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
-            sellable=True,
+            controllable=True,
+        )
+
+
+class NoLimitGamba(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 10000
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Unlimited Gamba",
+            item_type=ItemType.UNLIMITED_GAMBA,
+            group=ItemGroup.GAMBA,
+            shop_category=ShopCategory.FUN,
+            description="This item removes the Limit for your next gamba. You can bet as much as you want. Good luck.",
+            emoji="🎰",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.GAMBA],
+            controllable=True,
         )

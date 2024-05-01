@@ -98,7 +98,7 @@ class Shop(commands.Cog):
                 self.logger.log("sys", "Beans module disabled.", cog=self.__cog_name__)
                 return
 
-            await self.item_manager.use_items(guild.id, ItemTrigger.DAILY)
+            await self.item_manager.consume_trigger_items(guild.id, ItemTrigger.DAILY)
 
     @app_commands.command(name="shop", description="Buy cool stuff with your beans.")
     @app_commands.guild_only()

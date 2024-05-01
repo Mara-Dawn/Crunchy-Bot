@@ -6,13 +6,11 @@ from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
-from events.lootbox_event import LootBoxEvent
-from events.types import BeansEventType, EventType, LootBoxEventType, UIEventType
+from events.types import BeansEventType, EventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemGroup, ItemType
 from view.inventory_embed import InventoryEmbed
 from view.inventory_view import InventoryView
-from view.lootbox_view import LootBoxView
 from view.shop_color_select_view import ShopColorSelectView  # noqa: F401
 from view.shop_confirm_view import ShopConfirmView  # noqa: F401
 from view.shop_prediction_submission_view import (
@@ -168,53 +166,9 @@ class ShopViewController(ViewController):
         # directly purchasable items without inventory
         match item.group:
             case ItemGroup.LOOTBOX:
-
-                for _ in range(item.base_amount):
-                    loot_box = self.item_manager.create_loot_box(guild_id)
-
-                    title = f"{interaction.user.display_name}'s Random Treasure Chest"
-                    description = f"Only you can claim this, <@{interaction.user.id}>!"
-                    embed = discord.Embed(
-                        title=title,
-                        description=description,
-                        color=discord.Colour.purple(),
-                    )
-                    embed.set_image(url="attachment://treasure_closed.png")
-
-                    item = None
-                    if loot_box.item_type is not None:
-                        item = self.item_manager.get_item(guild_id, loot_box.item_type)
-
-                    view = LootBoxView(self.controller, owner_id=interaction.user.id)
-
-                    treasure_close_img = discord.File(
-                        "./img/treasure_closed.png", "treasure_closed.png"
-                    )
-
-                    message = await interaction.followup.send(
-                        "",
-                        embed=embed,
-                        view=view,
-                        files=[treasure_close_img],
-                        ephemeral=True,
-                    )
-                    new_user_balance = self.database.get_member_beans(
-                        guild_id, member_id
-                    )
-
-                    loot_box.message_id = message.id
-                    loot_box_id = self.database.log_lootbox(loot_box)
-
-                    event = LootBoxEvent(
-                        datetime.datetime.now(),
-                        guild_id,
-                        loot_box_id,
-                        interaction.user.id,
-                        LootBoxEventType.BUY,
-                    )
-                    await self.controller.dispatch_event(event)
-
-                    # await asyncio.sleep(0.5)  # avoid rate limiting
+                await self.item_manager.drop_private_loot_box(
+                    interaction, size=item.base_amount
+                )
                 return
 
         # All other items get added to the inventory awaiting their trigger

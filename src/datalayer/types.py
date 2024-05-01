@@ -11,6 +11,7 @@ class ItemTrigger(str, Enum):
     SLAP = UserInteraction.SLAP
     PET = UserInteraction.PET
     FART = UserInteraction.FART
+    GAMBA = "gamba"
     DAILY = "daily"
     USER_MESSAGE = "user_message"
 
@@ -22,6 +23,14 @@ class PredictionState(str, Enum):
     DENIED = "Denied"
     DONE = "Done"
     REFUNDED = "Refunded"
+
+
+class LootboxType(Enum):
+    SMALL_MIMIC = 1
+    LARGE_MIMIC = 2
+    REGULAR = 3
+    BEANS = 4
+    LUCKY_ITEM = 5
 
 
 class PredictionStateSort(int, Enum):
