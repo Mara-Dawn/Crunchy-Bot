@@ -82,10 +82,11 @@ class Gamba(commands.Cog):
         return True
 
     async def __gamba_items(
-        self, interaction: discord.Interaction, items: list[Item], over_limit: bool
+        self, interaction: discord.Interaction, items: list[Item], over_limit: bool, cooldown_remaining: int 
     ):
 
         no_limit = False
+        cooldown_override = False
 
         for item in items:
             match item.type:
@@ -93,12 +94,17 @@ class Gamba(commands.Cog):
                     if not over_limit:
                         continue
                     no_limit = True
+                case ItemType.INSTANT_GAMBA:
+                    if cooldown_remaining == 0:
+                        continue
+                    cooldown_override = True
+
 
             await self.item_manager.use_item(
                 interaction.guild, interaction.user.id, item.type
             )
 
-        return no_limit
+        return no_limit, cooldown_override
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
@@ -126,11 +132,39 @@ class Gamba(commands.Cog):
 
         over_limit = not (beans_gamba_min <= amount and amount <= beans_gamba_max)
 
+
+        last_gamba_cost_event = self.database.get_last_beans_event(
+            guild_id, user_id, BeansEventType.GAMBA_COST
+        )
+        last_gamba_payout_event = self.database.get_last_beans_event(
+            guild_id, user_id, BeansEventType.GAMBA_PAYOUT
+        )
+
+        cooldown_remaining = 0
+
+        if last_gamba_cost_event is not None:
+
+            current_date = datetime.datetime.now()
+            last_gamba_beans_date = last_gamba_cost_event.datetime
+
+            delta = current_date - last_gamba_beans_date
+            delta_seconds = delta.total_seconds()
+
+            last_gamba_amount = abs(last_gamba_cost_event.value)
+            cooldown = default_cooldown
+
+            if last_gamba_payout_event.value != 0:
+                # only go on cooldown when previous gamba was a win
+                cooldown = default_cooldown * (last_gamba_amount / default_amount)
+
+            if delta_seconds <= cooldown:
+                cooldown_remaining = cooldown - delta_seconds
+
         user_items = self.item_manager.get_user_items_activated(
             guild_id, user_id, ItemTrigger.GAMBA
         )
 
-        no_limit = await self.__gamba_items(interaction, user_items, over_limit)
+        no_limit, cooldown_override = await self.__gamba_items(interaction, user_items, over_limit, cooldown_remaining)
 
         if not no_limit and amount is not None and over_limit:
             prompt = (
@@ -176,65 +210,42 @@ class Gamba(commands.Cog):
             )
             return
 
-        last_gamba_cost_event = self.database.get_last_beans_event(
-            guild_id, user_id, BeansEventType.GAMBA_COST
-        )
-        last_gamba_payout_event = self.database.get_last_beans_event(
-            guild_id, user_id, BeansEventType.GAMBA_PAYOUT
-        )
+        
+        if cooldown_remaining != 0 and not cooldown_override:
+            cooldowntimer = int(timestamp_now + cooldown_remaining)
+            prompt = (
+                f"<user>{interaction.user.display_name}</user>"
+                f"tell me that my gamble is still on cooldown, using this expression: '<t:{cooldowntimer}:R>'."
+                " Use it in a sentence like you would in place of 'in 10 minutes' or ' 'in 5 hours', for example "
+                f" 'You may try again <t:{cooldowntimer}:R>'"
+                " I am an idiot for trying to gamba while its on cooldown, so please tell me off for it. Also keep it short, 30 words or less."
+            )
+            response = await self.ai_manager.prompt(prompt)
 
-        if last_gamba_cost_event is not None:
-
-            current_date = datetime.datetime.now()
-            last_gamba_beans_date = last_gamba_cost_event.datetime
-
-            delta = current_date - last_gamba_beans_date
-            delta_seconds = delta.total_seconds()
-
-            last_gamba_amount = abs(last_gamba_cost_event.value)
-            cooldown = default_cooldown
-
-            if last_gamba_payout_event.value != 0:
-                # only go on cooldown when previous gamba was a win
-                cooldown = default_cooldown * (last_gamba_amount / default_amount)
-
-            if delta_seconds <= cooldown:
-                remaining = cooldown - delta_seconds
-                cooldowntimer = int(timestamp_now + remaining)
-
-                prompt = (
-                    f"<user>{interaction.user.display_name}</user>"
-                    f"tell me that my gamble is still on cooldown, using this expression: '<t:{cooldowntimer}:R>'."
-                    " Use it in a sentence like you would in place of 'in 10 minutes' or ' 'in 5 hours', for example "
-                    f" 'You may try again <t:{cooldowntimer}:R>'"
-                    " I am an idiot for trying to gamba while its on cooldown, so please tell me off for it. Also keep it short, 30 words or less."
+            if response is None or len(response) == 0:
+                response = (
+                    f"Gamba is on cooldown. Try again in <t:{cooldowntimer}:R>.",
                 )
-                response = await self.ai_manager.prompt(prompt)
 
-                if response is None or len(response) == 0:
-                    response = (
-                        f"Gamba is on cooldown. Try again in <t:{cooldowntimer}:R>.",
-                    )
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                response,
+                ephemeral=False,
+            )
+            message = await interaction.original_response()
+            channel_id = message.channel.id
+            message_id = message.id
 
-                await self.bot.command_response(
-                    self.__cog_name__,
-                    interaction,
-                    response,
-                    ephemeral=False,
-                )
-                message = await interaction.original_response()
-                channel_id = message.channel.id
-                message_id = message.id
+            await asyncio.sleep(cooldown_remaining)
 
-                await asyncio.sleep(remaining)
-
-                message = (
-                    await self.bot.get_guild(guild_id)
-                    .get_channel(channel_id)
-                    .fetch_message(message_id)
-                )
-                await message.delete()
-                return
+            message = (
+                await self.bot.get_guild(guild_id)
+                .get_channel(channel_id)
+                .fetch_message(message_id)
+            )
+            await message.delete()
+            return
 
         event = BeansEvent(
             datetime.datetime.now(),
