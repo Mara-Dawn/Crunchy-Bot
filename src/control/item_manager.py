@@ -85,6 +85,7 @@ class ItemManager(Service):
             ItemType.SWAP_SLAP,
             ItemType.MIMIC,
             ItemType.CATGIRL,
+            ItemType.UNLIMITED_GAMBA,
         ]
 
         lucky_item_pool = [
@@ -97,6 +98,7 @@ class ItemManager(Service):
             ItemType.SWAP_SLAP,
             ItemType.MIMIC,
             ItemType.CATGIRL,
+            ItemType.UNLIMITED_GAMBA,
         ]
 
         weights = [self.get_item(guild_id, x).weight for x in item_pool]
@@ -177,7 +179,6 @@ class ItemManager(Service):
                 + lucky_item_chance
             ):
                 item_type = random.choices(item_pool, weights=weights)[0]
-                # item_type = ItemType.CATGIRL
                 BotUtil.dict_append(random_items, item_type, 1)
 
         return LootBox(guild_id, random_items, beans)

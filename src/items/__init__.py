@@ -826,3 +826,29 @@ class SlapBoost(Item):
             trigger=[ItemTrigger.SLAP],
             controllable=True,
         )
+
+
+class NoLimitGamba(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 10000
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Unlimited Gamba",
+            item_type=ItemType.UNLIMITED_GAMBA,
+            group=ItemGroup.GAMBA,
+            shop_category=ShopCategory.FUN,
+            description="This item removes the Limit for your next gamba. You can bet as much as you want. Good luck.",
+            emoji="🎰",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.GAMBA],
+            controllable=True,
+        )

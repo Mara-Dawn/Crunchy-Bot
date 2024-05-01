@@ -13,10 +13,12 @@ from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
+from datalayer.types import ItemTrigger
 from discord import app_commands
 from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.types import BeansEventType
+from items.item import Item
 from items.types import ItemType
 from view.settings_modal import SettingsModal
 
@@ -79,6 +81,25 @@ class Gamba(commands.Cog):
 
         return True
 
+    async def __gamba_items(
+        self, interaction: discord.Interaction, items: list[Item], over_limit: bool
+    ):
+
+        no_limit = False
+
+        for item in items:
+            match item.type:
+                case ItemType.UNLIMITED_GAMBA:
+                    if not over_limit:
+                        continue
+                    no_limit = True
+
+            await self.item_manager.use_item(
+                interaction.guild, interaction.user.id, item.type
+            )
+
+        return no_limit
+
     @commands.Cog.listener()
     async def on_ready(self) -> None:
         self.logger.log(
@@ -98,12 +119,23 @@ class Gamba(commands.Cog):
         default_cooldown = self.settings_manager.get_beans_gamba_cooldown(guild_id)
         timestamp_now = int(datetime.datetime.now().timestamp())
 
-        if amount is not None and not (
-            beans_gamba_min <= amount and amount <= beans_gamba_max
-        ):
+        default_amount = self.settings_manager.get_beans_gamba_cost(guild_id)
+
+        if amount is None or amount <= 0:
+            amount = default_amount
+
+        over_limit = not (beans_gamba_min <= amount and amount <= beans_gamba_max)
+
+        user_items = self.item_manager.get_user_items_activated(
+            guild_id, user_id, ItemTrigger.GAMBA
+        )
+
+        no_limit = await self.__gamba_items(interaction, user_items, over_limit)
+
+        if not no_limit and amount is not None and over_limit:
             prompt = (
                 f"<user>{interaction.user.display_name}</user>"
-                f"I tried to bet more than `🅱️{beans_gamba_max}` or less than `🅱️{beans_gamba_min} beans,"
+                f"I tried to bet more than `🅱️{beans_gamba_max}` or less than `🅱️{beans_gamba_min}` beans,"
                 " which is not acceptable. Please tell me what i did wrong and keep the formatting between"
                 " the backticks (including them) like in my message. Also keep it short."
             )
@@ -121,11 +153,6 @@ class Gamba(commands.Cog):
             return
 
         await interaction.response.defer()
-
-        default_amount = self.settings_manager.get_beans_gamba_cost(guild_id)
-
-        if amount is None:
-            amount = default_amount
 
         current_balance = self.database.get_member_beans(guild_id, user_id)
 

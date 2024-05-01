@@ -34,6 +34,7 @@ class ItemType(str, Enum):
     SATAN_FART = "SatanBoost"
     BAT = "Bat"
     CATGIRL = "CatGirl"
+    UNLIMITED_GAMBA = "NoLimitGamba"
 
 
 class ItemState(str, Enum):
@@ -54,6 +55,7 @@ class ItemGroup(str, Enum):
     SUBSCRIPTION = "subscription"
     MAJOR_JAIL_ACTION = "major_jail_action"
     MAJOR_ACTION = "major_action"
+    GAMBA = "gamba"
 
 
 class ShopCategory(int, Enum):
