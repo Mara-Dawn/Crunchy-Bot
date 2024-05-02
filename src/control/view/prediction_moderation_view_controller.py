@@ -1,7 +1,4 @@
 import discord
-from control.controller import Controller
-from control.logger import BotLogger
-from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.prediction_stats import PredictionStats
 from discord.ext import commands
@@ -19,6 +16,10 @@ from view.shop_reaction_select_view import ShopReactionSelectView  # noqa: F401
 
 # noqa: F401
 from view.shop_user_select_view import ShopUserSelectView  # noqa: F401
+
+from control.controller import Controller
+from control.logger import BotLogger
+from control.view.view_controller import ViewController
 
 
 class PredictionModerationViewController(ViewController):
