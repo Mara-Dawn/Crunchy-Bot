@@ -351,6 +351,10 @@ class InteractionManager(Service):
         self, items: list[Item], member: discord.Member, target_user: discord.Member
     ):
         response = ""
+
+        if member.id == target_user.id:
+            return response
+
         for item in items:
             if item.group == ItemGroup.MAJOR_JAIL_ACTION:
                 affected_jail = self.jail_manager.get_active_jail(
