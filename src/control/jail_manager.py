@@ -2,7 +2,6 @@ import datetime
 
 import discord
 from bot_util import BotUtil
-from datalayer.database import Database
 from datalayer.jail import UserJail
 from discord.ext import commands
 from events.bot_event import BotEvent
@@ -13,6 +12,7 @@ from events.types import JailEventType
 from items import *  # noqa: F403
 
 from control.controller import Controller
+from control.database_manager import DatabaseManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
@@ -24,7 +24,7 @@ class JailManager(Service):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: Database,
+        database: DatabaseManager,
         controller: Controller,
     ):
         super().__init__(bot, logger, database)

@@ -1,7 +1,6 @@
 import datetime
 
 import discord
-from datalayer.database import Database
 from datalayer.inventory import UserInventory
 from discord.ext import commands
 from events.beans_event import BeansEvent
@@ -13,6 +12,7 @@ from items.types import ItemState, ItemType
 from view.types import ActionType
 
 from control.controller import Controller
+from control.database_manager import DatabaseManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
@@ -24,7 +24,7 @@ class InventoryViewController(ViewController):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: Database,
+        database: DatabaseManager,
         controller: Controller,
     ):
         super().__init__(bot, logger, database)

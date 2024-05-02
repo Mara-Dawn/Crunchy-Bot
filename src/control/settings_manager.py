@@ -1,10 +1,10 @@
-from datalayer.database import Database
 from datalayer.settings import GuildSettings, ModuleSettings
 from discord.ext import commands
 from events.bot_event import BotEvent
 from items.types import ItemType
 
 from control.controller import Controller
+from control.database_manager import DatabaseManager
 from control.logger import BotLogger
 from control.service import Service
 
@@ -72,7 +72,7 @@ class SettingsManager(Service):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: Database,
+        database: DatabaseManager,
         controller: Controller,
     ):
         super().__init__(bot, logger, database)

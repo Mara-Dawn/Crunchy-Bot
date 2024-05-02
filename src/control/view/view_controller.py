@@ -1,9 +1,10 @@
-from control.logger import BotLogger
-from control.service import Service
-from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
 from events.ui_event import UIEvent
+
+from control.database_manager import DatabaseManager
+from control.logger import BotLogger
+from control.service import Service
 
 
 class ViewController(Service):
@@ -12,7 +13,7 @@ class ViewController(Service):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: Database,
+        database: DatabaseManager,
     ):
         super().__init__(bot, logger, database)
 

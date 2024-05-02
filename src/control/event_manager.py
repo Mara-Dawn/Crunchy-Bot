@@ -2,7 +2,6 @@ import datetime
 from typing import Any
 
 from bot_util import BotUtil
-from datalayer.database import Database
 from datalayer.stats import UserStats
 from datalayer.types import UserInteraction
 from discord.ext import commands
@@ -20,6 +19,7 @@ from items.types import ItemType
 from view.types import RankingType
 
 from control.controller import Controller
+from control.database_manager import DatabaseManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
@@ -32,7 +32,7 @@ class EventManager(Service):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: Database,
+        database: DatabaseManager,
         controller: Controller,
     ):
         super().__init__(bot, logger, database)

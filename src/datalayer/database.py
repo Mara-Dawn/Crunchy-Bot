@@ -396,14 +396,10 @@ class Database:
         QUOTE_TABLE,
     ]
 
-    def __init__(
-        self, bot: commands.Bot, logger: BotLogger, db_file: str, core_db_file: str
-    ):
-
+    def __init__(self, bot: commands.Bot, logger: BotLogger, db_file: str):
         self.conn = None
         self.bot = bot
         self.logger = logger
-        self.core_db_file = core_db_file
 
         try:
             self.conn = sqlite3.connect(db_file)
@@ -411,12 +407,6 @@ class Database:
                 "DB", f"Loaded DB version {sqlite3.version} from {db_file}."
             )
             self.__create_tables(self.conn)
-
-            self.conn_core = sqlite3.connect(core_db_file)
-            self.logger.log(
-                "DB", f"Loaded DB version {sqlite3.version} from {core_db_file}."
-            )
-            self.__create_tables(self.conn_core)
 
         except Error as e:
             traceback.print_stack()
@@ -468,37 +458,15 @@ class Database:
             traceback.print_exc()
             return None
 
-    def __query_select_core(self, query: str, task=None):
-        try:
-            c = self.conn_core.cursor()
-            if task is not None:
-                c.execute(query, task)
-            else:
-                c.execute(query)
-            rows = c.fetchall()
-            headings = [x[0] for x in c.description]
-
-            return self.__parse_rows(rows, headings)
-
-        except Error as e:
-            self.logger.error("DB", e)
-            traceback.print_stack()
-            traceback.print_exc()
-            return None
-
     def __query_insert(self, query: str, task=None) -> int:
         try:
             cur = self.conn.cursor()
-            cur_core = self.conn_core.cursor()
             if task is not None:
                 cur.execute(query, task)
-                cur_core.execute(query, task)
             else:
                 cur.execute(query)
-                cur_core.execute(query)
             insert_id = cur.lastrowid
             self.conn.commit()
-            self.conn_core.commit()
 
             return insert_id
 
@@ -534,7 +502,7 @@ class Database:
         """
         task = (int(guild_id), str(module), str(key))
 
-        rows = self.__query_select_core(command, task)
+        rows = self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return None
 
@@ -1338,7 +1306,7 @@ class Database:
             WHERE {self.QUOTE_TABLE}.{self.QUOTE_GUILD_COL} = {int(guild_id)}
             ORDER BY RANDOM() LIMIT 1;
         """
-        rows = self.__query_select_core(command)
+        rows = self.__query_select(command)
         if not rows:
             return None
         return Quote.from_db_row(rows[0])
@@ -1351,7 +1319,7 @@ class Database:
             ORDER BY RANDOM() LIMIT 1;
         """
         task = (guild_id, user_id)
-        rows = self.__query_select_core(command, task)
+        rows = self.__query_select(command, task)
         if not rows:
             return None
         return Quote.from_db_row(rows[0])
@@ -1563,7 +1531,7 @@ class Database:
 
         rows = self.__query_select(command)
         if not rows or len(rows) < 1:
-            return []
+            return {}
 
         transformed = {}
         for row in rows:

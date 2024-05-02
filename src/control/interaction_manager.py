@@ -3,7 +3,6 @@ import random
 
 import discord
 from bot_util import BotUtil
-from datalayer.database import Database
 from datalayer.interaction_modifiers import InteractionModifiers
 from datalayer.types import UserInteraction
 from discord.ext import commands
@@ -18,6 +17,7 @@ from items.item import Item
 from items.types import ItemGroup, ItemType
 
 from control.controller import Controller
+from control.database_manager import DatabaseManager
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.jail_manager import JailManager
@@ -32,7 +32,7 @@ class InteractionManager(Service):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: Database,
+        database: DatabaseManager,
         controller: Controller,
     ):
         super().__init__(bot, logger, database)

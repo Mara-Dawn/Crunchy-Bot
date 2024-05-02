@@ -1,7 +1,6 @@
 import datetime
 
 import discord
-from datalayer.database import Database
 from datalayer.prediction import Prediction
 from datalayer.types import PredictionState
 from discord.ext import commands
@@ -13,6 +12,7 @@ from events.ui_event import UIEvent
 from view.prediction_interaction_view import PredictionInteractionView
 
 from control.controller import Controller
+from control.database_manager import DatabaseManager
 from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
@@ -25,7 +25,7 @@ class PredictionInteractionViewController(ViewController):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: Database,
+        database: DatabaseManager,
         controller: Controller,
     ):
         super().__init__(

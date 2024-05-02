@@ -1,14 +1,15 @@
 import discord
-from control.controller import Controller
-from control.event_manager import EventManager
-from control.logger import BotLogger
-from control.view.view_controller import ViewController
-from datalayer.database import Database
 from discord.ext import commands
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.ranking_embed import RankingEmbed
 from view.types import RankingType
+
+from control.controller import Controller
+from control.database_manager import DatabaseManager
+from control.event_manager import EventManager
+from control.logger import BotLogger
+from control.view.view_controller import ViewController
 
 
 class RankingViewController(ViewController):
@@ -17,7 +18,7 @@ class RankingViewController(ViewController):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: Database,
+        database: DatabaseManager,
         controller: Controller,
     ):
         super().__init__(bot, logger, database)

@@ -1,11 +1,6 @@
 import datetime
 
 import discord
-from control.controller import Controller
-from control.logger import BotLogger
-from control.prediction_manager import PredictionManager
-from control.view.view_controller import ViewController
-from datalayer.database import Database
 from datalayer.prediction import Prediction
 from datalayer.types import PredictionState
 from discord.ext import commands
@@ -20,6 +15,12 @@ from events.types import (
 )
 from events.ui_event import UIEvent
 
+from control.controller import Controller
+from control.database_manager import DatabaseManager
+from control.logger import BotLogger
+from control.prediction_manager import PredictionManager
+from control.view.view_controller import ViewController
+
 
 class PredictionViewController(ViewController):
 
@@ -27,7 +28,7 @@ class PredictionViewController(ViewController):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: Database,
+        database: DatabaseManager,
         controller: Controller,
     ):
         super().__init__(
