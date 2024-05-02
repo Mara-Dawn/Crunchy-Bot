@@ -10,6 +10,7 @@ from discord.ext import commands
 class CrunchyBot(commands.Bot):
 
     DB_FILE = "database.sqlite"
+    CORE_DB_FILE = "core.sqlite"
     LOG_FILE = "./log/marabot.log"
     TENOR_TOKEN_FILE = "tenor.txt"
 
@@ -18,7 +19,7 @@ class CrunchyBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         self.logger = BotLogger(self, self.LOG_FILE)
-        self.database = Database(self, self.logger, self.DB_FILE)
+        self.database = Database(self, self.logger, self.DB_FILE, self.CORE_DB_FILE)
         self.controller = Controller(self, self.logger, self.database)
 
         await self.load_extension("cogs.police")

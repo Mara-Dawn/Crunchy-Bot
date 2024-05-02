@@ -365,49 +365,90 @@ class Database:
         PRIMARY KEY ({PREDICTION_EVENT_ID_COL})
     );"""
 
-    def __init__(self, bot: commands.Bot, logger: BotLogger, db_file: str):
+    TABLES = [
+        SETTINGS_TABLE,
+        JAIL_TABLE,
+        EVENT_TABLE,
+        QUOTE_TABLE,
+        TIMEOUT_TRACKER_TABLE,
+        INTERACTION_EVENT_TABLE,
+        JAIL_EVENT_TABLE,
+        TIMEOUT_EVENT_TABLE,
+        SPAM_EVENT_TABLE,
+        QUOTE_EVENT_TABLE,
+        BEANS_EVENT_TABLE,
+        INVENTORY_EVENT_TABLE,
+        LOOTBOX_TABLE,
+        LOOTBOX_EVENT_TABLE,
+        CUSTOM_COLOR_TABLE,
+        BULLY_REACT_TABLE,
+        BAT_EVENT_TABLE,
+        PREDICTION_TABLE,
+        PREDICTION_OUTCOME_TABLE,
+        PREDICTION_EVENT_TABLE,
+        PREDICTION_OVERVIEW_TABLE,
+        INVENTORY_ITEM_TABLE,
+        LOOTBOX_ITEM_TABLE,
+    ]
+
+    NON_SEASONAL_TABLES = [
+        SETTINGS_TABLE,
+        QUOTE_TABLE,
+    ]
+
+    def __init__(
+        self, bot: commands.Bot, logger: BotLogger, db_file: str, core_db_file: str
+    ):
 
         self.conn = None
         self.bot = bot
         self.logger = logger
+        self.core_db_file = core_db_file
 
         try:
             self.conn = sqlite3.connect(db_file)
             self.logger.log(
                 "DB", f"Loaded DB version {sqlite3.version} from {db_file}."
             )
+            self.__create_tables(self.conn)
 
-            c = self.conn.cursor()
-
-            c.execute(self.CREATE_SETTINGS_TABLE)
-            c.execute(self.CREATE_JAIL_TABLE)
-            c.execute(self.CREATE_EVENT_TABLE)
-            c.execute(self.CREATE_QUOTE_TABLE)
-            c.execute(self.CREATE_TIMEOUT_TRACKER_TABLE)
-            c.execute(self.CREATE_INTERACTION_EVENT_TABLE)
-            c.execute(self.CREATE_JAIL_EVENT_TABLE)
-            c.execute(self.CREATE_TIMEOUT_EVENT_TABLE)
-            c.execute(self.CREATE_SPAM_EVENT_TABLE)
-            c.execute(self.CREATE_QUOTE_EVENT_TABLE)
-            c.execute(self.CREATE_BEANS_EVENT_TABLE)
-            c.execute(self.CREATE_INVENTORY_EVENT_TABLE)
-            c.execute(self.CREATE_LOOTBOX_TABLE)
-            c.execute(self.CREATE_LOOTBOX_EVENT_TABLE)
-            c.execute(self.CREATE_CUSTOM_COLOR_TABLE)
-            c.execute(self.CREATE_BULLY_REACT_TABLE)
-            c.execute(self.CREATE_BAT_EVENT_TABLE)
-            c.execute(self.CREATE_PREDICTION_TABLE)
-            c.execute(self.CREATE_PREDICTION_OUTCOME_TABLE)
-            c.execute(self.CREATE_PREDICTION_EVENT_TABLE)
-            c.execute(self.CREATE_PREDICTION_OVERVIEW_TABLE)
-            c.execute(self.CREATE_INVENTORY_ITEM_TABLE)
-            c.execute(self.CREATE_LOOTBOX_ITEM_TABLE)
-            c.close()
+            self.conn_core = sqlite3.connect(core_db_file)
+            self.logger.log(
+                "DB", f"Loaded DB version {sqlite3.version} from {core_db_file}."
+            )
+            self.__create_tables(self.conn_core)
 
         except Error as e:
             traceback.print_stack()
             traceback.print_exc()
             self.logger.error("DB", e)
+
+    def __create_tables(self, connection: sqlite3.Connection):
+        c = connection.cursor()
+        c.execute(self.CREATE_SETTINGS_TABLE)
+        c.execute(self.CREATE_JAIL_TABLE)
+        c.execute(self.CREATE_EVENT_TABLE)
+        c.execute(self.CREATE_QUOTE_TABLE)
+        c.execute(self.CREATE_TIMEOUT_TRACKER_TABLE)
+        c.execute(self.CREATE_INTERACTION_EVENT_TABLE)
+        c.execute(self.CREATE_JAIL_EVENT_TABLE)
+        c.execute(self.CREATE_TIMEOUT_EVENT_TABLE)
+        c.execute(self.CREATE_SPAM_EVENT_TABLE)
+        c.execute(self.CREATE_QUOTE_EVENT_TABLE)
+        c.execute(self.CREATE_BEANS_EVENT_TABLE)
+        c.execute(self.CREATE_INVENTORY_EVENT_TABLE)
+        c.execute(self.CREATE_LOOTBOX_TABLE)
+        c.execute(self.CREATE_LOOTBOX_EVENT_TABLE)
+        c.execute(self.CREATE_CUSTOM_COLOR_TABLE)
+        c.execute(self.CREATE_BULLY_REACT_TABLE)
+        c.execute(self.CREATE_BAT_EVENT_TABLE)
+        c.execute(self.CREATE_PREDICTION_TABLE)
+        c.execute(self.CREATE_PREDICTION_OUTCOME_TABLE)
+        c.execute(self.CREATE_PREDICTION_EVENT_TABLE)
+        c.execute(self.CREATE_PREDICTION_OVERVIEW_TABLE)
+        c.execute(self.CREATE_INVENTORY_ITEM_TABLE)
+        c.execute(self.CREATE_LOOTBOX_ITEM_TABLE)
+        c.close()
 
     def __query_select(self, query: str, task=None):
         try:
@@ -427,15 +468,37 @@ class Database:
             traceback.print_exc()
             return None
 
+    def __query_select_core(self, query: str, task=None):
+        try:
+            c = self.conn_core.cursor()
+            if task is not None:
+                c.execute(query, task)
+            else:
+                c.execute(query)
+            rows = c.fetchall()
+            headings = [x[0] for x in c.description]
+
+            return self.__parse_rows(rows, headings)
+
+        except Error as e:
+            self.logger.error("DB", e)
+            traceback.print_stack()
+            traceback.print_exc()
+            return None
+
     def __query_insert(self, query: str, task=None) -> int:
         try:
             cur = self.conn.cursor()
+            cur_core = self.conn_core.cursor()
             if task is not None:
                 cur.execute(query, task)
+                cur_core.execute(query, task)
             else:
                 cur.execute(query)
+                cur_core.execute(query)
             insert_id = cur.lastrowid
             self.conn.commit()
+            self.conn_core.commit()
 
             return insert_id
 
@@ -471,32 +534,24 @@ class Database:
         """
         task = (int(guild_id), str(module), str(key))
 
-        rows = self.__query_select(command, task)
+        rows = self.__query_select_core(command, task)
         if not rows or len(rows) < 1:
             return None
 
         return json.loads(rows[0][self.SETTINGS_VALUE_COL])
 
     def update_setting(self, guild_id: int, module: str, key: str, value):
-        try:
-            value = json.dumps(value)
+        value = json.dumps(value)
 
-            command = f"""
-                INSERT INTO {self.SETTINGS_TABLE} ({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}, {self.SETTINGS_VALUE_COL}) 
-                VALUES (?, ?, ?, ?) 
-                ON CONFLICT({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}) 
-                DO UPDATE SET {self.SETTINGS_VALUE_COL}=excluded.{self.SETTINGS_VALUE_COL};
-            """
-            task = (int(guild_id), str(module), str(key), value)
+        command = f"""
+            INSERT INTO {self.SETTINGS_TABLE} ({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}, {self.SETTINGS_VALUE_COL}) 
+            VALUES (?, ?, ?, ?) 
+            ON CONFLICT({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}) 
+            DO UPDATE SET {self.SETTINGS_VALUE_COL}=excluded.{self.SETTINGS_VALUE_COL};
+        """
+        task = (int(guild_id), str(module), str(key), value)
 
-            cur = self.conn.cursor()
-            cur.execute(command, task)
-            self.conn.commit()
-
-        except Error as e:
-            self.logger.error("DB", e)
-            traceback.print_stack()
-            traceback.print_exc()
+        return self.__query_insert(command, task)
 
     def __create_base_event(self, event: BotEvent) -> int:
         command = f"""
@@ -1283,7 +1338,7 @@ class Database:
             WHERE {self.QUOTE_TABLE}.{self.QUOTE_GUILD_COL} = {int(guild_id)}
             ORDER BY RANDOM() LIMIT 1;
         """
-        rows = self.__query_select(command)
+        rows = self.__query_select_core(command)
         if not rows:
             return None
         return Quote.from_db_row(rows[0])
@@ -1296,7 +1351,7 @@ class Database:
             ORDER BY RANDOM() LIMIT 1;
         """
         task = (guild_id, user_id)
-        rows = self.__query_select(command, task)
+        rows = self.__query_select_core(command, task)
         if not rows:
             return None
         return Quote.from_db_row(rows[0])
