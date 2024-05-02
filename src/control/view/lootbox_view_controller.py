@@ -10,6 +10,7 @@ from events.jail_event import JailEvent
 from events.lootbox_event import LootBoxEvent
 from events.types import BeansEventType, JailEventType, LootBoxEventType, UIEventType
 from events.ui_event import UIEvent
+from items.item import Item
 from items.types import ItemType
 
 from control.controller import Controller
@@ -92,6 +93,7 @@ class LootBoxViewController(ViewController):
         attachment = discord.File("./img/treasure_open.png", "treasure_open.png")
 
         beans = loot_box.beans
+        large_mimic = False
 
         if beans < 0:
             bean_balance = self.database.get_member_beans(guild_id, member_id)
@@ -104,39 +106,7 @@ class LootBoxViewController(ViewController):
                     value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
                     inline=False,
                 )
-                jail_announcement = f"<@{member_id}> delved too deep looking for treasure and got sucked into a wormhole that teleported them into jail."
-                duration = random.randint(1*60, 3*60)
-                member = interaction.user
-                success = await self.jail_manager.jail_user(
-                    guild_id, self.bot.user.id, member, duration
-                )
-                if not success:
-                    time_now = datetime.datetime.now()
-                    affected_jails = self.database.get_active_jails_by_member(guild_id, member.id)
-                    if len(affected_jails) > 0:
-                        event = JailEvent(
-                            time_now,
-                            guild_id,
-                            JailEventType.INCREASE,
-                            self.bot.user.id,
-                            duration,
-                            affected_jails[0].id,
-                        )
-                        await self.controller.dispatch_event(event)
-                        remaining = self.jail_manager.get_jail_remaining(affected_jails[0])
-                        jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` have been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
-                        await self.jail_manager.announce(interaction.guild, jail_announcement)
-                    else:
-                        self.logger.error(
-                        guild_id,
-                        "User already jailed but no active jail was found.",
-                        "Shop",
-                        )
-                else:
-                    timestamp_now = int(datetime.datetime.now().timestamp())
-                    release = timestamp_now + (duration * 60)
-                    jail_announcement += f"\nThey will be released <t:{release}:R>."
-                    await self.jail_manager.announce(interaction.guild, jail_announcement)
+                large_mimic = True
             else:
                 embed.add_field(
                     name="Oh no, it's a Mimic!",
@@ -155,6 +125,8 @@ class LootBoxViewController(ViewController):
 
         log_message = f"{interaction.user.display_name} claimed a loot box containing {beans} beans"
 
+        items_to_give: list[tuple[int, Item]] = []
+
         if loot_box.items is not None and len(loot_box.items) > 0:
             embed.add_field(name="Woah, Shiny Items!", value="", inline=False)
 
@@ -163,18 +135,13 @@ class LootBoxViewController(ViewController):
                 item_count = item.base_amount * amount
                 item.add_to_embed(embed, 43, count=item_count, show_price=False)
                 log_message += f" and {item_count}x {item.name}"
+                items_to_give.append((item_count, item))
 
-                await self.item_manager.give_item(guild_id, member_id, item, item_count)
-                
-        if beans != 0:
-            event = BeansEvent(
-                datetime.datetime.now(),
-                guild_id,
-                BeansEventType.LOOTBOX_PAYOUT,
-                member_id,
-                beans,
-            )
-            await self.controller.dispatch_event(event)
+        self.logger.log(interaction.guild_id, log_message, cog="Beans")
+
+        await interaction.edit_original_response(
+            embed=embed, view=None, attachments=[attachment]
+        )
 
         event_type = LootBoxEventType.CLAIM
         if owner_id is not None:
@@ -185,8 +152,50 @@ class LootBoxViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        self.logger.log(interaction.guild_id, log_message, cog="Beans")
+        if beans != 0:
+            event = BeansEvent(
+                datetime.datetime.now(),
+                guild_id,
+                BeansEventType.LOOTBOX_PAYOUT,
+                member_id,
+                beans,
+            )
+            await self.controller.dispatch_event(event)
 
-        await interaction.edit_original_response(
-            embed=embed, view=None, attachments=[attachment]
-        )
+        for amount, item in items_to_give:
+            await self.item_manager.give_item(guild_id, member_id, item, amount)
+
+        if large_mimic:
+            jail_announcement = f"<@{member_id}> delved too deep looking for treasure and got sucked into a wormhole that teleported them into jail."
+            duration = random.randint(1*60, 3*60)
+            member = interaction.user
+            success = await self.jail_manager.jail_user(
+                guild_id, self.bot.user.id, member, duration
+            )
+            if not success:
+                time_now = datetime.datetime.now()
+                affected_jails = self.database.get_active_jails_by_member(guild_id, member.id)
+                if len(affected_jails) > 0:
+                    event = JailEvent(
+                        time_now,
+                        guild_id,
+                        JailEventType.INCREASE,
+                        self.bot.user.id,
+                        duration,
+                        affected_jails[0].id,
+                    )
+                    await self.controller.dispatch_event(event)
+                    remaining = self.jail_manager.get_jail_remaining(affected_jails[0])
+                    jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` have been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
+                    await self.jail_manager.announce(interaction.guild, jail_announcement)
+                else:
+                    self.logger.error(
+                    guild_id,
+                    "User already jailed but no active jail was found.",
+                    "Shop",
+                    )
+            else:
+                timestamp_now = int(datetime.datetime.now().timestamp())
+                release = timestamp_now + (duration * 60)
+                jail_announcement += f"\nThey will be released <t:{release}:R>."
+                await self.jail_manager.announce(interaction.guild, jail_announcement)
