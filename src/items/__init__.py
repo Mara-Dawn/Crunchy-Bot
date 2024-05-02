@@ -625,6 +625,36 @@ class CatGirl(Item):
         )
 
 
+class CrappyDrawing(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 12000
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Soggy Crumpled Up Coupon",
+            item_type=ItemType.CRAPPY_COUPON,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.LOOTBOX,
+            description=(
+                "Ow! Something hits your forehead and makes you flinch. You manage to catch it before it reaches the floor "
+                "and you notice a suspiciously wet rolled up small paper ball. After unwrapping it, you can read its message: "
+                "'Coupon for one shitty profile picture drawing form Lusa' (reach out to a mod to redeem)"
+            ),
+            emoji="🧻",
+            cost=cost,
+            value=None,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=None,
+            lootbox_exclusive=True,
+        )
+
+
 class LotteryTicket(Item):
 
     def __init__(self, cost: int | None):
