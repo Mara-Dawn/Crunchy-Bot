@@ -36,6 +36,7 @@ class ItemType(str, Enum):
     CATGIRL = "CatGirl"
     UNLIMITED_GAMBA = "NoLimitGamba"
     INSTANT_GAMBA = "NoCooldownGamba"
+    CRAPPY_COUPON = "CrappyDrawing"
 
 
 class ItemState(str, Enum):

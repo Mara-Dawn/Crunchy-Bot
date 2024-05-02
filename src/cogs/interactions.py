@@ -202,9 +202,12 @@ class Interactions(commands.Cog):
         embed = await self.__get_response_embed(command_type)
         response = self.__get_response(command_type, interaction, user)
 
-        user_items = self.item_manager.get_user_items_activated_by_interaction(
-            interaction.guild_id, interaction.user.id, command_type
-        )
+        user_items = []
+
+        if interaction.user.id != user.id:
+            user_items = self.item_manager.get_user_items_activated_by_interaction(
+                interaction.guild_id, interaction.user.id, command_type
+            )
 
         major_actions = []
         has_major_jail_actions = False

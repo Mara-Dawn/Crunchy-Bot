@@ -100,6 +100,22 @@ class Shop(commands.Cog):
 
             await self.item_manager.consume_trigger_items(guild.id, ItemTrigger.DAILY)
 
+    async def shop_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        items = [
+            self.item_manager.get_item(interaction.guild_id, enum) for enum in ItemType
+        ]
+        choices = [
+            app_commands.Choice(
+                name=item.name,
+                value=item.type,
+            )
+            for item in items
+            if current.lower() in item.name.lower()
+        ][:25]
+        return choices
+
     @app_commands.command(name="shop", description="Buy cool stuff with your beans.")
     @app_commands.guild_only()
     async def shop(self, interaction: discord.Interaction):
@@ -165,6 +181,46 @@ class Shop(commands.Cog):
         view.set_message(message)
         await view.refresh_ui()
 
+    @app_commands.command(name="give_item", description="Modify user inventories.")
+    @app_commands.describe(
+        item="The item you want to give or take.",
+        amount="The amount of items you want to give. Can be negative.",
+        user="The user who shall recieve the item.",
+    )
+    @app_commands.check(__has_permission)
+    @app_commands.autocomplete(item=shop_autocomplete)
+    @app_commands.guild_only()
+    async def give_item(
+        self,
+        interaction: discord.Interaction,
+        item: str,
+        amount: int,
+        user: discord.Member,
+    ):
+        if item not in ItemType._value2member_map_:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Item not found.",
+                args=[item, amount],
+            )
+            return
+
+        guild_id = interaction.guild_id
+        member_id = user.id
+
+        item_type = ItemType(item)
+        item_obj = self.item_manager.get_item(guild_id, item_type)
+
+        await self.item_manager.give_item(guild_id, member_id, item_obj, amount)
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"{amount}x {item_obj.name} was given to {user.display_name} by {interaction.user.display_name}.",
+            args=[item, amount],
+        )
+
     group = app_commands.Group(
         name="beansshop", description="Subcommands for the Beans Shop module."
     )
@@ -197,16 +253,6 @@ class Shop(commands.Cog):
             f"Beans shop module was turned {enabled}.",
             args=[enabled],
         )
-
-    async def shop_autocomplete(
-        self, interaction: discord.Interaction, current: str
-    ) -> list[app_commands.Choice[str]]:
-        choices = [
-            app_commands.Choice(name=enum.value, value=enum)
-            for enum in ItemType
-            if current.lower() in enum.value.lower()
-        ][:25]
-        return choices
 
     @group.command(name="price", description="Adjust item prices for the beans shop.")
     @app_commands.describe(
