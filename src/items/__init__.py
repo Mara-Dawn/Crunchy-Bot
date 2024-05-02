@@ -851,6 +851,7 @@ class NoLimitGamba(Item):
             max_amount=None,
             trigger=[ItemTrigger.GAMBA],
             controllable=True,
+            lootbox_exclusive=True,
         )
 
 
@@ -877,4 +878,5 @@ class NoCooldownGamba(Item):
             max_amount=None,
             trigger=[ItemTrigger.GAMBA],
             controllable=True,
+            lootbox_exclusive=True,
         )
