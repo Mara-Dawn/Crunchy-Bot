@@ -9,6 +9,7 @@ from discord.ext import commands
 from events.bat_event import BatEvent
 from events.bot_event import BotEvent
 from events.jail_event import JailEvent
+from events.notification_event import NotificationEvent
 from events.prediction_event import PredictionEvent
 from events.types import (
     BeansEventType,
@@ -56,6 +57,12 @@ class EventManager(Service):
                         f"Jail sentence `{jail_event.jail_id}` marked as released.",
                         self.log_name,
                     )
+            case EventType.NOTIFICATION:
+                notification_event: NotificationEvent = event
+                message = notification_event.message
+                if message is not None:
+                    await self.mod_notification(notification_event.guild_id, message)
+                return
             case EventType.PREDICTION:
                 prediction_event: PredictionEvent = event
                 notification = None

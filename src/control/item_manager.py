@@ -12,6 +12,7 @@ from discord.ext import commands
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.lootbox_event import LootBoxEvent
+from events.notification_event import NotificationEvent
 from events.types import LootBoxEventType
 
 # needed for global access
@@ -407,9 +408,9 @@ class ItemManager(Service):
     async def use_item(self, guild: discord.Guild, user_id: int, item_type: ItemType):
         guild_id = guild.id
 
-        event = InventoryEvent(
-            datetime.datetime.now(), guild_id, user_id, item_type, -1
-        )
+        time_now = datetime.datetime.now()
+
+        event = InventoryEvent(time_now, guild_id, user_id, item_type, -1)
         await self.controller.dispatch_event(event)
 
         match item_type:
@@ -422,3 +423,7 @@ class ItemManager(Service):
                     secrets.choice(bean_channels),
                     force_type=LootboxType.LARGE_MIMIC,
                 )
+            case ItemType.CRAPPY_COUPON:
+                notification = f"<@{user_id}> has redeemed a shitty drawing done by <@{269620844790153218}>."
+                event = NotificationEvent(time_now, guild_id, notification)
+                await self.controller.dispatch_event(event)

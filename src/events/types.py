@@ -12,6 +12,7 @@ class EventType(str, Enum):
     LOOTBOX = "loot_box"
     BAT = "bat"
     PREDICTION = "prediction"
+    NOTIFICATION = "notification"
 
 
 class BeansEventType(str, Enum):
