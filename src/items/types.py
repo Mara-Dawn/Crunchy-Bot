@@ -37,6 +37,7 @@ class ItemType(str, Enum):
     UNLIMITED_GAMBA = "NoLimitGamba"
     INSTANT_GAMBA = "NoCooldownGamba"
     CRAPPY_COUPON = "CrappyDrawing"
+    PRESTIGE_BEAN = "PrestigeBean"
 
 
 class ItemState(str, Enum):
@@ -58,6 +59,7 @@ class ItemGroup(str, Enum):
     MAJOR_JAIL_ACTION = "major_jail_action"
     MAJOR_ACTION = "major_action"
     GAMBA = "gamba"
+    PERMANENT = "permanent"
 
 
 class ShopCategory(int, Enum):

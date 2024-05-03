@@ -181,7 +181,7 @@ class UltraPet(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.PET],
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             controllable=True,
         )
 
@@ -208,7 +208,7 @@ class PenetratingPet(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.PET],
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             controllable=True,
         )
 
@@ -262,7 +262,7 @@ class SwapSlap(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             controllable=True,
         )
 
@@ -289,7 +289,7 @@ class UltraSlap(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             controllable=True,
         )
 
@@ -345,7 +345,7 @@ class UltraFartBoost(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             controllable=True,
         )
 
@@ -594,7 +594,7 @@ class PocketMimic(Item):
             max_amount=None,
             trigger=None,
             controllable=True,
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             useable=True,
         )
 
@@ -621,7 +621,7 @@ class CatGirl(Item):
             base_amount=1,
             max_amount=None,
             trigger=None,
-            lootbox_exclusive=True,
+            hide_in_shop=True,
         )
 
 
@@ -651,7 +651,7 @@ class CrappyDrawing(Item):
             base_amount=1,
             max_amount=None,
             trigger=None,
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             useable=True,
         )
 
@@ -882,7 +882,7 @@ class NoLimitGamba(Item):
             max_amount=None,
             trigger=[ItemTrigger.GAMBA],
             controllable=True,
-            lootbox_exclusive=True,
+            hide_in_shop=True,
         )
 
 
@@ -909,5 +909,31 @@ class NoCooldownGamba(Item):
             max_amount=None,
             trigger=[ItemTrigger.GAMBA],
             controllable=True,
-            lootbox_exclusive=True,
+            hide_in_shop=True,
+        )
+
+
+class PrestigeBean(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 1
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Prestige Bean",
+            item_type=ItemType.PRESTIGE_BEAN,
+            group=ItemGroup.PERMANENT,
+            shop_category=ShopCategory.FUN,
+            description="A proof of your achievements in previous Bean seasons. Each of these will generate you one bean a day.",
+            emoji="🅱️",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=ItemTrigger.DAILY,
+            hide_in_shop=True,
         )

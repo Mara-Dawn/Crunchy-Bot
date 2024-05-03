@@ -8,11 +8,12 @@ from datalayer.inventory import UserInventory
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, LootboxType, UserInteraction
 from discord.ext import commands
+from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.lootbox_event import LootBoxEvent
 from events.notification_event import NotificationEvent
-from events.types import LootBoxEventType
+from events.types import BeansEventType, LootBoxEventType
 
 # needed for global access
 from items import *  # noqa: F403
@@ -58,7 +59,7 @@ class ItemManager(Service):
         output = []
         for item_type in items:
             item = self.get_item(guild_id, item_type)
-            if not item.lootbox_exclusive:
+            if not item.hide_in_shop:
                 output.append(item)
 
         return output
@@ -389,23 +390,42 @@ class ItemManager(Service):
 
         return items
 
-    async def consume_trigger_items(self, guild_id: int, trigger: ItemTrigger):
-        guild_item_counts = self.database.get_item_counts_by_guild(guild_id)
+    async def consume_trigger_items(self, guild: discord.Guild, trigger: ItemTrigger):
+        guild_item_counts = self.database.get_item_counts_by_guild(guild.id)
 
         for user_id, item_counts in guild_item_counts.items():
             for item_type, count in item_counts.items():
 
-                item = self.get_item(guild_id, item_type)
+                item = self.get_item(guild.id, item_type)
 
                 if count <= 0 or not item.activated(trigger):
                     continue
 
-                event = InventoryEvent(
-                    datetime.datetime.now(), guild_id, user_id, item.type, -1
-                )
-                await self.controller.dispatch_event(event)
+                match item_type:
+                    case ItemType.PRESTIGE_BEAN:
+                        amount = item.value * count
+                        bean_event = BeansEvent(
+                            datetime.datetime.now(),
+                            guild.id,
+                            BeansEventType.PRESTIGE,
+                            user_id,
+                            amount,
+                        )
+                        await self.controller.dispatch_event(bean_event)
+                        continue
 
-    async def use_item(self, guild: discord.Guild, user_id: int, item_type: ItemType):
+                await self.use_item(
+                    guild,
+                    user_id,
+                    item_type,
+                )
+
+    async def use_item(
+        self,
+        guild: discord.Guild,
+        user_id: int,
+        item_type: ItemType,
+    ):
         guild_id = guild.id
 
         time_now = datetime.datetime.now()
