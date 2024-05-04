@@ -326,41 +326,7 @@ class ShopResponseViewController(ViewController):
         amount = shop_data.selected_amount
         cost = shop_data.item.cost * amount
         
-        bean_data = self.database.get_guild_beans(guild_id)
-        users = []
-        
-        for user_id, amount in bean_data.items():
-            if amount >= 100:
-                users.append(user_id)
-        
-        jails = self.database.get_active_jails_by_guild(guild_id)
-        
-        for jail in jails:
-            jailed_member_id = jail.member_id
-            if jailed_member_id in users:
-                users.remove(jailed_member_id)
-        
-        victims = random.sample(users, min(5, len(users)))
-        
-        jail_announcement = f'After committing unspeakable atrocities, <@{member_id}> caused innocent bystanders to be banished into the abyss.'
-        await self.jail_manager.announce(interaction.guild, jail_announcement)
-        
-        for victim in victims:
-            duration = random.randint(5*60, 10*60)
-            member = interaction.guild.get_member(victim)
-            
-            if member is None:
-                continue
-            
-            success = await self.jail_manager.jail_user(guild_id, member_id, member, duration)
-
-            if not success:
-                continue
-            
-            timestamp_now = int(datetime.datetime.now().timestamp())
-            release = timestamp_now + (duration*60)
-            jail_announcement = f'<@{victim}> was sentenced to Jail. They will be released <t:{release}:R>.'
-            await self.jail_manager.announce(interaction.guild, jail_announcement)
+        await self.jail_manager.random_jailing(interaction.guild, interaction.user.id)
         
         event = BeansEvent(datetime.datetime.now(), guild_id, BeansEventType.SHOP_PURCHASE, member_id, -cost)
         await self.controller.dispatch_event(event)

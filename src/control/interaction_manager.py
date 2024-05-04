@@ -79,7 +79,7 @@ class InteractionManager(Service):
         active_items: list[Item],
         already_interacted: bool,
         self_target: bool,
-    ) -> tuple[str, InteractionModifiers]:
+    ) -> tuple[InteractionModifiers, str]:
         response = ""
         modifiers = InteractionModifiers()
         guild_id = interaction.guild_id
@@ -127,30 +127,38 @@ class InteractionManager(Service):
         interaction: discord.Interaction,
         user: discord.Member,
         command_type: UserInteraction,
+        amount: int,
     ) -> tuple[float, str]:
         user_items = self.item_manager.get_user_items_activated_by_interaction(
             interaction.guild_id, user.id, command_type
         )
         response = ""
         reduction = 1
+        flat_bonus = 0
         for item in user_items:
 
-            if item.group != ItemGroup.PROTECTION:
+            if item.group not in [ItemGroup.PROTECTION, ItemGroup.INCOMING_FLAT_BONUS]:
                 continue
 
             match item.group:
                 case ItemGroup.PROTECTION:
-                    reduction *= item.value
-                    event = InventoryEvent(
-                        datetime.datetime.now(),
-                        interaction.guild_id,
-                        user.id,
-                        item.type,
-                        -1,
-                    )
-                    await self.controller.dispatch_event(event)
+                    if amount <= 0:
+                        continue
+                    reduction *= 1 - item.value
+                case ItemGroup.INCOMING_FLAT_BONUS:
+                    flat_bonus += item.value
                 case _:
                     continue
+
+            if not item.permanent:
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    interaction.guild_id,
+                    user.id,
+                    item.type,
+                    -1,
+                )
+                await self.controller.dispatch_event(event)
 
             self.logger.log(
                 interaction.guild_id,
@@ -159,7 +167,7 @@ class InteractionManager(Service):
             )
             response += f"* {item.name}\n"
 
-        return (reduction, response)
+        return (reduction, flat_bonus, response)
 
     async def user_command_interaction(
         self,
@@ -212,6 +220,7 @@ class InteractionManager(Service):
             response += "__Items used:__\n" + user_item_info
 
         amount = 0
+        max_amount = None
 
         match command_type:
             case UserInteraction.SLAP:
@@ -231,6 +240,19 @@ class InteractionManager(Service):
                 if modifiers.advantage:
                     amount_advantage = random.randint(min_amount, max_amount)
                     amount = max(amount, amount_advantage)
+
+        amount = amount + modifiers.flat_bonus
+
+        reduction, flat_inc_bonus, tartget_item_info = (
+            await self.get_jail_target_item_modifiers(
+                interaction, user, command_type, amount
+            )
+        )
+
+        amount += flat_inc_bonus
+
+        if command_type == UserInteraction.FART and max_amount is not None:
+            amount = min(max_amount, amount)
 
         initial_amount = amount
 
@@ -259,17 +281,10 @@ class InteractionManager(Service):
             timestamp_now = int(datetime.datetime.now().timestamp())
             satan_release = timestamp_now + (amount * 60)
 
-        if amount > 0:
-            reduction, tartget_item_info = await self.get_jail_target_item_modifiers(
-                interaction, user, command_type
-            )
+        if tartget_item_info != "":
+            response += "__Items used by target:__\n" + tartget_item_info
 
-            if tartget_item_info != "":
-                response += "__Items used to defend:__\n" + tartget_item_info
-
-            amount = int(amount * reduction)
-
-        damage_info = f"[{initial_amount}]"
+        amount = int(amount * reduction)
 
         damage_info = f"*({initial_amount})*" if initial_amount != amount else ""
 
@@ -328,17 +343,20 @@ class InteractionManager(Service):
                 modifiers.stabilized = item.value
             case ItemGroup.ADVANTAGE:
                 modifiers.advantage = item.value
+            case ItemGroup.FLAT_BONUS:
+                modifiers.flat_bonus += item.value
             case _:
                 return ""
 
-        event = InventoryEvent(
-            datetime.datetime.now(),
-            guild_id,
-            user_id,
-            item.type,
-            -1,
-        )
-        await self.controller.dispatch_event(event)
+        if not item.permanent:
+            event = InventoryEvent(
+                datetime.datetime.now(),
+                guild_id,
+                user_id,
+                item.type,
+                -1,
+            )
+            await self.controller.dispatch_event(event)
 
         self.logger.log(
             guild_id,

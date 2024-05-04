@@ -1,4 +1,5 @@
 import datetime
+import random
 
 import discord
 from bot_util import BotUtil
@@ -6,11 +7,13 @@ from datalayer.database import Database
 from datalayer.jail import UserJail
 from discord.ext import commands
 from events.bot_event import BotEvent
+from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
-from events.types import JailEventType
+from events.types import EventType, JailEventType
 
 # needed for global access
 from items import *  # noqa: F403
+from items.types import ItemType
 
 from control.controller import Controller
 from control.logger import BotLogger
@@ -35,7 +38,14 @@ class JailManager(Service):
         self.log_name = "Jail"
 
     async def listen_for_event(self, event: BotEvent):
-        pass
+        match event.type:
+            case EventType.INVENTORY:
+                inventory_event: InventoryEvent = event
+                match inventory_event.item_type:
+                    case ItemType.EXPLOSIVE_FART:
+                        if inventory_event.amount <= 0:
+                            guild = self.bot.get_guild(event.guild_id)
+                            await self.random_jailing(guild, event.get_causing_user_id())
 
     def get_active_jail(self, guild_id: int, user: discord.Member) -> UserJail:
         affected_jails = self.database.get_active_jails_by_member(guild_id, user.id)
@@ -114,3 +124,43 @@ class JailManager(Service):
             await self.controller.dispatch_event(event)
             
         return response
+    
+    async def random_jailing(self, guild: discord.Guild, member_id: int):
+        guild_id = guild.id
+        bean_data = self.database.get_guild_beans(guild_id)
+        users = []
+
+        for user_id, amount in bean_data.items():
+            if amount >= 100:
+                users.append(user_id)
+
+        jails = self.database.get_active_jails_by_guild(guild_id)
+
+        for jail in jails:
+            jailed_member_id = jail.member_id
+            if jailed_member_id in users:
+                users.remove(jailed_member_id)
+
+        victims = random.sample(users, min(5, len(users)))
+
+        jail_announcement = f"After committing unspeakable atrocities, <@{member_id}> caused innocent bystanders to be banished into the abyss."
+        await self.announce(guild, jail_announcement)
+
+        for victim in victims:
+            duration = random.randint(5 * 60, 10 * 60)
+            member = guild.get_member(victim)
+
+            if member is None:
+                continue
+
+            success = await self.jail_user(
+                guild_id, member_id, member, duration
+            )
+
+            if not success:
+                continue
+
+            timestamp_now = int(datetime.datetime.now().timestamp())
+            release = timestamp_now + (duration * 60)
+            jail_announcement = f"<@{victim}> was sentenced to Jail. They will be released <t:{release}:R>."
+            await self.announce(guild, jail_announcement)

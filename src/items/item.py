@@ -24,7 +24,8 @@ class Item:
         hide_in_shop: bool = False,
         weight: int = None,
         controllable: bool = False,
-        useable: bool = False
+        useable: bool = False,
+        permanent: bool = False
     ):
         self.name = name
         self.type = item_type
@@ -45,6 +46,7 @@ class Item:
             self.weight = max(self.cost, 100)
         self.controllable = controllable
         self.useable = useable
+        self.permanent = permanent
     
     def activated(self, action: ItemTrigger):
         if self.trigger is None:
