@@ -22,6 +22,7 @@ class RankingType(int, Enum):
     MIMICS = 12
     TOTAL_GAMBAD_SPENT = 13
     TOTAL_GAMBAD_WON = 14
+    BEANS_CURRENT = 15
 
 
 class ActionType(str, Enum):

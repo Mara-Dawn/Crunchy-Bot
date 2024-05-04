@@ -20,8 +20,14 @@ class Ranking:
     DEFINITIONS = {
         RankingType.BEANS: RankingDefinition(
             type=RankingType.BEANS,
-            title="Beans Rankings (excl. Shop/Transfers)",
-            description="Who has the biggest bean?",
+            title="Beans Ranking Highscores (excl. Shop/Transfers)",
+            description="Beans Ranking Highscores",
+            emoji="🅱️",
+        ),
+        RankingType.BEANS_CURRENT: RankingDefinition(
+            type=RankingType.BEANS_CURRENT,
+            title="Beans Rankings Currents",
+            description="Beans Rankings Current (Might be lower than high score)",
             emoji="🅱️",
         ),
         RankingType.TOTAL_GAMBAD_SPENT: RankingDefinition(

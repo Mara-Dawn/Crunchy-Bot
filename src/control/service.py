@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
+from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
 
-from control.database_manager import DatabaseManager
 from control.logger import BotLogger
 
 
@@ -13,7 +13,7 @@ class Service(ABC):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: DatabaseManager,
+        database: Database,
     ):
         self.controller = None
         self.bot = bot

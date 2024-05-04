@@ -2,6 +2,7 @@ import datetime
 from typing import Any
 
 from bot_util import BotUtil
+from datalayer.database import Database
 from datalayer.stats import UserStats
 from datalayer.types import UserInteraction
 from discord.ext import commands
@@ -20,7 +21,6 @@ from items.types import ItemType
 from view.types import RankingType
 
 from control.controller import Controller
-from control.database_manager import DatabaseManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
@@ -33,7 +33,7 @@ class EventManager(Service):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: DatabaseManager,
+        database: Database,
         controller: Controller,
     ):
         super().__init__(bot, logger, database)
@@ -402,6 +402,21 @@ class EventManager(Service):
                 )
             case RankingType.BEANS:
                 parsing_list = self.database.get_guild_beans_rankings(guild_id)
+                # only subtract lootboxes until patch where beans got removed.
+                lootbox_purchases = self.database.get_lootbox_purchases_by_guild(
+                    guild_id,
+                    datetime.datetime(year=2024, month=4, day=22, hour=14).timestamp(),
+                )
+                loot_box_item = self.item_manager.get_item(guild_id, ItemType.LOOTBOX)
+                for user_id, amount in lootbox_purchases.items():
+                    if user_id in parsing_list:
+                        parsing_list[user_id] -= amount * loot_box_item.cost
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
+            case RankingType.BEANS_CURRENT:
+                parsing_list = self.database.get_guild_beans_rankings_current(guild_id)
                 # only subtract lootboxes until patch where beans got removed.
                 lootbox_purchases = self.database.get_lootbox_purchases_by_guild(
                     guild_id,
