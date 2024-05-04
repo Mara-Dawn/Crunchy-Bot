@@ -3,6 +3,7 @@ import random
 
 import discord
 from bot_util import BotUtil
+from datalayer.database import Database
 from datalayer.prediction import Prediction
 from discord.ext import commands
 from events.bat_event import BatEvent
@@ -17,7 +18,6 @@ from view.shop_response_view import ShopResponseData
 from view.types import EmojiType
 
 from control.controller import Controller
-from control.database_manager import DatabaseManager
 from control.event_manager import EventManager
 from control.jail_manager import JailManager
 from control.logger import BotLogger
@@ -30,7 +30,7 @@ class ShopResponseViewController(ViewController):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: DatabaseManager,
+        database: Database,
         controller: Controller,
     ):
         super().__init__(

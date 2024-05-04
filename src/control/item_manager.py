@@ -4,6 +4,7 @@ import secrets
 
 import discord
 from bot_util import BotUtil
+from datalayer.database import Database
 from datalayer.inventory import UserInventory
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, LootboxType, UserInteraction
@@ -22,7 +23,6 @@ from items.types import ItemState, ItemType
 from view.lootbox_view import LootBoxView
 
 from control.controller import Controller
-from control.database_manager import DatabaseManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
@@ -34,7 +34,7 @@ class ItemManager(Service):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: DatabaseManager,
+        database: Database,
         controller: Controller,
     ):
         super().__init__(bot, logger, database)

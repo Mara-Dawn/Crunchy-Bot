@@ -4,12 +4,12 @@ from typing import Literal
 import discord
 from bot import CrunchyBot
 from control.controller import Controller
-from control.database_manager import DatabaseManager
 from control.event_manager import EventManager
 from control.interaction_manager import InteractionManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
+from datalayer.database import Database
 from datalayer.types import ItemTrigger
 from discord import app_commands
 from discord.ext import commands, tasks
@@ -25,7 +25,7 @@ class Shop(commands.Cog):
     def __init__(self, bot: CrunchyBot):
         self.bot = bot
         self.logger: BotLogger = bot.logger
-        self.database: DatabaseManager = bot.database
+        self.database: Database = bot.database
         self.controller: Controller = bot.controller
         self.item_manager: ItemManager = self.controller.get_service(ItemManager)
         self.event_manager: EventManager = self.controller.get_service(EventManager)

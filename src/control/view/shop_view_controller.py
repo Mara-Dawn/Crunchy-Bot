@@ -1,6 +1,7 @@
 import datetime
 
 import discord
+from datalayer.database import Database
 from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
@@ -22,7 +23,6 @@ from view.shop_response_view import ShopResponseView
 from view.shop_user_select_view import ShopUserSelectView  # noqa: F401
 
 from control.controller import Controller
-from control.database_manager import DatabaseManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
@@ -34,7 +34,7 @@ class ShopViewController(ViewController):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: DatabaseManager,
+        database: Database,
         controller: Controller,
     ):
         super().__init__(

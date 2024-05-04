@@ -1,6 +1,7 @@
 import asyncio
 
 import discord
+from datalayer.database import Database
 from datalayer.types import PredictionState, PredictionStateSort
 from discord.ext import commands
 from events.bot_event import BotEvent
@@ -18,7 +19,6 @@ from view.prediction_overview_view import PredictionOverviewView
 from view.prediction_view import PredictionView
 
 from control.controller import Controller
-from control.database_manager import DatabaseManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
@@ -30,7 +30,7 @@ class PredictionManager(Service):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: DatabaseManager,
+        database: Database,
         controller: Controller,
     ):
         super().__init__(bot, logger, database)

@@ -1,6 +1,7 @@
 import traceback
 
 import discord
+from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
@@ -8,7 +9,6 @@ from events.types import EventType
 from items.types import ItemType
 
 from control.controller import Controller
-from control.database_manager import DatabaseManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
@@ -23,7 +23,7 @@ class RoleManager(Service):
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        database: DatabaseManager,
+        database: Database,
         controller: Controller,
     ):
         super().__init__(bot, logger, database)

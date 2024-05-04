@@ -3,8 +3,9 @@ import datetime
 from datalayer.database import Database
 from discord.ext import commands
 from events.inventory_event import InventoryEvent
-from items.types import ItemType
+from items.types import ItemGroup, ItemType
 
+from control.item_manager import ItemManager
 from control.logger import BotLogger
 
 
@@ -49,7 +50,7 @@ class DatabaseManager:
 
         return wrapper
 
-    def migrate_permanent_items(self):
+    def migrate_permanent_items(self, item_manager: ItemManager):
         for guild in self.bot.guilds:
             guild_item_counts = self.db_core.get_item_counts_by_guild(guild.id)
             for user_id, item_counts in guild_item_counts.items():
@@ -57,7 +58,13 @@ class DatabaseManager:
                     guild.id, user_id
                 )
                 for item_type, count in item_counts.items():
-                    if item_type in self.PERMANENT_ITEMS:
+
+                    item = item_manager.get_item(guild.id, item_type)
+
+                    if (
+                        item_type in self.PERMANENT_ITEMS
+                        or item.group == ItemGroup.PERMANENT
+                    ):
                         amount = count
                         if item_type in current_user_items:
                             amount -= current_user_items[item_type]
