@@ -10,8 +10,8 @@ from control.logger import BotLogger
 
 class DatabaseManager:
 
-    SEASON_DB_FILE = "database.sqlite"
-    CORE_DB_FILE = "core.sqlite"
+    SEASON_DB_FILE = "season.sqlite"
+    CORE_DB_FILE = "database.sqlite"
 
     CORE_METHODS = [
         "get_setting",
