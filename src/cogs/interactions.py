@@ -221,9 +221,14 @@ class Interactions(commands.Cog):
                     has_major_jail_actions = True
 
         if len(major_actions) > 0:
-            response += await self.interaction_manager.handle_major_action_items(
-                major_actions, interaction.user, user
+            major_action_response = (
+                await self.interaction_manager.handle_major_action_items(
+                    major_actions, interaction.user, user
+                )
             )
+            response += major_action_response
+            if len(major_action_response) <= 0:
+                has_major_jail_actions = False
 
         if not has_major_jail_actions:
             response += await self.interaction_manager.user_command_interaction(

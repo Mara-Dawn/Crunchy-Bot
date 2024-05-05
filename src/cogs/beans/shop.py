@@ -212,7 +212,9 @@ class Shop(commands.Cog):
         item_type = ItemType(item)
         item_obj = self.item_manager.get_item(guild_id, item_type)
 
-        await self.item_manager.give_item(guild_id, member_id, item_obj, amount)
+        await self.item_manager.give_item(
+            guild_id, member_id, item_obj, amount, force=True
+        )
 
         await self.bot.command_response(
             self.__cog_name__,
