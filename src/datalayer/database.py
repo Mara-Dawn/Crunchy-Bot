@@ -365,37 +365,6 @@ class Database:
         PRIMARY KEY ({PREDICTION_EVENT_ID_COL})
     );"""
 
-    TABLES = [
-        SETTINGS_TABLE,
-        JAIL_TABLE,
-        EVENT_TABLE,
-        QUOTE_TABLE,
-        TIMEOUT_TRACKER_TABLE,
-        INTERACTION_EVENT_TABLE,
-        JAIL_EVENT_TABLE,
-        TIMEOUT_EVENT_TABLE,
-        SPAM_EVENT_TABLE,
-        QUOTE_EVENT_TABLE,
-        BEANS_EVENT_TABLE,
-        INVENTORY_EVENT_TABLE,
-        LOOTBOX_TABLE,
-        LOOTBOX_EVENT_TABLE,
-        CUSTOM_COLOR_TABLE,
-        BULLY_REACT_TABLE,
-        BAT_EVENT_TABLE,
-        PREDICTION_TABLE,
-        PREDICTION_OUTCOME_TABLE,
-        PREDICTION_EVENT_TABLE,
-        PREDICTION_OVERVIEW_TABLE,
-        INVENTORY_ITEM_TABLE,
-        LOOTBOX_ITEM_TABLE,
-    ]
-
-    NON_SEASONAL_TABLES = [
-        SETTINGS_TABLE,
-        QUOTE_TABLE,
-    ]
-
     def __init__(self, bot: commands.Bot, logger: BotLogger, db_file: str):
         self.conn = None
         self.bot = bot
