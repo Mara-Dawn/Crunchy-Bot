@@ -26,7 +26,7 @@ class Ranking:
         ),
         RankingType.BEANS_CURRENT: RankingDefinition(
             type=RankingType.BEANS_CURRENT,
-            title="Beans Rankings Currents",
+            title="Beans Rankings Current",
             description="Beans Rankings Current (Might be lower than high score)",
             emoji="🅱️",
         ),
