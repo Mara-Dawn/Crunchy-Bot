@@ -1378,13 +1378,14 @@ class Database:
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
             AND {self.EVENT_GUILD_ID_COL} = ?
-            WHERE {self.BEANS_EVENT_TYPE_COL} NOT IN (?, ?)
+            WHERE {self.BEANS_EVENT_TYPE_COL} NOT IN (?, ?, ?)
             GROUP BY {self.BEANS_EVENT_MEMBER_COL};
         """
         task = (
             guild_id,
             BeansEventType.SHOP_PURCHASE.value,
             BeansEventType.USER_TRANSFER.value,
+            BeansEventType.BALANCE_CHANGE.value,
         )
 
         rows = self.__query_select(command, task)
@@ -1408,7 +1409,7 @@ class Database:
                 FROM {self.BEANS_EVENT_TABLE}
                 INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
                 AND {self.EVENT_GUILD_ID_COL} = ?
-                WHERE {self.BEANS_EVENT_TYPE_COL} NOT IN (?, ?)
+                WHERE {self.BEANS_EVENT_TYPE_COL} NOT IN (?, ?, ?)
             )
             GROUP BY {self.BEANS_EVENT_MEMBER_COL};
         """
@@ -1416,6 +1417,7 @@ class Database:
             guild_id,
             BeansEventType.SHOP_PURCHASE.value,
             BeansEventType.USER_TRANSFER.value,
+            BeansEventType.BALANCE_CHANGE.value,
         )
 
         rows = self.__query_select(command, task)
