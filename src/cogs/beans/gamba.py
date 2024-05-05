@@ -82,7 +82,11 @@ class Gamba(commands.Cog):
         return True
 
     async def __gamba_items(
-        self, interaction: discord.Interaction, items: list[Item], over_limit: bool, cooldown_remaining: int 
+        self,
+        interaction: discord.Interaction,
+        items: list[Item],
+        over_limit: bool,
+        cooldown_remaining: int,
     ):
 
         no_limit = False
@@ -91,14 +95,13 @@ class Gamba(commands.Cog):
         for item in items:
             match item.type:
                 case ItemType.UNLIMITED_GAMBA:
-                    if not over_limit:
+                    if not over_limit or cooldown_remaining != 0:
                         continue
                     no_limit = True
                 case ItemType.INSTANT_GAMBA:
-                    if cooldown_remaining == 0:
+                    if (over_limit and not no_limit) or cooldown_remaining == 0:
                         continue
                     cooldown_override = True
-
 
             await self.item_manager.use_item(
                 interaction.guild, interaction.user.id, item.type
@@ -119,6 +122,7 @@ class Gamba(commands.Cog):
         if not await self.__check_enabled(interaction):
             return
 
+        await interaction.response.defer()
         guild_id = interaction.guild_id
         user_id = interaction.user.id
         beans_gamba_min = self.settings_manager.get_beans_gamba_min(guild_id)
@@ -132,7 +136,6 @@ class Gamba(commands.Cog):
             amount = default_amount
 
         over_limit = not (beans_gamba_min <= amount and amount <= beans_gamba_max)
-
 
         last_gamba_cost_event = self.database.get_last_beans_event(
             guild_id, user_id, BeansEventType.GAMBA_COST
@@ -165,7 +168,9 @@ class Gamba(commands.Cog):
             guild_id, user_id, ItemTrigger.GAMBA
         )
 
-        no_limit, cooldown_override = await self.__gamba_items(interaction, user_items, over_limit, cooldown_remaining)
+        no_limit, cooldown_override = await self.__gamba_items(
+            interaction, user_items, over_limit, cooldown_remaining
+        )
 
         if not no_limit and amount is not None and over_limit:
             prompt = (
@@ -186,8 +191,6 @@ class Gamba(commands.Cog):
                 ephemeral=False,
             )
             return
-
-        await interaction.response.defer()
 
         current_balance = self.database.get_member_beans(guild_id, user_id)
 
@@ -211,7 +214,6 @@ class Gamba(commands.Cog):
             )
             return
 
-        
         if cooldown_remaining != 0 and not cooldown_override:
             cooldowntimer = int(timestamp_now + cooldown_remaining)
             prompt = (
