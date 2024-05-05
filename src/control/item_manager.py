@@ -346,9 +346,17 @@ class ItemManager(Service):
         return output
 
     async def give_item(
-        self, guild_id: int, member_id: int, item: Item, amount: int = 1
+        self,
+        guild_id: int,
+        member_id: int,
+        item: Item,
+        amount: int = 1,
+        force: bool = False,
     ):
-        total_amount = item.base_amount * amount
+        total_amount = amount
+
+        if not force:
+            total_amount *= item.base_amount
 
         if item.max_amount is not None:
             item_count = 0

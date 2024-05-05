@@ -26,7 +26,7 @@ class InventoryEmbed(discord.Embed):
                     if custom_color is not None:
                         suffix = f" #{custom_color}"
                     item.add_to_embed(
-                        self, 54, count=count, name_suffix=suffix, disabled=disabled
+                        self, 56, count=count, name_suffix=suffix, disabled=disabled
                     )
                 case ItemType.REACTION_SPAM:
                     emoji = inventory.bully_emoji
@@ -36,9 +36,9 @@ class InventoryEmbed(discord.Embed):
                     else:
                         suffix = f" {target_name} | {str(emoji)}"
                     item.add_to_embed(
-                        self, 54, count=count, name_suffix=suffix, disabled=disabled
+                        self, 56, count=count, name_suffix=suffix, disabled=disabled
                     )
                 case _:
-                    item.add_to_embed(self, 54, count=count, disabled=disabled)
+                    item.add_to_embed(self, 56, count=count, disabled=disabled)
 
         self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")

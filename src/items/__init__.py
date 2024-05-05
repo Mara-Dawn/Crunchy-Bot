@@ -680,7 +680,6 @@ class LotteryTicket(Item):
             base_amount=1,
             max_amount=3,
             trigger=None,
-            permanent=True,
         )
 
 
@@ -706,7 +705,6 @@ class NameColor(Item):
             base_amount=7,
             max_amount=None,
             trigger=[ItemTrigger.DAILY],
-            permanent=True,
         )
 
 
@@ -758,7 +756,6 @@ class ReactionSpam(Item):
             base_amount=10,
             max_amount=None,
             trigger=[ItemTrigger.USER_MESSAGE],
-            permanent=True,
         )
 
 
@@ -941,10 +938,13 @@ class PrestigeBean(Item):
             max_amount=None,
             trigger=ItemTrigger.DAILY,
             hide_in_shop=True,
+            permanent=True,
         )
 
 
 # Permanent Rare Items
+
+
 class PermPetBoost(Item):
 
     def __init__(self, cost: int | None):
@@ -985,12 +985,16 @@ class IncomingPetBoost(Item):
             cost = defaultcost
 
         super().__init__(
-            name="incoming pet +1",
+            name="E-Girl UwU",
             item_type=ItemType.INC_PET_BOOST,
             group=ItemGroup.INCOMING_FLAT_BONUS,
             shop_category=ShopCategory.FUN,
-            description=(""),
-            emoji="🅱",
+            description=(
+                "No one can match the cuteness of your UwUs. People love giving you heatpats, permanently "
+                "increasing their effectiveness on you. +1 to each pet you recieve. "
+                " This affects the base value, so it will also scale with any bonus modifiers."
+            ),
+            emoji="💄",
             cost=cost,
             value=-1,
             view_class=None,
@@ -1012,12 +1016,17 @@ class PermSlapBoost(Item):
             cost = defaultcost
 
         super().__init__(
-            name="+1 slap",
+            name="Bionic Cyborg Arm",
             item_type=ItemType.PERM_SLAP_BOOST,
             group=ItemGroup.FLAT_BONUS,
             shop_category=ShopCategory.FUN,
-            description=(""),
-            emoji="🅱",
+            description=(
+                "You initially got this for its 'personal fun time' programs, but "
+                "it turns out this thing packs a punch! Permanently increases the "
+                "power of your slaps by +1."
+                " This affects the base value, so it will also scale with any bonus modifiers."
+            ),
+            emoji="🤖",
             cost=cost,
             value=1,
             view_class=None,
@@ -1039,12 +1048,18 @@ class PermFartBoost(Item):
             cost = defaultcost
 
         super().__init__(
-            name="+1 fart",
+            name="Big Dumpy",
             item_type=ItemType.PERM_FART_BOOST,
             group=ItemGroup.FLAT_BONUS,
             shop_category=ShopCategory.FUN,
-            description=(""),
-            emoji="🅱",
+            description=(
+                "Dayum, you got that cake, them sweet cheeks, you're packin' a wagon, "
+                " thicker than a bowl of oatmeal, got that big booty and you know how to use it."
+                " Permanently increases the power of your farts by +1."
+                " This affects the base value, so it will also scale with any bonus modifiers."
+                " (wont go over the possible max roll)"
+            ),
+            emoji="🍑",
             cost=cost,
             value=1,
             view_class=None,
@@ -1066,12 +1081,17 @@ class UltraBoost(Item):
             cost = defaultcost
 
         super().__init__(
-            name="x100",
+            name="Beanz'n'Dreamz",
             item_type=ItemType.ULTRA_BOOST,
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.FUN,
-            description="",
-            emoji="🅱",
+            description=(
+                "You've heard stories of catgirls drinking these non-stop, maybe you even have one "
+                "and just see empty cans everywhere. You finally cave in and decide to try "
+                "one yourself and you instantly see why she's addicted. "
+                "It will power up your next fart, pet or slap by x100!"
+            ),
+            emoji="💯",
             cost=cost,
             value=100,
             view_class=None,
@@ -1093,12 +1113,16 @@ class PermProtection(Item):
             cost = defaultcost
 
         super().__init__(
-            name="perm 1% prot",
+            name="Crippling Social Anxiety",
             item_type=ItemType.PERM_PROTECTION,
             group=ItemGroup.PROTECTION,
             shop_category=ShopCategory.INTERACTION,
-            description="",
-            emoji="🅱",
+            description=(
+                "Years of dodging family get togethers, ghosting your friends messages asking you to hang out "
+                "and never leaving your home has made you incredibly efficient at dodging not only responsibilities "
+                "but also any harm coming your way. Permanently reduces any incoming jailtime by 1%."
+            ),
+            emoji="🙈",
             cost=cost,
             value=0.01,
             view_class=None,
@@ -1107,6 +1131,5 @@ class PermProtection(Item):
             max_amount=5,
             trigger=[ItemTrigger.FART, ItemTrigger.SLAP],
             hide_in_shop=True,
-            controllable=True,
             permanent=True,
         )
