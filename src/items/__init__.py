@@ -415,7 +415,7 @@ class AdvancedFartProtection(FartProtection):
         self.base_amount = 15
         self.max_amount = 30
         self.name = self.name + " x3"
-        self.description = "A poor paranoid soul sewed 5 hazmat suits into one, making this one much stronger than what you would usually find in a store. (caps out at 25 stacks)"
+        self.description = "A poor paranoid soul sewed 3 hazmat suits into one, making this one much stronger than what you would usually find in a store. (caps out at 25 stacks)"
         self.hide_in_shop = True
 
 
