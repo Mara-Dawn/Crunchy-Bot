@@ -181,7 +181,7 @@ class UltraPet(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.PET],
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             controllable=True,
         )
 
@@ -208,7 +208,7 @@ class PenetratingPet(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.PET],
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             controllable=True,
         )
 
@@ -262,7 +262,7 @@ class SwapSlap(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             controllable=True,
         )
 
@@ -289,7 +289,7 @@ class UltraSlap(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.SLAP],
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             controllable=True,
         )
 
@@ -320,6 +320,7 @@ class ExplosiveFart(Item):
             base_amount=1,
             max_amount=None,
             trigger=None,
+            useable=True,
         )
 
 
@@ -345,7 +346,7 @@ class UltraFartBoost(Item):
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.FART],
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             controllable=True,
         )
 
@@ -414,8 +415,8 @@ class AdvancedFartProtection(FartProtection):
         self.base_amount = 15
         self.max_amount = 30
         self.name = self.name + " x3"
-        self.description = "A poor paranoid soul sewed 5 hazmat suits into one, making this one much stronger than what you would usually find in a store. (caps out at 25 stacks)"
-        self.lootbox_exclusive = True
+        self.description = "A poor paranoid soul sewed 3 hazmat suits into one, making this one much stronger than what you would usually find in a store. (caps out at 25 stacks)"
+        self.hide_in_shop = True
 
 
 class FartStabilizer(Item):
@@ -594,7 +595,7 @@ class PocketMimic(Item):
             max_amount=None,
             trigger=None,
             controllable=True,
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             useable=True,
         )
 
@@ -612,7 +613,7 @@ class CatGirl(Item):
             item_type=ItemType.CATGIRL,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
-            description="She is lazy, sleeply, does nothing all day and apparently lives in your inventory now.",
+            description="She is lazy, sleepy, does nothing all day and apparently lives in your inventory now.",
             emoji="🐱",
             cost=cost,
             value=None,
@@ -621,7 +622,8 @@ class CatGirl(Item):
             base_amount=1,
             max_amount=None,
             trigger=None,
-            lootbox_exclusive=True,
+            hide_in_shop=True,
+            permanent=True,
         )
 
 
@@ -651,7 +653,7 @@ class CrappyDrawing(Item):
             base_amount=1,
             max_amount=None,
             trigger=None,
-            lootbox_exclusive=True,
+            hide_in_shop=True,
             useable=True,
         )
 
@@ -678,6 +680,7 @@ class LotteryTicket(Item):
             base_amount=1,
             max_amount=3,
             trigger=None,
+            permanent=True,
         )
 
 
@@ -703,6 +706,7 @@ class NameColor(Item):
             base_amount=7,
             max_amount=None,
             trigger=[ItemTrigger.DAILY],
+            permanent=True,
         )
 
 
@@ -754,6 +758,7 @@ class ReactionSpam(Item):
             base_amount=10,
             max_amount=None,
             trigger=[ItemTrigger.USER_MESSAGE],
+            permanent=True,
         )
 
 
@@ -882,7 +887,7 @@ class NoLimitGamba(Item):
             max_amount=None,
             trigger=[ItemTrigger.GAMBA],
             controllable=True,
-            lootbox_exclusive=True,
+            hide_in_shop=True,
         )
 
 
@@ -909,5 +914,199 @@ class NoCooldownGamba(Item):
             max_amount=None,
             trigger=[ItemTrigger.GAMBA],
             controllable=True,
-            lootbox_exclusive=True,
+            hide_in_shop=True,
+        )
+
+
+class PrestigeBean(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 1
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Prestige Bean",
+            item_type=ItemType.PRESTIGE_BEAN,
+            group=ItemGroup.SUBSCRIPTION,
+            shop_category=ShopCategory.FUN,
+            description="A proof of your achievements in previous Bean seasons. Each of these will generate you one bean a day.",
+            emoji="🅱️",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=ItemTrigger.DAILY,
+            hide_in_shop=True,
+        )
+
+
+# Permanent Rare Items
+class PermPetBoost(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Kitty Paws",
+            item_type=ItemType.PERM_PET_BOOST,
+            group=ItemGroup.FLAT_BONUS,
+            shop_category=ShopCategory.FUN,
+            description=(
+                "These magical gloves will give you a permanent +1 to every pet."
+                " It affects the base roll, so it will also scale with any bonus modifiers."
+                " Possible side effects include randomly using the ':3' emote."
+            ),
+            emoji="🐾",
+            cost=cost,
+            value=-1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.PET],
+            hide_in_shop=True,
+            permanent=True,
+        )
+
+
+class IncomingPetBoost(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="incoming pet +1",
+            item_type=ItemType.INC_PET_BOOST,
+            group=ItemGroup.INCOMING_FLAT_BONUS,
+            shop_category=ShopCategory.FUN,
+            description=(""),
+            emoji="🅱",
+            cost=cost,
+            value=-1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.PET],
+            hide_in_shop=True,
+            permanent=True,
+        )
+
+
+class PermSlapBoost(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="+1 slap",
+            item_type=ItemType.PERM_SLAP_BOOST,
+            group=ItemGroup.FLAT_BONUS,
+            shop_category=ShopCategory.FUN,
+            description=(""),
+            emoji="🅱",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.SLAP],
+            hide_in_shop=True,
+            permanent=True,
+        )
+
+
+class PermFartBoost(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="+1 fart",
+            item_type=ItemType.PERM_FART_BOOST,
+            group=ItemGroup.FLAT_BONUS,
+            shop_category=ShopCategory.FUN,
+            description=(""),
+            emoji="🅱",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.FART],
+            hide_in_shop=True,
+            permanent=True,
+        )
+
+
+class UltraBoost(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="x100",
+            item_type=ItemType.ULTRA_BOOST,
+            group=ItemGroup.VALUE_MODIFIER,
+            shop_category=ShopCategory.FUN,
+            description="",
+            emoji="🅱",
+            cost=cost,
+            value=100,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.FART, ItemTrigger.PET, ItemTrigger.SLAP],
+            hide_in_shop=True,
+            controllable=True,
+        )
+
+
+class PermProtection(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="perm 1% prot",
+            item_type=ItemType.PERM_PROTECTION,
+            group=ItemGroup.PROTECTION,
+            shop_category=ShopCategory.INTERACTION,
+            description="",
+            emoji="🅱",
+            cost=cost,
+            value=0.01,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=5,
+            trigger=[ItemTrigger.FART, ItemTrigger.SLAP],
+            hide_in_shop=True,
+            controllable=True,
+            permanent=True,
         )

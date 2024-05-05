@@ -18,6 +18,7 @@ class ItemType(str, Enum):
     FART_STABILIZER = "FartStabilizer"
     FARTVANTAGE = "Fartvantage"
     FART_PROTECTION = "FartProtection"
+    PERM_PROTECTION = "PermProtection"
     ADVANCED_FART_PROTECTION = "AdvancedFartProtection"
     JAIL_REDUCTION = "JailReduction"
     ARREST = "Arrest"
@@ -37,6 +38,12 @@ class ItemType(str, Enum):
     UNLIMITED_GAMBA = "NoLimitGamba"
     INSTANT_GAMBA = "NoCooldownGamba"
     CRAPPY_COUPON = "CrappyDrawing"
+    PRESTIGE_BEAN = "PrestigeBean"
+    PERM_PET_BOOST = "PermPetBoost"
+    PERM_SLAP_BOOST = "PermSlapBoost"
+    PERM_FART_BOOST = "PermFartBoost"
+    ULTRA_BOOST = "UltraBoost"
+    INC_PET_BOOST = "IncomingPetBoost"
 
 
 class ItemState(str, Enum):
@@ -50,6 +57,7 @@ class ItemGroup(str, Enum):
     BONUS_ATTEMPT = "bonus_attempt"
     STABILIZER = "stabilizer"
     ADVANTAGE = "advantage"
+    FLAT_BONUS = "flat_bonus"
     PROTECTION = "protection"
     LOTTERY = "lottery"
     IMMEDIATE_USE = "immediate_use"
@@ -58,6 +66,7 @@ class ItemGroup(str, Enum):
     MAJOR_JAIL_ACTION = "major_jail_action"
     MAJOR_ACTION = "major_action"
     GAMBA = "gamba"
+    INCOMING_FLAT_BONUS = "incoming_flat_bonus"
 
 
 class ShopCategory(int, Enum):

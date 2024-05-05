@@ -114,6 +114,7 @@ class Gamba(commands.Cog):
 
     @app_commands.command(name="gamba", description="Gamba away your beans.")
     @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 5)
     async def gamba(self, interaction: discord.Interaction, amount: int | None = None):
         if not await self.__check_enabled(interaction):
             return

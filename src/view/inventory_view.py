@@ -99,7 +99,8 @@ class InventoryView(ViewMenu):
         ]
 
         self.clear_items()
-        self.add_item(Dropdown(controllable_items, self.selected))
+        if len(controllable_items) > 0:
+            self.add_item(Dropdown(controllable_items, self.selected))
         self.add_item(ActionButton(button_action, disabled))
         self.add_item(SellButton(disabled))
         self.add_item(SellAllButton(disabled))

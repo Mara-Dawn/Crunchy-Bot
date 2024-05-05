@@ -1,5 +1,3 @@
-from typing import Any  # noqa: UP035
-
 from items.item import Item
 from items.types import ItemType
 
@@ -14,6 +12,7 @@ class InteractionModifiers:
         advantage: bool = False,
         bonus_attempt: Item = None,
         satan_boost: bool = False,
+        flat_bonus: int = 0,
     ):
         self.item_modifier = item_modifier
         self.auto_crit = auto_crit
@@ -22,3 +21,4 @@ class InteractionModifiers:
         self.bonus_attempt = bonus_attempt
         self.satan_boost = satan_boost
         self.major_jail_actions: list[ItemType] = []
+        self.flat_bonus = flat_bonus

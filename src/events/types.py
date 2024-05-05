@@ -29,6 +29,7 @@ class BeansEventType(str, Enum):
     PREDICTION_BET = "prediction_bet"
     PREDICTION_PAYOUT = "prediction_payout"
     PREDICTION_REFUND = "prediction_refund"
+    PRESTIGE = "prestige"
 
 
 class JailEventType(str, Enum):

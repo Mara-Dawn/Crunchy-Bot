@@ -366,7 +366,6 @@ class Database:
     );"""
 
     def __init__(self, bot: commands.Bot, logger: BotLogger, db_file: str):
-
         self.conn = None
         self.bot = bot
         self.logger = logger
@@ -376,38 +375,39 @@ class Database:
             self.logger.log(
                 "DB", f"Loaded DB version {sqlite3.version} from {db_file}."
             )
-
-            c = self.conn.cursor()
-
-            c.execute(self.CREATE_SETTINGS_TABLE)
-            c.execute(self.CREATE_JAIL_TABLE)
-            c.execute(self.CREATE_EVENT_TABLE)
-            c.execute(self.CREATE_QUOTE_TABLE)
-            c.execute(self.CREATE_TIMEOUT_TRACKER_TABLE)
-            c.execute(self.CREATE_INTERACTION_EVENT_TABLE)
-            c.execute(self.CREATE_JAIL_EVENT_TABLE)
-            c.execute(self.CREATE_TIMEOUT_EVENT_TABLE)
-            c.execute(self.CREATE_SPAM_EVENT_TABLE)
-            c.execute(self.CREATE_QUOTE_EVENT_TABLE)
-            c.execute(self.CREATE_BEANS_EVENT_TABLE)
-            c.execute(self.CREATE_INVENTORY_EVENT_TABLE)
-            c.execute(self.CREATE_LOOTBOX_TABLE)
-            c.execute(self.CREATE_LOOTBOX_EVENT_TABLE)
-            c.execute(self.CREATE_CUSTOM_COLOR_TABLE)
-            c.execute(self.CREATE_BULLY_REACT_TABLE)
-            c.execute(self.CREATE_BAT_EVENT_TABLE)
-            c.execute(self.CREATE_PREDICTION_TABLE)
-            c.execute(self.CREATE_PREDICTION_OUTCOME_TABLE)
-            c.execute(self.CREATE_PREDICTION_EVENT_TABLE)
-            c.execute(self.CREATE_PREDICTION_OVERVIEW_TABLE)
-            c.execute(self.CREATE_INVENTORY_ITEM_TABLE)
-            c.execute(self.CREATE_LOOTBOX_ITEM_TABLE)
-            c.close()
+            self.__create_tables(self.conn)
 
         except Error as e:
             traceback.print_stack()
             traceback.print_exc()
             self.logger.error("DB", e)
+
+    def __create_tables(self, connection: sqlite3.Connection):
+        c = connection.cursor()
+        c.execute(self.CREATE_SETTINGS_TABLE)
+        c.execute(self.CREATE_JAIL_TABLE)
+        c.execute(self.CREATE_EVENT_TABLE)
+        c.execute(self.CREATE_QUOTE_TABLE)
+        c.execute(self.CREATE_TIMEOUT_TRACKER_TABLE)
+        c.execute(self.CREATE_INTERACTION_EVENT_TABLE)
+        c.execute(self.CREATE_JAIL_EVENT_TABLE)
+        c.execute(self.CREATE_TIMEOUT_EVENT_TABLE)
+        c.execute(self.CREATE_SPAM_EVENT_TABLE)
+        c.execute(self.CREATE_QUOTE_EVENT_TABLE)
+        c.execute(self.CREATE_BEANS_EVENT_TABLE)
+        c.execute(self.CREATE_INVENTORY_EVENT_TABLE)
+        c.execute(self.CREATE_LOOTBOX_TABLE)
+        c.execute(self.CREATE_LOOTBOX_EVENT_TABLE)
+        c.execute(self.CREATE_CUSTOM_COLOR_TABLE)
+        c.execute(self.CREATE_BULLY_REACT_TABLE)
+        c.execute(self.CREATE_BAT_EVENT_TABLE)
+        c.execute(self.CREATE_PREDICTION_TABLE)
+        c.execute(self.CREATE_PREDICTION_OUTCOME_TABLE)
+        c.execute(self.CREATE_PREDICTION_EVENT_TABLE)
+        c.execute(self.CREATE_PREDICTION_OVERVIEW_TABLE)
+        c.execute(self.CREATE_INVENTORY_ITEM_TABLE)
+        c.execute(self.CREATE_LOOTBOX_ITEM_TABLE)
+        c.close()
 
     def __query_select(self, query: str, task=None):
         try:
@@ -478,25 +478,17 @@ class Database:
         return json.loads(rows[0][self.SETTINGS_VALUE_COL])
 
     def update_setting(self, guild_id: int, module: str, key: str, value):
-        try:
-            value = json.dumps(value)
+        value = json.dumps(value)
 
-            command = f"""
-                INSERT INTO {self.SETTINGS_TABLE} ({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}, {self.SETTINGS_VALUE_COL}) 
-                VALUES (?, ?, ?, ?) 
-                ON CONFLICT({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}) 
-                DO UPDATE SET {self.SETTINGS_VALUE_COL}=excluded.{self.SETTINGS_VALUE_COL};
-            """
-            task = (int(guild_id), str(module), str(key), value)
+        command = f"""
+            INSERT INTO {self.SETTINGS_TABLE} ({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}, {self.SETTINGS_VALUE_COL}) 
+            VALUES (?, ?, ?, ?) 
+            ON CONFLICT({self.SETTINGS_GUILD_ID_COL}, {self.SETTINGS_MODULE_COL}, {self.SETTINGS_KEY_COL}) 
+            DO UPDATE SET {self.SETTINGS_VALUE_COL}=excluded.{self.SETTINGS_VALUE_COL};
+        """
+        task = (int(guild_id), str(module), str(key), value)
 
-            cur = self.conn.cursor()
-            cur.execute(command, task)
-            self.conn.commit()
-
-        except Error as e:
-            self.logger.error("DB", e)
-            traceback.print_stack()
-            traceback.print_exc()
+        return self.__query_insert(command, task)
 
     def __create_base_event(self, event: BotEvent) -> int:
         command = f"""
@@ -1381,7 +1373,7 @@ class Database:
 
         return output
 
-    def get_guild_beans_rankings(self, guild_id: int) -> dict[int, int]:
+    def get_guild_beans_rankings_current(self, guild_id: int) -> dict[int, int]:
         command = f"""
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
@@ -1403,6 +1395,34 @@ class Database:
             row[self.BEANS_EVENT_MEMBER_COL]: row[f"SUM({self.BEANS_EVENT_VALUE_COL})"]
             for row in rows
         }
+
+    def get_guild_beans_rankings(self, guild_id: int) -> dict[int, int]:
+        command = f"""
+            SELECT {self.BEANS_EVENT_MEMBER_COL}, MAX(rollingSum) as high_score 
+            FROM (
+                SELECT *, SUM({self.BEANS_EVENT_VALUE_COL}) 
+                OVER ( 
+                    PARTITION BY {self.BEANS_EVENT_MEMBER_COL} 
+                    ORDER BY {self.BEANS_EVENT_ID_COL}
+                ) as rollingSum 
+                FROM {self.BEANS_EVENT_TABLE}
+                INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
+                AND {self.EVENT_GUILD_ID_COL} = ?
+                WHERE {self.BEANS_EVENT_TYPE_COL} NOT IN (?, ?)
+            )
+            GROUP BY {self.BEANS_EVENT_MEMBER_COL};
+        """
+        task = (
+            guild_id,
+            BeansEventType.SHOP_PURCHASE.value,
+            BeansEventType.USER_TRANSFER.value,
+        )
+
+        rows = self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return {}
+
+        return {row[self.BEANS_EVENT_MEMBER_COL]: row["high_score"] for row in rows}
 
     def get_lootbox_purchases_by_guild(
         self, guild_id: int, until: int = None
@@ -1508,7 +1528,7 @@ class Database:
 
         rows = self.__query_select(command)
         if not rows or len(rows) < 1:
-            return []
+            return {}
 
         transformed = {}
         for row in rows:

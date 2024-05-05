@@ -1,10 +1,6 @@
 import datetime
 
 import discord
-from control.controller import Controller
-from control.logger import BotLogger
-from control.prediction_manager import PredictionManager
-from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.prediction import Prediction
 from datalayer.types import PredictionState
@@ -19,6 +15,11 @@ from events.types import (
     UIEventType,
 )
 from events.ui_event import UIEvent
+
+from control.controller import Controller
+from control.logger import BotLogger
+from control.prediction_manager import PredictionManager
+from control.view.view_controller import ViewController
 
 
 class PredictionViewController(ViewController):

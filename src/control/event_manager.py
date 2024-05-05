@@ -415,6 +415,21 @@ class EventManager(Service):
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
                 ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
+            case RankingType.BEANS_CURRENT:
+                parsing_list = self.database.get_guild_beans_rankings_current(guild_id)
+                # only subtract lootboxes until patch where beans got removed.
+                lootbox_purchases = self.database.get_lootbox_purchases_by_guild(
+                    guild_id,
+                    datetime.datetime(year=2024, month=4, day=22, hour=14).timestamp(),
+                )
+                loot_box_item = self.item_manager.get_item(guild_id, ItemType.LOOTBOX)
+                for user_id, amount in lootbox_purchases.items():
+                    if user_id in parsing_list:
+                        parsing_list[user_id] -= amount * loot_box_item.cost
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
             case RankingType.MIMICS:
                 lootboxes = self.database.get_lootboxes_by_guild(guild_id)
                 total_dict = {}

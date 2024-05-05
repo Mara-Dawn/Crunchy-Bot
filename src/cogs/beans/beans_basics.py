@@ -3,13 +3,16 @@ import random
 import typing
 
 import discord
-from cogs.beans.beans_group import BeansGroup
 from control.settings_manager import SettingsManager
 from discord import app_commands
 from discord.ext import commands
 from events.beans_event import BeansEvent
+from events.inventory_event import InventoryEvent
 from events.types import BeansEventType
+from items.types import ItemType
 from view.settings_modal import SettingsModal
+
+from cogs.beans.beans_group import BeansGroup
 
 
 class BeansBasics(BeansGroup):
@@ -202,6 +205,70 @@ class BeansBasics(BeansGroup):
             args=[interaction.user.display_name, user.display_name, amount],
             ephemeral=False,
         )
+
+    @app_commands.command(
+        name="award_prestige",
+        description="Award prestige beans based on current seasons high score.",
+    )
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def award_prestige(self, interaction: discord.Interaction) -> None:
+        author_id = 90043934247501824
+        if interaction.user.id != author_id:
+            raise app_commands.MissingPermissions
+
+        guild_id = interaction.guild_id
+
+        rankings = self.database.get_guild_beans_rankings(guild_id)
+        lootbox_purchases = self.database.get_lootbox_purchases_by_guild(
+            guild_id,
+            datetime.datetime(year=2024, month=4, day=22, hour=14).timestamp(),
+        )
+        loot_box_item = self.item_manager.get_item(guild_id, ItemType.LOOTBOX)
+
+        for user_id, amount in lootbox_purchases.items():
+            if user_id in rankings:
+                rankings[user_id] -= amount * loot_box_item.cost
+
+        rankings = sorted(rankings.items(), key=lambda item: item[1], reverse=True)
+
+        for rank, (user_id, score) in enumerate(rankings):
+            author = self.bot.get_user(user_id)
+            if author is not None and author.id != self.bot.user.id:
+                amount = int(score / 10000)
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    author.id,
+                    ItemType.PRESTIGE_BEAN,
+                    amount,
+                )
+                await self.controller.dispatch_event(event)
+
+                message = f"Congratulations, the current Beans Season has concluded and your final rank is: 🎉**Rank {rank+1}.**🎉\n"
+                if rank < 10:
+                    message += "You made it to the top 10, which means you get to choose additional rewards! Check out the Beans Info channel for more Information."
+                message += f"```python\nHigh Score: 🅱️{score}\nReward: 1 Prestige Bean per 10k\n-----------------------\nPayout: {amount} x Prestige Bean```"
+                await author.send(message)
+
+        output = "Action complete."
+        await self.bot.command_response(self.__cog_name__, interaction, output)
+
+    @app_commands.command(
+        name="migrate_permanent_items",
+        description="Migrates everyones permanent items to the new season.",
+    )
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def migrate_permanent_items(self, interaction: discord.Interaction) -> None:
+        author_id = 90043934247501824
+        if interaction.user.id != author_id:
+            raise app_commands.MissingPermissions
+
+        self.database.migrate_permanent_items(self.item_manager)
+
+        output = "Migration complete."
+        await self.bot.command_response(self.__cog_name__, interaction, output)
 
     @app_commands.command(
         name="settings",

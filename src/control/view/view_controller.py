@@ -1,9 +1,10 @@
-from control.logger import BotLogger
-from control.service import Service
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
 from events.ui_event import UIEvent
+
+from control.logger import BotLogger
+from control.service import Service
 
 
 class ViewController(Service):

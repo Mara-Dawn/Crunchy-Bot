@@ -21,10 +21,11 @@ class Item:
         base_amount: int = 1,
         max_amount: int = None,
         trigger: list[ItemTrigger] = None,
-        lootbox_exclusive: bool = False,
+        hide_in_shop: bool = False,
         weight: int = None,
         controllable: bool = False,
-        useable: bool = False
+        useable: bool = False,
+        permanent: bool = False
     ):
         self.name = name
         self.type = item_type
@@ -39,12 +40,13 @@ class Item:
         self.base_amount = base_amount
         self.max_amount = max_amount
         self.trigger = trigger
-        self.lootbox_exclusive = lootbox_exclusive
+        self.hide_in_shop = hide_in_shop
         self.weight = weight
         if self.weight is None:
             self.weight = max(self.cost, 100)
         self.controllable = controllable
         self.useable = useable
+        self.permanent = permanent
     
     def activated(self, action: ItemTrigger):
         if self.trigger is None:
