@@ -95,11 +95,11 @@ class Gamba(commands.Cog):
         for item in items:
             match item.type:
                 case ItemType.UNLIMITED_GAMBA:
-                    if not over_limit or cooldown_remaining != 0:
+                    if not over_limit:
                         continue
                     no_limit = True
                 case ItemType.INSTANT_GAMBA:
-                    if (over_limit and not no_limit) or cooldown_remaining == 0:
+                    if cooldown_remaining == 0:
                         continue
                     cooldown_override = True
 
