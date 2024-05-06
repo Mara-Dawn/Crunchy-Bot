@@ -60,7 +60,8 @@ class Controller:
                 await asyncio.sleep(5)
                 await view.message.edit()
             except (discord.NotFound, discord.HTTPException):
-                self.views.remove(view)
+                if view in self.views:
+                    self.views.remove(view)
 
     async def dispatch_event(self, event: BotEvent):
 
