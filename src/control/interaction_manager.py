@@ -412,7 +412,7 @@ class InteractionManager(Service):
                         member.guild.id, target_user.id
                     )
 
-                    protection_type = ItemType.FART_PROTECTION
+                    protection_type = ItemType.PROTECTION
 
                     if protection_type in inventory_items:
                         item_count = inventory_items[protection_type]

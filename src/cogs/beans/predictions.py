@@ -2,14 +2,14 @@ import datetime
 from typing import Literal
 
 import discord
-from cogs.beans.beans_group import BeansGroup
 from control.settings_manager import SettingsManager
 from datalayer.types import PredictionState
 from discord import app_commands
 from discord.ext import commands, tasks
 from events.prediction_event import PredictionEvent
 from events.types import PredictionEventType
-from items.types import ItemType
+
+from cogs.beans.beans_group import BeansGroup
 
 
 class Predictions(BeansGroup):
@@ -56,21 +56,6 @@ class Predictions(BeansGroup):
                 self.__cog_name__,
                 interaction,
                 "Prediction commands cannot be used in this channel.",
-            )
-            return False
-
-        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
-        stunned_remaining = self.event_manager.get_stunned_remaining(
-            guild_id, interaction.user.id, stun_base_duration
-        )
-
-        if stunned_remaining > 0:
-            timestamp_now = int(datetime.datetime.now().timestamp())
-            remaining = int(timestamp_now + stunned_remaining)
-            await self.bot.command_response(
-                self.__cog_name__,
-                interaction,
-                f"You are currently stunned from a bat attack. Try again <t:{remaining}:R>",
             )
             return False
 

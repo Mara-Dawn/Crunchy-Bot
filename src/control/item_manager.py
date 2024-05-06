@@ -409,37 +409,24 @@ class ItemManager(Service):
                 if count <= 0 or not item.activated(trigger):
                     continue
 
-                match item_type:
-                    case ItemType.PRESTIGE_BEAN:
-                        amount = item.value * count
-                        bean_event = BeansEvent(
-                            datetime.datetime.now(),
-                            guild.id,
-                            BeansEventType.PRESTIGE,
-                            user_id,
-                            amount,
-                        )
-                        await self.controller.dispatch_event(bean_event)
-                        continue
+                amount = 1
+                if item_type == ItemType.PRESTIGE_BEAN:
+                    amount = count
 
-                await self.use_item(
-                    guild,
-                    user_id,
-                    item_type,
-                )
+                await self.use_item(guild, user_id, item_type, amount)
 
     async def use_item(
-        self,
-        guild: discord.Guild,
-        user_id: int,
-        item_type: ItemType,
+        self, guild: discord.Guild, user_id: int, item_type: ItemType, amount: int = 1
     ):
         guild_id = guild.id
 
         time_now = datetime.datetime.now()
 
-        event = InventoryEvent(time_now, guild_id, user_id, item_type, -1)
-        await self.controller.dispatch_event(event)
+        item = self.get_item(guild.id, item_type)
+
+        if not item.permanent:
+            event = InventoryEvent(time_now, guild_id, user_id, item_type, -amount)
+            await self.controller.dispatch_event(event)
 
         match item_type:
             case ItemType.MIMIC:
@@ -451,7 +438,19 @@ class ItemManager(Service):
                     secrets.choice(bean_channels),
                     force_type=LootboxType.LARGE_MIMIC,
                 )
+
             case ItemType.CRAPPY_COUPON:
                 notification = f"<@{user_id}> has redeemed a shitty drawing done by <@{269620844790153218}>."
                 event = NotificationEvent(time_now, guild_id, notification)
                 await self.controller.dispatch_event(event)
+
+            case ItemType.PRESTIGE_BEAN:
+                beans_amount = item.value * amount
+                bean_event = BeansEvent(
+                    datetime.datetime.now(),
+                    guild.id,
+                    BeansEventType.PRESTIGE,
+                    user_id,
+                    beans_amount,
+                )
+                await self.controller.dispatch_event(bean_event)

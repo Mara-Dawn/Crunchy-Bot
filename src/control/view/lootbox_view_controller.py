@@ -4,8 +4,10 @@ import random
 import discord
 from bot_util import BotUtil
 from datalayer.database import Database
+from datalayer.types import ItemTrigger
 from discord.ext import commands
 from events.beans_event import BeansEvent
+from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
 from events.lootbox_event import LootBoxEvent
 from events.types import BeansEventType, JailEventType, LootBoxEventType, UIEventType
@@ -43,10 +45,7 @@ class LootBoxViewController(ViewController):
                 owner_id = event.payload[1]
                 await self.handle_lootbox_claim(interaction, owner_id, event.view_id)
 
-    async def handle_lootbox_claim(
-        self, interaction: discord.Interaction, owner_id: int, view_id: int
-    ):
-
+    async def lootbox_checks(self, interaction: discord.Interaction,   owner_id: int) -> bool:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
@@ -62,18 +61,59 @@ class LootBoxViewController(ViewController):
                 f"You are currently stunned from a bat attack. Try again <t:{remaining}:R>",
                 ephemeral=True,
             )
-            return
+            return False
 
         if owner_id is not None and member_id != owner_id:
             await interaction.followup.send(
                 "This is a personalized lootbox, only the owner can claim it.",
                 ephemeral=True,
             )
+            return False
+        return True
+
+    async def handle_mimic(self, interaction: discord.Interaction, embed: discord.Embed, beans: int):
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+        
+        if beans < -100:
+            user_items =  self.item_manager.get_user_items_activated(guild_id, member_id, ItemTrigger.MIMIC)
+
+            if ItemType.PROTECTION in [item.type for item in user_items]:
+                event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, ItemType.PROTECTION, -1)
+                await self.controller.dispatch_event(event)
+                embed.add_field(
+                    name="Oh no, it's a LARGE Mimic!",
+                    value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nLuckily your Hazmat Suit protects you from further harm. \n(You lose one stack)",
+                    inline=False,
+                )
+                return False
+
+            embed.add_field(
+                name="Oh no, it's a LARGE Mimic!",
+                value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
+                inline=False,
+            )
+            return True
+
+        embed.add_field(
+            name="Oh no, it's a Mimic!",
+            value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them.",
+            inline=False,
+        )
+        return False
+
+    async def handle_lootbox_claim(
+        self, interaction: discord.Interaction, owner_id: int, view_id: int
+    ):
+
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        if not await self.lootbox_checks(interaction, owner_id):
             return
 
         event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
         await self.controller.dispatch_ui_event(event)
-
         self.controller.detach_view_by_id(view_id)
 
         message = await interaction.original_response()
@@ -88,7 +128,6 @@ class LootBoxViewController(ViewController):
         embed = discord.Embed(
             title=title, description=description, color=discord.Colour.purple()
         )
-
         embed.set_image(url="attachment://treasure_open.png")
         attachment = discord.File("./img/treasure_open.png", "treasure_open.png")
 
@@ -97,22 +136,12 @@ class LootBoxViewController(ViewController):
 
         if beans < 0:
             bean_balance = self.database.get_member_beans(guild_id, member_id)
-            beans_taken = beans
+            
+            large_mimic = await self.handle_mimic(interaction, embed, beans)
+
             if bean_balance + beans < 0:
                 beans = -bean_balance
-            if beans_taken < -100:
-                embed.add_field(
-                    name="Oh no, it's a LARGE Mimic!",
-                    value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
-                    inline=False,
-                )
-                large_mimic = True
-            else:
-                embed.add_field(
-                    name="Oh no, it's a Mimic!",
-                    value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them.",
-                    inline=False,
-                )
+                
             embed.set_image(url="attachment://mimic.gif")
             attachment = discord.File("./img/mimic.gif", "mimic.gif")
 

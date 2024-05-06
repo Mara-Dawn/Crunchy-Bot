@@ -5,7 +5,13 @@ from items.types import ItemState, ItemType
 
 class InventoryEmbed(discord.Embed):
 
-    def __init__(self, inventory: UserInventory):
+    ITEMS_PER_PAGE = 10
+
+    def __init__(
+        self,
+        inventory: UserInventory,
+        start_offset: int = 0,
+    ):
         super().__init__(
             title=f"Inventory of {inventory.member_display_name}\nBeans: `🅱️{inventory.balance}`",
             color=discord.Colour.purple(),
@@ -13,10 +19,15 @@ class InventoryEmbed(discord.Embed):
         )
         inventory_items = inventory.items
 
+        self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")
         if len(inventory_items) == 0:
             self.add_field(name="", value="There is nothing here.", inline=False)
+            return
 
-        for item in inventory_items:
+        end_offset = min((start_offset + self.ITEMS_PER_PAGE), len(inventory_items))
+        display = inventory_items[start_offset:end_offset]
+
+        for item in display:
             count = inventory.get_item_count(item.type)
             disabled = inventory.get_item_state(item.type) is ItemState.DISABLED
             match item.type:
@@ -40,5 +51,3 @@ class InventoryEmbed(discord.Embed):
                     )
                 case _:
                     item.add_to_embed(self, 56, count=count, disabled=disabled)
-
-        self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")
