@@ -106,7 +106,7 @@ class AIManager(Service):
 
         if self.JAIL_EXTEND_COMMAND_MESSAGE.lower() in response_text.lower():
             time_now = datetime.datetime.now()
-            affected_jails = self.database.get_active_jails_by_member(message.guild.id, message.author.id)
+            affected_jails = await self.database.get_active_jails_by_member(message.guild.id, message.author.id)
             if len(affected_jails) > 0:
                 
                 event = JailEvent(
@@ -118,7 +118,7 @@ class AIManager(Service):
                     affected_jails[0].id,
                 )
                 await self.controller.dispatch_event(event)
-                remaining = self.jail_manager.get_jail_remaining(affected_jails[0])
+                remaining = await self.jail_manager.get_jail_remaining(affected_jails[0])
                 jail_announcement = (
                     f"<@{self.bot.user.id}> increased <@{message.author.id}>'s jail sentence by `{BotUtil.strfdelta(self.JAIL_COMMAND_DURATION, inputtype="minutes")}`. "
                     f"`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
@@ -185,7 +185,7 @@ class AIManager(Service):
                 self.channel_logs[channel_id].add_assistant_message(
                     reference_message.content
                 )
-        active_jails = self.database.get_active_jails_by_member(
+        active_jails = await self.database.get_active_jails_by_member(
             message.guild.id, message.author.id
         )
         jail_state = self.NOT_JAILED

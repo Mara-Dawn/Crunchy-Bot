@@ -49,8 +49,8 @@ class LootBoxViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
-        stunned_remaining = self.event_manager.get_stunned_remaining(
+        stun_base_duration = (await self.item_manager.get_item(guild_id, ItemType.BAT)).value
+        stunned_remaining = await self.event_manager.get_stunned_remaining(
             guild_id, interaction.user.id, stun_base_duration
         )
 
@@ -117,7 +117,7 @@ class LootBoxViewController(ViewController):
         self.controller.detach_view_by_id(view_id)
 
         message = await interaction.original_response()
-        loot_box = self.database.get_loot_box_by_message_id(guild_id, message.id)
+        loot_box = await self.database.get_loot_box_by_message_id(guild_id, message.id)
 
         title = "A Random Treasure has Appeared"
         if owner_id is not None:
@@ -135,7 +135,7 @@ class LootBoxViewController(ViewController):
         large_mimic = False
 
         if beans < 0:
-            bean_balance = self.database.get_member_beans(guild_id, member_id)
+            bean_balance = await self.database.get_member_beans(guild_id, member_id)
             
             large_mimic = await self.handle_mimic(interaction, embed, beans)
 
@@ -160,7 +160,7 @@ class LootBoxViewController(ViewController):
             embed.add_field(name="Woah, Shiny Items!", value="", inline=False)
 
             for item_type, amount in loot_box.items.items():
-                item = self.item_manager.get_item(guild_id, item_type)
+                item = await self.item_manager.get_item(guild_id, item_type)
                 item_count = item.base_amount * amount
                 item.add_to_embed(embed, 43, count=item_count, show_price=False)
                 log_message += f" and {item_count}x {item.name}"
@@ -203,7 +203,7 @@ class LootBoxViewController(ViewController):
             )
             if not success:
                 time_now = datetime.datetime.now()
-                affected_jails = self.database.get_active_jails_by_member(guild_id, member.id)
+                affected_jails = await self.database.get_active_jails_by_member(guild_id, member.id)
                 if len(affected_jails) > 0:
                     event = JailEvent(
                         time_now,
@@ -214,7 +214,7 @@ class LootBoxViewController(ViewController):
                         affected_jails[0].id,
                     )
                     await self.controller.dispatch_event(event)
-                    remaining = self.jail_manager.get_jail_remaining(affected_jails[0])
+                    remaining = await self.jail_manager.get_jail_remaining(affected_jails[0])
                     jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` have been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
                     await self.jail_manager.announce(interaction.guild, jail_announcement)
                 else:

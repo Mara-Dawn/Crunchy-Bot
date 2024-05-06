@@ -26,13 +26,13 @@ class RandomLoot(BeansGroup):
             or interaction.user.guild_permissions.administrator
         )
 
-    def __reevaluate_next_lootbox(self, guild_id: int) -> None:
-        min_wait = self.settings_manager.get_setting(
+    async def __reevaluate_next_lootbox(self, guild_id: int) -> None:
+        min_wait = await self.settings_manager.get_setting(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_LOOTBOX_MIN_WAIT_KEY,
         )
-        max_wait = self.settings_manager.get_setting(
+        max_wait = await self.settings_manager.get_setting(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
@@ -59,7 +59,7 @@ class RandomLoot(BeansGroup):
         self.logger.log(
             guild.id, "Adding lootbox timer for new guild.", cog=self.__cog_name__
         )
-        self.__reevaluate_next_lootbox(guild.id)
+        await self.__reevaluate_next_lootbox(guild.id)
 
     @commands.Cog.listener("on_guild_remove")
     async def on_guild_remove_randomloot(self, guild):
@@ -74,9 +74,9 @@ class RandomLoot(BeansGroup):
                 continue
 
             self.logger.log("sys", "Lootbox timeout reached.", cog=self.__cog_name__)
-            self.__reevaluate_next_lootbox(guild.id)
+            await self.__reevaluate_next_lootbox(guild.id)
 
-            bean_channels = self.settings_manager.get_beans_channels(guild.id)
+            bean_channels = await self.settings_manager.get_beans_channels(guild.id)
             if len(bean_channels) == 0:
                 continue
             await self.item_manager.drop_loot_box(guild, secrets.choice(bean_channels))
@@ -86,18 +86,18 @@ class RandomLoot(BeansGroup):
         self.logger.log("sys", "Lootbox before loop started.", cog=self.__cog_name__)
 
         for guild in self.bot.guilds:
-            min_wait = self.settings_manager.get_setting(
+            min_wait = await self.settings_manager.get_setting(
                 guild.id,
                 SettingsManager.BEANS_SUBSETTINGS_KEY,
                 SettingsManager.BEANS_LOOTBOX_MIN_WAIT_KEY,
             )
-            max_wait = self.settings_manager.get_setting(
+            max_wait = await self.settings_manager.get_setting(
                 guild.id,
                 SettingsManager.BEANS_SUBSETTINGS_KEY,
                 SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
             )
 
-            loot_box_event = self.database.get_last_loot_box_event(guild.id)
+            loot_box_event = await self.database.get_last_loot_box_event(guild.id)
             last_drop = datetime.datetime.now()
 
             if loot_box_event is not None:
@@ -137,7 +137,9 @@ class RandomLoot(BeansGroup):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def spawn_lootbox(self, interaction: discord.Interaction):
-        bean_channels = self.settings_manager.get_beans_channels(interaction.guild_id)
+        bean_channels = await self.settings_manager.get_beans_channels(
+            interaction.guild_id
+        )
         if len(bean_channels) == 0:
             await self.bot.command_response(
                 self.__cog_name__, interaction, "Error: No beans channel set."
@@ -149,7 +151,7 @@ class RandomLoot(BeansGroup):
         await self.bot.command_response(
             self.__cog_name__, interaction, "Loot box successfully spawned."
         )
-        self.__reevaluate_next_lootbox(interaction.guild.id)
+        await self.__reevaluate_next_lootbox(interaction.guild.id)
 
     @app_commands.command(
         name="lootbox_setup",
@@ -169,13 +171,13 @@ class RandomLoot(BeansGroup):
             [interaction.guild.id],
         )
 
-        modal.add_field(
+        await modal.add_field(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_LOOTBOX_MIN_WAIT_KEY,
             int,
         )
-        modal.add_field(
+        await modal.add_field(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,

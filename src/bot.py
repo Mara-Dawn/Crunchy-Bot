@@ -2,8 +2,8 @@ from typing import Any
 
 import discord
 from control.controller import Controller
-from control.database_manager import DatabaseManager
 from control.logger import BotLogger
+from datalayer.database import Database
 from discord.ext import commands
 
 
@@ -11,14 +11,20 @@ class CrunchyBot(commands.Bot):
 
     LOG_FILE = "./log/marabot.log"
     TENOR_TOKEN_FILE = "tenor.txt"
+    SEASON_DB_FILE = "season.sqlite"
+    CORE_DB_FILE = "database.sqlite"
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
     async def setup_hook(self) -> None:
         self.logger = BotLogger(self, self.LOG_FILE)
-        self.database = DatabaseManager(self, self.logger)
+        self.database = Database(
+            self, self.logger, self.CORE_DB_FILE, self.SEASON_DB_FILE
+        )
         self.controller = Controller(self, self.logger, self.database)
+
+        await self.database.init()
 
         await self.load_extension("cogs.police")
         await self.load_extension("cogs.jail")

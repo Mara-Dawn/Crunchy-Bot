@@ -74,14 +74,16 @@ class Interactions(commands.Cog):
     async def __check_enabled(self, interaction: discord.Interaction) -> bool:
         guild_id = interaction.guild_id
 
-        if not self.settings_manager.get_jail_enabled(guild_id):
+        if not await self.settings_manager.get_jail_enabled(guild_id):
             await self.bot.command_response(
                 self.__cog_name__, interaction, "Jail module is currently disabled."
             )
             return False
 
-        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
-        stunned_remaining = self.event_manager.get_stunned_remaining(
+        stun_base_duration = (
+            await self.item_manager.get_item(guild_id, ItemType.BAT)
+        ).value
+        stunned_remaining = await self.event_manager.get_stunned_remaining(
             guild_id, interaction.user.id, stun_base_duration
         )
 

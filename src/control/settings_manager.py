@@ -264,18 +264,20 @@ class SettingsManager(Service):
     async def listen_for_event(self, event: BotEvent) -> None:
         pass
 
-    def update_setting(self, guild: int, subsetting_key: str, key: str, value) -> None:
-        self.database.update_setting(guild, subsetting_key, key, value)
+    async def update_setting(
+        self, guild: int, subsetting_key: str, key: str, value
+    ) -> None:
+        await self.database.update_setting(guild, subsetting_key, key, value)
 
-    def get_setting(self, guild: int, subsetting_key: str, key: str):
-        result = self.database.get_setting(guild, subsetting_key, key)
+    async def get_setting(self, guild: int, subsetting_key: str, key: str):
+        result = await self.database.get_setting(guild, subsetting_key, key)
 
         if result is not None:
             return result
 
         return self.settings.get_default_setting(subsetting_key, key)
 
-    def get_setting_title(self, cog: str, key: str):
+    async def get_setting_title(self, cog: str, key: str):
         result = self.settings.get_module(cog)
 
         if result is None:
@@ -309,7 +311,7 @@ class SettingsManager(Service):
             " " + ", ".join([guild_obj.get_channel(id).name for id in channels]) + " "
         )
 
-    def get_settings_string(self, guild: int, cog: str = "") -> str:
+    async def get_settings_string(self, guild: int, cog: str = "") -> str:
         guild_obj = self.bot.get_guild(guild)
 
         indent = "    "
@@ -328,7 +330,7 @@ class SettingsManager(Service):
             for setting_key in module_settings:
 
                 setting = module_settings[setting_key]
-                value = self.get_setting(guild, module_key, setting_key)
+                value = await self.get_setting(guild, module_key, setting_key)
 
                 if setting.handler != "":
                     handler = getattr(self, setting.handler)
@@ -340,186 +342,190 @@ class SettingsManager(Service):
 
     # General Settings
 
-    def get_mod_channels(self, guild: int) -> list[int]:
+    async def get_mod_channels(self, guild: int) -> list[int]:
         return [
             int(x)
-            for x in self.get_setting(
+            for x in await self.get_setting(
                 guild, self.GENERAL_SUBSETTINGS_KEY, self.GENERAL_MOD_CHANNELS_KEY
             )
         ]
 
-    def add_mod_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_mod_channels(guild)
+    async def add_mod_channel(self, guild: int, channel: int) -> None:
+        channels = await self.get_mod_channels(guild)
         if channel not in channels:
             channels.append(channel)
-        self.update_setting(
+        await self.update_setting(
             guild, self.GENERAL_SUBSETTINGS_KEY, self.GENERAL_MOD_CHANNELS_KEY, channels
         )
 
-    def remove_mod_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_mod_channels(guild)
+    async def remove_mod_channel(self, guild: int, channel: int) -> None:
+        channels = await self.get_mod_channels(guild)
         if channel in channels:
             channels.remove(channel)
-        self.update_setting(
+        await self.update_setting(
             guild, self.GENERAL_SUBSETTINGS_KEY, self.GENERAL_MOD_CHANNELS_KEY, channels
         )
 
     # Police Settings
 
-    def get_police_enabled(self, guild: int) -> bool:
-        return self.get_setting(
+    async def get_police_enabled(self, guild: int) -> bool:
+        return await self.get_setting(
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_ENABLED_KEY
         )
 
-    def set_police_enabled(self, guild: int, enabled: bool) -> None:
-        self.update_setting(
+    async def set_police_enabled(self, guild: int, enabled: bool) -> None:
+        await self.update_setting(
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_ENABLED_KEY, enabled
         )
 
-    def get_police_naughty_roles(self, guild: int) -> list[int]:
+    async def get_police_naughty_roles(self, guild: int) -> list[int]:
         return [
             int(x)
-            for x in self.get_setting(
+            for x in await self.get_setting(
                 guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY
             )
         ]
 
-    def set_police_naughty_roles(self, guild: int, roles: list[int]) -> None:
-        self.update_setting(
+    async def set_police_naughty_roles(self, guild: int, roles: list[int]) -> None:
+        await self.update_setting(
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles
         )
 
-    def add_police_naughty_role(self, guild: int, role: int) -> None:
+    async def add_police_naughty_role(self, guild: int, role: int) -> None:
         roles = self.get_police_naughty_roles(guild)
         if role not in roles:
             roles.append(role)
-        self.update_setting(
+        await self.update_setting(
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles
         )
 
-    def remove_police_naughty_role(self, guild: int, role: int) -> None:
+    async def remove_police_naughty_role(self, guild: int, role: int) -> None:
         roles = self.get_police_naughty_roles(guild)
         if role in roles:
             roles.remove(role)
-        self.update_setting(
+        await self.update_setting(
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_NAUGHTY_ROLES_KEY, roles
         )
 
-    def get_police_exclude_channels(self, guild: int) -> list[int]:
+    async def get_police_exclude_channels(self, guild: int) -> list[int]:
         return [
             int(x)
-            for x in self.get_setting(
+            for x in await self.get_setting(
                 guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_EXCLUDED_CHANNELS_KEY
             )
         ]
 
-    def set_police_exclude_channels(self, guild: int, channels: list[int]) -> None:
-        self.update_setting(
+    async def set_police_exclude_channels(
+        self, guild: int, channels: list[int]
+    ) -> None:
+        await self.update_setting(
             guild,
             self.POLICE_SUBSETTINGS_KEY,
             self.POLICE_EXCLUDED_CHANNELS_KEY,
             channels,
         )
 
-    def add_police_exclude_channel(self, guild: int, channel: int) -> None:
+    async def add_police_exclude_channel(self, guild: int, channel: int) -> None:
         channels = self.get_police_exclude_channels(guild)
         if channel not in channels:
             channels.append(channel)
-        self.update_setting(
+        await self.update_setting(
             guild,
             self.POLICE_SUBSETTINGS_KEY,
             self.POLICE_EXCLUDED_CHANNELS_KEY,
             channels,
         )
 
-    def remove_police_exclude_channel(self, guild: int, channel: int) -> None:
+    async def remove_police_exclude_channel(self, guild: int, channel: int) -> None:
         channels = self.get_police_exclude_channels(guild)
         if channel in channels:
             channels.remove(channel)
-        self.update_setting(
+        await self.update_setting(
             guild,
             self.POLICE_SUBSETTINGS_KEY,
             self.POLICE_EXCLUDED_CHANNELS_KEY,
             channels,
         )
 
-    def get_police_timeout(self, guild: int) -> int:
+    async def get_police_timeout(self, guild: int) -> int:
         return int(
-            self.get_setting(
+            await self.get_setting(
                 guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_LENGTH_KEY
             )
         )
 
-    def set_police_timeout(self, guild: int, timeout: int) -> None:
-        self.update_setting(
+    async def set_police_timeout(self, guild: int, timeout: int) -> None:
+        await self.update_setting(
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_LENGTH_KEY, timeout
         )
 
-    def get_police_timeout_notice(self, guild: int) -> str:
-        return self.get_setting(
+    async def get_police_timeout_notice(self, guild: int) -> str:
+        return await self.get_setting(
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_NOTICE_KEY
         )
 
-    def set_police_timeout_notice(self, guild: int, message: str) -> None:
-        self.update_setting(
+    async def set_police_timeout_notice(self, guild: int, message: str) -> None:
+        await self.update_setting(
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUT_NOTICE_KEY, message
         )
 
-    def get_police_message_limit(self, guild: int) -> int:
+    async def get_police_message_limit(self, guild: int) -> int:
         return int(
-            self.get_setting(
+            await self.get_setting(
                 guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_KEY
             )
         )
 
-    def set_police_message_limit(self, guild: int, limit: int) -> None:
-        self.update_setting(
+    async def set_police_message_limit(self, guild: int, limit: int) -> None:
+        await self.update_setting(
             guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_MESSAGE_LIMIT_KEY, limit
         )
 
-    def get_police_message_limit_interval(self, guild: int) -> int:
+    async def get_police_message_limit_interval(self, guild: int) -> int:
         return int(
-            self.get_setting(
+            await self.get_setting(
                 guild,
                 self.POLICE_SUBSETTINGS_KEY,
                 self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY,
             )
         )
 
-    def set_police_message_limit_interval(self, guild: int, interval: int) -> None:
-        self.update_setting(
+    async def set_police_message_limit_interval(
+        self, guild: int, interval: int
+    ) -> None:
+        await self.update_setting(
             guild,
             self.POLICE_SUBSETTINGS_KEY,
             self.POLICE_MESSAGE_LIMIT_INTERVAL_KEY,
             interval,
         )
 
-    def get_police_timeouts_before_jail(self, guild: int) -> int:
+    async def get_police_timeouts_before_jail(self, guild: int) -> int:
         return int(
-            self.get_setting(
+            await self.get_setting(
                 guild, self.POLICE_SUBSETTINGS_KEY, self.POLICE_TIMEOUTS_BEFORE_JAIL_KEY
             )
         )
 
-    def set_police_timeouts_before_jail(self, guild: int, amount: int) -> None:
-        self.update_setting(
+    async def set_police_timeouts_before_jail(self, guild: int, amount: int) -> None:
+        await self.update_setting(
             guild,
             self.POLICE_SUBSETTINGS_KEY,
             self.POLICE_TIMEOUTS_BEFORE_JAIL_KEY,
             amount,
         )
 
-    def get_police_timeout_jail_duration(self, guild: int) -> int:
+    async def get_police_timeout_jail_duration(self, guild: int) -> int:
         return int(
-            self.get_setting(
+            await self.get_setting(
                 guild,
                 self.POLICE_SUBSETTINGS_KEY,
                 self.POLICE_TIMEOUT_JAIL_DURATION_KEY,
             )
         )
 
-    def set_police_timeout_jail_duration(self, guild: int, duration: int) -> None:
-        self.update_setting(
+    async def set_police_timeout_jail_duration(self, guild: int, duration: int) -> None:
+        await self.update_setting(
             guild,
             self.POLICE_SUBSETTINGS_KEY,
             self.POLICE_TIMEOUT_JAIL_DURATION_KEY,
@@ -528,308 +534,316 @@ class SettingsManager(Service):
 
     # Jail Settings
 
-    def get_jail_enabled(self, guild: int) -> bool:
-        return self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ENABLED_KEY)
+    async def get_jail_enabled(self, guild: int) -> bool:
+        return await self.get_setting(
+            guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ENABLED_KEY
+        )
 
-    def set_jail_enabled(self, guild: int, enabled: bool) -> None:
-        self.update_setting(
+    async def set_jail_enabled(self, guild: int, enabled: bool) -> None:
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ENABLED_KEY, enabled
         )
 
-    def get_jail_role(self, guild: int) -> int:
-        value = self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY)
+    async def get_jail_role(self, guild: int) -> int:
+        value = await self.get_setting(
+            guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY
+        )
         return int(value) if value != "" else 0
 
-    def set_jail_role(self, guild: int, role_id: int) -> None:
-        self.update_setting(
+    async def set_jail_role(self, guild: int, role_id: int) -> None:
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_ROLE_KEY, role_id
         )
 
-    def get_jail_channels(self, guild: int) -> list[int]:
+    async def get_jail_channels(self, guild: int) -> list[int]:
         return [
             int(x)
-            for x in self.get_setting(
+            for x in await self.get_setting(
                 guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY
             )
         ]
 
-    def set_jail_channels(self, guild: int, channels: list[int]) -> None:
-        self.update_setting(
+    async def set_jail_channels(self, guild: int, channels: list[int]) -> None:
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY, channels
         )
 
-    def add_jail_channel(self, guild: int, channel: int) -> None:
+    async def add_jail_channel(self, guild: int, channel: int) -> None:
         channels = self.get_jail_channels(guild)
         if channel not in channels:
             channels.append(channel)
-        self.update_setting(
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY, channels
         )
 
-    def remove_jail_channel(self, guild: int, channel: int) -> None:
+    async def remove_jail_channel(self, guild: int, channel: int) -> None:
         channels = self.get_jail_channels(guild)
         if channel in channels:
             channels.remove(channel)
-        self.update_setting(
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_CHANNELS_KEY, channels
         )
 
-    def get_jail_slap_time(self, guild: int) -> int:
+    async def get_jail_slap_time(self, guild: int) -> int:
         return int(
-            self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_SLAP_TIME_KEY)
+            await self.get_setting(
+                guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_SLAP_TIME_KEY
+            )
         )
 
-    def set_jail_slap_time(self, guild: int, time: int) -> None:
-        self.update_setting(
+    async def set_jail_slap_time(self, guild: int, time: int) -> None:
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_SLAP_TIME_KEY, time
         )
 
-    def get_jail_pet_time(self, guild: int) -> int:
+    async def get_jail_pet_time(self, guild: int) -> int:
         return int(
-            self.get_setting(guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_PET_TIME_KEY)
+            await self.get_setting(
+                guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_PET_TIME_KEY
+            )
         )
 
-    def set_jail_pet_time(self, guild: int, time: int) -> None:
-        self.update_setting(
+    async def set_jail_pet_time(self, guild: int, time: int) -> None:
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_PET_TIME_KEY, time
         )
 
-    def get_jail_fart_min(self, guild: int) -> int:
+    async def get_jail_fart_min(self, guild: int) -> int:
         return int(
-            self.get_setting(
+            await self.get_setting(
                 guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MIN_KEY
             )
         )
 
-    def set_jail_fart_min(self, guild: int, time: int) -> None:
-        self.update_setting(
+    async def set_jail_fart_min(self, guild: int, time: int) -> None:
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MIN_KEY, time
         )
 
-    def get_jail_fart_max(self, guild: int) -> int:
+    async def get_jail_fart_max(self, guild: int) -> int:
         return int(
-            self.get_setting(
+            await self.get_setting(
                 guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MAX_KEY
             )
         )
 
-    def set_jail_fart_max(self, guild: int, time: int) -> None:
-        self.update_setting(
+    async def set_jail_fart_max(self, guild: int, time: int) -> None:
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_FART_TIME_MAX_KEY, time
         )
 
-    def get_jail_base_crit_rate(self, guild: int) -> float:
+    async def get_jail_base_crit_rate(self, guild: int) -> float:
         return float(
-            self.get_setting(
+            await self.get_setting(
                 guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_RATE_KEY
             )
         )
 
-    def set_jail_base_crit_rate(self, guild: int, rate: float) -> None:
-        self.update_setting(
+    async def set_jail_base_crit_rate(self, guild: int, rate: float) -> None:
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_RATE_KEY, rate
         )
 
-    def get_jail_base_crit_mod(self, guild: int) -> float:
+    async def get_jail_base_crit_mod(self, guild: int) -> float:
         return float(
-            self.get_setting(
+            await self.get_setting(
                 guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_MOD_KEY
             )
         )
 
-    def set_jail_base_crit_mod(self, guild: int, mod: float) -> None:
-        self.update_setting(
+    async def set_jail_base_crit_mod(self, guild: int, mod: float) -> None:
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_BASE_CRIT_MOD_KEY, mod
         )
 
-    def get_jail_mod_roles(self, guild: int) -> list[int]:
+    async def get_jail_mod_roles(self, guild: int) -> list[int]:
         return [
             int(x)
-            for x in self.get_setting(
+            for x in await self.get_setting(
                 guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY
             )
         ]
 
-    def set_jail_mod_roles(self, guild: int, roles: list[int]) -> None:
-        self.update_setting(
+    async def set_jail_mod_roles(self, guild: int, roles: list[int]) -> None:
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles
         )
 
-    def add_jail_mod_role(self, guild: int, role: int) -> None:
+    async def add_jail_mod_role(self, guild: int, role: int) -> None:
         roles = self.get_jail_mod_roles(guild)
         if role not in roles:
             roles.append(role)
-        self.update_setting(
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles
         )
 
-    def remove_jail_mod_role(self, guild: int, role: int) -> None:
+    async def remove_jail_mod_role(self, guild: int, role: int) -> None:
         roles = self.get_jail_mod_roles(guild)
         if role not in roles:
             roles.remove(role)
-        self.update_setting(
+        await self.update_setting(
             guild, self.JAIL_SUBSETTINGS_KEY, self.JAIL_MOD_ROLES_KEY, roles
         )
 
     # Beans Settings
 
-    def get_beans_enabled(self, guild: int) -> bool:
-        return self.get_setting(
+    async def get_beans_enabled(self, guild: int) -> bool:
+        return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY
         )
 
-    def set_beans_enabled(self, guild: int, enabled: bool) -> None:
-        self.update_setting(
+    async def set_beans_enabled(self, guild: int, enabled: bool) -> None:
+        await self.update_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY, enabled
         )
 
-    def get_beans_daily_min(self, guild: int) -> int:
-        return self.get_setting(
+    async def get_beans_daily_min(self, guild: int) -> int:
+        return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN_KEY
         )
 
-    def set_beans_daily_min(self, guild: int, amount: int) -> None:
-        self.update_setting(
+    async def set_beans_daily_min(self, guild: int, amount: int) -> None:
+        await self.update_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN_KEY, amount
         )
 
-    def get_beans_daily_max(self, guild: int) -> int:
-        return self.get_setting(
+    async def get_beans_daily_max(self, guild: int) -> int:
+        return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX_KEY
         )
 
-    def set_beans_daily_max(self, guild: int, amount: int) -> None:
-        self.update_setting(
+    async def set_beans_daily_max(self, guild: int, amount: int) -> None:
+        await self.update_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX_KEY, amount
         )
 
-    def get_beans_gamba_cost(self, guild: int) -> int:
-        return self.get_setting(
+    async def get_beans_gamba_cost(self, guild: int) -> int:
+        return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_DEFAULT_KEY
         )
 
-    def set_beans_gamba_cost(self, guild: int, amount: int) -> None:
-        self.update_setting(
+    async def set_beans_gamba_cost(self, guild: int, amount: int) -> None:
+        await self.update_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_DEFAULT_KEY, amount
         )
 
-    def get_beans_gamba_cooldown(self, guild: int) -> int:
-        return self.get_setting(
+    async def get_beans_gamba_cooldown(self, guild: int) -> int:
+        return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN_KEY
         )
 
-    def set_beans_gamba_cooldown(self, guild: int, seconds: int) -> None:
-        self.update_setting(
+    async def set_beans_gamba_cooldown(self, guild: int, seconds: int) -> None:
+        await self.update_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_COOLDOWN_KEY, seconds
         )
 
-    def get_beans_channels(self, guild: int) -> list[int]:
+    async def get_beans_channels(self, guild: int) -> list[int]:
         return [
             int(x)
-            for x in self.get_setting(
+            for x in await self.get_setting(
                 guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY
             )
         ]
 
-    def add_beans_channel(self, guild: int, channel: int) -> None:
+    async def add_beans_channel(self, guild: int, channel: int) -> None:
         channels = self.get_beans_channels(guild)
         if channel not in channels:
             channels.append(channel)
-        self.update_setting(
+        await self.update_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY, channels
         )
 
-    def remove_beans_channel(self, guild: int, channel: int) -> None:
+    async def remove_beans_channel(self, guild: int, channel: int) -> None:
         channels = self.get_beans_channels(guild)
         if channel in channels:
             channels.remove(channel)
-        self.update_setting(
+        await self.update_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_CHANNELS_KEY, channels
         )
 
-    def get_beans_gamba_min(self, guild: int) -> int:
-        return self.get_setting(
+    async def get_beans_gamba_min(self, guild: int) -> int:
+        return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MIN_KEY
         )
 
-    def set_beans_gamba_min(self, guild: int, amount: int) -> None:
-        self.update_setting(
+    async def set_beans_gamba_min(self, guild: int, amount: int) -> None:
+        await self.update_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MIN_KEY, amount
         )
 
-    def get_beans_gamba_max(self, guild: int) -> int:
-        return self.get_setting(
+    async def get_beans_gamba_max(self, guild: int) -> int:
+        return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MAX_KEY
         )
 
-    def set_beans_gamba_max(self, guild: int, amount: int) -> None:
-        self.update_setting(
+    async def set_beans_gamba_max(self, guild: int, amount: int) -> None:
+        await self.update_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MAX_KEY, amount
         )
 
-    def get_beans_bonus_amount_10(self, guild: int) -> int:
-        return self.get_setting(
+    async def get_beans_bonus_amount_10(self, guild: int) -> int:
+        return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_10_KEY
         )
 
-    def set_beans_bonus_amount_10(self, guild: int, amount: int) -> None:
-        self.update_setting(
+    async def set_beans_bonus_amount_10(self, guild: int, amount: int) -> None:
+        await self.update_setting(
             guild,
             self.BEANS_SUBSETTINGS_KEY,
             self.BEANS_BONUS_CARD_AMOUNT_10_KEY,
             amount,
         )
 
-    def get_beans_bonus_amount_25(self, guild: int) -> int:
-        return self.get_setting(
+    async def get_beans_bonus_amount_25(self, guild: int) -> int:
+        return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_25_KEY
         )
 
-    def set_beans_bonus_amount_25(self, guild: int, amount: int) -> None:
-        self.update_setting(
+    async def set_beans_bonus_amount_25(self, guild: int, amount: int) -> None:
+        await self.update_setting(
             guild,
             self.BEANS_SUBSETTINGS_KEY,
             self.BEANS_BONUS_CARD_AMOUNT_25_KEY,
             amount,
         )
 
-    def get_beans_lottery_base_amount(self, guild: int) -> int:
-        return self.get_setting(
+    async def get_beans_lottery_base_amount(self, guild: int) -> int:
+        return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_LOTTERY_BASE_AMOUNT_KEY
         )
 
-    def set_beans_lottery_base_amount(self, guild: int, amount: int) -> None:
-        self.update_setting(
+    async def set_beans_lottery_base_amount(self, guild: int, amount: int) -> None:
+        await self.update_setting(
             guild,
             self.BEANS_SUBSETTINGS_KEY,
             self.BEANS_LOTTERY_BASE_AMOUNT_KEY,
             amount,
         )
 
-    def get_beans_notification_channels(self, guild: int) -> list[int]:
+    async def get_beans_notification_channels(self, guild: int) -> list[int]:
         return [
             int(x)
-            for x in self.get_setting(
+            for x in await self.get_setting(
                 guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_NOTIFICATION_CHANNELS_KEY
             )
         ]
 
-    def add_beans_notification_channel(self, guild: int, channel: int) -> None:
+    async def add_beans_notification_channel(self, guild: int, channel: int) -> None:
         channels = self.get_beans_notification_channels(guild)
         if channel not in channels:
             channels.append(channel)
-        self.update_setting(
+        await self.update_setting(
             guild,
             self.BEANS_SUBSETTINGS_KEY,
             self.BEANS_NOTIFICATION_CHANNELS_KEY,
             channels,
         )
 
-    def remove_beans_notification_channel(self, guild: int, channel: int) -> None:
+    async def remove_beans_notification_channel(self, guild: int, channel: int) -> None:
         channels = self.get_beans_notification_channels(guild)
         if channel in channels:
             channels.remove(channel)
-        self.update_setting(
+        await self.update_setting(
             guild,
             self.BEANS_SUBSETTINGS_KEY,
             self.BEANS_NOTIFICATION_CHANNELS_KEY,
@@ -838,64 +852,70 @@ class SettingsManager(Service):
 
     # Shop Settings
 
-    def get_shop_enabled(self, guild: int) -> bool:
-        return self.get_setting(guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY)
+    async def get_shop_enabled(self, guild: int) -> bool:
+        return await self.get_setting(
+            guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY
+        )
 
-    def set_shop_enabled(self, guild: int, enabled: bool) -> None:
-        self.update_setting(
+    async def set_shop_enabled(self, guild: int, enabled: bool) -> None:
+        await self.update_setting(
             guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY, enabled
         )
 
-    def get_shop_item_price(self, guild: int, item_type: ItemType) -> int:
-        return self.get_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type.value)
+    async def get_shop_item_price(self, guild: int, item_type: ItemType) -> int:
+        return await self.get_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type.value)
 
-    def set_shop_item_price(self, guild: int, item_type: ItemType, amount: int) -> None:
-        self.update_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type.value, amount)
+    async def set_shop_item_price(
+        self, guild: int, item_type: ItemType, amount: int
+    ) -> None:
+        await self.update_setting(
+            guild, self.SHOP_SUBSETTINGS_KEY, item_type.value, amount
+        )
 
     # Bully Settings
 
-    def get_bully_enabled(self, guild: int) -> bool:
-        return self.get_setting(
+    async def get_bully_enabled(self, guild: int) -> bool:
+        return await self.get_setting(
             guild, self.BULLY_SUBSETTINGS_KEY, self.BULLY_ENABLED_KEY
         )
 
-    def set_bully_enabled(self, guild: int, enabled: bool) -> None:
-        self.update_setting(
+    async def set_bully_enabled(self, guild: int, enabled: bool) -> None:
+        await self.update_setting(
             guild, self.BULLY_SUBSETTINGS_KEY, self.BULLY_ENABLED_KEY, enabled
         )
 
-    def get_bully_exclude_channels(self, guild: int) -> list[int]:
+    async def get_bully_exclude_channels(self, guild: int) -> list[int]:
         return [
             int(x)
-            for x in self.get_setting(
+            for x in await self.get_setting(
                 guild, self.BULLY_SUBSETTINGS_KEY, self.BULLY_EXCLUDED_CHANNELS_KEY
             )
         ]
 
-    def set_bully_exclude_channels(self, guild: int, channels: list[int]) -> None:
-        self.update_setting(
+    async def set_bully_exclude_channels(self, guild: int, channels: list[int]) -> None:
+        await self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,
             self.BULLY_EXCLUDED_CHANNELS_KEY,
             channels,
         )
 
-    def add_bully_exclude_channel(self, guild: int, channel: int) -> None:
+    async def add_bully_exclude_channel(self, guild: int, channel: int) -> None:
         channels = self.get_bully_exclude_channels(guild)
         if channel not in channels:
             channels.append(channel)
-        self.update_setting(
+        await self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,
             self.BULLY_EXCLUDED_CHANNELS_KEY,
             channels,
         )
 
-    def remove_bully_exclude_channel(self, guild: int, channel: int) -> None:
+    async def remove_bully_exclude_channel(self, guild: int, channel: int) -> None:
         channels = self.get_bully_exclude_channels(guild)
         if channel in channels:
             channels.remove(channel)
-        self.update_setting(
+        await self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,
             self.BULLY_EXCLUDED_CHANNELS_KEY,
@@ -904,73 +924,73 @@ class SettingsManager(Service):
 
     # Predictions Settings
 
-    def get_predictions_enabled(self, guild: int) -> bool:
-        return self.get_setting(
+    async def get_predictions_enabled(self, guild: int) -> bool:
+        return await self.get_setting(
             guild, self.PREDICTIONS_SUBSETTINGS_KEY, self.PREDICTIONS_ENABLED_KEY
         )
 
-    def set_predictions_enabled(self, guild: int, enabled: bool) -> None:
-        self.update_setting(
+    async def set_predictions_enabled(self, guild: int, enabled: bool) -> None:
+        await self.update_setting(
             guild,
             self.PREDICTIONS_SUBSETTINGS_KEY,
             self.PREDICTIONS_ENABLED_KEY,
             enabled,
         )
 
-    def get_predictions_mod_roles(self, guild: int) -> list[int]:
+    async def get_predictions_mod_roles(self, guild: int) -> list[int]:
         return [
             int(x)
-            for x in self.get_setting(
+            for x in await self.get_setting(
                 guild, self.PREDICTIONS_SUBSETTINGS_KEY, self.PREDICTIONS_MOD_ROLES_KEY
             )
         ]
 
-    def add_predictions_mod_role(self, guild: int, role: int) -> None:
+    async def add_predictions_mod_role(self, guild: int, role: int) -> None:
         roles = self.get_predictions_mod_roles(guild)
         if role not in roles:
             roles.append(role)
-        self.update_setting(
+        await self.update_setting(
             guild,
             self.PREDICTIONS_SUBSETTINGS_KEY,
             self.PREDICTIONS_MOD_ROLES_KEY,
             roles,
         )
 
-    def remove_predictions_mod_role(self, guild: int, role: int) -> None:
+    async def remove_predictions_mod_role(self, guild: int, role: int) -> None:
         roles = self.get_jail_mod_roles(guild)
         if role not in roles:
             roles.remove(role)
-        self.update_setting(
+        await self.update_setting(
             guild,
             self.PREDICTIONS_SUBSETTINGS_KEY,
             self.PREDICTIONS_MOD_ROLES_KEY,
             roles,
         )
 
-    def get_predictions_channels(self, guild: int) -> list[int]:
+    async def get_predictions_channels(self, guild: int) -> list[int]:
         return [
             int(x)
-            for x in self.get_setting(
+            for x in await self.get_setting(
                 guild, self.PREDICTIONS_SUBSETTINGS_KEY, self.PREDICTIONS_CHANNELS_KEY
             )
         ]
 
-    def add_predictions_channel(self, guild: int, channel: int) -> None:
+    async def add_predictions_channel(self, guild: int, channel: int) -> None:
         channels = self.get_predictions_channels(guild)
         if channel not in channels:
             channels.append(channel)
-        self.update_setting(
+        await self.update_setting(
             guild,
             self.PREDICTIONS_SUBSETTINGS_KEY,
             self.PREDICTIONS_CHANNELS_KEY,
             channels,
         )
 
-    def remove_predictions_channel(self, guild: int, channel: int) -> None:
+    async def remove_predictions_channel(self, guild: int, channel: int) -> None:
         channels = self.get_predictions_channels(guild)
         if channel in channels:
             channels.remove(channel)
-        self.update_setting(
+        await self.update_setting(
             guild,
             self.PREDICTIONS_SUBSETTINGS_KEY,
             self.PREDICTIONS_CHANNELS_KEY,

@@ -45,7 +45,7 @@ class PredictionViewController(ViewController):
         match event.type:
             case EventType.PREDICTION:
                 prediction_event: PredictionEvent = event
-                prediction_stats = self.database.get_prediction_stats_by_guild(
+                prediction_stats = await self.database.get_prediction_stats_by_guild(
                     prediction_event.guild_id
                 )
                 event = UIEvent(
@@ -58,10 +58,10 @@ class PredictionViewController(ViewController):
                     prediction_event.prediction_event_type
                     == PredictionEventType.PLACE_BET
                 ):
-                    user_bets = self.database.get_prediction_bets_by_user(
+                    user_bets = await self.database.get_prediction_bets_by_user(
                         prediction_event.guild_id, prediction_event.member_id
                     )
-                    user_balance = self.database.get_member_beans(
+                    user_balance = await self.database.get_member_beans(
                         prediction_event.guild_id, prediction_event.member_id
                     )
                     event = UIEvent(
@@ -73,7 +73,7 @@ class PredictionViewController(ViewController):
                 beans_event: BeansEvent = event
                 if beans_event.value == 0:
                     return
-                new_user_balance = self.database.get_member_beans(
+                new_user_balance = await self.database.get_member_beans(
                     beans_event.guild_id, beans_event.member_id
                 )
                 event = UIEvent(
@@ -93,7 +93,7 @@ class PredictionViewController(ViewController):
                 | UIEventType.PREDICTION_INTERACTION_PARENT_CHANGED
             ):
                 guild_id = event.payload
-                prediction_stats = self.database.get_prediction_stats_by_guild(guild_id)
+                prediction_stats = await self.database.get_prediction_stats_by_guild(guild_id)
                 event = UIEvent(
                     UIEventType.PREDICTION_REFRESH, prediction_stats, event.view_id
                 )
@@ -126,7 +126,7 @@ class PredictionViewController(ViewController):
         )
 
     async def submit_prediction(self, prediction: Prediction):
-        prediction_id = self.database.log_prediction(prediction)
+        prediction_id = await self.database.log_prediction(prediction)
         event = PredictionEvent(
             datetime.datetime.now(),
             prediction.guild_id,
@@ -147,7 +147,7 @@ class PredictionViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        user_bets = self.database.get_prediction_bets_by_user(
+        user_bets = await self.database.get_prediction_bets_by_user(
             interaction.guild_id, interaction.user.id
         )
 
@@ -182,7 +182,7 @@ class PredictionViewController(ViewController):
             )
             return False
 
-        user_balance = self.database.get_member_beans(guild_id, member_id)
+        user_balance = await self.database.get_member_beans(guild_id, member_id)
 
         if user_balance < selected_bet_amount:
             await interaction.followup.send(

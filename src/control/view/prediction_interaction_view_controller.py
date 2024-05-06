@@ -41,11 +41,11 @@ class PredictionInteractionViewController(ViewController):
         match event.type:
             case EventType.PREDICTION:
                 prediction_event: PredictionEvent = event
-                prediction = self.database.get_prediction_by_id(
+                prediction = await self.database.get_prediction_by_id(
                     prediction_event.prediction_id
                 )
-                prediction_stats = self.database.get_prediction_stats_by_prediction(
-                    prediction
+                prediction_stats = (
+                    await self.database.get_prediction_stats_by_prediction(prediction)
                 )
                 event = UIEvent(
                     UIEventType.PREDICTION_INTERACTION_REFRESH,
@@ -102,7 +102,9 @@ class PredictionInteractionViewController(ViewController):
             message = await interaction.original_response()
             await message.delete()
 
-        prediction_stats = self.database.get_prediction_stats_by_prediction(prediction)
+        prediction_stats = await self.database.get_prediction_stats_by_prediction(
+            prediction
+        )
         view.prediction_stats = prediction_stats
 
         await view.refresh_ui()
@@ -126,7 +128,7 @@ class PredictionInteractionViewController(ViewController):
         prediction.state = PredictionState.DONE
         prediction.moderator_id = member_id
 
-        self.database.update_prediction(prediction)
+        await self.database.update_prediction(prediction)
 
         event = PredictionEvent(
             datetime.datetime.now(),
@@ -138,8 +140,12 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        prediction_stats = self.database.get_prediction_stats_by_prediction(prediction)
-        winners = self.database.get_prediction_bets_by_outcome(selected_outcome_id)
+        prediction_stats = await self.database.get_prediction_stats_by_prediction(
+            prediction
+        )
+        winners = await self.database.get_prediction_bets_by_outcome(
+            selected_outcome_id
+        )
         odds = prediction_stats.get_odds(selected_outcome_id)
         odds_text = round(odds, 2)
         if int(odds) == odds:
@@ -185,7 +191,7 @@ class PredictionInteractionViewController(ViewController):
             message += f"```python\nTotal Pot: 🅱️{total}\nReward: 5%\n-----------------------\nPayout:🅱️{payout}```"
             await author.send(message)
 
-        bean_channels = self.settings_manager.get_beans_notification_channels(
+        bean_channels = await self.settings_manager.get_beans_notification_channels(
             interaction.guild_id
         )
         announcement = (
@@ -211,7 +217,7 @@ class PredictionInteractionViewController(ViewController):
         prediction.state = PredictionState.DENIED
         prediction.moderator_id = member_id
 
-        self.database.update_prediction(prediction)
+        await self.database.update_prediction(prediction)
 
         event = PredictionEvent(
             datetime.datetime.now(),
@@ -236,7 +242,7 @@ class PredictionInteractionViewController(ViewController):
         prediction.state = PredictionState.LOCKED
         prediction.moderator_id = member_id
 
-        self.database.update_prediction(prediction)
+        await self.database.update_prediction(prediction)
 
         event = PredictionEvent(
             datetime.datetime.now(),
@@ -247,7 +253,7 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        bean_channels = self.settings_manager.get_beans_notification_channels(
+        bean_channels = await self.settings_manager.get_beans_notification_channels(
             interaction.guild_id
         )
         announcement = (
@@ -273,7 +279,7 @@ class PredictionInteractionViewController(ViewController):
         prediction.state = PredictionState.APPROVED
         prediction.moderator_id = member_id
 
-        self.database.update_prediction(prediction)
+        await self.database.update_prediction(prediction)
 
         event = PredictionEvent(
             datetime.datetime.now(),
@@ -284,7 +290,7 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        bean_channels = self.settings_manager.get_beans_notification_channels(
+        bean_channels = await self.settings_manager.get_beans_notification_channels(
             interaction.guild_id
         )
         announcement = (
@@ -312,7 +318,7 @@ class PredictionInteractionViewController(ViewController):
         prediction.state = PredictionState.APPROVED
         prediction.moderator_id = member_id
 
-        self.database.update_prediction(prediction)
+        await self.database.update_prediction(prediction)
 
         event = PredictionEvent(
             datetime.datetime.now(),
@@ -339,7 +345,7 @@ class PredictionInteractionViewController(ViewController):
             )
             await self.controller.dispatch_event(event)
 
-        bean_channels = self.settings_manager.get_beans_notification_channels(
+        bean_channels = await self.settings_manager.get_beans_notification_channels(
             interaction.guild_id
         )
         announcement = (
@@ -365,7 +371,7 @@ class PredictionInteractionViewController(ViewController):
         view_id: int,
     ):
         prediction.author_id = self.bot.user.id
-        prediction_id = self.database.log_prediction(prediction)
+        prediction_id = await self.database.log_prediction(prediction)
         event = PredictionEvent(
             datetime.datetime.now(),
             prediction.guild_id,
@@ -375,7 +381,7 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        new_prediction = self.database.get_prediction_by_id(prediction_id)
+        new_prediction = await self.database.get_prediction_by_id(prediction_id)
 
         success_message = "You successfully resubmitted your selected prediction."
         await interaction.followup.send(success_message, ephemeral=True)
@@ -391,7 +397,7 @@ class PredictionInteractionViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        self.database.update_prediction(updated_prediction)
+        await self.database.update_prediction(updated_prediction)
 
         event = PredictionEvent(
             datetime.datetime.now(),
@@ -418,7 +424,7 @@ class PredictionInteractionViewController(ViewController):
         prediction.state = PredictionState.REFUNDED
         prediction.moderator_id = member_id
 
-        self.database.update_prediction(prediction)
+        await self.database.update_prediction(prediction)
 
         event = PredictionEvent(
             datetime.datetime.now(),
@@ -429,7 +435,7 @@ class PredictionInteractionViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        data = self.database.get_prediction_bets_by_id(prediction.id)
+        data = await self.database.get_prediction_bets_by_id(prediction.id)
 
         for user_id, amount in data.items():
             if user_id == self.bot.user.id:

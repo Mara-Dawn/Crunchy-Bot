@@ -47,7 +47,7 @@ class Shop(commands.Cog):
     async def __check_enabled(self, interaction: discord.Interaction):
         guild_id = interaction.guild_id
 
-        if not self.settings_manager.get_shop_enabled(guild_id):
+        if not await self.settings_manager.get_shop_enabled(guild_id):
             await self.bot.command_response(
                 self.__cog_name__,
                 interaction,
@@ -55,8 +55,9 @@ class Shop(commands.Cog):
             )
             return False
 
-        if interaction.channel_id not in self.settings_manager.get_beans_channels(
-            guild_id
+        if (
+            interaction.channel_id
+            not in await self.settings_manager.get_beans_channels(guild_id)
         ):
             await self.bot.command_response(
                 self.__cog_name__,
@@ -65,8 +66,10 @@ class Shop(commands.Cog):
             )
             return False
 
-        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
-        stunned_remaining = self.event_manager.get_stunned_remaining(
+        stun_base_duration = (
+            await self.item_manager.get_item(guild_id, ItemType.BAT)
+        ).value
+        stunned_remaining = await self.event_manager.get_stunned_remaining(
             guild_id, interaction.user.id, stun_base_duration
         )
 
@@ -94,7 +97,7 @@ class Shop(commands.Cog):
         self.logger.log("sys", "Daily Item Check started.", cog=self.__cog_name__)
 
         for guild in self.bot.guilds:
-            if not self.settings_manager.get_beans_enabled(guild.id):
+            if not await self.settings_manager.get_beans_enabled(guild.id):
                 self.logger.log("sys", "Beans module disabled.", cog=self.__cog_name__)
                 return
 
@@ -104,7 +107,8 @@ class Shop(commands.Cog):
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
         items = [
-            self.item_manager.get_item(interaction.guild_id, enum) for enum in ItemType
+            await self.item_manager.get_item(interaction.guild_id, enum)
+            for enum in ItemType
         ]
         choices = [
             app_commands.Choice(
@@ -130,14 +134,14 @@ class Shop(commands.Cog):
 
         shop_img = discord.File("./img/shop.png", "shop.png")
         police_img = discord.File("./img/police.png", "police.png")
-        items = self.item_manager.get_shop_items(interaction.guild_id)
+        items = await self.item_manager.get_shop_items(interaction.guild_id)
 
         items = sorted(items, key=lambda x: (x.shop_category.value, x.cost))
 
-        user_balance = self.database.get_member_beans(
+        user_balance = await self.database.get_member_beans(
             interaction.guild.id, interaction.user.id
         )
-        user_items = self.database.get_item_counts_by_user(
+        user_items = await self.database.get_item_counts_by_user(
             interaction.guild.id, interaction.user.id
         )
         embed = ShopEmbed(interaction.guild.name, interaction.user.id, items)
@@ -210,7 +214,7 @@ class Shop(commands.Cog):
         member_id = user.id
 
         item_type = ItemType(item)
-        item_obj = self.item_manager.get_item(guild_id, item_type)
+        item_obj = await self.item_manager.get_item(guild_id, item_type)
 
         await self.item_manager.give_item(
             guild_id, member_id, item_obj, amount, force=True
@@ -234,7 +238,7 @@ class Shop(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def get_settings(self, interaction: discord.Interaction):
-        output = self.settings_manager.get_settings_string(
+        output = await self.settings_manager.get_settings_string(
             interaction.guild_id, SettingsManager.SHOP_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
@@ -248,7 +252,9 @@ class Shop(commands.Cog):
     async def set_toggle(
         self, interaction: discord.Interaction, enabled: Literal["on", "off"]
     ):
-        self.settings_manager.set_shop_enabled(interaction.guild_id, enabled == "on")
+        await self.settings_manager.set_shop_enabled(
+            interaction.guild_id, enabled == "on"
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -281,7 +287,9 @@ class Shop(commands.Cog):
 
         item = ItemType(item)
 
-        self.settings_manager.set_shop_item_price(interaction.guild_id, item, amount)
+        await self.settings_manager.set_shop_item_price(
+            interaction.guild_id, item, amount
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,

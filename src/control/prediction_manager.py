@@ -59,11 +59,13 @@ class PredictionManager(Service):
                     case PredictionEventType.SUBMIT | PredictionEventType.DENY:
                         return
                     case _:
-                        prediction = self.database.get_prediction_by_id(
+                        prediction = await self.database.get_prediction_by_id(
                             prediction_event.prediction_id
                         )
                         prediction_stats = (
-                            self.database.get_prediction_stats_by_prediction(prediction)
+                            await self.database.get_prediction_stats_by_prediction(
+                                prediction
+                            )
                         )
                         event = UIEvent(
                             UIEventType.PREDICTION_OVERVIEW_REFRESH,
@@ -72,9 +74,11 @@ class PredictionManager(Service):
                         await self.controller.dispatch_ui_event(event)
 
     async def refresh_prediction_messages(self, guild_id: int):
-        prediction_channels = self.settings_manager.get_predictions_channels(guild_id)
+        prediction_channels = await self.settings_manager.get_predictions_channels(
+            guild_id
+        )
 
-        prediction_stats = self.database.get_prediction_stats_by_guild(
+        prediction_stats = await self.database.get_prediction_stats_by_guild(
             guild_id, [PredictionState.APPROVED, PredictionState.LOCKED]
         )
 
@@ -96,7 +100,7 @@ class PredictionManager(Service):
 
             await channel.purge()
 
-            self.database.clear_prediction_overview_messages(channel_id)
+            await self.database.clear_prediction_overview_messages(channel_id)
 
             head_embed = PredictionEmbed(guild.name)
             head_view = PredictionInfoView(self.controller)
@@ -109,17 +113,19 @@ class PredictionManager(Service):
                 message = await channel.send(content="", view=view)
                 view.set_message(message)
                 await view.refresh_ui()
-                self.database.add_prediction_overview_message(
+                await self.database.add_prediction_overview_message(
                     stats.prediction.id, message.id, channel_id
                 )
 
     async def init_existing_prediction_messages(self, guild_id: int):
 
-        prediction_stats = self.database.get_prediction_stats_by_guild(
+        prediction_stats = await self.database.get_prediction_stats_by_guild(
             guild_id, [PredictionState.APPROVED, PredictionState.LOCKED]
         )
 
-        prediction_channels = self.settings_manager.get_predictions_channels(guild_id)
+        prediction_channels = await self.settings_manager.get_predictions_channels(
+            guild_id
+        )
 
         guild = self.bot.get_guild(guild_id)
 
@@ -148,7 +154,7 @@ class PredictionManager(Service):
 
             for stats in prediction_stats:
                 await asyncio.sleep(5)  # avoid rate limiting
-                message_id = self.database.get_prediction_overview_message(
+                message_id = await self.database.get_prediction_overview_message(
                     stats.prediction.id, channel_id
                 )
                 if message_id is None:
@@ -172,13 +178,13 @@ class PredictionManager(Service):
     ):
         await interaction.response.defer(ephemeral=True)
 
-        prediction_stats = self.database.get_prediction_stats_by_guild(
+        prediction_stats = await self.database.get_prediction_stats_by_guild(
             interaction.guild_id, [PredictionState.APPROVED, PredictionState.LOCKED]
         )
-        user_balance = self.database.get_member_beans(
+        user_balance = await self.database.get_member_beans(
             interaction.guild.id, interaction.user.id
         )
-        user_bets = self.database.get_prediction_bets_by_user(
+        user_bets = await self.database.get_prediction_bets_by_user(
             interaction.guild.id, interaction.user.id
         )
 
@@ -199,7 +205,7 @@ class PredictionManager(Service):
     ):
         await interaction.response.defer(ephemeral=True)
 
-        prediction_stats = self.database.get_prediction_stats_by_guild(
+        prediction_stats = await self.database.get_prediction_stats_by_guild(
             interaction.guild_id
         )
 

@@ -49,11 +49,15 @@ class DatabaseManager:
 
         return wrapper
 
-    def migrate_permanent_items(self, item_manager: ItemManager):
+    async def init(self):
+        await self.db_core.create_tables()
+        await self.db_season.create_tables()
+
+    async def migrate_permanent_items(self, item_manager: ItemManager):
         for guild in self.bot.guilds:
-            guild_item_counts = self.db_core.get_item_counts_by_guild(guild.id)
+            guild_item_counts = await self.db_core.get_item_counts_by_guild(guild.id)
             for user_id, item_counts in guild_item_counts.items():
-                current_user_items = self.db_season.get_item_counts_by_user(
+                current_user_items = await self.db_season.get_item_counts_by_user(
                     guild.id, user_id
                 )
                 for item_type, count in item_counts.items():
@@ -72,4 +76,4 @@ class DatabaseManager:
                             item_type,
                             amount,
                         )
-                        self.db_season.log_event(event)
+                        await self.db_season.log_event(event)

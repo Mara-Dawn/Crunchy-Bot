@@ -37,7 +37,7 @@ class RankingViewController(ViewController):
     ):
         image = "./img/jail_wide.png"
 
-        ranking_data = self.event_manager.get_user_rankings(
+        ranking_data = await self.event_manager.get_user_rankings(
             interaction.guild_id, ranking_type
         )
         ranking_img = discord.File(image, "ranking_img.png")

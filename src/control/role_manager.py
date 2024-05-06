@@ -137,7 +137,7 @@ class RoleManager(Service):
 
         await custom_role.edit(position=max_pos)
 
-        self.database.log_custom_role(guild.id, user.id, custom_role.id)
+        await self.database.log_custom_role(guild.id, user.id, custom_role.id)
 
         await user.add_roles(custom_role)
 
@@ -145,8 +145,8 @@ class RoleManager(Service):
         guild: discord.Guild = self.bot.get_guild(guild_id)
         member: discord.Member = guild.get_member(user_id)
 
-        custom_role_id = self.database.get_custom_role(guild_id, user_id)
-        custom_color = self.database.get_custom_color(guild_id, user_id)
+        custom_role_id = await self.database.get_custom_role(guild_id, user_id)
+        custom_color = await self.database.get_custom_color(guild_id, user_id)
 
         if custom_color is None:
             return
@@ -154,7 +154,7 @@ class RoleManager(Service):
         hex_value = int(custom_color, 16)
 
         color = discord.Color(hex_value)
-        user_items = self.database.get_item_counts_by_user(guild_id, user_id)
+        user_items = await self.database.get_item_counts_by_user(guild_id, user_id)
 
         name_token_count = 0
 

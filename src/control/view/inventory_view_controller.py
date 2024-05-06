@@ -105,7 +105,7 @@ class InventoryViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        item = self.item_manager.get_item(guild_id, item_type)
+        item = await self.item_manager.get_item(guild_id, item_type)
 
         beans = sell_amount * int(
             (item.cost * UserInventory.SELL_MODIFIER) / item.base_amount
@@ -133,10 +133,14 @@ class InventoryViewController(ViewController):
         match item_action:
             case ActionType.DISABLE_ACTION:
                 item_state = ItemState.DISABLED
-                self.database.log_item_state(guild_id, user_id, item_type, item_state)
+                await self.database.log_item_state(
+                    guild_id, user_id, item_type, item_state
+                )
             case ActionType.ENABLE_ACTION:
                 item_state = ItemState.ENABLED
-                self.database.log_item_state(guild_id, user_id, item_type, item_state)
+                await self.database.log_item_state(
+                    guild_id, user_id, item_type, item_state
+                )
             case ActionType.USE_ACTION:
                 await self.item_manager.use_item(interaction.guild, user_id, item_type)
 
