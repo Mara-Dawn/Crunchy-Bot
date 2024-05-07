@@ -123,8 +123,8 @@ class ItemManager(Service):
 
         # Spawn Chances
         mimic_chance = 0.1
-        large_chest_chance = 0.04
-        large_mimic_chance = 0.03
+        large_chest_chance = 0.02
+        large_mimic_chance = 0.02
         lucky_item_chance = 0.02
 
         # Chest Ranges

@@ -169,7 +169,7 @@ class Gamba(commands.Cog):
             if delta_seconds <= cooldown:
                 cooldown_remaining = cooldown - delta_seconds
 
-        user_items = self.item_manager.get_user_items_activated(
+        user_items = await self.item_manager.get_user_items_activated(
             guild_id, user_id, ItemTrigger.GAMBA
         )
 

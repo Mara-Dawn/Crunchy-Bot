@@ -129,7 +129,7 @@ class InteractionManager(Service):
         command_type: UserInteraction,
         amount: int,
     ) -> tuple[float, str]:
-        user_items = self.item_manager.get_user_items_activated_by_interaction(
+        user_items = await self.item_manager.get_user_items_activated_by_interaction(
             interaction.guild_id, user.id, command_type
         )
         response = ""

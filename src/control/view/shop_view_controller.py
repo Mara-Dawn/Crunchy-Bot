@@ -145,6 +145,8 @@ class ShopViewController(ViewController):
                     self.controller, interaction, item, view_id
                 )
 
+                await view.init()
+
                 message = await interaction.followup.send(
                     "", embed=embed, view=view, ephemeral=True
                 )

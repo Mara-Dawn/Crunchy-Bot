@@ -207,8 +207,10 @@ class Interactions(commands.Cog):
         user_items = []
 
         if interaction.user.id != user.id:
-            user_items = self.item_manager.get_user_items_activated_by_interaction(
-                interaction.guild_id, interaction.user.id, command_type
+            user_items = (
+                await self.item_manager.get_user_items_activated_by_interaction(
+                    interaction.guild_id, interaction.user.id, command_type
+                )
             )
 
         major_actions = []

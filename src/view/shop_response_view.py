@@ -9,6 +9,7 @@ from datalayer.types import PredictionState
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
+
 from view.types import EmojiType
 from view.view_menu import ViewMenu
 
@@ -50,6 +51,9 @@ class ShopResponseView(ViewMenu):
 
         self.controller_type = ControllerType.SHOP_RESPONSE_VIEW
         self.controller.register_view(self)
+
+    async def init(self):
+        pass
 
     async def listen_for_ui_event(self, event: UIEvent):
         if event.view_id != self.id:

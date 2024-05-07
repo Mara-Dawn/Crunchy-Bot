@@ -544,6 +544,7 @@ class LootBoxItem(Item):
             base_amount=1,
             max_amount=None,
             trigger=None,
+            hide_in_shop=True
         )
 
 

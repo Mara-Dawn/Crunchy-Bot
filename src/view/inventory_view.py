@@ -182,7 +182,7 @@ class ActionButton(discord.ui.Button):
             case ActionType.USE_ACTION:
                 color = discord.ButtonStyle.green
             case _:
-                color = discord.ButtonStyle.grey
+                color = discord.ButtonStyle.green
 
         super().__init__(
             label=action_type.value,

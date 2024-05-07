@@ -76,7 +76,7 @@ class LootBoxViewController(ViewController):
         member_id = interaction.user.id
         
         if beans < -100:
-            user_items =  self.item_manager.get_user_items_activated(guild_id, member_id, ItemTrigger.MIMIC)
+            user_items = await self.item_manager.get_user_items_activated(guild_id, member_id, ItemTrigger.MIMIC)
 
             if ItemType.PROTECTION in [item.type for item in user_items]:
                 event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, ItemType.PROTECTION, -1)

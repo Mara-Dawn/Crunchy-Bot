@@ -116,7 +116,7 @@ class JailManager(Service):
                 
         if len(affected_jails) > 0:
             jail = affected_jails[0]
-            remaining = self.get_jail_remaining(jail)
+            remaining = await self.get_jail_remaining(jail)
             response = f'Their remaining sentence of `{BotUtil.strfdelta(remaining, inputtype='minutes')}` will be forgiven.'
 
             time_now = datetime.datetime.now()

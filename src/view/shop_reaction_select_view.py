@@ -3,6 +3,7 @@ from control.controller import Controller
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
+
 from view.shop_response_view import (
     AmountInput,
     CancelButton,
@@ -25,14 +26,8 @@ class ShopReactionSelectView(ShopResponseView):
     ):
         super().__init__(controller, interaction, item, parent_id)
 
-        _, default_emoji = self.controller.database.get_bully_react(
-            interaction.guild_id, interaction.user.id
-        )
-
-        self.selected_emoji: discord.Emoji | str = default_emoji
-        self.selected_emoji_type: EmojiType = (
-            EmojiType.DEFAULT if isinstance(default_emoji, str) else EmojiType.CUSTOM
-        )
+        self.selected_emoji: discord.Emoji | str = None
+        self.selected_emoji_type: EmojiType = None
 
         self.user_select = UserPicker()
         self.amount_select = AmountInput(suffix=" x 10 Reactions")
@@ -40,6 +35,16 @@ class ShopReactionSelectView(ShopResponseView):
         self.confirm_button = ConfirmButton()
         self.cancel_button = CancelButton()
 
+        self.refresh_elements()
+
+    async def init(self):
+        _, default_emoji = await self.controller.database.get_bully_react(
+            self.guild_id, self.member_id
+        )
+        self.selected_emoji: discord.Emoji | str = None
+        self.selected_emoji_type: EmojiType = (
+            EmojiType.DEFAULT if isinstance(default_emoji, str) else EmojiType.CUSTOM
+        )
         self.refresh_elements()
 
     async def submit(self, interaction: discord.Interaction):

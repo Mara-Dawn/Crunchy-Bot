@@ -1160,10 +1160,10 @@ class Database:
     async def get_jail_events_by_guild(
         self, guild_id: int
     ) -> dict[UserJail, list[JailEvent]]:
-        jails = self.get_jails_by_guild(guild_id)
+        jails = await self.get_jails_by_guild(guild_id)
         output = {}
         for jail in jails:
-            output[jail] = self.get_jail_events_by_jail(jail.id)
+            output[jail] = await self.get_jail_events_by_jail(jail.id)
 
         return output
 
@@ -1306,7 +1306,7 @@ class Database:
         if not rows:
             return None
 
-        items = self.get_lootbox_items(rows[0][self.LOOTBOX_ID_COL])
+        items = await self.get_lootbox_items(rows[0][self.LOOTBOX_ID_COL])
 
         return LootBox.from_db_row(rows[0], items)
 
@@ -1775,7 +1775,7 @@ class Database:
         mod_name = BotUtil.get_name(
             self.bot, prediction.guild_id, prediction.moderator_id, 30
         )
-        winning_outcome_id = self.get_prediction_winning_outcome(prediction.id)
+        winning_outcome_id = await self.get_prediction_winning_outcome(prediction.id)
         stats = PredictionStats(
             prediction, bets, author_name, mod_name, winning_outcome_id
         )
@@ -1852,7 +1852,7 @@ class Database:
             (
                 row[self.LOOTBOX_EVENT_MEMBER_COL],
                 LootBox.from_db_row(
-                    row, self.get_lootbox_items(row[self.LOOTBOX_ID_COL])
+                    row, (await self.get_lootbox_items(row[self.LOOTBOX_ID_COL]))
                 ),
             )
             for row in rows
