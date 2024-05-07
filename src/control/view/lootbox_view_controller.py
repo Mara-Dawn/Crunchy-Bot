@@ -4,8 +4,10 @@ import random
 import discord
 from bot_util import BotUtil
 from datalayer.database import Database
+from datalayer.types import ItemTrigger
 from discord.ext import commands
 from events.beans_event import BeansEvent
+from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
 from events.lootbox_event import LootBoxEvent
 from events.types import BeansEventType, JailEventType, LootBoxEventType, UIEventType
@@ -43,15 +45,12 @@ class LootBoxViewController(ViewController):
                 owner_id = event.payload[1]
                 await self.handle_lootbox_claim(interaction, owner_id, event.view_id)
 
-    async def handle_lootbox_claim(
-        self, interaction: discord.Interaction, owner_id: int, view_id: int
-    ):
-
+    async def lootbox_checks(self, interaction: discord.Interaction,   owner_id: int) -> bool:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
-        stunned_remaining = self.event_manager.get_stunned_remaining(
+        stun_base_duration = (await self.item_manager.get_item(guild_id, ItemType.BAT)).value
+        stunned_remaining = await self.event_manager.get_stunned_remaining(
             guild_id, interaction.user.id, stun_base_duration
         )
 
@@ -62,22 +61,63 @@ class LootBoxViewController(ViewController):
                 f"You are currently stunned from a bat attack. Try again <t:{remaining}:R>",
                 ephemeral=True,
             )
-            return
+            return False
 
         if owner_id is not None and member_id != owner_id:
             await interaction.followup.send(
                 "This is a personalized lootbox, only the owner can claim it.",
                 ephemeral=True,
             )
+            return False
+        return True
+
+    async def handle_mimic(self, interaction: discord.Interaction, embed: discord.Embed, beans: int):
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+        
+        if beans < -100:
+            user_items = await self.item_manager.get_user_items_activated(guild_id, member_id, ItemTrigger.MIMIC)
+
+            if ItemType.PROTECTION in [item.type for item in user_items]:
+                event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, ItemType.PROTECTION, -1)
+                await self.controller.dispatch_event(event)
+                embed.add_field(
+                    name="Oh no, it's a LARGE Mimic!",
+                    value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nLuckily your Hazmat Suit protects you from further harm. \n(You lose one stack)",
+                    inline=False,
+                )
+                return False
+
+            embed.add_field(
+                name="Oh no, it's a LARGE Mimic!",
+                value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
+                inline=False,
+            )
+            return True
+
+        embed.add_field(
+            name="Oh no, it's a Mimic!",
+            value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them.",
+            inline=False,
+        )
+        return False
+
+    async def handle_lootbox_claim(
+        self, interaction: discord.Interaction, owner_id: int, view_id: int
+    ):
+
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        if not await self.lootbox_checks(interaction, owner_id):
             return
 
         event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
         await self.controller.dispatch_ui_event(event)
-
         self.controller.detach_view_by_id(view_id)
 
         message = await interaction.original_response()
-        loot_box = self.database.get_loot_box_by_message_id(guild_id, message.id)
+        loot_box = await self.database.get_loot_box_by_message_id(guild_id, message.id)
 
         title = "A Random Treasure has Appeared"
         if owner_id is not None:
@@ -88,7 +128,6 @@ class LootBoxViewController(ViewController):
         embed = discord.Embed(
             title=title, description=description, color=discord.Colour.purple()
         )
-
         embed.set_image(url="attachment://treasure_open.png")
         attachment = discord.File("./img/treasure_open.png", "treasure_open.png")
 
@@ -96,23 +135,13 @@ class LootBoxViewController(ViewController):
         large_mimic = False
 
         if beans < 0:
-            bean_balance = self.database.get_member_beans(guild_id, member_id)
-            beans_taken = beans
+            bean_balance = await self.database.get_member_beans(guild_id, member_id)
+            
+            large_mimic = await self.handle_mimic(interaction, embed, beans)
+
             if bean_balance + beans < 0:
                 beans = -bean_balance
-            if beans_taken < -100:
-                embed.add_field(
-                    name="Oh no, it's a LARGE Mimic!",
-                    value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
-                    inline=False,
-                )
-                large_mimic = True
-            else:
-                embed.add_field(
-                    name="Oh no, it's a Mimic!",
-                    value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them.",
-                    inline=False,
-                )
+                
             embed.set_image(url="attachment://mimic.gif")
             attachment = discord.File("./img/mimic.gif", "mimic.gif")
 
@@ -131,7 +160,7 @@ class LootBoxViewController(ViewController):
             embed.add_field(name="Woah, Shiny Items!", value="", inline=False)
 
             for item_type, amount in loot_box.items.items():
-                item = self.item_manager.get_item(guild_id, item_type)
+                item = await self.item_manager.get_item(guild_id, item_type)
                 item_count = item.base_amount * amount
                 item.add_to_embed(embed, 43, count=item_count, show_price=False)
                 log_message += f" and {item_count}x {item.name}"
@@ -174,7 +203,7 @@ class LootBoxViewController(ViewController):
             )
             if not success:
                 time_now = datetime.datetime.now()
-                affected_jails = self.database.get_active_jails_by_member(guild_id, member.id)
+                affected_jails = await self.database.get_active_jails_by_member(guild_id, member.id)
                 if len(affected_jails) > 0:
                     event = JailEvent(
                         time_now,
@@ -185,7 +214,7 @@ class LootBoxViewController(ViewController):
                         affected_jails[0].id,
                     )
                     await self.controller.dispatch_event(event)
-                    remaining = self.jail_manager.get_jail_remaining(affected_jails[0])
+                    remaining = await self.jail_manager.get_jail_remaining(affected_jails[0])
                     jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` have been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
                     await self.jail_manager.announce(interaction.guild, jail_announcement)
                 else:

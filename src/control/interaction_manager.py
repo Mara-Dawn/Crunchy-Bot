@@ -129,7 +129,7 @@ class InteractionManager(Service):
         command_type: UserInteraction,
         amount: int,
     ) -> tuple[float, str]:
-        user_items = self.item_manager.get_user_items_activated_by_interaction(
+        user_items = await self.item_manager.get_user_items_activated_by_interaction(
             interaction.guild_id, user.id, command_type
         )
         response = ""
@@ -178,11 +178,11 @@ class InteractionManager(Service):
     ) -> str:
         guild_id = interaction.guild_id
 
-        affected_jail = self.jail_manager.get_active_jail(guild_id, user)
+        affected_jail = await self.jail_manager.get_active_jail(guild_id, user)
         if affected_jail is None:
             return ""
 
-        already_interacted = self.event_manager.has_jail_event_from_user(
+        already_interacted = await self.event_manager.has_jail_event_from_user(
             affected_jail.id, interaction.user.id, command_type
         )
         self_target = interaction.user.id == user.id
@@ -224,16 +224,22 @@ class InteractionManager(Service):
 
         match command_type:
             case UserInteraction.SLAP:
-                amount = self.settings_manager.get_jail_slap_time(interaction.guild_id)
+                amount = await self.settings_manager.get_jail_slap_time(
+                    interaction.guild_id
+                )
             case UserInteraction.PET:
-                amount = -self.settings_manager.get_jail_pet_time(interaction.guild_id)
+                amount = -await self.settings_manager.get_jail_pet_time(
+                    interaction.guild_id
+                )
             case UserInteraction.FART:
                 min_amount = (
                     0
                     if modifiers.stabilized
-                    else self.settings_manager.get_jail_fart_min(interaction.guild_id)
+                    else await self.settings_manager.get_jail_fart_min(
+                        interaction.guild_id
+                    )
                 )
-                max_amount = self.settings_manager.get_jail_fart_max(
+                max_amount = await self.settings_manager.get_jail_fart_max(
                     interaction.guild_id
                 )
                 amount = random.randint(min_amount, max_amount)
@@ -256,12 +262,16 @@ class InteractionManager(Service):
 
         initial_amount = amount
 
-        remaining = self.jail_manager.get_jail_remaining(affected_jail)
+        remaining = await self.jail_manager.get_jail_remaining(affected_jail)
         amount = int(amount * modifiers.item_modifier)
         amount = max(amount, -int(remaining + 1))
 
-        crit_mod = self.settings_manager.get_jail_base_crit_mod(interaction.guild_id)
-        crit_rate = self.settings_manager.get_jail_base_crit_rate(interaction.guild_id)
+        crit_mod = await self.settings_manager.get_jail_base_crit_mod(
+            interaction.guild_id
+        )
+        crit_rate = await self.settings_manager.get_jail_base_crit_rate(
+            interaction.guild_id
+        )
 
         is_crit = (random.random() <= crit_rate) or modifiers.auto_crit
 
@@ -314,7 +324,7 @@ class InteractionManager(Service):
             )
             await self.controller.dispatch_event(event)
 
-            remaining = self.jail_manager.get_jail_remaining(affected_jail)
+            remaining = await self.jail_manager.get_jail_remaining(affected_jail)
             response += (
                 f'`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain.'
             )
@@ -330,7 +340,7 @@ class InteractionManager(Service):
         match item.group:
             case ItemGroup.VALUE_MODIFIER:
                 if item.type == ItemType.SATAN_FART:
-                    affected_jails = self.database.get_active_jails_by_member(
+                    affected_jails = await self.database.get_active_jails_by_member(
                         guild_id, user_id
                     )
                     if len(affected_jails) > 0:
@@ -375,7 +385,7 @@ class InteractionManager(Service):
 
         for item in items:
             if item.group == ItemGroup.MAJOR_JAIL_ACTION:
-                affected_jail = self.jail_manager.get_active_jail(
+                affected_jail = await self.jail_manager.get_active_jail(
                     target_user.guild.id, target_user
                 )
                 if affected_jail is None:
@@ -408,11 +418,11 @@ class InteractionManager(Service):
 
                 case ItemType.PENETRATING_PET:
                     item_count = 0
-                    inventory_items = self.database.get_item_counts_by_user(
+                    inventory_items = await self.database.get_item_counts_by_user(
                         member.guild.id, target_user.id
                     )
 
-                    protection_type = ItemType.FART_PROTECTION
+                    protection_type = ItemType.PROTECTION
 
                     if protection_type in inventory_items:
                         item_count = inventory_items[protection_type]
@@ -433,19 +443,21 @@ class InteractionManager(Service):
                     item_text += "\n"
 
                 case ItemType.SWAP_SLAP:
-                    target_jail = self.jail_manager.get_active_jail(
+                    target_jail = await self.jail_manager.get_active_jail(
                         member.guild.id, target_user
                     )
 
                     if target_jail is not None:
                         continue
 
-                    jail = self.jail_manager.get_active_jail(member.guild.id, member)
+                    jail = await self.jail_manager.get_active_jail(
+                        member.guild.id, member
+                    )
 
                     if jail is None:
                         continue
 
-                    remaining = self.jail_manager.get_jail_remaining(jail)
+                    remaining = await self.jail_manager.get_jail_remaining(jail)
 
                     await self.jail_manager.release_user(
                         member.guild.id, member.id, member

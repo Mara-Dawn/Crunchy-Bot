@@ -49,7 +49,7 @@ class EventManager(Service):
             case EventType.JAIL:
                 jail_event: JailEvent = event
                 if jail_event.jail_event_type is JailEventType.RELEASE:
-                    self.database.log_jail_release(
+                    await self.database.log_jail_release(
                         jail_event.jail_id, int(jail_event.get_timestamp())
                     )
                     self.logger.log(
@@ -89,7 +89,7 @@ class EventManager(Service):
 
         from_user = event.get_causing_user_id()
         args = event.get_type_specific_args()
-        self.database.log_event(event)
+        await self.database.log_event(event)
         self.__log_event(event, from_user, *args)
 
     def __log_event(self, event: BotEvent, member_id: int, *args):
@@ -115,7 +115,7 @@ class EventManager(Service):
         )
 
     async def mod_notification(self, guild_id: int, message: str):
-        for channel_id in self.settings_manager.get_mod_channels(guild_id):
+        for channel_id in await self.settings_manager.get_mod_channels(guild_id):
             guild = self.bot.get_guild(guild_id)
             if guild is None:
                 continue
@@ -124,10 +124,10 @@ class EventManager(Service):
                 continue
             await channel.send(message)
 
-    def get_stunned_remaining(
+    async def get_stunned_remaining(
         self, guild_id: int, user_id: int, base_duration: int
     ) -> int:
-        last_bat_event: BatEvent = self.database.get_last_bat_event_by_target(
+        last_bat_event: BatEvent = await self.database.get_last_bat_event_by_target(
             guild_id, user_id
         )
 
@@ -149,10 +149,10 @@ class EventManager(Service):
 
         return 0
 
-    def has_jail_event_from_user(
+    async def has_jail_event_from_user(
         self, jail_id: int, user_id: int, jail_event_type: JailEventType
     ) -> bool:
-        events = self.database.get_jail_events_by_user(user_id)
+        events = await self.database.get_jail_events_by_user(user_id)
 
         for event in events:
             if event.jail_id == jail_id and event.jail_event_type == jail_event_type:
@@ -160,8 +160,8 @@ class EventManager(Service):
 
         return False
 
-    def get_user_statistics(self, user_id: int) -> UserStats:
-        events_out = self.database.get_interaction_events_by_user(user_id)
+    async def get_user_statistics(self, user_id: int) -> UserStats:
+        events_out = await self.database.get_interaction_events_by_user(user_id)
 
         user_stats = UserStats()
 
@@ -192,7 +192,7 @@ class EventManager(Service):
         user_stats.set_count_out(count_out)
         user_stats.set_user_count_out(user_count_out)
 
-        events_in = self.database.get_interaction_events_affecting_user(user_id)
+        events_in = await self.database.get_interaction_events_affecting_user(user_id)
 
         count_in = {
             UserInteraction.SLAP: 0,
@@ -218,7 +218,7 @@ class EventManager(Service):
         user_stats.set_count_in(count_in)
         user_stats.set_user_count_in(user_count_in)
 
-        jail_events = self.database.get_jail_events_affecting_user(user_id)
+        jail_events = await self.database.get_jail_events_affecting_user(user_id)
 
         total_jail_duration = 0
         jail_stays = []
@@ -245,7 +245,7 @@ class EventManager(Service):
         user_stats.set_jail_total(total_jail_duration)
         user_stats.set_jail_amount(len(jail_stays))
 
-        jail_interaction_events = self.database.get_jail_events_by_user(user_id)
+        jail_interaction_events = await self.database.get_jail_events_by_user(user_id)
         total_added_to_others = 0
         total_reduced_from_others = 0
         max_fart = None
@@ -279,7 +279,7 @@ class EventManager(Service):
         user_stats.set_total_reduced_from_self(abs(total_reduced_from_self))
         user_stats.set_fart_stats(max_fart, min_fart)
 
-        timeout_events = self.database.get_timeout_events_by_user(user_id)
+        timeout_events = await self.database.get_timeout_events_by_user(user_id)
 
         total_timeout_duration = 0
         timeout_count = len(timeout_events)
@@ -290,16 +290,16 @@ class EventManager(Service):
         user_stats.set_timeout_total(total_timeout_duration)
         user_stats.set_timeout_amount(timeout_count)
 
-        spam_events = self.database.get_spam_events_by_user(user_id)
+        spam_events = await self.database.get_spam_events_by_user(user_id)
         spam_count = len(spam_events)
         user_stats.set_spam_score(spam_count)
 
         return user_stats
 
-    def __get_ranking_data_by_type(
+    async def __get_ranking_data_by_type(
         self, guild_id: int, outgoing: bool, interaction_type: UserInteraction
     ) -> list[tuple[int, Any]]:
-        guild_interaction_events = self.database.get_guild_interaction_events(
+        guild_interaction_events = await self.database.get_guild_interaction_events(
             guild_id, interaction_type
         )
         parsing_list = {}
@@ -313,38 +313,38 @@ class EventManager(Service):
 
         return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
 
-    def get_user_rankings(
+    async def get_user_rankings(
         self, guild_id: int, ranking_type: RankingType
     ) -> dict[str, Any]:
         parsing_list = {}
         ranking_data = []
         match ranking_type:
             case RankingType.SLAP:
-                ranking_data = self.__get_ranking_data_by_type(
+                ranking_data = await self.__get_ranking_data_by_type(
                     guild_id, outgoing=True, interaction_type=UserInteraction.SLAP
                 )
             case RankingType.PET:
-                ranking_data = self.__get_ranking_data_by_type(
+                ranking_data = await self.__get_ranking_data_by_type(
                     guild_id, outgoing=True, interaction_type=UserInteraction.PET
                 )
             case RankingType.FART:
-                ranking_data = self.__get_ranking_data_by_type(
+                ranking_data = await self.__get_ranking_data_by_type(
                     guild_id, outgoing=True, interaction_type=UserInteraction.FART
                 )
             case RankingType.SLAP_RECIEVED:
-                ranking_data = self.__get_ranking_data_by_type(
+                ranking_data = await self.__get_ranking_data_by_type(
                     guild_id, outgoing=False, interaction_type=UserInteraction.SLAP
                 )
             case RankingType.PET_RECIEVED:
-                ranking_data = self.__get_ranking_data_by_type(
+                ranking_data = await self.__get_ranking_data_by_type(
                     guild_id, outgoing=False, interaction_type=UserInteraction.PET
                 )
             case RankingType.FART_RECIEVED:
-                ranking_data = self.__get_ranking_data_by_type(
+                ranking_data = await self.__get_ranking_data_by_type(
                     guild_id, outgoing=False, interaction_type=UserInteraction.FART
                 )
             case RankingType.TIMEOUT_TOTAL:
-                guild_timeout_events = self.database.get_timeout_events_by_guild(
+                guild_timeout_events = await self.database.get_timeout_events_by_guild(
                     guild_id
                 )
                 for event in guild_timeout_events:
@@ -359,7 +359,7 @@ class EventManager(Service):
                 ]
                 ranking_data = converted
             case RankingType.TIMEOUT_COUNT:
-                guild_timeout_events = self.database.get_timeout_events_by_guild(
+                guild_timeout_events = await self.database.get_timeout_events_by_guild(
                     guild_id
                 )
                 for event in guild_timeout_events:
@@ -369,7 +369,7 @@ class EventManager(Service):
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
             case RankingType.JAIL_TOTAL:
-                jail_data = self.database.get_jail_events_by_guild(guild_id)
+                jail_data = await self.database.get_jail_events_by_guild(guild_id)
                 for jail, events in jail_data.items():
                     for event in events:
                         user_id = jail.member_id
@@ -383,7 +383,7 @@ class EventManager(Service):
                 ]
                 ranking_data = converted
             case RankingType.JAIL_COUNT:
-                jail_data = self.database.get_jail_events_by_guild(guild_id)
+                jail_data = await self.database.get_jail_events_by_guild(guild_id)
                 for jail, events in jail_data.items():
                     for event in events:
                         user_id = jail.member_id
@@ -393,7 +393,9 @@ class EventManager(Service):
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
             case RankingType.SPAM_SCORE:
-                guild_spam_events = self.database.get_spam_events_by_guild(guild_id)
+                guild_spam_events = await self.database.get_spam_events_by_guild(
+                    guild_id
+                )
                 for event in guild_spam_events:
                     user_id = event.member_id
                     BotUtil.dict_append(parsing_list, user_id, 1)
@@ -401,13 +403,15 @@ class EventManager(Service):
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
             case RankingType.BEANS:
-                parsing_list = self.database.get_guild_beans_rankings(guild_id)
+                parsing_list = await self.database.get_guild_beans_rankings(guild_id)
                 # only subtract lootboxes until patch where beans got removed.
-                lootbox_purchases = self.database.get_lootbox_purchases_by_guild(
+                lootbox_purchases = await self.database.get_lootbox_purchases_by_guild(
                     guild_id,
                     datetime.datetime(year=2024, month=4, day=22, hour=14).timestamp(),
                 )
-                loot_box_item = self.item_manager.get_item(guild_id, ItemType.LOOTBOX)
+                loot_box_item = await self.item_manager.get_item(
+                    guild_id, ItemType.LOOTBOX
+                )
                 for user_id, amount in lootbox_purchases.items():
                     if user_id in parsing_list:
                         parsing_list[user_id] -= amount * loot_box_item.cost
@@ -416,13 +420,17 @@ class EventManager(Service):
                 )
                 ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
             case RankingType.BEANS_CURRENT:
-                parsing_list = self.database.get_guild_beans_rankings_current(guild_id)
+                parsing_list = await self.database.get_guild_beans_rankings_current(
+                    guild_id
+                )
                 # only subtract lootboxes until patch where beans got removed.
-                lootbox_purchases = self.database.get_lootbox_purchases_by_guild(
+                lootbox_purchases = await self.database.get_lootbox_purchases_by_guild(
                     guild_id,
                     datetime.datetime(year=2024, month=4, day=22, hour=14).timestamp(),
                 )
-                loot_box_item = self.item_manager.get_item(guild_id, ItemType.LOOTBOX)
+                loot_box_item = await self.item_manager.get_item(
+                    guild_id, ItemType.LOOTBOX
+                )
                 for user_id, amount in lootbox_purchases.items():
                     if user_id in parsing_list:
                         parsing_list[user_id] -= amount * loot_box_item.cost
@@ -431,7 +439,7 @@ class EventManager(Service):
                 )
                 ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
             case RankingType.MIMICS:
-                lootboxes = self.database.get_lootboxes_by_guild(guild_id)
+                lootboxes = await self.database.get_lootboxes_by_guild(guild_id)
                 total_dict = {}
                 for user_id, lootbox in lootboxes:
                     if lootbox.beans < 0:
@@ -445,7 +453,7 @@ class EventManager(Service):
                         (user_id, f"{mimic_count}/{total_dict[user_id]}")
                     )
             case RankingType.TOTAL_GAMBAD_SPENT:
-                gamba_events = self.database.get_guild_beans_events(
+                gamba_events = await self.database.get_guild_beans_events(
                     guild_id, [BeansEventType.GAMBA_COST]
                 )
                 for event in gamba_events:
@@ -456,7 +464,7 @@ class EventManager(Service):
                 )
                 ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
             case RankingType.TOTAL_GAMBAD_WON:
-                gamba_events = self.database.get_guild_beans_events(
+                gamba_events = await self.database.get_guild_beans_events(
                     guild_id, [BeansEventType.GAMBA_COST, BeansEventType.GAMBA_PAYOUT]
                 )
                 for event in gamba_events:

@@ -1,5 +1,5 @@
 import builtins
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from typing import Any
 
 import discord
@@ -9,7 +9,7 @@ from control.settings_manager import SettingsManager
 
 class SettingsModal(discord.ui.Modal):
 
-    def __init__(self, bot: CrunchyBot, settings: SettingsManager, cog: str, command: str, title: str, callback: Callable = None, callback_arguments: list[Any] = None):
+    def __init__(self, bot: CrunchyBot, settings: SettingsManager, cog: str, command: str, title: str, callback: Coroutine = None, callback_arguments: list[Any] = None):
         super().__init__(title=title)
         
         self.settings = settings
@@ -24,9 +24,9 @@ class SettingsModal(discord.ui.Modal):
         self.constraints: list[SettingsConstraint]  = []
         self.allow_negative_map: dict[str, bool] = {}
     
-    def add_field(self, guild_id: int, subsetting_key: str, setting_key: str, value_type: type[Any], allow_negative: bool = False):
-        label = self.settings.get_setting_title(subsetting_key, setting_key)
-        default = self.settings.get_setting(guild_id, subsetting_key, setting_key)
+    async def add_field(self, guild_id: int, subsetting_key: str, setting_key: str, value_type: type[Any], allow_negative: bool = False):
+        label = await self.settings.get_setting_title(subsetting_key, setting_key)
+        default = await self.settings.get_setting(guild_id, subsetting_key, setting_key)
         
         field_id = setting_key
         new_field = discord.ui.TextInput(label=label, required=False, custom_id=field_id)
@@ -90,12 +90,12 @@ class SettingsModal(discord.ui.Modal):
             
         for text_input_id, keys in self.input_settings_map.items():
             value = self.__cast_value(self.id_map[text_input_id].value, self.type_map[text_input_id])
-            self.settings.update_setting(interaction.guild_id, keys[0], keys[1], value)
+            await self.settings.update_setting(interaction.guild_id, keys[0], keys[1], value)
             
         await self.bot.response(self.cog, interaction, 'Settings were successfully updated.', self.command, args=[text_input.value for text_input in self.children])
         
         if self.callback is not None:
-            self.callback(*self.callback_arguments)
+            await self.callback(*self.callback_arguments)
         
         
 class SettingsConstraint:

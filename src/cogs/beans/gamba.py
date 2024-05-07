@@ -49,14 +49,15 @@ class Gamba(commands.Cog):
     async def __check_enabled(self, interaction: discord.Interaction) -> bool:
         guild_id = interaction.guild_id
 
-        if not self.settings_manager.get_beans_enabled(guild_id):
+        if not await self.settings_manager.get_beans_enabled(guild_id):
             await self.bot.command_response(
                 self.__cog_name__, interaction, "Beans module is currently disabled."
             )
             return False
 
-        if interaction.channel_id not in self.settings_manager.get_beans_channels(
-            guild_id
+        if (
+            interaction.channel_id
+            not in await self.settings_manager.get_beans_channels(guild_id)
         ):
             await self.bot.command_response(
                 self.__cog_name__,
@@ -65,8 +66,10 @@ class Gamba(commands.Cog):
             )
             return False
 
-        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
-        stunned_remaining = self.event_manager.get_stunned_remaining(
+        stun_base_duration = (
+            await self.item_manager.get_item(guild_id, ItemType.BAT)
+        ).value
+        stunned_remaining = await self.event_manager.get_stunned_remaining(
             guild_id, interaction.user.id, stun_base_duration
         )
         if stunned_remaining > 0:
@@ -83,7 +86,6 @@ class Gamba(commands.Cog):
 
     async def __gamba_items(
         self,
-        interaction: discord.Interaction,
         items: list[Item],
         over_limit: bool,
         cooldown_remaining: int,
@@ -103,11 +105,26 @@ class Gamba(commands.Cog):
                         continue
                     cooldown_override = True
 
-            await self.item_manager.use_item(
-                interaction.guild, interaction.user.id, item.type
-            )
-
         return no_limit, cooldown_override
+
+    async def __consume_gamba_items(
+        self,
+        interaction: discord.Interaction,
+        items: list[Item],
+        no_limit: bool,
+        cooldown_override: bool,
+    ):
+        for item in items:
+            use_item = False
+            match item.type:
+                case ItemType.UNLIMITED_GAMBA:
+                    use_item = no_limit
+                case ItemType.INSTANT_GAMBA:
+                    use_item = cooldown_override
+            if use_item:
+                await self.item_manager.use_item(
+                    interaction.guild, interaction.user.id, item.type
+                )
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
@@ -125,22 +142,24 @@ class Gamba(commands.Cog):
         await interaction.response.defer()
         guild_id = interaction.guild_id
         user_id = interaction.user.id
-        beans_gamba_min = self.settings_manager.get_beans_gamba_min(guild_id)
-        beans_gamba_max = self.settings_manager.get_beans_gamba_max(guild_id)
-        default_cooldown = self.settings_manager.get_beans_gamba_cooldown(guild_id)
+        beans_gamba_min = await self.settings_manager.get_beans_gamba_min(guild_id)
+        beans_gamba_max = await self.settings_manager.get_beans_gamba_max(guild_id)
+        default_cooldown = await self.settings_manager.get_beans_gamba_cooldown(
+            guild_id
+        )
         timestamp_now = int(datetime.datetime.now().timestamp())
 
-        default_amount = self.settings_manager.get_beans_gamba_cost(guild_id)
+        default_amount = await self.settings_manager.get_beans_gamba_cost(guild_id)
 
         if amount is None or amount <= 0:
             amount = default_amount
 
         over_limit = not (beans_gamba_min <= amount and amount <= beans_gamba_max)
 
-        last_gamba_cost_event = self.database.get_last_beans_event(
+        last_gamba_cost_event = await self.database.get_last_beans_event(
             guild_id, user_id, BeansEventType.GAMBA_COST
         )
-        last_gamba_payout_event = self.database.get_last_beans_event(
+        last_gamba_payout_event = await self.database.get_last_beans_event(
             guild_id, user_id, BeansEventType.GAMBA_PAYOUT
         )
 
@@ -164,12 +183,12 @@ class Gamba(commands.Cog):
             if delta_seconds <= cooldown:
                 cooldown_remaining = cooldown - delta_seconds
 
-        user_items = self.item_manager.get_user_items_activated(
+        user_items = await self.item_manager.get_user_items_activated(
             guild_id, user_id, ItemTrigger.GAMBA
         )
 
         no_limit, cooldown_override = await self.__gamba_items(
-            interaction, user_items, over_limit, cooldown_remaining
+            user_items, over_limit, cooldown_remaining
         )
 
         if not no_limit and amount is not None and over_limit:
@@ -192,7 +211,7 @@ class Gamba(commands.Cog):
             )
             return
 
-        current_balance = self.database.get_member_beans(guild_id, user_id)
+        current_balance = await self.database.get_member_beans(guild_id, user_id)
 
         if current_balance < amount:
 
@@ -249,6 +268,10 @@ class Gamba(commands.Cog):
             )
             await message.delete()
             return
+
+        await self.__consume_gamba_items(
+            interaction, user_items, no_limit, cooldown_override
+        )
 
         event = BeansEvent(
             datetime.datetime.now(),
@@ -367,7 +390,7 @@ class Gamba(commands.Cog):
             year=today.year, month=today.month, day=today.day
         ).timestamp()
 
-        user_daily_gamba_count = self.database.get_beans_daily_gamba_count(
+        user_daily_gamba_count = await self.database.get_beans_daily_gamba_count(
             guild_id,
             user_id,
             BeansEventType.GAMBA_COST,
@@ -377,12 +400,16 @@ class Gamba(commands.Cog):
         beans_bonus_amount = 0
         match user_daily_gamba_count:
             case 10:
-                beans_bonus_amount = self.settings_manager.get_beans_bonus_amount_10(
-                    interaction.guild_id
+                beans_bonus_amount = (
+                    await self.settings_manager.get_beans_bonus_amount_10(
+                        interaction.guild_id
+                    )
                 )
             case 25:
-                beans_bonus_amount = self.settings_manager.get_beans_bonus_amount_25(
-                    interaction.guild_id
+                beans_bonus_amount = (
+                    await self.settings_manager.get_beans_bonus_amount_25(
+                        interaction.guild_id
+                    )
                 )
 
         if beans_bonus_amount > 0:
@@ -438,25 +465,25 @@ class Gamba(commands.Cog):
             "Settings for Gamba related Features",
         )
 
-        modal.add_field(
+        await modal.add_field(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_GAMBA_DEFAULT_KEY,
             int,
         )
-        modal.add_field(
+        await modal.add_field(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_GAMBA_COOLDOWN_KEY,
             int,
         )
-        modal.add_field(
+        await modal.add_field(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_GAMBA_MIN_KEY,
             int,
         )
-        modal.add_field(
+        await modal.add_field(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_GAMBA_MAX_KEY,

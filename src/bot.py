@@ -11,6 +11,8 @@ class CrunchyBot(commands.Bot):
 
     LOG_FILE = "./log/marabot.log"
     TENOR_TOKEN_FILE = "tenor.txt"
+    SEASON_DB_FILE = "season.sqlite"
+    CORE_DB_FILE = "database.sqlite"
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -19,6 +21,8 @@ class CrunchyBot(commands.Bot):
         self.logger = BotLogger(self, self.LOG_FILE)
         self.database = DatabaseManager(self, self.logger)
         self.controller = Controller(self, self.logger, self.database)
+
+        await self.database.init()
 
         await self.load_extension("cogs.police")
         await self.load_extension("cogs.jail")

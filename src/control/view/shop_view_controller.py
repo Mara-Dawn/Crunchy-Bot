@@ -51,7 +51,7 @@ class ShopViewController(ViewController):
                 beans_event: BeansEvent = event
                 if beans_event.value == 0:
                     return
-                new_user_balance = self.database.get_member_beans(
+                new_user_balance = await self.database.get_member_beans(
                     beans_event.guild_id, beans_event.member_id
                 )
                 event = UIEvent(
@@ -63,7 +63,7 @@ class ShopViewController(ViewController):
                 beans_event: InventoryEvent = event
                 if beans_event.amount == 0:
                     return
-                user_items = self.database.get_item_counts_by_user(
+                user_items = await self.database.get_item_counts_by_user(
                     beans_event.guild_id, beans_event.member_id
                 )
                 event = UIEvent(
@@ -87,8 +87,8 @@ class ShopViewController(ViewController):
                 await self.send_inventory_message(interaction)
 
     async def refresh_ui(self, guild_id: int, member_id: int, view_id: int):
-        new_user_balance = self.database.get_member_beans(guild_id, member_id)
-        user_items = self.database.get_item_counts_by_user(guild_id, member_id)
+        new_user_balance = await self.database.get_member_beans(guild_id, member_id)
+        user_items = await self.database.get_item_counts_by_user(guild_id, member_id)
         event = UIEvent(
             UIEventType.SHOP_REFRESH, (new_user_balance, user_items), view_id
         )
@@ -106,9 +106,9 @@ class ShopViewController(ViewController):
 
         guild_id = interaction.guild_id
         member_id = interaction.user.id
-        user_balance = self.database.get_member_beans(guild_id, member_id)
+        user_balance = await self.database.get_member_beans(guild_id, member_id)
 
-        item = self.item_manager.get_item(guild_id, selected)
+        item = await self.item_manager.get_item(guild_id, selected)
 
         if user_balance < item.cost:
             await interaction.followup.send(
@@ -116,7 +116,9 @@ class ShopViewController(ViewController):
             )
             return
 
-        inventory_items = self.database.get_item_counts_by_user(guild_id, member_id)
+        inventory_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id
+        )
 
         if item.max_amount is not None:
             item_count = 0
@@ -142,6 +144,8 @@ class ShopViewController(ViewController):
                 view: ShopResponseView = view_class(
                     self.controller, interaction, item, view_id
                 )
+
+                await view.init()
 
                 message = await interaction.followup.send(
                     "", embed=embed, view=view, ephemeral=True
@@ -187,13 +191,13 @@ class ShopViewController(ViewController):
         )
         self.logger.log(interaction.guild_id, log_message, cog="Shop")
 
-        new_user_balance = self.database.get_member_beans(guild_id, member_id)
+        new_user_balance = await self.database.get_member_beans(guild_id, member_id)
         success_message = f"You successfully bought one **{item.name}** for `🅱️{item.cost}` beans. Remaining balance: `🅱️{new_user_balance}`\n Use */inventory* to check your inventory."
 
         await interaction.followup.send(success_message, ephemeral=True)
 
     async def send_inventory_message(self, interaction: discord.Interaction):
-        inventory = self.item_manager.get_user_inventory(
+        inventory = await self.item_manager.get_user_inventory(
             interaction.guild_id, interaction.user.id
         )
 

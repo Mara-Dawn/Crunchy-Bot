@@ -5,7 +5,7 @@ from items.types import ItemState, ItemType
 
 class UserInventory:
 
-    SELL_MODIFIER = 0.3
+    SELL_MODIFIER = 0.1
 
     def __init__(
         self,

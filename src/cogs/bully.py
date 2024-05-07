@@ -58,11 +58,12 @@ class Bully(commands.Cog):
 
         guild_id = message.guild.id
 
-        if not self.settings_manager.get_bully_enabled(guild_id):
+        if not await self.settings_manager.get_bully_enabled(guild_id):
             return
 
-        if message.channel.id in self.settings_manager.get_bully_exclude_channels(
-            guild_id
+        if (
+            message.channel.id
+            in await self.settings_manager.get_bully_exclude_channels(guild_id)
         ):
             return
 
@@ -75,7 +76,7 @@ class Bully(commands.Cog):
                 match item.type:
                     case ItemType.REACTION_SPAM:
 
-                        target_id, emoji = self.database.get_bully_react(
+                        target_id, emoji = await self.database.get_bully_react(
                             guild_id, user_id
                         )
 
@@ -115,7 +116,7 @@ class Bully(commands.Cog):
     )
     @app_commands.check(__has_permission)
     async def get_settings(self, interaction: discord.Interaction):
-        output = self.settings_manager.get_settings_string(
+        output = await self.settings_manager.get_settings_string(
             interaction.guild_id, SettingsManager.BULLY_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
@@ -128,7 +129,9 @@ class Bully(commands.Cog):
     async def set_toggle(
         self, interaction: discord.Interaction, enabled: typing.Literal["on", "off"]
     ):
-        self.settings_manager.set_bully_enabled(interaction.guild_id, enabled == "on")
+        await self.settings_manager.set_bully_enabled(
+            interaction.guild_id, enabled == "on"
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -145,7 +148,7 @@ class Bully(commands.Cog):
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ):
         await interaction.response.defer(ephemeral=True)
-        self.settings_manager.add_bully_exclude_channel(
+        await self.settings_manager.add_bully_exclude_channel(
             interaction.guild_id, channel.id
         )
         await self.bot.command_response(
@@ -164,7 +167,7 @@ class Bully(commands.Cog):
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ):
         await interaction.response.defer(ephemeral=True)
-        self.settings_manager.remove_bully_exclude_channel(
+        await self.settings_manager.remove_bully_exclude_channel(
             interaction.guild_id, channel.id
         )
         await self.bot.command_response(

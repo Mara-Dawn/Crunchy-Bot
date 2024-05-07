@@ -28,14 +28,15 @@ class BeansBasics(BeansGroup):
     async def __check_enabled(self, interaction: discord.Interaction) -> bool:
         guild_id = interaction.guild_id
 
-        if not self.settings_manager.get_beans_enabled(guild_id):
+        if not await self.settings_manager.get_beans_enabled(guild_id):
             await self.bot.command_response(
                 self.__cog_name__, interaction, "Beans module is currently disabled."
             )
             return False
 
-        if interaction.channel_id not in self.settings_manager.get_beans_channels(
-            guild_id
+        if (
+            interaction.channel_id
+            not in await self.settings_manager.get_beans_channels(guild_id)
         ):
             await self.bot.command_response(
                 self.__cog_name__,
@@ -59,7 +60,7 @@ class BeansBasics(BeansGroup):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
 
-        last_daily_beans_event = self.database.get_last_beans_event(
+        last_daily_beans_event = await self.database.get_last_beans_event(
             guild_id, user_id, BeansEventType.DAILY
         )
 
@@ -77,8 +78,8 @@ class BeansBasics(BeansGroup):
                 )
                 return
 
-        beans_daily_min = self.settings_manager.get_beans_daily_min(guild_id)
-        beans_daily_max = self.settings_manager.get_beans_daily_max(guild_id)
+        beans_daily_min = await self.settings_manager.get_beans_daily_min(guild_id)
+        beans_daily_max = await self.settings_manager.get_beans_daily_max(guild_id)
 
         amount = random.randint(beans_daily_min, beans_daily_max)
 
@@ -111,7 +112,7 @@ class BeansBasics(BeansGroup):
 
         guild_id = interaction.guild_id
 
-        current_balance = self.database.get_member_beans(guild_id, user_id)
+        current_balance = await self.database.get_member_beans(guild_id, user_id)
 
         await self.bot.command_response(
             self.__cog_name__,
@@ -176,7 +177,7 @@ class BeansBasics(BeansGroup):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
 
-        current_balance = self.database.get_member_beans(guild_id, user_id)
+        current_balance = await self.database.get_member_beans(guild_id, user_id)
 
         if current_balance < amount:
             await self.bot.command_response(
@@ -219,12 +220,12 @@ class BeansBasics(BeansGroup):
 
         guild_id = interaction.guild_id
 
-        rankings = self.database.get_guild_beans_rankings(guild_id)
-        lootbox_purchases = self.database.get_lootbox_purchases_by_guild(
+        rankings = await self.database.get_guild_beans_rankings(guild_id)
+        lootbox_purchases = await self.database.get_lootbox_purchases_by_guild(
             guild_id,
             datetime.datetime(year=2024, month=4, day=22, hour=14).timestamp(),
         )
-        loot_box_item = self.item_manager.get_item(guild_id, ItemType.LOOTBOX)
+        loot_box_item = await self.item_manager.get_item(guild_id, ItemType.LOOTBOX)
 
         for user_id, amount in lootbox_purchases.items():
             if user_id in rankings:
@@ -265,7 +266,7 @@ class BeansBasics(BeansGroup):
         if interaction.user.id != author_id:
             raise app_commands.MissingPermissions
 
-        self.database.migrate_permanent_items(self.item_manager)
+        await self.database.migrate_permanent_items(self.item_manager)
 
         output = "Migration complete."
         await self.bot.command_response(self.__cog_name__, interaction, output)
@@ -277,7 +278,7 @@ class BeansBasics(BeansGroup):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def get_settings(self, interaction: discord.Interaction) -> None:
-        output = self.settings_manager.get_settings_string(
+        output = await self.settings_manager.get_settings_string(
             interaction.guild_id, SettingsManager.BEANS_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
@@ -291,7 +292,9 @@ class BeansBasics(BeansGroup):
     async def set_toggle(
         self, interaction: discord.Interaction, enabled: typing.Literal["on", "off"]
     ) -> None:
-        self.settings_manager.set_beans_enabled(interaction.guild_id, enabled == "on")
+        await self.settings_manager.set_beans_enabled(
+            interaction.guild_id, enabled == "on"
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -315,25 +318,25 @@ class BeansBasics(BeansGroup):
             "Settings for Daily Beans related Features",
         )
 
-        modal.add_field(
+        await modal.add_field(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_DAILY_MIN_KEY,
             int,
         )
-        modal.add_field(
+        await modal.add_field(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_DAILY_MAX_KEY,
             int,
         )
-        modal.add_field(
+        await modal.add_field(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_BONUS_CARD_AMOUNT_10_KEY,
             int,
         )
-        modal.add_field(
+        await modal.add_field(
             guild_id,
             SettingsManager.BEANS_SUBSETTINGS_KEY,
             SettingsManager.BEANS_BONUS_CARD_AMOUNT_25_KEY,
@@ -356,7 +359,7 @@ class BeansBasics(BeansGroup):
     async def add_channel(
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ) -> None:
-        self.settings_manager.add_beans_channel(interaction.guild_id, channel.id)
+        await self.settings_manager.add_beans_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -372,7 +375,9 @@ class BeansBasics(BeansGroup):
     async def remove_channel(
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ) -> None:
-        self.settings_manager.remove_beans_channel(interaction.guild_id, channel.id)
+        await self.settings_manager.remove_beans_channel(
+            interaction.guild_id, channel.id
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -389,7 +394,7 @@ class BeansBasics(BeansGroup):
     async def add_mod_channel(
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ) -> None:
-        self.settings_manager.add_mod_channel(interaction.guild_id, channel.id)
+        await self.settings_manager.add_mod_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -408,7 +413,7 @@ class BeansBasics(BeansGroup):
     async def remove_mod_channel(
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ) -> None:
-        self.settings_manager.remove_mod_channel(interaction.guild_id, channel.id)
+        await self.settings_manager.remove_mod_channel(interaction.guild_id, channel.id)
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -425,7 +430,7 @@ class BeansBasics(BeansGroup):
     async def add_notification_channel(
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ) -> None:
-        self.settings_manager.add_beans_notification_channel(
+        await self.settings_manager.add_beans_notification_channel(
             interaction.guild_id, channel.id
         )
         await self.bot.command_response(
@@ -446,7 +451,7 @@ class BeansBasics(BeansGroup):
     async def remove_notification_channel(
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ) -> None:
-        self.settings_manager.remove_beans_notification_channel(
+        await self.settings_manager.remove_beans_notification_channel(
             interaction.guild_id, channel.id
         )
         await self.bot.command_response(

@@ -14,6 +14,7 @@ class ItemTrigger(str, Enum):
     GAMBA = "gamba"
     DAILY = "daily"
     USER_MESSAGE = "user_message"
+    MIMIC = "mimic"
 
 
 class PredictionState(str, Enum):

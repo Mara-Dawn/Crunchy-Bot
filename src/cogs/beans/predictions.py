@@ -2,14 +2,14 @@ import datetime
 from typing import Literal
 
 import discord
-from cogs.beans.beans_group import BeansGroup
 from control.settings_manager import SettingsManager
 from datalayer.types import PredictionState
 from discord import app_commands
 from discord.ext import commands, tasks
 from events.prediction_event import PredictionEvent
 from events.types import PredictionEventType
-from items.types import ItemType
+
+from cogs.beans.beans_group import BeansGroup
 
 
 class Predictions(BeansGroup):
@@ -22,9 +22,11 @@ class Predictions(BeansGroup):
             or interaction.user.guild_permissions.administrator
         )
 
-    def __has_mod_permission(self, interaction: discord.Interaction) -> bool:
+    async def __has_mod_permission(self, interaction: discord.Interaction) -> bool:
         author_id = 90043934247501824
-        roles = self.settings_manager.get_predictions_mod_roles(interaction.guild_id)
+        roles = await self.settings_manager.get_predictions_mod_roles(
+            interaction.guild_id
+        )
         is_mod = (
             len(set([x.id for x in interaction.user.roles]).intersection(roles)) > 0
         )
@@ -39,7 +41,7 @@ class Predictions(BeansGroup):
     ):
         guild_id = interaction.guild_id
 
-        if not self.settings_manager.get_predictions_enabled(guild_id):
+        if not await self.settings_manager.get_predictions_enabled(guild_id):
             await self.bot.command_response(
                 self.__cog_name__,
                 interaction,
@@ -50,27 +52,12 @@ class Predictions(BeansGroup):
         if (
             not all_channels
             and interaction.channel_id
-            not in self.settings_manager.get_beans_channels(guild_id)
+            not in await self.settings_manager.get_beans_channels(guild_id)
         ):
             await self.bot.command_response(
                 self.__cog_name__,
                 interaction,
                 "Prediction commands cannot be used in this channel.",
-            )
-            return False
-
-        stun_base_duration = self.item_manager.get_item(guild_id, ItemType.BAT).value
-        stunned_remaining = self.event_manager.get_stunned_remaining(
-            guild_id, interaction.user.id, stun_base_duration
-        )
-
-        if stunned_remaining > 0:
-            timestamp_now = int(datetime.datetime.now().timestamp())
-            remaining = int(timestamp_now + stunned_remaining)
-            await self.bot.command_response(
-                self.__cog_name__,
-                interaction,
-                f"You are currently stunned from a bat attack. Try again <t:{remaining}:R>",
             )
             return False
 
@@ -99,7 +86,7 @@ class Predictions(BeansGroup):
                 cog=self.__cog_name__,
             )
 
-            active_predictions = self.database.get_predictions_by_guild(
+            active_predictions = await self.database.get_predictions_by_guild(
                 guild_id, [PredictionState.APPROVED]
             )
 
@@ -126,7 +113,7 @@ class Predictions(BeansGroup):
 
                     prediction.state = PredictionState.LOCKED
                     prediction.lock_datetime = None
-                    self.database.update_prediction(prediction)
+                    await self.database.update_prediction(prediction)
 
                     event = PredictionEvent(
                         datetime.datetime.now(),
@@ -138,7 +125,9 @@ class Predictions(BeansGroup):
                     await self.controller.dispatch_event(event)
 
                     bean_channels = (
-                        self.settings_manager.get_beans_notification_channels(guild_id)
+                        await self.settings_manager.get_beans_notification_channels(
+                            guild_id
+                        )
                     )
                     announcement = (
                         f"**This prediction has been locked in!**\n> {prediction.content}\nNo more bets will be accepted. "
@@ -172,7 +161,7 @@ class Predictions(BeansGroup):
         if not await self.__check_enabled(interaction, all_channels=True):
             return
 
-        if not self.__has_mod_permission(interaction):
+        if not await self.__has_mod_permission(interaction):
             raise app_commands.MissingPermissions([])
 
         log_message = (
@@ -194,7 +183,7 @@ class Predictions(BeansGroup):
         if not await self.__check_enabled(interaction, all_channels=True):
             return
 
-        if not self.__has_mod_permission(interaction):
+        if not await self.__has_mod_permission(interaction):
             raise app_commands.MissingPermissions([])
 
         await interaction.response.defer()
@@ -211,7 +200,7 @@ class Predictions(BeansGroup):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def get_settings(self, interaction: discord.Interaction):
-        output = self.settings_manager.get_settings_string(
+        output = await self.settings_manager.get_settings_string(
             interaction.guild_id, SettingsManager.PREDICTIONS_SUBSETTINGS_KEY
         )
         await self.bot.command_response(self.__cog_name__, interaction, output)
@@ -226,7 +215,7 @@ class Predictions(BeansGroup):
     async def set_toggle(
         self, interaction: discord.Interaction, enabled: Literal["on", "off"]
     ):
-        self.settings_manager.set_predictions_enabled(
+        await self.settings_manager.set_predictions_enabled(
             interaction.guild_id, enabled == "on"
         )
         await self.bot.command_response(
@@ -243,7 +232,9 @@ class Predictions(BeansGroup):
     @app_commands.describe(role="This role will be allowed to moderate predictions.")
     @app_commands.check(__has_permission)
     async def add_mod_role(self, interaction: discord.Interaction, role: discord.Role):
-        self.settings_manager.add_predictions_mod_role(interaction.guild_id, role.id)
+        await self.settings_manager.add_predictions_mod_role(
+            interaction.guild_id, role.id
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -260,7 +251,9 @@ class Predictions(BeansGroup):
     async def remove_mod_role(
         self, interaction: discord.Interaction, role: discord.Role
     ):
-        self.settings_manager.remove_predictions_mod_role(interaction.guild_id, role.id)
+        await self.settings_manager.remove_predictions_mod_role(
+            interaction.guild_id, role.id
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -279,7 +272,9 @@ class Predictions(BeansGroup):
     async def add_predictions_channel(
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ):
-        self.settings_manager.add_predictions_channel(interaction.guild_id, channel.id)
+        await self.settings_manager.add_predictions_channel(
+            interaction.guild_id, channel.id
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -298,7 +293,7 @@ class Predictions(BeansGroup):
     async def remove_predictions_channel(
         self, interaction: discord.Interaction, channel: discord.TextChannel
     ):
-        self.settings_manager.remove_predictions_channel(
+        await self.settings_manager.remove_predictions_channel(
             interaction.guild_id, channel.id
         )
         await self.bot.command_response(

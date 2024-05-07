@@ -1,10 +1,8 @@
 import datetime
 import json
-import sqlite3
-import traceback
-from sqlite3 import Error
 from typing import Any
 
+import aiosqlite
 import discord
 from bot_util import BotUtil
 from control.logger import BotLogger
@@ -365,85 +363,59 @@ class Database:
         PRIMARY KEY ({PREDICTION_EVENT_ID_COL})
     );"""
 
-    def __init__(self, bot: commands.Bot, logger: BotLogger, db_file: str):
-        self.conn = None
+    def __init__(
+        self,
+        bot: commands.Bot,
+        logger: BotLogger,
+        db_file: str,
+    ):
         self.bot = bot
         self.logger = logger
+        self.db_file = db_file
 
-        try:
-            self.conn = sqlite3.connect(db_file)
+    async def create_tables(self, file: str):
+        async with aiosqlite.connect(file) as db:
+            await db.execute(self.CREATE_SETTINGS_TABLE)
+            await db.execute(self.CREATE_JAIL_TABLE)
+            await db.execute(self.CREATE_EVENT_TABLE)
+            await db.execute(self.CREATE_QUOTE_TABLE)
+            await db.execute(self.CREATE_TIMEOUT_TRACKER_TABLE)
+            await db.execute(self.CREATE_INTERACTION_EVENT_TABLE)
+            await db.execute(self.CREATE_JAIL_EVENT_TABLE)
+            await db.execute(self.CREATE_TIMEOUT_EVENT_TABLE)
+            await db.execute(self.CREATE_SPAM_EVENT_TABLE)
+            await db.execute(self.CREATE_QUOTE_EVENT_TABLE)
+            await db.execute(self.CREATE_BEANS_EVENT_TABLE)
+            await db.execute(self.CREATE_INVENTORY_EVENT_TABLE)
+            await db.execute(self.CREATE_LOOTBOX_TABLE)
+            await db.execute(self.CREATE_LOOTBOX_EVENT_TABLE)
+            await db.execute(self.CREATE_CUSTOM_COLOR_TABLE)
+            await db.execute(self.CREATE_BULLY_REACT_TABLE)
+            await db.execute(self.CREATE_BAT_EVENT_TABLE)
+            await db.execute(self.CREATE_PREDICTION_TABLE)
+            await db.execute(self.CREATE_PREDICTION_OUTCOME_TABLE)
+            await db.execute(self.CREATE_PREDICTION_EVENT_TABLE)
+            await db.execute(self.CREATE_PREDICTION_OVERVIEW_TABLE)
+            await db.execute(self.CREATE_INVENTORY_ITEM_TABLE)
+            await db.execute(self.CREATE_LOOTBOX_ITEM_TABLE)
+            await db.commit()
             self.logger.log(
-                "DB", f"Loaded DB version {sqlite3.version} from {db_file}."
+                "DB", f"Loaded DB version {aiosqlite.__version__} from {file}."
             )
-            self.__create_tables(self.conn)
 
-        except Error as e:
-            traceback.print_stack()
-            traceback.print_exc()
-            self.logger.error("DB", e)
+    async def __query_select(self, query: str, task=None):
+        async with aiosqlite.connect(self.db_file) as db:  # noqa: SIM117
+            async with db.execute(query, task) as cursor:
+                rows = await cursor.fetchall()
+                headings = [x[0] for x in cursor.description]
+                return self.__parse_rows(rows, headings)
 
-    def __create_tables(self, connection: sqlite3.Connection):
-        c = connection.cursor()
-        c.execute(self.CREATE_SETTINGS_TABLE)
-        c.execute(self.CREATE_JAIL_TABLE)
-        c.execute(self.CREATE_EVENT_TABLE)
-        c.execute(self.CREATE_QUOTE_TABLE)
-        c.execute(self.CREATE_TIMEOUT_TRACKER_TABLE)
-        c.execute(self.CREATE_INTERACTION_EVENT_TABLE)
-        c.execute(self.CREATE_JAIL_EVENT_TABLE)
-        c.execute(self.CREATE_TIMEOUT_EVENT_TABLE)
-        c.execute(self.CREATE_SPAM_EVENT_TABLE)
-        c.execute(self.CREATE_QUOTE_EVENT_TABLE)
-        c.execute(self.CREATE_BEANS_EVENT_TABLE)
-        c.execute(self.CREATE_INVENTORY_EVENT_TABLE)
-        c.execute(self.CREATE_LOOTBOX_TABLE)
-        c.execute(self.CREATE_LOOTBOX_EVENT_TABLE)
-        c.execute(self.CREATE_CUSTOM_COLOR_TABLE)
-        c.execute(self.CREATE_BULLY_REACT_TABLE)
-        c.execute(self.CREATE_BAT_EVENT_TABLE)
-        c.execute(self.CREATE_PREDICTION_TABLE)
-        c.execute(self.CREATE_PREDICTION_OUTCOME_TABLE)
-        c.execute(self.CREATE_PREDICTION_EVENT_TABLE)
-        c.execute(self.CREATE_PREDICTION_OVERVIEW_TABLE)
-        c.execute(self.CREATE_INVENTORY_ITEM_TABLE)
-        c.execute(self.CREATE_LOOTBOX_ITEM_TABLE)
-        c.close()
-
-    def __query_select(self, query: str, task=None):
-        try:
-            c = self.conn.cursor()
-            if task is not None:
-                c.execute(query, task)
-            else:
-                c.execute(query)
-            rows = c.fetchall()
-            headings = [x[0] for x in c.description]
-
-            return self.__parse_rows(rows, headings)
-
-        except Error as e:
-            self.logger.error("DB", e)
-            traceback.print_stack()
-            traceback.print_exc()
-            return None
-
-    def __query_insert(self, query: str, task=None) -> int:
-        try:
-            cur = self.conn.cursor()
-            if task is not None:
-                cur.execute(query, task)
-            else:
-                cur.execute(query)
-            insert_id = cur.lastrowid
-            self.conn.commit()
-
+    async def __query_insert(self, query: str, task=None) -> int:
+        async with aiosqlite.connect(self.db_file) as db:
+            cursor = await db.execute(query, task)
+            insert_id = cursor.lastrowid
+            await db.commit()
             return insert_id
-
-        except Error as e:
-            self.logger.error("DB", e)
-            traceback.print_stack()
-            traceback.print_exc()
-            return None
 
     def __parse_rows(self, rows, headings):
         if rows is None:
@@ -463,7 +435,7 @@ class Database:
     def __list_sanitizer(self, attribute_list: list[Any]) -> str:
         return "(" + ",".join(["?" for x in range(len(attribute_list))]) + ")"
 
-    def get_setting(self, guild_id: int, module: str, key: str):
+    async def get_setting(self, guild_id: int, module: str, key: str):
         command = f"""
             SELECT * FROM {self.SETTINGS_TABLE} 
             WHERE {self.SETTINGS_GUILD_ID_COL}=? AND {self.SETTINGS_MODULE_COL}=? AND {self.SETTINGS_KEY_COL}=? 
@@ -471,13 +443,13 @@ class Database:
         """
         task = (int(guild_id), str(module), str(key))
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return None
 
         return json.loads(rows[0][self.SETTINGS_VALUE_COL])
 
-    def update_setting(self, guild_id: int, module: str, key: str, value):
+    async def update_setting(self, guild_id: int, module: str, key: str, value):
         value = json.dumps(value)
 
         command = f"""
@@ -488,9 +460,9 @@ class Database:
         """
         task = (int(guild_id), str(module), str(key), value)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_base_event(self, event: BotEvent) -> int:
+    async def __create_base_event(self, event: BotEvent) -> int:
         command = f"""
                 INSERT INTO {self.EVENT_TABLE} (
                 {self.EVENT_TIMESTAMP_COL}, 
@@ -500,9 +472,11 @@ class Database:
             """
         task = (event.get_timestamp(), event.guild_id, event.type)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_interaction_event(self, event_id: int, event: InteractionEvent) -> int:
+    async def __create_interaction_event(
+        self, event_id: int, event: InteractionEvent
+    ) -> int:
         command = f"""
             INSERT INTO {self.INTERACTION_EVENT_TABLE} (
             {self.INTERACTION_EVENT_ID_COL},
@@ -518,9 +492,9 @@ class Database:
             event.to_user_id,
         )
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_timeout_event(self, event_id: int, event: TimeoutEvent) -> int:
+    async def __create_timeout_event(self, event_id: int, event: TimeoutEvent) -> int:
         command = f"""
             INSERT INTO {self.TIMEOUT_EVENT_TABLE} (
             {self.TIMEOUT_EVENT_ID_COL},
@@ -530,9 +504,9 @@ class Database:
         """
         task = (event_id, event.member_id, event.duration)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_spam_event(self, event_id: int, event: SpamEvent) -> int:
+    async def __create_spam_event(self, event_id: int, event: SpamEvent) -> int:
         command = f"""
             INSERT INTO {self.SPAM_EVENT_TABLE} (
             {self.SPAM_EVENT_ID_COL},
@@ -541,9 +515,9 @@ class Database:
         """
         task = (event_id, event.member_id)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_jail_event(self, event_id: int, event: JailEvent) -> int:
+    async def __create_jail_event(self, event_id: int, event: JailEvent) -> int:
         command = f"""
             INSERT INTO {self.JAIL_EVENT_TABLE} (
             {self.JAIL_EVENT_ID_COL},
@@ -561,9 +535,9 @@ class Database:
             event.jail_id,
         )
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_quote_event(self, event_id: int, event: QuoteEvent) -> int:
+    async def __create_quote_event(self, event_id: int, event: QuoteEvent) -> int:
         command = f"""
             INSERT INTO {self.QUOTE_EVENT_TABLE} (
             {self.QUOTE_EVENT_ID_COL},
@@ -572,9 +546,9 @@ class Database:
         """
         task = (event_id, event.quote_id)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_beans_event(self, event_id: int, event: BeansEvent) -> int:
+    async def __create_beans_event(self, event_id: int, event: BeansEvent) -> int:
         command = f"""
             INSERT INTO {self.BEANS_EVENT_TABLE} (
             {self.BEANS_EVENT_ID_COL},
@@ -590,9 +564,11 @@ class Database:
             event.value,
         )
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_inventory_event(self, event_id: int, event: InventoryEvent) -> int:
+    async def __create_inventory_event(
+        self, event_id: int, event: InventoryEvent
+    ) -> int:
         command = f"""
             INSERT INTO {self.INVENTORY_EVENT_TABLE} (
             {self.INVENTORY_EVENT_ID_COL},
@@ -608,9 +584,9 @@ class Database:
             event.amount,
         )
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_loot_box_event(self, event_id: int, event: LootBoxEvent) -> int:
+    async def __create_loot_box_event(self, event_id: int, event: LootBoxEvent) -> int:
         command = f"""
             INSERT INTO {self.LOOTBOX_EVENT_TABLE} (
             {self.LOOTBOX_EVENT_ID_COL},
@@ -626,9 +602,9 @@ class Database:
             event.loot_box_event_type,
         )
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_bat_event(self, event_id: int, event: BatEvent) -> int:
+    async def __create_bat_event(self, event_id: int, event: BatEvent) -> int:
         command = f"""
             INSERT INTO {self.BAT_EVENT_TABLE} (
             {self.BAT_EVENT_ID_COL},
@@ -639,9 +615,11 @@ class Database:
         """
         task = (event_id, event.used_by_id, event.target_id, event.duration)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def __create_prediction_event(self, event_id: int, event: PredictionEvent) -> int:
+    async def __create_prediction_event(
+        self, event_id: int, event: PredictionEvent
+    ) -> int:
         command = f"""
             INSERT INTO {self.PREDICTION_EVENT_TABLE} (
             {self.PREDICTION_EVENT_ID_COL},
@@ -661,10 +639,10 @@ class Database:
             event.amount,
         )
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def log_event(self, event: BotEvent) -> int:
-        event_id = self.__create_base_event(event)
+    async def log_event(self, event: BotEvent) -> int:
+        event_id = await self.__create_base_event(event)
 
         if event_id is None:
             self.logger.error("DB", "Event creation error, id was NoneType")
@@ -672,27 +650,27 @@ class Database:
 
         match event.type:
             case EventType.INTERACTION:
-                return self.__create_interaction_event(event_id, event)
+                return await self.__create_interaction_event(event_id, event)
             case EventType.JAIL:
-                return self.__create_jail_event(event_id, event)
+                return await self.__create_jail_event(event_id, event)
             case EventType.TIMEOUT:
-                return self.__create_timeout_event(event_id, event)
+                return await self.__create_timeout_event(event_id, event)
             case EventType.QUOTE:
-                return self.__create_quote_event(event_id, event)
+                return await self.__create_quote_event(event_id, event)
             case EventType.SPAM:
-                return self.__create_spam_event(event_id, event)
+                return await self.__create_spam_event(event_id, event)
             case EventType.BEANS:
-                return self.__create_beans_event(event_id, event)
+                return await self.__create_beans_event(event_id, event)
             case EventType.INVENTORY:
-                return self.__create_inventory_event(event_id, event)
+                return await self.__create_inventory_event(event_id, event)
             case EventType.LOOTBOX:
-                return self.__create_loot_box_event(event_id, event)
+                return await self.__create_loot_box_event(event_id, event)
             case EventType.BAT:
-                return self.__create_bat_event(event_id, event)
+                return await self.__create_bat_event(event_id, event)
             case EventType.PREDICTION:
-                return self.__create_prediction_event(event_id, event)
+                return await self.__create_prediction_event(event_id, event)
 
-    def log_quote(self, quote: Quote) -> int:
+    async def log_quote(self, quote: Quote) -> int:
         command = f"""
             INSERT INTO {self.QUOTE_TABLE} (
             {self.QUOTE_GUILD_COL},
@@ -716,9 +694,9 @@ class Database:
             quote.message_content,
         )
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def log_lootbox(self, loot_box: LootBox) -> int:
+    async def log_lootbox(self, loot_box: LootBox) -> int:
         command = f"""
             INSERT INTO {self.LOOTBOX_TABLE} (
             {self.LOOTBOX_GUILD_COL},
@@ -732,7 +710,7 @@ class Database:
             loot_box.beans,
         )
 
-        lootbox_id = self.__query_insert(command, task)
+        lootbox_id = await self.__query_insert(command, task)
 
         for item_type, amount in loot_box.items.items():
 
@@ -745,11 +723,11 @@ class Database:
             """
 
             task = (lootbox_id, item_type.value, amount)
-            self.__query_insert(command, task)
+            await self.__query_insert(command, task)
 
         return lootbox_id
 
-    def log_item_state(
+    async def log_item_state(
         self,
         guild_id: int,
         user_id: int,
@@ -769,9 +747,9 @@ class Database:
         """
         task = (guild_id, user_id, item_type.value, item_state.value)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def get_user_item_states(
+    async def get_user_item_states(
         self, guild_id: int, user_id: int
     ) -> dict[ItemType, ItemState]:
         command = f"""
@@ -781,7 +759,7 @@ class Database:
         """
         task = (guild_id, user_id)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
 
@@ -792,7 +770,7 @@ class Database:
             for row in rows
         }
 
-    def log_bully_react(
+    async def log_bully_react(
         self,
         guild_id: int,
         user_id: int,
@@ -820,9 +798,9 @@ class Database:
 
         task = (guild_id, user_id, target_id, emoji_type.value, emoji)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def get_bully_react(
+    async def get_bully_react(
         self, guild_id: int, user_id: int
     ) -> tuple[int, discord.Emoji | str]:
         command = f"""
@@ -832,7 +810,7 @@ class Database:
         """
         task = (guild_id, user_id)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return None, None
 
@@ -842,7 +820,7 @@ class Database:
 
         return rows[0][self.BULLY_REACT_TARGET_COL], emoji
 
-    def log_custom_color(self, guild_id: int, user_id: int, color: str) -> int:
+    async def log_custom_color(self, guild_id: int, user_id: int, color: str) -> int:
         command = f"""
             INSERT INTO {self.CUSTOM_COLOR_TABLE} ({self.CUSTOM_COLOR_GUILD_COL}, {self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_COLOR_COL}) 
             VALUES (?, ?, ?) 
@@ -851,9 +829,9 @@ class Database:
         """
         task = (guild_id, user_id, color)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def get_custom_color(self, guild_id: int, user_id: int) -> str:
+    async def get_custom_color(self, guild_id: int, user_id: int) -> str:
         command = f"""
             SELECT * FROM {self.CUSTOM_COLOR_TABLE}
             WHERE {self.CUSTOM_COLOR_MEMBER_COL} = ? 
@@ -861,13 +839,13 @@ class Database:
         """
         task = (user_id, guild_id)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return None
 
         return rows[0][self.CUSTOM_COLOR_COLOR_COL]
 
-    def log_custom_role(self, guild_id: int, user_id: int, role_id: int) -> int:
+    async def log_custom_role(self, guild_id: int, user_id: int, role_id: int) -> int:
         command = f"""
             INSERT INTO {self.CUSTOM_COLOR_TABLE} ({self.CUSTOM_COLOR_GUILD_COL}, {self.CUSTOM_COLOR_MEMBER_COL}, {self.CUSTOM_COLOR_ROLE_COL}) 
             VALUES (?, ?, ?) 
@@ -877,9 +855,9 @@ class Database:
         """
         task = (guild_id, user_id, role_id)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def get_custom_role(self, guild_id: int, user_id: int) -> int:
+    async def get_custom_role(self, guild_id: int, user_id: int) -> int:
         command = f"""
             SELECT * FROM {self.CUSTOM_COLOR_TABLE}
             WHERE {self.CUSTOM_COLOR_MEMBER_COL} = ? 
@@ -887,13 +865,13 @@ class Database:
         """
         task = (user_id, guild_id)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return None
 
         return rows[0][self.CUSTOM_COLOR_ROLE_COL]
 
-    def log_prediction(self, prediction: Prediction) -> int:
+    async def log_prediction(self, prediction: Prediction) -> int:
         command = f"""
             INSERT INTO {self.PREDICTION_TABLE} (
             {self.PREDICTION_GUILD_ID_COL},
@@ -915,7 +893,7 @@ class Database:
             prediction.comment,
         )
 
-        prediction_id = self.__query_insert(command, task)
+        prediction_id = await self.__query_insert(command, task)
 
         for outcome in prediction.outcomes.values():
             command = f"""
@@ -928,11 +906,11 @@ class Database:
                 prediction_id,
                 outcome,
             )
-            self.__query_insert(command, task)
+            await self.__query_insert(command, task)
 
         return prediction_id
 
-    def update_prediction(self, prediction: Prediction) -> int:
+    async def update_prediction(self, prediction: Prediction) -> int:
         command = f"""
             UPDATE {self.PREDICTION_TABLE} SET (
             {self.PREDICTION_CONTENT_COL},
@@ -952,7 +930,7 @@ class Database:
             prediction.id,
         )
 
-        prediction_id = self.__query_insert(command, task)
+        prediction_id = await self.__query_insert(command, task)
 
         for id, outcome in prediction.outcomes.items():
             command = f"""
@@ -964,21 +942,21 @@ class Database:
                 outcome,
                 id,
             )
-            self.__query_insert(command, task)
+            await self.__query_insert(command, task)
 
         return prediction_id
 
-    def clear_prediction_overview_messages(self, channel_id: int) -> int:
+    async def clear_prediction_overview_messages(self, channel_id: int) -> int:
         command = f"""
             DELETE FROM {self.PREDICTION_OVERVIEW_TABLE}
             WHERE {self.PREDICTION_OVERVIEW_CHANNEL_ID_COL} = {int(channel_id)}
         """
 
-        channel_id = self.__query_insert(command)
+        channel_id = await self.__query_insert(command)
 
         return channel_id
 
-    def add_prediction_overview_message(
+    async def add_prediction_overview_message(
         self, prediction_id: int, message_id: int, channel_id: int
     ) -> int:
         command = f"""
@@ -990,11 +968,11 @@ class Database:
         """
         task = (message_id, channel_id, prediction_id)
 
-        insert_id = self.__query_insert(command, task)
+        insert_id = await self.__query_insert(command, task)
 
         return insert_id
 
-    def get_prediction_overview_message(
+    async def get_prediction_overview_message(
         self, prediction_id: int, channel_id: int
     ) -> int:
         command = f"""
@@ -1004,13 +982,13 @@ class Database:
         """
         task = (prediction_id, channel_id)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return None
 
         return rows[0][self.PREDICTION_OVERVIEW_MESSAGE_ID_COL]
 
-    def fix_quote(self, quote: Quote, channel_id: int) -> int:
+    async def fix_quote(self, quote: Quote, channel_id: int) -> int:
         command = f"""
             UPDATE {self.QUOTE_TABLE} 
             SET {self.QUOTE_CHANNEL_COL} = ?
@@ -1018,9 +996,9 @@ class Database:
         """
         task = (channel_id, quote.id)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def increment_timeout_tracker(self, guild_id: int, user_id: int) -> int:
+    async def increment_timeout_tracker(self, guild_id: int, user_id: int) -> int:
         command = f"""
             INSERT INTO {self.TIMEOUT_TRACKER_TABLE} ({self.TIMEOUT_TRACKER_GUILD_ID_COL}, {self.TIMEOUT_TRACKER_MEMBER_COL}, {self.TIMEOUT_TRACKER_COUNT_COL}) 
             VALUES (?, ?, 1) 
@@ -1029,9 +1007,9 @@ class Database:
         """
         task = (guild_id, user_id)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def reset_timeout_tracker(self, guild_id: int, user_id: int) -> int:
+    async def reset_timeout_tracker(self, guild_id: int, user_id: int) -> int:
         command = f"""
             UPDATE {self.TIMEOUT_TRACKER_TABLE} 
             SET {self.TIMEOUT_TRACKER_COUNT_COL} = 0
@@ -1040,9 +1018,9 @@ class Database:
         """
         task = (guild_id, user_id)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def get_timeout_tracker_count(self, guild_id: int, user_id: int) -> int:
+    async def get_timeout_tracker_count(self, guild_id: int, user_id: int) -> int:
         command = f"""
             SELECT * FROM {self.TIMEOUT_TRACKER_TABLE}
             WHERE {self.TIMEOUT_TRACKER_GUILD_ID_COL} = ? 
@@ -1050,13 +1028,13 @@ class Database:
         """
         task = (guild_id, user_id)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return 0
 
         return rows[0][self.TIMEOUT_TRACKER_COUNT_COL]
 
-    def log_jail_sentence(self, jail: UserJail) -> UserJail:
+    async def log_jail_sentence(self, jail: UserJail) -> UserJail:
         command = f"""
             INSERT INTO {self.JAIL_TABLE} (
             {self.JAIL_GUILD_ID_COL},
@@ -1070,10 +1048,10 @@ class Database:
             jail.get_jailed_on_timestamp(),
         )
 
-        insert_id = self.__query_insert(command, task)
+        insert_id = await self.__query_insert(command, task)
         return UserJail.from_jail(jail, jail_id=insert_id)
 
-    def log_jail_release(self, jail_id: int, released_on: int) -> int:
+    async def log_jail_release(self, jail_id: int, released_on: int) -> int:
         command = f"""
             UPDATE {self.JAIL_TABLE} 
             SET {self.JAIL_RELEASED_ON_COL} = ?
@@ -1081,54 +1059,57 @@ class Database:
         """
         task = (released_on, jail_id)
 
-        return self.__query_insert(command, task)
+        return await self.__query_insert(command, task)
 
-    def get_active_jails(self) -> list[UserJail]:
+    async def get_active_jails(self) -> list[UserJail]:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_RELEASED_ON_COL} IS NULL 
             OR {self.JAIL_RELEASED_ON_COL} = 0;
         """
-        rows = self.__query_select(command)
-
+        rows = await self.__query_select(command)
+        if not rows:
+            return []
         return [UserJail.from_db_row(row) for row in rows]
 
-    def get_jail(self, jail_id: int) -> UserJail:
+    async def get_jail(self, jail_id: int) -> UserJail:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_ID_COL} = {int(jail_id)}
             LIMIT 1;
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
 
         if rows and len(rows) < 1:
             return None
 
         return UserJail.from_db_row(rows)
 
-    def get_jails_by_guild(self, guild_id: int) -> list[UserJail]:
+    async def get_jails_by_guild(self, guild_id: int) -> list[UserJail]:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_GUILD_ID_COL} = {int(guild_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [UserJail.from_db_row(row) for row in rows]
 
-    def get_active_jails_by_guild(self, guild_id: int) -> list[UserJail]:
+    async def get_active_jails_by_guild(self, guild_id: int) -> list[UserJail]:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_GUILD_ID_COL} = {int(guild_id)}
             AND {self.JAIL_RELEASED_ON_COL} IS NULL 
             OR {self.JAIL_RELEASED_ON_COL} = 0;
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [UserJail.from_db_row(row) for row in rows]
 
-    def get_active_jails_by_member(self, guild_id: int, user_id: int) -> list[UserJail]:
+    async def get_active_jails_by_member(
+        self, guild_id: int, user_id: int
+    ) -> list[UserJail]:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             WHERE {self.JAIL_MEMBER_COL} = ?
@@ -1137,111 +1118,113 @@ class Database:
             OR {self.JAIL_RELEASED_ON_COL} = 0;
         """
         task = (user_id, guild_id)
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows:
             return []
         return [UserJail.from_db_row(row) for row in rows]
 
-    def get_jail_events_by_jail(self, jail_id: int) -> list[JailEvent]:
+    async def get_jail_events_by_jail(self, jail_id: int) -> list[JailEvent]:
         command = f"""
             SELECT * FROM {self.JAIL_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
             WHERE {self.JAIL_EVENT_JAILREFERENCE_COL} = {int(jail_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [JailEvent.from_db_row(row) for row in rows]
 
-    def get_jail_events_by_user(self, user_id: int) -> list[JailEvent]:
+    async def get_jail_events_by_user(self, user_id: int) -> list[JailEvent]:
         command = f"""
             SELECT * FROM {self.JAIL_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
             AND {self.JAIL_EVENT_BY_COL} = {int(user_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [JailEvent.from_db_row(row) for row in rows]
 
-    def get_jail_events_affecting_user(self, user_id: int) -> list[JailEvent]:
+    async def get_jail_events_affecting_user(self, user_id: int) -> list[JailEvent]:
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             INNER JOIN {self.JAIL_EVENT_TABLE} ON {self.JAIL_TABLE}.{self.JAIL_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_JAILREFERENCE_COL}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
             WHERE {self.JAIL_TABLE}.{self.JAIL_MEMBER_COL} = {int(user_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [JailEvent.from_db_row(row) for row in rows]
 
-    def get_jail_events_by_guild(
+    async def get_jail_events_by_guild(
         self, guild_id: int
     ) -> dict[UserJail, list[JailEvent]]:
-        jails = self.get_jails_by_guild(guild_id)
+        jails = await self.get_jails_by_guild(guild_id)
         output = {}
         for jail in jails:
-            output[jail] = self.get_jail_events_by_jail(jail.id)
+            output[jail] = await self.get_jail_events_by_jail(jail.id)
 
         return output
 
-    def get_timeout_events_by_user(self, user_id: int) -> list[TimeoutEvent]:
+    async def get_timeout_events_by_user(self, user_id: int) -> list[TimeoutEvent]:
         command = f"""
             SELECT * FROM {self.TIMEOUT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
             WHERE {self.TIMEOUT_EVENT_MEMBER_COL} = {int(user_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [TimeoutEvent.from_db_row(row) for row in rows]
 
-    def get_timeout_events_by_guild(self, guild_id: int) -> list[TimeoutEvent]:
+    async def get_timeout_events_by_guild(self, guild_id: int) -> list[TimeoutEvent]:
         command = f"""
             SELECT * FROM {self.TIMEOUT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
             WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = {int(guild_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [TimeoutEvent.from_db_row(row) for row in rows]
 
-    def get_spam_events_by_user(self, user_id: int) -> list[SpamEvent]:
+    async def get_spam_events_by_user(self, user_id: int) -> list[SpamEvent]:
         command = f"""
             SELECT * FROM {self.SPAM_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.SPAM_EVENT_TABLE}.{self.SPAM_EVENT_ID_COL}
             WHERE {self.SPAM_EVENT_MEMBER_COL} = {int(user_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [SpamEvent.from_db_row(row) for row in rows]
 
-    def get_spam_events_by_guild(self, guild_id: int) -> list[SpamEvent]:
+    async def get_spam_events_by_guild(self, guild_id: int) -> list[SpamEvent]:
         command = f"""
             SELECT * FROM {self.SPAM_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.SPAM_EVENT_TABLE}.{self.SPAM_EVENT_ID_COL}
             WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = {int(guild_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [SpamEvent.from_db_row(row) for row in rows]
 
-    def get_interaction_events_by_user(self, user_id: int) -> list[InteractionEvent]:
+    async def get_interaction_events_by_user(
+        self, user_id: int
+    ) -> list[InteractionEvent]:
         command = f"""
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
             WHERE {self.INTERACTION_EVENT_FROM_COL} = {int(user_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [InteractionEvent.from_db_row(row) for row in rows]
 
-    def get_interaction_events_affecting_user(
+    async def get_interaction_events_affecting_user(
         self, user_id: int
     ) -> list[InteractionEvent]:
         command = f"""
@@ -1249,12 +1232,12 @@ class Database:
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
             WHERE {self.INTERACTION_EVENT_TO_COL} = {int(user_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
         return [InteractionEvent.from_db_row(row) for row in rows]
 
-    def get_guild_interaction_events(
+    async def get_guild_interaction_events(
         self, guild_id: int, interaction_type: UserInteraction
     ) -> list[InteractionEvent]:
         command = f"""
@@ -1264,23 +1247,23 @@ class Database:
             AND {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_TYPE_COL} = ?;
         """
         task = (guild_id, interaction_type.value)
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows:
             return []
         return [InteractionEvent.from_db_row(row) for row in rows]
 
-    def get_random_quote(self, guild_id: int) -> Quote:
+    async def get_random_quote(self, guild_id: int) -> Quote:
         command = f""" 
             SELECT * FROM {self.QUOTE_TABLE} 
             WHERE {self.QUOTE_TABLE}.{self.QUOTE_GUILD_COL} = {int(guild_id)}
             ORDER BY RANDOM() LIMIT 1;
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return None
         return Quote.from_db_row(rows[0])
 
-    def get_random_quote_by_user(self, guild_id: int, user_id: int) -> Quote:
+    async def get_random_quote_by_user(self, guild_id: int, user_id: int) -> Quote:
         command = f""" 
             SELECT * FROM {self.QUOTE_TABLE} 
             WHERE {self.QUOTE_TABLE}.{self.QUOTE_GUILD_COL} = ?
@@ -1288,17 +1271,17 @@ class Database:
             ORDER BY RANDOM() LIMIT 1;
         """
         task = (guild_id, user_id)
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows:
             return None
         return Quote.from_db_row(rows[0])
 
-    def get_lootbox_items(self, lootbox_id: int) -> list[ItemType]:
+    async def get_lootbox_items(self, lootbox_id: int) -> list[ItemType]:
         command = f""" 
             SELECT * FROM {self.LOOTBOX_ITEM_TABLE} 
             WHERE {self.LOOTBOX_ITEM_LOOTBOX_ID_COL} = {int(lootbox_id)};
         """
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows:
             return []
 
@@ -1309,7 +1292,9 @@ class Database:
             for row in rows
         }
 
-    def get_loot_box_by_message_id(self, guild_id: int, message_id: int) -> LootBox:
+    async def get_loot_box_by_message_id(
+        self, guild_id: int, message_id: int
+    ) -> LootBox:
         command = f""" 
             SELECT * FROM {self.LOOTBOX_TABLE} 
             WHERE {self.LOOTBOX_MESSAGE_ID_COL} = ?
@@ -1317,15 +1302,15 @@ class Database:
             LIMIT 1;
         """
         task = (message_id, guild_id)
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows:
             return None
 
-        items = self.get_lootbox_items(rows[0][self.LOOTBOX_ID_COL])
+        items = await self.get_lootbox_items(rows[0][self.LOOTBOX_ID_COL])
 
         return LootBox.from_db_row(rows[0], items)
 
-    def get_last_loot_box_event(self, guild_id: int):
+    async def get_last_loot_box_event(self, guild_id: int):
         command = f"""
             SELECT * FROM {self.LOOTBOX_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
@@ -1334,12 +1319,12 @@ class Database:
             ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
         """
         task = (LootBoxEventType.DROP.value, guild_id)
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows:
             return None
         return LootBoxEvent.from_db_row(rows[0])
 
-    def get_member_beans(self, guild_id: int, user_id: int) -> int:
+    async def get_member_beans(self, guild_id: int, user_id: int) -> int:
         command = f"""
             SELECT SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
@@ -1348,13 +1333,13 @@ class Database:
         """
         task = (user_id, guild_id)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return 0
         output = rows[0][f"SUM({self.BEANS_EVENT_VALUE_COL})"]
         return output if output is not None else 0
 
-    def get_guild_beans(self, guild_id: int) -> dict[int, int]:
+    async def get_guild_beans(self, guild_id: int) -> dict[int, int]:
         command = f"""
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
@@ -1362,7 +1347,7 @@ class Database:
             GROUP BY {self.BEANS_EVENT_MEMBER_COL};
         """
 
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows or len(rows) < 1:
             return {}
 
@@ -1373,7 +1358,7 @@ class Database:
 
         return output
 
-    def get_guild_beans_rankings_current(self, guild_id: int) -> dict[int, int]:
+    async def get_guild_beans_rankings_current(self, guild_id: int) -> dict[int, int]:
         command = f"""
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
@@ -1389,7 +1374,7 @@ class Database:
             BeansEventType.SHOP_BUYBACK.value,
         )
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
 
@@ -1398,7 +1383,7 @@ class Database:
             for row in rows
         }
 
-    def get_guild_beans_rankings(self, guild_id: int) -> dict[int, int]:
+    async def get_guild_beans_rankings(self, guild_id: int) -> dict[int, int]:
         command = f"""
             SELECT {self.BEANS_EVENT_MEMBER_COL}, MAX(rollingSum) as high_score 
             FROM (
@@ -1422,13 +1407,13 @@ class Database:
             BeansEventType.SHOP_BUYBACK.value,
         )
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
 
         return {row[self.BEANS_EVENT_MEMBER_COL]: row["high_score"] for row in rows}
 
-    def get_lootbox_purchases_by_guild(
+    async def get_lootbox_purchases_by_guild(
         self, guild_id: int, until: int = None
     ) -> dict[int, int]:
         command = f"""
@@ -1444,7 +1429,7 @@ class Database:
 
         task = (guild_id, LootBoxEventType.BUY.value, until)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
 
@@ -1455,7 +1440,7 @@ class Database:
             for row in rows
         }
 
-    def get_beans_daily_gamba_count(
+    async def get_beans_daily_gamba_count(
         self,
         guild_id: int,
         user_id: int,
@@ -1474,13 +1459,13 @@ class Database:
         """
         task = (user_id, guild_id, beans_event_type, min_value, date)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return 0
 
         return rows[0]["COUNT(*)"]
 
-    def get_last_beans_event(
+    async def get_last_beans_event(
         self, guild_id: int, user_id: int, beans_event_type: BeansEventType
     ) -> BeansEvent:
         command = f"""
@@ -1493,12 +1478,12 @@ class Database:
         """
         task = (user_id, guild_id, beans_event_type)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return None
         return BeansEvent.from_db_row(rows[0])
 
-    def get_lottery_data(self, guild_id: int) -> dict[int, int]:
+    async def get_lottery_data(self, guild_id: int) -> dict[int, int]:
         command = f"""
             SELECT {self.INVENTORY_EVENT_MEMBER_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
@@ -1509,7 +1494,7 @@ class Database:
         """
         task = (guild_id, ItemType.LOTTERY_TICKET)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
         rows = {
@@ -1521,7 +1506,9 @@ class Database:
         }
         return rows
 
-    def get_item_counts_by_guild(self, guild_id: int) -> dict[int, dict[ItemType, int]]:
+    async def get_item_counts_by_guild(
+        self, guild_id: int
+    ) -> dict[int, dict[ItemType, int]]:
         command = f"""
             SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, {self.INVENTORY_EVENT_MEMBER_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
@@ -1530,7 +1517,7 @@ class Database:
             GROUP BY {self.INVENTORY_EVENT_MEMBER_COL}, {self.INVENTORY_EVENT_ITEM_TYPE_COL};
         """
 
-        rows = self.__query_select(command)
+        rows = await self.__query_select(command)
         if not rows or len(rows) < 1:
             return {}
 
@@ -1548,7 +1535,7 @@ class Database:
 
         return transformed
 
-    def get_item_counts_by_user(
+    async def get_item_counts_by_user(
         self, guild_id: int, user_id: int
     ) -> dict[ItemType, int]:
         command = f"""
@@ -1561,7 +1548,7 @@ class Database:
         """
         task = (user_id, guild_id)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
 
@@ -1573,7 +1560,7 @@ class Database:
             if row[f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"] > 0
         }
 
-    def get_prediction_by_id(self, prediction_id: int) -> Prediction:
+    async def get_prediction_by_id(self, prediction_id: int) -> Prediction:
 
         command = f"""
             SELECT * FROM {self.PREDICTION_TABLE} 
@@ -1581,7 +1568,7 @@ class Database:
             LIMIT 1;
         """
 
-        prediction_rows = self.__query_select(command)
+        prediction_rows = await self.__query_select(command)
         if not prediction_rows or len(prediction_rows) < 1:
             return None
 
@@ -1592,13 +1579,13 @@ class Database:
             WHERE {self.PREDICTION_OUTCOME_PREDICTION_ID_COL} = {int(prediction_row[self.PREDICTION_ID_COL])};
         """
 
-        outcome_rows = self.__query_select(command)
+        outcome_rows = await self.__query_select(command)
         if not outcome_rows or len(outcome_rows) < 1:
             return None
 
         return Prediction.from_db_row(prediction_row, outcome_rows)
 
-    def get_predictions_by_guild(
+    async def get_predictions_by_guild(
         self, guild_id: int, states: list[PredictionState] = None
     ) -> list[Prediction]:
 
@@ -1617,7 +1604,7 @@ class Database:
 
         task = (guild_id, *states)
 
-        prediction_rows = self.__query_select(command, task)
+        prediction_rows = await self.__query_select(command, task)
         if not prediction_rows or len(prediction_rows) < 1:
             return None
 
@@ -1629,7 +1616,7 @@ class Database:
                 WHERE {self.PREDICTION_OUTCOME_PREDICTION_ID_COL} = {int(row[self.PREDICTION_ID_COL])};
             """
 
-            outcome_rows = self.__query_select(command)
+            outcome_rows = await self.__query_select(command)
             if not outcome_rows or len(outcome_rows) < 1:
                 continue
 
@@ -1638,7 +1625,9 @@ class Database:
 
         return predictions
 
-    def get_prediction_bets(self, predictions: list[Prediction]) -> dict[int, int]:
+    async def get_prediction_bets(
+        self, predictions: list[Prediction]
+    ) -> dict[int, int]:
         if predictions is None:
             return None
 
@@ -1655,7 +1644,7 @@ class Database:
 
         task = (PredictionEventType.PLACE_BET, *prediction_ids)
 
-        bet_rows = self.__query_select(command, task)
+        bet_rows = await self.__query_select(command, task)
         if not bet_rows or len(bet_rows) < 1:
             return None
 
@@ -1666,7 +1655,7 @@ class Database:
             for row in bet_rows
         }
 
-    def get_prediction_bets_by_outcome(self, outcome_id: int) -> dict[int, int]:
+    async def get_prediction_bets_by_outcome(self, outcome_id: int) -> dict[int, int]:
 
         command = f"""
             SELECT * FROM {self.PREDICTION_EVENT_TABLE}
@@ -1677,7 +1666,7 @@ class Database:
 
         task = (PredictionEventType.PLACE_BET, outcome_id)
 
-        bet_rows = self.__query_select(command, task)
+        bet_rows = await self.__query_select(command, task)
         if not bet_rows or len(bet_rows) < 1:
             return {}
 
@@ -1695,7 +1684,7 @@ class Database:
 
         return output
 
-    def get_prediction_bets_by_id(self, prediction_id: int) -> dict[int, int]:
+    async def get_prediction_bets_by_id(self, prediction_id: int) -> dict[int, int]:
 
         command = f"""
             SELECT * FROM {self.PREDICTION_EVENT_TABLE}
@@ -1706,7 +1695,7 @@ class Database:
 
         task = (PredictionEventType.PLACE_BET, prediction_id)
 
-        bet_rows = self.__query_select(command, task)
+        bet_rows = await self.__query_select(command, task)
         if not bet_rows or len(bet_rows) < 1:
             return {}
 
@@ -1724,7 +1713,7 @@ class Database:
 
         return output
 
-    def get_prediction_bets_by_user(
+    async def get_prediction_bets_by_user(
         self, guild_id: int, member_id: int
     ) -> dict[int, tuple[int, int]]:
 
@@ -1739,7 +1728,7 @@ class Database:
 
         task = (PredictionEventType.PLACE_BET, member_id, guild_id)
 
-        bet_rows = self.__query_select(command, task)
+        bet_rows = await self.__query_select(command, task)
         if not bet_rows or len(bet_rows) < 1:
             return {}
 
@@ -1751,7 +1740,7 @@ class Database:
             for row in bet_rows
         }
 
-    def get_prediction_winning_outcome(self, prediction_id: int) -> int:
+    async def get_prediction_winning_outcome(self, prediction_id: int) -> int:
         command = f"""
             SELECT * FROM {self.PREDICTION_EVENT_TABLE}
             WHERE {self.PREDICTION_EVENT_TYPE_COL} = ?
@@ -1761,16 +1750,16 @@ class Database:
 
         task = (PredictionEventType.RESOLVE, prediction_id)
 
-        bet_rows = self.__query_select(command, task)
+        bet_rows = await self.__query_select(command, task)
         if not bet_rows or len(bet_rows) < 1:
             return None
 
         return bet_rows[0][self.PREDICTION_EVENT_OUTCOME_ID_COL]
 
-    def get_prediction_stats_by_prediction(
+    async def get_prediction_stats_by_prediction(
         self, prediction: Prediction
     ) -> PredictionStats:
-        prediction_bets = self.get_prediction_bets([prediction])
+        prediction_bets = await self.get_prediction_bets([prediction])
 
         bets = None
         if prediction_bets is not None:
@@ -1786,21 +1775,21 @@ class Database:
         mod_name = BotUtil.get_name(
             self.bot, prediction.guild_id, prediction.moderator_id, 30
         )
-        winning_outcome_id = self.get_prediction_winning_outcome(prediction.id)
+        winning_outcome_id = await self.get_prediction_winning_outcome(prediction.id)
         stats = PredictionStats(
             prediction, bets, author_name, mod_name, winning_outcome_id
         )
         return stats
 
-    def get_prediction_stats_by_guild(
+    async def get_prediction_stats_by_guild(
         self, guild_id: int, states: list[PredictionState] = None
     ) -> list[PredictionStats]:
-        predictions = self.get_predictions_by_guild(guild_id, states)
+        predictions = await self.get_predictions_by_guild(guild_id, states)
 
         if predictions is None:
             return []
 
-        prediction_bets = self.get_prediction_bets(predictions)
+        prediction_bets = await self.get_prediction_bets(predictions)
 
         prediction_stats = []
 
@@ -1815,14 +1804,16 @@ class Database:
 
             author_name = BotUtil.get_name(self.bot, guild_id, prediction.author_id, 40)
             mod_name = BotUtil.get_name(self.bot, guild_id, prediction.moderator_id, 30)
-            winning_outcome_id = self.get_prediction_winning_outcome(prediction.id)
+            winning_outcome_id = await self.get_prediction_winning_outcome(
+                prediction.id
+            )
             stats = PredictionStats(
                 prediction, bets, author_name, mod_name, winning_outcome_id
             )
             prediction_stats.append(stats)
         return prediction_stats
 
-    def get_last_bat_event_by_target(
+    async def get_last_bat_event_by_target(
         self, guild_id: int, target_user_id: int
     ) -> BatEvent:
         command = f"""
@@ -1834,12 +1825,12 @@ class Database:
         """
         task = (guild_id, target_user_id)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return None
         return BatEvent.from_db_row(rows[0])
 
-    def get_lootboxes_by_guild(self, guild_id: int) -> list[tuple[int, LootBox]]:
+    async def get_lootboxes_by_guild(self, guild_id: int) -> list[tuple[int, LootBox]]:
 
         lootbox_types = [LootBoxEventType.CLAIM.value, LootBoxEventType.OPEN.value]
         list_sanitized = self.__list_sanitizer(lootbox_types)
@@ -1853,7 +1844,7 @@ class Database:
         """
         task = (guild_id, *lootbox_types)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
 
@@ -1861,13 +1852,13 @@ class Database:
             (
                 row[self.LOOTBOX_EVENT_MEMBER_COL],
                 LootBox.from_db_row(
-                    row, self.get_lootbox_items(row[self.LOOTBOX_ID_COL])
+                    row, (await self.get_lootbox_items(row[self.LOOTBOX_ID_COL]))
                 ),
             )
             for row in rows
         ]
 
-    def get_guild_beans_events(
+    async def get_guild_beans_events(
         self, guild_id: int, event_types: list[BeansEventType]
     ) -> list[BeansEvent]:
         event_type_values = [event_type.value for event_type in event_types]
@@ -1881,7 +1872,7 @@ class Database:
         """
         task = (guild_id, *event_type_values)
 
-        rows = self.__query_select(command, task)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
 

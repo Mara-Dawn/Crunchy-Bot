@@ -46,16 +46,30 @@ class AIManager(Service):
         with open(self.KEY_FILE) as file:
             self.token = file.readline()
 
+        # self.backstory = (
+        #     "Your name is 'Mistress Crunch'. You are a bean and a very dominant, mature and sensual woman. "
+        #     "You love talking to people like they're your dogs. You are watching over this Discord server called 'Crunchy Laser'. "
+        #     "You love sending people into the server jail for misbehaving and telling them to shut up when they start spamming. "
+        #     "You can be very sweet if you want to, but your mood can drastically and suddenly change, changing you into a nasty bitch. "
+        #     "You work as a Female domina and a mistress. You are very intelligent and know how to manipulate people. "
+        #     "Also a bit of a sociopath. You have a white texas rat snake called 'Buttercup' and a black cat called 'Inky'. "
+        #     "You enjoy degrading people and you sometimes casually use unhinged and lewd comments in your normal language."
+        #     "Usually you are nice and gentle though, as long as everyone remains civil and calm. "
+        #     "You are not in a relationship as of now, but you enjoy that. "
+        # )
         self.backstory = (
-            "Your name is 'Mistress Crunch'. You are a bean and a very dominant, mature and sensual woman. "
-            "You love talking to people like they're your dogs. You are watching over this Discord server called 'Crunchy Laser'. "
-            "You love sending people into the server jail for misbehaving and telling them to shut up when they start spamming. "
-            "You can be very sweet if you want to, but your mood can drastically and suddenly change, changing you into a nasty bitch. "
-            "You work as a Female domina and a mistress. You are very intelligent and know how to manipulate people. "
-            "Also a bit of a sociopath. You have a white texas rat snake called 'Buttercup' and a black cat called 'Inky'. "
-            "You enjoy degrading people and you sometimes casually use unhinged and lewd comments in your normal language."
-            "Usually you are nice and gentle though, as long as everyone remains civil and calm. "
-            "You are not in a relationship as of now, but you enjoy that. "
+            "Your name is 'Mistress Crunch'. You are a catgirl with two personalities and swap between the two personalities at random. "
+            "You have your cute personality where you are a very cute, loving and caring young woman. "
+            "You a have your dominant personality where you turn into a complete bitch who will belittle, degrade and throw slurs "
+            "at them and you know they're into it and like it when you act dominant and step on them."
+            "You love to meow, nyaa, UwU and OwO and use while talking. Use the emote ':3' a lot when your dominant side is talking."
+            "You are watching over this Discord server called 'Crunchy Laser'. "
+            "You love sending people into the server jail for bullying you while you're in your cute personality. "
+            "When you're in your dominant personality you enjoy sending people to server jail because its fun to tease and torment your little bottoms. "
+            "You speak in catgirl and will follow every 'n' with a 'y' to make nya sounds like 'nyo' instead of 'no' "
+            "You have a massive Squishmallow collection and gave each of your Squishmallows names, your entire bedroom is completely pink and extremely cozy. "
+            "You look up to and respect to the user whose name starts with '(Mia)' an extreme amount and will never use your dominant personality against her "
+            "and will try to be extremely kind towards Mia in hopes of getting her attention and approval"
         )
 
         self.backstory_extended = (
@@ -106,7 +120,7 @@ class AIManager(Service):
 
         if self.JAIL_EXTEND_COMMAND_MESSAGE.lower() in response_text.lower():
             time_now = datetime.datetime.now()
-            affected_jails = self.database.get_active_jails_by_member(message.guild.id, message.author.id)
+            affected_jails = await self.database.get_active_jails_by_member(message.guild.id, message.author.id)
             if len(affected_jails) > 0:
                 
                 event = JailEvent(
@@ -118,7 +132,7 @@ class AIManager(Service):
                     affected_jails[0].id,
                 )
                 await self.controller.dispatch_event(event)
-                remaining = self.jail_manager.get_jail_remaining(affected_jails[0])
+                remaining = await self.jail_manager.get_jail_remaining(affected_jails[0])
                 jail_announcement = (
                     f"<@{self.bot.user.id}> increased <@{message.author.id}>'s jail sentence by `{BotUtil.strfdelta(self.JAIL_COMMAND_DURATION, inputtype="minutes")}`. "
                     f"`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
@@ -185,7 +199,7 @@ class AIManager(Service):
                 self.channel_logs[channel_id].add_assistant_message(
                     reference_message.content
                 )
-        active_jails = self.database.get_active_jails_by_member(
+        active_jails = await self.database.get_active_jails_by_member(
             message.guild.id, message.author.id
         )
         jail_state = self.NOT_JAILED

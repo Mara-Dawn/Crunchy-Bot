@@ -45,7 +45,7 @@ class InventoryViewController(ViewController):
                 member_id = event.member_id
 
         if member_id is not None and guild_id is not None:
-            inventory = self.item_manager.get_user_inventory(guild_id, member_id)
+            inventory = await self.item_manager.get_user_inventory(guild_id, member_id)
             event = UIEvent(UIEventType.INVENTORY_USER_REFRESH, inventory)
             await self.controller.dispatch_ui_event(event)
 
@@ -77,7 +77,7 @@ class InventoryViewController(ViewController):
     ):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
-        inventory = self.item_manager.get_user_inventory(guild_id, user_id)
+        inventory = await self.item_manager.get_user_inventory(guild_id, user_id)
 
         item_owned = inventory.get_item_count(item_type)
 
@@ -105,7 +105,7 @@ class InventoryViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        item = self.item_manager.get_item(guild_id, item_type)
+        item = await self.item_manager.get_item(guild_id, item_type)
 
         beans = sell_amount * int(
             (item.cost * UserInventory.SELL_MODIFIER) / item.base_amount
@@ -133,14 +133,18 @@ class InventoryViewController(ViewController):
         match item_action:
             case ActionType.DISABLE_ACTION:
                 item_state = ItemState.DISABLED
-                self.database.log_item_state(guild_id, user_id, item_type, item_state)
+                await self.database.log_item_state(
+                    guild_id, user_id, item_type, item_state
+                )
             case ActionType.ENABLE_ACTION:
                 item_state = ItemState.ENABLED
-                self.database.log_item_state(guild_id, user_id, item_type, item_state)
+                await self.database.log_item_state(
+                    guild_id, user_id, item_type, item_state
+                )
             case ActionType.USE_ACTION:
                 await self.item_manager.use_item(interaction.guild, user_id, item_type)
 
-        inventory = self.item_manager.get_user_inventory(guild_id, user_id)
+        inventory = await self.item_manager.get_user_inventory(guild_id, user_id)
 
         event = UIEvent(UIEventType.INVENTORY_REFRESH, inventory, view_id)
         await self.controller.dispatch_ui_event(event)

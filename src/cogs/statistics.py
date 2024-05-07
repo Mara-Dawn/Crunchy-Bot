@@ -129,7 +129,7 @@ class Statistics(commands.Cog):
         log_message = f"{interaction.user.name} used command `{interaction.command.name}` on {user.name}."
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
 
-        user_statistics = self.event_manager.get_user_statistics(user_id)
+        user_statistics = await self.event_manager.get_user_statistics(user_id)
 
         embed = StatisticsEmbed(self.bot, interaction, user, user_statistics)
 
@@ -144,7 +144,7 @@ class Statistics(commands.Cog):
         )
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
 
-        ranking_data = self.event_manager.get_user_rankings(
+        ranking_data = await self.event_manager.get_user_rankings(
             interaction.guild_id, RankingType.BEANS
         )
 

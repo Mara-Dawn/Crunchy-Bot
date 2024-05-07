@@ -162,7 +162,7 @@ class BonusPet(Item):
 class UltraPet(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 900
+        defaultcost = 1500
 
         if cost is None:
             cost = defaultcost
@@ -243,7 +243,7 @@ class BonusSlap(Item):
 class SwapSlap(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 6000
+        defaultcost = 4000
 
         if cost is None:
             cost = defaultcost
@@ -387,7 +387,7 @@ class FartProtection(Item):
 
         super().__init__(
             name="Your Uncle's old Hazmat Suit",
-            item_type=ItemType.FART_PROTECTION,
+            item_type=ItemType.PROTECTION,
             group=ItemGroup.PROTECTION,
             shop_category=ShopCategory.INTERACTION,
             description="According to him his grandpa took it from a dead guy in ww2. The next 5 interactions negatively affecting your jailtime will be reduced by 50%",
@@ -398,7 +398,7 @@ class FartProtection(Item):
             allow_amount=False,
             base_amount=5,
             max_amount=5,
-            trigger=[ItemTrigger.FART, ItemTrigger.SLAP],
+            trigger=[ItemTrigger.FART, ItemTrigger.SLAP, ItemTrigger.MIMIC],
             controllable=True,
         )
 
@@ -406,7 +406,7 @@ class FartProtection(Item):
 class AdvancedFartProtection(FartProtection):
 
     def __init__(self, cost: int | None):
-        defaultcost = 1500
+        defaultcost = 2500
 
         if cost is None:
             cost = defaultcost
@@ -544,6 +544,7 @@ class LootBoxItem(Item):
             base_amount=1,
             max_amount=None,
             trigger=None,
+            hide_in_shop=True
         )
 
 
@@ -630,7 +631,7 @@ class CatGirl(Item):
 class CrappyDrawing(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 12000
+        defaultcost = 8000
 
         if cost is None:
             cost = defaultcost
@@ -864,7 +865,7 @@ class SlapBoost(Item):
 class NoLimitGamba(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 8000
+        defaultcost = 7000
 
         if cost is None:
             cost = defaultcost
@@ -891,7 +892,7 @@ class NoLimitGamba(Item):
 class NoCooldownGamba(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 4000
+        defaultcost = 3500
 
         if cost is None:
             cost = defaultcost

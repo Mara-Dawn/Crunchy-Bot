@@ -3,6 +3,7 @@ from control.controller import Controller
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
+
 from view.shop_response_view import (
     AmountInput,
     CancelButton,
@@ -23,15 +24,18 @@ class ShopColorSelectView(ShopResponseView):
     ):
         super().__init__(controller, interaction, item, parent_id)
 
-        self.selected_color = self.controller.database.get_custom_color(
-            interaction.guild_id, interaction.user.id
-        )
+        self.selected_color = None
         self.amount_select = AmountInput(suffix=" Week(s)")
-        self.color_input_button = ColorInputButton(self.selected_color)
+        self.color_input_button = ColorInputButton(None)
         self.confirm_button = ConfirmButton()
         self.cancel_button = CancelButton()
-
         self.refresh_elements()
+
+    async def init(self):
+        self.selected_color = await self.controller.database.get_custom_color(
+            self.guild_id, self.member_id
+        )
+        self.color_input_button = ColorInputButton(self.selected_color)
 
     async def submit(self, interaction: discord.Interaction):
         await interaction.response.defer()

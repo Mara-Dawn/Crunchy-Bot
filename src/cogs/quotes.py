@@ -48,7 +48,7 @@ class Quotes(commands.Cog):
             message.content,
         )
 
-        quote_id = self.database.log_quote(quote)
+        quote_id = await self.database.log_quote(quote)
 
         event = QuoteEvent(message.created_at, guild_id, quote_id)
         await self.controller.dispatch_event(event)
@@ -82,11 +82,11 @@ class Quotes(commands.Cog):
 
         image_generator = ImageGenerator(self.bot)
         if user is not None:
-            quote = self.database.get_random_quote_by_user(
+            quote = await self.database.get_random_quote_by_user(
                 interaction.guild_id, user.id
             )
         else:
-            quote = self.database.get_random_quote(interaction.guild_id)
+            quote = await self.database.get_random_quote(interaction.guild_id)
 
         image = image_generator.from_quote(quote)
 
@@ -106,7 +106,7 @@ class Quotes(commands.Cog):
                     pass
                 if message is not None:
                     url = message.jump_url
-                    self.database.fix_quote(quote, channel.id)
+                    await self.database.fix_quote(quote, channel.id)
                     break
         else:
 

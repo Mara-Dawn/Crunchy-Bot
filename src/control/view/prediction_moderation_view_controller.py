@@ -42,7 +42,7 @@ class PredictionModerationViewController(ViewController):
         match event.type:
             case EventType.PREDICTION:
                 prediction_event: PredictionEvent = event
-                prediction_stats = self.database.get_prediction_stats_by_guild(
+                prediction_stats = await self.database.get_prediction_stats_by_guild(
                     prediction_event.guild_id
                 )
                 event = UIEvent(
@@ -65,7 +65,7 @@ class PredictionModerationViewController(ViewController):
                 await self.refresh_ui(guild_id, event.view_id)
 
     async def refresh_ui(self, guild_id: int, view_id: int):
-        prediction_stats = self.database.get_prediction_stats_by_guild(guild_id)
+        prediction_stats = await self.database.get_prediction_stats_by_guild(guild_id)
         event = UIEvent(
             UIEventType.PREDICTION_MODERATION_REFRESH, prediction_stats, view_id
         )
