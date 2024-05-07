@@ -45,7 +45,7 @@ class InventoryViewController(ViewController):
                 member_id = event.member_id
 
         if member_id is not None and guild_id is not None:
-            inventory = self.item_manager.get_user_inventory(guild_id, member_id)
+            inventory = await self.item_manager.get_user_inventory(guild_id, member_id)
             event = UIEvent(UIEventType.INVENTORY_USER_REFRESH, inventory)
             await self.controller.dispatch_ui_event(event)
 
@@ -77,7 +77,7 @@ class InventoryViewController(ViewController):
     ):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
-        inventory = self.item_manager.get_user_inventory(guild_id, user_id)
+        inventory = await self.item_manager.get_user_inventory(guild_id, user_id)
 
         item_owned = inventory.get_item_count(item_type)
 
@@ -144,7 +144,7 @@ class InventoryViewController(ViewController):
             case ActionType.USE_ACTION:
                 await self.item_manager.use_item(interaction.guild, user_id, item_type)
 
-        inventory = self.item_manager.get_user_inventory(guild_id, user_id)
+        inventory = await self.item_manager.get_user_inventory(guild_id, user_id)
 
         event = UIEvent(UIEventType.INVENTORY_REFRESH, inventory, view_id)
         await self.controller.dispatch_ui_event(event)

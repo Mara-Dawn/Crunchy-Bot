@@ -1,6 +1,5 @@
 import datetime
 import json
-import sys
 from typing import Any
 
 import aiosqlite
@@ -364,41 +363,15 @@ class Database:
         PRIMARY KEY ({PREDICTION_EVENT_ID_COL})
     );"""
 
-    CORE_METHODS = [
-        "get_setting",
-        "update_setting",
-        "log_quote",
-        "get_random_quote",
-        "get_random_quote_by_user",
-        "log_custom_color",
-        "get_custom_color",
-        "log_custom_role",
-        "get_custom_role",
-        "log_bully_react",
-        "get_bully_react",
-    ]
-
-    PERMANENT_ITEMS = [
-        ItemType.REACTION_SPAM,
-        ItemType.LOTTERY_TICKET,
-        ItemType.NAME_COLOR,
-    ]
-
     def __init__(
         self,
         bot: commands.Bot,
         logger: BotLogger,
-        db_core_file: str,
-        db_season_file: str,
+        db_file: str,
     ):
         self.bot = bot
         self.logger = logger
-        self.db_core_file = db_core_file
-        self.db_season_file = db_season_file
-
-    async def init(self):
-        await self.create_tables(self.db_core_file)
-        await self.create_tables(self.db_season_file)
+        self.db_file = db_file
 
     async def create_tables(self, file: str):
         async with aiosqlite.connect(file) as db:
@@ -430,54 +403,15 @@ class Database:
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {file}."
             )
 
-    async def migrate_permanent_items(self, item_manager):
-        for guild in self.bot.guilds:
-            guild_item_counts = await self.db_core.get_item_counts_by_guild(guild.id)
-            for user_id, item_counts in guild_item_counts.items():
-                current_user_items = await self.db_season.get_item_counts_by_user(
-                    guild.id, user_id
-                )
-                for item_type, count in item_counts.items():
-
-                    item = item_manager.get_item(guild.id, item_type)
-
-                    if item_type in self.PERMANENT_ITEMS or item.permanent:
-                        amount = count
-                        if item_type in current_user_items:
-                            amount -= current_user_items[item_type]
-
-                        event = InventoryEvent(
-                            datetime.datetime.now(),
-                            guild.id,
-                            user_id,
-                            item_type,
-                            amount,
-                        )
-                        self.db_season.log_event(event)
-
     async def __query_select(self, query: str, task=None):
-        name = sys._getframe(1).f_code.co_name
-        if name in self.CORE_METHODS:
-            return await self.__query_select_file(self.db_core_file, query, task)
-        return await self.__query_select_file(self.db_season_file, query, task)
-
-    async def __query_insert(self, query: str, task=None) -> int:
-        name = sys._getframe(1).f_code.co_name
-        if name in self.CORE_METHODS:
-            return await self.__query_insert_file(self.db_core_file, query, task)
-
-        # id = await self.__query_insert_file(self.db_core_file, query, task)
-        return await self.__query_insert_file(self.db_season_file, query, task)
-
-    async def __query_select_file(self, file: str, query: str, task=None):
-        async with aiosqlite.connect(file) as db:  # noqa: SIM117
+        async with aiosqlite.connect(self.db_file) as db:  # noqa: SIM117
             async with db.execute(query, task) as cursor:
                 rows = await cursor.fetchall()
                 headings = [x[0] for x in cursor.description]
                 return self.__parse_rows(rows, headings)
 
-    async def __query_insert_file(self, file: str, query: str, task=None) -> int:
-        async with aiosqlite.connect(file) as db:  # noqa: SIM117
+    async def __query_insert(self, query: str, task=None) -> int:
+        async with aiosqlite.connect(self.db_file) as db:
             cursor = await db.execute(query, task)
             insert_id = cursor.lastrowid
             await db.commit()
@@ -1134,7 +1068,8 @@ class Database:
             OR {self.JAIL_RELEASED_ON_COL} = 0;
         """
         rows = await self.__query_select(command)
-
+        if not rows:
+            return []
         return [UserJail.from_db_row(row) for row in rows]
 
     async def get_jail(self, jail_id: int) -> UserJail:
@@ -1824,7 +1759,7 @@ class Database:
     async def get_prediction_stats_by_prediction(
         self, prediction: Prediction
     ) -> PredictionStats:
-        prediction_bets = self.get_prediction_bets([prediction])
+        prediction_bets = await self.get_prediction_bets([prediction])
 
         bets = None
         if prediction_bets is not None:
@@ -1854,7 +1789,7 @@ class Database:
         if predictions is None:
             return []
 
-        prediction_bets = self.get_prediction_bets(predictions)
+        prediction_bets = await self.get_prediction_bets(predictions)
 
         prediction_stats = []
 
@@ -1869,7 +1804,9 @@ class Database:
 
             author_name = BotUtil.get_name(self.bot, guild_id, prediction.author_id, 40)
             mod_name = BotUtil.get_name(self.bot, guild_id, prediction.moderator_id, 30)
-            winning_outcome_id = self.get_prediction_winning_outcome(prediction.id)
+            winning_outcome_id = await self.get_prediction_winning_outcome(
+                prediction.id
+            )
             stats = PredictionStats(
                 prediction, bets, author_name, mod_name, winning_outcome_id
             )

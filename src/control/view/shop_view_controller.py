@@ -195,7 +195,7 @@ class ShopViewController(ViewController):
         await interaction.followup.send(success_message, ephemeral=True)
 
     async def send_inventory_message(self, interaction: discord.Interaction):
-        inventory = self.item_manager.get_user_inventory(
+        inventory = await self.item_manager.get_user_inventory(
             interaction.guild_id, interaction.user.id
         )
 

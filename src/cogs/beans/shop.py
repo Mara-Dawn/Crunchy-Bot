@@ -174,7 +174,7 @@ class Shop(commands.Cog):
         member_id = interaction.user.id
         guild_id = interaction.guild_id
 
-        inventory = self.item_manager.get_user_inventory(guild_id, member_id)
+        inventory = await self.item_manager.get_user_inventory(guild_id, member_id)
         embed = InventoryEmbed(inventory)
         view = InventoryView(self.controller, interaction, inventory)
 
