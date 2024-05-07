@@ -25,7 +25,7 @@ class SettingsModal(discord.ui.Modal):
         self.allow_negative_map: dict[str, bool] = {}
     
     async def add_field(self, guild_id: int, subsetting_key: str, setting_key: str, value_type: type[Any], allow_negative: bool = False):
-        label = self.settings.get_setting_title(subsetting_key, setting_key)
+        label = await self.settings.get_setting_title(subsetting_key, setting_key)
         default = await self.settings.get_setting(guild_id, subsetting_key, setting_key)
         
         field_id = setting_key
@@ -90,7 +90,7 @@ class SettingsModal(discord.ui.Modal):
             
         for text_input_id, keys in self.input_settings_map.items():
             value = self.__cast_value(self.id_map[text_input_id].value, self.type_map[text_input_id])
-            self.settings.update_setting(interaction.guild_id, keys[0], keys[1], value)
+            await self.settings.update_setting(interaction.guild_id, keys[0], keys[1], value)
             
         await self.bot.response(self.cog, interaction, 'Settings were successfully updated.', self.command, args=[text_input.value for text_input in self.children])
         

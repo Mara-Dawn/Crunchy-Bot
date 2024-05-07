@@ -86,7 +86,6 @@ class Gamba(commands.Cog):
 
     async def __gamba_items(
         self,
-        interaction: discord.Interaction,
         items: list[Item],
         over_limit: bool,
         cooldown_remaining: int,
@@ -106,11 +105,26 @@ class Gamba(commands.Cog):
                         continue
                     cooldown_override = True
 
-            await self.item_manager.use_item(
-                interaction.guild, interaction.user.id, item.type
-            )
-
         return no_limit, cooldown_override
+
+    async def __consume_gamba_items(
+        self,
+        interaction: discord.Interaction,
+        items: list[Item],
+        no_limit: bool,
+        cooldown_override: bool,
+    ):
+        for item in items:
+            use_item = False
+            match item.type:
+                case ItemType.UNLIMITED_GAMBA:
+                    use_item = no_limit
+                case ItemType.INSTANT_GAMBA:
+                    use_item = cooldown_override
+            if use_item:
+                await self.item_manager.use_item(
+                    interaction.guild, interaction.user.id, item.type
+                )
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
@@ -174,7 +188,7 @@ class Gamba(commands.Cog):
         )
 
         no_limit, cooldown_override = await self.__gamba_items(
-            interaction, user_items, over_limit, cooldown_remaining
+            user_items, over_limit, cooldown_remaining
         )
 
         if not no_limit and amount is not None and over_limit:
@@ -254,6 +268,10 @@ class Gamba(commands.Cog):
             )
             await message.delete()
             return
+
+        await self.__consume_gamba_items(
+            interaction, user_items, no_limit, cooldown_override
+        )
 
         event = BeansEvent(
             datetime.datetime.now(),
