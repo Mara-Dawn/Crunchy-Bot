@@ -43,6 +43,20 @@ class DatabaseManager:
         "get_custom_role",
         "log_bully_react",
         "get_bully_react",
+        "log_jail_sentence",
+        "log_jail_release",
+        "get_active_jails",
+        "get_jail",
+        "get_jails_by_guild",
+        "get_active_jails_by_guild",
+        "get_active_jails_by_member",
+        "get_jail_events_affecting_user",
+        "log_prediction",
+        "update_prediction",
+        "get_prediction_by_id",
+        "get_predictions_by_guild",
+        "get_prediction_stats_by_prediction",
+        "get_prediction_stats_by_guild",
     ]
 
     PERMANENT_ITEMS = [
@@ -69,7 +83,7 @@ class DatabaseManager:
                 )
                 for item_type, count in item_counts.items():
 
-                    item = item_manager.get_item(guild.id, item_type)
+                    item = await item_manager.get_item(guild.id, item_type)
 
                     if item_type in self.PERMANENT_ITEMS or item.permanent:
                         amount = count

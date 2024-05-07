@@ -392,7 +392,7 @@ class SettingsManager(Service):
         )
 
     async def add_police_naughty_role(self, guild: int, role: int) -> None:
-        roles = self.get_police_naughty_roles(guild)
+        roles = await self.get_police_naughty_roles(guild)
         if role not in roles:
             roles.append(role)
         await self.update_setting(
@@ -400,7 +400,7 @@ class SettingsManager(Service):
         )
 
     async def remove_police_naughty_role(self, guild: int, role: int) -> None:
-        roles = self.get_police_naughty_roles(guild)
+        roles = await self.get_police_naughty_roles(guild)
         if role in roles:
             roles.remove(role)
         await self.update_setting(
@@ -426,7 +426,7 @@ class SettingsManager(Service):
         )
 
     async def add_police_exclude_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_police_exclude_channels(guild)
+        channels = await self.get_police_exclude_channels(guild)
         if channel not in channels:
             channels.append(channel)
         await self.update_setting(
@@ -437,7 +437,7 @@ class SettingsManager(Service):
         )
 
     async def remove_police_exclude_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_police_exclude_channels(guild)
+        channels = await self.get_police_exclude_channels(guild)
         if channel in channels:
             channels.remove(channel)
         await self.update_setting(
@@ -569,7 +569,7 @@ class SettingsManager(Service):
         )
 
     async def add_jail_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_jail_channels(guild)
+        channels = await self.get_jail_channels(guild)
         if channel not in channels:
             channels.append(channel)
         await self.update_setting(
@@ -577,7 +577,7 @@ class SettingsManager(Service):
         )
 
     async def remove_jail_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_jail_channels(guild)
+        channels = await self.get_jail_channels(guild)
         if channel in channels:
             channels.remove(channel)
         await self.update_setting(
@@ -670,7 +670,7 @@ class SettingsManager(Service):
         )
 
     async def add_jail_mod_role(self, guild: int, role: int) -> None:
-        roles = self.get_jail_mod_roles(guild)
+        roles = await self.get_jail_mod_roles(guild)
         if role not in roles:
             roles.append(role)
         await self.update_setting(
@@ -678,7 +678,7 @@ class SettingsManager(Service):
         )
 
     async def remove_jail_mod_role(self, guild: int, role: int) -> None:
-        roles = self.get_jail_mod_roles(guild)
+        roles = await self.get_jail_mod_roles(guild)
         if role not in roles:
             roles.remove(role)
         await self.update_setting(
@@ -746,7 +746,7 @@ class SettingsManager(Service):
         ]
 
     async def add_beans_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_beans_channels(guild)
+        channels = await self.get_beans_channels(guild)
         if channel not in channels:
             channels.append(channel)
         await self.update_setting(
@@ -754,7 +754,7 @@ class SettingsManager(Service):
         )
 
     async def remove_beans_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_beans_channels(guild)
+        channels = await self.get_beans_channels(guild)
         if channel in channels:
             channels.remove(channel)
         await self.update_setting(
@@ -829,7 +829,7 @@ class SettingsManager(Service):
         ]
 
     async def add_beans_notification_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_beans_notification_channels(guild)
+        channels = await self.get_beans_notification_channels(guild)
         if channel not in channels:
             channels.append(channel)
         await self.update_setting(
@@ -840,7 +840,7 @@ class SettingsManager(Service):
         )
 
     async def remove_beans_notification_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_beans_notification_channels(guild)
+        channels = await self.get_beans_notification_channels(guild)
         if channel in channels:
             channels.remove(channel)
         await self.update_setting(
@@ -901,7 +901,7 @@ class SettingsManager(Service):
         )
 
     async def add_bully_exclude_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_bully_exclude_channels(guild)
+        channels = await self.get_bully_exclude_channels(guild)
         if channel not in channels:
             channels.append(channel)
         await self.update_setting(
@@ -912,7 +912,7 @@ class SettingsManager(Service):
         )
 
     async def remove_bully_exclude_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_bully_exclude_channels(guild)
+        channels = await self.get_bully_exclude_channels(guild)
         if channel in channels:
             channels.remove(channel)
         await self.update_setting(
@@ -946,7 +946,7 @@ class SettingsManager(Service):
         ]
 
     async def add_predictions_mod_role(self, guild: int, role: int) -> None:
-        roles = self.get_predictions_mod_roles(guild)
+        roles = await self.get_predictions_mod_roles(guild)
         if role not in roles:
             roles.append(role)
         await self.update_setting(
@@ -957,7 +957,7 @@ class SettingsManager(Service):
         )
 
     async def remove_predictions_mod_role(self, guild: int, role: int) -> None:
-        roles = self.get_jail_mod_roles(guild)
+        roles = await self.get_jail_mod_roles(guild)
         if role not in roles:
             roles.remove(role)
         await self.update_setting(
@@ -976,7 +976,7 @@ class SettingsManager(Service):
         ]
 
     async def add_predictions_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_predictions_channels(guild)
+        channels = await self.get_predictions_channels(guild)
         if channel not in channels:
             channels.append(channel)
         await self.update_setting(
@@ -987,7 +987,7 @@ class SettingsManager(Service):
         )
 
     async def remove_predictions_channel(self, guild: int, channel: int) -> None:
-        channels = self.get_predictions_channels(guild)
+        channels = await self.get_predictions_channels(guild)
         if channel in channels:
             channels.remove(channel)
         await self.update_setting(
