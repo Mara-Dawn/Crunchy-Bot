@@ -544,7 +544,7 @@ class LootBoxItem(Item):
             base_amount=1,
             max_amount=None,
             trigger=None,
-            hide_in_shop=True
+            hide_in_shop=True,
         )
 
 
@@ -955,7 +955,7 @@ class PermPetBoost(Item):
             cost = defaultcost
 
         super().__init__(
-            name="Kitty Paws",
+            name="Floof Paws",
             item_type=ItemType.PERM_PET_BOOST,
             group=ItemGroup.FLAT_BONUS,
             shop_category=ShopCategory.FUN,
