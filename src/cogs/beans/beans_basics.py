@@ -215,6 +215,7 @@ class BeansBasics(BeansGroup):
     @app_commands.guild_only()
     async def award_prestige(self, interaction: discord.Interaction) -> None:
         author_id = 90043934247501824
+        await interaction.response.defer()
         if interaction.user.id != author_id:
             raise app_commands.MissingPermissions
 
@@ -237,6 +238,7 @@ class BeansBasics(BeansGroup):
             author = self.bot.get_user(user_id)
             if author is not None and author.id != self.bot.user.id:
                 amount = int(score / 10000)
+
                 event = InventoryEvent(
                     datetime.datetime.now(),
                     guild_id,
