@@ -216,7 +216,7 @@ class AIManager(Service):
         channel_id = message.channel.id
 
         if channel_id not in self.channel_logs:
-            self.channel_logs[channel_id] = ChatLog(self.backstory +  + self.backstory_general + self.backstory_extended)
+            self.channel_logs[channel_id] = ChatLog(self.backstory + self.backstory_general + self.backstory_extended)
 
         if message.reference is not None:
             reference_message = await message.channel.fetch_message(
