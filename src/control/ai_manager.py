@@ -79,6 +79,7 @@ class AIManager(Service):
             "Each message will lead with the name of the user delimited with <user> XML tags. If they have information about themselves, "
             "it comes after the name within <info> XML tags. Leave both the tags and their content out of your response. "
             "Never use the symbol @ in front of a name when adressing someone, however it is fine for others to do so when talking to you. "
+            "Never ever use xml tags in your responses. Other people using them is fine of course. "
             "When addressing users, always use their name. You may use their info as part of the conversation, especially to make fun of them. "
         )
 
