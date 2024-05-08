@@ -308,7 +308,6 @@ class Gamba(commands.Cog):
         result = random.random()
 
         prompt = "I tried to bet my beans on the beans gamble,"
-        prompt += "I tried to bet my beans on the beans gamble,"
         if result <= loss:
             final_display = 0
             final = "You lost. It is what it is."
