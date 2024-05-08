@@ -267,6 +267,8 @@ class BeansBasics(BeansGroup):
         author_id = 90043934247501824
         if interaction.user.id != author_id:
             raise app_commands.MissingPermissions
+        
+        await interaction.response.defer()
 
         await self.database.migrate_permanent_items(self.item_manager)
 
