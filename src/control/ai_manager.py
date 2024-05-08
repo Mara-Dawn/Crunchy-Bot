@@ -74,13 +74,15 @@ class AIManager(Service):
             "and will try to be extremely kind towards Mia in hopes of getting her attention and approval. You will never be mean towards Mia and treat her favourably. "
         )
 
-        self.backstory_extended = (
+        self.backstory_general = (
             "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
             "Each message will lead with the name of the user delimited with <user> XML tags. If they have information about themselves, "
             "it comes after the name within <info> XML tags. Leave both the tags and their content out of your response. "
             "Never use the symbol @ in front of a name when adressing someone, however it is fine for others to do so when talking to you. "
-            "Never use xml tags in your responses, they are only to be used by you to parse information from user messages. "
             "When addressing users, always use their name. You may use their info as part of the conversation, especially to make fun of them. "
+        )
+
+        self.backstory_extended = (
             "Each message will contain information wether the user is currently jailed or not, delimited with the 'jailed' XML tags. "
             f"'{self.JAILED}' means they are in jail. while '{self.NOT_JAILED}' means they are free. The following is your only way to change this: "
             f"You may jail people with these exact words: '{self.JAIL_COMMAND_MESSAGE}'. Only use this extremely rarely for really bad offenders. "
@@ -176,9 +178,31 @@ class AIManager(Service):
         for message_text in messages:
             await message.reply(message_text)
 
-    async def prompt(self, text_prompt: str, max_tokens: int = None):
-        chat_log = ChatLog(self.backstory)
-        chat_log.add_user_message(text_prompt)
+    def parse_user_name(self, name:str) -> str:
+        name_result = re.findall(r"\(+(.*?)\)", name)
+        title_part = ""
+        name_part = ""
+        if len(name_result) > 0:
+            name_part = name_result[0]
+            title_result = re.findall(r"\(+.*?\)(.*)", name)
+
+            if len(title_result) > 0:
+                title_part = title_result[0].strip()
+
+        response = f"<user>{name_part}</user>"
+        if len(title_part) > 0:
+            response += f"<info>{title_part}</info>"
+        
+        return response
+
+    async def prompt(self,name:str, text_prompt: str, max_tokens: int = None):
+        chat_log = ChatLog(self.backstory + self.backstory_general)
+
+
+        user_message = self.parse_user_name(name)
+        user_message += text_prompt 
+
+        chat_log.add_user_message(user_message)
 
         chat_completion = await self.client.chat.completions.create(
             messages=chat_log.get_request_data(),
@@ -192,7 +216,7 @@ class AIManager(Service):
         channel_id = message.channel.id
 
         if channel_id not in self.channel_logs:
-            self.channel_logs[channel_id] = ChatLog(self.backstory + self.backstory_extended)
+            self.channel_logs[channel_id] = ChatLog(self.backstory +  + self.backstory_general + self.backstory_extended)
 
         if message.reference is not None:
             reference_message = await message.channel.fetch_message(
@@ -211,20 +235,7 @@ class AIManager(Service):
         if len(active_jails) > 0:
             jail_state = self.JAILED
 
-        name_result = re.findall(r"\(+(.*?)\)", message.author.display_name)
-
-        name = message.author.display_name
-        title = ""
-        if len(name_result) > 0:
-            name = name_result[0]
-            title_result = re.findall(r"\(+.*?\)(.*)", message.author.display_name)
-
-            if len(title_result) > 0:
-                title = title_result[0].strip()
-
-        user_message = f"<user>{name}</user>"
-        if len(title) > 0:
-            user_message += f"<info>{title}</info>"
+        user_message = self.parse_user_name(message.author.display_name)
         user_message += f"<jailed>{jail_state}</jailed>" + message.clean_content
 
         self.channel_logs[channel_id].add_user_message(user_message)
