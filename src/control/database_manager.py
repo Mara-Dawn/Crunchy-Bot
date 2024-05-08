@@ -90,6 +90,9 @@ class DatabaseManager:
                         if item_type in current_user_items:
                             amount -= current_user_items[item_type]
 
+                        if amount <= 0:
+                            continue
+
                         event = InventoryEvent(
                             datetime.datetime.now(),
                             guild.id,
