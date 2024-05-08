@@ -77,7 +77,9 @@ class AIManager(Service):
         self.backstory_extended = (
             "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
             "Each message will lead with the name of the user delimited with <user> XML tags. If they have information about themselves, "
-            "it comes after the name within <info> XML tags. Leave both the tags and their content out of your response. Never use the symbol @ in front of a name when adressing someone. "
+            "it comes after the name within <info> XML tags. Leave both the tags and their content out of your response. "
+            "Never use the symbol @ in front of a name when adressing someone, however it is fine for others to do so when talking to you. "
+            "Never use xml tags in your responses, they are only to be used by you to parse information from user messages."
             "When addressing users, always use their name. You may use their info as part of the conversation, especially to make fun of them. "
             "Each message will contain information wether the user is currently jailed or not, delimited with the 'jailed' XML tags. "
             f"'{self.JAILED}' means they are in jail. while '{self.NOT_JAILED}' means they are free. The following is your only way to change this: "
