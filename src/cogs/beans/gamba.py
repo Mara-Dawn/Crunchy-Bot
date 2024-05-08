@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import random
-import re
 
 import discord
 from bot import CrunchyBot
@@ -193,12 +192,13 @@ class Gamba(commands.Cog):
 
         if not no_limit and amount is not None and over_limit:
             prompt = (
-                f"<user>{interaction.user.display_name}</user>"
                 f"I tried to bet more than `🅱️{beans_gamba_max}` or less than `🅱️{beans_gamba_min}` beans,"
                 " which is not acceptable. Please tell me what i did wrong and keep the formatting between"
                 " the backticks (including them) like in my message. Also keep it short."
             )
-            response = await self.ai_manager.prompt(prompt, max_tokens=60)
+            response = await self.ai_manager.prompt(
+                interaction.user.display_name, prompt
+            )
 
             if response is None or len(response) == 0:
                 response = f"Between `🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}` you fucking monkey."
@@ -216,11 +216,12 @@ class Gamba(commands.Cog):
         if current_balance < amount:
 
             prompt = (
-                f"<user>{interaction.user.display_name}</user>"
-                "I tried to bet beans but i dont have any,"
-                " which is not acceptable. Please tell me what i did wrong. Also keep it short, 30 words or less."
+                "I tried to bet beans but i dont have any, "
+                "which is not acceptable. Please tell me what i did wrong. Also keep it short, 30 words or less."
             )
-            response = await self.ai_manager.prompt(prompt)
+            response = await self.ai_manager.prompt(
+                interaction.user.display_name, prompt
+            )
 
             if response is None or len(response) == 0:
                 response = "You're out of beans, idiot."
@@ -236,13 +237,14 @@ class Gamba(commands.Cog):
         if cooldown_remaining != 0 and not cooldown_override:
             cooldowntimer = int(timestamp_now + cooldown_remaining)
             prompt = (
-                f"<user>{interaction.user.display_name}</user>"
-                f"tell me that my gamble is still on cooldown, using this expression: '<t:{cooldowntimer}:R>'."
+                f"tell me that my gamble is still on cooldown, using this expression: '<t:{cooldowntimer}:R>'. "
                 " Use it in a sentence like you would in place of 'in 10 minutes' or ' 'in 5 hours', for example "
                 f" 'You may try again <t:{cooldowntimer}:R>'"
                 " I am an idiot for trying to gamba while its on cooldown, so please tell me off for it. Also keep it short, 30 words or less."
             )
-            response = await self.ai_manager.prompt(prompt)
+            response = await self.ai_manager.prompt(
+                interaction.user.display_name, prompt
+            )
 
             if response is None or len(response) == 0:
                 response = (
@@ -305,21 +307,7 @@ class Gamba(commands.Cog):
         # (0.27*2)+(0.14*3)+(0.05*5)+(0.009*10)+(0.001*100)
         result = random.random()
 
-        name_result = re.findall(r"\(+(.*?)\)", interaction.user.display_name)
-
-        name = interaction.user.display_name
-        title = ""
-        if len(name_result) > 0:
-            name = name_result[0]
-            title_result = re.findall(r"\(+.*?\)(.*)", interaction.user.display_name)
-
-            if len(title_result) > 0:
-                title = title_result[0].strip()
-
-        prompt = f"My name is {name} "
-        if len(title) > 0:
-            prompt += f"and i am {title}"
-        prompt += ". I tried to bet my beans on the beans gamble,"
+        prompt = "I tried to bet my beans on the beans gamble,"
         prompt += "I tried to bet my beans on the beans gamble,"
         if result <= loss:
             final_display = 0
@@ -363,7 +351,7 @@ class Gamba(commands.Cog):
 
         prompt += " Also keep it super concise, 25 words or less preferably unless its a jackpot, and refer to the gamble as gamba."
 
-        final_ai = await self.ai_manager.prompt(prompt)
+        final_ai = await self.ai_manager.prompt(interaction.user.display_name, prompt)
 
         if final_ai is not None and len(response) > 0:
             final = final_ai
