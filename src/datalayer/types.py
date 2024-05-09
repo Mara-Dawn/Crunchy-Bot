@@ -34,6 +34,11 @@ class LootboxType(Enum):
     LUCKY_ITEM = 5
 
 
+class Season(Enum):
+    ALL = 0
+    CURRENT = 1715162400
+
+
 class PredictionStateSort(int, Enum):
 
     @staticmethod
