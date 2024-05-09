@@ -6,7 +6,6 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - ./database.sqlite:/app/Crunchy-Bot/database.sqlite
-      - ./season.sqlite:/app/Crunchy-Bot/season.sqlite
       - ./key.txt:/app/Crunchy-Bot/key.txt
       - ./openai.txt:/app/Crunchy-Bot/openai.txt
       - ./tenor.txt:/app/Crunchy-Bot/tenor.txt
