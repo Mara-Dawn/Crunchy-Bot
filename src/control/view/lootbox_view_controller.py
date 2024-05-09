@@ -77,6 +77,7 @@ class LootBoxViewController(ViewController):
 
         large_mimic = False
         mimic_detetor = False
+        beans_taken = beans
 
         user_items = await self.item_manager.get_user_items_activated(guild_id, member_id, ItemTrigger.MIMIC)
 
@@ -90,7 +91,12 @@ class LootBoxViewController(ViewController):
             event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, ItemType.MIMIC_DETECTOR, -1)
             await self.controller.dispatch_event(event)
             mimic_detetor = True
-            return large_mimic, mimic_detetor
+            return large_mimic, mimic_detetor, beans_taken
+
+        bean_balance = await self.database.get_member_beans(guild_id, member_id)
+
+        if bean_balance + beans < 0:
+            beans_taken = -bean_balance
 
         if beans < -100:
             if ItemType.PROTECTION in [item.type for item in user_items]:
@@ -98,26 +104,26 @@ class LootBoxViewController(ViewController):
                 await self.controller.dispatch_event(event)
                 embed.add_field(
                     name="Oh no, it's a LARGE Mimic!",
-                    value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nLuckily your Hazmat Suit protects you from further harm. \n(You lose one stack)",
+                    value=f"It munches away at your beans, eating `🅱️{abs(beans_taken)}` of them. \nLuckily your Hazmat Suit protects you from further harm. \n(You lose one stack)",
                     inline=False,
                 )
-                return large_mimic, mimic_detetor
+                return large_mimic, mimic_detetor, beans_taken
 
             embed.add_field(
                 name="Oh no, it's a LARGE Mimic!",
-                value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
+                value=f"It munches away at your beans, eating `🅱️{abs(beans_taken)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
                 inline=False,
             )
             large_mimic = True
-            return large_mimic, mimic_detetor
+            return large_mimic, mimic_detetor, beans_taken
 
         embed.add_field(
             name="Oh no, it's a Mimic!",
-            value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them.",
+            value=f"It munches away at your beans, eating `🅱️{abs(beans_taken)}` of them.",
             inline=False,
         )
 
-        return large_mimic, mimic_detetor
+        return large_mimic, mimic_detetor, beans_taken
 
     async def handle_lootbox_claim(
         self, interaction: discord.Interaction, owner_id: int, view_id: int
@@ -149,15 +155,12 @@ class LootBoxViewController(ViewController):
         mimic_detector = False
 
         if beans < 0:
-            bean_balance = await self.database.get_member_beans(guild_id, member_id)
-            
-            large_mimic, mimic_detector = await self.handle_mimic(interaction, embed, beans)
+            large_mimic, mimic_detector, beans_taken = await self.handle_mimic(interaction, embed, beans)
             
             if mimic_detector:
                 return
 
-            if bean_balance + beans < 0:
-                beans = -bean_balance
+            beans = beans_taken
                 
             embed.set_image(url="attachment://mimic.gif")
             attachment = discord.File("./img/mimic.gif", "mimic.gif")

@@ -919,7 +919,7 @@ class NoCooldownGamba(Item):
 class MimicDetector(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 1500
+        defaultcost = 1100
 
         if cost is None:
             cost = defaultcost
