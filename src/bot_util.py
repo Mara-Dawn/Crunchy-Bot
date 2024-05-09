@@ -76,6 +76,8 @@ class BotUtil:
                     dictionary[key] = value
                 case "add":
                     dictionary[key] += value
+                case "max":
+                    dictionary[key] = max(value, dictionary[key])
 
 
 class Tenor:

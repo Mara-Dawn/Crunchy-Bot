@@ -543,6 +543,44 @@ class EventManager(Service):
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
                 ranking_data = [(k, f"{v}") for (k, v) in sorted_list]
+            case RankingType.WIN_STREAK:
+                user_list: dict[int, int] = {}
+                gamba_events = await self.database.get_guild_beans_events(
+                    guild_id, [BeansEventType.GAMBA_PAYOUT]
+                )
+                for event in gamba_events:
+                    user_id = event.member_id
+                    if event.value > 0:
+                        BotUtil.dict_append(user_list, user_id, 1)
+                    else:
+                        user_list[user_id] = 0
+                    BotUtil.dict_append(
+                        parsing_list, user_id, user_list[user_id], mode="max"
+                    )
+
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"{v}") for (k, v) in sorted_list]
+            case RankingType.LOSS_STREAK:
+                user_list: dict[int, int] = {}
+                gamba_events = await self.database.get_guild_beans_events(
+                    guild_id, [BeansEventType.GAMBA_PAYOUT]
+                )
+                for event in gamba_events:
+                    user_id = event.member_id
+                    if event.value == 0:
+                        BotUtil.dict_append(user_list, user_id, 1)
+                    else:
+                        user_list[user_id] = 0
+                    BotUtil.dict_append(
+                        parsing_list, user_id, user_list[user_id], mode="max"
+                    )
+
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"{v}") for (k, v) in sorted_list]
 
         return {
             BotUtil.get_name(self.bot, guild_id, user_id, 100): value
