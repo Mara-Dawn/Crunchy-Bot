@@ -44,6 +44,7 @@ class ItemType(str, Enum):
     PERM_FART_BOOST = "PermFartBoost"
     ULTRA_BOOST = "UltraBoost"
     INC_PET_BOOST = "IncomingPetBoost"
+    MIMIC_DETECTOR = "MimicDetector"
 
 
 class ItemState(str, Enum):

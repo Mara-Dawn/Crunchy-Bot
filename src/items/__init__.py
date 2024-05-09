@@ -916,6 +916,40 @@ class NoCooldownGamba(Item):
         )
 
 
+class MimicDetector(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 1500
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Useful Foxgirl",
+            item_type=ItemType.MIMIC_DETECTOR,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.FUN,
+            description=(
+                "Compared to her less than useful cat sisters, she is genuinely happy to help you out."
+                " With her superior sense of smell she can identify mimics before you open them! "
+                " She is super shy though so she will run away after helping you once."
+            ),
+            emoji="🦊",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.MIMIC],
+            controllable=True,
+            hide_in_shop=True,
+        )
+
+
+# Permanent Rare Items
+
+
 class PrestigeBean(Item):
 
     def __init__(self, cost: int | None):
@@ -941,9 +975,6 @@ class PrestigeBean(Item):
             hide_in_shop=True,
             permanent=True,
         )
-
-
-# Permanent Rare Items
 
 
 class PermPetBoost(Item):

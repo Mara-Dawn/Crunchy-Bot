@@ -71,13 +71,28 @@ class LootBoxViewController(ViewController):
             return False
         return True
 
-    async def handle_mimic(self, interaction: discord.Interaction, embed: discord.Embed, beans: int):
+    async def handle_mimic(self, interaction: discord.Interaction, embed: discord.Embed, beans: int) -> tuple[bool,bool]:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
-        
-        if beans < -100:
-            user_items = await self.item_manager.get_user_items_activated(guild_id, member_id, ItemTrigger.MIMIC)
 
+        large_mimic = False
+        mimic_detetor = False
+
+        user_items = await self.item_manager.get_user_items_activated(guild_id, member_id, ItemTrigger.MIMIC)
+
+        if ItemType.MIMIC_DETECTOR in [item.type for item in user_items]:
+            message = (
+                "**Oh, wait a second!**\nYou feel something tugging on your leg. It's the Foxgirl you found and took care of until now. " 
+                "She is signaling you **not to open that chest**, looks like its a **mimic**! Whew that was close. Before you get to thank her,"
+                "she runs away and disappears between the trees."
+            )
+            await interaction.followup.send(content=message, ephemeral=True)
+            event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, ItemType.MIMIC_DETECTOR, -1)
+            await self.controller.dispatch_event(event)
+            mimic_detetor = True
+            return large_mimic, mimic_detetor
+
+        if beans < -100:
             if ItemType.PROTECTION in [item.type for item in user_items]:
                 event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, ItemType.PROTECTION, -1)
                 await self.controller.dispatch_event(event)
@@ -86,21 +101,23 @@ class LootBoxViewController(ViewController):
                     value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nLuckily your Hazmat Suit protects you from further harm. \n(You lose one stack)",
                     inline=False,
                 )
-                return False
+                return large_mimic, mimic_detetor
 
             embed.add_field(
                 name="Oh no, it's a LARGE Mimic!",
                 value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
                 inline=False,
             )
-            return True
+            large_mimic = True
+            return large_mimic, mimic_detetor
 
         embed.add_field(
             name="Oh no, it's a Mimic!",
             value=f"It munches away at your beans, eating `🅱️{abs(beans)}` of them.",
             inline=False,
         )
-        return False
+
+        return large_mimic, mimic_detetor
 
     async def handle_lootbox_claim(
         self, interaction: discord.Interaction, owner_id: int, view_id: int
@@ -111,10 +128,6 @@ class LootBoxViewController(ViewController):
 
         if not await self.lootbox_checks(interaction, owner_id):
             return
-
-        event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
-        await self.controller.dispatch_ui_event(event)
-        self.controller.detach_view_by_id(view_id)
 
         message = await interaction.original_response()
         loot_box = await self.database.get_loot_box_by_message_id(guild_id, message.id)
@@ -133,11 +146,15 @@ class LootBoxViewController(ViewController):
 
         beans = loot_box.beans
         large_mimic = False
+        mimic_detector = False
 
         if beans < 0:
             bean_balance = await self.database.get_member_beans(guild_id, member_id)
             
-            large_mimic = await self.handle_mimic(interaction, embed, beans)
+            large_mimic, mimic_detector = await self.handle_mimic(interaction, embed, beans)
+            
+            if mimic_detector:
+                return
 
             if bean_balance + beans < 0:
                 beans = -bean_balance
@@ -151,6 +168,10 @@ class LootBoxViewController(ViewController):
                 value=f"A whole  `🅱️{beans}` of them.",
                 inline=False,
             )
+
+        event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
+        await self.controller.dispatch_ui_event(event)
+        self.controller.detach_view_by_id(view_id)
 
         log_message = f"{interaction.user.display_name} claimed a loot box containing {beans} beans"
 

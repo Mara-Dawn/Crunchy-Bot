@@ -92,6 +92,7 @@ class ItemManager(Service):
             ItemType.UNLIMITED_GAMBA,
             ItemType.INSTANT_GAMBA,
             ItemType.CRAPPY_COUPON,
+            ItemType.MIMIC_DETECTOR,
         ]
 
         lucky_item_pool = [
@@ -107,6 +108,7 @@ class ItemManager(Service):
             ItemType.UNLIMITED_GAMBA,
             ItemType.INSTANT_GAMBA,
             ItemType.CRAPPY_COUPON,
+            ItemType.MIMIC_DETECTOR,
         ]
 
         weights = [(await self.get_item(guild_id, x)).weight for x in item_pool]
