@@ -1645,7 +1645,7 @@ class Database:
             if user_id not in transformed:
                 transformed[user_id] = permanent_items[user_id]
                 continue
-            for count, item_type in item_counts.items():
+            for item_type, count in item_counts.items():
                 transformed[user_id][item_type] = count
 
         return transformed
