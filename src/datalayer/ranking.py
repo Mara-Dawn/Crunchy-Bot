@@ -30,6 +30,30 @@ class Ranking:
             description="Beans Rankings Current (Might be lower than high score)",
             emoji="🅱️",
         ),
+        RankingType.WIN_RATE: RankingDefinition(
+            type=RankingType.WIN_RATE,
+            title="Gamba Win Rate",
+            description="Who is the luckiest bean addict?",
+            emoji="🅱️",
+        ),
+        RankingType.AVG_GAMBA_GAIN: RankingDefinition(
+            type=RankingType.AVG_GAMBA_GAIN,
+            title="Average Gamba Gain per Bean",
+            description="How many beans do you win for every bean you bet.",
+            emoji="🅱️",
+        ),
+        RankingType.WIN_STREAK: RankingDefinition(
+            type=RankingType.WIN_STREAK,
+            title="Gamba Win Streaks",
+            description="Who had the longest win streak?",
+            emoji="🅱️",
+        ),
+        RankingType.LOSS_STREAK: RankingDefinition(
+            type=RankingType.LOSS_STREAK,
+            title="Gamba Loss Streak",
+            description="Who had the longest loss streak?",
+            emoji="🅱️",
+        ),
         RankingType.TOTAL_GAMBAD_SPENT: RankingDefinition(
             type=RankingType.TOTAL_GAMBAD_SPENT,
             title="Beans spent on Gamba Rankings",

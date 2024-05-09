@@ -614,7 +614,7 @@ class CatGirl(Item):
             item_type=ItemType.CATGIRL,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
-            description="She is lazy, sleepy, does nothing all day and apparently lives in your inventory now.",
+            description="She is lazy, sleepy, does nothing all day and apparently lives in your inventory now. :3",
             emoji="🐱",
             cost=cost,
             value=None,
@@ -916,6 +916,40 @@ class NoCooldownGamba(Item):
         )
 
 
+class MimicDetector(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 1100
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Useful Foxgirl",
+            item_type=ItemType.MIMIC_DETECTOR,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.FUN,
+            description=(
+                "Compared to her less than useful cat sisters, she is genuinely happy to help you out."
+                " With her superior sense of smell she can identify mimics before you open them! "
+                " She is super shy though so she will run away after helping you once."
+            ),
+            emoji="🦊",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.MIMIC],
+            controllable=True,
+            hide_in_shop=True,
+        )
+
+
+# Permanent Rare Items
+
+
 class PrestigeBean(Item):
 
     def __init__(self, cost: int | None):
@@ -943,9 +977,6 @@ class PrestigeBean(Item):
         )
 
 
-# Permanent Rare Items
-
-
 class PermPetBoost(Item):
 
     def __init__(self, cost: int | None):
@@ -966,12 +997,43 @@ class PermPetBoost(Item):
             ),
             emoji="🐾",
             cost=cost,
-            value=-1,
+            value=1,
             view_class=None,
             allow_amount=False,
             base_amount=1,
             max_amount=None,
             trigger=[ItemTrigger.PET],
+            hide_in_shop=True,
+            permanent=True,
+        )
+
+
+class UsefulCatGirl(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 100000
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Useful Catgirl",
+            item_type=ItemType.USEFUL_CATGIRL,
+            group=ItemGroup.FLAT_BONUS,
+            shop_category=ShopCategory.FUN,
+            description=(
+                "After housing so many useless catgirls you somehow managed to convince one of them to be useful. "
+                "Whenever you slap someone, she'll also claw at them. Gain +1 to slaps. "
+                "Whenever you pet someone she'll snuggle up close with them. Gain +1 to pets as well."
+            ),
+            emoji="🐈",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=1,
+            trigger=[ItemTrigger.PET, ItemTrigger.SLAP],
             hide_in_shop=True,
             permanent=True,
         )
@@ -997,7 +1059,7 @@ class IncomingPetBoost(Item):
             ),
             emoji="💄",
             cost=cost,
-            value=-1,
+            value=1,
             view_class=None,
             allow_amount=False,
             base_amount=1,

@@ -23,6 +23,10 @@ class RankingType(int, Enum):
     TOTAL_GAMBAD_SPENT = 13
     TOTAL_GAMBAD_WON = 14
     BEANS_CURRENT = 15
+    WIN_RATE = 16
+    AVG_GAMBA_GAIN = 17
+    WIN_STREAK = 18
+    LOSS_STREAK = 19
 
 
 class ActionType(str, Enum):

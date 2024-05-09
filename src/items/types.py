@@ -35,6 +35,7 @@ class ItemType(str, Enum):
     SATAN_FART = "SatanBoost"
     BAT = "Bat"
     CATGIRL = "CatGirl"
+    USEFUL_CATGIRL = "UsefulCatGirl"
     UNLIMITED_GAMBA = "NoLimitGamba"
     INSTANT_GAMBA = "NoCooldownGamba"
     CRAPPY_COUPON = "CrappyDrawing"
@@ -44,6 +45,7 @@ class ItemType(str, Enum):
     PERM_FART_BOOST = "PermFartBoost"
     ULTRA_BOOST = "UltraBoost"
     INC_PET_BOOST = "IncomingPetBoost"
+    MIMIC_DETECTOR = "MimicDetector"
 
 
 class ItemState(str, Enum):

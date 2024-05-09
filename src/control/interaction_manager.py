@@ -146,7 +146,10 @@ class InteractionManager(Service):
                         continue
                     reduction *= 1 - item.value
                 case ItemGroup.INCOMING_FLAT_BONUS:
-                    flat_bonus += item.value
+                    if command_type == UserInteraction.PET:
+                        flat_bonus -= item.value
+                    else:
+                        flat_bonus += item.value
                 case _:
                     continue
 
@@ -227,10 +230,12 @@ class InteractionManager(Service):
                 amount = await self.settings_manager.get_jail_slap_time(
                     interaction.guild_id
                 )
+                amount = amount + modifiers.flat_bonus
             case UserInteraction.PET:
                 amount = -await self.settings_manager.get_jail_pet_time(
                     interaction.guild_id
                 )
+                amount = amount - modifiers.flat_bonus
             case UserInteraction.FART:
                 min_amount = (
                     0
@@ -246,8 +251,7 @@ class InteractionManager(Service):
                 if modifiers.advantage:
                     amount_advantage = random.randint(min_amount, max_amount)
                     amount = max(amount, amount_advantage)
-
-        amount = amount + modifiers.flat_bonus
+                amount = amount + modifiers.flat_bonus
 
         reduction, flat_inc_bonus, tartget_item_info = (
             await self.get_jail_target_item_modifiers(
