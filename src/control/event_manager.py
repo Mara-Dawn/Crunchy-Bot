@@ -474,6 +474,75 @@ class EventManager(Service):
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
                 ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
+            case RankingType.WIN_RATE:
+                total_won: dict[int, int] = {}
+                total_cost: dict[int, int] = {}
+                user_list = set()
+                gamba_events = await self.database.get_guild_beans_events(
+                    guild_id, [BeansEventType.GAMBA_PAYOUT]
+                )
+                for event in gamba_events:
+                    user_id = event.member_id
+                    if event.value > 0:
+                        BotUtil.dict_append(total_won, user_id, 1)
+                        user_list.add(user_id)
+                    else:
+                        BotUtil.dict_append(total_cost, user_id, 1)
+                        user_list.add(user_id)
+
+                for user_id in user_list:
+                    win_amount = 0
+                    cost_amount = 0
+                    ratio = 0
+
+                    if user_id in total_won:
+                        win_amount = total_won[user_id]
+                    if user_id in total_cost:
+                        cost_amount = total_cost[user_id]
+
+                    total = win_amount + cost_amount
+                    if total != 0:
+                        ratio = round(win_amount / (total) * 100, 2)
+                    parsing_list[user_id] = ratio
+
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"{v}%") for (k, v) in sorted_list]
+            case RankingType.AVG_GAMBA_GAIN:
+                total_won: dict[int, int] = {}
+                total_cost: dict[int, int] = {}
+                user_list = set()
+                gamba_events = await self.database.get_guild_beans_events(
+                    guild_id, [BeansEventType.GAMBA_COST, BeansEventType.GAMBA_PAYOUT]
+                )
+                for event in gamba_events:
+                    user_id = event.member_id
+                    if event.value > 0:
+                        BotUtil.dict_append(total_won, user_id, event.value)
+                        user_list.add(user_id)
+                    else:
+                        BotUtil.dict_append(total_cost, user_id, abs(event.value))
+                        user_list.add(user_id)
+
+                for user_id in user_list:
+                    win_amount = 0
+                    cost_amount = 0
+                    ratio = 0
+
+                    if user_id in total_won:
+                        win_amount = total_won[user_id]
+                    if user_id in total_cost:
+                        cost_amount = total_cost[user_id]
+
+                    if cost_amount != 0:
+                        ratio = round(win_amount / cost_amount, 2)
+                    parsing_list[user_id] = ratio
+
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"{v}") for (k, v) in sorted_list]
 
         return {
             BotUtil.get_name(self.bot, guild_id, user_id, 100): value
