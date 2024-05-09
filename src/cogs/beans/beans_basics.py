@@ -258,24 +258,6 @@ class BeansBasics(BeansGroup):
         await self.bot.command_response(self.__cog_name__, interaction, output)
 
     @app_commands.command(
-        name="migrate_permanent_items",
-        description="Migrates everyones permanent items to the new season.",
-    )
-    @app_commands.check(__has_permission)
-    @app_commands.guild_only()
-    async def migrate_permanent_items(self, interaction: discord.Interaction) -> None:
-        author_id = 90043934247501824
-        if interaction.user.id != author_id:
-            raise app_commands.MissingPermissions
-        
-        await interaction.response.defer()
-
-        await self.database.migrate_permanent_items(self.item_manager)
-
-        output = "Migration complete."
-        await self.bot.command_response(self.__cog_name__, interaction, output)
-
-    @app_commands.command(
         name="settings",
         description="Overview of all beans related settings and their current value.",
     )
