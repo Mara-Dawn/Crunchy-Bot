@@ -15,11 +15,17 @@ class LootBoxView(ViewMenu):
         self.add_item(ClaimButton())
         self.owner_id = owner_id
 
+        self.blocked = False
+
         self.controller_type = ControllerType.LOOTBOX_VIEW
         self.controller.register_view(self)
 
     async def claim(self, interaction: discord.Interaction):
         await interaction.response.defer()
+
+        if self.blocked:
+            return
+
         event = UIEvent(
             UIEventType.CLAIM_LOOTBOX,
             (interaction, self.owner_id),
@@ -35,7 +41,9 @@ class LootBoxView(ViewMenu):
             return
         match event.type:
             case UIEventType.STOP_INTERACTIONS:
-                self.stop()
+                self.blocked = True
+            case UIEventType.RESUME_INTERACTIONS:
+                self.blocked = False
 
 
 class ClaimButton(discord.ui.Button):

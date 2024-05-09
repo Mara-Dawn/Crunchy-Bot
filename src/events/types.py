@@ -63,6 +63,7 @@ class PredictionEventType(str, Enum):
 
 class UIEventType(str, Enum):
     STOP_INTERACTIONS = "stop_interactions"
+    RESUME_INTERACTIONS = "resume_interactions"
     SHOW_INVENTORY = "show_inventory"
     SHOP_BUY = "shop_buy"
     SHOP_CHANGED = "shop_changed"

@@ -128,6 +128,8 @@ class LootBoxViewController(ViewController):
     async def handle_lootbox_claim(
         self, interaction: discord.Interaction, owner_id: int, view_id: int
     ):
+        event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
+        await self.controller.dispatch_ui_event(event)
 
         guild_id = interaction.guild_id
         member_id = interaction.user.id
@@ -158,6 +160,8 @@ class LootBoxViewController(ViewController):
             large_mimic, mimic_detector, beans_taken = await self.handle_mimic(interaction, embed, beans)
             
             if mimic_detector:
+                event = UIEvent(UIEventType.RESUME_INTERACTIONS, None, view_id)
+                await self.controller.dispatch_ui_event(event)
                 return
 
             beans = beans_taken
@@ -172,8 +176,6 @@ class LootBoxViewController(ViewController):
                 inline=False,
             )
 
-        event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
-        await self.controller.dispatch_ui_event(event)
         self.controller.detach_view_by_id(view_id)
 
         log_message = f"{interaction.user.display_name} claimed a loot box containing {beans} beans"
