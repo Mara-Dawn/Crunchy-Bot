@@ -80,19 +80,6 @@ class ItemManager(Service):
             ItemType.GIGA_FART,
             ItemType.FART_STABILIZER,
             ItemType.FARTVANTAGE,
-            ItemType.SATAN_FART,
-            ItemType.ADVANCED_FART_PROTECTION,
-            ItemType.ULTRA_FART_BOOST,
-            ItemType.ULTRA_PET,
-            ItemType.ULTRA_SLAP,
-            ItemType.PENETRATING_PET,
-            ItemType.SWAP_SLAP,
-            ItemType.MIMIC,
-            ItemType.CATGIRL,
-            ItemType.UNLIMITED_GAMBA,
-            ItemType.INSTANT_GAMBA,
-            ItemType.CRAPPY_COUPON,
-            ItemType.MIMIC_DETECTOR,
         ]
 
         lucky_item_pool = [
@@ -109,7 +96,10 @@ class ItemManager(Service):
             ItemType.INSTANT_GAMBA,
             ItemType.CRAPPY_COUPON,
             ItemType.MIMIC_DETECTOR,
+            ItemType.USEFUL_CATGIRL,
         ]
+
+        item_pool = item_pool + lucky_item_pool
 
         weights = [(await self.get_item(guild_id, x)).weight for x in item_pool]
         weights = [1.0 / w for w in weights]
@@ -127,7 +117,7 @@ class ItemManager(Service):
         mimic_chance = 0.1
         large_chest_chance = 0.02
         large_mimic_chance = 0.02
-        lucky_item_chance = 0.02
+        lucky_item_chance = 0.05
 
         # Chest Ranges
         small_min_beans = 30

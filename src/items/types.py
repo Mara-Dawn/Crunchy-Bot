@@ -35,6 +35,7 @@ class ItemType(str, Enum):
     SATAN_FART = "SatanBoost"
     BAT = "Bat"
     CATGIRL = "CatGirl"
+    USEFUL_CATGIRL = "UsefulCatGirl"
     UNLIMITED_GAMBA = "NoLimitGamba"
     INSTANT_GAMBA = "NoCooldownGamba"
     CRAPPY_COUPON = "CrappyDrawing"
