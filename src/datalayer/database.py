@@ -363,6 +363,19 @@ class Database:
         PRIMARY KEY ({PREDICTION_EVENT_ID_COL})
     );"""
 
+    PERMANENT_ITEMS = [
+        ItemType.REACTION_SPAM,
+        ItemType.LOTTERY_TICKET,
+        ItemType.NAME_COLOR,
+        ItemType.CATGIRL,
+        ItemType.PRESTIGE_BEAN,
+        ItemType.PERM_PET_BOOST,
+        ItemType.INC_PET_BOOST,
+        ItemType.PERM_SLAP_BOOST,
+        ItemType.PERM_FART_BOOST,
+        ItemType.PERM_PROTECTION,
+    ]
+
     def __init__(
         self,
         bot: commands.Bot,
@@ -1467,7 +1480,7 @@ class Database:
         return {row[self.BEANS_EVENT_MEMBER_COL]: row["high_score"] for row in rows}
 
     async def get_lootbox_purchases_by_guild(
-        self, guild_id: int, until: int = None
+        self, guild_id: int, until: int = None, season: Season = Season.CURRENT
     ) -> dict[int, int]:
         command = f"""
             SELECT {self.LOOTBOX_EVENT_MEMBER_COL}, COUNT({self.LOOTBOX_EVENT_TYPE_COL}) FROM {self.LOOTBOX_EVENT_TABLE} 
@@ -1475,12 +1488,13 @@ class Database:
             AND {self.EVENT_GUILD_ID_COL} = ?
             WHERE {self.LOOTBOX_EVENT_TYPE_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} < ?
+            AND {self.EVENT_TIMESTAMP_COL} > ?
             GROUP BY {self.LOOTBOX_EVENT_MEMBER_COL};
         """
         if until is None:
             until = datetime.datetime.now().timestamp()
 
-        task = (guild_id, LootBoxEventType.BUY.value, until)
+        task = (guild_id, LootBoxEventType.BUY.value, until, season.value)
 
         rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
@@ -1564,18 +1578,20 @@ class Database:
         }
         return rows
 
-    async def get_item_counts_by_guild(
-        self, guild_id: int, season: Season = Season.CURRENT
+    async def get_permanent_item_counts_by_guild(
+        self, guild_id: int
     ) -> dict[int, dict[ItemType, int]]:
+        item_types = [item.value for item in self.PERMANENT_ITEMS]
+        list_sanitized = self.__list_sanitizer(item_types)
         command = f"""
             SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, {self.INVENTORY_EVENT_MEMBER_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
             ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INVENTORY_EVENT_TABLE}.{self.INVENTORY_EVENT_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.INVENTORY_EVENT_ITEM_TYPE_COL} in {list_sanitized}
             GROUP BY {self.INVENTORY_EVENT_MEMBER_COL}, {self.INVENTORY_EVENT_ITEM_TYPE_COL};
         """
-        task = (guild_id, season.value)
+        task = (guild_id, *item_types)
         rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
@@ -1594,6 +1610,73 @@ class Database:
 
         return transformed
 
+    async def get_item_counts_by_guild(
+        self, guild_id: int, season: Season = Season.CURRENT
+    ) -> dict[int, dict[ItemType, int]]:
+        command = f"""
+            SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, {self.INVENTORY_EVENT_MEMBER_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} 
+            ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INVENTORY_EVENT_TABLE}.{self.INVENTORY_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            GROUP BY {self.INVENTORY_EVENT_MEMBER_COL}, {self.INVENTORY_EVENT_ITEM_TYPE_COL};
+        """
+        task = (guild_id, season.value)
+        rows = await self.__query_select(command, task)
+
+        permanent_items = await self.get_permanent_item_counts_by_guild(guild_id)
+
+        if not rows or len(rows) < 1:
+            return permanent_items
+
+        transformed = {}
+        for row in rows:
+            user_id = row[self.INVENTORY_EVENT_MEMBER_COL]
+            item_type = ItemType(row[self.INVENTORY_EVENT_ITEM_TYPE_COL])
+            amount = row[f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"]
+            if amount <= 0:
+                continue
+            if user_id not in transformed:
+                transformed[user_id] = {item_type: amount}
+            else:
+                transformed[user_id][item_type] = amount
+
+        for user_id, item_counts in permanent_items.items():
+            if user_id not in transformed:
+                transformed[user_id] = permanent_items[user_id]
+                continue
+            for count, item_type in item_counts:
+                transformed[user_id][item_type] = count
+
+        return transformed
+
+    async def get_permanent_item_counts_by_user(
+        self, guild_id: int, user_id: int
+    ) -> dict[ItemType, int]:
+        item_types = [item.value for item in self.PERMANENT_ITEMS]
+        list_sanitized = self.__list_sanitizer(item_types)
+        command = f"""
+            SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} 
+            ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INVENTORY_EVENT_TABLE}.{self.INVENTORY_EVENT_ID_COL}
+            WHERE {self.INVENTORY_EVENT_MEMBER_COL} = ?
+            AND {self.EVENT_GUILD_ID_COL} = ?
+            AND {self.INVENTORY_EVENT_ITEM_TYPE_COL} IN {list_sanitized}
+            GROUP BY {self.INVENTORY_EVENT_ITEM_TYPE_COL};
+        """
+        task = (user_id, guild_id, *item_types)
+        rows = await self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return {}
+
+        return {
+            ItemType(row[self.INVENTORY_EVENT_ITEM_TYPE_COL]): row[
+                f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"
+            ]
+            for row in rows
+            if row[f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"] > 0
+        }
+
     async def get_item_counts_by_user(
         self, guild_id: int, user_id: int, season: Season = Season.CURRENT
     ) -> dict[ItemType, int]:
@@ -1608,16 +1691,23 @@ class Database:
         """
         task = (user_id, guild_id, season.value)
         rows = await self.__query_select(command, task)
-        if not rows or len(rows) < 1:
-            return {}
 
-        return {
+        permanent_items = await self.get_permanent_item_counts_by_user(
+            guild_id, user_id
+        )
+
+        if not rows or len(rows) < 1:
+            return permanent_items
+
+        transformed = {
             ItemType(row[self.INVENTORY_EVENT_ITEM_TYPE_COL]): row[
                 f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"
             ]
             for row in rows
             if row[f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"] > 0
         }
+        result = transformed | permanent_items
+        return result
 
     async def get_prediction_by_id(self, prediction_id: int) -> Prediction:
 
