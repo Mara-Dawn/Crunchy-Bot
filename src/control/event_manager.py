@@ -476,7 +476,7 @@ class EventManager(Service):
                 ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
             case RankingType.WIN_RATE:
                 total_won: dict[int, int] = {}
-                total_cost: dict[int, int] = {}
+                total_lost: dict[int, int] = {}
                 user_list = set()
                 gamba_events = await self.database.get_guild_beans_events(
                     guild_id, [BeansEventType.GAMBA_PAYOUT]
@@ -487,7 +487,7 @@ class EventManager(Service):
                         BotUtil.dict_append(total_won, user_id, 1)
                         user_list.add(user_id)
                     else:
-                        BotUtil.dict_append(total_cost, user_id, 1)
+                        BotUtil.dict_append(total_lost, user_id, 1)
                         user_list.add(user_id)
 
                 for user_id in user_list:
@@ -497,8 +497,12 @@ class EventManager(Service):
 
                     if user_id in total_won:
                         win_amount = total_won[user_id]
-                    if user_id in total_cost:
-                        cost_amount = total_cost[user_id]
+                    else:
+                        total_won[user_id] = 0
+                    if user_id in total_lost:
+                        cost_amount = total_lost[user_id]
+                    else:
+                        cost_amount[user_id] = 0
 
                     total = win_amount + cost_amount
                     if total != 0:
@@ -508,7 +512,10 @@ class EventManager(Service):
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
-                ranking_data = [(k, f"{v}%") for (k, v) in sorted_list]
+                ranking_data = [
+                    (k, f"{v}% ({total_won[k]}/{total_won[k] + total_lost[k]})")
+                    for (k, v) in sorted_list
+                ]
             case RankingType.AVG_GAMBA_GAIN:
                 total_won: dict[int, int] = {}
                 total_cost: dict[int, int] = {}
@@ -532,8 +539,12 @@ class EventManager(Service):
 
                     if user_id in total_won:
                         win_amount = total_won[user_id]
+                    else:
+                        total_won[user_id] = 0
                     if user_id in total_cost:
                         cost_amount = total_cost[user_id]
+                    else:
+                        total_cost[user_id] = 0
 
                     if cost_amount != 0:
                         ratio = round(win_amount / cost_amount, 2)
@@ -542,9 +553,13 @@ class EventManager(Service):
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
-                ranking_data = [(k, f"{v}") for (k, v) in sorted_list]
+                ranking_data = [
+                    (k, f"{v} ({total_won[k]}/{total_cost[k]})")
+                    for (k, v) in sorted_list
+                ]
             case RankingType.WIN_STREAK:
                 user_list: dict[int, int] = {}
+                gamba_count: dict[int, int] = {}
                 gamba_events = await self.database.get_guild_beans_events(
                     guild_id, [BeansEventType.GAMBA_PAYOUT]
                 )
@@ -557,13 +572,17 @@ class EventManager(Service):
                     BotUtil.dict_append(
                         parsing_list, user_id, user_list[user_id], mode="max"
                     )
+                    BotUtil.dict_append(gamba_count, user_id, 1)
 
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
-                ranking_data = [(k, f"{v}") for (k, v) in sorted_list]
+                ranking_data = [
+                    (k, f"{v} ({gamba_count[k]} total)") for (k, v) in sorted_list
+                ]
             case RankingType.LOSS_STREAK:
                 user_list: dict[int, int] = {}
+                gamba_count: dict[int, int] = {}
                 gamba_events = await self.database.get_guild_beans_events(
                     guild_id, [BeansEventType.GAMBA_PAYOUT]
                 )
@@ -576,11 +595,14 @@ class EventManager(Service):
                     BotUtil.dict_append(
                         parsing_list, user_id, user_list[user_id], mode="max"
                     )
+                    BotUtil.dict_append(gamba_count, user_id, 1)
 
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
-                ranking_data = [(k, f"{v}") for (k, v) in sorted_list]
+                ranking_data = [
+                    (k, f"{v} ({gamba_count[k]} total)") for (k, v) in sorted_list
+                ]
 
         return {
             BotUtil.get_name(self.bot, guild_id, user_id, 100): value
