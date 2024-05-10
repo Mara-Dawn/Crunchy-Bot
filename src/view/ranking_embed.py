@@ -2,6 +2,7 @@ from typing import Any
 
 import discord
 from datalayer.ranking import Ranking
+from datalayer.types import Season
 
 from view.types import RankingType
 
@@ -13,9 +14,10 @@ class RankingEmbed(discord.Embed):
         interaction: discord.Interaction,
         ranking_type: RankingType,
         rankings: dict[str, Any],
+        season: Season,
     ):
         super().__init__(
-            title=f"Leaderbords for {interaction.guild.name}",
+            title=f"Leaderbords for {interaction.guild.name} ({season.value})",
             color=discord.Colour.purple(),
         )
         self.add_field(

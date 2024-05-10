@@ -7,6 +7,7 @@ from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
+from datalayer.types import Season
 from discord import app_commands
 from discord.ext import commands, tasks
 from view.ranking_embed import RankingEmbed
@@ -137,19 +138,22 @@ class Statistics(commands.Cog):
 
     @app_commands.command(name="rankings", description="Crunchy user rankings.")
     @app_commands.guild_only()
-    async def rankings(self, interaction: discord.Interaction):
+    async def rankings(self, interaction: discord.Interaction, season: Season | None):
         await interaction.response.defer()
         log_message = (
             f"{interaction.user.name} used command `{interaction.command.name}`."
         )
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
 
+        if season is None:
+            season = Season.CURRENT
+
         ranking_data = await self.event_manager.get_user_rankings(
-            interaction.guild_id, RankingType.BEANS
+            interaction.guild_id, RankingType.BEANS, season
         )
 
-        embed = RankingEmbed(interaction, RankingType.BEANS, ranking_data)
-        view = RankingView(self.controller, interaction)
+        embed = RankingEmbed(interaction, RankingType.BEANS, ranking_data, season)
+        view = RankingView(self.controller, interaction, season)
 
         ranking_img = discord.File("./img/jail_wide.png", "ranking_img.png")
         police_img = discord.File("./img/police.png", "police.png")

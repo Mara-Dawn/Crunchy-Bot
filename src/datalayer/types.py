@@ -34,9 +34,15 @@ class LootboxType(Enum):
     LUCKY_ITEM = 5
 
 
-class Season(Enum):
-    ALL = 0
-    CURRENT = 1715162400
+class SeasonDate(Enum):
+    BEGINNING = 0
+    SEASON_1 = 1715162400
+
+
+class Season(str, Enum):
+    ALL = "All Time"
+    SEASON_1 = "Season 1"
+    CURRENT = "Season 2"
 
 
 class PredictionStateSort(int, Enum):
