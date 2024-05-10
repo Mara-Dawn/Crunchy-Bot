@@ -502,7 +502,7 @@ class EventManager(Service):
                     if user_id in total_lost:
                         cost_amount = total_lost[user_id]
                     else:
-                        cost_amount[user_id] = 0
+                        total_lost[user_id] = 0
 
                     total = win_amount + cost_amount
                     if total != 0:
