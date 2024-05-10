@@ -7,8 +7,7 @@ from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
 from items.types import ItemType
-
-from view.shop_embed import ShopEmbed
+from view.shop.embed import ShopEmbed
 from view.view_menu import ViewMenu
 
 

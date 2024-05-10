@@ -1,7 +1,7 @@
 import discord
 from control.controller import Controller
 from items.item import Item
-from view.shop_response_view import (
+from view.shop.response_view import (
     CancelButton,
     ShopResponseView,
     SubmissionInputButton,

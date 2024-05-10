@@ -10,9 +10,9 @@ from datalayer.database import Database
 from datalayer.types import Season
 from discord import app_commands
 from discord.ext import commands, tasks
-from view.ranking_embed import RankingEmbed
-from view.ranking_view import RankingView
-from view.statistics_embed import StatisticsEmbed
+from view.ranking.embed import RankingEmbed
+from view.ranking.statistics_embed import StatisticsEmbed
+from view.ranking.view import RankingView
 from view.types import RankingType
 
 

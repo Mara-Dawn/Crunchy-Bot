@@ -20,7 +20,7 @@ from events.types import BeansEventType, LootBoxEventType
 from items import *  # noqa: F403
 from items.item import Item
 from items.types import ItemState, ItemType
-from view.lootbox_view import LootBoxView
+from view.lootbox.view import LootBoxView
 
 from control.controller import Controller
 from control.logger import BotLogger

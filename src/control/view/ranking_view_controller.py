@@ -4,7 +4,7 @@ from datalayer.types import Season
 from discord.ext import commands
 from events.types import UIEventType
 from events.ui_event import UIEvent
-from view.ranking_embed import RankingEmbed
+from view.ranking.embed import RankingEmbed
 from view.types import RankingType
 
 from control.controller import Controller

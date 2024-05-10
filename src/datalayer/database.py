@@ -10,6 +10,7 @@ from discord.ext import commands
 from events.bat_event import BatEvent
 from events.beans_event import BeansEvent, BeansEventType
 from events.bot_event import BotEvent
+from events.garden_event import GardenEvent
 from events.interaction_event import InteractionEvent
 from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
@@ -18,16 +19,28 @@ from events.prediction_event import PredictionEvent
 from events.quote_event import QuoteEvent
 from events.spam_event import SpamEvent
 from events.timeout_event import TimeoutEvent
-from events.types import EventType, LootBoxEventType, PredictionEventType
+from events.types import (
+    EventType,
+    GardenEventType,
+    LootBoxEventType,
+    PredictionEventType,
+)
 from items.types import ItemState, ItemType
 from view.types import EmojiType
 
+from datalayer.garden import Plot, UserGarden
 from datalayer.jail import UserJail
 from datalayer.lootbox import LootBox
 from datalayer.prediction import Prediction
 from datalayer.prediction_stats import PredictionStats
 from datalayer.quote import Quote
-from datalayer.types import PredictionState, Season, SeasonDate, UserInteraction
+from datalayer.types import (
+    PlantType,
+    PredictionState,
+    Season,
+    SeasonDate,
+    UserInteraction,
+)
 
 
 class Database:
@@ -363,6 +376,49 @@ class Database:
         PRIMARY KEY ({PREDICTION_EVENT_ID_COL})
     );"""
 
+    GARDEN_TABLE = "gardens"
+    GARDEN_ID = "grdn_id"
+    GARDEN_GUILD_ID = "grdn_guild_id"
+    GARDEN_USER_ID = "grdn_user_id"
+    CREATE_GARDEN_TABLE = f"""
+    CREATE TABLE if not exists {GARDEN_TABLE} (
+        {GARDEN_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
+        {GARDEN_GUILD_ID} INTEGER,
+        {GARDEN_USER_ID} INTEGER,
+        UNIQUE({GARDEN_GUILD_ID}, {GARDEN_USER_ID})
+    );"""
+
+    PLOT_TABLE = "plots"
+    PLOT_ID = "plot_id"
+    PLOT_GARDEN_ID = "plot_garden_id"
+    PLOT_X = "plot_x"
+    PLOT_Y = "plot_y"
+    CREATE_PLOT_TABLE = f"""
+    CREATE TABLE if not exists {PLOT_TABLE} (
+        {PLOT_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
+        {PLOT_GARDEN_ID} INTEGER REFERENCES {GARDEN_TABLE} ({GARDEN_ID}), 
+        {PLOT_X} INTEGER,
+        {PLOT_Y} INTEGER
+    );"""
+
+    GARDEN_EVENT_TABLE = "gardenevents"
+    GARDEN_EVENT_ID_COL = "gaev_id"
+    GARDEN_EVENT_GARDEN_ID_COL = "gaev_garden_id"
+    GARDEN_EVENT_PLOT_ID_COL = "gaev_plot_id"
+    GARDEN_EVENT_MEMBER_ID = "gaev_member_id"
+    GARDEN_EVENT_TYPE_COL = "gaev_type"
+    GARDEN_EVENT_PAYLOAD_COL = "gaev_payload"
+    CREATE_GARDEN_EVENT_TABLE = f"""
+    CREATE TABLE if not exists {GARDEN_EVENT_TABLE} (
+        {GARDEN_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {GARDEN_EVENT_GARDEN_ID_COL} INTEGER REFERENCES {GARDEN_TABLE} ({GARDEN_ID}), 
+        {GARDEN_EVENT_PLOT_ID_COL} INTEGER REFERENCES {PLOT_TABLE} ({PLOT_ID}), 
+        {GARDEN_EVENT_MEMBER_ID} INTEGER, 
+        {GARDEN_EVENT_TYPE_COL} TEXT, 
+        {GARDEN_EVENT_PAYLOAD_COL} TEXT, 
+        PRIMARY KEY ({GARDEN_EVENT_ID_COL})
+    );"""
+
     PERMANENT_ITEMS = [
         ItemType.REACTION_SPAM,
         ItemType.LOTTERY_TICKET,
@@ -417,6 +473,9 @@ class Database:
             await db.execute(self.CREATE_PREDICTION_OVERVIEW_TABLE)
             await db.execute(self.CREATE_INVENTORY_ITEM_TABLE)
             await db.execute(self.CREATE_LOOTBOX_ITEM_TABLE)
+            await db.execute(self.CREATE_PLOT_TABLE)
+            await db.execute(self.CREATE_GARDEN_TABLE)
+            await db.execute(self.CREATE_GARDEN_EVENT_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -670,6 +729,28 @@ class Database:
 
         return await self.__query_insert(command, task)
 
+    async def __create_garden_event(self, event_id: int, event: GardenEvent) -> int:
+        command = f"""
+            INSERT INTO {self.GARDEN_EVENT_TABLE} (
+            {self.GARDEN_EVENT_ID_COL},
+            {self.GARDEN_EVENT_GARDEN_ID_COL},
+            {self.GARDEN_EVENT_PLOT_ID_COL},
+            {self.GARDEN_EVENT_MEMBER_ID},
+            {self.GARDEN_EVENT_TYPE_COL},
+            {self.GARDEN_EVENT_PAYLOAD_COL})
+            VALUES (?, ?, ?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.garden_id,
+            event.plot_id,
+            event.member_id,
+            event.garden_event_type,
+            event.payload,
+        )
+
+        return await self.__query_insert(command, task)
+
     async def log_event(self, event: BotEvent) -> int:
         event_id = await self.__create_base_event(event)
 
@@ -698,6 +779,8 @@ class Database:
                 return await self.__create_bat_event(event_id, event)
             case EventType.PREDICTION:
                 return await self.__create_prediction_event(event_id, event)
+            case EventType.GARDEN:
+                return await self.__create_garden_event(event_id, event)
 
     async def log_quote(self, quote: Quote) -> int:
         command = f"""
@@ -2098,3 +2181,141 @@ class Database:
             return {}
 
         return [BeansEvent.from_db_row(row) for row in rows]
+
+    async def create_user_garden(self, guild_id: int, user_id: int):
+        command = f"""
+            INSERT OR IGNORE INTO {self.GARDEN_TABLE}
+            ({self.GARDEN_GUILD_ID}, {self.GARDEN_USER_ID}) 
+            VALUES(?, ?);
+        """
+        task = (guild_id, user_id)
+
+        insert_id = await self.__query_insert(command, task)
+
+        if insert_id != 0:
+            command = f"""
+                INSERT OR IGNORE INTO {self.PLOT_TABLE}
+                ({self.PLOT_GARDEN_ID}, {self.PLOT_X}, {self.PLOT_Y}) 
+                VALUES(?, ?, ?);
+            """
+            task = (insert_id, 0, 0)
+            insert_id = await self.__query_insert(command, task)
+
+    async def add_garden_plot(self, garden: UserGarden) -> UserGarden:
+
+        plot_count = len(garden.plots)
+        new_position = UserGarden.PLOT_ORDER[plot_count]
+
+        command = f"""
+                INSERT INTO {self.PLOT_TABLE}
+                ({self.PLOT_GARDEN_ID}, {self.PLOT_X}, {self.PLOT_Y}) 
+                VALUES(?, ?, ?);
+            """
+        task = (garden.id, new_position[0], new_position[1])
+        insert_id = await self.__query_insert(command, task)
+
+        plot = Plot(insert_id, garden.id, new_position[0], new_position[1])
+        garden.plots.append(plot)
+        return garden
+
+    async def get_garden_plots(
+        self, garden_id, season: Season = Season.CURRENT
+    ) -> list[Plot]:
+        command = f"""
+            SELECT * FROM {self.GARDEN_TABLE}
+            INNER JOIN {self.PLOT_TABLE} ON {self.PLOT_TABLE}.{self.PLOT_GARDEN_ID} = {self.GARDEN_TABLE}.{self.GARDEN_ID}
+            WHERE {self.GARDEN_ID} = {int(garden_id)};
+        """
+        rows = await self.__query_select(command)
+        if not rows or len(rows) < 1:
+            return []
+
+        plots: list[Plot] = []
+
+        for row in rows:
+            plot = Plot(
+                row[self.PLOT_ID],
+                garden_id,
+                row[self.PLOT_X],
+                row[self.PLOT_Y],
+            )
+            plots.append(plot)
+
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
+        command = f"""
+            SELECT * FROM {self.GARDEN_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.GARDEN_EVENT_TABLE}.{self.GARDEN_EVENT_ID_COL}
+            WHERE {self.GARDEN_EVENT_GARDEN_ID_COL} = ?
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
+            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC;
+        """
+        task = (garden_id, start_timestamp, end_timestamp)
+        rows = await self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return plots
+
+        plot_plants = {}
+        plot_water_events = {}
+        skip_list = []
+
+        for row in rows:
+            plot_id = row[self.GARDEN_EVENT_PLOT_ID_COL]
+            if plot_id in skip_list:
+                continue
+            type = GardenEventType(row[self.GARDEN_EVENT_TYPE_COL])
+            match type:
+                case GardenEventType.PLANT:
+                    plot_plants[plot_id] = GardenEvent.from_db_row(row)
+                    skip_list.append(plot_id)
+                case GardenEventType.WATER:
+                    if plot_id not in plot_water_events:
+                        plot_water_events[plot_id] = [GardenEvent.from_db_row(row)]
+                    else:
+                        plot_water_events[plot_id].append(GardenEvent.from_db_row(row))
+                case GardenEventType.REMOVE | GardenEventType.HARVEST:
+                    skip_list.append(plot_id)
+
+        result = []
+
+        for plot in plots:
+            if plot.id in plot_plants:
+                event: GardenEvent = plot_plants[plot_id]
+                plot.plant_datetime = event.datetime
+                plot.plant = UserGarden.get_plant_by_type(event.payload)
+            if plot.id in plot_water_events:
+                plot.water_events = plot_water_events[plot_id]
+            result.append(plot)
+
+        return result
+
+    async def get_user_garden(
+        self, guild_id: int, user_id: int, season: Season = Season.CURRENT
+    ) -> UserGarden:
+        await self.create_user_garden(guild_id, user_id)
+
+        command = f"""
+            SELECT * FROM {self.GARDEN_TABLE}
+            WHERE {self.GARDEN_GUILD_ID} = ?
+            AND {self.GARDEN_USER_ID} = ?
+            LIMIT 1;
+        """
+        task = (guild_id, user_id)
+        rows = await self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return None
+        garden_id = rows[0][self.GARDEN_ID]
+
+        plots = await self.get_garden_plots(garden_id, season)
+
+        user_balance = await self.get_member_beans(guild_id, user_id, season)
+
+        user_seeds = {PlantType.BEAN: user_balance}
+
+        return UserGarden(
+            garden_id,
+            guild_id,
+            user_id,
+            plots,
+            user_seeds,
+        )

@@ -6,7 +6,6 @@ from datalayer.ranking import Ranking
 from datalayer.types import Season
 from events.types import UIEventType
 from events.ui_event import UIEvent
-
 from view.types import RankingType
 from view.view_menu import ViewMenu
 

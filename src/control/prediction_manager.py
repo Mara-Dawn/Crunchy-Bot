@@ -11,12 +11,12 @@ from events.types import EventType, PredictionEventType, UIEventType
 # needed for global access
 from events.ui_event import UIEvent
 from items import *  # noqa: F403
-from view.prediction_embed import PredictionEmbed
-from view.prediction_info_view import PredictionInfoView
-from view.prediction_moderation_embed import PredictionModerationEmbed
-from view.prediction_moderation_view import PredictionModerationView
-from view.prediction_overview_view import PredictionOverviewView
-from view.prediction_view import PredictionView
+from view.prediction.embed import PredictionEmbed
+from view.prediction.info_view import PredictionInfoView
+from view.prediction.moderation_embed import PredictionModerationEmbed
+from view.prediction.moderation_view import PredictionModerationView
+from view.prediction.overview_view import PredictionOverviewView
+from view.prediction.view import PredictionView
 
 from control.controller import Controller
 from control.logger import BotLogger

@@ -8,8 +8,7 @@ from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
 from items.types import ItemState, ItemType
-
-from view.inventory_embed import InventoryEmbed
+from view.inventory.embed import InventoryEmbed
 from view.types import ActionType
 from view.view_menu import ViewMenu
 

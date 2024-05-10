@@ -9,7 +9,6 @@ from datalayer.types import PredictionState
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
-
 from view.types import EmojiType
 from view.view_menu import ViewMenu
 
