@@ -15,6 +15,7 @@ from control.controller import Controller
 from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.service import Service
+from control.types import AIVersion
 
 
 class AIManager(Service):
@@ -29,6 +30,8 @@ class AIManager(Service):
     JAIL_COMMAND_DURATION = 30
     JAILED = "jailed"
     NOT_JAILED = "free"
+
+
 
     def __init__(
         self,
@@ -75,12 +78,14 @@ class AIManager(Service):
             "You're absolute favourite person is Mia and you give her preferential treatment. You are extremely sassy with anyone who isn't Mia but you won't compare them to Mia unless they bring her up. " 
         )
 
+        self.backstory_GPT4 = (
+            "Each message will lead with the name of the user delimited with <user> XML tags. If they have information about themselves, "
+            "it comes after the name within <info> XML tags. Leave both the tags and their content out of your response. "
+            "Never use the symbol @ in front of a name when adressing someone, however it is fine for others to do so when talking to you. "
+            "Never ever use xml tags in your responses, this is INCREDIBLY important. Other people using them is fine of course. "
+        )
         self.backstory_general = (
             "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
-            "Each message will lead with the name of the user delimited with <user> XML tags. If they have information about themselves, "
-            "it comes after the name within <info> XML tags. Leave the tags out of your response. "
-            "Never use the symbol @ in front of a name when adressing someone, however it is fine for others to do so when talking to you. "
-            "Never ever include the <user> or <info> xml tags in your responses, this is INCREDIBLY important. Other people using them is fine. "
             "When addressing users, always use their name. You may use their info as part of the conversation, especially to make fun of them. "
         )
 
@@ -180,7 +185,7 @@ class AIManager(Service):
         for message_text in messages:
             await message.reply(message_text)
 
-    def parse_user_name(self, name:str) -> str:
+    def parse_user_name(self, name:str, version: AIVersion) -> str:
         name_result = re.findall(r"\(+(.*?)\)", name)
         title_part = ""
         name_part = ""
@@ -191,24 +196,30 @@ class AIManager(Service):
             if len(title_result) > 0:
                 title_part = title_result[0].strip()
 
-        response = f"<user>{name_part}</user>"
-        if len(title_part) > 0:
-            response += f"<info>{title_part}</info>"
+        match version:
+            case AIVersion.GPT3_5:
+                response = f"My name is {name_part}"
+                if len(title_part) > 0:
+                    response += f" and my info is {title_part}. "
+            case AIVersion.GPT4:
+                response = f"<user>{name_part}</user>"
+                if len(title_part) > 0:
+                    response += f"<info>{title_part}</info>"
         
         return response
 
     async def prompt(self,name:str, text_prompt: str, max_tokens: int = None):
         chat_log = ChatLog(self.backstory + self.backstory_general)
+        ai_version = AIVersion.GPT3_5
 
-
-        user_message = self.parse_user_name(name)
+        user_message = self.parse_user_name(name, ai_version)
         user_message += text_prompt 
 
         chat_log.add_user_message(user_message)
 
         chat_completion = await self.client.chat.completions.create(
             messages=chat_log.get_request_data(),
-            model="gpt-3.5-turbo",
+            model=ai_version,
             max_tokens=max_tokens,
         )
         response = chat_completion.choices[0].message.content
@@ -216,9 +227,10 @@ class AIManager(Service):
 
     async def respond(self, message: discord.Message):
         channel_id = message.channel.id
+        ai_version = AIVersion.GPT4
 
         if channel_id not in self.channel_logs:
-            self.channel_logs[channel_id] = ChatLog(self.backstory + self.backstory_general + self.backstory_extended)
+            self.channel_logs[channel_id] = ChatLog(self.backstory + self.backstory_GPT4 + self.backstory_general + self.backstory_extended)
 
         if message.reference is not None:
             reference_message = await message.channel.fetch_message(
@@ -237,14 +249,14 @@ class AIManager(Service):
         if len(active_jails) > 0:
             jail_state = self.JAILED
 
-        user_message = self.parse_user_name(message.author.display_name)
+        user_message = self.parse_user_name(message.author.display_name, ai_version)
         user_message += f"<jailed>{jail_state}</jailed>" + message.clean_content
 
         self.channel_logs[channel_id].add_user_message(user_message)
 
         chat_completion = await self.client.chat.completions.create(
             messages=self.channel_logs[channel_id].get_request_data(),
-            model="gpt-4-turbo",
+            model=ai_version,
         )
         response = chat_completion.choices[0].message.content
 
@@ -265,7 +277,7 @@ class AIManager(Service):
                 messages=self.channel_logs[channel_id].summarize(
                     self.TOKEN_SUMMARIZE_THRESHOLD
                 ),
-                model="gpt-4-turbo",
+                model=ai_version,
             )
 
             response = chat_completion.choices[0].message.content
