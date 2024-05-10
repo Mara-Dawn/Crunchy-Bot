@@ -377,7 +377,7 @@ class Database:
     ]
 
     SEASONS = {
-        Season.ALL: (SeasonDate.BEGINNING, None),
+        Season.ALL_TIME: (SeasonDate.BEGINNING, None),
         Season.SEASON_1: (SeasonDate.BEGINNING, SeasonDate.SEASON_1),
         Season.CURRENT: (SeasonDate.SEASON_1, None),
     }

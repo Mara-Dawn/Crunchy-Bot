@@ -31,8 +31,6 @@ class AIManager(Service):
     JAILED = "jailed"
     NOT_JAILED = "free"
 
-
-
     def __init__(
         self,
         bot: commands.Bot,
