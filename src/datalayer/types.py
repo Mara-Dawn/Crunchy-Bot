@@ -40,7 +40,7 @@ class SeasonDate(Enum):
 
 
 class Season(str, Enum):
-    ALL = "All Time"
+    ALL_TIME = "All Time"
     SEASON_1 = "Season 1"
     CURRENT = "Season 2"
 
