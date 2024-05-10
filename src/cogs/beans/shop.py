@@ -14,10 +14,10 @@ from datalayer.types import ItemTrigger
 from discord import app_commands
 from discord.ext import commands, tasks
 from items.types import ItemType
-from view.inventory_embed import InventoryEmbed
-from view.inventory_view import InventoryView
-from view.shop_embed import ShopEmbed
-from view.shop_view import ShopView
+from view.inventory.embed import InventoryEmbed
+from view.inventory.view import InventoryView
+from view.shop.embed import ShopEmbed
+from view.shop.view import ShopView
 
 
 class Shop(commands.Cog):

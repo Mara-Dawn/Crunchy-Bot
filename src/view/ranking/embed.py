@@ -3,7 +3,6 @@ from typing import Any
 import discord
 from datalayer.ranking import Ranking
 from datalayer.types import Season
-
 from view.types import RankingType
 
 
