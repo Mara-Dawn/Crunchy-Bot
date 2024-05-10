@@ -21,13 +21,13 @@ class Ranking:
         RankingType.BEANS: RankingDefinition(
             type=RankingType.BEANS,
             title="Beans Ranking Highscores (excl. Shop/Transfers)",
-            description="Beans Ranking Highscores",
+            description="The season ranks will be decided by these",
             emoji="🅱️",
         ),
         RankingType.BEANS_CURRENT: RankingDefinition(
             type=RankingType.BEANS_CURRENT,
             title="Beans Rankings Current",
-            description="Beans Rankings Current (Might be lower than high score)",
+            description="Your current season score (Might be lower than high score)",
             emoji="🅱️",
         ),
         RankingType.WIN_RATE: RankingDefinition(
@@ -39,7 +39,7 @@ class Ranking:
         RankingType.AVG_GAMBA_GAIN: RankingDefinition(
             type=RankingType.AVG_GAMBA_GAIN,
             title="Average Gamba Gain per Bean",
-            description="How many beans do you win for every bean you bet.",
+            description="How many beans do you win for every bean you bet?",
             emoji="🅱️",
         ),
         RankingType.WIN_STREAK: RankingDefinition(
