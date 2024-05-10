@@ -27,7 +27,7 @@ from datalayer.lootbox import LootBox
 from datalayer.prediction import Prediction
 from datalayer.prediction_stats import PredictionStats
 from datalayer.quote import Quote
-from datalayer.types import PredictionState, Season, UserInteraction
+from datalayer.types import PredictionState, Season, SeasonDate, UserInteraction
 
 
 class Database:
@@ -376,6 +376,12 @@ class Database:
         ItemType.PERM_PROTECTION,
     ]
 
+    SEASONS = {
+        Season.ALL: (SeasonDate.BEGINNING, None),
+        Season.SEASON_1: (SeasonDate.BEGINNING, SeasonDate.SEASON_1),
+        Season.CURRENT: (SeasonDate.SEASON_1, None),
+    }
+
     def __init__(
         self,
         bot: commands.Bot,
@@ -415,6 +421,16 @@ class Database:
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
             )
+
+    def __get_season_interval(self, season: Season):
+        start_timestamp = self.SEASONS[season][0].value
+        end_timestamp = self.SEASONS[season][1]
+        if end_timestamp is None:
+            end_timestamp = int(datetime.datetime.now().timestamp())
+        else:
+            end_timestamp = end_timestamp.value
+
+        return start_timestamp, end_timestamp
 
     async def __query_select(self, query: str, task=None):
         async with aiosqlite.connect(self.db_file) as db:  # noqa: SIM117
@@ -1139,13 +1155,15 @@ class Database:
     async def get_jail_events_by_jail(
         self, jail_id: int, season: Season = Season.CURRENT
     ) -> list[JailEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.JAIL_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
             WHERE {self.JAIL_EVENT_JAILREFERENCE_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (jail_id, season.value)
+        task = (jail_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -1154,13 +1172,15 @@ class Database:
     async def get_jail_events_by_user(
         self, user_id: int, season: Season = Season.CURRENT
     ) -> list[JailEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.JAIL_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
             AND {self.JAIL_EVENT_BY_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (user_id, season.value)
+        task = (user_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -1169,14 +1189,16 @@ class Database:
     async def get_jail_events_affecting_user(
         self, user_id: int, season: Season = Season.CURRENT
     ) -> list[JailEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.JAIL_TABLE} 
             INNER JOIN {self.JAIL_EVENT_TABLE} ON {self.JAIL_TABLE}.{self.JAIL_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_JAILREFERENCE_COL}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.JAIL_EVENT_TABLE}.{self.JAIL_EVENT_ID_COL}
             WHERE {self.JAIL_TABLE}.{self.JAIL_MEMBER_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (user_id, season.value)
+        task = (user_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -1195,13 +1217,15 @@ class Database:
     async def get_timeout_events_by_user(
         self, user_id: int, season: Season = Season.CURRENT
     ) -> list[TimeoutEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.TIMEOUT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
             WHERE {self.TIMEOUT_EVENT_MEMBER_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (user_id, season.value)
+        task = (user_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -1210,13 +1234,15 @@ class Database:
     async def get_timeout_events_by_guild(
         self, guild_id: int, season: Season = Season.CURRENT
     ) -> list[TimeoutEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.TIMEOUT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.TIMEOUT_EVENT_TABLE}.{self.TIMEOUT_EVENT_ID_COL}
             WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (guild_id, season.value)
+        task = (guild_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -1225,13 +1251,15 @@ class Database:
     async def get_spam_events_by_user(
         self, user_id: int, season: Season = Season.CURRENT
     ) -> list[SpamEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.SPAM_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.SPAM_EVENT_TABLE}.{self.SPAM_EVENT_ID_COL}
             WHERE {self.SPAM_EVENT_MEMBER_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (user_id, season.value)
+        task = (user_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -1240,13 +1268,15 @@ class Database:
     async def get_spam_events_by_guild(
         self, guild_id: int, season: Season = Season.CURRENT
     ) -> list[SpamEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.SPAM_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.SPAM_EVENT_TABLE}.{self.SPAM_EVENT_ID_COL}
             WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (guild_id, season.value)
+        task = (guild_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -1255,13 +1285,15 @@ class Database:
     async def get_interaction_events_by_user(
         self, user_id: int, season: Season = Season.CURRENT
     ) -> list[InteractionEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
             WHERE {self.INTERACTION_EVENT_FROM_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (user_id, season.value)
+        task = (user_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -1270,13 +1302,15 @@ class Database:
     async def get_interaction_events_affecting_user(
         self, user_id: int, season: Season = Season.CURRENT
     ) -> list[InteractionEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
             WHERE {self.INTERACTION_EVENT_TO_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (user_id, season.value)
+        task = (user_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -1288,14 +1322,16 @@ class Database:
         interaction_type: UserInteraction,
         season: Season = Season.CURRENT,
     ) -> list[InteractionEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.INTERACTION_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_ID_COL}
             WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = ?
             AND {self.INTERACTION_EVENT_TABLE}.{self.INTERACTION_EVENT_TYPE_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (guild_id, interaction_type.value, season.value)
+        task = (guild_id, interaction_type.value, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -1362,15 +1398,17 @@ class Database:
     async def get_last_loot_box_event(
         self, guild_id: int, season: Season = Season.CURRENT
     ):
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.LOOTBOX_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
             WHERE {self.LOOTBOX_EVENT_TYPE_COL} = ?
             AND {self.EVENT_GUILD_ID_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
             ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
         """
-        task = (LootBoxEventType.DROP.value, guild_id, season.value)
+        task = (LootBoxEventType.DROP.value, guild_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return None
@@ -1379,14 +1417,16 @@ class Database:
     async def get_member_beans(
         self, guild_id: int, user_id: int, season: Season = Season.CURRENT
     ) -> int:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
             WHERE {self.BEANS_EVENT_MEMBER_COL} = ?
             AND {self.EVENT_GUILD_ID_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?;
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
         """
-        task = (user_id, guild_id, season.value)
+        task = (user_id, guild_id, start_timestamp, end_timestamp)
 
         rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
@@ -1397,14 +1437,16 @@ class Database:
     async def get_guild_beans(
         self, guild_id: int, season: Season = Season.CURRENT
     ) -> dict[int, int]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
             AND {self.EVENT_GUILD_ID_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
             GROUP BY {self.BEANS_EVENT_MEMBER_COL};
         """
-        task = (guild_id, season.value)
+        task = (guild_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
@@ -1419,12 +1461,14 @@ class Database:
     async def get_guild_beans_rankings_current(
         self, guild_id: int, season: Season = Season.CURRENT
     ) -> dict[int, int]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT {self.BEANS_EVENT_MEMBER_COL}, SUM({self.BEANS_EVENT_VALUE_COL}) FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
             AND {self.EVENT_GUILD_ID_COL} = ?
             WHERE {self.BEANS_EVENT_TYPE_COL} NOT IN (?, ?, ?, ?)
             AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
             GROUP BY {self.BEANS_EVENT_MEMBER_COL};
         """
         task = (
@@ -1433,7 +1477,8 @@ class Database:
             BeansEventType.USER_TRANSFER.value,
             BeansEventType.BALANCE_CHANGE.value,
             BeansEventType.SHOP_BUYBACK.value,
-            season.value,
+            start_timestamp,
+            end_timestamp,
         )
 
         rows = await self.__query_select(command, task)
@@ -1448,6 +1493,7 @@ class Database:
     async def get_guild_beans_rankings(
         self, guild_id: int, season: Season = Season.CURRENT
     ) -> dict[int, int]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT {self.BEANS_EVENT_MEMBER_COL}, MAX(rollingSum) as high_score 
             FROM (
@@ -1461,6 +1507,7 @@ class Database:
                 AND {self.EVENT_GUILD_ID_COL} = ?
                 WHERE {self.BEANS_EVENT_TYPE_COL} NOT IN (?, ?, ?, ?)
                 AND {self.EVENT_TIMESTAMP_COL} > ?
+                AND {self.EVENT_TIMESTAMP_COL} <= ?
             )
             GROUP BY {self.BEANS_EVENT_MEMBER_COL};
         """
@@ -1470,7 +1517,8 @@ class Database:
             BeansEventType.USER_TRANSFER.value,
             BeansEventType.BALANCE_CHANGE.value,
             BeansEventType.SHOP_BUYBACK.value,
-            season.value,
+            start_timestamp,
+            end_timestamp,
         )
 
         rows = await self.__query_select(command, task)
@@ -1482,6 +1530,7 @@ class Database:
     async def get_lootbox_purchases_by_guild(
         self, guild_id: int, until: int = None, season: Season = Season.CURRENT
     ) -> dict[int, int]:
+        start_timestamp, _ = self.__get_season_interval(season)
         command = f"""
             SELECT {self.LOOTBOX_EVENT_MEMBER_COL}, COUNT({self.LOOTBOX_EVENT_TYPE_COL}) FROM {self.LOOTBOX_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
@@ -1494,7 +1543,7 @@ class Database:
         if until is None:
             until = datetime.datetime.now().timestamp()
 
-        task = (guild_id, LootBoxEventType.BUY.value, until, season.value)
+        task = (guild_id, LootBoxEventType.BUY.value, until, start_timestamp)
 
         rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
@@ -1539,6 +1588,7 @@ class Database:
         beans_event_type: BeansEventType,
         season: Season = Season.CURRENT,
     ) -> BeansEvent:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.BEANS_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
@@ -1546,9 +1596,10 @@ class Database:
             AND {self.EVENT_GUILD_ID_COL} = ?
             AND {self.BEANS_EVENT_TYPE_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
             ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
         """
-        task = (user_id, guild_id, beans_event_type, season.value)
+        task = (user_id, guild_id, beans_event_type, start_timestamp, end_timestamp)
 
         rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
@@ -1613,15 +1664,17 @@ class Database:
     async def get_item_counts_by_guild(
         self, guild_id: int, season: Season = Season.CURRENT
     ) -> dict[int, dict[ItemType, int]]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, {self.INVENTORY_EVENT_MEMBER_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
             ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.INVENTORY_EVENT_TABLE}.{self.INVENTORY_EVENT_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
             GROUP BY {self.INVENTORY_EVENT_MEMBER_COL}, {self.INVENTORY_EVENT_ITEM_TYPE_COL};
         """
-        task = (guild_id, season.value)
+        task = (guild_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
 
         permanent_items = await self.get_permanent_item_counts_by_guild(guild_id)
@@ -1680,6 +1733,7 @@ class Database:
     async def get_item_counts_by_user(
         self, guild_id: int, user_id: int, season: Season = Season.CURRENT
     ) -> dict[ItemType, int]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
@@ -1687,9 +1741,10 @@ class Database:
             WHERE {self.INVENTORY_EVENT_MEMBER_COL} = ?
             AND {self.EVENT_GUILD_ID_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
             GROUP BY {self.INVENTORY_EVENT_ITEM_TYPE_COL};
         """
-        task = (user_id, guild_id, season.value)
+        task = (user_id, guild_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
 
         permanent_items = await self.get_permanent_item_counts_by_user(
@@ -1963,17 +2018,22 @@ class Database:
         return prediction_stats
 
     async def get_last_bat_event_by_target(
-        self, guild_id: int, target_user_id: int, season: Season = Season.CURRENT
+        self,
+        guild_id: int,
+        target_user_id: int,
+        season: Season = Season.CURRENT,
     ) -> BatEvent:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.BAT_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BAT_EVENT_TABLE}.{self.BAT_EVENT_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND {self.BAT_EVENT_TARGET_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
             ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
         """
-        task = (guild_id, target_user_id, season.value)
+        task = (guild_id, target_user_id, start_timestamp, end_timestamp)
 
         rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
@@ -1983,6 +2043,7 @@ class Database:
     async def get_lootboxes_by_guild(
         self, guild_id: int, season: Season = Season.CURRENT
     ) -> list[tuple[int, LootBox]]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
 
         lootbox_types = [LootBoxEventType.CLAIM.value, LootBoxEventType.OPEN.value]
         list_sanitized = self.__list_sanitizer(lootbox_types)
@@ -1993,9 +2054,10 @@ class Database:
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
             AND {self.LOOTBOX_EVENT_TYPE_COL} IN {list_sanitized};
         """
-        task = (guild_id, season.value, *lootbox_types)
+        task = (guild_id, start_timestamp, end_timestamp, *lootbox_types)
 
         rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
@@ -2017,6 +2079,7 @@ class Database:
         event_types: list[BeansEventType],
         season: Season = Season.CURRENT,
     ) -> list[BeansEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
         event_type_values = [event_type.value for event_type in event_types]
         list_sanitized = self.__list_sanitizer(event_type_values)
 
@@ -2025,9 +2088,10 @@ class Database:
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
             AND {self.BEANS_EVENT_TYPE_COL} IN {list_sanitized};
         """
-        task = (guild_id, season.value, *event_type_values)
+        task = (guild_id, start_timestamp, end_timestamp, *event_type_values)
 
         rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:

@@ -3,21 +3,26 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.types import ControllerType
 from datalayer.ranking import Ranking
+from datalayer.types import Season
 from events.types import UIEventType
 from events.ui_event import UIEvent
+
 from view.types import RankingType
 from view.view_menu import ViewMenu
 
 
 class RankingView(ViewMenu):
 
-    def __init__(self, controller: Controller, interaction: discord.Interaction):
+    def __init__(
+        self, controller: Controller, interaction: discord.Interaction, season: Season
+    ):
         super().__init__(timeout=180)
         self.interaction = interaction
         self.controller = controller
         self.event_manager: EventManager = self.controller.get_service(EventManager)
         self.add_item(Dropdown())
         self.member_id = interaction.user.id
+        self.season = season
 
         self.controller_type = ControllerType.RANKING_VIEW
         self.controller.register_view(self)
@@ -32,7 +37,7 @@ class RankingView(ViewMenu):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.UPDATE_RANKINGS,
-            (interaction, ranking_type),
+            (interaction, ranking_type, self.season),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)

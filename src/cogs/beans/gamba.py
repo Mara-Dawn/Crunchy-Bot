@@ -297,8 +297,8 @@ class Gamba(commands.Cog):
 
         payout = 0
 
-        loss = 0.53
-        times_two = 0.27
+        loss = 0.50
+        times_two = 0.30
         times_three = 0.14
         times_five = 0.05
         # times_ten = 0.009

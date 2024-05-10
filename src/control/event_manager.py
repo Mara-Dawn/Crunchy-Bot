@@ -4,7 +4,7 @@ from typing import Any
 from bot_util import BotUtil
 from datalayer.database import Database
 from datalayer.stats import UserStats
-from datalayer.types import UserInteraction
+from datalayer.types import Season, UserInteraction
 from discord.ext import commands
 from events.bat_event import BatEvent
 from events.bot_event import BotEvent
@@ -297,10 +297,14 @@ class EventManager(Service):
         return user_stats
 
     async def __get_ranking_data_by_type(
-        self, guild_id: int, outgoing: bool, interaction_type: UserInteraction
+        self,
+        guild_id: int,
+        outgoing: bool,
+        interaction_type: UserInteraction,
+        season: Season,
     ) -> list[tuple[int, Any]]:
         guild_interaction_events = await self.database.get_guild_interaction_events(
-            guild_id, interaction_type
+            guild_id, interaction_type, season
         )
         parsing_list = {}
 
@@ -314,38 +318,57 @@ class EventManager(Service):
         return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
 
     async def get_user_rankings(
-        self, guild_id: int, ranking_type: RankingType
+        self, guild_id: int, ranking_type: RankingType, season: Season
     ) -> dict[str, Any]:
         parsing_list = {}
         ranking_data = []
+
         match ranking_type:
             case RankingType.SLAP:
                 ranking_data = await self.__get_ranking_data_by_type(
-                    guild_id, outgoing=True, interaction_type=UserInteraction.SLAP
+                    guild_id,
+                    outgoing=True,
+                    interaction_type=UserInteraction.SLAP,
+                    season=season,
                 )
             case RankingType.PET:
                 ranking_data = await self.__get_ranking_data_by_type(
-                    guild_id, outgoing=True, interaction_type=UserInteraction.PET
+                    guild_id,
+                    outgoing=True,
+                    interaction_type=UserInteraction.PET,
+                    season=season,
                 )
             case RankingType.FART:
                 ranking_data = await self.__get_ranking_data_by_type(
-                    guild_id, outgoing=True, interaction_type=UserInteraction.FART
+                    guild_id,
+                    outgoing=True,
+                    interaction_type=UserInteraction.FART,
+                    season=season,
                 )
             case RankingType.SLAP_RECIEVED:
                 ranking_data = await self.__get_ranking_data_by_type(
-                    guild_id, outgoing=False, interaction_type=UserInteraction.SLAP
+                    guild_id,
+                    outgoing=False,
+                    interaction_type=UserInteraction.SLAP,
+                    season=season,
                 )
             case RankingType.PET_RECIEVED:
                 ranking_data = await self.__get_ranking_data_by_type(
-                    guild_id, outgoing=False, interaction_type=UserInteraction.PET
+                    guild_id,
+                    outgoing=False,
+                    interaction_type=UserInteraction.PET,
+                    season=season,
                 )
             case RankingType.FART_RECIEVED:
                 ranking_data = await self.__get_ranking_data_by_type(
-                    guild_id, outgoing=False, interaction_type=UserInteraction.FART
+                    guild_id,
+                    outgoing=False,
+                    interaction_type=UserInteraction.FART,
+                    season=season,
                 )
             case RankingType.TIMEOUT_TOTAL:
                 guild_timeout_events = await self.database.get_timeout_events_by_guild(
-                    guild_id
+                    guild_id, season
                 )
                 for event in guild_timeout_events:
                     user_id = event.member_id
@@ -360,7 +383,7 @@ class EventManager(Service):
                 ranking_data = converted
             case RankingType.TIMEOUT_COUNT:
                 guild_timeout_events = await self.database.get_timeout_events_by_guild(
-                    guild_id
+                    guild_id, season
                 )
                 for event in guild_timeout_events:
                     user_id = event.member_id
@@ -369,7 +392,9 @@ class EventManager(Service):
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
             case RankingType.JAIL_TOTAL:
-                jail_data = await self.database.get_jail_events_by_guild(guild_id)
+                jail_data = await self.database.get_jail_events_by_guild(
+                    guild_id, season
+                )
                 for jail, events in jail_data.items():
                     for event in events:
                         user_id = jail.member_id
@@ -383,7 +408,9 @@ class EventManager(Service):
                 ]
                 ranking_data = converted
             case RankingType.JAIL_COUNT:
-                jail_data = await self.database.get_jail_events_by_guild(guild_id)
+                jail_data = await self.database.get_jail_events_by_guild(
+                    guild_id, season
+                )
                 for jail, events in jail_data.items():
                     for event in events:
                         user_id = jail.member_id
@@ -394,7 +421,7 @@ class EventManager(Service):
                 )
             case RankingType.SPAM_SCORE:
                 guild_spam_events = await self.database.get_spam_events_by_guild(
-                    guild_id
+                    guild_id, season
                 )
                 for event in guild_spam_events:
                     user_id = event.member_id
@@ -403,11 +430,14 @@ class EventManager(Service):
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
             case RankingType.BEANS:
-                parsing_list = await self.database.get_guild_beans_rankings(guild_id)
+                parsing_list = await self.database.get_guild_beans_rankings(
+                    guild_id, season
+                )
                 # only subtract lootboxes until patch where beans got removed.
                 lootbox_purchases = await self.database.get_lootbox_purchases_by_guild(
                     guild_id,
                     datetime.datetime(year=2024, month=4, day=22, hour=14).timestamp(),
+                    season,
                 )
                 loot_box_item = await self.item_manager.get_item(
                     guild_id, ItemType.LOOTBOX
@@ -421,12 +451,13 @@ class EventManager(Service):
                 ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
             case RankingType.BEANS_CURRENT:
                 parsing_list = await self.database.get_guild_beans_rankings_current(
-                    guild_id
+                    guild_id, season
                 )
                 # only subtract lootboxes until patch where beans got removed.
                 lootbox_purchases = await self.database.get_lootbox_purchases_by_guild(
                     guild_id,
                     datetime.datetime(year=2024, month=4, day=22, hour=14).timestamp(),
+                    season,
                 )
                 loot_box_item = await self.item_manager.get_item(
                     guild_id, ItemType.LOOTBOX
@@ -439,7 +470,7 @@ class EventManager(Service):
                 )
                 ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
             case RankingType.MIMICS:
-                lootboxes = await self.database.get_lootboxes_by_guild(guild_id)
+                lootboxes = await self.database.get_lootboxes_by_guild(guild_id, season)
                 total_dict = {}
                 for user_id, lootbox in lootboxes:
                     if lootbox.beans < 0:
@@ -454,7 +485,7 @@ class EventManager(Service):
                     )
             case RankingType.TOTAL_GAMBAD_SPENT:
                 gamba_events = await self.database.get_guild_beans_events(
-                    guild_id, [BeansEventType.GAMBA_COST]
+                    guild_id, [BeansEventType.GAMBA_COST], season
                 )
                 for event in gamba_events:
                     user_id = event.member_id
@@ -465,7 +496,9 @@ class EventManager(Service):
                 ranking_data = [(k, f"🅱️{v}") for (k, v) in sorted_list]
             case RankingType.TOTAL_GAMBAD_WON:
                 gamba_events = await self.database.get_guild_beans_events(
-                    guild_id, [BeansEventType.GAMBA_COST, BeansEventType.GAMBA_PAYOUT]
+                    guild_id,
+                    [BeansEventType.GAMBA_COST, BeansEventType.GAMBA_PAYOUT],
+                    season,
                 )
                 for event in gamba_events:
                     user_id = event.member_id
@@ -479,7 +512,7 @@ class EventManager(Service):
                 total_lost: dict[int, int] = {}
                 user_list = set()
                 gamba_events = await self.database.get_guild_beans_events(
-                    guild_id, [BeansEventType.GAMBA_PAYOUT]
+                    guild_id, [BeansEventType.GAMBA_PAYOUT], season
                 )
                 for event in gamba_events:
                     user_id = event.member_id
@@ -521,7 +554,9 @@ class EventManager(Service):
                 total_cost: dict[int, int] = {}
                 user_list = set()
                 gamba_events = await self.database.get_guild_beans_events(
-                    guild_id, [BeansEventType.GAMBA_COST, BeansEventType.GAMBA_PAYOUT]
+                    guild_id,
+                    [BeansEventType.GAMBA_COST, BeansEventType.GAMBA_PAYOUT],
+                    season,
                 )
                 for event in gamba_events:
                     user_id = event.member_id
@@ -561,7 +596,7 @@ class EventManager(Service):
                 user_list: dict[int, int] = {}
                 gamba_count: dict[int, int] = {}
                 gamba_events = await self.database.get_guild_beans_events(
-                    guild_id, [BeansEventType.GAMBA_PAYOUT]
+                    guild_id, [BeansEventType.GAMBA_PAYOUT], season
                 )
                 for event in gamba_events:
                     user_id = event.member_id
@@ -584,7 +619,7 @@ class EventManager(Service):
                 user_list: dict[int, int] = {}
                 gamba_count: dict[int, int] = {}
                 gamba_events = await self.database.get_guild_beans_events(
-                    guild_id, [BeansEventType.GAMBA_PAYOUT]
+                    guild_id, [BeansEventType.GAMBA_PAYOUT], season
                 )
                 for event in gamba_events:
                     user_id = event.member_id
