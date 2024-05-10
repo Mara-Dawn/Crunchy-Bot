@@ -2,6 +2,7 @@ from typing import Any
 
 import discord
 from datalayer.ranking import Ranking
+
 from view.types import RankingType
 
 
@@ -16,7 +17,11 @@ class RankingEmbed(discord.Embed):
         super().__init__(
             title=f"Leaderbords for {interaction.guild.name}",
             color=discord.Colour.purple(),
-            description=Ranking.DEFINITIONS[ranking_type].description,
+        )
+        self.add_field(
+            name=Ranking.DEFINITIONS[ranking_type].title,
+            value=Ranking.DEFINITIONS[ranking_type].description,
+            inline=False,
         )
 
         leaderbord_msg = ""
