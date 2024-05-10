@@ -12,6 +12,11 @@ class ControllerType(str, Enum):
     INVENTORY_VIEW = "InventoryViewController"
 
 
+class AIVersion(str, Enum):
+    GPT3_5 = "gpt-3.5-turbo"
+    GPT4 = "gpt-4-turbo"
+
+
 class ControllerModuleMap(str, Enum):
 
     @staticmethod
