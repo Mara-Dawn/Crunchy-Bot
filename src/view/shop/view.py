@@ -7,8 +7,7 @@ from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
 from items.types import ItemType
-
-from view.shop_embed import ShopEmbed
+from view.shop.embed import ShopEmbed
 from view.view_menu import ViewMenu
 
 
@@ -116,9 +115,12 @@ class ShopView(ViewMenu):
         if user_items is not None:
             self.user_items = user_items
 
+        author_name = self.controller.bot.user.display_name
+        author_img = self.controller.bot.user.display_avatar
         embed = ShopEmbed(
+            author_name=author_name,
+            author_img=author_img,
             guild_name=self.guild_name,
-            user_id=self.member_id,
             items=self.items,
             user_items=self.user_items,
             start_offset=start,

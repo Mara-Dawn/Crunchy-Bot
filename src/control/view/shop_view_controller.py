@@ -9,18 +9,18 @@ from events.inventory_event import InventoryEvent
 from events.types import BeansEventType, EventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemGroup, ItemType
-from view.inventory_embed import InventoryEmbed
-from view.inventory_view import InventoryView
-from view.shop_color_select_view import ShopColorSelectView  # noqa: F401
-from view.shop_confirm_view import ShopConfirmView  # noqa: F401
-from view.shop_prediction_submission_view import (
+from view.inventory.embed import InventoryEmbed
+from view.inventory.view import InventoryView
+from view.shop.color_select_view import ShopColorSelectView  # noqa: F401
+from view.shop.confirm_view import ShopConfirmView  # noqa: F401
+from view.shop.prediction_submission_view import (
     ShopPredictionSubmissionView,  # noqa: F401
 )
-from view.shop_reaction_select_view import ShopReactionSelectView  # noqa: F401
+from view.shop.reaction_select_view import ShopReactionSelectView  # noqa: F401
 
 # noqa: F401
-from view.shop_response_view import ShopResponseView
-from view.shop_user_select_view import ShopUserSelectView  # noqa: F401
+from view.shop.response_view import ShopResponseView
+from view.shop.user_select_view import ShopUserSelectView  # noqa: F401
 
 from control.controller import Controller
 from control.item_manager import ItemManager
@@ -201,13 +201,13 @@ class ShopViewController(ViewController):
             interaction.guild_id, interaction.user.id
         )
 
-        police_img = discord.File("./img/police.png", "police.png")
-
-        embed = InventoryEmbed(inventory)
+        author_name = self.bot.user.display_name
+        author_img = self.bot.user.display_avatar
+        embed = InventoryEmbed(author_name, author_img, inventory)
         view = InventoryView(self.controller, interaction, inventory)
 
         message = await interaction.followup.send(
-            "", embed=embed, view=view, files=[police_img], ephemeral=True
+            "", embed=embed, view=view, ephemeral=True
         )
         view.set_message(message)
         await view.refresh_ui()

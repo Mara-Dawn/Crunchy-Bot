@@ -10,7 +10,7 @@ from events.bot_event import BotEvent
 from events.prediction_event import PredictionEvent
 from events.types import BeansEventType, EventType, PredictionEventType, UIEventType
 from events.ui_event import UIEvent
-from view.prediction_interaction_view import PredictionInteractionView
+from view.prediction.interaction_view import PredictionInteractionView
 
 from control.controller import Controller
 from control.event_manager import EventManager

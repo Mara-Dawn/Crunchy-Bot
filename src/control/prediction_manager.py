@@ -11,12 +11,12 @@ from events.types import EventType, PredictionEventType, UIEventType
 # needed for global access
 from events.ui_event import UIEvent
 from items import *  # noqa: F403
-from view.prediction_embed import PredictionEmbed
-from view.prediction_info_view import PredictionInfoView
-from view.prediction_moderation_embed import PredictionModerationEmbed
-from view.prediction_moderation_view import PredictionModerationView
-from view.prediction_overview_view import PredictionOverviewView
-from view.prediction_view import PredictionView
+from view.prediction.embed import PredictionEmbed
+from view.prediction.info_view import PredictionInfoView
+from view.prediction.moderation_embed import PredictionModerationEmbed
+from view.prediction.moderation_view import PredictionModerationView
+from view.prediction.overview_view import PredictionOverviewView
+from view.prediction.view import PredictionView
 
 from control.controller import Controller
 from control.logger import BotLogger
@@ -102,7 +102,9 @@ class PredictionManager(Service):
 
             await self.database.clear_prediction_overview_messages(channel_id)
 
-            head_embed = PredictionEmbed(guild.name)
+            author_name = self.bot.user.display_name
+            author_img = self.bot.user.display_avatar
+            head_embed = PredictionEmbed(author_name, author_img, guild.name)
             head_view = PredictionInfoView(self.controller)
             message = await channel.send(content="", embed=head_embed, view=head_view)
             head_view.set_message(message)
@@ -148,7 +150,9 @@ class PredictionManager(Service):
                 self.bot.add_view(head_view, message_id=message.id)
                 head_view.set_message(message)
                 head_view.reload_elements()
-                head_embed = PredictionEmbed(guild.name)
+                author_name = self.bot.user.display_name
+                author_img = self.bot.user.display_avatar
+                head_embed = PredictionEmbed(author_name, author_img, guild.name)
                 await message.edit(embed=head_embed)
                 break
 
@@ -209,7 +213,11 @@ class PredictionManager(Service):
             interaction.guild_id
         )
 
-        embed = PredictionModerationEmbed(interaction.guild.name)
+        author_name = self.bot.user.display_name
+        author_img = self.bot.user.display_avatar
+        embed = PredictionModerationEmbed(
+            author_name, author_img, interaction.guild.name
+        )
 
         view = PredictionModerationView(self.controller, interaction, prediction_stats)
 

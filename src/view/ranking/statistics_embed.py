@@ -13,6 +13,9 @@ class StatisticsEmbed(discord.Embed):
         user: discord.Member,
         user_statistics: UserStats,
     ):
+        author_name = bot.user.display_name
+        author_img = bot.user.display_avatar
+        self.set_author(name=author_name, icon_url=author_img)
         super().__init__(
             title=f"User Statistics for {BotUtil.get_name(bot, interaction.guild_id, user.id, 30)}",
             color=discord.Colour.purple(),
@@ -172,6 +175,5 @@ class StatisticsEmbed(discord.Embed):
             inline=True,
         )
 
-        self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")
         self.set_thumbnail(url=user.avatar.url)
         self.set_footer(text="Enjoy your stay!", icon_url="attachment://jail.png")

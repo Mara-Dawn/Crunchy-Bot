@@ -14,7 +14,7 @@ from events.prediction_event import PredictionEvent
 from events.types import BeansEventType, JailEventType, PredictionEventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemType
-from view.shop_response_view import ShopResponseData
+from view.shop.response_view import ShopResponseData
 from view.types import EmojiType
 
 from control.controller import Controller

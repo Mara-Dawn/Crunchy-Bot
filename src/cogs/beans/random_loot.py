@@ -50,7 +50,6 @@ class RandomLoot(BeansGroup):
 
     @commands.Cog.listener("on_ready")
     async def on_ready_randomloot(self):
-        # pylint: disable-next=no-member
         self.loot_box_task.start()
         self.logger.log("init", "RandomLoot loaded.", cog=self.__cog_name__)
 

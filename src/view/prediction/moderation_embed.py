@@ -7,6 +7,8 @@ class PredictionModerationEmbed(discord.Embed):
 
     def __init__(
         self,
+        author_name,
+        author_img,
         guild_name: str,
     ):
         description = "Moderate the incoming Prediction suggestions from here."
@@ -15,6 +17,7 @@ class PredictionModerationEmbed(discord.Embed):
             color=discord.Colour.purple(),
             description=description,
         )
+        self.set_author(name=author_name, icon_url=author_img)
 
         message = "Browse through the different predictions below to moderate them.\nAt the bottom you can filter the predictions by different states, approve or deny them and even edit not yet approved ones."
 
@@ -23,5 +26,3 @@ class PredictionModerationEmbed(discord.Embed):
             value=f"```{message}```",
             inline=False,
         )
-
-        self.set_author(name="Crunchy Patrol")

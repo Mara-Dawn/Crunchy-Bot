@@ -9,6 +9,8 @@ class InventoryEmbed(discord.Embed):
 
     def __init__(
         self,
+        author_name,
+        author_img,
         inventory: UserInventory,
         start_offset: int = 0,
     ):
@@ -17,9 +19,9 @@ class InventoryEmbed(discord.Embed):
             color=discord.Colour.purple(),
             description="All the items you currently own.",
         )
+        self.set_author(name=author_name, icon_url=author_img)
         inventory_items = inventory.items
 
-        self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")
         if len(inventory_items) == 0:
             self.add_field(name="", value="There is nothing here.", inline=False)
             return

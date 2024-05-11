@@ -12,6 +12,7 @@ class EventType(str, Enum):
     LOOTBOX = "loot_box"
     BAT = "bat"
     PREDICTION = "prediction"
+    GARDEN = "garden"
     NOTIFICATION = "notification"
 
 
@@ -30,6 +31,8 @@ class BeansEventType(str, Enum):
     PREDICTION_PAYOUT = "prediction_payout"
     PREDICTION_REFUND = "prediction_refund"
     PRESTIGE = "prestige"
+    BEAN_PLANT = "bean_plant"
+    BEAN_HARVEST = "bean_harvest"
 
 
 class JailEventType(str, Enum):
@@ -59,6 +62,13 @@ class PredictionEventType(str, Enum):
     PLACE_BET = "place_bet"
     RESOLVE = "resolve"
     REFUND = "refund"
+
+
+class GardenEventType(str, Enum):
+    WATER = "water"
+    PLANT = "plant"
+    REMOVE = "remove"
+    HARVEST = "harvest"
 
 
 class UIEventType(str, Enum):
@@ -118,3 +128,13 @@ class UIEventType(str, Enum):
     INVENTORY_USER_REFRESH = "inventory_user_refresh"
     INVENTORY_ITEM_ACTION = "inventory_item_action"
     INVENTORY_SELL = "inventory_sell"
+
+    GARDEN_SELECT_PLOT = "garden_select_plot"
+    GARDEN_DETACH = "garden_detach"
+
+    GARDEN_PLOT_WATER = "garden_plot_water"
+    GARDEN_PLOT_PLANT = "garden_plot_plant"
+    GARDEN_PLOT_HARVEST = "garden_plot_harvest"
+    GARDEN_PLOT_BACK = "garden_plot_back"
+    GARDEN_PLOT_REMOVE = "garden_plot_remove"
+    GARDEN_REFRESH = "garden_plot_refresh"

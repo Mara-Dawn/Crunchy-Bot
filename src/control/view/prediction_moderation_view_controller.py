@@ -6,16 +6,16 @@ from events.bot_event import BotEvent
 from events.prediction_event import PredictionEvent
 from events.types import EventType, UIEventType
 from events.ui_event import UIEvent
-from view.prediction_interaction_view import PredictionInteractionView
-from view.shop_color_select_view import ShopColorSelectView  # noqa: F401
-from view.shop_confirm_view import ShopConfirmView  # noqa: F401
-from view.shop_prediction_submission_view import (
+from view.prediction.interaction_view import PredictionInteractionView
+from view.shop.color_select_view import ShopColorSelectView  # noqa: F401
+from view.shop.confirm_view import ShopConfirmView  # noqa: F401
+from view.shop.prediction_submission_view import (
     ShopPredictionSubmissionView,  # noqa: F401
 )
-from view.shop_reaction_select_view import ShopReactionSelectView  # noqa: F401
+from view.shop.reaction_select_view import ShopReactionSelectView  # noqa: F401
 
 # noqa: F401
-from view.shop_user_select_view import ShopUserSelectView  # noqa: F401
+from view.shop.user_select_view import ShopUserSelectView  # noqa: F401
 
 from control.controller import Controller
 from control.logger import BotLogger

@@ -9,15 +9,14 @@ class ShopEmbed(discord.Embed):
 
     def __init__(
         self,
+        author_name,
+        author_img,
         guild_name: str,
-        user_id: int,
         items: list[Item],
         user_items: dict[ItemType, int] = None,
         start_offset: int = 0,
     ):
         description = "Spend your hard earned beans!\n"
-        # description += f"Only <@{user_id}> can interact here.\n"
-        # description += "Use `/shop` to open your own shop widget.\n"
         description += (
             "Use `/inventory` or the balance button below to see your inventory. \n"
         )
@@ -26,6 +25,7 @@ class ShopEmbed(discord.Embed):
             color=discord.Colour.purple(),
             description=description,
         )
+        self.set_author(name=author_name, icon_url=author_img)
         end_offset = min((start_offset + self.ITEMS_PER_PAGE), len(items))
         display = items[start_offset:end_offset]
 
@@ -36,4 +36,3 @@ class ShopEmbed(discord.Embed):
             item.add_to_embed(self, 44, count=owned, show_price=True)
 
         self.set_image(url="attachment://shop.png")
-        self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")

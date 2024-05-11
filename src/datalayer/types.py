@@ -34,6 +34,19 @@ class LootboxType(Enum):
     LUCKY_ITEM = 5
 
 
+class PlantType(str, Enum):
+    BEAN = "Bean"
+
+
+class PlotState(Enum):
+    EMPTY = 0
+    SEED_PLANTED = 1
+    SEED_PLANTED_WET = 2
+    GROWING = 3
+    GROWING_WET = 4
+    READY = 5
+
+
 class SeasonDate(Enum):
     BEGINNING = 0
     SEASON_1 = 1715162400

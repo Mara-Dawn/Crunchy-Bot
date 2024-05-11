@@ -3,8 +3,7 @@ from control.controller import Controller
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
-
-from view.shop_response_view import (
+from view.shop.response_view import (
     AmountInput,
     CancelButton,
     ColorInputButton,

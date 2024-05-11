@@ -7,7 +7,7 @@ from datalayer.prediction_stats import PredictionStats
 from datalayer.types import PredictionState, PredictionStateSort
 from events.types import UIEventType
 from events.ui_event import UIEvent
-from view.prediction_moderation_embed import PredictionModerationEmbed
+from view.prediction.moderation_embed import PredictionModerationEmbed
 from view.view_menu import ViewMenu
 
 
@@ -152,7 +152,11 @@ class PredictionModerationView(ViewMenu):
 
         self.refresh_elements(disabled)
 
-        embed = PredictionModerationEmbed(guild_name=self.guild_name)
+        author_name = self.controller.bot.user.display_name
+        author_img = self.controller.bot.user.display_avatar
+        embed = PredictionModerationEmbed(
+            author_name, author_img, guild_name=self.guild_name
+        )
 
         embeds = [embed]
 

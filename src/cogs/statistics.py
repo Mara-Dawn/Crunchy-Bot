@@ -10,9 +10,9 @@ from datalayer.database import Database
 from datalayer.types import Season
 from discord import app_commands
 from discord.ext import commands, tasks
-from view.ranking_embed import RankingEmbed
-from view.ranking_view import RankingView
-from view.statistics_embed import StatisticsEmbed
+from view.ranking.embed import RankingEmbed
+from view.ranking.statistics_embed import StatisticsEmbed
+from view.ranking.view import RankingView
 from view.types import RankingType
 
 
@@ -121,7 +121,6 @@ class Statistics(commands.Cog):
     ):
         await interaction.response.defer()
 
-        police_img = discord.File("./img/police.png", "police.png")
         jail_img = discord.File("./img/jail.png", "jail.png")
 
         user = user if user is not None else interaction.user
@@ -134,7 +133,7 @@ class Statistics(commands.Cog):
 
         embed = StatisticsEmbed(self.bot, interaction, user, user_statistics)
 
-        await interaction.followup.send("", embed=embed, files=[police_img, jail_img])
+        await interaction.followup.send("", embed=embed, files=[jail_img])
 
     @app_commands.command(name="rankings", description="Crunchy user rankings.")
     @app_commands.guild_only()
@@ -152,13 +151,34 @@ class Statistics(commands.Cog):
             interaction.guild_id, RankingType.BEANS, season
         )
 
-        embed = RankingEmbed(interaction, RankingType.BEANS, ranking_data, season)
+        author_name = self.bot.user.display_name
+        author_img = self.bot.user.display_avatar
+        embed = RankingEmbed(
+            author_name,
+            author_img,
+            interaction,
+            RankingType.BEANS,
+            ranking_data,
+            season,
+        )
         view = RankingView(self.controller, interaction, season)
 
-        ranking_img = discord.File("./img/jail_wide.png", "ranking_img.png")
-        police_img = discord.File("./img/police.png", "police.png")
+        ranking_img = discord.File("./img/profile_picture.png", "ranking_img.png")
+
+        match season:
+            case Season.SEASON_1:
+                ranking_img = discord.File(
+                    "./img/seasons/season_1.png", "ranking_img.png"
+                )
+            case Season.CURRENT:
+                ranking_img = discord.File(
+                    "./img/profile_picture.png", "ranking_img.png"
+                )
+            case Season.ALL_TIME:
+                ranking_img = discord.File("./img/treasure_open.png", "ranking_img.png")
+
         message = await interaction.followup.send(
-            "", embed=embed, view=view, files=[police_img, ranking_img]
+            "", embed=embed, view=view, files=[ranking_img]
         )
         view.set_message(message)
 

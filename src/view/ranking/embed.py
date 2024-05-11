@@ -3,7 +3,6 @@ from typing import Any
 import discord
 from datalayer.ranking import Ranking
 from datalayer.types import Season
-
 from view.types import RankingType
 
 
@@ -11,6 +10,8 @@ class RankingEmbed(discord.Embed):
 
     def __init__(
         self,
+        author_name,
+        author_img,
         interaction: discord.Interaction,
         ranking_type: RankingType,
         rankings: dict[str, Any],
@@ -20,6 +21,7 @@ class RankingEmbed(discord.Embed):
             title=f"Leaderbords for {interaction.guild.name} ({season.value})",
             color=discord.Colour.purple(),
         )
+        self.set_author(name=author_name, icon_url=author_img)
         self.add_field(
             name=Ranking.DEFINITIONS[ranking_type].title,
             value=Ranking.DEFINITIONS[ranking_type].description,
@@ -36,4 +38,3 @@ class RankingEmbed(discord.Embed):
 
         self.add_field(name="", value=leaderbord_msg)
         self.set_image(url="attachment://ranking_img.png")
-        self.set_author(name="Crunchy Patrol", icon_url="attachment://police.png")

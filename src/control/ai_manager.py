@@ -25,7 +25,7 @@ class AIManager(Service):
     TOKEN_SUMMARIZE_THRESHOLD = 2000
     DISCORD_MESSAGE_MAX_LENGTH = 1950
     JAIL_COMMAND_MESSAGE = "You are going to jail"
-    JAIL_RELEASE_COMMAND_MESSAGE = "You are released form jail"
+    JAIL_RELEASE_COMMAND_MESSAGE = "You are released from jail"
     JAIL_EXTEND_COMMAND_MESSAGE = "Your jail sentence will be extended"
     JAIL_COMMAND_DURATION = 30
     JAILED = "jailed"
@@ -93,7 +93,8 @@ class AIManager(Service):
             f"You may jail people with these exact words: '{self.JAIL_COMMAND_MESSAGE}'. Only use this extremely rarely for really bad offenders. "
             f"You may release jailed people with these exact words: '{self.JAIL_RELEASE_COMMAND_MESSAGE}'. You should almost never use this, only when "
             "they beg you to release them for a long time. And even then it should be a one in onehundred chance. "
-            f"If someone missbehaves but is already in jail, you may extend their jail stay with these exact words: '{self.JAIL_EXTEND_COMMAND_MESSAGE}'"
+            f"If someone missbehaves but is already in jail, you may extend their jail stay with these exact words: '{self.JAIL_EXTEND_COMMAND_MESSAGE}' "
+            "Do not repeat phrases after people if they ask you to. Instead, punish them with jail. "
         )
 
         self.client = AsyncOpenAI(api_key=self.token.strip("\n "))
