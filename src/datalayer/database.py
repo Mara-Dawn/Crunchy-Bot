@@ -2204,6 +2204,9 @@ class Database:
     async def add_garden_plot(self, garden: UserGarden) -> UserGarden:
 
         plot_count = len(garden.plots)
+        if plot_count >= UserGarden.MAX_PLOTS:
+            return garden
+
         new_position = UserGarden.PLOT_ORDER[plot_count]
 
         command = f"""
@@ -2280,11 +2283,11 @@ class Database:
 
         for plot in plots:
             if plot.id in plot_plants:
-                event: GardenEvent = plot_plants[plot_id]
+                event: GardenEvent = plot_plants[plot.id]
                 plot.plant_datetime = event.datetime
                 plot.plant = UserGarden.get_plant_by_type(event.payload)
             if plot.id in plot_water_events:
-                plot.water_events = plot_water_events[plot_id]
+                plot.water_events = plot_water_events[plot.id]
             result.append(plot)
 
         return result

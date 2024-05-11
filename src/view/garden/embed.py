@@ -9,19 +9,21 @@ class GardenEmbed(discord.Embed):
         self,
         bot: commands.Bot,
         garden: UserGarden,
-        author: str,
     ):
+        description = "Your very own peaceful garden."
+
         super().__init__(
             title="Bean Garden",
             color=discord.Colour.purple(),
-            description="Your very own peaceful garden.",
+            description=description,
         )
-        self.set_author(name=author, icon_url="attachment://profile_picture.png")
+        self.garden = garden
+        self.bot = bot
 
+    def get_garden_content(self) -> str:
         message = ""
-        for plot in garden.plots:
+        for plot in self.garden.plots:
             if plot.x == 0:
                 message += "\n"
-            message += str(bot.get_emoji(plot.get_status_emoji()))
-
-        self.add_field(name="Plot Overview:", value=message)
+            message += str(self.bot.get_emoji(plot.get_status_emoji()))
+        return message

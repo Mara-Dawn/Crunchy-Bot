@@ -8,6 +8,7 @@ from datalayer.types import PlantType, PlotState
 from discord.ext import commands
 from events.types import UIEventType
 from events.ui_event import UIEvent
+from view.garden.embed import GardenEmbed
 from view.garden.plot_embed import PlotEmbed
 from view.view_menu import ViewMenu
 
@@ -127,7 +128,12 @@ class PlotView(ViewMenu):
                     self.seed_select = SeedSelect(self.controller.bot, self.garden)
                 self.plant_button = PlantButton()
                 self.back_button = BackButton()
-            case PlotState.SEED_PLANTED | PlotState.GROWING:
+            case (
+                PlotState.SEED_PLANTED
+                | PlotState.GROWING
+                | PlotState.SEED_PLANTED_WET
+                | PlotState.GROWING_WET
+            ):
                 self.water_button = WaterButton()
                 self.destroy_button = DestroyButton()
                 self.back_button = BackButton()
@@ -162,22 +168,17 @@ class PlotView(ViewMenu):
 
         self.refresh_elements()
 
-        author_name = (
-            self.controller.bot.get_guild(self.guild_id)
-            .get_member(self.controller.bot.user.id)
-            .display_name
-        )
-        embed = PlotEmbed(self.x, self.y, author_name)
+        garden_embed = GardenEmbed(self.controller.bot, self.garden)
+        content = garden_embed.get_garden_content()
+        plot_nr = UserGarden.PLOT_ORDER.index((self.x, self.y))
+        embed = PlotEmbed(plot_nr, self.x, self.y)
 
-        profile_picture = discord.File(
-            "./img/profile_picture.png", "profile_picture.png"
-        )
         status_picture = self.plot.get_status_image()
         plot_picture = discord.File(f"./img/garden/{status_picture}", "status.png")
 
         try:
             await self.message.edit(
-                embed=embed, view=self, attachments=[profile_picture, plot_picture]
+                content=content, embed=embed, view=self, attachments=[plot_picture]
             )
         except (discord.NotFound, discord.HTTPException):
             self.controller.detach_view(self)

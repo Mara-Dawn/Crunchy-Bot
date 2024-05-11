@@ -4,6 +4,7 @@ import discord
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.garden import UserGarden
+from datalayer.types import PlotState
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.garden.embed import GardenEmbed
@@ -52,7 +53,9 @@ class GardenView(ViewMenu):
         plot_nr = 1
 
         for plot in self.garden.plots:
-            self.add_item(PlotButton(plot.x, plot.y, f"Plot {plot_nr}", plot.empty()))
+            self.add_item(
+                PlotButton(plot.x, plot.y, f"Plot {plot_nr}", plot.get_status())
+            )
             plot_nr += 1
 
     async def refresh_ui(self, garden: UserGarden = None):
@@ -64,20 +67,10 @@ class GardenView(ViewMenu):
 
         self.refresh_elements()
 
-        author_name = (
-            self.controller.bot.get_guild(self.guild_id)
-            .get_member(self.controller.bot.user.id)
-            .display_name
-        )
-        profile_picture = discord.File(
-            "./img/profile_picture.png", "profile_picture.png"
-        )
-
-        embed = GardenEmbed(self.controller.bot, self.garden, author_name)
+        embed = GardenEmbed(self.controller.bot, self.garden)
+        content = embed.get_garden_content()
         try:
-            await self.message.edit(
-                embed=embed, view=self, attachments=[profile_picture]
-            )
+            await self.message.edit(content=content, embed=embed, view=self)
         except (discord.NotFound, discord.HTTPException):
             self.controller.detach_view(self)
 
@@ -89,11 +82,19 @@ class GardenView(ViewMenu):
 
 class PlotButton(discord.ui.Button):
 
-    def __init__(self, x: int, y: int, label: str, empty: bool = True):
+    def __init__(self, x: int, y: int, label: str, plot_state: PlotState):
         self.x = x
         self.y = y
 
-        color = discord.ButtonStyle.green if empty else discord.ButtonStyle.grey
+        match plot_state:
+            case PlotState.EMPTY:
+                color = discord.ButtonStyle.grey
+            case PlotState.SEED_PLANTED | PlotState.GROWING:
+                color = discord.ButtonStyle.red
+            case PlotState.SEED_PLANTED_WET | PlotState.GROWING_WET:
+                color = discord.ButtonStyle.green
+            case PlotState.READY:
+                color = discord.ButtonStyle.blurple
 
         super().__init__(
             label=label,

@@ -41,8 +41,10 @@ class PlantType(str, Enum):
 class PlotState(Enum):
     EMPTY = 0
     SEED_PLANTED = 1
-    GROWING = 2
-    READY = 3
+    SEED_PLANTED_WET = 2
+    GROWING = 3
+    GROWING_WET = 4
+    READY = 5
 
 
 class SeasonDate(Enum):

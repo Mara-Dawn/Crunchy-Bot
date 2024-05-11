@@ -12,6 +12,8 @@ from events.garden_event import GardenEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType, EventType, GardenEventType, UIEventType
 from events.ui_event import UIEvent
+from view.garden.embed import GardenEmbed
+from view.garden.plot_embed import PlotEmbed
 from view.garden.plot_view import PlotView
 from view.garden.view import GardenView
 
@@ -134,10 +136,14 @@ class GardenViewController(ViewController):
         )
         await self.controller.dispatch_ui_event(event)
 
+        status_picture = garden.get_plot(x, y).get_status_image()
+        plot_picture = discord.File(f"./img/garden/{status_picture}", "status.png")
+
+        plot_nr = UserGarden.PLOT_ORDER.index((x, y))
+        embed = PlotEmbed(plot_nr, x, y)
         view = PlotView(self.controller, interaction, garden, x, y)
         view.set_message(message)
-        await message.edit(view=view)
-        await view.refresh_ui()
+        await message.edit(embed=embed, view=view, attachments=[plot_picture])
 
     async def back_to_garden(
         self,
@@ -156,10 +162,11 @@ class GardenViewController(ViewController):
 
         garden = await self.database.get_user_garden(guild_id, user_id)
 
+        embed = GardenEmbed(self.controller.bot, garden)
         view = GardenView(self.controller, interaction, garden)
         view.set_message(message)
-        await message.edit(view=view)
-        await view.refresh_ui()
+        content = embed.get_garden_content()
+        await message.edit(content=content, embed=embed, view=view, attachments=[])
 
     async def water(
         self,

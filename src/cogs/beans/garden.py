@@ -2,6 +2,7 @@ import discord
 from bot import CrunchyBot
 from discord import app_commands
 from discord.ext import commands
+from view.garden.embed import GardenEmbed
 from view.garden.view import GardenView
 
 from cogs.beans.beans_group import BeansGroup
@@ -61,17 +62,15 @@ class Garden(BeansGroup):
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         await interaction.response.defer(ephemeral=True)
 
-        police_img = discord.File("./img/profile_picture.png", "profile_picture.png")
-
         garden = await self.database.get_user_garden(guild_id, user_id)
-
+        garden = await self.database.add_garden_plot(garden)
+        embed = GardenEmbed(self.controller.bot, garden)
         view = GardenView(self.controller, interaction, garden)
-
+        content = embed.get_garden_content()
         message = await interaction.followup.send(
-            "", view=view, files=[police_img], ephemeral=True
+            content=content, embed=embed, view=view, ephemeral=True
         )
         view.set_message(message)
-        await view.refresh_ui()
 
 
 async def setup(bot):
