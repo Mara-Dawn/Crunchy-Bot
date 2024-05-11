@@ -19,7 +19,7 @@ class GardenView(ViewMenu):
         interaction: discord.Interaction,
         garden: UserGarden,
     ):
-        super().__init__(timeout=300)
+        super().__init__(timeout=None)
         self.controller = controller
         self.garden = garden
         self.member_id = interaction.user.id
@@ -35,6 +35,9 @@ class GardenView(ViewMenu):
             return
 
         match event.type:
+            case UIEventType.GARDEN_REFRESH:
+                garden = event.payload
+                await self.refresh_ui(garden)
             case UIEventType.GARDEN_DETACH:
                 self.controller.detach_view(self)
                 self.stop()
@@ -92,9 +95,9 @@ class PlotButton(discord.ui.Button):
             case PlotState.SEED_PLANTED | PlotState.GROWING:
                 color = discord.ButtonStyle.red
             case PlotState.SEED_PLANTED_WET | PlotState.GROWING_WET:
-                color = discord.ButtonStyle.green
-            case PlotState.READY:
                 color = discord.ButtonStyle.blurple
+            case PlotState.READY:
+                color = discord.ButtonStyle.green
 
         super().__init__(
             label=label,

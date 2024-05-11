@@ -102,15 +102,16 @@ class GardenViewController(ViewController):
                 await self.controller.dispatch_event(event)
 
     async def __harvest_plant(
-        self, interaction: discord.Integration, plant_type: PlantType
+        self, interaction: discord.Interaction, plant_type: PlantType
     ):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        reward = random.randint(900, 1100)
+        message = ""
 
         match plant_type:
             case PlantType.BEAN:
+                reward = random.randint(450, 550)
                 event = BeansEvent(
                     datetime.datetime.now(),
                     guild_id,
@@ -119,6 +120,9 @@ class GardenViewController(ViewController):
                     reward,
                 )
                 await self.controller.dispatch_event(event)
+                message = f"You harvest a Bean Plant and gain `🅱️{reward}`."
+
+        await interaction.followup.send(content=message, ephemeral=True)
 
     async def open_plot_menu(
         self,
@@ -139,11 +143,16 @@ class GardenViewController(ViewController):
         status_picture = garden.get_plot(x, y).get_status_image()
         plot_picture = discord.File(f"./img/garden/{status_picture}", "status.png")
 
+        garden_embed = GardenEmbed(self.controller.bot, garden)
+
+        content = garden_embed.get_garden_content()
         plot_nr = UserGarden.PLOT_ORDER.index((x, y))
         embed = PlotEmbed(plot_nr, x, y)
         view = PlotView(self.controller, interaction, garden, x, y)
         view.set_message(message)
-        await message.edit(embed=embed, view=view, attachments=[plot_picture])
+        await message.edit(
+            content=content, embed=embed, view=view, attachments=[plot_picture]
+        )
 
     async def back_to_garden(
         self,
@@ -189,7 +198,7 @@ class GardenViewController(ViewController):
 
         garden = await self.database.get_user_garden(guild_id, user_id)
         event = UIEvent(
-            UIEventType.GARDEN_PLOT_REFRESH,
+            UIEventType.GARDEN_REFRESH,
             garden,
             view_id,
         )
@@ -220,7 +229,7 @@ class GardenViewController(ViewController):
 
         garden = await self.database.get_user_garden(guild_id, user_id)
         event = UIEvent(
-            UIEventType.GARDEN_PLOT_REFRESH,
+            UIEventType.GARDEN_REFRESH,
             garden,
             view_id,
         )
@@ -247,7 +256,7 @@ class GardenViewController(ViewController):
 
         garden = await self.database.get_user_garden(guild_id, user_id)
         event = UIEvent(
-            UIEventType.GARDEN_PLOT_REFRESH,
+            UIEventType.GARDEN_REFRESH,
             garden,
             view_id,
         )
@@ -275,8 +284,9 @@ class GardenViewController(ViewController):
         await self.__harvest_plant(interaction, plot.plant.type)
 
         garden = await self.database.get_user_garden(guild_id, user_id)
+        garden = await self.database.add_garden_plot(garden)
         event = UIEvent(
-            UIEventType.GARDEN_PLOT_REFRESH,
+            UIEventType.GARDEN_REFRESH,
             garden,
             view_id,
         )

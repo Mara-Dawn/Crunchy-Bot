@@ -201,13 +201,13 @@ class ShopViewController(ViewController):
             interaction.guild_id, interaction.user.id
         )
 
-        police_img = discord.File("./img/police.png", "police.png")
-
-        embed = InventoryEmbed(inventory)
+        author_name = self.bot.user.display_name
+        author_img = self.bot.user.display_avatar
+        embed = InventoryEmbed(author_name, author_img, inventory)
         view = InventoryView(self.controller, interaction, inventory)
 
         message = await interaction.followup.send(
-            "", embed=embed, view=view, files=[police_img], ephemeral=True
+            "", embed=embed, view=view, ephemeral=True
         )
         view.set_message(message)
         await view.refresh_ui()

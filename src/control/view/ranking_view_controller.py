@@ -40,14 +40,16 @@ class RankingViewController(ViewController):
         ranking_type: RankingType,
         season: Season,
     ):
-        image = "./img/jail_wide.png"
+        image = "./img/profile_picture.png"
 
         ranking_data = await self.event_manager.get_user_rankings(
             interaction.guild_id, ranking_type, season
         )
         ranking_img = discord.File(image, "ranking_img.png")
-        police_img = discord.File("./img/police.png", "police.png")
-        embed = RankingEmbed(interaction, ranking_type, ranking_data, season)
-        await interaction.edit_original_response(
-            embed=embed, attachments=[police_img, ranking_img]
+
+        author_name = self.bot.user.display_name
+        author_img = self.bot.user.display_avatar
+        embed = RankingEmbed(
+            author_name, author_img, interaction, ranking_type, ranking_data, season
         )
+        await interaction.edit_original_response(embed=embed, attachments=[ranking_img])

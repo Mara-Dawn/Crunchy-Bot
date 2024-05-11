@@ -152,7 +152,11 @@ class PredictionModerationView(ViewMenu):
 
         self.refresh_elements(disabled)
 
-        embed = PredictionModerationEmbed(guild_name=self.guild_name)
+        author_name = self.controller.bot.user.display_name
+        author_img = self.controller.bot.user.display_avatar
+        embed = PredictionModerationEmbed(
+            author_name, author_img, guild_name=self.guild_name
+        )
 
         embeds = [embed]
 

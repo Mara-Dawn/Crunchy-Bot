@@ -144,7 +144,10 @@ class Shop(commands.Cog):
         user_items = await self.database.get_item_counts_by_user(
             interaction.guild.id, interaction.user.id
         )
-        embed = ShopEmbed(interaction.guild.name, interaction.user.id, items)
+
+        author_name = self.bot.user.display_name
+        author_img = self.bot.user.display_avatar
+        embed = ShopEmbed(author_name, author_img, interaction.guild.name, items)
 
         view = ShopView(self.controller, interaction, items)
 
@@ -169,18 +172,16 @@ class Shop(commands.Cog):
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         await interaction.response.defer(ephemeral=True)
 
-        police_img = discord.File("./img/police.png", "police.png")
-
         member_id = interaction.user.id
         guild_id = interaction.guild_id
 
         inventory = await self.item_manager.get_user_inventory(guild_id, member_id)
-        embed = InventoryEmbed(inventory)
+        author_name = self.bot.user.display_name
+        author_img = self.bot.user.display_avatar
+        embed = InventoryEmbed(author_name, author_img, inventory)
         view = InventoryView(self.controller, interaction, inventory)
 
-        message = await interaction.followup.send(
-            "", embed=embed, view=view, files=[police_img]
-        )
+        message = await interaction.followup.send("", embed=embed, view=view)
 
         view.set_message(message)
         await view.refresh_ui()

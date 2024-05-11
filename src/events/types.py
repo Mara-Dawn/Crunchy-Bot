@@ -137,4 +137,4 @@ class UIEventType(str, Enum):
     GARDEN_PLOT_HARVEST = "garden_plot_harvest"
     GARDEN_PLOT_BACK = "garden_plot_back"
     GARDEN_PLOT_REMOVE = "garden_plot_remove"
-    GARDEN_PLOT_REFRESH = "garden_plot_refresh"
+    GARDEN_REFRESH = "garden_plot_refresh"

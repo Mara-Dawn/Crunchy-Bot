@@ -5,6 +5,8 @@ class PredictionEmbed(discord.Embed):
 
     def __init__(
         self,
+        author_name,
+        author_img,
         guild_name: str,
     ):
         description = "Get rich by making smart predictions!"
@@ -13,6 +15,7 @@ class PredictionEmbed(discord.Embed):
             color=discord.Colour.purple(),
             description=description,
         )
+        self.set_author(name=author_name, icon_url=author_img)
 
         message = (
             "Browse through the different predictions below and place your bets. "
@@ -26,4 +29,3 @@ class PredictionEmbed(discord.Embed):
             value=f"```{message}```\n{important_info}",
             inline=False,
         )
-        self.set_author(name="Crunchy Patrol")

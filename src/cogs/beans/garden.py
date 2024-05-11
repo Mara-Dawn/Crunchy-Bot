@@ -1,8 +1,11 @@
 import discord
 from bot import CrunchyBot
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
+from events.types import UIEventType
+from events.ui_event import UIEvent
 from view.garden.embed import GardenEmbed
+from view.garden.plot_view import PlotView
 from view.garden.view import GardenView
 
 from cogs.beans.beans_group import BeansGroup
@@ -45,7 +48,26 @@ class Garden(BeansGroup):
 
     @commands.Cog.listener("on_ready")
     async def on_ready_garden(self):
+        self.garden_view_refresh.start()
         self.logger.log("init", "Garden loaded.", cog=self.__cog_name__)
+
+    @tasks.loop(minutes=1)
+    async def garden_view_refresh(self):
+        self.logger.debug(
+            "sys", "Garden view refresh task started.", cog=self.__cog_name__
+        )
+
+        for view in self.controller.views:
+            if isinstance(view, GardenView | PlotView):
+                garden = await self.database.get_user_garden(
+                    view.guild_id, view.member_id
+                )
+                event = UIEvent(
+                    UIEventType.GARDEN_REFRESH,
+                    garden,
+                    view.id,
+                )
+                await self.controller.dispatch_ui_event(event)
 
     @app_commands.command(name="garden", description="Plant beans in your garden.")
     @app_commands.guild_only()
@@ -63,7 +85,6 @@ class Garden(BeansGroup):
         await interaction.response.defer(ephemeral=True)
 
         garden = await self.database.get_user_garden(guild_id, user_id)
-        garden = await self.database.add_garden_plot(garden)
         embed = GardenEmbed(self.controller.bot, garden)
         view = GardenView(self.controller, interaction, garden)
         content = embed.get_garden_content()

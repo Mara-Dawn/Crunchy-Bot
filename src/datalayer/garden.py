@@ -118,7 +118,7 @@ class Plot:
             watered_hours += min(24, hours)
             previous = event.datetime
 
-        return age - watered_hours
+        return age + watered_hours
 
     def watered(self):
         if len(self.water_events) <= 0:

@@ -115,9 +115,12 @@ class ShopView(ViewMenu):
         if user_items is not None:
             self.user_items = user_items
 
+        author_name = self.controller.bot.user.display_name
+        author_img = self.controller.bot.user.display_avatar
         embed = ShopEmbed(
+            author_name=author_name,
+            author_img=author_img,
             guild_name=self.guild_name,
-            user_id=self.member_id,
             items=self.items,
             user_items=self.user_items,
             start_offset=start,

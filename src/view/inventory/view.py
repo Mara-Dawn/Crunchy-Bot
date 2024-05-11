@@ -144,7 +144,9 @@ class InventoryView(ViewMenu):
         self.refresh_elements(disabled)
 
         start = InventoryEmbed.ITEMS_PER_PAGE * self.current_page
-        embed = InventoryEmbed(self.inventory, start)
+        author_name = self.controller.bot.user.display_name
+        author_img = self.controller.bot.user.display_avatar
+        embed = InventoryEmbed(author_name, author_img, self.inventory, start)
         if self.message is None:
             return
 

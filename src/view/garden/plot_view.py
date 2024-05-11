@@ -23,7 +23,7 @@ class PlotView(ViewMenu):
         x: int,
         y: int,
     ):
-        super().__init__(timeout=300)
+        super().__init__(timeout=None)
 
         self.controller = controller
         self.garden = garden
@@ -57,7 +57,7 @@ class PlotView(ViewMenu):
             return
 
         match event.type:
-            case UIEventType.GARDEN_PLOT_REFRESH:
+            case UIEventType.GARDEN_REFRESH:
                 garden = event.payload
                 await self.refresh_ui(garden)
             case UIEventType.GARDEN_DETACH:
