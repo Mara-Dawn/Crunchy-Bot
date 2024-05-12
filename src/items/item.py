@@ -1,5 +1,6 @@
 import discord
 from datalayer.types import ItemTrigger
+from discord.ext import commands
 
 from items.types import ItemGroup, ItemType, ShopCategory
 
@@ -9,7 +10,7 @@ class Item:
     def __init__(
         self,
         name: str, 
-        item_type: ItemType,
+        type: ItemType,
         group: ItemGroup,
         shop_category: ShopCategory,
         description: str,
@@ -28,7 +29,7 @@ class Item:
         permanent: bool = False
     ):
         self.name = name
-        self.type = item_type
+        self.type = type
         self.group = group
         self.shop_category = shop_category
         self.description = description
@@ -53,13 +54,17 @@ class Item:
             return False
         return action in self.trigger
     
-    def get_embed(self, color=None, amount_in_cart: int = 1) -> discord.Embed:
+    def get_embed(self, bot: commands.Bot, color=None, amount_in_cart: int = 1) -> discord.Embed:
+        emoji = self.emoji
+        if isinstance(self.emoji, int):
+            emoji = str(bot.get_emoji(self.emoji))
+
         if color is None:
             color=discord.Colour.purple()
-        title = f'> {self.emoji} {self.name} {self.emoji}'
+        title = f'> {emoji} {self.name} {emoji}'
 
         if self.permanent:
-            title = f'> {self.emoji} *{self.name}* {self.emoji}'
+            title = f'> {emoji} *{self.name}* {emoji}'
 
         description = self.description
         max_width = 53
@@ -83,11 +88,15 @@ class Item:
         
         return embed
     
-    def add_to_embed(self, embed: discord.Embed, max_width: int, count: int=None, show_price: bool = False, name_suffix: str='', disabled: bool = False) -> None:
-        title = f'> ~*  {self.emoji} {self.name} {self.emoji}  *~ {name_suffix}'
+    def add_to_embed(self, bot: commands.Bot, embed: discord.Embed, max_width: int, count: int=None, show_price: bool = False, name_suffix: str='', disabled: bool = False) -> None:
+        emoji = self.emoji
+        if isinstance(self.emoji, int):
+            emoji = str(bot.get_emoji(self.emoji))
+
+        title = f'> ~*  {emoji} {self.name} {emoji}  *~ {name_suffix}'
 
         if self.permanent:
-            title = f'> ~* {self.emoji} *{self.name}* {self.emoji} *~ {name_suffix}'
+            title = f'> ~* {emoji} *{self.name}* {emoji} *~ {name_suffix}'
 
         description = self.description
         

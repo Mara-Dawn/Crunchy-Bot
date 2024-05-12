@@ -1,4 +1,5 @@
 import discord
+from discord.ext import commands
 from items.item import Item
 from items.types import ItemType
 
@@ -9,8 +10,7 @@ class ShopEmbed(discord.Embed):
 
     def __init__(
         self,
-        author_name,
-        author_img,
+        bot: commands.Bot,
         guild_name: str,
         items: list[Item],
         user_items: dict[ItemType, int] = None,
@@ -25,6 +25,8 @@ class ShopEmbed(discord.Embed):
             color=discord.Colour.purple(),
             description=description,
         )
+        author_name = bot.user.display_name
+        author_img = bot.user.display_avatar
         self.set_author(name=author_name, icon_url=author_img)
         end_offset = min((start_offset + self.ITEMS_PER_PAGE), len(items))
         display = items[start_offset:end_offset]
@@ -33,6 +35,6 @@ class ShopEmbed(discord.Embed):
             owned = None
             if user_items is not None and item.type in user_items:
                 owned = user_items[item.type]
-            item.add_to_embed(self, 44, count=owned, show_price=True)
+            item.add_to_embed(bot, self, 44, count=owned, show_price=True)
 
         self.set_image(url="attachment://shop.png")

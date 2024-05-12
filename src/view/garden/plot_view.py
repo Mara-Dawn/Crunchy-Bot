@@ -34,6 +34,7 @@ class PlotView(ViewMenu):
 
         self.member_id = interaction.user.id
         self.guild_id = interaction.guild_id
+        self.blocked = False
 
         self.selected_seed: PlantType = None
 
@@ -60,6 +61,9 @@ class PlotView(ViewMenu):
             case UIEventType.GARDEN_REFRESH:
                 garden = event.payload
                 await self.refresh_ui(garden)
+                self.blocked = False
+            case UIEventType.GARDEN_PLOT_BLOCK:
+                self.blocked = True
             case UIEventType.GARDEN_DETACH:
                 self.controller.detach_view(self)
                 self.stop()
@@ -75,6 +79,8 @@ class PlotView(ViewMenu):
 
     async def water(self, interaction: discord.Interaction):
         await interaction.response.defer()
+        if self.blocked:
+            return
         event = UIEvent(
             UIEventType.GARDEN_PLOT_WATER,
             (interaction, self.plot),
@@ -84,6 +90,8 @@ class PlotView(ViewMenu):
 
     async def plant(self, interaction: discord.Interaction):
         await interaction.response.defer()
+        if self.blocked:
+            return
         event = UIEvent(
             UIEventType.GARDEN_PLOT_PLANT,
             (interaction, self.plot, self.selected_seed),
@@ -93,6 +101,8 @@ class PlotView(ViewMenu):
 
     async def remove(self, interaction: discord.Interaction):
         await interaction.response.defer()
+        if self.blocked:
+            return
         event = UIEvent(
             UIEventType.GARDEN_PLOT_REMOVE,
             (interaction, self.plot),
@@ -102,6 +112,8 @@ class PlotView(ViewMenu):
 
     async def harvest(self, interaction: discord.Interaction):
         await interaction.response.defer()
+        if self.blocked:
+            return
         event = UIEvent(
             UIEventType.GARDEN_PLOT_HARVEST,
             (interaction, self.plot),
@@ -171,7 +183,12 @@ class PlotView(ViewMenu):
         garden_embed = GardenEmbed(self.controller.bot, self.garden)
         content = garden_embed.get_garden_content()
         plot_nr = UserGarden.PLOT_ORDER.index((self.x, self.y))
-        embed = PlotEmbed(plot_nr, self.x, self.y)
+
+        plant_name = None
+        if self.plot.plant is not None:
+            plant_name = self.plot.plant.type.value
+
+        embed = PlotEmbed(plot_nr, self.x, self.y, plant_name)
 
         status_picture = self.plot.get_status_image()
         plot_picture = discord.File(f"./img/garden/{status_picture}", "status.png")

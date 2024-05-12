@@ -47,6 +47,12 @@ class ItemType(str, Enum):
     INC_PET_BOOST = "IncomingPetBoost"
     MIMIC_DETECTOR = "MimicDetector"
 
+    RARE_SEED = "RareSeed"
+    SPEED_SEED = "SpeedSeed"
+    BOX_SEED = "BoxSeed"
+    CAT_SEED = "CatSeed"
+    CRYSTAL_SEED = "CrystalSeed"
+
 
 class ItemState(str, Enum):
     ENABLED = "enabled"
@@ -69,6 +75,7 @@ class ItemGroup(str, Enum):
     MAJOR_ACTION = "major_action"
     GAMBA = "gamba"
     INCOMING_FLAT_BONUS = "incoming_flat_bonus"
+    SEED = "seed"
 
 
 class ShopCategory(int, Enum):
@@ -79,3 +86,4 @@ class ShopCategory(int, Enum):
     PET = 4
     FART = 5
     JAIL = 6
+    GARDEN = 7

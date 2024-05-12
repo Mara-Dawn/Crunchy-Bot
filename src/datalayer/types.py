@@ -36,6 +36,11 @@ class LootboxType(Enum):
 
 class PlantType(str, Enum):
     BEAN = "Bean"
+    RARE_BEAN = "Rare Bean"
+    SPEED_BEAN = "Speed Bean"
+    BOX_BEAN = "Treasure Bean"
+    CAT_BEAN = "Catgirl Bean"
+    CRYSTAL_BEAN = "Crystal Bean"
 
 
 class PlotState(Enum):

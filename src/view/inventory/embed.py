@@ -1,5 +1,6 @@
 import discord
 from datalayer.inventory import UserInventory
+from discord.ext import commands
 from items.types import ItemState, ItemType
 
 
@@ -9,8 +10,7 @@ class InventoryEmbed(discord.Embed):
 
     def __init__(
         self,
-        author_name,
-        author_img,
+        bot: commands.Bot,
         inventory: UserInventory,
         start_offset: int = 0,
     ):
@@ -19,6 +19,8 @@ class InventoryEmbed(discord.Embed):
             color=discord.Colour.purple(),
             description="All the items you currently own.",
         )
+        author_name = bot.user.display_name
+        author_img = bot.user.display_avatar
         self.set_author(name=author_name, icon_url=author_img)
         inventory_items = inventory.items
 
@@ -39,7 +41,12 @@ class InventoryEmbed(discord.Embed):
                     if custom_color is not None:
                         suffix = f" #{custom_color}"
                     item.add_to_embed(
-                        self, 56, count=count, name_suffix=suffix, disabled=disabled
+                        bot,
+                        self,
+                        56,
+                        count=count,
+                        name_suffix=suffix,
+                        disabled=disabled,
                     )
                 case ItemType.REACTION_SPAM:
                     emoji = inventory.bully_emoji
@@ -49,7 +56,12 @@ class InventoryEmbed(discord.Embed):
                     else:
                         suffix = f" {target_name} | {str(emoji)}"
                     item.add_to_embed(
-                        self, 56, count=count, name_suffix=suffix, disabled=disabled
+                        bot,
+                        self,
+                        56,
+                        count=count,
+                        name_suffix=suffix,
+                        disabled=disabled,
                     )
                 case _:
-                    item.add_to_embed(self, 56, count=count, disabled=disabled)
+                    item.add_to_embed(bot, self, 56, count=count, disabled=disabled)

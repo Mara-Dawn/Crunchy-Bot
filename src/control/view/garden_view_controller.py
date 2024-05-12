@@ -12,6 +12,8 @@ from events.garden_event import GardenEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType, EventType, GardenEventType, UIEventType
 from events.ui_event import UIEvent
+from items import BaseSeed
+from items.types import ItemType
 from view.garden.embed import GardenEmbed
 from view.garden.plot_embed import PlotEmbed
 from view.garden.plot_view import PlotView
@@ -90,6 +92,7 @@ class GardenViewController(ViewController):
     async def __use_seed(self, interaction: discord.Integration, plant_type: PlantType):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
+        item_type = None
         match plant_type:
             case PlantType.BEAN:
                 event = BeansEvent(
@@ -100,6 +103,19 @@ class GardenViewController(ViewController):
                     -1,
                 )
                 await self.controller.dispatch_event(event)
+            case _:
+                plant_seed_map = {v: k for k, v in BaseSeed.SEED_PLANT_MAP.items()}
+                item_type = plant_seed_map[plant_type]
+
+        if item_type is not None:
+            event = InventoryEvent(
+                datetime.datetime.now(),
+                guild_id,
+                member_id,
+                item_type,
+                -1,
+            )
+            await self.controller.dispatch_event(event)
 
     async def __harvest_plant(
         self, interaction: discord.Interaction, plant_type: PlantType
@@ -108,21 +124,92 @@ class GardenViewController(ViewController):
         member_id = interaction.user.id
 
         message = ""
+        reward = 0
 
         match plant_type:
             case PlantType.BEAN:
                 reward = random.randint(450, 550)
-                event = BeansEvent(
+                message = f"You harvest a Bean Plant and gain `🅱️{reward}`."
+            case PlantType.RARE_BEAN:
+                reward = random.randint(1400, 1600)
+                message = f"You harvest a Rare Bean Plant and gain `🅱️{reward}`."
+            case PlantType.CRYSTAL_BEAN:
+                reward = random.randint(5000, 6000)
+                message = f"You harvest a Crystal Bean Plant and gain `🅱️{reward}`."
+            case PlantType.SPEED_BEAN:
+                reward = random.randint(90, 110)
+                message = f"You harvest a Speed Bean Plant and gain `🅱️{reward}`."
+            case PlantType.BOX_BEAN:
+                await self.item_manager.drop_private_loot_box(interaction, size=10)
+            case PlantType.CAT_BEAN:
+                reward = random.randint(450, 550)
+                message = f"You harvest a Catnip Bean Plant and gain `🅱️{reward}`."
+
+                roll = random.random()
+                useful_catgirl_chance = 0.001
+
+                item_type = ItemType.CATGIRL
+                message += (
+                    "\n You also hear a suspicious meowing coming from your inventory."
+                )
+                if roll <= useful_catgirl_chance:
+                    item_type = ItemType.USEFUL_CATGIRL
+                    message += "\n Just as you thought 'Not another useless Catgirl!' you realize that this one"
+                    message += "\n is actually cleaning up and helping out with things! You found yourself an ultra rare **Useful Catgirl!**"
+                else:
+                    message += "\n Looks like you got yourself a useless Catgirl!"
+
+                event = InventoryEvent(
                     datetime.datetime.now(),
                     guild_id,
-                    BeansEventType.BEAN_HARVEST,
                     member_id,
-                    reward,
+                    item_type,
+                    1,
                 )
                 await self.controller.dispatch_event(event)
-                message = f"You harvest a Bean Plant and gain `🅱️{reward}`."
 
-        await interaction.followup.send(content=message, ephemeral=True)
+        roll = random.random()
+        rare_seed_chance = 0.1
+        speed_seed_chance = 0.2
+        crystal_seed_chance = 0.01
+
+        item_type = None
+        if roll <= rare_seed_chance:
+            item_type = ItemType.RARE_SEED
+            message += "\nOh wow, you also find a **Rare Seed**!"
+        elif roll > rare_seed_chance and roll <= (rare_seed_chance + speed_seed_chance):
+            item_type = ItemType.SPEED_SEED
+            message += "\nOh wow, you also find a **Speed Seed**!"
+        elif roll > (rare_seed_chance + speed_seed_chance) and roll <= (
+            rare_seed_chance + speed_seed_chance + crystal_seed_chance
+        ):
+            item_type = ItemType.CRYSTAL_SEED
+            message += (
+                "\nOh wow, you also find a **Crystal Seed**! These must be super rare!"
+            )
+
+        if item_type is not None:
+            event = InventoryEvent(
+                datetime.datetime.now(),
+                guild_id,
+                member_id,
+                item_type,
+                1,
+            )
+            await self.controller.dispatch_event(event)
+
+        if reward > 0:
+            event = BeansEvent(
+                datetime.datetime.now(),
+                guild_id,
+                BeansEventType.BEAN_HARVEST,
+                member_id,
+                reward,
+            )
+            await self.controller.dispatch_event(event)
+
+        if len(message) > 0:
+            await interaction.followup.send(content=message, ephemeral=True)
 
     async def open_plot_menu(
         self,
@@ -140,14 +227,18 @@ class GardenViewController(ViewController):
         )
         await self.controller.dispatch_ui_event(event)
 
-        status_picture = garden.get_plot(x, y).get_status_image()
+        plot = garden.get_plot(x, y)
+        status_picture = plot.get_status_image()
+        plant_name = None
+        if plot.plant is not None:
+            plant_name = plot.plant.type.value
         plot_picture = discord.File(f"./img/garden/{status_picture}", "status.png")
 
         garden_embed = GardenEmbed(self.controller.bot, garden)
 
         content = garden_embed.get_garden_content()
         plot_nr = UserGarden.PLOT_ORDER.index((x, y))
-        embed = PlotEmbed(plot_nr, x, y)
+        embed = PlotEmbed(plot_nr, x, y, plant_name)
         view = PlotView(self.controller, interaction, garden, x, y)
         view.set_message(message)
         await message.edit(
@@ -186,6 +277,13 @@ class GardenViewController(ViewController):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
 
+        event = UIEvent(
+            UIEventType.GARDEN_PLOT_BLOCK,
+            None,
+            view_id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
         event = GardenEvent(
             datetime.datetime.now(),
             guild_id,
@@ -193,6 +291,7 @@ class GardenViewController(ViewController):
             plot.id,
             user_id,
             GardenEventType.WATER,
+            plot.plant.type.value,
         )
         await self.controller.dispatch_event(event)
 
@@ -213,6 +312,13 @@ class GardenViewController(ViewController):
     ):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
+
+        event = UIEvent(
+            UIEventType.GARDEN_PLOT_BLOCK,
+            None,
+            view_id,
+        )
+        await self.controller.dispatch_ui_event(event)
 
         event = GardenEvent(
             datetime.datetime.now(),
@@ -244,6 +350,13 @@ class GardenViewController(ViewController):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
 
+        event = UIEvent(
+            UIEventType.GARDEN_PLOT_BLOCK,
+            None,
+            view_id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
         event = GardenEvent(
             datetime.datetime.now(),
             guild_id,
@@ -251,6 +364,7 @@ class GardenViewController(ViewController):
             plot.id,
             user_id,
             GardenEventType.REMOVE,
+            plot.plant.type.value,
         )
         await self.controller.dispatch_event(event)
 
@@ -271,6 +385,13 @@ class GardenViewController(ViewController):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
 
+        event = UIEvent(
+            UIEventType.GARDEN_PLOT_BLOCK,
+            None,
+            view_id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
         event = GardenEvent(
             datetime.datetime.now(),
             guild_id,
@@ -278,6 +399,7 @@ class GardenViewController(ViewController):
             plot.id,
             user_id,
             GardenEventType.HARVEST,
+            plot.plant.type.value,
         )
         await self.controller.dispatch_event(event)
 

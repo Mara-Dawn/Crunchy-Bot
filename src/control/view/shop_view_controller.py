@@ -137,7 +137,7 @@ class ShopViewController(ViewController):
         match item.group:
             case ItemGroup.IMMEDIATE_USE | ItemGroup.SUBSCRIPTION:
 
-                embed = item.get_embed()
+                embed = item.get_embed(self.bot)
                 view_class_name = item.view_class
 
                 view_class = globals()[view_class_name]
@@ -200,10 +200,7 @@ class ShopViewController(ViewController):
         inventory = await self.item_manager.get_user_inventory(
             interaction.guild_id, interaction.user.id
         )
-
-        author_name = self.bot.user.display_name
-        author_img = self.bot.user.display_avatar
-        embed = InventoryEmbed(author_name, author_img, inventory)
+        embed = InventoryEmbed(self.bot, inventory)
         view = InventoryView(self.controller, interaction, inventory)
 
         message = await interaction.followup.send(

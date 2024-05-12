@@ -1,4 +1,11 @@
-from datalayer.types import ItemTrigger
+from datalayer.garden import (
+    BoxBeanPlant,
+    CatBeanPlant,
+    CrystalBeanPlant,
+    RareBeanPlant,
+    SpeedBeanPlant,
+)
+from datalayer.types import ItemTrigger, PlantType, PlotState
 
 from items.item import Item
 from items.types import ItemGroup, ItemType, ShopCategory
@@ -14,7 +21,7 @@ class Arrest(Item):
 
         super().__init__(
             name="Citizens Arrest",
-            item_type=ItemType.ARREST,
+            type=ItemType.ARREST,
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description="Take the law into your own hands and arrest a user of choice for 30 minutes.",
@@ -39,7 +46,7 @@ class AutoCrit(Item):
 
         super().__init__(
             name="Magic Beans",
-            item_type=ItemType.AUTO_CRIT,
+            type=ItemType.AUTO_CRIT,
             group=ItemGroup.AUTO_CRIT,
             shop_category=ShopCategory.INTERACTION,
             description="Let these rainbow colored little beans guide your next slap, pet or fart to a guaranteed critical hit.",
@@ -65,7 +72,7 @@ class Bailout(Item):
 
         super().__init__(
             name="Bribe the Mods",
-            item_type=ItemType.BAILOUT,
+            type=ItemType.BAILOUT,
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description="Pay off the mods with beans to let you out of jail early.",
@@ -90,7 +97,7 @@ class Bat(Item):
 
         super().__init__(
             name="Baseball Bat",
-            item_type=ItemType.BAT,
+            type=ItemType.BAT,
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.INTERACTION,
             description="Sneak up on someone and knock them out for 20 minutes, making them unable to use and buy items or gamba their beans.",
@@ -115,7 +122,7 @@ class BonusFart(Item):
 
         super().__init__(
             name="Bonus Fart",
-            item_type=ItemType.BONUS_FART,
+            type=ItemType.BONUS_FART,
             group=ItemGroup.BONUS_ATTEMPT,
             shop_category=ShopCategory.FART,
             description="Allows you to continue farting on a jailed person after using your guaranteed one.",
@@ -142,7 +149,7 @@ class BonusPet(Item):
 
         super().__init__(
             name="Bonus Pet",
-            item_type=ItemType.BONUS_PET,
+            type=ItemType.BONUS_PET,
             group=ItemGroup.BONUS_ATTEMPT,
             shop_category=ShopCategory.PET,
             description="Allows you to continue giving pets to a jailed person after using your guaranteed one.",
@@ -169,7 +176,7 @@ class UltraPet(Item):
 
         super().__init__(
             name="The Most Gentle Pet Ever",
-            item_type=ItemType.ULTRA_PET,
+            type=ItemType.ULTRA_PET,
             group=ItemGroup.MAJOR_JAIL_ACTION,
             shop_category=ShopCategory.PET,
             description="You feel a weird tingle in your hand, almost as if the next person to recieve your pets will be instantly freed from jail.",
@@ -196,7 +203,7 @@ class PenetratingPet(Item):
 
         super().__init__(
             name="Gamer Hands Pet",
-            item_type=ItemType.PENETRATING_PET,
+            type=ItemType.PENETRATING_PET,
             group=ItemGroup.MAJOR_JAIL_ACTION,
             shop_category=ShopCategory.PET,
             description="Years of hardcore sweaty gaming, dorito dust and a lack of hygiene turned your hands into incredibly effective weapons. Your next pet instantly dissolves any protection the target might have had.",
@@ -223,7 +230,7 @@ class BonusSlap(Item):
 
         super().__init__(
             name="Bonus Slap",
-            item_type=ItemType.BONUS_SLAP,
+            type=ItemType.BONUS_SLAP,
             group=ItemGroup.BONUS_ATTEMPT,
             shop_category=ShopCategory.SLAP,
             description="Allows you to continue slapping a jailed person after using your guaranteed one.",
@@ -250,7 +257,7 @@ class SwapSlap(Item):
 
         super().__init__(
             name="No U",
-            item_type=ItemType.SWAP_SLAP,
+            type=ItemType.SWAP_SLAP,
             group=ItemGroup.MAJOR_ACTION,
             shop_category=ShopCategory.SLAP,
             description="Limited edition uno reverse card. If you are jailed, your next slap against a non jailed user will make them trade places with you.",
@@ -277,7 +284,7 @@ class UltraSlap(Item):
 
         super().__init__(
             name="Infinity and Beyond Glove",
-            item_type=ItemType.ULTRA_SLAP,
+            type=ItemType.ULTRA_SLAP,
             group=ItemGroup.MAJOR_ACTION,
             shop_category=ShopCategory.SLAP,
             description="This glove will slap people into another dimension, completely annihilating them and erasing their existence. Your next slap will stun your target for 5 hours.",
@@ -308,7 +315,7 @@ class ExplosiveFart(Item):
 
         super().__init__(
             name="Explosive Diarrhea",
-            item_type=ItemType.EXPLOSIVE_FART,
+            type=ItemType.EXPLOSIVE_FART,
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description=description,
@@ -334,7 +341,7 @@ class UltraFartBoost(Item):
 
         super().__init__(
             name="Nuclear Lunch Codes",
-            item_type=ItemType.ULTRA_FART_BOOST,
+            type=ItemType.ULTRA_FART_BOOST,
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.FART,
             description="You try to cook a nice lunch, but your cooking skills are so abysmal that the brave souls who 'agreed' to eat it have a near death experience. Powers up your next Fart by x50.",
@@ -361,7 +368,7 @@ class FartBoost(Item):
 
         super().__init__(
             name="UK Breakfast Beans",
-            item_type=ItemType.FART_BOOST,
+            type=ItemType.FART_BOOST,
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.FART,
             description="Extremely dangerous, multiplies the power of your next fart by 3.",
@@ -387,7 +394,7 @@ class FartProtection(Item):
 
         super().__init__(
             name="Your Uncle's old Hazmat Suit",
-            item_type=ItemType.PROTECTION,
+            type=ItemType.PROTECTION,
             group=ItemGroup.PROTECTION,
             shop_category=ShopCategory.INTERACTION,
             description="According to him his grandpa took it from a dead guy in ww2. The next 5 interactions negatively affecting your jailtime will be reduced by 50%",
@@ -429,7 +436,7 @@ class FartStabilizer(Item):
 
         super().__init__(
             name="Ass ACOG",
-            item_type=ItemType.FART_STABILIZER,
+            type=ItemType.FART_STABILIZER,
             group=ItemGroup.STABILIZER,
             shop_category=ShopCategory.FART,
             description="Stabilizes your aim and increases your rectal precision. Your next fart cannot roll below 0.",
@@ -455,7 +462,7 @@ class Fartvantage(Item):
 
         super().__init__(
             name="Fast Food Binge",
-            item_type=ItemType.FARTVANTAGE,
+            type=ItemType.FARTVANTAGE,
             group=ItemGroup.ADVANTAGE,
             shop_category=ShopCategory.FART,
             description="Couldn't hold back again, hm? Better go empty your bowels on some poor loser. Rolls your next fart twice and takes the better result.",
@@ -481,7 +488,7 @@ class GigaFart(Item):
 
         super().__init__(
             name="Shady 4am Chinese Takeout",
-            item_type=ItemType.GIGA_FART,
+            type=ItemType.GIGA_FART,
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.FART,
             description="Works better than any laxative and boosts the pressure of your next fart by x10. Try not to hurt yourself.",
@@ -507,7 +514,7 @@ class JailReduction(Item):
 
         super().__init__(
             name="Gaslight the Guards",
-            item_type=ItemType.JAIL_REDUCTION,
+            type=ItemType.JAIL_REDUCTION,
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description="Manipulate the mods into believing your jail sentence is actually 30 minutes shorter than it really is. (Cuts off at 30 minutes left)",
@@ -532,7 +539,7 @@ class LootBoxItem(Item):
 
         super().__init__(
             name="Random Treasure Chest",
-            item_type=ItemType.LOOTBOX,
+            type=ItemType.LOOTBOX,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
             description="No need to wait for loot box drops, just buy your own!",
@@ -558,7 +565,7 @@ class LootBoxItemBundle(Item):
 
         super().__init__(
             name="Random Treasure Chest x5",
-            item_type=ItemType.LOOTBOX_BUNDLE,
+            type=ItemType.LOOTBOX_BUNDLE,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
             description="Too addicted? Just buy 5 at once! All neatly contained within a single Box.",
@@ -583,7 +590,7 @@ class PocketMimic(Item):
 
         super().__init__(
             name="Pocket Mimic",
-            item_type=ItemType.MIMIC,
+            type=ItemType.MIMIC,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
             description="Use this item from your inventory to spawn a large mimic. It will look like a regular chest spawn to other people.",
@@ -611,7 +618,7 @@ class CatGirl(Item):
 
         super().__init__(
             name="Useless Cat Girl",
-            item_type=ItemType.CATGIRL,
+            type=ItemType.CATGIRL,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
             description="She is lazy, sleepy, does nothing all day and apparently lives in your inventory now. :3",
@@ -638,7 +645,7 @@ class CrappyDrawing(Item):
 
         super().__init__(
             name="Soggy Crumpled Up Coupon",
-            item_type=ItemType.CRAPPY_COUPON,
+            type=ItemType.CRAPPY_COUPON,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
             description=(
@@ -669,7 +676,7 @@ class LotteryTicket(Item):
 
         super().__init__(
             name="Lottery Ticket",
-            item_type=ItemType.LOTTERY_TICKET,
+            type=ItemType.LOTTERY_TICKET,
             group=ItemGroup.LOTTERY,
             shop_category=ShopCategory.FUN,
             description="Enter the Weekly Crunchy Bean Lottery© and win big! Max 3 tickets per person.",
@@ -694,7 +701,7 @@ class NameColor(Item):
 
         super().__init__(
             name="Name Color Change",
-            item_type=ItemType.NAME_COLOR,
+            type=ItemType.NAME_COLOR,
             group=ItemGroup.SUBSCRIPTION,
             shop_category=ShopCategory.FUN,
             description="Paint your discord name in your favourite color! Grab one weeks worth of color tokens. Each day, a token gets consumed until you run out.",
@@ -719,7 +726,7 @@ class PetBoost(Item):
 
         super().__init__(
             name="Big Mama Bear Hug",
-            item_type=ItemType.PET_BOOST,
+            type=ItemType.PET_BOOST,
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.PET,
             description="When a normal pet just isnt enough. Powers up your next pet by 5x.",
@@ -745,7 +752,7 @@ class ReactionSpam(Item):
 
         super().__init__(
             name="Bully for Hire",
-            item_type=ItemType.REACTION_SPAM,
+            type=ItemType.REACTION_SPAM,
             group=ItemGroup.SUBSCRIPTION,
             shop_category=ShopCategory.FUN,
             description="Hire a personal bully to react to every single message of your victim with an emoji of your choice. One purchase amounts to 10 message reactions. Only one bully can be active at a time.",
@@ -770,7 +777,7 @@ class Release(Item):
 
         super().__init__(
             name="Get out of Jail Fart",
-            item_type=ItemType.RELEASE,
+            type=ItemType.RELEASE,
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description="Due to dietary advancements your farts can now help a friend out of jail for one time only.",
@@ -795,7 +802,7 @@ class RouletteFart(Item):
 
         super().__init__(
             name="Russian Roulette",
-            item_type=ItemType.ROULETTE_FART,
+            type=ItemType.ROULETTE_FART,
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description="After a night of heavy drinking you decide to gamble on a fart to prank your friend. 50% chance to jail the target, 50% chance to shit yourself and go to jail instead. (30 minutes)",
@@ -820,7 +827,7 @@ class SatanBoost(Item):
 
         super().__init__(
             name="Satan's Nuclear Hellfart",
-            item_type=ItemType.SATAN_FART,
+            type=ItemType.SATAN_FART,
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.FART,
             description="A x25 fart boost that sends a jailed person to the shadow realm but with a high risk of the farter being caught in the blast. 75% chance to jail yourself too with the same duration.",
@@ -846,7 +853,7 @@ class SlapBoost(Item):
 
         super().__init__(
             name="Massive Bonking Hammer",
-            item_type=ItemType.SLAP_BOOST,
+            type=ItemType.SLAP_BOOST,
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.SLAP,
             description="For when someone has been extra horny. Powers up your next slap by 5x.",
@@ -872,7 +879,7 @@ class NoLimitGamba(Item):
 
         super().__init__(
             name="Unlimited Gamba",
-            item_type=ItemType.UNLIMITED_GAMBA,
+            type=ItemType.UNLIMITED_GAMBA,
             group=ItemGroup.GAMBA,
             shop_category=ShopCategory.FUN,
             description="This item removes the Limit for your next gamba. You can bet as much as you want. Good luck.",
@@ -899,7 +906,7 @@ class NoCooldownGamba(Item):
 
         super().__init__(
             name="Instant Gamba",
-            item_type=ItemType.INSTANT_GAMBA,
+            type=ItemType.INSTANT_GAMBA,
             group=ItemGroup.GAMBA,
             shop_category=ShopCategory.FUN,
             description="Allows you to ignore the cooldown on your next gamba.",
@@ -926,7 +933,7 @@ class MimicDetector(Item):
 
         super().__init__(
             name="Useful Foxgirl",
-            item_type=ItemType.MIMIC_DETECTOR,
+            type=ItemType.MIMIC_DETECTOR,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.FUN,
             description=(
@@ -947,6 +954,126 @@ class MimicDetector(Item):
         )
 
 
+# Garden Seeds
+
+
+class BaseSeed(Item):
+
+    SEED_TYPES = [
+        ItemType.RARE_SEED,
+        ItemType.SPEED_SEED,
+        ItemType.BOX_SEED,
+        ItemType.CAT_SEED,
+        ItemType.CRYSTAL_SEED,
+    ]
+
+    SEED_PLANT_MAP = {
+        ItemType.RARE_SEED: PlantType.RARE_BEAN,
+        ItemType.SPEED_SEED: PlantType.SPEED_BEAN,
+        ItemType.BOX_SEED: PlantType.BOX_BEAN,
+        ItemType.CAT_SEED: PlantType.CAT_BEAN,
+        ItemType.CRYSTAL_SEED: PlantType.CRYSTAL_BEAN,
+    }
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="",
+            type=None,
+            group=ItemGroup.SEED,
+            shop_category=ShopCategory.GARDEN,
+            description="",
+            emoji="",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[],
+            controllable=False,
+            hide_in_shop=True,
+        )
+
+
+class RareSeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Rare Bean Seed"
+        self.type = ItemType.RARE_SEED
+        self.description = (
+            "You found this special shiny bean while harvesting your last bean plant. "
+            "It looks really juicy, maybe it will produce even more beans!"
+        )
+        self.emoji = RareBeanPlant.EMOJI_MAP[PlotState.READY]
+
+
+class SpeedSeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Speed Bean Seed"
+        self.type = ItemType.SPEED_SEED
+        self.description = (
+            "When picking up this bean it slips through your fingers and completely defies gravity "
+            "by falling significantly faster than any other bean.This little bean almost slipped through your fingers. "
+        )
+        self.emoji = SpeedBeanPlant.EMOJI_MAP[PlotState.READY]
+
+
+class CrystalSeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Crystal Bean Seed"
+        self.type = ItemType.CRYSTAL_SEED
+        self.description = (
+            "WOAH! What a pretty little bean! This must be worth a fortune. "
+            "Better plant it quick, just imagine the amount of beans you will make."
+        )
+        self.emoji = CrystalBeanPlant.EMOJI_MAP[PlotState.READY]
+
+
+class BoxSeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 750
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(cost)
+        self.name = "Treasure Bean Seed"
+        self.type = ItemType.BOX_SEED
+        self.description = (
+            "Aww look how cute this tiny bean looks! "
+            "Maybe it will grow into a big beautiful treasure hoard "
+            "when you plant it in your garden. Just pray it doesn't have teeth."
+        )
+        self.emoji = BoxBeanPlant.EMOJI_MAP[PlotState.READY]
+
+
+class CatSeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 500
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(cost)
+        self.name = "Catgirl Bean Seed"
+        self.type = ItemType.CAT_SEED
+        self.description = (
+            "You find an oddly cat-shaped pink bean, you can only being to speculate what the hell this is. "
+            "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
+        )
+        self.emoji = CatBeanPlant.EMOJI_MAP[PlotState.READY]
+
+
 # Permanent Rare Items
 
 
@@ -960,7 +1087,7 @@ class PrestigeBean(Item):
 
         super().__init__(
             name="Prestige Bean",
-            item_type=ItemType.PRESTIGE_BEAN,
+            type=ItemType.PRESTIGE_BEAN,
             group=ItemGroup.SUBSCRIPTION,
             shop_category=ShopCategory.FUN,
             description="A proof of your achievements in previous Bean seasons. Each of these will generate you one bean a day.",
@@ -987,7 +1114,7 @@ class PermPetBoost(Item):
 
         super().__init__(
             name="Floof Paws",
-            item_type=ItemType.PERM_PET_BOOST,
+            type=ItemType.PERM_PET_BOOST,
             group=ItemGroup.FLAT_BONUS,
             shop_category=ShopCategory.FUN,
             description=(
@@ -1018,7 +1145,7 @@ class UsefulCatGirl(Item):
 
         super().__init__(
             name="Useful Catgirl",
-            item_type=ItemType.USEFUL_CATGIRL,
+            type=ItemType.USEFUL_CATGIRL,
             group=ItemGroup.FLAT_BONUS,
             shop_category=ShopCategory.FUN,
             description=(
@@ -1049,7 +1176,7 @@ class IncomingPetBoost(Item):
 
         super().__init__(
             name="E-Girl UwU",
-            item_type=ItemType.INC_PET_BOOST,
+            type=ItemType.INC_PET_BOOST,
             group=ItemGroup.INCOMING_FLAT_BONUS,
             shop_category=ShopCategory.FUN,
             description=(
@@ -1080,7 +1207,7 @@ class PermSlapBoost(Item):
 
         super().__init__(
             name="Bionic Cyborg Arm",
-            item_type=ItemType.PERM_SLAP_BOOST,
+            type=ItemType.PERM_SLAP_BOOST,
             group=ItemGroup.FLAT_BONUS,
             shop_category=ShopCategory.FUN,
             description=(
@@ -1112,7 +1239,7 @@ class PermFartBoost(Item):
 
         super().__init__(
             name="Big Dumpy",
-            item_type=ItemType.PERM_FART_BOOST,
+            type=ItemType.PERM_FART_BOOST,
             group=ItemGroup.FLAT_BONUS,
             shop_category=ShopCategory.FUN,
             description=(
@@ -1145,7 +1272,7 @@ class UltraBoost(Item):
 
         super().__init__(
             name="Beanz'n'Dreamz",
-            item_type=ItemType.ULTRA_BOOST,
+            type=ItemType.ULTRA_BOOST,
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.FUN,
             description=(
@@ -1177,7 +1304,7 @@ class PermProtection(Item):
 
         super().__init__(
             name="Crippling Social Anxiety",
-            item_type=ItemType.PERM_PROTECTION,
+            type=ItemType.PERM_PROTECTION,
             group=ItemGroup.PROTECTION,
             shop_category=ShopCategory.INTERACTION,
             description=(
