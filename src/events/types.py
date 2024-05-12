@@ -69,6 +69,7 @@ class GardenEventType(str, Enum):
     PLANT = "plant"
     REMOVE = "remove"
     HARVEST = "harvest"
+    NOTIFICATION = "notification"
 
 
 class UIEventType(str, Enum):
@@ -138,3 +139,4 @@ class UIEventType(str, Enum):
     GARDEN_PLOT_BACK = "garden_plot_back"
     GARDEN_PLOT_REMOVE = "garden_plot_remove"
     GARDEN_REFRESH = "garden_plot_refresh"
+    GARDEN_PLOT_BLOCK = "garden_plot_block"

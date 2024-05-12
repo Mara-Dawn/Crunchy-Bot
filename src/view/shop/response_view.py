@@ -96,7 +96,9 @@ class ShopResponseView(ViewMenu):
             hex_value = int(self.selected_color, 16)
             color = discord.Color(hex_value)
 
-        embed = self.item.get_embed(color=color, amount_in_cart=self.selected_amount)
+        embed = self.item.get_embed(
+            self.controller.bot, color=color, amount_in_cart=self.selected_amount
+        )
 
         embed.title = f"{self.item.emoji} {self.item.name} {self.item.emoji}"
 

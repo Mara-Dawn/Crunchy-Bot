@@ -188,7 +188,7 @@ class LootBoxViewController(ViewController):
             for item_type, amount in loot_box.items.items():
                 item = await self.item_manager.get_item(guild_id, item_type)
                 item_count = item.base_amount * amount
-                item.add_to_embed(embed, 43, count=item_count, show_price=False)
+                item.add_to_embed(self.bot, embed, 43, count=item_count, show_price=False)
                 log_message += f" and {item_count}x {item.name}"
                 items_to_give.append((item_count, item))
 

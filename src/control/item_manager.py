@@ -80,6 +80,8 @@ class ItemManager(Service):
             ItemType.GIGA_FART,
             ItemType.FART_STABILIZER,
             ItemType.FARTVANTAGE,
+            ItemType.BOX_SEED,
+            ItemType.CAT_SEED,
         ]
 
         lucky_item_pool = [

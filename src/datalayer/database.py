@@ -25,6 +25,7 @@ from events.types import (
     LootBoxEventType,
     PredictionEventType,
 )
+from items import BaseSeed
 from items.types import ItemState, ItemType
 from view.types import EmojiType
 
@@ -1787,10 +1788,18 @@ class Database:
         return transformed
 
     async def get_permanent_item_counts_by_user(
-        self, guild_id: int, user_id: int
+        self, guild_id: int, user_id: int, item_types: list[ItemType] = None
     ) -> dict[ItemType, int]:
-        item_types = [item.value for item in self.PERMANENT_ITEMS]
-        list_sanitized = self.__list_sanitizer(item_types)
+        permanent_items = self.PERMANENT_ITEMS
+        if item_types is not None:
+            permanent_items = [
+                item_type
+                for item_type in self.PERMANENT_ITEMS
+                if item_type in item_types
+            ]
+
+        permanent_types = [item.value for item in permanent_items]
+        list_sanitized = self.__list_sanitizer(permanent_types)
         command = f"""
             SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
@@ -1800,7 +1809,7 @@ class Database:
             AND {self.INVENTORY_EVENT_ITEM_TYPE_COL} IN {list_sanitized}
             GROUP BY {self.INVENTORY_EVENT_ITEM_TYPE_COL};
         """
-        task = (user_id, guild_id, *item_types)
+        task = (user_id, guild_id, *permanent_types)
         rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return {}
@@ -1814,9 +1823,25 @@ class Database:
         }
 
     async def get_item_counts_by_user(
-        self, guild_id: int, user_id: int, season: Season = Season.CURRENT
+        self,
+        guild_id: int,
+        user_id: int,
+        season: Season = Season.CURRENT,
+        item_types: list[ItemType] = None,
     ) -> dict[ItemType, int]:
+        item_types_filter = ""
+
         start_timestamp, end_timestamp = self.__get_season_interval(season)
+        task = (user_id, guild_id, start_timestamp, end_timestamp)
+
+        if item_types is not None:
+            types = [item.value for item in item_types]
+            list_sanitized = self.__list_sanitizer(types)
+            item_types_filter = (
+                f"AND {self.INVENTORY_EVENT_ITEM_TYPE_COL} IN {list_sanitized}"
+            )
+            task = (user_id, guild_id, start_timestamp, end_timestamp, *types)
+
         command = f"""
             SELECT {self.INVENTORY_EVENT_ITEM_TYPE_COL}, SUM({self.INVENTORY_EVENT_AMOUNT_COL}) FROM {self.INVENTORY_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 
@@ -1825,13 +1850,13 @@ class Database:
             AND {self.EVENT_GUILD_ID_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
             AND {self.EVENT_TIMESTAMP_COL} <= ?
+            {item_types_filter}
             GROUP BY {self.INVENTORY_EVENT_ITEM_TYPE_COL};
         """
-        task = (user_id, guild_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
 
         permanent_items = await self.get_permanent_item_counts_by_user(
-            guild_id, user_id
+            guild_id, user_id, item_types
         )
 
         if not rows or len(rows) < 1:
@@ -2260,6 +2285,7 @@ class Database:
 
         plot_plants = {}
         plot_water_events = {}
+        plot_notified = {}
         skip_list = []
 
         for row in rows:
@@ -2278,6 +2304,8 @@ class Database:
                         plot_water_events[plot_id].append(GardenEvent.from_db_row(row))
                 case GardenEventType.REMOVE | GardenEventType.HARVEST:
                     skip_list.append(plot_id)
+                case GardenEventType.NOTIFICATION:
+                    plot_notified[plot_id] = True
 
         result = []
 
@@ -2288,9 +2316,26 @@ class Database:
                 plot.plant = UserGarden.get_plant_by_type(event.payload)
             if plot.id in plot_water_events:
                 plot.water_events = plot_water_events[plot.id]
+            if plot.id in plot_notified:
+                plot.notified = plot_notified[plot.id]
             result.append(plot)
 
         return result
+
+    async def get_user_seeds(
+        self, guild_id: int, user_id: int, season: Season = Season.CURRENT
+    ) -> dict[PlantType, int]:
+        user_balance = await self.get_member_beans(guild_id, user_id, season)
+        user_seeds = {PlantType.BEAN: user_balance}
+
+        seed_items = await self.get_item_counts_by_user(
+            guild_id, user_id, season=season, item_types=BaseSeed.SEED_TYPES
+        )
+
+        for item_type, count in seed_items.items():
+            user_seeds[BaseSeed.SEED_PLANT_MAP[item_type]] = count
+
+        return user_seeds
 
     async def get_user_garden(
         self, guild_id: int, user_id: int, season: Season = Season.CURRENT
@@ -2310,10 +2355,7 @@ class Database:
         garden_id = rows[0][self.GARDEN_ID]
 
         plots = await self.get_garden_plots(garden_id, season)
-
-        user_balance = await self.get_member_beans(guild_id, user_id, season)
-
-        user_seeds = {PlantType.BEAN: user_balance}
+        user_seeds = await self.get_user_seeds(guild_id, user_id, season=season)
 
         return UserGarden(
             garden_id,
@@ -2322,3 +2364,36 @@ class Database:
             plots,
             user_seeds,
         )
+
+    async def get_guild_gardens(
+        self, guild_id: int, season: Season = Season.CURRENT
+    ) -> list[UserGarden]:
+
+        command = f"""
+            SELECT * FROM {self.GARDEN_TABLE}
+            WHERE {self.GARDEN_GUILD_ID} = {int(guild_id)}
+            LIMIT 1;
+        """
+        rows = await self.__query_select(command)
+        if not rows or len(rows) < 1:
+            return []
+
+        gardens = []
+
+        for row in rows:
+            garden_id = row[self.GARDEN_ID]
+            user_id = row[self.GARDEN_USER_ID]
+
+            plots = await self.get_garden_plots(garden_id, season)
+
+            gardens.append(
+                UserGarden(
+                    garden_id,
+                    guild_id,
+                    user_id,
+                    plots,
+                    {},
+                )
+            )
+
+        return gardens
