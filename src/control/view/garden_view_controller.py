@@ -170,7 +170,7 @@ class GardenViewController(ViewController):
 
         roll = random.random()
         rare_seed_chance = 0.1
-        speed_seed_chance = 0.2
+        speed_seed_chance = 0.1
         crystal_seed_chance = 0.01
 
         item_type = None

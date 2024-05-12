@@ -1068,7 +1068,7 @@ class CatSeed(BaseSeed):
         self.name = "Catgirl Bean Seed"
         self.type = ItemType.CAT_SEED
         self.description = (
-            "You find an oddly cat-shaped pink bean, you can only being to speculate what the hell this is. "
+            "You find an oddly cat-shaped pink bean, you can only begin to speculate what the hell this is. "
             "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
         )
         self.emoji = CatBeanPlant.EMOJI_MAP[PlotState.READY]
