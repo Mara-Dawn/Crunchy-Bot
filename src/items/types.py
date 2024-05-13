@@ -52,6 +52,9 @@ class ItemType(str, Enum):
     BOX_SEED = "BoxSeed"
     CAT_SEED = "CatSeed"
     CRYSTAL_SEED = "CrystalSeed"
+    YELLOW_SEED = "YellowSeed"
+    GHOST_SEED = "GhostSeed"
+    BAKED_SEED = "BakedSeed"
 
 
 class ItemState(str, Enum):

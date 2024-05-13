@@ -1,9 +1,12 @@
 from datalayer.garden import (
+    BakedBeanPlant,
     BoxBeanPlant,
     CatBeanPlant,
     CrystalBeanPlant,
+    GhostBeanPlant,
     RareBeanPlant,
     SpeedBeanPlant,
+    YellowBeanPlant,
 )
 from datalayer.types import ItemTrigger, PlantType, PlotState
 
@@ -965,6 +968,9 @@ class BaseSeed(Item):
         ItemType.BOX_SEED,
         ItemType.CAT_SEED,
         ItemType.CRYSTAL_SEED,
+        ItemType.YELLOW_SEED,
+        ItemType.GHOST_SEED,
+        ItemType.BAKED_SEED,
     ]
 
     SEED_PLANT_MAP = {
@@ -973,6 +979,9 @@ class BaseSeed(Item):
         ItemType.BOX_SEED: PlantType.BOX_BEAN,
         ItemType.CAT_SEED: PlantType.CAT_BEAN,
         ItemType.CRYSTAL_SEED: PlantType.CRYSTAL_BEAN,
+        ItemType.YELLOW_SEED: PlantType.YELLOW_BEAN,
+        ItemType.GHOST_SEED: PlantType.GHOST_BEAN,
+        ItemType.BAKED_SEED: PlantType.BAKED_BEAN,
     }
 
     def __init__(self, cost: int | None):
@@ -1021,7 +1030,7 @@ class SpeedSeed(BaseSeed):
         self.type = ItemType.SPEED_SEED
         self.description = (
             "When picking up this bean it slips through your fingers and completely defies gravity "
-            "by falling significantly faster than any other bean.This little bean almost slipped through your fingers. "
+            "by falling significantly faster than any other bean. Maybe it will grow just as fast. "
         )
         self.emoji = SpeedBeanPlant.EMOJI_MAP[PlotState.READY]
 
@@ -1072,6 +1081,58 @@ class CatSeed(BaseSeed):
             "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
         )
         self.emoji = CatBeanPlant.EMOJI_MAP[PlotState.READY]
+
+
+class YellowSeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 500
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(cost)
+        self.name = "Piss Bean Seed"
+        self.type = ItemType.YELLOW_SEED
+        self.description = (
+            "This little stinker smells awful! You recognize the scent but it takes you a while to connect the dots."
+            "Its piss. And not a particularly healthy kind. Better go plant it quick. (Fertilizes the soil, making the next 3 plants "
+            "on this plot grow 1.5 times as fast)"
+        )
+        self.emoji = YellowBeanPlant.EMOJI_MAP[PlotState.READY]
+
+
+class GhostSeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 500
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(cost)
+        self.name = "Ghost Bean Seed"
+        self.type = ItemType.GHOST_SEED
+        self.description = (
+            "You find an oddly cat-shaped pink bean, you can only begin to speculate what the hell this is. "
+            "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
+        )
+        self.emoji = GhostBeanPlant.EMOJI_MAP[PlotState.READY]
+
+
+class BakedSeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 500
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(cost)
+        self.name = "Baked Bean Seed"
+        self.type = ItemType.BAKED_SEED
+        self.description = (
+            "You find an oddly cat-shaped pink bean, you can only begin to speculate what the hell this is. "
+            "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
+        )
+        self.emoji = BakedBeanPlant.EMOJI_MAP[PlotState.READY]
 
 
 # Permanent Rare Items
