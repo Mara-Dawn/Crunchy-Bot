@@ -165,6 +165,9 @@ class YellowBeanPlant(Plant):
     READY_EMOJI = 1239500357407870986
     IMAGE_DIR = "yellow_bean"
 
+    FERTILE_TIME = 24 * 3
+    # FERTILE_TIME = 12
+
     def __init__(self):
         super().__init__(PlantType.YELLOW_BEAN)
         self.seed_hours = 24
@@ -187,7 +190,7 @@ class GhostBeanPlant(Plant):
         self.seed_hours = 24
         self.grow_hours = 24 * 6
         # self.seed_hours = 2
-        # self.grow_hours = 10
+        # self.grow_hours = 5
 
 
 class BakedBeanPlant(Plant):
@@ -202,9 +205,9 @@ class BakedBeanPlant(Plant):
     def __init__(self):
         super().__init__(PlantType.BAKED_BEAN)
         self.seed_hours = 24
-        self.grow_hours = 24 * 6
+        self.grow_hours = 24 * 4
         # self.seed_hours = 2
-        # self.grow_hours = 10
+        # self.grow_hours = 5
 
 
 class Plot:
@@ -221,6 +224,7 @@ class Plot:
         plant_datetime: datetime.datetime = None,
         water_events: list[GardenEvent] = None,
         notified: bool = False,
+        last_fertilized_event: GardenEvent = None,
     ):
         self.id = id
         self.garden_id = garden_id
@@ -232,21 +236,22 @@ class Plot:
         self.x = x
         self.y = y
         self.notified = notified
+        self.last_fertilized_event = last_fertilized_event
 
     def get_status_emoji(self):
         if self.empty():
             return self.EMPTY_PLOT_EMOJI
-        return self.plant.get_status_emoji(self.get_age(), self.watered())
+        return self.plant.get_status_emoji(self.get_age(), self.is_watered())
 
     def get_status_image(self) -> str:
         if self.empty():
             return "plot_empty.png"
-        return self.plant.get_status_image(self.get_age(), self.watered())
+        return self.plant.get_status_image(self.get_age(), self.is_watered())
 
     def get_status(self) -> PlotState:
         if self.empty():
             return PlotState.EMPTY
-        return self.plant.get_status(self.get_age(), self.watered())
+        return self.plant.get_status(self.get_age(), self.is_watered())
 
     def get_age(self) -> int:
         if self.plant is None:
@@ -254,8 +259,8 @@ class Plot:
 
         now = datetime.datetime.now()
         delta = now - self.plant_datetime
-        # age = int(delta.total_seconds() / 60)
         age = int(delta.total_seconds() / 60 / 60)
+        # age = int(delta.total_seconds() / 60)
 
         if len(self.water_events) <= 0:
             return age
@@ -264,22 +269,45 @@ class Plot:
         previous = now
         for event in self.water_events:
             delta = previous - event.datetime
-            # hours = int(delta.total_seconds() / 60)
             hours = int(delta.total_seconds() / 60 / 60)
+            # hours = int(delta.total_seconds() / 60)
             watered_hours += min(24, hours)
             previous = event.datetime
 
-        return age + watered_hours
+        fertile_hours = self.hours_since_last_fertilized()
+        if fertile_hours is None:
+            fertile_hours = 0
+        fertile_hours = min(age, fertile_hours)
+        fertile_hours = min(YellowBeanPlant.FERTILE_TIME, fertile_hours)
+        fertile_hours = int(fertile_hours * 0.5)
 
-    def watered(self):
-        if len(self.water_events) <= 0:
+        return age + watered_hours + fertile_hours
+
+    def is_watered(self) -> bool:
+        hours = self.hours_since_last_water()
+        if hours is None:
             return False
+        return self.hours_since_last_water() < 24
+
+    def hours_since_last_water(self) -> int | None:
+        if len(self.water_events) <= 0:
+            return None
 
         now = datetime.datetime.now()
         delta = now - self.water_events[0].datetime
-        # hours = int(delta.total_seconds() / 60)
         hours = int(delta.total_seconds() / 60 / 60)
-        return hours < 24
+        # hours = int(delta.total_seconds() / 60)
+        return hours
+
+    def hours_since_last_fertilized(self) -> int | None:
+        if self.last_fertilized_event is None:
+            return None
+
+        now = datetime.datetime.now()
+        delta = now - self.last_fertilized_event.datetime
+        hours = int(delta.total_seconds() / 60 / 60)
+        # hours = int(delta.total_seconds() / 60)
+        return hours
 
     def empty(self):
         return self.plant is None

@@ -46,6 +46,15 @@ class ItemType(str, Enum):
     ULTRA_BOOST = "UltraBoost"
     INC_PET_BOOST = "IncomingPetBoost"
     MIMIC_DETECTOR = "MimicDetector"
+    SPOOK_BEAN = "GhostBean"
+
+    HIGH_AS_FRICK = "HighAsFrick"
+    EGIRL_DEBUFF = "UwUfy"
+    RELIGION_DEBUFF = "Religify"
+    ALCOHOL_DEBUFF = "Alcoholify"
+    WEEB_DEBUFF = "Weebify"
+    BRIT_DEBUFF = "Britify"
+    MEOW_DEBUFF = "Meowify"
 
     BEAN_SEED = "BaseSeed"
     RARE_SEED = "RareSeed"
@@ -80,6 +89,7 @@ class ItemGroup(str, Enum):
     GAMBA = "gamba"
     INCOMING_FLAT_BONUS = "incoming_flat_bonus"
     SEED = "seed"
+    DEBUFF = "debuff"
 
 
 class ShopCategory(int, Enum):

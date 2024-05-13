@@ -2285,14 +2285,24 @@ class Database:
 
         plot_plants = {}
         plot_water_events = {}
+        plot_last_fertilized = {}
         plot_notified = {}
         skip_list = []
 
         for row in rows:
             plot_id = row[self.GARDEN_EVENT_PLOT_ID_COL]
+            type = GardenEventType(row[self.GARDEN_EVENT_TYPE_COL])
+            payload = row[self.GARDEN_EVENT_PAYLOAD_COL]
+
+            if (
+                type == GardenEventType.HARVEST
+                and payload == PlantType.YELLOW_BEAN.value
+                and plot_id not in plot_last_fertilized
+            ):
+                plot_last_fertilized[plot_id] = GardenEvent.from_db_row(row)
+
             if plot_id in skip_list:
                 continue
-            type = GardenEventType(row[self.GARDEN_EVENT_TYPE_COL])
             match type:
                 case GardenEventType.PLANT:
                     plot_plants[plot_id] = GardenEvent.from_db_row(row)
@@ -2318,6 +2328,8 @@ class Database:
                 plot.water_events = plot_water_events[plot.id]
             if plot.id in plot_notified:
                 plot.notified = plot_notified[plot.id]
+            if plot.id in plot_last_fertilized:
+                plot.last_fertilized_event = plot_last_fertilized[plot.id]
             result.append(plot)
 
         return result

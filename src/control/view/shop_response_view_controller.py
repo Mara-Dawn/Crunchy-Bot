@@ -51,6 +51,8 @@ class ShopResponseViewController(ViewController):
                 shop_data = event.payload[1]
                 await self.submit_confirm_view(interaction, shop_data, event.view_id)
             case UIEventType.SHOP_RESPONSE_USER_SUBMIT:
+                if event.view_id is None:
+                    return
                 interaction = event.payload[0]
                 shop_data = event.payload[1]
                 await self.submit_user_view(interaction, shop_data, event.view_id)

@@ -143,7 +143,7 @@ class GardenViewController(ViewController):
                 await self.item_manager.drop_private_loot_box(interaction, size=10)
             case PlantType.CAT_BEAN:
                 reward = random.randint(450, 550)
-                message = f"You harvest a Catnip Bean Plant and gain `🅱️{reward}`."
+                message = f"You harvest a Catgirl Bean Plant and gain `🅱️{reward}`."
 
                 roll = random.random()
                 useful_catgirl_chance = 0.001
@@ -164,6 +164,34 @@ class GardenViewController(ViewController):
                     guild_id,
                     member_id,
                     item_type,
+                    1,
+                )
+                await self.controller.dispatch_event(event)
+            case PlantType.YELLOW_BEAN:
+                reward = random.randint(200, 300)
+                message = f"You harvest a Piss Bean Plant and gain `🅱️{reward}`."
+                message += "\nThe soil seems more fertile too! Looks like plants will grow faster on this plot for a while."
+            case PlantType.BAKED_BEAN:
+                reward = random.randint(420, 690)
+                message = f"You harvest a Speed Bean Plant and gain `🅱️{reward}`."
+                message += "\nAs soon as you pick them up you feel a sudden hit of absolute dankness smash your brain and sweep you off your feet. Good luck."
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    member_id,
+                    ItemType.HIGH_AS_FRICK,
+                    7,
+                )
+                await self.controller.dispatch_event(event)
+            case PlantType.GHOST_BEAN:
+                reward = random.randint(450, 550)
+                message = f"You harvest a Ghost Bean Plant and gain `🅱️{reward}`."
+                message += "\nYou also gain a Spooky Bean. Enjoy ruining someones day with this."
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    member_id,
+                    ItemType.SPOOK_BEAN,
                     1,
                 )
                 await self.controller.dispatch_event(event)
@@ -229,16 +257,12 @@ class GardenViewController(ViewController):
 
         plot = garden.get_plot(x, y)
         status_picture = plot.get_status_image()
-        plant_name = None
-        if plot.plant is not None:
-            plant_name = plot.plant.type.value
         plot_picture = discord.File(f"./img/garden/{status_picture}", "status.png")
 
         garden_embed = GardenEmbed(self.controller.bot, garden)
 
         content = garden_embed.get_garden_content()
-        plot_nr = UserGarden.PLOT_ORDER.index((x, y))
-        embed = PlotEmbed(plot_nr, x, y, plant_name)
+        embed = PlotEmbed(plot)
         view = PlotView(self.controller, interaction, garden, x, y)
         view.set_message(message)
         await message.edit(

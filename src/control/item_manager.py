@@ -21,6 +21,7 @@ from items import *  # noqa: F403
 from items.item import Item
 from items.types import ItemState, ItemType
 from view.lootbox.view import LootBoxView
+from view.shop.user_select_view import ShopUserSelectView
 
 from control.controller import Controller
 from control.logger import BotLogger
@@ -97,6 +98,9 @@ class ItemManager(Service):
             ItemType.SATAN_FART,
             ItemType.BOX_SEED,
             ItemType.CAT_SEED,
+            ItemType.YELLOW_SEED,
+            ItemType.BAKED_SEED,
+            ItemType.GHOST_SEED,
         ]
 
         lucky_item_pool = [
@@ -434,11 +438,34 @@ class ItemManager(Service):
 
                 await self.use_item(guild, user_id, item_type, amount)
 
+    async def use_item_interaction(
+        self, interaction: discord.Interaction, item_type: ItemType, amount: int = 1
+    ):
+
+        guild = interaction.guild
+        user_id = interaction.user.id
+
+        match item_type:
+            case ItemType.SPOOK_BEAN:
+                item = await self.get_item(guild.id, item_type)
+                embed = item.get_embed(self.bot, show_price=False)
+
+                view = ShopUserSelectView(self.controller, interaction, item, None)
+                await view.init()
+
+                message = await interaction.followup.send(
+                    "", embed=embed, view=view, ephemeral=True
+                )
+                view.set_message(message)
+                await view.refresh_ui()
+                return
+
+        return await self.use_item(guild, user_id, item_type, amount)
+
     async def use_item(
         self, guild: discord.Guild, user_id: int, item_type: ItemType, amount: int = 1
     ):
         guild_id = guild.id
-
         time_now = datetime.datetime.now()
 
         item = await self.get_item(guild.id, item_type)
