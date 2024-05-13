@@ -14,6 +14,8 @@ from datalayer.types import ItemTrigger
 from discord import app_commands
 from discord.ext import commands, tasks
 from items.types import ItemType
+from view.catalogue.embed import CatalogEmbed
+from view.catalogue.view import CatalogView
 from view.inventory.embed import InventoryEmbed
 from view.inventory.view import InventoryView
 from view.shop.embed import ShopEmbed
@@ -153,6 +155,32 @@ class Shop(commands.Cog):
         )
         view.set_message(message)
         await view.refresh_ui(user_balance=user_balance, user_items=user_items)
+
+    @app_commands.command(
+        name="catalog",
+        description="A list of all items and where to get them.",
+    )
+    @app_commands.guild_only()
+    async def catalog(self, interaction: discord.Interaction):
+        if not await self.__check_enabled(interaction):
+            return
+
+        log_message = (
+            f"{interaction.user.name} used command `{interaction.command.name}`."
+        )
+        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
+        await interaction.response.defer(ephemeral=True)
+
+        guild_id = interaction.guild_id
+
+        item_list = await self.item_manager.get_catalog_items(guild_id)
+        embed = CatalogEmbed(self.bot)
+        view = CatalogView(self.controller, interaction, item_list)
+
+        message = await interaction.followup.send("", embed=embed, view=view)
+
+        view.set_message(message)
+        await view.refresh_ui()
 
     @app_commands.command(
         name="inventory",

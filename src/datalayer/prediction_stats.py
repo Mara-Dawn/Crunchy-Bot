@@ -1,4 +1,5 @@
 import discord
+
 from datalayer.prediction import Prediction
 from datalayer.types import PredictionState
 

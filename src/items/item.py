@@ -14,6 +14,7 @@ class Item:
         group: ItemGroup,
         shop_category: ShopCategory,
         description: str,
+        information: str,
         emoji: str,
         cost: int,
         value: int,
@@ -26,13 +27,15 @@ class Item:
         weight: int = None,
         controllable: bool = False,
         useable: bool = False,
-        permanent: bool = False
+        permanent: bool = False,
+        secret: bool = False,
     ):
         self.name = name
         self.type = type
         self.group = group
         self.shop_category = shop_category
         self.description = description
+        self.information = information
         self.cost = cost
         self.value = value
         self.emoji = emoji
@@ -48,47 +51,55 @@ class Item:
         self.controllable = controllable
         self.useable = useable
         self.permanent = permanent
+        self.secret = secret
     
     def activated(self, action: ItemTrigger):
         if self.trigger is None:
             return False
         return action in self.trigger
     
-    def get_embed(self, bot: commands.Bot, color=None, amount_in_cart: int = 1) -> discord.Embed:
+    def get_embed(self, bot: commands.Bot, color=None, amount_in_cart: int = 1, show_price = True, show_info: bool = False) -> discord.Embed:
         emoji = self.emoji
         if isinstance(self.emoji, int):
             emoji = str(bot.get_emoji(self.emoji))
 
         if color is None:
             color=discord.Colour.purple()
-        title = f'> {emoji} {self.name} {emoji}'
+
+        title = f'> ~* {emoji} {self.name} {emoji}  *~'
 
         if self.permanent:
-            title = f'> {emoji} *{self.name}* {emoji}'
+            title = f'> ~* {emoji} *{self.name}* {emoji} *~'
 
         description = self.description
         max_width = 53
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += ' '*spacing
-            
-        if self.permanent:
-            suffix = f'🅱️[34m{self.cost*amount_in_cart}'
-            suffix_len = len(suffix) - 5
-        else:
-            suffix = f'🅱️{self.cost*amount_in_cart}'
-            suffix_len = len(suffix)
-        spacing = max_width - suffix_len 
+
+        suffix = ''
+        spacing = 0
+        if show_price:    
+            if self.permanent:
+                suffix = f'🅱️[34m{self.cost*amount_in_cart}'
+                suffix_len = len(suffix) - 5
+            else:
+                suffix = f'🅱️{self.cost*amount_in_cart}'
+                suffix_len = len(suffix)
+            spacing = max_width - suffix_len 
         info_block = f'```python\n"{description}"\n\n{' '*spacing}{suffix}```'
 
         if self.permanent:
             info_block = f'```ansi\n[33m"{description}"[0m\n\n{' '*spacing}{suffix}```'
         
+        if show_info:
+            info_block += f'```ansi\n[37m{self.information}```'
+        
         embed = discord.Embed(title=title, description=info_block, color=color)
         
         return embed
     
-    def add_to_embed(self, bot: commands.Bot, embed: discord.Embed, max_width: int, count: int=None, show_price: bool = False, name_suffix: str='', disabled: bool = False) -> None:
+    def add_to_embed(self, bot: commands.Bot, embed: discord.Embed, max_width: int, count: int=None, show_price: bool = False, name_suffix: str='', disabled: bool = False, show_info: bool = False) -> None:
         emoji = self.emoji
         if isinstance(self.emoji, int):
             emoji = str(bot.get_emoji(self.emoji))
@@ -142,6 +153,9 @@ class Item:
 
             spacing = max_width - prefix_len - suffix_len
             info_block = f'```python\n"{description}"\n\n{prefix}{' '*spacing}{suffix}```'
+        
+        if show_info:
+            info_block += f'```ansi\n[37m{self.information}```'
 
         
         embed.add_field(name=title, value=info_block, inline=False)
