@@ -224,6 +224,76 @@ class AIManager(Service):
         response = chat_completion.choices[0].message.content
         return response
 
+    async def stonerfy(self, text_prompt: str):
+        backstory = (
+            "Reword the message you recieve in the way a completely high on weed stoner would say it while he has the high of his life. Often uses 'dude' and 'ya man'."
+            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+        )
+
+        return await self.modify(text_prompt, backstory)
+
+    async def uwufy(self, text_prompt: str):
+        backstory = (
+            "Reword the message you recieve in the way a super cutesy random rawr teenage uwu e-girl would on the internet in 2010. "
+            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+        )
+
+        return await self.modify(text_prompt, backstory)
+    
+    async def religify(self, text_prompt: str):
+        backstory = (
+            "Reword the message you recieve in the way a super pure and religious fanatic would, who is strictly opposed to anything sexual. "
+            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+        )
+
+        return await self.modify(text_prompt, backstory)
+
+    async def alcoholify(self, text_prompt: str):
+        backstory = (
+            "Reword the message you recieve in the way a super drunk alcoholic uncle or aunt would, "
+            "slurring their words and being needlessly angry and agressive but sometimes weirdly wholesome. "
+            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+        )
+
+        return await self.modify(text_prompt, backstory)
+
+    async def weebify(self, text_prompt: str):
+        backstory = (
+            "Reword the message you recieve in the way a super over the top hyped anime nerd would, using some japanese phrases known from anime. "
+            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+        )
+
+        return await self.modify(text_prompt, backstory)
+
+    async def britify(self, text_prompt: str):
+        backstory = (
+            "Reword the message you recieve in ye olde english. "
+            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+        )
+
+        return await self.modify(text_prompt, backstory)
+
+    async def meowify(self, text_prompt: str):
+        backstory = (
+            "Reword the message you recieve and replace it with cat speak only containing meows and cat noises. "
+            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+        )
+
+        return await self.modify(text_prompt, backstory)
+
+    async def modify(self, text_prompt:str, backstory:str):
+        chat_log = ChatLog(backstory)
+        ai_version = AIVersion.GPT3_5
+
+        chat_log.add_user_message(text_prompt)
+
+        chat_completion = await self.client.chat.completions.create(
+            messages=chat_log.get_request_data(),
+            model=ai_version,
+        )
+        response = chat_completion.choices[0].message.content
+        return response
+
     async def respond(self, message: discord.Message):
         channel_id = message.channel.id
         ai_version = AIVersion.GPT4

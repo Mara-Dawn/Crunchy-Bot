@@ -55,7 +55,7 @@ class Garden(BeansGroup):
         self.garden_notifications.start()
         self.logger.log("init", "Garden loaded.", cog=self.__cog_name__)
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=15)
     async def garden_view_refresh(self):
         self.logger.debug(
             "sys", "Garden view refresh task started.", cog=self.__cog_name__

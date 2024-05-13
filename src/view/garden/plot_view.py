@@ -123,7 +123,6 @@ class PlotView(ViewMenu):
 
     async def set_selected_seed(self, plant_type: PlantType):
         self.selected_seed = plant_type
-        await self.refresh_ui()
 
     def refresh_elements(self):
 
@@ -182,13 +181,7 @@ class PlotView(ViewMenu):
 
         garden_embed = GardenEmbed(self.controller.bot, self.garden)
         content = garden_embed.get_garden_content()
-        plot_nr = UserGarden.PLOT_ORDER.index((self.x, self.y))
-
-        plant_name = None
-        if self.plot.plant is not None:
-            plant_name = self.plot.plant.type.value
-
-        embed = PlotEmbed(plot_nr, self.x, self.y, plant_name)
+        embed = PlotEmbed(self.plot)
 
         status_picture = self.plot.get_status_image()
         plot_picture = discord.File(f"./img/garden/{status_picture}", "status.png")

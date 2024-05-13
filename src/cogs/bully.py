@@ -3,6 +3,7 @@ import typing
 
 import discord
 from bot import CrunchyBot
+from control.ai_manager import AIManager
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
@@ -11,10 +12,10 @@ from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.types import ItemTrigger
-from discord import app_commands
+from discord import HTTPException, NotFound, Webhook, app_commands
 from discord.ext import commands
 from events.inventory_event import InventoryEvent
-from items.types import ItemType
+from items.types import ItemGroup, ItemType
 
 
 class Bully(commands.Cog):
@@ -27,9 +28,11 @@ class Bully(commands.Cog):
         self.item_manager: ItemManager = self.controller.get_service(ItemManager)
         self.event_manager: EventManager = self.controller.get_service(EventManager)
         self.role_manager: RoleManager = self.controller.get_service(RoleManager)
+        self.ai_manager: AIManager = self.controller.get_service(AIManager)
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
         )
+        self.webhooks: dict[int, Webhook] = {}
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -73,38 +76,96 @@ class Bully(commands.Cog):
 
         for user_id, items in user_items.items():
             for item in items:
-                match item.type:
-                    case ItemType.REACTION_SPAM:
+                if item.type == ItemType.REACTION_SPAM:
+                    target_id, emoji = await self.database.get_bully_react(
+                        guild_id, user_id
+                    )
 
-                        target_id, emoji = await self.database.get_bully_react(
-                            guild_id, user_id
-                        )
+                    if message.author.id != target_id:
+                        continue
 
-                        if message.author.id != target_id:
-                            continue
-
-                        if emoji is None:
-                            continue
-
+                    if emoji is None:
+                        continue
+                    try:
                         current_message = await message.channel.fetch_message(
                             message.id
                         )
-                        if emoji in [x.emoji for x in current_message.reactions]:
-                            continue
-
-                        await message.add_reaction(emoji)
-
-                        event = InventoryEvent(
-                            datetime.datetime.now(),
-                            guild_id,
-                            user_id,
-                            item.type,
-                            -1,
-                        )
-                        await self.controller.dispatch_event(event)
-
-                    case _:
+                    except NotFound:
                         continue
+
+                    if emoji in [x.emoji for x in current_message.reactions]:
+                        continue
+
+                    await message.add_reaction(emoji)
+
+                    event = InventoryEvent(
+                        datetime.datetime.now(),
+                        guild_id,
+                        user_id,
+                        item.type,
+                        -1,
+                    )
+                    await self.controller.dispatch_event(event)
+                if item.group == ItemGroup.DEBUFF:
+                    if message.author.id != user_id:
+                        continue
+                    await self.modify_message(item.type, message)
+                    return
+
+    async def modify_message(self, item_type: ItemType, message: discord.Message):
+        content = message.content
+        channel = message.channel
+        author = message.author
+        guild_id = message.guild.id
+
+        await message.delete()
+
+        generated_content = ""
+
+        match item_type:
+            case ItemType.HIGH_AS_FRICK:
+                generated_content = await self.ai_manager.stonerfy(content)
+            case ItemType.EGIRL_DEBUFF:
+                generated_content = await self.ai_manager.uwufy(content)
+            case ItemType.RELIGION_DEBUFF:
+                generated_content = await self.ai_manager.religify(content)
+            case ItemType.ALCOHOL_DEBUFF:
+                generated_content = await self.ai_manager.alcoholify(content)
+            case ItemType.WEEB_DEBUFF:
+                generated_content = await self.ai_manager.weebify(content)
+            case ItemType.BRIT_DEBUFF:
+                generated_content = await self.ai_manager.britify(content)
+            case ItemType.MEOW_DEBUFF:
+                generated_content = await self.ai_manager.meowify(content)
+
+        if channel.id not in self.webhooks:
+            self.webhooks[channel.id] = await channel.create_webhook(
+                name=author.display_name
+            )
+        try:
+            await self.webhooks[channel.id].send(
+                content=generated_content,
+                username=author.display_name,
+                avatar_url=author.display_avatar,
+            )
+        except (HTTPException, NotFound):
+            self.webhooks[channel.id] = await channel.create_webhook(
+                name=author.display_name
+            )
+            await self.webhooks[channel.id].send(
+                content=generated_content,
+                username=author.display_name,
+                avatar_url=author.display_avatar,
+            )
+
+        event = InventoryEvent(
+            datetime.datetime.now(),
+            guild_id,
+            author.id,
+            item_type,
+            -1,
+        )
+        await self.controller.dispatch_event(event)
 
     group = app_commands.Group(
         name="bully", description="Subcommands for the Bully module."

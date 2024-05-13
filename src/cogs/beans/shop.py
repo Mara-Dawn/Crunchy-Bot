@@ -112,6 +112,7 @@ class Shop(commands.Cog):
             await self.item_manager.get_item(interaction.guild_id, enum)
             for enum in ItemType
         ]
+
         choices = [
             app_commands.Choice(
                 name=item.name,

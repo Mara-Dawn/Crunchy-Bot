@@ -994,6 +994,194 @@ class MimicDetector(Item):
         )
 
 
+class GhostBean(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Spooky Bean",
+            type=ItemType.SPOOK_BEAN,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.GARDEN,
+            description=(
+                "This bean allows you to possess someone with a random ghost. "
+                "The ghost will mess with their messages for a short while, "
+                "hwever you have no control over which ghost it is. Possible outcomes: "
+                "E-Girl, Priest, Alcoholic, Weeb, British, Cat"
+            ),
+            information="Obtained when harvesting a Ghost Bean Plant from your garden.",
+            emoji="👻",
+            cost=cost,
+            value=1,
+            view_class="ShopUserSelectView",
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[],
+            controllable=True,
+            useable=True,
+            hide_in_shop=True,
+        )
+
+
+# Debuffs
+class Debuff(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="",
+            type=None,
+            group=ItemGroup.DEBUFF,
+            shop_category=ShopCategory.GARDEN,
+            description="",
+            information="",
+            emoji="",
+            cost=cost,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[ItemTrigger.USER_MESSAGE],
+            controllable=False,
+            hide_in_shop=True,
+        )
+
+
+class HighAsFrick(Debuff):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Blazed out of your Mind"
+        self.type = ItemType.HIGH_AS_FRICK
+        self.description = (
+            "You found this special shiny bean while harvesting your last bean plant. "
+            "It looks really juicy, maybe it will produce even more beans!"
+        )
+        self.information = (
+            "You gain this debuff after harvesting the Baked Beans plant. "
+            "Your next 7 messages will become stoner talk instead."
+        )
+        self.emoji = "💨"
+
+
+class UwUfy(Debuff):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Rawr xD omgoshiess *sparkles* ^-^"
+        self.type = ItemType.EGIRL_DEBUFF
+        self.description = (
+            "You were possessed by a super random egirl teenager from 2010. "
+            "You feel a desperate need for attention and just cant hold back all the uwu."
+            "(We take no responsibility for whatever happens while possessed) "
+        )
+        self.information = (
+            "You gain this debuff when someone uses a ghost bean on you. "
+            "Your next 7 messages will become uwu egirl talk."
+        )
+        self.emoji = "💞"
+
+
+class Religify(Debuff):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Praise the Lord!"
+        self.type = ItemType.RELIGION_DEBUFF
+        self.description = (
+            "You were possessed by a religious fanatic. "
+            "You feel a desperate need to judge everyone harshly for their impureness. "
+            "(We take no responsibility for whatever happens while possessed) "
+        )
+        self.information = (
+            "You gain this debuff when someone uses a ghost bean on you. "
+            "Your next 7 messages will become religious fanatic talk."
+        )
+        self.emoji = "⛪"
+
+
+class Alcoholify(Debuff):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "BUUUURP *Hic*"
+        self.type = ItemType.ALCOHOL_DEBUFF
+        self.description = (
+            "You were possessed by a raging alcoholic. "
+            "You feel a desperate need to yell at people and slur your words. "
+            "(We take no responsibility for whatever happens while possessed) "
+        )
+        self.information = (
+            "You gain this debuff when someone uses a ghost bean on you. "
+            "Your next 7 messages will become alcoholic talk."
+        )
+        self.emoji = "🍺"
+
+
+class Weebify(Debuff):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Kawaii Desu"
+        self.type = ItemType.WEEB_DEBUFF
+        self.description = (
+            "You were possessed by a shut in weeb. "
+            "You feel a desperate need to make anime references ant speak japanese. "
+            "(We take no responsibility for whatever happens while possessed) "
+        )
+        self.information = (
+            "You gain this debuff when someone uses a ghost bean on you. "
+            "Your next 7 messages will become weeb talk."
+        )
+        self.emoji = "🗾"
+
+
+class Britify(Debuff):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Bri'ish Debuff"
+        self.type = ItemType.BRIT_DEBUFF
+        self.description = (
+            "You were possessed by an old british person. "
+            "You feel a desperate need to speak in ye olde english. "
+            "(We take no responsibility for whatever happens while possessed) "
+        )
+        self.information = (
+            "You gain this debuff when someone uses a ghost bean on you. "
+            "Your next 7 messages will become brit talk."
+        )
+        self.emoji = "😩"
+
+
+class Meowify(Debuff):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Nyaaaa :3"
+        self.type = ItemType.MEOW_DEBUFF
+        self.description = (
+            "You were possessed by a Cat. "
+            "You feel a desperate need to meow meow meow mrrrrp. "
+            "(We take no responsibility for whatever happens while possessed) "
+        )
+        self.information = (
+            "You gain this debuff when someone uses a ghost bean on you. "
+            "Your next 7 messages will become cat talk."
+        )
+        self.emoji = "😸"
+
+
 # Garden Seeds
 
 
@@ -1154,7 +1342,7 @@ class CatSeed(BaseSeed):
 class YellowSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
-        defaultcost = 500
+        defaultcost = 1000
         if cost is None:
             cost = defaultcost
 
@@ -1162,19 +1350,22 @@ class YellowSeed(BaseSeed):
         self.name = "Piss Bean Seed"
         self.type = ItemType.YELLOW_SEED
         self.description = (
-            "This little stinker smells awful! You recognize the scent but it takes you a while to connect the dots."
-            "Its piss. And not a particularly healthy kind. Better go plant it quick. (Fertilizes the soil, making the next 3 plants "
-            "on this plot grow 1.5 times as fast)"
+            "This little stinker smells awful! You recognize the scent but it takes you a while to connect the dots. "
+            "Yep, it's piss. And not a particularly healthy kind. Better go plant it quick. (Fertilizes the soil, making plants grow faster)"
         )
-        self.information = "Available as a rare drop from lootboxes."
+        self.information = (
+            "Available as a rare drop from lootboxes."
+            "\nTakes 2-4 Days to grow, depending on water."
+            "\nProduces 200 - 300 beans when harvested."
+            "\nFertilizes the plot it was planted on for 3 days, making beans grow 50% faster."
+        )
         self.emoji = YellowBeanPlant.READY_EMOJI
-        self.secret = True
 
 
 class GhostSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
-        defaultcost = 500
+        defaultcost = 1000
         if cost is None:
             cost = defaultcost
 
@@ -1182,12 +1373,16 @@ class GhostSeed(BaseSeed):
         self.name = "Ghost Bean Seed"
         self.type = ItemType.GHOST_SEED
         self.description = (
-            "You find an oddly cat-shaped pink bean, you can only begin to speculate what the hell this is. "
-            "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
+            "OOoooOOoooo so spooky! Yoi can even see through this bean, woah!"
+            "Plant it in your garden and maybe youll get to see something amazing."
         )
-        self.information = "Available as a rare drop from lootboxes."
+        self.information = (
+            "Available as a rare drop from lootboxes."
+            "\nTakes 3-6 Days to grow, depending on water."
+            "\nProduces 450 - 550 beans when harvested."
+            "\nWhen harvested it will always drop a Spooky Bean that allwos you to curse others."
+        )
         self.emoji = GhostBeanPlant.READY_EMOJI
-        self.secret = True
 
 
 class BakedSeed(BaseSeed):
@@ -1201,12 +1396,17 @@ class BakedSeed(BaseSeed):
         self.name = "Baked Bean Seed"
         self.type = ItemType.BAKED_SEED
         self.description = (
-            "You find an oddly cat-shaped pink bean, you can only begin to speculate what the hell this is. "
-            "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
+            "You can hear the faint sound of reggea music as you pick up these beans. "
+            "They look at you with deep red eyes and give off a toasty dank smell. "
+            "Go plant them in your garden, im sure they wont care. "
         )
-        self.information = "Available as a rare drop from lootboxes."
+        self.information = (
+            "Available as a rare drop from lootboxes."
+            "\nTakes 2-4 Days to grow, depending on water."
+            "\nProduces 420 - 690 beans when harvested."
+            "\nWhen harvested they will make you stoned and turn your next 7 messages into stoner talk gibberish."
+        )
         self.emoji = BakedBeanPlant.READY_EMOJI
-        self.secret = True
 
 
 # Permanent Rare Items
@@ -1258,7 +1458,7 @@ class PermPetBoost(Item):
                 " It affects the base roll, so it will also scale with any bonus modifiers."
                 " Possible side effects include randomly using the ':3' emote."
             ),
-            information="Given out at the end of a Beans season for every 10k Beans Score you aquired.",
+            information="Unique Item, Given out at the end of Beans Season 1.",
             emoji="🐾",
             cost=cost,
             value=1,

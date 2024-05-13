@@ -1,4 +1,5 @@
 import datetime
+import secrets
 
 import discord
 from datalayer.database import Database
@@ -9,6 +10,7 @@ from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType, EventType, UIEventType
 from events.ui_event import UIEvent
+from items.item import Item
 from items.types import ItemState, ItemType
 from view.types import ActionType
 
@@ -66,6 +68,14 @@ class InventoryViewController(ViewController):
                 await self.sell(
                     interaction, item_type, amount, sell_until, event.view_id
                 )
+            case UIEventType.SHOP_RESPONSE_USER_SUBMIT:
+                if event.view_id is not None:
+                    return
+                interaction = event.payload[0]
+                shop_data = event.payload[1]
+                selected_user = shop_data.selected_user
+                item = shop_data.item
+                await self.submit_user_view(interaction, selected_user, item)
 
     async def sell(
         self,
@@ -119,6 +129,64 @@ class InventoryViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
+    async def submit_user_view(
+        self,
+        interaction: discord.Interaction,
+        target: discord.Member,
+        item: Item,
+    ):
+        guild_id = interaction.guild_id
+        user_id = interaction.user.id
+
+        match item.type:
+            case ItemType.SPOOK_BEAN:
+                if target is not None and target.bot:
+                    await interaction.followup.send(
+                        "You cannot select bot users.", ephemeral=True
+                    )
+                    return
+
+                if target is None:
+                    await interaction.followup.send(
+                        "Please select a user first.", ephemeral=True
+                    )
+                    return
+
+                random_ghosts = [
+                    ItemType.EGIRL_DEBUFF,
+                    ItemType.RELIGION_DEBUFF,
+                    ItemType.ALCOHOL_DEBUFF,
+                    ItemType.WEEB_DEBUFF,
+                    ItemType.BRIT_DEBUFF,
+                    ItemType.MEOW_DEBUFF,
+                ]
+
+                ghost = secrets.choice(random_ghosts)
+
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    target.id,
+                    ghost,
+                    7,
+                )
+                await self.controller.dispatch_event(event)
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    user_id,
+                    item.type,
+                    -1,
+                )
+                await self.controller.dispatch_event(event)
+
+                await interaction.followup.send(
+                    f"{target.display_name} was possessed by a random ghost.",
+                    ephemeral=True,
+                )
+                message = await interaction.original_response()
+                await message.delete()
+
     async def item_action(
         self,
         interaction: discord.Interaction,
@@ -142,7 +210,7 @@ class InventoryViewController(ViewController):
                     guild_id, user_id, item_type, item_state
                 )
             case ActionType.USE_ACTION:
-                await self.item_manager.use_item(interaction.guild, user_id, item_type)
+                await self.item_manager.use_item_interaction(interaction, item_type)
 
         inventory = await self.item_manager.get_user_inventory(guild_id, user_id)
 
