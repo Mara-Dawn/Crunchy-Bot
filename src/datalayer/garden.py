@@ -15,26 +15,29 @@ class Plant:
 
     IMAGE_DIR = "bean"
 
-    IMAGE_MAP = {
-        PlotState.SEED_PLANTED: f"{IMAGE_DIR}/planted.png",
-        PlotState.SEED_PLANTED_WET: f"{IMAGE_DIR}/planted_wet.png",
-        PlotState.GROWING: f"{IMAGE_DIR}/growing.png",
-        PlotState.GROWING_WET: f"{IMAGE_DIR}/growing_wet.png",
-        PlotState.READY: f"{IMAGE_DIR}/ready.png",
-    }
+    IMAGE_MAP = {}
 
-    EMOJI_MAP = {
-        PlotState.SEED_PLANTED: SEED_EMOJI,
-        PlotState.SEED_PLANTED_WET: SEED_EMOJI_WATERED,
-        PlotState.GROWING: GROWING_EMOJI,
-        PlotState.GROWING_WET: GROWING_EMOJI_WATERED,
-        PlotState.READY: READY_EMOJI,
-    }
+    EMOJI_MAP = {}
 
     def __init__(self, plant_type: PlantType):
         self.type = plant_type
         self.seed_hours = 0
         self.grow_hours = 0
+        self.IMAGE_MAP = {
+            PlotState.SEED_PLANTED: f"{self.IMAGE_DIR}/planted.png",
+            PlotState.SEED_PLANTED_WET: f"{self.IMAGE_DIR}/planted_wet.png",
+            PlotState.GROWING: f"{self.IMAGE_DIR}/growing.png",
+            PlotState.GROWING_WET: f"{self.IMAGE_DIR}/growing_wet.png",
+            PlotState.READY: f"{self.IMAGE_DIR}/ready.png",
+        }
+
+        self.EMOJI_MAP = {
+            PlotState.SEED_PLANTED: self.SEED_EMOJI,
+            PlotState.SEED_PLANTED_WET: self.SEED_EMOJI_WATERED,
+            PlotState.GROWING: self.GROWING_EMOJI,
+            PlotState.GROWING_WET: self.GROWING_EMOJI_WATERED,
+            PlotState.READY: self.READY_EMOJI,
+        }
 
     def get_status(self, age: int, watered: bool) -> PlotState:
         if age <= self.seed_hours:

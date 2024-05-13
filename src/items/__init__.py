@@ -1,5 +1,6 @@
 from datalayer.garden import (
     BakedBeanPlant,
+    BeanPlant,
     BoxBeanPlant,
     CatBeanPlant,
     CrystalBeanPlant,
@@ -8,7 +9,7 @@ from datalayer.garden import (
     SpeedBeanPlant,
     YellowBeanPlant,
 )
-from datalayer.types import ItemTrigger, PlantType, PlotState
+from datalayer.types import ItemTrigger, PlantType
 
 from items.item import Item
 from items.types import ItemGroup, ItemType, ShopCategory
@@ -28,6 +29,7 @@ class Arrest(Item):
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description="Take the law into your own hands and arrest a user of choice for 30 minutes.",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🚨",
             cost=cost,
             value=None,
@@ -53,6 +55,7 @@ class AutoCrit(Item):
             group=ItemGroup.AUTO_CRIT,
             shop_category=ShopCategory.INTERACTION,
             description="Let these rainbow colored little beans guide your next slap, pet or fart to a guaranteed critical hit.",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="💥",
             cost=cost,
             value=True,
@@ -79,6 +82,7 @@ class Bailout(Item):
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description="Pay off the mods with beans to let you out of jail early.",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🗿",
             cost=cost,
             value=None,
@@ -104,6 +108,7 @@ class Bat(Item):
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.INTERACTION,
             description="Sneak up on someone and knock them out for 20 minutes, making them unable to use and buy items or gamba their beans.",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="💫",
             cost=cost,
             value=20,
@@ -129,6 +134,7 @@ class BonusFart(Item):
             group=ItemGroup.BONUS_ATTEMPT,
             shop_category=ShopCategory.FART,
             description="Allows you to continue farting on a jailed person after using your guaranteed one.",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="😂",
             cost=cost,
             value=True,
@@ -156,6 +162,7 @@ class BonusPet(Item):
             group=ItemGroup.BONUS_ATTEMPT,
             shop_category=ShopCategory.PET,
             description="Allows you to continue giving pets to a jailed person after using your guaranteed one.",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🥰",
             cost=cost,
             value=True,
@@ -183,6 +190,7 @@ class UltraPet(Item):
             group=ItemGroup.MAJOR_JAIL_ACTION,
             shop_category=ShopCategory.PET,
             description="You feel a weird tingle in your hand, almost as if the next person to recieve your pets will be instantly freed from jail.",
+            information="Available as a rare drop from lootboxes.",
             emoji="😳",
             cost=cost,
             value=True,
@@ -210,6 +218,7 @@ class PenetratingPet(Item):
             group=ItemGroup.MAJOR_JAIL_ACTION,
             shop_category=ShopCategory.PET,
             description="Years of hardcore sweaty gaming, dorito dust and a lack of hygiene turned your hands into incredibly effective weapons. Your next pet instantly dissolves any protection the target might have had.",
+            information="Available as a rare drop from lootboxes.",
             emoji="🎮",
             cost=cost,
             value=True,
@@ -237,6 +246,7 @@ class BonusSlap(Item):
             group=ItemGroup.BONUS_ATTEMPT,
             shop_category=ShopCategory.SLAP,
             description="Allows you to continue slapping a jailed person after using your guaranteed one.",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="✋",
             cost=cost,
             value=True,
@@ -264,6 +274,7 @@ class SwapSlap(Item):
             group=ItemGroup.MAJOR_ACTION,
             shop_category=ShopCategory.SLAP,
             description="Limited edition uno reverse card. If you are jailed, your next slap against a non jailed user will make them trade places with you.",
+            information="Available as a rare drop from lootboxes.",
             emoji="🔁",
             cost=cost,
             value=None,
@@ -291,6 +302,7 @@ class UltraSlap(Item):
             group=ItemGroup.MAJOR_ACTION,
             shop_category=ShopCategory.SLAP,
             description="This glove will slap people into another dimension, completely annihilating them and erasing their existence. Your next slap will stun your target for 5 hours.",
+            information="Available as a rare drop from lootboxes.",
             emoji="🥊",
             cost=cost,
             value=60 * 5,
@@ -322,6 +334,7 @@ class ExplosiveFart(Item):
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description=description,
+            information="Available in the shop. Use /shop for more Information.\nYou can hit yourself with this item.",
             emoji="😨",
             cost=cost,
             value=1,
@@ -348,6 +361,7 @@ class UltraFartBoost(Item):
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.FART,
             description="You try to cook a nice lunch, but your cooking skills are so abysmal that the brave souls who 'agreed' to eat it have a near death experience. Powers up your next Fart by x50.",
+            information="Available as a rare drop from lootboxes.",
             emoji="🤮",
             cost=cost,
             value=50,
@@ -375,6 +389,7 @@ class FartBoost(Item):
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.FART,
             description="Extremely dangerous, multiplies the power of your next fart by 3.",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="🤢",
             cost=cost,
             value=3,
@@ -401,6 +416,7 @@ class FartProtection(Item):
             group=ItemGroup.PROTECTION,
             shop_category=ShopCategory.INTERACTION,
             description="According to him his grandpa took it from a dead guy in ww2. The next 5 interactions negatively affecting your jailtime will be reduced by 50%",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="☣",
             cost=cost,
             value=0.5,
@@ -426,6 +442,7 @@ class AdvancedFartProtection(FartProtection):
         self.max_amount = 30
         self.name = self.name + " x3"
         self.description = "A poor paranoid soul sewed 3 hazmat suits into one, making this one much stronger than what you would usually find in a store. (caps out at 25 stacks)"
+        self.information = "Available as a rare drop from lootboxes."
         self.hide_in_shop = True
 
 
@@ -443,6 +460,7 @@ class FartStabilizer(Item):
             group=ItemGroup.STABILIZER,
             shop_category=ShopCategory.FART,
             description="Stabilizes your aim and increases your rectal precision. Your next fart cannot roll below 0.",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="🔭",
             cost=cost,
             value=10,
@@ -469,6 +487,7 @@ class Fartvantage(Item):
             group=ItemGroup.ADVANTAGE,
             shop_category=ShopCategory.FART,
             description="Couldn't hold back again, hm? Better go empty your bowels on some poor loser. Rolls your next fart twice and takes the better result.",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="🍔",
             cost=cost,
             value=2,
@@ -495,6 +514,7 @@ class GigaFart(Item):
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.FART,
             description="Works better than any laxative and boosts the pressure of your next fart by x10. Try not to hurt yourself.",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="💀",
             cost=cost,
             value=10,
@@ -521,6 +541,7 @@ class JailReduction(Item):
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description="Manipulate the mods into believing your jail sentence is actually 30 minutes shorter than it really is. (Cuts off at 30 minutes left)",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🥺",
             cost=cost,
             value=30,
@@ -546,6 +567,7 @@ class LootBoxItem(Item):
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
             description="No need to wait for loot box drops, just buy your own!",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🧰",
             cost=cost,
             value=None,
@@ -572,6 +594,7 @@ class LootBoxItemBundle(Item):
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
             description="Too addicted? Just buy 5 at once! All neatly contained within a single Box.",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🧰",
             cost=cost,
             value=None,
@@ -597,6 +620,7 @@ class PocketMimic(Item):
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
             description="Use this item from your inventory to spawn a large mimic. It will look like a regular chest spawn to other people.",
+            information="Available as a rare drop from lootboxes.",
             emoji="🧰",
             cost=cost,
             value=None,
@@ -625,6 +649,7 @@ class CatGirl(Item):
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
             description="She is lazy, sleepy, does nothing all day and apparently lives in your inventory now. :3",
+            information="Available as a rare drop from lootboxes.",
             emoji="🐱",
             cost=cost,
             value=None,
@@ -656,6 +681,7 @@ class CrappyDrawing(Item):
                 "and you notice a suspiciously wet rolled up small paper ball. After unwrapping it, you can read its message: "
                 "'Coupon for one shitty profile picture drawing form Lusa' (Use item in your inventory to redeem.)"
             ),
+            information="Available as a rare drop from lootboxes.",
             emoji="🧻",
             cost=cost,
             value=None,
@@ -683,6 +709,7 @@ class LotteryTicket(Item):
             group=ItemGroup.LOTTERY,
             shop_category=ShopCategory.FUN,
             description="Enter the Weekly Crunchy Bean Lottery© and win big! Max 3 tickets per person.",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🎫",
             cost=cost,
             value=1,
@@ -708,6 +735,7 @@ class NameColor(Item):
             group=ItemGroup.SUBSCRIPTION,
             shop_category=ShopCategory.FUN,
             description="Paint your discord name in your favourite color! Grab one weeks worth of color tokens. Each day, a token gets consumed until you run out.",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🌈",
             cost=cost,
             value=1,
@@ -733,6 +761,7 @@ class PetBoost(Item):
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.PET,
             description="When a normal pet just isnt enough. Powers up your next pet by 5x.",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="🧸",
             cost=cost,
             value=5,
@@ -759,6 +788,7 @@ class ReactionSpam(Item):
             group=ItemGroup.SUBSCRIPTION,
             shop_category=ShopCategory.FUN,
             description="Hire a personal bully to react to every single message of your victim with an emoji of your choice. One purchase amounts to 10 message reactions. Only one bully can be active at a time.",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🤡",
             cost=cost,
             value=1,
@@ -784,6 +814,7 @@ class Release(Item):
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description="Due to dietary advancements your farts can now help a friend out of jail for one time only.",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🔑",
             cost=cost,
             value=None,
@@ -809,6 +840,7 @@ class RouletteFart(Item):
             group=ItemGroup.IMMEDIATE_USE,
             shop_category=ShopCategory.JAIL,
             description="After a night of heavy drinking you decide to gamble on a fart to prank your friend. 50% chance to jail the target, 50% chance to shit yourself and go to jail instead. (30 minutes)",
+            information="Available in the shop. Use /shop for more Information.",
             emoji="🔫",
             cost=cost,
             value=None,
@@ -834,6 +866,7 @@ class SatanBoost(Item):
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.FART,
             description="A x25 fart boost that sends a jailed person to the shadow realm but with a high risk of the farter being caught in the blast. 75% chance to jail yourself too with the same duration.",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="😈",
             cost=cost,
             value=25,
@@ -860,6 +893,7 @@ class SlapBoost(Item):
             group=ItemGroup.VALUE_MODIFIER,
             shop_category=ShopCategory.SLAP,
             description="For when someone has been extra horny. Powers up your next slap by 5x.",
+            information="Available from loot boxes and in the shop. Use /shop for more Information.",
             emoji="🔨",
             cost=cost,
             value=5,
@@ -886,6 +920,7 @@ class NoLimitGamba(Item):
             group=ItemGroup.GAMBA,
             shop_category=ShopCategory.FUN,
             description="This item removes the Limit for your next gamba. You can bet as much as you want. Good luck.",
+            information="Available as a rare drop from lootboxes.",
             emoji="🎰",
             cost=cost,
             value=1,
@@ -913,6 +948,7 @@ class NoCooldownGamba(Item):
             group=ItemGroup.GAMBA,
             shop_category=ShopCategory.FUN,
             description="Allows you to ignore the cooldown on your next gamba.",
+            information="Available as a rare drop from lootboxes.",
             emoji="🎰",
             cost=cost,
             value=1,
@@ -944,6 +980,7 @@ class MimicDetector(Item):
                 " With her superior sense of smell she can identify mimics before you open them! "
                 " She is super shy though so she will run away after helping you once."
             ),
+            information="Available as a rare drop from lootboxes.\n This item was designed by Maya as part of her season 1 reward.",
             emoji="🦊",
             cost=cost,
             value=1,
@@ -991,12 +1028,16 @@ class BaseSeed(Item):
             cost = defaultcost
 
         super().__init__(
-            name="",
-            type=None,
+            name="Bean Seed",
+            type=ItemType.BEAN_SEED,
             group=ItemGroup.SEED,
             shop_category=ShopCategory.GARDEN,
-            description="",
-            emoji="",
+            description="Just your regular ol' bean, but you plant it in your garden.",
+            information=(
+                "Takes 3-6 Days to grow, depending on water."
+                "\nProduces 450 - 550 beans when harvested."
+            ),
+            emoji=BeanPlant.READY_EMOJI,
             cost=cost,
             value=1,
             view_class=None,
@@ -1019,7 +1060,12 @@ class RareSeed(BaseSeed):
             "You found this special shiny bean while harvesting your last bean plant. "
             "It looks really juicy, maybe it will produce even more beans!"
         )
-        self.emoji = RareBeanPlant.EMOJI_MAP[PlotState.READY]
+        self.information = (
+            "Has a small chance of dropping when harvesting any bean plant."
+            "\nTakes 5-10 Days to grow, depending on water."
+            "\nProduces 1400 - 1600 beans when harvested."
+        )
+        self.emoji = RareBeanPlant.READY_EMOJI
 
 
 class SpeedSeed(BaseSeed):
@@ -1032,7 +1078,12 @@ class SpeedSeed(BaseSeed):
             "When picking up this bean it slips through your fingers and completely defies gravity "
             "by falling significantly faster than any other bean. Maybe it will grow just as fast. "
         )
-        self.emoji = SpeedBeanPlant.EMOJI_MAP[PlotState.READY]
+        self.information = (
+            "Has a small chance of dropping when harvesting any bean plant."
+            "\nTakes 3-6 Hours to grow, depending on water."
+            "\nProduces 90 - 110 beans when harvested."
+        )
+        self.emoji = SpeedBeanPlant.READY_EMOJI
 
 
 class CrystalSeed(BaseSeed):
@@ -1045,7 +1096,12 @@ class CrystalSeed(BaseSeed):
             "WOAH! What a pretty little bean! This must be worth a fortune. "
             "Better plant it quick, just imagine the amount of beans you will make."
         )
-        self.emoji = CrystalBeanPlant.EMOJI_MAP[PlotState.READY]
+        self.information = (
+            "Has a super small chance of dropping when harvesting any bean plant."
+            "\nTakes 7-14 Days to grow, depending on water."
+            "\nProduces 5000 - 6000 beans when harvested."
+        )
+        self.emoji = CrystalBeanPlant.READY_EMOJI
 
 
 class BoxSeed(BaseSeed):
@@ -1063,7 +1119,13 @@ class BoxSeed(BaseSeed):
             "Maybe it will grow into a big beautiful treasure hoard "
             "when you plant it in your garden. Just pray it doesn't have teeth."
         )
-        self.emoji = BoxBeanPlant.EMOJI_MAP[PlotState.READY]
+        self.information = "Available as a rare drop from lootboxes."
+        self.information = (
+            "Available as a rare drop from lootboxes."
+            "\nTakes 4-8 Days to grow, depending on water."
+            "\nDrops a personal x10 chest when harvested."
+        )
+        self.emoji = BoxBeanPlant.READY_EMOJI
 
 
 class CatSeed(BaseSeed):
@@ -1080,7 +1142,13 @@ class CatSeed(BaseSeed):
             "You find an oddly cat-shaped pink bean, you can only begin to speculate what the hell this is. "
             "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
         )
-        self.emoji = CatBeanPlant.EMOJI_MAP[PlotState.READY]
+        self.information = (
+            "Available as a rare drop from lootboxes."
+            "\nTakes 3-6 Days to grow, depending on water."
+            "\nProduces 450 - 550 beans when harvested."
+            "\nAttracts useless catgirls with a small chance to attract a useful one."
+        )
+        self.emoji = CatBeanPlant.READY_EMOJI
 
 
 class YellowSeed(BaseSeed):
@@ -1098,7 +1166,9 @@ class YellowSeed(BaseSeed):
             "Its piss. And not a particularly healthy kind. Better go plant it quick. (Fertilizes the soil, making the next 3 plants "
             "on this plot grow 1.5 times as fast)"
         )
-        self.emoji = YellowBeanPlant.EMOJI_MAP[PlotState.READY]
+        self.information = "Available as a rare drop from lootboxes."
+        self.emoji = YellowBeanPlant.READY_EMOJI
+        self.secret = True
 
 
 class GhostSeed(BaseSeed):
@@ -1115,7 +1185,9 @@ class GhostSeed(BaseSeed):
             "You find an oddly cat-shaped pink bean, you can only begin to speculate what the hell this is. "
             "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
         )
-        self.emoji = GhostBeanPlant.EMOJI_MAP[PlotState.READY]
+        self.information = "Available as a rare drop from lootboxes."
+        self.emoji = GhostBeanPlant.READY_EMOJI
+        self.secret = True
 
 
 class BakedSeed(BaseSeed):
@@ -1132,7 +1204,9 @@ class BakedSeed(BaseSeed):
             "You find an oddly cat-shaped pink bean, you can only begin to speculate what the hell this is. "
             "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
         )
-        self.emoji = BakedBeanPlant.EMOJI_MAP[PlotState.READY]
+        self.information = "Available as a rare drop from lootboxes."
+        self.emoji = BakedBeanPlant.READY_EMOJI
+        self.secret = True
 
 
 # Permanent Rare Items
@@ -1152,6 +1226,7 @@ class PrestigeBean(Item):
             group=ItemGroup.SUBSCRIPTION,
             shop_category=ShopCategory.FUN,
             description="A proof of your achievements in previous Bean seasons. Each of these will generate you one bean a day.",
+            information="Given out at the end of a Beans season for every 10k Beans Score you aquired.",
             emoji="🅱️",
             cost=cost,
             value=1,
@@ -1177,12 +1252,13 @@ class PermPetBoost(Item):
             name="Floof Paws",
             type=ItemType.PERM_PET_BOOST,
             group=ItemGroup.FLAT_BONUS,
-            shop_category=ShopCategory.FUN,
+            shop_category=ShopCategory.PET,
             description=(
                 "These magical gloves will give you a permanent +1 to every pet."
                 " It affects the base roll, so it will also scale with any bonus modifiers."
                 " Possible side effects include randomly using the ':3' emote."
             ),
+            information="Given out at the end of a Beans season for every 10k Beans Score you aquired.",
             emoji="🐾",
             cost=cost,
             value=1,
@@ -1208,12 +1284,13 @@ class UsefulCatGirl(Item):
             name="Useful Catgirl",
             type=ItemType.USEFUL_CATGIRL,
             group=ItemGroup.FLAT_BONUS,
-            shop_category=ShopCategory.FUN,
+            shop_category=ShopCategory.INTERACTION,
             description=(
                 "After housing so many useless catgirls you somehow managed to convince one of them to be useful. "
                 "Whenever you slap someone, she'll also claw at them. Gain +1 to slaps. "
                 "Whenever you pet someone she'll snuggle up close with them. Gain +1 to pets as well."
             ),
+            information="Available as a super rare drop from lootboxes.",
             emoji="🐈",
             cost=cost,
             value=1,
@@ -1239,12 +1316,13 @@ class IncomingPetBoost(Item):
             name="E-Girl UwU",
             type=ItemType.INC_PET_BOOST,
             group=ItemGroup.INCOMING_FLAT_BONUS,
-            shop_category=ShopCategory.FUN,
+            shop_category=ShopCategory.PET,
             description=(
                 "No one can match the cuteness of your UwUs. People love giving you heatpats, permanently "
                 "increasing their effectiveness on you. +1 to each pet you recieve. "
                 " This affects the base value, so it will also scale with any bonus modifiers."
             ),
+            information="Unique Item, Given out at the end of Beans Season 1.",
             emoji="💄",
             cost=cost,
             value=1,
@@ -1270,13 +1348,14 @@ class PermSlapBoost(Item):
             name="Bionic Cyborg Arm",
             type=ItemType.PERM_SLAP_BOOST,
             group=ItemGroup.FLAT_BONUS,
-            shop_category=ShopCategory.FUN,
+            shop_category=ShopCategory.SLAP,
             description=(
                 "You initially got this for its 'personal fun time' programs, but "
                 "it turns out this thing packs a punch! Permanently increases the "
                 "power of your slaps by +1."
                 " This affects the base value, so it will also scale with any bonus modifiers."
             ),
+            information="Unique Item, Given out at the end of Beans Season 1.",
             emoji="🤖",
             cost=cost,
             value=1,
@@ -1302,7 +1381,7 @@ class PermFartBoost(Item):
             name="Big Dumpy",
             type=ItemType.PERM_FART_BOOST,
             group=ItemGroup.FLAT_BONUS,
-            shop_category=ShopCategory.FUN,
+            shop_category=ShopCategory.FART,
             description=(
                 "Dayum, you got that cake, them sweet cheeks, you're packin' a wagon, "
                 " thicker than a bowl of oatmeal, got that big booty and you know how to use it."
@@ -1310,6 +1389,7 @@ class PermFartBoost(Item):
                 " This affects the base value, so it will also scale with any bonus modifiers."
                 " (wont go over the possible max roll)"
             ),
+            information="Unique Item, Given out at the end of Beans Season 1.",
             emoji="🍑",
             cost=cost,
             value=1,
@@ -1335,13 +1415,14 @@ class UltraBoost(Item):
             name="Beanz'n'Dreamz",
             type=ItemType.ULTRA_BOOST,
             group=ItemGroup.VALUE_MODIFIER,
-            shop_category=ShopCategory.FUN,
+            shop_category=ShopCategory.INTERACTION,
             description=(
                 "You've heard stories of catgirls drinking these non-stop, maybe you even have one "
                 "and just see empty cans everywhere. You finally cave in and decide to try "
                 "one yourself and you instantly see why she's addicted. "
                 "It will power up your next fart, pet or slap by x100!"
             ),
+            information="Given out at the end of a Beans season as a bonus reward.",
             emoji="💯",
             cost=cost,
             value=100,
@@ -1373,6 +1454,7 @@ class PermProtection(Item):
                 "and never leaving your home has made you incredibly efficient at dodging not only responsibilities "
                 "but also any harm coming your way. Permanently reduces any incoming jailtime by 1%."
             ),
+            information="Unique Item, Given out at the end of Beans Season 1.",
             emoji="🙈",
             cost=cost,
             value=0.01,

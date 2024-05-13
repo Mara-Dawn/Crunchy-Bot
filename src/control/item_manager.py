@@ -56,6 +56,20 @@ class ItemManager(Service):
 
         return instance
 
+    async def get_catalog_items(self, guild_id: int) -> list[Item]:
+        items = [x for x in ItemType]
+        output = []
+        for item_type in items:
+            item = await self.get_item(guild_id, item_type)
+            if not item.secret:
+                output.append(item)
+
+        output = sorted(
+            output,
+            key=lambda x: (x.permanent, x.shop_category.value, x.cost),
+        )
+        return output
+
     async def get_shop_items(self, guild_id: int) -> list[Item]:
         items = [x for x in ItemType]
         output = []
@@ -274,11 +288,16 @@ class ItemManager(Service):
     async def get_user_inventory(self, guild_id: int, user_id: int) -> UserInventory:
         item_data = await self.database.get_item_counts_by_user(guild_id, user_id)
 
-        inventory_items = []
+        inventory_items: list[Item] = []
 
         for item_type in item_data:
             item = await self.get_item(guild_id, item_type)
             inventory_items.append(item)
+
+        inventory_items = sorted(
+            inventory_items,
+            key=lambda x: (not x.permanent, x.shop_category.value, x.cost),
+        )
 
         balance = await self.database.get_member_beans(guild_id, user_id)
         custom_name_color = await self.database.get_custom_color(guild_id, user_id)

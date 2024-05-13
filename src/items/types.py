@@ -47,6 +47,7 @@ class ItemType(str, Enum):
     INC_PET_BOOST = "IncomingPetBoost"
     MIMIC_DETECTOR = "MimicDetector"
 
+    BEAN_SEED = "BaseSeed"
     RARE_SEED = "RareSeed"
     SPEED_SEED = "SpeedSeed"
     BOX_SEED = "BoxSeed"
