@@ -7,8 +7,29 @@ from datalayer.types import PlantType, PlotState
 
 class Plant:
 
-    IMAGE_MAP = {}
-    EMOJI_MAP = {}
+    SEED_EMOJI = 1238648940992401439
+    SEED_EMOJI_WATERED = 1238648945408872449
+    GROWING_EMOJI = 1238648939058696296
+    GROWING_EMOJI_WATERED = 1238648943806517248
+    READY_EMOJI = 1238648937666318406
+
+    IMAGE_DIR = "bean"
+
+    IMAGE_MAP = {
+        PlotState.SEED_PLANTED: f"{IMAGE_DIR}/planted.png",
+        PlotState.SEED_PLANTED_WET: f"{IMAGE_DIR}/planted_wet.png",
+        PlotState.GROWING: f"{IMAGE_DIR}/growing.png",
+        PlotState.GROWING_WET: f"{IMAGE_DIR}/growing_wet.png",
+        PlotState.READY: f"{IMAGE_DIR}/ready.png",
+    }
+
+    EMOJI_MAP = {
+        PlotState.SEED_PLANTED: SEED_EMOJI,
+        PlotState.SEED_PLANTED_WET: SEED_EMOJI_WATERED,
+        PlotState.GROWING: GROWING_EMOJI,
+        PlotState.GROWING_WET: GROWING_EMOJI_WATERED,
+        PlotState.READY: READY_EMOJI,
+    }
 
     def __init__(self, plant_type: PlantType):
         self.type = plant_type
@@ -37,22 +58,7 @@ class BeanPlant(Plant):
     GROWING_EMOJI = 1238648939058696296
     GROWING_EMOJI_WATERED = 1238648943806517248
     READY_EMOJI = 1238648937666318406
-
-    IMAGE_MAP = {
-        PlotState.SEED_PLANTED: "bean/planted.png",
-        PlotState.SEED_PLANTED_WET: "bean/planted_wet.png",
-        PlotState.GROWING: "bean/growing.png",
-        PlotState.GROWING_WET: "bean/growing_wet.png",
-        PlotState.READY: "bean/ready.png",
-    }
-
-    EMOJI_MAP = {
-        PlotState.SEED_PLANTED: SEED_EMOJI,
-        PlotState.SEED_PLANTED_WET: SEED_EMOJI_WATERED,
-        PlotState.GROWING: GROWING_EMOJI,
-        PlotState.GROWING_WET: GROWING_EMOJI_WATERED,
-        PlotState.READY: READY_EMOJI,
-    }
+    IMAGE_DIR = "bean"
 
     def __init__(self):
         super().__init__(PlantType.BEAN)
@@ -69,27 +75,12 @@ class RareBeanPlant(Plant):
     GROWING_EMOJI = 1239252754321510430
     GROWING_EMOJI_WATERED = 1239252750877982771
     READY_EMOJI = 1239252756884099183
-
-    IMAGE_MAP = {
-        PlotState.SEED_PLANTED: "rare_bean/planted.png",
-        PlotState.SEED_PLANTED_WET: "rare_bean/planted_wet.png",
-        PlotState.GROWING: "rare_bean/growing.png",
-        PlotState.GROWING_WET: "rare_bean/growing_wet.png",
-        PlotState.READY: "rare_bean/ready.png",
-    }
-
-    EMOJI_MAP = {
-        PlotState.SEED_PLANTED: SEED_EMOJI,
-        PlotState.SEED_PLANTED_WET: SEED_EMOJI_WATERED,
-        PlotState.GROWING: GROWING_EMOJI,
-        PlotState.GROWING_WET: GROWING_EMOJI_WATERED,
-        PlotState.READY: READY_EMOJI,
-    }
+    IMAGE_DIR = "rare_bean"
 
     def __init__(self):
         super().__init__(PlantType.RARE_BEAN)
         self.seed_hours = 24 * 2
-        self.grow_hours = 24 * 12
+        self.grow_hours = 24 * 10
         # self.seed_hours = 1
         # self.grow_hours = 10
 
@@ -101,22 +92,7 @@ class CrystalBeanPlant(Plant):
     GROWING_EMOJI = 1239224174782976051
     GROWING_EMOJI_WATERED = 1239224178582880297
     READY_EMOJI = 1239224180164005948
-
-    IMAGE_MAP = {
-        PlotState.SEED_PLANTED: "crystal_bean/planted.png",
-        PlotState.SEED_PLANTED_WET: "crystal_bean/planted_wet.png",
-        PlotState.GROWING: "crystal_bean/growing.png",
-        PlotState.GROWING_WET: "crystal_bean/growing_wet.png",
-        PlotState.READY: "crystal_bean/ready.png",
-    }
-
-    EMOJI_MAP = {
-        PlotState.SEED_PLANTED: SEED_EMOJI,
-        PlotState.SEED_PLANTED_WET: SEED_EMOJI_WATERED,
-        PlotState.GROWING: GROWING_EMOJI,
-        PlotState.GROWING_WET: GROWING_EMOJI_WATERED,
-        PlotState.READY: READY_EMOJI,
-    }
+    IMAGE_DIR = "crystal_bean"
 
     def __init__(self):
         super().__init__(PlantType.CRYSTAL_BEAN)
@@ -133,22 +109,7 @@ class SpeedBeanPlant(Plant):
     GROWING_EMOJI = 1239222811344502855
     GROWING_EMOJI_WATERED = 1239222815044009984
     READY_EMOJI = 1239222816641913033
-
-    IMAGE_MAP = {
-        PlotState.SEED_PLANTED: "speed_bean/planted.png",
-        PlotState.SEED_PLANTED_WET: "speed_bean/planted_wet.png",
-        PlotState.GROWING: "speed_bean/growing.png",
-        PlotState.GROWING_WET: "speed_bean/growing_wet.png",
-        PlotState.READY: "speed_bean/ready.png",
-    }
-
-    EMOJI_MAP = {
-        PlotState.SEED_PLANTED: SEED_EMOJI,
-        PlotState.SEED_PLANTED_WET: SEED_EMOJI_WATERED,
-        PlotState.GROWING: GROWING_EMOJI,
-        PlotState.GROWING_WET: GROWING_EMOJI_WATERED,
-        PlotState.READY: READY_EMOJI,
-    }
+    IMAGE_DIR = "speed_bean"
 
     def __init__(self):
         super().__init__(PlantType.SPEED_BEAN)
@@ -165,27 +126,12 @@ class BoxBeanPlant(Plant):
     GROWING_EMOJI = 1239271630656635011
     GROWING_EMOJI_WATERED = 1239271626475044954
     READY_EMOJI = 1239271631516598374
-
-    IMAGE_MAP = {
-        PlotState.SEED_PLANTED: "box_bean/planted.png",
-        PlotState.SEED_PLANTED_WET: "box_bean/planted_wet.png",
-        PlotState.GROWING: "box_bean/growing.png",
-        PlotState.GROWING_WET: "box_bean/growing_wet.png",
-        PlotState.READY: "box_bean/ready.png",
-    }
-
-    EMOJI_MAP = {
-        PlotState.SEED_PLANTED: SEED_EMOJI,
-        PlotState.SEED_PLANTED_WET: SEED_EMOJI_WATERED,
-        PlotState.GROWING: GROWING_EMOJI,
-        PlotState.GROWING_WET: GROWING_EMOJI_WATERED,
-        PlotState.READY: READY_EMOJI,
-    }
+    IMAGE_DIR = "box_bean"
 
     def __init__(self):
         super().__init__(PlantType.BOX_BEAN)
         self.seed_hours = 24
-        self.grow_hours = 24 * 4
+        self.grow_hours = 24 * 8
         # self.seed_hours = 1
         # self.grow_hours = 5
 
@@ -197,27 +143,63 @@ class CatBeanPlant(Plant):
     GROWING_EMOJI = 1239283617306513550
     GROWING_EMOJI_WATERED = 1239283611077972018
     READY_EMOJI = 1239283613984362548
-
-    IMAGE_MAP = {
-        PlotState.SEED_PLANTED: "cat_bean/planted.png",
-        PlotState.SEED_PLANTED_WET: "cat_bean/planted_wet.png",
-        PlotState.GROWING: "cat_bean/growing.png",
-        PlotState.GROWING_WET: "cat_bean/growing_wet.png",
-        PlotState.READY: "cat_bean/ready.png",
-    }
-
-    EMOJI_MAP = {
-        PlotState.SEED_PLANTED: SEED_EMOJI,
-        PlotState.SEED_PLANTED_WET: SEED_EMOJI_WATERED,
-        PlotState.GROWING: GROWING_EMOJI,
-        PlotState.GROWING_WET: GROWING_EMOJI_WATERED,
-        PlotState.READY: READY_EMOJI,
-    }
+    IMAGE_DIR = "cat_bean"
 
     def __init__(self):
         super().__init__(PlantType.CAT_BEAN)
         self.seed_hours = 24
-        self.grow_hours = 24 * 3
+        self.grow_hours = 24 * 6
+        # self.seed_hours = 2
+        # self.grow_hours = 10
+
+
+class YellowBeanPlant(Plant):
+
+    SEED_EMOJI = 1239500356141187174
+    SEED_EMOJI_WATERED = 1239500353586724874
+    GROWING_EMOJI = 1239500354941354034
+    GROWING_EMOJI_WATERED = 1239500352324239381
+    READY_EMOJI = 1239500357407870986
+    IMAGE_DIR = "yellow_bean"
+
+    def __init__(self):
+        super().__init__(PlantType.YELLOW_BEAN)
+        self.seed_hours = 24
+        self.grow_hours = 24 * 4
+        # self.seed_hours = 2
+        # self.grow_hours = 10
+
+
+class GhostBeanPlant(Plant):
+
+    SEED_EMOJI = 1239503898713002055
+    SEED_EMOJI_WATERED = 1239503895517069422
+    GROWING_EMOJI = 1239503897471483914
+    GROWING_EMOJI_WATERED = 1239503893592014900
+    READY_EMOJI = 1239503901091172382
+    IMAGE_DIR = "ghost_bean"
+
+    def __init__(self):
+        super().__init__(PlantType.GHOST_BEAN)
+        self.seed_hours = 24
+        self.grow_hours = 24 * 6
+        # self.seed_hours = 2
+        # self.grow_hours = 10
+
+
+class BakedBeanPlant(Plant):
+
+    SEED_EMOJI = 1239505232421982262
+    SEED_EMOJI_WATERED = 1239505228634521662
+    GROWING_EMOJI = 1239505230635339817
+    GROWING_EMOJI_WATERED = 1239505226969645099
+    READY_EMOJI = 1239505234435244042
+    IMAGE_DIR = "baked_bean"
+
+    def __init__(self):
+        super().__init__(PlantType.GHOST_BEAN)
+        self.seed_hours = 24
+        self.grow_hours = 24 * 6
         # self.seed_hours = 2
         # self.grow_hours = 10
 
@@ -365,4 +347,10 @@ class UserGarden:
                 return CatBeanPlant()
             case PlantType.CRYSTAL_BEAN:
                 return CrystalBeanPlant()
+            case PlantType.YELLOW_BEAN:
+                return YellowBeanPlant()
+            case PlantType.GHOST_BEAN:
+                return GhostBeanPlant()
+            case PlantType.BAKED_BEAN:
+                return BakedBeanPlant()
         return None
