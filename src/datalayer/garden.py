@@ -197,7 +197,7 @@ class BakedBeanPlant(Plant):
     IMAGE_DIR = "baked_bean"
 
     def __init__(self):
-        super().__init__(PlantType.GHOST_BEAN)
+        super().__init__(PlantType.BAKED_BEAN)
         self.seed_hours = 24
         self.grow_hours = 24 * 6
         # self.seed_hours = 2
