@@ -135,7 +135,6 @@ class Shop(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         shop_img = discord.File("./img/shop.png", "shop.png")
-        police_img = discord.File("./img/police.png", "police.png")
         items = await self.item_manager.get_shop_items(interaction.guild_id)
 
         items = sorted(items, key=lambda x: (x.shop_category.value, x.cost))
@@ -151,7 +150,7 @@ class Shop(commands.Cog):
         view = ShopView(self.controller, interaction, items)
 
         message = await interaction.followup.send(
-            "", embed=embed, view=view, files=[shop_img, police_img], ephemeral=True
+            "", embed=embed, view=view, files=[shop_img], ephemeral=True
         )
         view.set_message(message)
         await view.refresh_ui(user_balance=user_balance, user_items=user_items)
