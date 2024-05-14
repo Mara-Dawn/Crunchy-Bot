@@ -1010,7 +1010,7 @@ class GhostBean(Item):
             description=(
                 "This bean allows you to possess someone with a random ghost. "
                 "The ghost will mess with their messages for a short while, "
-                "hwever you have no control over which ghost it is. Possible outcomes: "
+                "however you have no control over which ghost it is. Possible outcomes: "
                 "E-Girl, Priest, Alcoholic, Weeb, British, Cat"
             ),
             information="Obtained when harvesting a Ghost Bean Plant from your garden.",
