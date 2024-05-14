@@ -98,6 +98,11 @@ class Garden(BeansGroup):
                         )
                         await self.controller.dispatch_event(event)
                     if user is not None:
+                        self.logger.log(
+                            "sys",
+                            f"Sending garden notification to {user.display_name}",
+                            cog=self.__cog_name__,
+                        )
                         message = (
                             f"Hey there, some of your plants on {guild.name} are ready to be harvested.\n"
                             "Make sure to drop by and visit your */beans garden* to not miss out on your rewards!"
