@@ -66,7 +66,7 @@ class BeanPlant(Plant):
     def __init__(self):
         super().__init__(PlantType.BEAN)
         self.seed_hours = 24
-        self.grow_hours = 24 * 6 - 2
+        self.grow_hours = 24 * 6 - 4
         # self.seed_hours = 1
         # self.grow_hours = 10
 
@@ -83,7 +83,7 @@ class RareBeanPlant(Plant):
     def __init__(self):
         super().__init__(PlantType.RARE_BEAN)
         self.seed_hours = 24 * 2
-        self.grow_hours = 24 * 10 - 2
+        self.grow_hours = 24 * 10 - 4
         # self.seed_hours = 1
         # self.grow_hours = 10
 
@@ -100,7 +100,7 @@ class CrystalBeanPlant(Plant):
     def __init__(self):
         super().__init__(PlantType.CRYSTAL_BEAN)
         self.seed_hours = 24 * 2
-        self.grow_hours = 24 * 14 - 2
+        self.grow_hours = 24 * 14 - 4
         # self.seed_hours = 1
         # self.grow_hours = 10
 
@@ -134,7 +134,7 @@ class BoxBeanPlant(Plant):
     def __init__(self):
         super().__init__(PlantType.BOX_BEAN)
         self.seed_hours = 24
-        self.grow_hours = 24 * 8 - 2
+        self.grow_hours = 24 * 8 - 4
         # self.seed_hours = 1
         # self.grow_hours = 5
 
@@ -151,7 +151,7 @@ class CatBeanPlant(Plant):
     def __init__(self):
         super().__init__(PlantType.CAT_BEAN)
         self.seed_hours = 24
-        self.grow_hours = 24 * 6 - 2
+        self.grow_hours = 24 * 6 - 4
         # self.seed_hours = 2
         # self.grow_hours = 10
 
@@ -171,7 +171,7 @@ class YellowBeanPlant(Plant):
     def __init__(self):
         super().__init__(PlantType.YELLOW_BEAN)
         self.seed_hours = 24
-        self.grow_hours = 24 * 4 - 2
+        self.grow_hours = 24 * 4 - 4
         # self.seed_hours = 2
         # self.grow_hours = 10
 
@@ -188,7 +188,7 @@ class GhostBeanPlant(Plant):
     def __init__(self):
         super().__init__(PlantType.GHOST_BEAN)
         self.seed_hours = 24
-        self.grow_hours = 24 * 6 - 2
+        self.grow_hours = 24 * 6 - 4
         # self.seed_hours = 2
         # self.grow_hours = 5
 
@@ -205,7 +205,7 @@ class BakedBeanPlant(Plant):
     def __init__(self):
         super().__init__(PlantType.BAKED_BEAN)
         self.seed_hours = 24
-        self.grow_hours = 24 * 4 - 2
+        self.grow_hours = 24 * 4 - 4
         # self.seed_hours = 2
         # self.grow_hours = 5
 
