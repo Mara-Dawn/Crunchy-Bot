@@ -15,7 +15,7 @@ class ControllerType(str, Enum):
 
 class AIVersion(str, Enum):
     GPT3_5 = "gpt-3.5-turbo"
-    GPT4 = "gpt-4-turbo"
+    GPT4 = "gpt-4o"
 
 
 class ControllerModuleMap(str, Enum):
