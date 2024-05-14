@@ -283,7 +283,7 @@ class AIManager(Service):
 
     async def modify(self, text_prompt:str, backstory:str):
         chat_log = ChatLog(backstory)
-        ai_version = AIVersion.GPT3_5
+        ai_version = AIVersion.GPT4
 
         chat_log.add_user_message(text_prompt)
 
