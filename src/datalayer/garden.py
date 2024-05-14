@@ -214,6 +214,8 @@ class Plot:
 
     EMPTY_PLOT_EMOJI = 1238648942489505864
 
+    TIME_MODIFIER = 60 * 60
+
     def __init__(
         self,
         id: int,
@@ -259,29 +261,27 @@ class Plot:
 
         now = datetime.datetime.now()
         delta = now - self.plant_datetime
-        age = int(delta.total_seconds() / 60 / 60)
-        # age = int(delta.total_seconds() / 60)
+        age = delta.total_seconds() / self.TIME_MODIFIER
 
         if len(self.water_events) <= 0:
-            return age
+            return int(age)
 
         watered_hours = 0
         previous = now
         for event in self.water_events:
             delta = previous - event.datetime
-            hours = int(delta.total_seconds() / 60 / 60)
-            # hours = int(delta.total_seconds() / 60)
+            hours = delta.total_seconds() / self.TIME_MODIFIER
             watered_hours += min(24, hours)
             previous = event.datetime
 
-        fertile_hours = self.hours_since_last_fertilized()
-        if fertile_hours is None:
+        last_fertilized = self.hours_since_last_fertilized()
+        if last_fertilized is None:
             fertile_hours = 0
+        fertile_hours = max(0, YellowBeanPlant.FERTILE_TIME - last_fertilized)
         fertile_hours = min(age, fertile_hours)
-        fertile_hours = min(YellowBeanPlant.FERTILE_TIME, fertile_hours)
-        fertile_hours = int(fertile_hours * 0.5)
+        fertile_hours = fertile_hours * 0.5
 
-        return age + watered_hours + fertile_hours
+        return int(age + watered_hours + fertile_hours)
 
     def is_watered(self) -> bool:
         hours = self.hours_since_last_water()
@@ -295,8 +295,7 @@ class Plot:
 
         now = datetime.datetime.now()
         delta = now - self.water_events[0].datetime
-        hours = int(delta.total_seconds() / 60 / 60)
-        # hours = int(delta.total_seconds() / 60)
+        hours = int(delta.total_seconds() / self.TIME_MODIFIER)
         return hours
 
     def hours_since_last_fertilized(self) -> int | None:
@@ -305,8 +304,7 @@ class Plot:
 
         now = datetime.datetime.now()
         delta = now - self.last_fertilized_event.datetime
-        hours = int(delta.total_seconds() / 60 / 60)
-        # hours = int(delta.total_seconds() / 60)
+        hours = int(delta.total_seconds() / self.TIME_MODIFIER)
         return hours
 
     def empty(self):
