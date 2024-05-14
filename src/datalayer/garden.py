@@ -275,11 +275,11 @@ class Plot:
             previous = event.datetime
 
         last_fertilized = self.hours_since_last_fertilized()
-        if last_fertilized is None:
-            fertile_hours = 0
-        fertile_hours = max(0, YellowBeanPlant.FERTILE_TIME - last_fertilized)
-        fertile_hours = min(age, fertile_hours)
-        fertile_hours = fertile_hours * 0.5
+        fertile_hours = 0
+        if last_fertilized is not None:
+            fertile_hours = max(0, YellowBeanPlant.FERTILE_TIME - last_fertilized)
+            fertile_hours = min(age, fertile_hours)
+            fertile_hours = fertile_hours * 0.5
 
         return int(age + watered_hours + fertile_hours)
 
