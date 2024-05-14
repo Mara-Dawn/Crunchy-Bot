@@ -51,7 +51,7 @@ class Garden(BeansGroup):
 
     @commands.Cog.listener("on_ready")
     async def on_ready_garden(self):
-        self.garden_view_refresh.start()
+        # self.garden_view_refresh.start()
         self.garden_notifications.start()
         self.logger.log("init", "Garden loaded.", cog=self.__cog_name__)
 
