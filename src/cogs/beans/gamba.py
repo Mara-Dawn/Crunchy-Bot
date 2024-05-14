@@ -300,7 +300,7 @@ class Gamba(commands.Cog):
         times_two = 0.30
         times_three = 0.14
         times_five = 0.05
-        jackpot = 0.001
+        jackpot = 0.01
 
         # (0.27*2)+(0.14*3)+(0.05*5)+(0.001*10)
         result = random.random()
