@@ -292,7 +292,6 @@ class Gamba(commands.Cog):
             "\n**3x**🎲🎲",
             "\n**5x**🎲🎲🎲",
             "\n**10x**🎲🎲🎲🎲",
-            "\n**100x**🎲🎲🎲🎲🎲",
         ]
 
         payout = 0
@@ -301,10 +300,9 @@ class Gamba(commands.Cog):
         times_two = 0.30
         times_three = 0.14
         times_five = 0.05
-        # times_ten = 0.009
         jackpot = 0.001
 
-        # (0.27*2)+(0.14*3)+(0.05*5)+(0.009*10)+(0.001*100)
+        # (0.27*2)+(0.14*3)+(0.05*5)+(0.001*10)
         result = random.random()
 
         prompt = "I tried to bet my beans on the beans gamble,"
@@ -329,20 +327,12 @@ class Gamba(commands.Cog):
             payout = amount * 5
             final = f"Your luck is amazing! Your payout is `🅱️{payout}` beans."
             prompt += f"and i won `🅱️{payout}` beans, which is a large amount. Please congratulate me."
-        elif result > (loss + times_two + times_three + times_five) and result <= (
-            1 - jackpot
-        ):
+        elif result > (1 - jackpot) and result <= 1:
             final_display = 4
             payout = amount * 10
-            final = f"**BIG WIN!** Your payout is `🅱️{payout}` beans."
+            final = f"**JACKPOT!** Your payout is `🅱️{payout}` beans."
             prompt += f"and i won `🅱️{payout}` beans, which is a massive amount."
             prompt += " Please congratulate me a lot and freak out a little because it is so rare."
-        elif result > (1 - jackpot) and result <= 1:
-            final_display = 5
-            payout = amount * 100
-            final = f"**JACKPOT!!!** Your payout is `🅱️{payout}` beans."
-            prompt += f"and i hit the jackpot! Now im rich, i got  `🅱️{payout}` beans as a payout! "
-            prompt += "Please congratulate me a lot and praise me. Completely freak out about it and break character a little."
 
         if result > loss:
             prompt += " please mention the amount of beans i won."
@@ -365,7 +355,7 @@ class Gamba(commands.Cog):
         message = await interaction.original_response()
         i = 0
         current = i
-        while i <= 12 or current != final_display:
+        while i <= 10 or current != final_display:
             current = i % len(display_values)
             display = display_values[current]
             await asyncio.sleep((1 / 30) * i * 2)

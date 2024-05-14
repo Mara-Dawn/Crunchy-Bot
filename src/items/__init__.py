@@ -1136,7 +1136,7 @@ class Weebify(Debuff):
         self.type = ItemType.WEEB_DEBUFF
         self.description = (
             "You were possessed by a shut in weeb. "
-            "You feel a desperate need to make anime references ant speak japanese. "
+            "You feel a desperate need to make anime references and speak japanese. "
             "(We take no responsibility for whatever happens while possessed) "
         )
         self.information = (
