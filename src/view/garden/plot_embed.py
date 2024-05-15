@@ -38,7 +38,7 @@ class PlotEmbed(discord.Embed):
                 description += (
                     f"*Flash bean buff will run out in {flash_bean_left} hours*\n"
                 )
-        if flash_beans_active >= 0:
+        if flash_beans_active > 0:
             description += (
                 f"*You currently have {flash_beans_active} active Flash Beans*\n"
             )
