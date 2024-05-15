@@ -397,7 +397,7 @@ class Plot:
         return hours
 
     def get_hours_since_last_flash_bean(self) -> int | None:
-        if len(self.modifiers.flash_bean_events) <= 0:
+        if self.modifiers is None or len(self.modifiers.flash_bean_events) <= 0:
             return None
 
         now = datetime.datetime.now()
@@ -406,7 +406,7 @@ class Plot:
         return hours
 
     def get_active_flash_bean_count(self) -> int | None:
-        if len(self.modifiers.flash_bean_events) <= 0:
+        if self.modifiers is None or len(self.modifiers.flash_bean_events) <= 0:
             return 0
         count = 0
         now = datetime.datetime.now()
