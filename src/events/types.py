@@ -18,6 +18,7 @@ class EventType(str, Enum):
 
 class BeansEventType(str, Enum):
     DAILY = "daily"
+    SEASON_START = "season_start"
     GAMBA_COST = "gamba_cost"
     GAMBA_PAYOUT = "gamba_payout"
     BONUS_PAYOUT = "bonus_payout"

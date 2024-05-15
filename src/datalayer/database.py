@@ -1611,6 +1611,45 @@ class Database:
 
         return {row[self.BEANS_EVENT_MEMBER_COL]: row["high_score"] for row in rows}
 
+    async def get_member_beans_rankings(
+        self,  guild_id: int, member_id: int, season: Season = Season.CURRENT
+    ) -> int:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
+        command = f"""
+            SELECT {self.BEANS_EVENT_MEMBER_COL}, MAX(rollingSum) as high_score 
+            FROM (
+                SELECT *, SUM({self.BEANS_EVENT_VALUE_COL}) 
+                OVER ( 
+                    PARTITION BY {self.BEANS_EVENT_MEMBER_COL} 
+                    ORDER BY {self.BEANS_EVENT_ID_COL}
+                ) as rollingSum 
+                FROM {self.BEANS_EVENT_TABLE}
+                INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
+                AND {self.EVENT_GUILD_ID_COL} = ?
+                WHERE {self.BEANS_EVENT_TYPE_COL} NOT IN (?, ?, ?, ?)
+                AND {self.EVENT_TIMESTAMP_COL} > ?
+                AND {self.EVENT_TIMESTAMP_COL} <= ?
+                AND {self.BEANS_EVENT_MEMBER_COL} = ?
+            )
+            GROUP BY {self.BEANS_EVENT_MEMBER_COL};
+        """
+        task = (
+            guild_id,
+            BeansEventType.SHOP_PURCHASE.value,
+            BeansEventType.USER_TRANSFER.value,
+            BeansEventType.BALANCE_CHANGE.value,
+            BeansEventType.SHOP_BUYBACK.value,
+            start_timestamp,
+            end_timestamp,
+            member_id
+        )
+
+        rows = await self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return 0
+
+        return rows[0]["high_score"]
+
     async def get_lootbox_purchases_by_guild(
         self, guild_id: int, until: int = None, season: Season = Season.CURRENT
     ) -> dict[int, int]:

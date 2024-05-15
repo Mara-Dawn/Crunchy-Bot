@@ -94,8 +94,13 @@ class LootBoxViewController(ViewController):
             return large_mimic, mimic_detetor, beans_taken
 
         bean_balance = await self.database.get_member_beans(guild_id, member_id)
+        season_high_score = await self.database.get_member_beans_rankings(guild_id, member_id)
 
-        if bean_balance + beans < 0:
+        threshold = int(season_high_score / 10)
+        if abs(beans) > threshold:
+            beans_taken = -threshold
+
+        if bean_balance + beans_taken < 0:
             beans_taken = -bean_balance
 
         if beans < -100:

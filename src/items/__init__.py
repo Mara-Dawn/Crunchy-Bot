@@ -910,7 +910,7 @@ class SlapBoost(Item):
 class NoLimitGamba(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 7000
+        defaultcost = 8500
 
         if cost is None:
             cost = defaultcost
@@ -1423,8 +1423,8 @@ class FlashSeed(BaseSeed):
         self.name = "Flash Bean Seed"
         self.type = ItemType.FLASH_SEED
         self.description = (
-            "A Piss Bean survived and is back for one last run. It found his calling as the Flash! "
-            "He's so fast, he helps you grow every plot at lightning speed! Until... "
+            "A Piss Bean survived and is back for one last run. It found its calling as the Flash! "
+            "It's so fast, it helps you grow every plot at lightning speed! Until... "
             "(Makes all your plots grow 50% faster while active)"
         )
         self.information = (

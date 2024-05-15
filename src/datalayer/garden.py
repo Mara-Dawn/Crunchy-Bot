@@ -269,8 +269,8 @@ class Plot:
 
     EMPTY_PLOT_EMOJI = 1238648942489505864
 
-    # TIME_MODIFIER = 60 * 60
-    TIME_MODIFIER = 60
+    TIME_MODIFIER = 60 * 60
+    # TIME_MODIFIER = 60
 
     def __init__(
         self,
