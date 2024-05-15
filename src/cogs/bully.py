@@ -148,7 +148,7 @@ class Bully(commands.Cog):
                         await webhook.delete()
                 elif len(webhooks) == 1:
                     self.webhooks[channel.id] = webhooks[0]
-            if self.webhooks[channel.id] is None:
+            if channel.id not in self.webhooks:
                 self.webhooks[channel.id] = await channel.create_webhook(
                     name="Possession"
                 )

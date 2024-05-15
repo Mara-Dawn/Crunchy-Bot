@@ -36,7 +36,7 @@ class PlotEmbed(discord.Embed):
             flash_bean_left = FlashBeanPlant.MODIFIER_DURATON - last_flash_bean
             if flash_bean_left >= 0:
                 description += (
-                    f"*Flash bean buff is active for {flash_bean_left} more hours*\n"
+                    f"*Flash bean buff will run out in {flash_bean_left} hours*\n"
                 )
         if flash_beans_active >= 0:
             description += (
