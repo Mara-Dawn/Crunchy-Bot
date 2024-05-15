@@ -48,6 +48,11 @@ class ItemType(str, Enum):
     MIMIC_DETECTOR = "MimicDetector"
     SPOOK_BEAN = "GhostBean"
 
+    CHEST_BEANS = "ChestBeansReward"
+    CHEST_MIMIC = "ChestMimic"
+    CHEST_LARGE_MIMIC = "ChestLargeMimic"
+    CHEST_SPOOK_MIMIC = "ChestSpookMimic"
+
     HIGH_AS_FRICK = "HighAsFrick"
     EGIRL_DEBUFF = "UwUfy"
     RELIGION_DEBUFF = "Religify"

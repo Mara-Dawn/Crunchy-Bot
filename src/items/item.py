@@ -111,9 +111,6 @@ class Item:
 
         description = self.description
         
-        if len(description) < max_width:
-            spacing = max_width - len(description)
-            description += ' '*spacing
         prefix = ''
         suffix = ''
 

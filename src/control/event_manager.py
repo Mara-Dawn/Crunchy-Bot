@@ -3,6 +3,7 @@ from typing import Any
 
 from bot_util import BotUtil
 from datalayer.database import Database
+from datalayer.lootbox import LootBox
 from datalayer.stats import UserStats
 from datalayer.types import Season, UserInteraction
 from discord.ext import commands
@@ -473,7 +474,10 @@ class EventManager(Service):
                 lootboxes = await self.database.get_lootboxes_by_guild(guild_id, season)
                 total_dict = {}
                 for user_id, lootbox in lootboxes:
-                    if lootbox.beans < 0:
+                    if (
+                        lootbox.beans < 0
+                        or len(list(LootBox.MIMICS & lootbox.items.keys())) > 0
+                    ):
                         BotUtil.dict_append(parsing_list, user_id, 1)
                     BotUtil.dict_append(total_dict, user_id, 1)
                 mimic_data = sorted(

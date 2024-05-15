@@ -5,18 +5,35 @@ from items.types import ItemType
 
 class LootBox:
 
+    SPECIAL_ITEMS = [
+        ItemType.CHEST_BEANS,
+        ItemType.CHEST_LARGE_MIMIC,
+        ItemType.CHEST_MIMIC,
+        ItemType.CHEST_SPOOK_MIMIC,
+    ]
+
+    MIMICS = [
+        ItemType.CHEST_LARGE_MIMIC,
+        ItemType.CHEST_MIMIC,
+        ItemType.CHEST_SPOOK_MIMIC,
+    ]
+    SMALL_MIN_BEANS = 30
+    SMALL_MAX_BEANS = 80
+    LARGE_MIN_BEANS = 500
+    LARGE_MAX_BEANS = 800
+
     def __init__(
         self,
         guild_id: int,
         items: dict[ItemType, int],
-        beans: int,
+        beans: int = 0,
         message_id: int = None,
         id: int = None,
     ):
         self.guild_id = guild_id
         self.message_id = message_id
         self.items = items
-        self.beans = beans
+        self.beans = beans  # deprecated
         self.id = id
 
     @staticmethod
