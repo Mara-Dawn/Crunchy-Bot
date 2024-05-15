@@ -17,6 +17,10 @@ class PlotModifiers:
         self.water_events = water_events
         self.last_fertilized = last_fertilized
         self.flash_bean_events = flash_bean_events
+        if self.water_events is None:
+            self.water_events = []
+        if self.flash_bean_events is None:
+            self.flash_bean_events = []
 
 
 class Plant:

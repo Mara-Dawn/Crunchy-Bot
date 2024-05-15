@@ -119,7 +119,7 @@ class InventoryViewController(ViewController):
         item = await self.item_manager.get_item(guild_id, item_type)
 
         beans = sell_amount * int(
-            (item.cost * UserInventory.SELL_MODIFIER) / item.base_amount
+            min((item.cost * UserInventory.SELL_MODIFIER) / item.base_amount, 100)
         )
         event = BeansEvent(
             datetime.datetime.now(),
