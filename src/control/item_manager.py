@@ -117,6 +117,7 @@ class ItemManager(Service):
             ItemType.CRAPPY_COUPON,
             ItemType.MIMIC_DETECTOR,
             ItemType.USEFUL_CATGIRL,
+            ItemType.FLASH_SEED,
         ]
 
         item_pool = item_pool + lucky_item_pool

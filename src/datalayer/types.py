@@ -44,6 +44,7 @@ class PlantType(str, Enum):
     YELLOW_BEAN = "Piss Bean"
     GHOST_BEAN = "Ghost Bean"
     BAKED_BEAN = "Baked Bean"
+    FLASH_BEAN = "Flash Bean"
 
 
 class PlotState(Enum):

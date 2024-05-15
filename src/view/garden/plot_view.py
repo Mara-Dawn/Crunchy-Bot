@@ -271,7 +271,7 @@ class SeedSelect(discord.ui.Select):
                 discord.SelectOption(
                     label=label,
                     value=plant_type,
-                    emoji=bot.get_emoji(plant.READY_EMOJI),
+                    emoji=bot.get_emoji(plant.emoji),
                 )
             )
 

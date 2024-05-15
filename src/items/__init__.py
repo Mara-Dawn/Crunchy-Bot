@@ -4,6 +4,7 @@ from datalayer.garden import (
     BoxBeanPlant,
     CatBeanPlant,
     CrystalBeanPlant,
+    FlashBeanPlant,
     GhostBeanPlant,
     RareBeanPlant,
     SpeedBeanPlant,
@@ -1196,6 +1197,7 @@ class BaseSeed(Item):
         ItemType.YELLOW_SEED,
         ItemType.GHOST_SEED,
         ItemType.BAKED_SEED,
+        ItemType.FLASH_SEED,
     ]
 
     SEED_PLANT_MAP = {
@@ -1207,6 +1209,7 @@ class BaseSeed(Item):
         ItemType.YELLOW_SEED: PlantType.YELLOW_BEAN,
         ItemType.GHOST_SEED: PlantType.GHOST_BEAN,
         ItemType.BAKED_SEED: PlantType.BAKED_BEAN,
+        ItemType.FLASH_SEED: PlantType.FLASH_BEAN,
     }
 
     def __init__(self, cost: int | None):
@@ -1373,7 +1376,7 @@ class GhostSeed(BaseSeed):
         self.name = "Ghost Bean Seed"
         self.type = ItemType.GHOST_SEED
         self.description = (
-            "OOoooOOoooo so spooky! Yoi can even see through this bean, woah!"
+            "OOoooOOoooo so spooky! You can even see through this bean, woah! "
             "Plant it in your garden and maybe youll get to see something amazing."
         )
         self.information = (
@@ -1407,6 +1410,29 @@ class BakedSeed(BaseSeed):
             "\nWhen harvested they will make you stoned and turn your next 7 messages into stoner talk gibberish."
         )
         self.emoji = BakedBeanPlant.READY_EMOJI
+
+
+class FlashSeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 3500
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(cost)
+        self.name = "Flash Bean Seed"
+        self.type = ItemType.FLASH_SEED
+        self.description = (
+            "A Piss Bean survived and is back for one last run. It found his calling as the Flash! "
+            "He's so fast, he helps you grow every plot at lightning speed! Until... "
+            "(Makes all your plots grow 50% faster while active)"
+        )
+        self.information = (
+            "Available as a super rare drop from lootboxes."
+            "\nWill be active for 3 days, boosting the growth of all of your plants by an additional 50%."
+            "\nProduces a Ghost Bean Seed when harvested."
+        )
+        self.emoji = FlashBeanPlant.SEED_EMOJI
 
 
 # Permanent Rare Items

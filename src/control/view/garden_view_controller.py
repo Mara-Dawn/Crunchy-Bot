@@ -195,6 +195,17 @@ class GardenViewController(ViewController):
                     1,
                 )
                 await self.controller.dispatch_event(event)
+            case PlantType.FLASH_BEAN:
+                message = "You remove the dried out Flash bean from the plot and find a small seed!"
+                message += "\nA Ghost Bean Seed has been added to your inventory."
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    member_id,
+                    ItemType.GHOST_SEED,
+                    1,
+                )
+                await self.controller.dispatch_event(event)
 
         roll = random.random()
         rare_seed_chance = 0.1

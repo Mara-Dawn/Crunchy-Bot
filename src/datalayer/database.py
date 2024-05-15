@@ -29,7 +29,7 @@ from items import BaseSeed
 from items.types import ItemState, ItemType
 from view.types import EmojiType
 
-from datalayer.garden import Plot, UserGarden
+from datalayer.garden import Plot, PlotModifiers, UserGarden
 from datalayer.jail import UserJail
 from datalayer.lootbox import LootBox
 from datalayer.prediction import Prediction
@@ -2286,6 +2286,7 @@ class Database:
         plot_plants = {}
         plot_water_events = {}
         plot_last_fertilized = {}
+        flash_bean_events = []
         plot_notified = {}
         skip_list = []
 
@@ -2300,6 +2301,11 @@ class Database:
                 and plot_id not in plot_last_fertilized
             ):
                 plot_last_fertilized[plot_id] = GardenEvent.from_db_row(row)
+            if (
+                type == GardenEventType.PLANT
+                and payload == PlantType.FLASH_BEAN.value
+            ):
+                flash_bean_events.append(GardenEvent.from_db_row(row))
 
             if plot_id in skip_list:
                 continue
@@ -2324,12 +2330,20 @@ class Database:
                 event: GardenEvent = plot_plants[plot.id]
                 plot.plant_datetime = event.datetime
                 plot.plant = UserGarden.get_plant_by_type(event.payload)
-            if plot.id in plot_water_events:
-                plot.water_events = plot_water_events[plot.id]
             if plot.id in plot_notified:
                 plot.notified = plot_notified[plot.id]
+
+            modifiers = PlotModifiers()
+            now = datetime.datetime.now()
+
+            if plot.id in plot_water_events:
+                modifiers.water_events =  plot_water_events[plot.id] 
             if plot.id in plot_last_fertilized:
-                plot.last_fertilized_event = plot_last_fertilized[plot.id]
+                delta = now - plot_last_fertilized[plot.id].datetime
+                modifiers.last_fertilized = delta.total_seconds() / Plot.TIME_MODIFIER
+            modifiers.flash_bean_events = flash_bean_events 
+
+            plot.modifiers = modifiers
             result.append(plot)
 
         return result
