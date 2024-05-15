@@ -1443,7 +1443,7 @@ class BakedSeed(BaseSeed):
 class FlashSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
-        defaultcost = 5000
+        defaultcost = 6500
         if cost is None:
             cost = defaultcost
 
@@ -1457,7 +1457,8 @@ class FlashSeed(BaseSeed):
         )
         self.information = (
             "Available as a super rare drop from lootboxes."
-            "\nWill be active for 3 days, boosting the growth of all of your plants by an additional 50%."
+            "\nWill be active for 3 days, boosting the growth of all of your plants by an additional 50%. "
+            "This stacks additively with other flash beans, water and fertilizer."
             "\nProduces a Ghost Bean Seed when harvested."
         )
         self.emoji = FlashBeanPlant.SEED_EMOJI
