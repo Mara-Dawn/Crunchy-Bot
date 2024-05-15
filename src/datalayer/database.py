@@ -2302,7 +2302,7 @@ class Database:
             ):
                 plot_last_fertilized[plot_id] = GardenEvent.from_db_row(row)
             if (
-                type == GardenEventType.PLANT
+                type in [GardenEventType.PLANT, GardenEventType.REMOVE]
                 and payload == PlantType.FLASH_BEAN.value
             ):
                 flash_bean_events.append(GardenEvent.from_db_row(row))
@@ -2337,11 +2337,11 @@ class Database:
             now = datetime.datetime.now()
 
             if plot.id in plot_water_events:
-                modifiers.water_events =  plot_water_events[plot.id] 
+                modifiers.water_events = plot_water_events[plot.id]
             if plot.id in plot_last_fertilized:
                 delta = now - plot_last_fertilized[plot.id].datetime
                 modifiers.last_fertilized = delta.total_seconds() / Plot.TIME_MODIFIER
-            modifiers.flash_bean_events = flash_bean_events 
+            modifiers.flash_bean_events = flash_bean_events
 
             plot.modifiers = modifiers
             result.append(plot)

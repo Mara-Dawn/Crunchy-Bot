@@ -1,6 +1,7 @@
 import datetime
 
 from events.garden_event import GardenEvent
+from events.types import GardenEventType
 
 from datalayer.types import PlantType, PlotState
 
@@ -61,13 +62,13 @@ class Plant:
         if age <= self.seed_hours:
             return (
                 PlotState.SEED_PLANTED
-                if not watered or not self.allow_modifiers
+                if not watered and self.allow_modifiers
                 else PlotState.SEED_PLANTED_WET
             )
         elif age <= self.grow_hours:
             return (
                 PlotState.GROWING
-                if not watered or not self.allow_modifiers
+                if not watered and self.allow_modifiers
                 else PlotState.GROWING_WET
             )
         else:
@@ -268,8 +269,8 @@ class Plot:
 
     EMPTY_PLOT_EMOJI = 1238648942489505864
 
-    TIME_MODIFIER = 60 * 60
-    # TIME_MODIFIER = 60
+    # TIME_MODIFIER = 60 * 60
+    TIME_MODIFIER = 60
 
     def __init__(
         self,
@@ -343,16 +344,32 @@ class Plot:
         flash_bean_hours = 0
         threshold = FlashBeanPlant.MODIFIER_DURATON + self.plant.grow_hours
         if len(flash_bean_events) > 0 and self.plant.allow_modifiers:
+            remove_events = {}
             for event in flash_bean_events:
+                if event.garden_event_type == GardenEventType.REMOVE:
+                    remove_events[event.plot_id] = event.datetime
+                    continue
+
                 delta = now - event.datetime
                 last_flash_bean = delta.total_seconds() / self.TIME_MODIFIER
                 if last_flash_bean > threshold:
                     continue
+
                 last_flash_bean = delta.total_seconds() / self.TIME_MODIFIER
                 flash_bean_active_before_plant = max(0, last_flash_bean - age)
-                flash_bean_active = min(
-                    last_flash_bean, FlashBeanPlant.MODIFIER_DURATON
-                )
+
+                max_duration = FlashBeanPlant.MODIFIER_DURATON
+
+                # In case Flash Bean was removed early
+                if event.plot_id in remove_events:
+                    duration_delta = remove_events[event.plot_id] - event.datetime
+                    max_duration = min(
+                        max_duration,
+                        duration_delta.total_seconds() / self.TIME_MODIFIER,
+                    )
+                    del remove_events[event.plot_id]
+
+                flash_bean_active = min(last_flash_bean, max_duration)
                 hours = max(
                     0, min(age, flash_bean_active - flash_bean_active_before_plant)
                 )
@@ -389,10 +406,24 @@ class Plot:
             return 0
         count = 0
         now = datetime.datetime.now()
+        remove_events = {}
         for event in self.modifiers.flash_bean_events:
+            if event.garden_event_type == GardenEventType.REMOVE:
+                remove_events[event.plot_id] = event.datetime
+                continue
             delta = now - event.datetime
             flash_bean_age = delta.total_seconds() / self.TIME_MODIFIER
-            if flash_bean_age <= FlashBeanPlant.MODIFIER_DURATON:
+
+            max_duration = FlashBeanPlant.MODIFIER_DURATON
+            if event.plot_id in remove_events:
+                duration_delta = remove_events[event.plot_id] - event.datetime
+                max_duration = min(
+                    max_duration,
+                    duration_delta.total_seconds() / self.TIME_MODIFIER,
+                )
+                del remove_events[event.plot_id]
+
+            if flash_bean_age <= max_duration:
                 count += 1
 
         return count
