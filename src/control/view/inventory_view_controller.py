@@ -10,6 +10,7 @@ from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType, EventType, UIEventType
 from events.ui_event import UIEvent
+from items import Debuff
 from items.item import Item
 from items.types import ItemState, ItemType
 from view.types import ActionType
@@ -152,16 +153,7 @@ class InventoryViewController(ViewController):
                     )
                     return
 
-                random_ghosts = [
-                    ItemType.EGIRL_DEBUFF,
-                    ItemType.RELIGION_DEBUFF,
-                    ItemType.ALCOHOL_DEBUFF,
-                    ItemType.WEEB_DEBUFF,
-                    ItemType.BRIT_DEBUFF,
-                    ItemType.MEOW_DEBUFF,
-                ]
-
-                ghost = secrets.choice(random_ghosts)
+                ghost = secrets.choice(Debuff.DEBUFFS)
 
                 event = InventoryEvent(
                     datetime.datetime.now(),

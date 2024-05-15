@@ -1,10 +1,11 @@
 import datetime
 import random
+import secrets
 
 import discord
 from bot_util import BotUtil
 from datalayer.database import Database
-from datalayer.types import ItemTrigger
+from datalayer.types import ItemTrigger, LootboxType
 from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
@@ -12,6 +13,7 @@ from events.jail_event import JailEvent
 from events.lootbox_event import LootBoxEvent
 from events.types import BeansEventType, JailEventType, LootBoxEventType, UIEventType
 from events.ui_event import UIEvent
+from items import Debuff
 from items.item import Item
 from items.types import ItemType
 
@@ -75,7 +77,7 @@ class LootBoxViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        large_mimic = False
+        lootbox_type = LootboxType.SMALL_MIMIC
         mimic_detetor = False
         beans_taken = beans
 
@@ -91,7 +93,7 @@ class LootBoxViewController(ViewController):
             event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, ItemType.MIMIC_DETECTOR, -1)
             await self.controller.dispatch_event(event)
             mimic_detetor = True
-            return large_mimic, mimic_detetor, beans_taken
+            return lootbox_type, mimic_detetor, beans_taken
 
         bean_balance = await self.database.get_member_beans(guild_id, member_id)
         season_high_score = await self.database.get_member_beans_rankings(guild_id, member_id)
@@ -112,15 +114,35 @@ class LootBoxViewController(ViewController):
                     value=f"It munches away at your beans, eating `🅱️{abs(beans_taken)}` of them. \nLuckily your Hazmat Suit protects you from further harm. \n(You lose one stack)",
                     inline=False,
                 )
-                return large_mimic, mimic_detetor, beans_taken
+                return lootbox_type, mimic_detetor, beans_taken
 
             embed.add_field(
                 name="Oh no, it's a LARGE Mimic!",
                 value=f"It munches away at your beans, eating `🅱️{abs(beans_taken)}` of them. \nIt swallows your whole body and somehow you end up in JAIL?!?",
                 inline=False,
             )
-            large_mimic = True
-            return large_mimic, mimic_detetor, beans_taken
+            lootbox_type = LootboxType.LARGE_MIMIC
+            return lootbox_type, mimic_detetor, beans_taken
+
+
+        roll = random.random()
+        spooky_mimic_chance = 0.1
+
+        if roll <= spooky_mimic_chance:
+            lootbox_type = LootboxType.SPOOKY_MIMIC
+            text = (
+                "A Ghost suddenly jumps out of the chest and possesses you. "
+                "Better hope it doesnt do anything ... *weird*.\n"
+                f"It also munches away at your beans, eating `🅱️{abs(beans_taken)}` of them."
+            )
+            embed.add_field(
+                name="AAAAAAH, it's a Spooky Mimic!",
+                value=text,
+                inline=False,
+            )
+
+            return lootbox_type, mimic_detetor, beans_taken
+
 
         embed.add_field(
             name="Oh no, it's a Mimic!",
@@ -128,7 +150,7 @@ class LootBoxViewController(ViewController):
             inline=False,
         )
 
-        return large_mimic, mimic_detetor, beans_taken
+        return lootbox_type, mimic_detetor, beans_taken
 
     async def handle_lootbox_claim(
         self, interaction: discord.Interaction, owner_id: int, view_id: int
@@ -158,11 +180,11 @@ class LootBoxViewController(ViewController):
         attachment = discord.File("./img/treasure_open.png", "treasure_open.png")
 
         beans = loot_box.beans
-        large_mimic = False
+        lootbox_type = None
         mimic_detector = False
 
         if beans < 0:
-            large_mimic, mimic_detector, beans_taken = await self.handle_mimic(interaction, embed, beans)
+            lootbox_type, mimic_detector, beans_taken = await self.handle_mimic(interaction, embed, beans)
             
             if mimic_detector:
                 event = UIEvent(UIEventType.RESUME_INTERACTIONS, None, view_id)
@@ -225,37 +247,50 @@ class LootBoxViewController(ViewController):
         for amount, item in items_to_give:
             await self.item_manager.give_item(guild_id, member_id, item, amount)
 
-        if large_mimic:
-            jail_announcement = f"<@{member_id}> delved too deep looking for treasure and got sucked into a wormhole that teleported them into jail."
-            duration = random.randint(1*60, 3*60)
-            member = interaction.user
-            success = await self.jail_manager.jail_user(
-                guild_id, self.bot.user.id, member, duration
-            )
-            if not success:
-                time_now = datetime.datetime.now()
-                affected_jails = await self.database.get_active_jails_by_member(guild_id, member.id)
-                if len(affected_jails) > 0:
-                    event = JailEvent(
-                        time_now,
+        match lootbox_type:
+            case LootboxType.LARGE_MIMIC:
+                jail_announcement = f"<@{member_id}> delved too deep looking for treasure and got sucked into a wormhole that teleported them into jail."
+                duration = random.randint(1*60, 3*60)
+                member = interaction.user
+                success = await self.jail_manager.jail_user(
+                    guild_id, self.bot.user.id, member, duration
+                )
+                if not success:
+                    time_now = datetime.datetime.now()
+                    affected_jails = await self.database.get_active_jails_by_member(guild_id, member.id)
+                    if len(affected_jails) > 0:
+                        event = JailEvent(
+                            time_now,
+                            guild_id,
+                            JailEventType.INCREASE,
+                            self.bot.user.id,
+                            duration,
+                            affected_jails[0].id,
+                        )
+                        await self.controller.dispatch_event(event)
+                        remaining = await self.jail_manager.get_jail_remaining(affected_jails[0])
+                        jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` have been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
+                        await self.jail_manager.announce(interaction.guild, jail_announcement)
+                    else:
+                        self.logger.error(
                         guild_id,
-                        JailEventType.INCREASE,
-                        self.bot.user.id,
-                        duration,
-                        affected_jails[0].id,
-                    )
-                    await self.controller.dispatch_event(event)
-                    remaining = await self.jail_manager.get_jail_remaining(affected_jails[0])
-                    jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` have been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
-                    await self.jail_manager.announce(interaction.guild, jail_announcement)
+                        "User already jailed but no active jail was found.",
+                        "Shop",
+                        )
                 else:
-                    self.logger.error(
+                    timestamp_now = int(datetime.datetime.now().timestamp())
+                    release = timestamp_now + (duration * 60)
+                    jail_announcement += f"\nThey will be released <t:{release}:R>."
+                    await self.jail_manager.announce(interaction.guild, jail_announcement)
+
+            case LootboxType.SPOOKY_MIMIC:
+                ghost = secrets.choice(Debuff.DEBUFFS)
+                event = InventoryEvent(
+                    datetime.datetime.now(),
                     guild_id,
-                    "User already jailed but no active jail was found.",
-                    "Shop",
-                    )
-            else:
-                timestamp_now = int(datetime.datetime.now().timestamp())
-                release = timestamp_now + (duration * 60)
-                jail_announcement += f"\nThey will be released <t:{release}:R>."
-                await self.jail_manager.announce(interaction.guild, jail_announcement)
+                    member_id,
+                    ghost,
+                    7,
+                )
+                await self.controller.dispatch_event(event)
+

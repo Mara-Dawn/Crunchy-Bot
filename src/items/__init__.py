@@ -910,7 +910,7 @@ class SlapBoost(Item):
 class NoLimitGamba(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 8500
+        defaultcost = 9000
 
         if cost is None:
             cost = defaultcost
@@ -1031,6 +1031,17 @@ class GhostBean(Item):
 
 # Debuffs
 class Debuff(Item):
+
+
+    DEBUFFS = [
+        ItemType.EGIRL_DEBUFF,
+        ItemType.RELIGION_DEBUFF,
+        ItemType.ALCOHOL_DEBUFF,
+        ItemType.WEEB_DEBUFF,
+        ItemType.BRIT_DEBUFF,
+        ItemType.MEOW_DEBUFF,
+    ]
+
 
     def __init__(self, cost: int | None):
         defaultcost = 0

@@ -32,6 +32,7 @@ class LootboxType(Enum):
     REGULAR = 3
     BEANS = 4
     LUCKY_ITEM = 5
+    SPOOKY_MIMIC = 6
 
 
 class PlantType(str, Enum):
