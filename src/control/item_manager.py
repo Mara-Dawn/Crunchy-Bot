@@ -141,12 +141,6 @@ class ItemManager(Service):
         spook_mimic_chance = 0.01
         lucky_item_chance = 0.05
 
-        # Chest Ranges
-        # small_min_beans = 30
-        # small_max_beans = 80
-        # large_min_beans = 500
-        # large_max_beans = 800
-
         random_items = {}
 
         force_roll = None
@@ -182,9 +176,6 @@ class ItemManager(Service):
 
             if force_roll is not None:
                 roll = force_roll
-
-            # small_beans_reward = random.randint(small_min_beans, small_max_beans)
-            # large_beans_reward = random.randint(large_min_beans, large_max_beans)
 
             if roll <= mimic_chance:
                 item_type = ItemType.CHEST_MIMIC
