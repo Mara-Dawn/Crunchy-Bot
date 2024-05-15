@@ -291,6 +291,8 @@ class Plot:
         self.y = y
         self.notified = notified
         self.modifiers = modifiers
+        if self.modifiers is None:
+            self.modifiers = PlotModifiers()
 
     def get_status_emoji(self):
         if self.empty():
