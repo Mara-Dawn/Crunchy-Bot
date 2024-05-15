@@ -1012,7 +1012,7 @@ class GhostBean(Item):
                 "This bean allows you to possess someone with a random ghost. "
                 "The ghost will mess with their messages for a short while, "
                 "however you have no control over which ghost it is. Possible outcomes: "
-                "E-Girl, Priest, Alcoholic, Weeb, British, Cat"
+                "E-Girl, Priest, Alcoholic, Weeb, British, Cat, Nerd"
             ),
             information="Obtained when harvesting a Ghost Bean Plant from your garden.",
             emoji="👻",
@@ -1032,7 +1032,6 @@ class GhostBean(Item):
 # Debuffs
 class Debuff(Item):
 
-
     DEBUFFS = [
         ItemType.EGIRL_DEBUFF,
         ItemType.RELIGION_DEBUFF,
@@ -1040,8 +1039,8 @@ class Debuff(Item):
         ItemType.WEEB_DEBUFF,
         ItemType.BRIT_DEBUFF,
         ItemType.MEOW_DEBUFF,
+        ItemType.NERD_DEBUFF,
     ]
-
 
     def __init__(self, cost: int | None):
         defaultcost = 0
@@ -1192,6 +1191,24 @@ class Meowify(Debuff):
             "Your next 7 messages will become cat talk."
         )
         self.emoji = "😸"
+
+
+class Nerdify(Debuff):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Uhm Actually.."
+        self.type = ItemType.NERD_DEBUFF
+        self.description = (
+            "You were possessed by a pretentious nerdy high school kid. "
+            "You feel a desperate need to correct everyone and be an annoying little shit. "
+            "(We take no responsibility for whatever happens while possessed) "
+        )
+        self.information = (
+            "You gain this debuff when someone uses a ghost bean on you. "
+            "Your next 7 messages will become nerd talk."
+        )
+        self.emoji = "🤓"
 
 
 # Garden Seeds
@@ -1426,7 +1443,7 @@ class BakedSeed(BaseSeed):
 class FlashSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
-        defaultcost = 3500
+        defaultcost = 5000
         if cost is None:
             cost = defaultcost
 

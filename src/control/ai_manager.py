@@ -226,63 +226,70 @@ class AIManager(Service):
 
     async def stonerfy(self, text_prompt: str):
         backstory = (
-            "Reword the message you recieve in the way a completely high on weed stoner would say it while he has the high of his life. Often uses 'dude' and 'ya man'."
-            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+            "Reword my next message in a way a completely high on weed stoner would word it while he has the high of his life. Often uses 'dude' and 'ya man'."
         )
 
         return await self.modify(text_prompt, backstory)
 
     async def uwufy(self, text_prompt: str):
         backstory = (
-            "Reword the message you recieve in the way a super cutesy random rawr teenage uwu e-girl would on the internet in 2010. "
-            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+            "Reword my next message in a way a super cutesy random rawr teenage uwu e-girl would word it on the internet in 2010. "
         )
 
         return await self.modify(text_prompt, backstory)
     
     async def religify(self, text_prompt: str):
         backstory = (
-            "Reword the message you recieve in the way a super pure and religious fanatic would, who is strictly opposed to anything sexual. "
-            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+            "Reword my next message in a way a super pure and religious fanatic would word it, who is strictly opposed to anything sexual. "
+            " The priest has deep faith in their god, the 'Supreme Lord of Ultimate Terror', or SLUT for short. He brings him up randomly a lot and mostly uses the short form after mentioning the full title once. "
         )
-
         return await self.modify(text_prompt, backstory)
 
     async def alcoholify(self, text_prompt: str):
         backstory = (
-            "Reword the message you recieve in the way a super drunk alcoholic uncle or aunt would, "
+            "Reword my next message in a way a super drunk alcoholic uncle or aunt would word it, "
             "slurring their words and being needlessly angry and agressive but sometimes weirdly wholesome. "
-            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
         )
 
         return await self.modify(text_prompt, backstory)
 
     async def weebify(self, text_prompt: str):
         backstory = (
-            "Reword the message you recieve in the way a super over the top hyped anime nerd would, using some japanese phrases known from anime. "
-            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+            "Reword my next message in a way a super over the top hyped anime nerd would word it, using some japanese phrases known from anime. "
         )
 
         return await self.modify(text_prompt, backstory)
 
     async def britify(self, text_prompt: str):
         backstory = (
-            "Reword the message you recieve in ye olde english. "
-            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+            "Reword my next message in ye olde english. Speack with a thick british accent as well and use random typically british phrases. "
         )
 
         return await self.modify(text_prompt, backstory)
 
     async def meowify(self, text_prompt: str):
         backstory = (
-            "Reword the message you recieve and replace it with cat speak only containing meows and cat noises. "
-            "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind."
+            "Reword my next message and replace it with cat speak only containing meows and cat noises. "
         )
 
         return await self.modify(text_prompt, backstory)
 
+    async def nerdify(self, text_prompt: str):
+        backstory = (
+            "Reword my next message in a way a really pretentious nerdy school kid would say it, sometimes using words like 'Uhm Actually' and 'Ah Yes'. "
+            "He should bellittle others for knowing less than him and use overly technical wors to make himself look smarter."
+        )
+
+        return await self.modify(text_prompt, backstory)
+    
     async def modify(self, text_prompt:str, backstory:str):
-        chat_log = ChatLog(backstory)
+        text = backstory
+        text += "Keep in mind that the following message is spoken by someone and should be reworded so that it still is from their point of view. "
+        text += "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind. "
+        text += "Dont put your response in quotation marks. Do not respond to the message, just reword it. "
+        text += "The message will follow now: "
+        
+        chat_log = ChatLog(text)
         ai_version = AIVersion.GPT4
 
         chat_log.add_user_message(text_prompt)
