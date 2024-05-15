@@ -335,7 +335,7 @@ class Dropdown(discord.ui.Select):
 
         for item in items:
             sell_price = int(
-                (item.cost * UserInventory.SELL_MODIFIER) / item.base_amount
+                min((item.cost * UserInventory.SELL_MODIFIER) / item.base_amount, 100)
             )
 
             option = discord.SelectOption(
