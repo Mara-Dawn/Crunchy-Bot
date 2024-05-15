@@ -384,7 +384,11 @@ class Plot:
         return self.get_hours_since_last_water() < 24
 
     def get_hours_since_last_water(self) -> int | None:
-        if self.modifiers.water_events is None or len(self.modifiers.water_events) <= 0:
+        if (
+            self.modifiers is None
+            or self.modifiers.water_events is None
+            or len(self.modifiers.water_events) <= 0
+        ):
             return None
 
         now = datetime.datetime.now()
