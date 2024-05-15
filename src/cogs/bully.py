@@ -12,7 +12,7 @@ from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.types import ItemTrigger
-from discord import HTTPException, NotFound, Webhook, app_commands
+from discord import NotFound, Webhook, app_commands
 from discord.ext import commands
 from events.inventory_event import InventoryEvent
 from items.types import ItemGroup, ItemType
@@ -137,26 +137,27 @@ class Bully(commands.Cog):
                 generated_content = await self.ai_manager.britify(content)
             case ItemType.MEOW_DEBUFF:
                 generated_content = await self.ai_manager.meowify(content)
+            case ItemType.NERD_DEBUFF:
+                generated_content = await self.ai_manager.nerdify(content)
 
         if channel.id not in self.webhooks:
-            self.webhooks[channel.id] = await channel.create_webhook(
-                name=author.display_name
-            )
-        try:
-            await self.webhooks[channel.id].send(
-                content=generated_content,
-                username=author.display_name,
-                avatar_url=author.display_avatar,
-            )
-        except (HTTPException, NotFound):
-            self.webhooks[channel.id] = await channel.create_webhook(
-                name=author.display_name
-            )
-            await self.webhooks[channel.id].send(
-                content=generated_content,
-                username=author.display_name,
-                avatar_url=author.display_avatar,
-            )
+            webhooks = await message.channel.webhooks()
+            if webhooks is not None:
+                if len(webhooks) > 1:
+                    for webhook in webhooks:
+                        await webhook.delete()
+                elif len(webhooks) == 1:
+                    self.webhooks[channel.id] = webhooks[0]
+            if self.webhooks[channel.id] is None:
+                self.webhooks[channel.id] = await channel.create_webhook(
+                    name="Possession"
+                )
+
+        await self.webhooks[channel.id].send(
+            content=generated_content,
+            username=author.display_name,
+            avatar_url=author.display_avatar,
+        )
 
         event = InventoryEvent(
             datetime.datetime.now(),

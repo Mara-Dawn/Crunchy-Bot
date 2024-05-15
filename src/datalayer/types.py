@@ -32,6 +32,7 @@ class LootboxType(Enum):
     REGULAR = 3
     BEANS = 4
     LUCKY_ITEM = 5
+    SPOOKY_MIMIC = 6
 
 
 class PlantType(str, Enum):
@@ -44,6 +45,7 @@ class PlantType(str, Enum):
     YELLOW_BEAN = "Piss Bean"
     GHOST_BEAN = "Ghost Bean"
     BAKED_BEAN = "Baked Bean"
+    FLASH_BEAN = "Flash Bean"
 
 
 class PlotState(Enum):

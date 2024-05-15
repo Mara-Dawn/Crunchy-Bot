@@ -29,7 +29,7 @@ from items import BaseSeed
 from items.types import ItemState, ItemType
 from view.types import EmojiType
 
-from datalayer.garden import Plot, UserGarden
+from datalayer.garden import Plot, PlotModifiers, UserGarden
 from datalayer.jail import UserJail
 from datalayer.lootbox import LootBox
 from datalayer.prediction import Prediction
@@ -1611,6 +1611,45 @@ class Database:
 
         return {row[self.BEANS_EVENT_MEMBER_COL]: row["high_score"] for row in rows}
 
+    async def get_member_beans_rankings(
+        self,  guild_id: int, member_id: int, season: Season = Season.CURRENT
+    ) -> int:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
+        command = f"""
+            SELECT {self.BEANS_EVENT_MEMBER_COL}, MAX(rollingSum) as high_score 
+            FROM (
+                SELECT *, SUM({self.BEANS_EVENT_VALUE_COL}) 
+                OVER ( 
+                    PARTITION BY {self.BEANS_EVENT_MEMBER_COL} 
+                    ORDER BY {self.BEANS_EVENT_ID_COL}
+                ) as rollingSum 
+                FROM {self.BEANS_EVENT_TABLE}
+                INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.BEANS_EVENT_TABLE}.{self.BEANS_EVENT_ID_COL}
+                AND {self.EVENT_GUILD_ID_COL} = ?
+                WHERE {self.BEANS_EVENT_TYPE_COL} NOT IN (?, ?, ?, ?)
+                AND {self.EVENT_TIMESTAMP_COL} > ?
+                AND {self.EVENT_TIMESTAMP_COL} <= ?
+                AND {self.BEANS_EVENT_MEMBER_COL} = ?
+            )
+            GROUP BY {self.BEANS_EVENT_MEMBER_COL};
+        """
+        task = (
+            guild_id,
+            BeansEventType.SHOP_PURCHASE.value,
+            BeansEventType.USER_TRANSFER.value,
+            BeansEventType.BALANCE_CHANGE.value,
+            BeansEventType.SHOP_BUYBACK.value,
+            start_timestamp,
+            end_timestamp,
+            member_id
+        )
+
+        rows = await self.__query_select(command, task)
+        if not rows or len(rows) < 1:
+            return 0
+
+        return rows[0]["high_score"]
+
     async def get_lootbox_purchases_by_guild(
         self, guild_id: int, until: int = None, season: Season = Season.CURRENT
     ) -> dict[int, int]:
@@ -2286,6 +2325,7 @@ class Database:
         plot_plants = {}
         plot_water_events = {}
         plot_last_fertilized = {}
+        flash_bean_events = []
         plot_notified = {}
         skip_list = []
 
@@ -2300,6 +2340,11 @@ class Database:
                 and plot_id not in plot_last_fertilized
             ):
                 plot_last_fertilized[plot_id] = GardenEvent.from_db_row(row)
+            if (
+                type in [GardenEventType.PLANT, GardenEventType.REMOVE]
+                and payload == PlantType.FLASH_BEAN.value
+            ):
+                flash_bean_events.append(GardenEvent.from_db_row(row))
 
             if plot_id in skip_list:
                 continue
@@ -2324,12 +2369,20 @@ class Database:
                 event: GardenEvent = plot_plants[plot.id]
                 plot.plant_datetime = event.datetime
                 plot.plant = UserGarden.get_plant_by_type(event.payload)
-            if plot.id in plot_water_events:
-                plot.water_events = plot_water_events[plot.id]
             if plot.id in plot_notified:
                 plot.notified = plot_notified[plot.id]
+
+            modifiers = PlotModifiers()
+            now = datetime.datetime.now()
+
+            if plot.id in plot_water_events:
+                modifiers.water_events = plot_water_events[plot.id]
             if plot.id in plot_last_fertilized:
-                plot.last_fertilized_event = plot_last_fertilized[plot.id]
+                delta = now - plot_last_fertilized[plot.id].datetime
+                modifiers.last_fertilized = delta.total_seconds() / Plot.TIME_MODIFIER
+            modifiers.flash_bean_events = flash_bean_events
+
+            plot.modifiers = modifiers
             result.append(plot)
 
         return result

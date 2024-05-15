@@ -123,6 +123,7 @@ class InventoryView(ViewMenu):
         self.add_item(CurrentPageButton(page_display))
         self.add_item(BalanceButton(self.inventory.balance))
         self.add_item(SellButton(disabled))
+        self.add_item(SellAmountButton(disabled))
         self.add_item(SellAllButton(disabled))
 
     async def refresh_ui(self, inventory: UserInventory = None, disabled: bool = False):
@@ -215,7 +216,7 @@ class SellButton(discord.ui.Button):
             await view.sell_selected_item(interaction)
 
 
-class SellAllButton(discord.ui.Button):
+class SellAmountButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         super().__init__(
@@ -229,10 +230,10 @@ class SellAllButton(discord.ui.Button):
         view: InventoryView = self.view
 
         if await view.interaction_check(interaction):
-            await interaction.response.send_modal(SellAllModal(self.view))
+            await interaction.response.send_modal(SellAmountModal(self.view))
 
 
-class SellAllModal(discord.ui.Modal):
+class SellAmountModal(discord.ui.Modal):
 
     def __init__(self, view: InventoryView):
         super().__init__(title="Specify how much you want to sell.")
@@ -293,6 +294,24 @@ class SellAllModal(discord.ui.Modal):
         await self.view.sell_selected_item(
             interaction, amount=amount, sell_until=sell_until
         )
+
+
+class SellAllButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Sell All",
+            style=discord.ButtonStyle.grey,
+            row=2,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: InventoryView = self.view
+
+        if await view.interaction_check(interaction):
+            await interaction.response.defer()
+            await view.sell_selected_item(interaction, amount=0, sell_until=True)
 
 
 class BalanceButton(discord.ui.Button):

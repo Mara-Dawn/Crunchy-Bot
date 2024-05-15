@@ -60,6 +60,33 @@ class BeansBasics(BeansGroup):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
 
+        season_start_beans_event = await self.database.get_last_beans_event(
+            guild_id, user_id, BeansEventType.SEASON_START
+        )
+        if season_start_beans_event is None:
+            amount = 500
+            event = BeansEvent(
+                datetime.datetime.now(),
+                guild_id,
+                BeansEventType.SEASON_START,
+                user_id,
+                0,
+            )
+            await self.controller.dispatch_event(event)
+            event = BeansEvent(
+                datetime.datetime.now(), guild_id, BeansEventType.DAILY, user_id, amount
+            )
+            await self.controller.dispatch_event(event)
+
+            await self.bot.command_response(
+                module=self.__cog_name__,
+                interaction=interaction,
+                message=f"Welcome to the new Beans Season <@{user_id}>! Here are `🅱️{amount}` beans to get you started.",
+                args=[amount],
+                ephemeral=False,
+            )
+            return
+
         last_daily_beans_event = await self.database.get_last_beans_event(
             guild_id, user_id, BeansEventType.DAILY
         )

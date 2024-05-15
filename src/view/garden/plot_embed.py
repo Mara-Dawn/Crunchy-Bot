@@ -1,5 +1,5 @@
 import discord
-from datalayer.garden import Plot, UserGarden, YellowBeanPlant
+from datalayer.garden import FlashBeanPlant, Plot, UserGarden, YellowBeanPlant
 
 
 class PlotEmbed(discord.Embed):
@@ -9,8 +9,10 @@ class PlotEmbed(discord.Embed):
         plot: Plot,
     ):
         plot_nr = UserGarden.PLOT_ORDER.index((plot.x, plot.y))
-        last_watered = plot.hours_since_last_water()
-        last_fertilized = plot.hours_since_last_fertilized()
+        last_watered = plot.get_hours_since_last_water()
+        last_fertilized = plot.modifiers.last_fertilized
+        last_flash_bean = plot.get_hours_since_last_flash_bean()
+        flash_beans_active = plot.get_active_flash_bean_count()
 
         plant_name = None
         if plot.plant is not None:
@@ -22,14 +24,24 @@ class PlotEmbed(discord.Embed):
 
         description = f"**Plot {plot_nr + 1} - Row: {plot.y+1}, Column: {plot.x+1}**\n"
 
-        if last_watered is not None:
+        if last_watered is not None and plot.plant.allow_modifiers:
             description += f"*{last_watered} hours since this plot was last watered.*\n"
         if last_fertilized is not None:
-            fertilizer_left = YellowBeanPlant.FERTILE_TIME - last_fertilized
+            fertilizer_left = YellowBeanPlant.MODIFIER_DURATON - last_fertilized
             if fertilizer_left >= 0:
                 description += (
-                    f"*The fertilizer will run out in {fertilizer_left} hours*\n"
+                    f"*The fertilizer will run out in {int(fertilizer_left)} hours*\n"
                 )
+        if last_flash_bean is not None:
+            flash_bean_left = FlashBeanPlant.MODIFIER_DURATON - last_flash_bean
+            if flash_bean_left >= 0:
+                description += (
+                    f"*Flash bean buff is active for {flash_bean_left} more hours*\n"
+                )
+        if flash_beans_active >= 0:
+            description += (
+                f"*You currently have {flash_beans_active} active Flash Beans*\n"
+            )
 
         if plant_name is None:
             description += (

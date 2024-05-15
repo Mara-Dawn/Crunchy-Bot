@@ -1,8 +1,22 @@
 import datetime
 
 from events.garden_event import GardenEvent
+from events.types import GardenEventType
 
 from datalayer.types import PlantType, PlotState
+
+
+class PlotModifiers:
+
+    def __init__(
+        self,
+        water_events: list[GardenEvent] = None,
+        last_fertilized: float = None,
+        flash_bean_events: list[GardenEvent] = None,
+    ):
+        self.water_events = water_events
+        self.last_fertilized = last_fertilized
+        self.flash_bean_events = flash_bean_events
 
 
 class Plant:
@@ -19,10 +33,14 @@ class Plant:
 
     EMOJI_MAP = {}
 
+    MODIFIER_DURATON = 0
+    MODIFIER = 0
+
     def __init__(self, plant_type: PlantType):
         self.type = plant_type
         self.seed_hours = 0
         self.grow_hours = 0
+        self.allow_modifiers = True
         self.IMAGE_MAP = {
             PlotState.SEED_PLANTED: f"{self.IMAGE_DIR}/planted.png",
             PlotState.SEED_PLANTED_WET: f"{self.IMAGE_DIR}/planted_wet.png",
@@ -38,12 +56,21 @@ class Plant:
             PlotState.GROWING_WET: self.GROWING_EMOJI_WATERED,
             PlotState.READY: self.READY_EMOJI,
         }
+        self.emoji = self.READY_EMOJI
 
     def get_status(self, age: int, watered: bool) -> PlotState:
         if age <= self.seed_hours:
-            return PlotState.SEED_PLANTED if not watered else PlotState.SEED_PLANTED_WET
+            return (
+                PlotState.SEED_PLANTED
+                if not watered and self.allow_modifiers
+                else PlotState.SEED_PLANTED_WET
+            )
         elif age <= self.grow_hours:
-            return PlotState.GROWING if not watered else PlotState.GROWING_WET
+            return (
+                PlotState.GROWING
+                if not watered and self.allow_modifiers
+                else PlotState.GROWING_WET
+            )
         else:
             return PlotState.READY
 
@@ -165,8 +192,8 @@ class YellowBeanPlant(Plant):
     READY_EMOJI = 1239500357407870986
     IMAGE_DIR = "yellow_bean"
 
-    FERTILE_TIME = 24 * 3
-    # FERTILE_TIME = 12
+    MODIFIER_DURATON = 24 * 3
+    MODIFIER = 0.5
 
     def __init__(self):
         super().__init__(PlantType.YELLOW_BEAN)
@@ -210,11 +237,40 @@ class BakedBeanPlant(Plant):
         # self.grow_hours = 5
 
 
+class FlashBeanPlant(Plant):
+
+    SEED_EMOJI = 1240215495957811210
+    SEED_EMOJI_WATERED = 1240215495957811210
+    GROWING_EMOJI = 1240215495957811210
+    GROWING_EMOJI_WATERED = 1240215495957811210
+    READY_EMOJI = 1240215497241530430
+    IMAGE_DIR = "flash_bean"
+
+    MODIFIER_DURATON = 24 * 3
+    MODIFIER = 0.5
+
+    def __init__(self):
+        super().__init__(PlantType.FLASH_BEAN)
+        self.seed_hours = 24
+        self.grow_hours = 24 * 3
+        self.allow_modifiers = False
+
+        self.IMAGE_MAP = {
+            PlotState.SEED_PLANTED: f"{self.IMAGE_DIR}/planted.png",
+            PlotState.SEED_PLANTED_WET: f"{self.IMAGE_DIR}/planted.png",
+            PlotState.GROWING: f"{self.IMAGE_DIR}/planted.png",
+            PlotState.GROWING_WET: f"{self.IMAGE_DIR}/planted.png",
+            PlotState.READY: f"{self.IMAGE_DIR}/ready.png",
+        }
+        self.emoji = self.SEED_EMOJI
+
+
 class Plot:
 
     EMPTY_PLOT_EMOJI = 1238648942489505864
 
     TIME_MODIFIER = 60 * 60
+    # TIME_MODIFIER = 60
 
     def __init__(
         self,
@@ -224,21 +280,17 @@ class Plot:
         y: int,
         plant: Plant = None,
         plant_datetime: datetime.datetime = None,
-        water_events: list[GardenEvent] = None,
         notified: bool = False,
-        last_fertilized_event: GardenEvent = None,
+        modifiers: PlotModifiers = None,
     ):
         self.id = id
         self.garden_id = garden_id
         self.plant = plant
-        self.water_events = water_events
-        if self.water_events is None:
-            self.water_events = []
         self.plant_datetime = plant_datetime
         self.x = x
         self.y = y
         self.notified = notified
-        self.last_fertilized_event = last_fertilized_event
+        self.modifiers = modifiers
 
     def get_status_emoji(self):
         if self.empty():
@@ -263,49 +315,118 @@ class Plot:
         delta = now - self.plant_datetime
         age = delta.total_seconds() / self.TIME_MODIFIER
 
-        if len(self.water_events) <= 0:
-            return int(age)
+        if not self.plant.allow_modifiers:
+            return age
 
+        water_events = self.modifiers.water_events
         watered_hours = 0
-        previous = now
-        for event in self.water_events:
-            delta = previous - event.datetime
-            hours = delta.total_seconds() / self.TIME_MODIFIER
-            watered_hours += min(24, hours)
-            previous = event.datetime
+        if (
+            water_events is not None
+            and len(water_events) > 0
+            and self.plant.allow_modifiers
+        ):
+            previous = now
+            for event in water_events:
+                delta = previous - event.datetime
+                hours = delta.total_seconds() / self.TIME_MODIFIER
+                watered_hours += min(24, hours)
+                previous = event.datetime
 
-        last_fertilized = self.hours_since_last_fertilized()
+        last_fertilized = self.modifiers.last_fertilized
         fertile_hours = 0
-        if last_fertilized is not None:
-            fertile_hours = max(0, YellowBeanPlant.FERTILE_TIME - last_fertilized)
-            fertile_hours = min(age, fertile_hours)
-            fertile_hours = fertile_hours * 0.5
+        if last_fertilized is not None and self.plant.allow_modifiers:
+            fertilizer_active_before_plant = max(0, last_fertilized - age)
+            fertilizer_active = min(last_fertilized, YellowBeanPlant.MODIFIER_DURATON)
+            fertile_hours = min(age, fertilizer_active - fertilizer_active_before_plant)
+            fertile_hours = fertile_hours * YellowBeanPlant.MODIFIER
 
-        return int(age + watered_hours + fertile_hours)
+        flash_bean_events = self.modifiers.flash_bean_events
+        flash_bean_hours = 0
+        threshold = FlashBeanPlant.MODIFIER_DURATON + self.plant.grow_hours
+        if len(flash_bean_events) > 0 and self.plant.allow_modifiers:
+            remove_events = {}
+            for event in flash_bean_events:
+                if event.garden_event_type == GardenEventType.REMOVE:
+                    remove_events[event.plot_id] = event.datetime
+                    continue
+
+                delta = now - event.datetime
+                last_flash_bean = delta.total_seconds() / self.TIME_MODIFIER
+                if last_flash_bean > threshold:
+                    continue
+
+                last_flash_bean = delta.total_seconds() / self.TIME_MODIFIER
+                flash_bean_active_before_plant = max(0, last_flash_bean - age)
+
+                max_duration = FlashBeanPlant.MODIFIER_DURATON
+
+                # In case Flash Bean was removed early
+                if event.plot_id in remove_events:
+                    duration_delta = remove_events[event.plot_id] - event.datetime
+                    max_duration = min(
+                        max_duration,
+                        duration_delta.total_seconds() / self.TIME_MODIFIER,
+                    )
+                    del remove_events[event.plot_id]
+
+                flash_bean_active = min(last_flash_bean, max_duration)
+                hours = max(
+                    0, min(age, flash_bean_active - flash_bean_active_before_plant)
+                )
+                flash_bean_hours += hours * FlashBeanPlant.MODIFIER
+
+        return int(age + watered_hours + fertile_hours + flash_bean_hours)
 
     def is_watered(self) -> bool:
-        hours = self.hours_since_last_water()
+        hours = self.get_hours_since_last_water()
         if hours is None:
             return False
-        return self.hours_since_last_water() < 24
+        return self.get_hours_since_last_water() < 24
 
-    def hours_since_last_water(self) -> int | None:
-        if len(self.water_events) <= 0:
+    def get_hours_since_last_water(self) -> int | None:
+        if self.modifiers.water_events is None or len(self.modifiers.water_events) <= 0:
             return None
 
         now = datetime.datetime.now()
-        delta = now - self.water_events[0].datetime
+        delta = now - self.modifiers.water_events[0].datetime
         hours = int(delta.total_seconds() / self.TIME_MODIFIER)
         return hours
 
-    def hours_since_last_fertilized(self) -> int | None:
-        if self.last_fertilized_event is None:
+    def get_hours_since_last_flash_bean(self) -> int | None:
+        if len(self.modifiers.flash_bean_events) <= 0:
             return None
 
         now = datetime.datetime.now()
-        delta = now - self.last_fertilized_event.datetime
+        delta = now - self.modifiers.flash_bean_events[0].datetime
         hours = int(delta.total_seconds() / self.TIME_MODIFIER)
         return hours
+
+    def get_active_flash_bean_count(self) -> int | None:
+        if len(self.modifiers.flash_bean_events) <= 0:
+            return 0
+        count = 0
+        now = datetime.datetime.now()
+        remove_events = {}
+        for event in self.modifiers.flash_bean_events:
+            if event.garden_event_type == GardenEventType.REMOVE:
+                remove_events[event.plot_id] = event.datetime
+                continue
+            delta = now - event.datetime
+            flash_bean_age = delta.total_seconds() / self.TIME_MODIFIER
+
+            max_duration = FlashBeanPlant.MODIFIER_DURATON
+            if event.plot_id in remove_events:
+                duration_delta = remove_events[event.plot_id] - event.datetime
+                max_duration = min(
+                    max_duration,
+                    duration_delta.total_seconds() / self.TIME_MODIFIER,
+                )
+                del remove_events[event.plot_id]
+
+            if flash_bean_age <= max_duration:
+                count += 1
+
+        return count
 
     def empty(self):
         return self.plant is None
@@ -382,4 +503,6 @@ class UserGarden:
                 return GhostBeanPlant()
             case PlantType.BAKED_BEAN:
                 return BakedBeanPlant()
+            case PlantType.FLASH_BEAN:
+                return FlashBeanPlant()
         return None

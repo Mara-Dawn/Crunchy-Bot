@@ -55,6 +55,7 @@ class ItemType(str, Enum):
     WEEB_DEBUFF = "Weebify"
     BRIT_DEBUFF = "Britify"
     MEOW_DEBUFF = "Meowify"
+    NERD_DEBUFF = "Nerdify"
 
     BEAN_SEED = "BaseSeed"
     RARE_SEED = "RareSeed"
@@ -65,6 +66,7 @@ class ItemType(str, Enum):
     YELLOW_SEED = "YellowSeed"
     GHOST_SEED = "GhostSeed"
     BAKED_SEED = "BakedSeed"
+    FLASH_SEED = "FlashSeed"
 
 
 class ItemState(str, Enum):
