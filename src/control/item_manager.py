@@ -135,17 +135,18 @@ class ItemManager(Service):
         lucky_weights = [w / sum_lucky_weights for w in lucky_weights]
 
         # Spawn Chances
-        mimic_chance = 0.1
+        mimic_chance = 0.09
         large_chest_chance = 0.03
         large_mimic_chance = 0.02
+        spook_mimic_chance = 0.01
         lucky_item_chance = 0.05
 
         # Chest Ranges
-        small_min_beans = 30
-        small_max_beans = 80
-        large_min_beans = 500
-        large_max_beans = 800
-        beans = 0
+        # small_min_beans = 30
+        # small_max_beans = 80
+        # large_min_beans = 500
+        # large_max_beans = 800
+
         random_items = {}
 
         force_roll = None
@@ -165,6 +166,14 @@ class ItemManager(Service):
                         + large_mimic_chance
                         + lucky_item_chance
                     )
+                case LootboxType.SPOOKY_MIMIC:
+                    force_roll = (
+                        mimic_chance
+                        + large_chest_chance
+                        + large_mimic_chance
+                        + lucky_item_chance
+                        + spook_mimic_chance
+                    )
                 case LootboxType.REGULAR:
                     force_roll = 1
 
@@ -174,17 +183,20 @@ class ItemManager(Service):
             if force_roll is not None:
                 roll = force_roll
 
-            small_beans_reward = random.randint(small_min_beans, small_max_beans)
-            large_beans_reward = random.randint(large_min_beans, large_max_beans)
+            # small_beans_reward = random.randint(small_min_beans, small_max_beans)
+            # large_beans_reward = random.randint(large_min_beans, large_max_beans)
 
             if roll <= mimic_chance:
-                beans += -small_beans_reward
+                item_type = ItemType.CHEST_MIMIC
+                BotUtil.dict_append(random_items, item_type, 1)
             elif roll > mimic_chance and roll <= (mimic_chance + large_chest_chance):
-                beans += large_beans_reward
+                item_type = ItemType.CHEST_BEANS
+                BotUtil.dict_append(random_items, item_type, 1)
             elif roll > (mimic_chance + large_chest_chance) and roll <= (
                 mimic_chance + large_chest_chance + large_mimic_chance
             ):
-                beans += -large_beans_reward
+                item_type = ItemType.CHEST_LARGE_MIMIC
+                BotUtil.dict_append(random_items, item_type, 1)
             elif roll > (
                 mimic_chance + large_chest_chance + large_mimic_chance
             ) and roll <= (
@@ -200,11 +212,26 @@ class ItemManager(Service):
                 + large_chest_chance
                 + large_mimic_chance
                 + lucky_item_chance
+            ) and roll <= (
+                mimic_chance
+                + large_chest_chance
+                + large_mimic_chance
+                + lucky_item_chance
+                + spook_mimic_chance
+            ):
+                item_type = ItemType.CHEST_SPOOK_MIMIC
+                BotUtil.dict_append(random_items, item_type, 1)
+            elif roll > (
+                mimic_chance
+                + large_chest_chance
+                + large_mimic_chance
+                + lucky_item_chance
+                + spook_mimic_chance
             ):
                 item_type = random.choices(item_pool, weights=weights)[0]
                 BotUtil.dict_append(random_items, item_type, 1)
 
-        return LootBox(guild_id, random_items, beans)
+        return LootBox(guild_id, random_items)
 
     async def drop_loot_box(
         self, guild: discord.Guild, channel_id: int, force_type: LootboxType = None

@@ -1211,6 +1211,109 @@ class Nerdify(Debuff):
         self.emoji = "🤓"
 
 
+# Lootbox Extras
+
+
+class ChestBeansReward(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="A Bunch of Beans!",
+            type=ItemType.CHEST_BEANS,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.LOOTBOX,
+            description="",
+            information="",
+            emoji="🅱️",
+            cost=cost,
+            value=None,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            hide_in_shop=True,
+        )
+
+
+class ChestMimic(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Oh no, it's a Mimic!",
+            type=ItemType.CHEST_MIMIC,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.LOOTBOX,
+            description="",
+            information="",
+            emoji="😠",
+            cost=cost,
+            value=None,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            hide_in_shop=True,
+        )
+
+
+class ChestLargeMimic(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Oh no, it's a LARGE Mimic!",
+            type=ItemType.CHEST_LARGE_MIMIC,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.LOOTBOX,
+            description="",
+            information="",
+            emoji="😡",
+            cost=cost,
+            value=None,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            hide_in_shop=True,
+        )
+
+
+class ChestSpookMimic(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="AAAAAAH, it's a Spooky Mimic!",
+            type=ItemType.CHEST_SPOOK_MIMIC,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.LOOTBOX,
+            description="",
+            information="",
+            emoji="😨",
+            cost=cost,
+            value=None,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            hide_in_shop=True,
+        )
+
+
 # Garden Seeds
 
 
