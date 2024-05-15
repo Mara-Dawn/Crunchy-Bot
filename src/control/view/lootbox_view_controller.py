@@ -217,7 +217,7 @@ class LootBoxViewController(ViewController):
                 item_count = item.base_amount * amount
                 item.add_to_embed(self.bot, embed, 43, count=item_count, show_price=False)
                 log_message += f" and {item_count}x {item.name}"
-                items_to_give.append((item_count, item))
+                items_to_give.append((amount, item))
 
         self.logger.log(interaction.guild_id, log_message, cog="Beans")
 
