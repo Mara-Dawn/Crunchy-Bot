@@ -84,7 +84,7 @@ class LootBoxViewController(ViewController):
         if ItemType.MIMIC_DETECTOR in [item.type for item in user_items]:
             message = (
                 "**Oh, wait a second!**\nYou feel something tugging on your leg. It's the Foxgirl you found and took care of until now. " 
-                "She is signaling you **not to open that chest**, looks like its a **mimic**! Whew that was close. Before you get to thank her,"
+                "She is signaling you **not to open that chest**, looks like its a **mimic**! Whew that was close. Before you get to thank her, "
                 "she runs away and disappears between the trees."
             )
             await interaction.followup.send(content=message, ephemeral=True)
