@@ -197,7 +197,7 @@ class YellowBeanPlant(Plant):
     IMAGE_DIR = "yellow_bean"
 
     MODIFIER_DURATON = 24 * 3
-    MODIFIER = 0.5
+    MODIFIER = 1
 
     def __init__(self):
         super().__init__(PlantType.YELLOW_BEAN)
@@ -251,7 +251,7 @@ class FlashBeanPlant(Plant):
     IMAGE_DIR = "flash_bean"
 
     MODIFIER_DURATON = 24 * 3
-    MODIFIER = 0.5
+    MODIFIER = 1
 
     def __init__(self):
         super().__init__(PlantType.FLASH_BEAN)

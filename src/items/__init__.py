@@ -15,6 +15,38 @@ from datalayer.types import ItemTrigger, PlantType
 from items.item import Item
 from items.types import ItemGroup, ItemType, ShopCategory
 
+# Copy this class as a base for adding new items.
+# class Example(Item):
+
+#     def __init__(self, cost: int | None):
+#         defaultcost = 0
+
+#         if cost is None:
+#             cost = defaultcost
+
+#         super().__init__(
+#             name="Item Name",
+#             type=ItemType.EXAMPLE,
+#             group=ItemGroup.GAMBA,
+#             shop_category=ShopCategory.FUN,
+#             description="Shown together with the item name.",
+#             information="Shown as additional info in the catalog.",
+#             emoji="🅱️",
+#             cost=0,
+#             value=1,
+#             view_class=None,
+#             allow_amount=False,
+#             base_amount=1,
+#             max_amount=None,
+#             trigger=[],
+#             hide_in_shop=False,
+#             weight=None,
+#             controllable=False,
+#             useable=False,
+#             permanent=False,
+#             secret=False,
+#         )
+
 
 class Arrest(Item):
 
@@ -35,10 +67,6 @@ class Arrest(Item):
             cost=cost,
             value=None,
             view_class="ShopUserSelectView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
         )
 
 
@@ -60,10 +88,6 @@ class AutoCrit(Item):
             emoji="💥",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART, ItemTrigger.PET, ItemTrigger.SLAP],
             controllable=True,
         )
@@ -88,10 +112,6 @@ class Bailout(Item):
             cost=cost,
             value=None,
             view_class="ShopConfirmView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
         )
 
 
@@ -114,10 +134,6 @@ class Bat(Item):
             cost=cost,
             value=20,
             view_class="ShopUserSelectView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
         )
 
 
@@ -139,10 +155,6 @@ class BonusFart(Item):
             emoji="😂",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             weight=150,
             controllable=True,
@@ -167,10 +179,6 @@ class BonusPet(Item):
             emoji="🥰",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.PET],
             weight=150,
             controllable=True,
@@ -195,10 +203,6 @@ class UltraPet(Item):
             emoji="😳",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.PET],
             hide_in_shop=True,
             controllable=True,
@@ -223,10 +227,6 @@ class PenetratingPet(Item):
             emoji="🎮",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.PET],
             hide_in_shop=True,
             controllable=True,
@@ -251,10 +251,6 @@ class BonusSlap(Item):
             emoji="✋",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.SLAP],
             weight=150,
             controllable=True,
@@ -279,10 +275,6 @@ class SwapSlap(Item):
             emoji="🔁",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.SLAP],
             hide_in_shop=True,
             controllable=True,
@@ -307,10 +299,6 @@ class UltraSlap(Item):
             emoji="🥊",
             cost=cost,
             value=60 * 5,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.SLAP],
             hide_in_shop=True,
             controllable=True,
@@ -340,10 +328,6 @@ class ExplosiveFart(Item):
             cost=cost,
             value=1,
             view_class="ShopConfirmView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
             useable=True,
         )
 
@@ -366,10 +350,6 @@ class UltraFartBoost(Item):
             emoji="🤮",
             cost=cost,
             value=50,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             hide_in_shop=True,
             controllable=True,
@@ -394,10 +374,6 @@ class FartBoost(Item):
             emoji="🤢",
             cost=cost,
             value=3,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             controllable=True,
         )
@@ -421,8 +397,6 @@ class FartProtection(Item):
             emoji="☣",
             cost=cost,
             value=0.5,
-            view_class=None,
-            allow_amount=False,
             base_amount=5,
             max_amount=5,
             trigger=[ItemTrigger.FART, ItemTrigger.SLAP, ItemTrigger.MIMIC],
@@ -465,10 +439,6 @@ class FartStabilizer(Item):
             emoji="🔭",
             cost=cost,
             value=10,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             controllable=True,
         )
@@ -492,10 +462,6 @@ class Fartvantage(Item):
             emoji="🍔",
             cost=cost,
             value=2,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             controllable=True,
         )
@@ -519,10 +485,6 @@ class GigaFart(Item):
             emoji="💀",
             cost=cost,
             value=10,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             controllable=True,
         )
@@ -549,8 +511,6 @@ class JailReduction(Item):
             view_class="ShopConfirmView",
             allow_amount=True,
             base_amount=1,
-            max_amount=None,
-            trigger=None,
         )
 
 
@@ -572,11 +532,6 @@ class LootBoxItem(Item):
             emoji="🧰",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
             hide_in_shop=True,
         )
 
@@ -599,11 +554,7 @@ class LootBoxItemBundle(Item):
             emoji="🧰",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
             base_amount=5,
-            max_amount=None,
-            trigger=None,
         )
 
 
@@ -625,11 +576,6 @@ class PocketMimic(Item):
             emoji="🧰",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
             controllable=True,
             hide_in_shop=True,
             useable=True,
@@ -654,11 +600,6 @@ class CatGirl(Item):
             emoji="🐱",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
             hide_in_shop=True,
             permanent=True,
         )
@@ -686,11 +627,6 @@ class CrappyDrawing(Item):
             emoji="🧻",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
             hide_in_shop=True,
             useable=True,
         )
@@ -714,11 +650,7 @@ class LotteryTicket(Item):
             emoji="🎫",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
             max_amount=3,
-            trigger=None,
         )
 
 
@@ -743,7 +675,6 @@ class NameColor(Item):
             view_class="ShopColorSelectView",
             allow_amount=True,
             base_amount=7,
-            max_amount=None,
             trigger=[ItemTrigger.DAILY],
         )
 
@@ -766,10 +697,6 @@ class PetBoost(Item):
             emoji="🧸",
             cost=cost,
             value=5,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.PET],
             controllable=True,
         )
@@ -796,7 +723,6 @@ class ReactionSpam(Item):
             view_class="ShopReactionSelectView",
             allow_amount=True,
             base_amount=10,
-            max_amount=None,
             trigger=[ItemTrigger.USER_MESSAGE],
         )
 
@@ -820,10 +746,6 @@ class Release(Item):
             cost=cost,
             value=None,
             view_class="ShopUserSelectView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
         )
 
 
@@ -846,10 +768,6 @@ class RouletteFart(Item):
             cost=cost,
             value=None,
             view_class="ShopUserSelectView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
         )
 
 
@@ -871,10 +789,6 @@ class SatanBoost(Item):
             emoji="😈",
             cost=cost,
             value=25,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             controllable=True,
         )
@@ -898,10 +812,6 @@ class SlapBoost(Item):
             emoji="🔨",
             cost=cost,
             value=5,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.SLAP],
             controllable=True,
         )
@@ -925,10 +835,6 @@ class NoLimitGamba(Item):
             emoji="🎰",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.GAMBA],
             controllable=True,
             hide_in_shop=True,
@@ -953,10 +859,6 @@ class NoCooldownGamba(Item):
             emoji="🎰",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.GAMBA],
             controllable=True,
             hide_in_shop=True,
@@ -985,10 +887,6 @@ class MimicDetector(Item):
             emoji="🦊",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.MIMIC],
             controllable=True,
             hide_in_shop=True,
@@ -1019,10 +917,6 @@ class GhostBean(Item):
             cost=cost,
             value=1,
             view_class="ShopUserSelectView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=[],
             controllable=True,
             useable=True,
             hide_in_shop=True,
@@ -1058,12 +952,7 @@ class Debuff(Item):
             emoji="",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.USER_MESSAGE],
-            controllable=False,
             hide_in_shop=True,
         )
 
@@ -1232,9 +1121,6 @@ class ChestBeansReward(Item):
             emoji="🅱️",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
             hide_in_shop=True,
         )
 
@@ -1257,9 +1143,6 @@ class ChestMimic(Item):
             emoji="😠",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
             hide_in_shop=True,
         )
 
@@ -1282,9 +1165,6 @@ class ChestLargeMimic(Item):
             emoji="😡",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
             hide_in_shop=True,
         )
 
@@ -1307,9 +1187,6 @@ class ChestSpookMimic(Item):
             emoji="😨",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
             hide_in_shop=True,
         )
 
@@ -1362,12 +1239,6 @@ class BaseSeed(Item):
             emoji=BeanPlant.READY_EMOJI,
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=[],
-            controllable=False,
             hide_in_shop=True,
         )
 
@@ -1491,7 +1362,7 @@ class YellowSeed(BaseSeed):
             "Available as a rare drop from lootboxes."
             "\nTakes 2-4 Days to grow, depending on water."
             "\nProduces 200 - 300 beans when harvested."
-            "\nFertilizes the plot it was planted on for 3 days, making beans grow 50% faster."
+            "\nFertilizes the plot it was planted on for 3 days, making beans grow 100% faster."
         )
         self.emoji = YellowBeanPlant.READY_EMOJI
 
@@ -1556,11 +1427,11 @@ class FlashSeed(BaseSeed):
         self.description = (
             "A Piss Bean survived and is back for one last run. It found its calling as the Flash! "
             "It's so fast, it helps you grow every plot at lightning speed! Until... "
-            "(Makes all your plots grow 50% faster while active)"
+            "(Makes all your plots age twice as fast while active)"
         )
         self.information = (
             "Available as a super rare drop from lootboxes."
-            "\nWill be active for 3 days, boosting the growth of all of your plants by an additional 50%. "
+            "\nWill be active for 3 days, boosting the growth of all of your plants by an additional 100%. "
             "This stacks additively with other flash beans, water and fertilizer."
             "\nProduces a Ghost Bean Seed when harvested."
         )
@@ -1588,10 +1459,6 @@ class PrestigeBean(Item):
             emoji="🅱️",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=ItemTrigger.DAILY,
             hide_in_shop=True,
             permanent=True,
@@ -1620,10 +1487,6 @@ class PermPetBoost(Item):
             emoji="🐾",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.PET],
             hide_in_shop=True,
             permanent=True,
@@ -1652,9 +1515,6 @@ class UsefulCatGirl(Item):
             emoji="🐈",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
             max_amount=1,
             trigger=[ItemTrigger.PET, ItemTrigger.SLAP],
             hide_in_shop=True,
@@ -1684,10 +1544,6 @@ class IncomingPetBoost(Item):
             emoji="💄",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.PET],
             hide_in_shop=True,
             permanent=True,
@@ -1717,10 +1573,6 @@ class PermSlapBoost(Item):
             emoji="🤖",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.SLAP],
             hide_in_shop=True,
             permanent=True,
@@ -1751,10 +1603,6 @@ class PermFartBoost(Item):
             emoji="🍑",
             cost=cost,
             value=1,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             hide_in_shop=True,
             permanent=True,
@@ -1784,10 +1632,6 @@ class UltraBoost(Item):
             emoji="💯",
             cost=cost,
             value=100,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART, ItemTrigger.PET, ItemTrigger.SLAP],
             hide_in_shop=True,
             controllable=True,
@@ -1816,10 +1660,6 @@ class PermProtection(Item):
             emoji="🙈",
             cost=cost,
             value=0.01,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=5,
             trigger=[ItemTrigger.FART, ItemTrigger.SLAP],
             hide_in_shop=True,
             permanent=True,
