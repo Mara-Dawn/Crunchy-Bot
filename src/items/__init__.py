@@ -1362,7 +1362,7 @@ class YellowSeed(BaseSeed):
             "Available as a rare drop from lootboxes."
             "\nTakes 2-4 Days to grow, depending on water."
             "\nProduces 200 - 300 beans when harvested."
-            "\nFertilizes the plot it was planted on for 3 days, making beans grow 50% faster."
+            "\nFertilizes the plot it was planted on for 3 days, making beans grow 100% faster."
         )
         self.emoji = YellowBeanPlant.READY_EMOJI
 
@@ -1427,11 +1427,11 @@ class FlashSeed(BaseSeed):
         self.description = (
             "A Piss Bean survived and is back for one last run. It found its calling as the Flash! "
             "It's so fast, it helps you grow every plot at lightning speed! Until... "
-            "(Makes all your plots grow 50% faster while active)"
+            "(Makes all your plots age twice as fast while active)"
         )
         self.information = (
             "Available as a super rare drop from lootboxes."
-            "\nWill be active for 3 days, boosting the growth of all of your plants by an additional 50%. "
+            "\nWill be active for 3 days, boosting the growth of all of your plants by an additional 100%. "
             "This stacks additively with other flash beans, water and fertilizer."
             "\nProduces a Ghost Bean Seed when harvested."
         )
