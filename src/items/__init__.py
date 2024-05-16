@@ -680,7 +680,7 @@ class CrappyDrawing(Item):
             description=(
                 "Ow! Something hits your forehead and makes you flinch. You manage to catch it before it reaches the floor "
                 "and you notice a suspiciously wet rolled up small paper ball. After unwrapping it, you can read its message: "
-                "'Coupon for one shitty profile picture drawing form Lusa' (Use item in your inventory to redeem.)"
+                "'Coupon for one shitty profile picture drawing from Lusa' (Use item in your inventory to redeem.)"
             ),
             information="Available as a rare drop from lootboxes.",
             emoji="🧻",
