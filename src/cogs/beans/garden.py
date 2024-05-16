@@ -73,7 +73,7 @@ class Garden(BeansGroup):
                 )
                 await self.controller.dispatch_ui_event(event)
 
-    @tasks.loop(hours=1)
+    @tasks.loop(minutes=15)
     async def garden_notifications(self):
         self.logger.debug(
             "sys", "Garden notification task started.", cog=self.__cog_name__
@@ -83,6 +83,11 @@ class Garden(BeansGroup):
 
             gardens = await self.database.get_guild_gardens(guild.id)
 
+            self.logger.log(
+                "sys",
+                f"found {len(gardens)} gardens.",
+                cog=self.__cog_name__,
+            )
             for garden in gardens:
                 plots = garden.notification_pending_plots()
                 if len(plots) > 0:
