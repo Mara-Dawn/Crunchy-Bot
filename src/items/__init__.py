@@ -16,6 +16,39 @@ from items.item import Item
 from items.types import ItemGroup, ItemType, ShopCategory
 
 
+class Example(Item):
+    # Copy this class as a base for adding new items.
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Item Name",
+            type=ItemType.EXAMPLE,
+            group=ItemGroup.GAMBA,
+            shop_category=ShopCategory.FUN,
+            description="Shown together with the item name.",
+            information="Shown as additional info in the catalog.",
+            emoji="🅱️",
+            cost=0,
+            value=1,
+            view_class=None,
+            allow_amount=False,
+            base_amount=1,
+            max_amount=None,
+            trigger=[],
+            hide_in_shop=False,
+            weight=None,
+            controllable=False,
+            useable=False,
+            permanent=False,
+            secret=False,
+        )
+
+
 class Arrest(Item):
 
     def __init__(self, cost: int | None):
@@ -35,10 +68,6 @@ class Arrest(Item):
             cost=cost,
             value=None,
             view_class="ShopUserSelectView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
         )
 
 
@@ -60,10 +89,6 @@ class AutoCrit(Item):
             emoji="💥",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART, ItemTrigger.PET, ItemTrigger.SLAP],
             controllable=True,
         )
@@ -88,10 +113,6 @@ class Bailout(Item):
             cost=cost,
             value=None,
             view_class="ShopConfirmView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
         )
 
 
@@ -114,10 +135,6 @@ class Bat(Item):
             cost=cost,
             value=20,
             view_class="ShopUserSelectView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
         )
 
 
@@ -139,10 +156,6 @@ class BonusFart(Item):
             emoji="😂",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             weight=150,
             controllable=True,
@@ -167,10 +180,6 @@ class BonusPet(Item):
             emoji="🥰",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.PET],
             weight=150,
             controllable=True,
@@ -195,10 +204,6 @@ class UltraPet(Item):
             emoji="😳",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.PET],
             hide_in_shop=True,
             controllable=True,
@@ -223,10 +228,6 @@ class PenetratingPet(Item):
             emoji="🎮",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.PET],
             hide_in_shop=True,
             controllable=True,
@@ -251,10 +252,6 @@ class BonusSlap(Item):
             emoji="✋",
             cost=cost,
             value=True,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.SLAP],
             weight=150,
             controllable=True,
@@ -279,10 +276,6 @@ class SwapSlap(Item):
             emoji="🔁",
             cost=cost,
             value=None,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.SLAP],
             hide_in_shop=True,
             controllable=True,
@@ -307,10 +300,6 @@ class UltraSlap(Item):
             emoji="🥊",
             cost=cost,
             value=60 * 5,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.SLAP],
             hide_in_shop=True,
             controllable=True,
@@ -340,10 +329,6 @@ class ExplosiveFart(Item):
             cost=cost,
             value=1,
             view_class="ShopConfirmView",
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
-            trigger=None,
             useable=True,
         )
 
@@ -366,10 +351,6 @@ class UltraFartBoost(Item):
             emoji="🤮",
             cost=cost,
             value=50,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             hide_in_shop=True,
             controllable=True,
@@ -394,10 +375,6 @@ class FartBoost(Item):
             emoji="🤢",
             cost=cost,
             value=3,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             controllable=True,
         )
@@ -421,8 +398,6 @@ class FartProtection(Item):
             emoji="☣",
             cost=cost,
             value=0.5,
-            view_class=None,
-            allow_amount=False,
             base_amount=5,
             max_amount=5,
             trigger=[ItemTrigger.FART, ItemTrigger.SLAP, ItemTrigger.MIMIC],
@@ -465,10 +440,6 @@ class FartStabilizer(Item):
             emoji="🔭",
             cost=cost,
             value=10,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             controllable=True,
         )
@@ -492,10 +463,6 @@ class Fartvantage(Item):
             emoji="🍔",
             cost=cost,
             value=2,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             controllable=True,
         )
@@ -519,10 +486,6 @@ class GigaFart(Item):
             emoji="💀",
             cost=cost,
             value=10,
-            view_class=None,
-            allow_amount=False,
-            base_amount=1,
-            max_amount=None,
             trigger=[ItemTrigger.FART],
             controllable=True,
         )
@@ -549,8 +512,6 @@ class JailReduction(Item):
             view_class="ShopConfirmView",
             allow_amount=True,
             base_amount=1,
-            max_amount=None,
-            trigger=None,
         )
 
 
