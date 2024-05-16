@@ -2,7 +2,6 @@ from enum import Enum
 
 
 class ItemType(str, Enum):
-    EXAMPLE = "Example"
     AUTO_CRIT = "AutoCrit"
     FART_BOOST = "FartBoost"
     ULTRA_FART_BOOST = "UltraFartBoost"
