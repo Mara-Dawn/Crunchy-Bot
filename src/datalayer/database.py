@@ -1452,7 +1452,7 @@ class Database:
         """
         rows = await self.__query_select(command)
         if not rows:
-            return []
+            return {}
 
         return {
             ItemType(row[self.LOOTBOX_ITEM_TYPE_COL]): int(
