@@ -1612,7 +1612,7 @@ class Database:
         return {row[self.BEANS_EVENT_MEMBER_COL]: row["high_score"] for row in rows}
 
     async def get_member_beans_rankings(
-        self,  guild_id: int, member_id: int, season: Season = Season.CURRENT
+        self, guild_id: int, member_id: int, season: Season = Season.CURRENT
     ) -> int:
         start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
@@ -1641,7 +1641,7 @@ class Database:
             BeansEventType.SHOP_BUYBACK.value,
             start_timestamp,
             end_timestamp,
-            member_id
+            member_id,
         )
 
         rows = await self.__query_select(command, task)
@@ -2436,8 +2436,7 @@ class Database:
 
         command = f"""
             SELECT * FROM {self.GARDEN_TABLE}
-            WHERE {self.GARDEN_GUILD_ID} = {int(guild_id)}
-            LIMIT 1;
+            WHERE {self.GARDEN_GUILD_ID} = {int(guild_id)};
         """
         rows = await self.__query_select(command)
         if not rows or len(rows) < 1:
