@@ -127,6 +127,8 @@ class ItemManager(Service):
         sum_weights = sum(weights)
         weights = [w / sum_weights for w in weights]
 
+        # test = {item_pool[index]: value for index, value in enumerate(weights)}
+
         lucky_weights = [
             (await self.get_item(guild_id, x)).weight for x in lucky_item_pool
         ]
@@ -134,6 +136,9 @@ class ItemManager(Service):
         sum_lucky_weights = sum(lucky_weights)
         lucky_weights = [w / sum_lucky_weights for w in lucky_weights]
 
+        # test2 = {
+        #     lucky_item_pool[index]: value for index, value in enumerate(lucky_weights)
+        # }
         # Spawn Chances
         mimic_chance = 0.09
         large_chest_chance = 0.03
