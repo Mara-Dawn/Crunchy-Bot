@@ -14,6 +14,8 @@ class EventType(str, Enum):
     PREDICTION = "prediction"
     GARDEN = "garden"
     NOTIFICATION = "notification"
+    ENCOUNTER = "encounter"
+    COMBAT = "combat"
 
 
 class BeansEventType(str, Enum):
@@ -71,6 +73,19 @@ class GardenEventType(str, Enum):
     REMOVE = "remove"
     HARVEST = "harvest"
     NOTIFICATION = "notification"
+
+
+class EncounterEventType(str, Enum):
+    SPAWN = "spawn"
+    MEMBER_ENGAGE = "member_engage"
+    MEMBER_DEFEAT = "member_defeat"
+    ENEMY_DEFEAT = "enemy_defeat"
+    END = "end"
+
+
+class CombatEventType(str, Enum):
+    MEMBER_TURN = "member_turn"
+    ENEMY_TURN = "enemy_turn"
 
 
 class UIEventType(str, Enum):
@@ -141,3 +156,5 @@ class UIEventType(str, Enum):
     GARDEN_PLOT_REMOVE = "garden_plot_remove"
     GARDEN_REFRESH = "garden_plot_refresh"
     GARDEN_PLOT_BLOCK = "garden_plot_block"
+
+    COMBAT_ENGAGE = "combat_engage"

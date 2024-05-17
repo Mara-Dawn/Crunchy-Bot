@@ -5,11 +5,14 @@ from typing import Any
 import aiosqlite
 import discord
 from bot_util import BotUtil
+from combat.encounter import Encounter
 from control.logger import BotLogger
 from discord.ext import commands
 from events.bat_event import BatEvent
 from events.beans_event import BeansEvent, BeansEventType
 from events.bot_event import BotEvent
+from events.combat_event import CombatEvent
+from events.encounter_event import EncounterEvent
 from events.garden_event import GardenEvent
 from events.interaction_event import InteractionEvent
 from events.inventory_event import InventoryEvent
@@ -20,6 +23,7 @@ from events.quote_event import QuoteEvent
 from events.spam_event import SpamEvent
 from events.timeout_event import TimeoutEvent
 from events.types import (
+    EncounterEventType,
     EventType,
     GardenEventType,
     LootBoxEventType,
@@ -426,7 +430,7 @@ class Database:
     CREATE_GUILD_SEASON_TABLE = f"""
     CREATE TABLE if not exists {GUILD_SEASON_TABLE} (
         {GUILD_SEASON_GUILD_ID_COL} INTEGER PRIMARY KEY,
-        {GUILD_SEASON_GUILD_LEVEL_COL} INTEGER,
+        {GUILD_SEASON_GUILD_LEVEL_COL} INTEGER
     );"""
 
     ENCOUNTER_TABLE = "encounters"
@@ -434,22 +438,14 @@ class Database:
     ENCOUNTER_GUILD_ID_COL = "encn_guild_id"
     ENCOUNTER_ENEMY_TYPE_COL = "encn_enemy_type"
     ENCOUNTER_ENEMY_HEALTH_COL = "encn_enemy_health"
+    ENCOUNTER_MESSAGE_ID_COL = "encn_message_id"
     CREATE_ENCOUNTER_TABLE = f"""
     CREATE TABLE if not exists {ENCOUNTER_TABLE} (
         {ENCOUNTER_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
         {ENCOUNTER_GUILD_ID_COL} INTEGER,
         {ENCOUNTER_ENEMY_TYPE_COL} TEXT,
         {ENCOUNTER_ENEMY_HEALTH_COL} INTEGER,
-    );"""
-
-    ENCOUNTER_PARTICIPANTS_TABLE = "encounterparticipants"
-    ENCOUNTER_PARTICIPANTS_ENCOUNTER_ID_COL = "enpa_encounter_id"
-    ENCOUNTER_PARTICIPANTS_MEMBER_ID_COL = "enpa_member_id"
-    CREATE_ENCOUNTER_PARTICIPANTS_TABLE = f"""
-    CREATE TABLE if not exists {ENCOUNTER_PARTICIPANTS_TABLE} (
-        {ENCOUNTER_PARTICIPANTS_ENCOUNTER_ID_COL} INTEGER,
-        {ENCOUNTER_PARTICIPANTS_MEMBER_ID_COL} INTEGER,
-        PRIMARY KEY ({ENCOUNTER_PARTICIPANTS_ENCOUNTER_ID_COL}, {ENCOUNTER_PARTICIPANTS_MEMBER_ID_COL})
+        {ENCOUNTER_MESSAGE_ID_COL} INTEGER
     );"""
 
     ENCOUNTER_EVENT_TABLE = "encounterevents"
@@ -457,15 +453,33 @@ class Database:
     ENCOUNTER_EVENT_ENCOUNTER_ID_COL = "enev_encounter_id"
     ENCOUNTER_EVENT_MEMBER_ID = "enev_member_id"
     ENCOUNTER_EVENT_TYPE_COL = "enev_type"
-    ENCOUNTER_EVENT_PAYLOAD_COL = "enev_payload"
     CREATE_ENCOUNTER_EVENT_TABLE = f"""
     CREATE TABLE if not exists {ENCOUNTER_EVENT_TABLE} (
         {ENCOUNTER_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
         {ENCOUNTER_EVENT_ENCOUNTER_ID_COL} INTEGER REFERENCES {ENCOUNTER_TABLE} ({ENCOUNTER_ID_COL}), 
         {ENCOUNTER_EVENT_MEMBER_ID} INTEGER, 
         {ENCOUNTER_EVENT_TYPE_COL} TEXT, 
-        {ENCOUNTER_EVENT_PAYLOAD_COL} TEXT, 
         PRIMARY KEY ({ENCOUNTER_EVENT_ID_COL})
+    );"""
+
+    COMBAT_EVENT_TABLE = "combatevents"
+    COMBAT_EVENT_ID_COL = "cbev_id"
+    COMBAT_EVENT_ENCOUNTER_ID_COL = "cbev_encounter_id"
+    COMBAT_EVENT_MEMBER_ID = "cbev_member_id"
+    COMBAT_EVENT_TARGET_ID = "cbev_target_id"
+    COMBAT_EVENT_SKILL_TYPE = "cbev_skill_type"
+    COMBAT_EVENT_SKILL_VALUE = "cbev_skill_value"
+    COMBAT_EVENT_TYPE_COL = "cbev_type"
+    CREATE_COMBAT_EVENT_TABLE = f"""
+    CREATE TABLE if not exists {COMBAT_EVENT_TABLE} (
+        {COMBAT_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {COMBAT_EVENT_ENCOUNTER_ID_COL} INTEGER REFERENCES {ENCOUNTER_TABLE} ({ENCOUNTER_ID_COL}), 
+        {COMBAT_EVENT_MEMBER_ID} INTEGER, 
+        {COMBAT_EVENT_TARGET_ID} INTEGER, 
+        {COMBAT_EVENT_SKILL_TYPE} TEXT, 
+        {COMBAT_EVENT_SKILL_VALUE} INTEGER, 
+        {COMBAT_EVENT_TYPE_COL} TEXT, 
+        PRIMARY KEY ({COMBAT_EVENT_ID_COL})
     );"""
 
     PERMANENT_ITEMS = [
@@ -525,6 +539,10 @@ class Database:
             await db.execute(self.CREATE_PLOT_TABLE)
             await db.execute(self.CREATE_GARDEN_TABLE)
             await db.execute(self.CREATE_GARDEN_EVENT_TABLE)
+            await db.execute(self.CREATE_GUILD_SEASON_TABLE)
+            await db.execute(self.CREATE_ENCOUNTER_TABLE)
+            await db.execute(self.CREATE_ENCOUNTER_EVENT_TABLE)
+            await db.execute(self.CREATE_COMBAT_EVENT_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -800,6 +818,50 @@ class Database:
 
         return await self.__query_insert(command, task)
 
+    async def __create_encounter_event(
+        self, event_id: int, event: EncounterEvent
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.ENCOUNTER_EVENT_TABLE} (
+            {self.ENCOUNTER_EVENT_ID_COL},
+            {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL},
+            {self.ENCOUNTER_EVENT_MEMBER_ID},
+            {self.ENCOUNTER_EVENT_TYPE_COL})
+            VALUES (?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.encounter_id,
+            event.member_id,
+            event.encounter_event_type,
+        )
+
+        return await self.__query_insert(command, task)
+
+    async def __create_combat_event(self, event_id: int, event: CombatEvent) -> int:
+        command = f"""
+            INSERT INTO {self.COMBAT_EVENT_TABLE} (
+            {self.COMBAT_EVENT_ID_COL},
+            {self.COMBAT_EVENT_ENCOUNTER_ID_COL},
+            {self.COMBAT_EVENT_MEMBER_ID},
+            {self.COMBAT_EVENT_TARGET_ID},
+            {self.COMBAT_EVENT_SKILL_TYPE},
+            {self.COMBAT_EVENT_SKILL_VALUE},
+            {self.COMBAT_EVENT_TYPE_COL})
+            VALUES (?, ?, ?, ?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.encounter_id,
+            event.member_id,
+            event.target_id,
+            event.skill_type,
+            event.skill_value,
+            event.combat_event_type,
+        )
+
+        return await self.__query_insert(command, task)
+
     async def log_event(self, event: BotEvent) -> int:
         event_id = await self.__create_base_event(event)
 
@@ -830,6 +892,10 @@ class Database:
                 return await self.__create_prediction_event(event_id, event)
             case EventType.GARDEN:
                 return await self.__create_garden_event(event_id, event)
+            case EventType.ENCOUNTER:
+                return await self.__create_encounter_event(event_id, event)
+            case EventType.COMBAT:
+                return await self.__create_combat_event(event_id, event)
 
     async def log_quote(self, quote: Quote) -> int:
         command = f"""
@@ -853,6 +919,24 @@ class Database:
             quote.channel_id,
             quote.get_timestamp(),
             quote.message_content,
+        )
+
+        return await self.__query_insert(command, task)
+
+    async def log_encounter(self, encounter: Encounter) -> int:
+        command = f"""
+            INSERT INTO {self.ENCOUNTER_TABLE} (
+            {self.ENCOUNTER_GUILD_ID_COL},
+            {self.ENCOUNTER_ENEMY_TYPE_COL},
+            {self.ENCOUNTER_ENEMY_HEALTH_COL},
+            {self.ENCOUNTER_MESSAGE_ID_COL})
+            VALUES (?, ?, ?, ?);
+        """
+        task = (
+            encounter.guild_id,
+            encounter.enemy_type.value,
+            encounter.max_health,
+            encounter.message_id,
         )
 
         return await self.__query_insert(command, task)
@@ -2509,3 +2593,125 @@ class Database:
             )
 
         return gardens
+
+    async def get_guild_level(self, guild_id: int) -> int:
+        command = f"""
+            INSERT OR IGNORE INTO {self.GUILD_SEASON_TABLE}
+            ({self.GUILD_SEASON_GUILD_ID_COL}, {self.GUILD_SEASON_GUILD_LEVEL_COL}) 
+            VALUES(?, ?);
+        """
+        task = (guild_id, 1)
+
+        await self.__query_insert(command, task)
+
+        command = f""" 
+            SELECT * FROM {self.GUILD_SEASON_TABLE} 
+            WHERE {self.GUILD_SEASON_GUILD_ID_COL} = {int(guild_id)}
+            LIMIT 1;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return 1
+
+        return int(rows[0][self.GUILD_SEASON_GUILD_LEVEL_COL])
+
+    async def get_encounter_by_message_id(
+        self, guild_id: int, message_id: int
+    ) -> Encounter:
+        command = f""" 
+            SELECT * FROM {self.ENCOUNTER_TABLE} 
+            WHERE {self.ENCOUNTER_MESSAGE_ID_COL} = ?
+            AND {self.ENCOUNTER_GUILD_ID_COL} = ?
+            LIMIT 1;
+        """
+        task = (message_id, guild_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return None
+
+        return Encounter.from_db_row(rows[0])
+
+    async def get_active_encounters(self, guild_id: int) -> list[int]:
+        start_timestamp, _ = self.__get_season_interval(Season.CURRENT)
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_TYPE_COL} in (? ,?)
+            AND {self.EVENT_TIMESTAMP_COL} > ?;
+        """
+        task = (
+            guild_id,
+            EncounterEventType.SPAWN.value,
+            EncounterEventType.END.value,
+            start_timestamp,
+        )
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        started_encounters = []
+        ended_encounters = []
+        for row in rows:
+            match EncounterEventType(row[self.ENCOUNTER_EVENT_TYPE_COL]):
+                case EncounterEventType.SPAWN:
+                    started_encounters.append(
+                        row[self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL]
+                    )
+                case EncounterEventType.END:
+                    ended_encounters.append(row[self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL])
+
+        active_encounters = []
+        for encounter_id in started_encounters:
+            if encounter_id not in ended_encounters:
+                active_encounters.append(encounter_id)
+        return active_encounters
+
+    async def get_active_encounter_participants(
+        self, guild_id: int
+    ) -> dict[int, list[int]]:
+        active_encounters = await self.get_active_encounters(guild_id)
+
+        if len(active_encounters) <= 0:
+            return {}
+
+        list_sanitized = self.__list_sanitizer(active_encounters)
+        participants = {}
+
+        for encounter_id in active_encounters:
+            participants[encounter_id] = []
+
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} IN {list_sanitized};
+        """
+
+        task = (guild_id, EncounterEventType.MEMBER_ENGAGE.value, *active_encounters)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return participants
+
+        for row in rows:
+            encounter_id = row[self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL]
+            member_id = row[self.ENCOUNTER_EVENT_MEMBER_ID]
+            participants[encounter_id].append(member_id)
+
+        return participants
+
+    async def get_last_encounter_spawn_event(self, guild_id: int) -> EncounterEvent:
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+        """
+
+        task = (guild_id, EncounterEventType.SPAWN.value)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return None
+
+        return EncounterEvent.from_db_row(rows[0])

@@ -1,7 +1,6 @@
+from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
 from items.item import Item
-
-from enemies.types import EnemyType
 
 
 class Enemy:

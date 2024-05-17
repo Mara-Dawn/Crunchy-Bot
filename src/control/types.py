@@ -11,6 +11,7 @@ class ControllerType(str, Enum):
     PREDICTION_VIEW = "PredictionViewController"
     INVENTORY_VIEW = "InventoryViewController"
     GARDEN_VIEW = "GardenViewController"
+    COMBAT = "CombatViewController"
 
 
 class AIVersion(str, Enum):
@@ -32,6 +33,7 @@ class ControllerModuleMap(str, Enum):
             ControllerType.PREDICTION_VIEW: "prediction_view_controller",
             ControllerType.INVENTORY_VIEW: "inventory_view_controller",
             ControllerType.GARDEN_VIEW: "garden_view_controller",
+            ControllerType.COMBAT: "combat_view_controller",
         }
 
         return map[controller_type]

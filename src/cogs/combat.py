@@ -4,7 +4,11 @@ import secrets
 
 import discord
 from bot import CrunchyBot
+from control.controller import Controller
 from control.encounter_manager import EncounterManager
+from control.logger import BotLogger
+from control.settings_manager import SettingsManager
+from datalayer.database import Database
 from discord import app_commands
 from discord.ext import commands, tasks
 
@@ -15,9 +19,15 @@ class Combat(commands.Cog):
     ENCOUNTER_MAX_WAIT = 90
 
     def __init__(self, bot: CrunchyBot) -> None:
-        super().__init__(bot)
+        self.bot = bot
+        self.logger: BotLogger = bot.logger
+        self.database: Database = bot.database
+        self.controller: Controller = bot.controller
         self.encounter_manager: EncounterManager = self.controller.get_service(
             EncounterManager
+        )
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
         )
         self.enemy_timers = {}
 
@@ -45,7 +55,7 @@ class Combat(commands.Cog):
 
     @commands.Cog.listener("on_ready")
     async def on_ready_combat(self):
-        self.random_encounter_task.start()
+        # self.random_encounter_task.start()
         self.logger.log("init", "Combat loaded.", cog=self.__cog_name__)
 
     @commands.Cog.listener("on_guild_join")
@@ -84,11 +94,13 @@ class Combat(commands.Cog):
         )
 
         for guild in self.bot.guilds:
-            # loot_box_event = await self.database.get_last_loot_box_event(guild.id)
+            encounter_event = await self.database.get_last_encounter_spawn_event(
+                guild.id
+            )
             last_spawn = datetime.datetime.now()
 
-            if loot_box_event is not None:
-                last_spawn = loot_box_event.datetime
+            if encounter_event is not None:
+                last_spawn = encounter_event.datetime
 
             diff = datetime.datetime.now() - last_spawn
             diff_minutes = int(diff.total_seconds() / 60)
