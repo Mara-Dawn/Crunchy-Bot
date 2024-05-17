@@ -146,7 +146,7 @@ class GardenViewController(ViewController):
                 message = f"You harvest a Catgirl Bean Plant and gain `🅱️{reward}`."
 
                 roll = random.random()
-                useful_catgirl_chance = 0.001
+                useful_catgirl_chance = 0.003
 
                 item_type = ItemType.CATGIRL
                 message += (
