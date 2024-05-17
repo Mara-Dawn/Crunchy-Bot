@@ -820,17 +820,17 @@ class SlapBoost(Item):
 class NoLimitGamba(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 9000
+        defaultcost = 12000
 
         if cost is None:
             cost = defaultcost
 
         super().__init__(
-            name="Unlimited Gamba",
+            name="Giga Gamba",
             type=ItemType.UNLIMITED_GAMBA,
             group=ItemGroup.GAMBA,
             shop_category=ShopCategory.FUN,
-            description="This item removes the Limit for your next gamba. You can bet as much as you want. Good luck.",
+            description="This item increases the maximum amount of beans you can bet on your next gamba to 10.000. Good luck.",
             information="Available as a rare drop from lootboxes.",
             emoji="🎰",
             cost=cost,
