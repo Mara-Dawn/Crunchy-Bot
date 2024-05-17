@@ -112,7 +112,7 @@ class ItemManager(Service):
             ItemType.SWAP_SLAP,
             ItemType.MIMIC,
             ItemType.CATGIRL,
-            ItemType.GIGA_GAMBA,
+            ItemType.UNLIMITED_GAMBA,
             ItemType.INSTANT_GAMBA,
             ItemType.CRAPPY_COUPON,
             ItemType.MIMIC_DETECTOR,

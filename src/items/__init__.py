@@ -827,7 +827,7 @@ class NoLimitGamba(Item):
 
         super().__init__(
             name="Giga Gamba",
-            type=ItemType.GIGA_GAMBA,
+            type=ItemType.UNLIMITED_GAMBA,
             group=ItemGroup.GAMBA,
             shop_category=ShopCategory.FUN,
             description="This item increases the maximum amount of beans you can bet on your next gamba to 10.000. Good luck.",
