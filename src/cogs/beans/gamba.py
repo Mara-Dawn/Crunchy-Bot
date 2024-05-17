@@ -95,7 +95,7 @@ class Gamba(commands.Cog):
 
         for item in items:
             match item.type:
-                case ItemType.GIGA_GAMBA:
+                case ItemType.UNLIMITED_GAMBA:
                     if not over_limit:
                         continue
                     no_limit = True
@@ -116,7 +116,7 @@ class Gamba(commands.Cog):
         for item in items:
             use_item = False
             match item.type:
-                case ItemType.GIGA_GAMBA:
+                case ItemType.UNLIMITED_GAMBA:
                     use_item = no_limit
                 case ItemType.INSTANT_GAMBA:
                     use_item = cooldown_override
