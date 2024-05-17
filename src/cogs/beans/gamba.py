@@ -95,7 +95,7 @@ class Gamba(commands.Cog):
 
         for item in items:
             match item.type:
-                case ItemType.UNLIMITED_GAMBA:
+                case ItemType.GIGA_GAMBA:
                     if not over_limit:
                         continue
                     no_limit = True
@@ -116,7 +116,7 @@ class Gamba(commands.Cog):
         for item in items:
             use_item = False
             match item.type:
-                case ItemType.UNLIMITED_GAMBA:
+                case ItemType.GIGA_GAMBA:
                     use_item = no_limit
                 case ItemType.INSTANT_GAMBA:
                     use_item = cooldown_override
@@ -190,7 +190,11 @@ class Gamba(commands.Cog):
             user_items, over_limit, cooldown_remaining
         )
 
-        if not no_limit and amount is not None and over_limit:
+        if no_limit:
+            beans_gamba_max = 10000
+            over_limit = not (beans_gamba_min <= amount and amount <= beans_gamba_max)
+
+        if amount is not None and over_limit:
             prompt = (
                 f"I tried to bet more than `🅱️{beans_gamba_max}` or less than `🅱️{beans_gamba_min}` beans,"
                 " which is not acceptable. Please tell me what i did wrong and keep the formatting between"
