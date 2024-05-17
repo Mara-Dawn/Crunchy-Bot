@@ -168,7 +168,7 @@ class GardenViewController(ViewController):
                 )
                 await self.controller.dispatch_event(event)
             case PlantType.YELLOW_BEAN:
-                reward = random.randint(200, 300)
+                reward = random.randint(450, 550)
                 message = f"You harvest a Piss Bean Plant and gain `🅱️{reward}`."
                 message += "\nThe soil seems more fertile too! Looks like plants will grow faster on this plot for a while."
             case PlantType.BAKED_BEAN:
