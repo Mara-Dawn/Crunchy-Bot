@@ -1,3 +1,4 @@
+import copy
 import datetime
 from typing import Any
 
@@ -46,7 +47,9 @@ class EventManager(Service):
         self.log_name = "Events"
 
     async def listen_for_event(self, event: BotEvent):
-        synchronize_events = []  # for events that need to be sent after db write
+        synchronized = False
+        if event.synchronized:
+            return
 
         match event.type:
             case EventType.JAIL:
@@ -90,17 +93,17 @@ class EventManager(Service):
                 if notification is not None:
                     await self.mod_notification(prediction_event.guild_id, notification)
             case EventType.COMBAT:
-                synchronize_events.append(event)
+                synchronized = True
 
-        if not event.synchronized:
-            from_user = event.get_causing_user_id()
-            args = event.get_type_specific_args()
-            await self.database.log_event(event)
-            self.__log_event(event, from_user, *args)
+        from_user = event.get_causing_user_id()
+        args = event.get_type_specific_args()
+        await self.database.log_event(event)
+        self.__log_event(event, from_user, *args)
 
-        for event in synchronize_events:
-            event.synchronized = True
-            self.controller.dispatch_event(event)
+        if synchronized:
+            sync_event = copy.deepcopy(event)
+            sync_event.synchronized = True
+            await self.controller.dispatch_event(sync_event)
 
     def __log_event(self, event: BotEvent, member_id: int, *args):
         event_type = event.type

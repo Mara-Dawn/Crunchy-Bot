@@ -2808,7 +2808,7 @@ class Database:
             SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
             WHERE {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = {int(encounter_id)}
-            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC;
+            ORDER BY {self.EVENT_ID_COL} DESC;
         """
         rows = await self.__query_select(command)
         if not rows:
@@ -2823,7 +2823,7 @@ class Database:
             SELECT * FROM {self.COMBAT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
             WHERE {self.COMBAT_EVENT_ENCOUNTER_ID_COL} = {int(encounter_id)}
-            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC;
+            ORDER BY {self.EVENT_ID_COL} DESC;
         """
         rows = await self.__query_select(command)
         if not rows:

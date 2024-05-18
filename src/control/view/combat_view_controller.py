@@ -97,7 +97,7 @@ class CombatViewController(ViewController):
 
         skill_value = character.get_skill_value(skill)
 
-        title = f"Turn of {character.name}"
+        title = f"Turn of *{character.name}*"
         content = f"<@{character.id}> used **{skill.name}**"
 
         match skill.skill_effect:
@@ -110,7 +110,11 @@ class CombatViewController(ViewController):
             title=title, description=content, color=discord.Colour.blurple()
         )
 
-        await interaction.edit_original_response(embed=embed, view=None)
+        message = await interaction.original_response()
+        channel = message.channel
+        await message.delete()
+        await channel.send("", embed=embed)
+
         self.controller.detach_view_by_id(view_id)
 
         event = CombatEvent(

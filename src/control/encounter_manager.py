@@ -53,9 +53,9 @@ class EncounterManager(Service):
                         )
 
             case EventType.COMBAT:
+                combat_event: CombatEvent = event
                 if not event.synchronized:
                     return
-                combat_event: CombatEvent = event
                 await self.refresh_encounter_thread(combat_event.encounter_id)
 
     def get_enemy(self, enemy_type: EnemyType) -> Enemy:
@@ -81,7 +81,9 @@ class EncounterManager(Service):
 
         return Encounter(guild_id, enemy.type, enemy_health)
 
-    def get_embed(self, encounter: Encounter, show_info: bool = False) -> discord.Embed:
+    def get_spawn_embed(
+        self, encounter: Encounter, show_info: bool = False
+    ) -> discord.Embed:
         enemy = self.get_enemy(encounter.enemy_type)
         title = "A random Enemy appeared!"
 
@@ -150,7 +152,7 @@ class EncounterManager(Service):
         self.logger.log(guild.id, log_message, cog=self.log_name)
 
         encounter = await self.create_encounter(guild.id)
-        embed = self.get_embed(encounter)
+        embed = self.get_spawn_embed(encounter)
 
         enemy = self.get_enemy(encounter.enemy_type)
 
@@ -288,18 +290,25 @@ class EncounterManager(Service):
 
     async def refresh_encounter_thread(self, encounter_id: int):
         context = await self.load_encounter_context(encounter_id)
+        current_actor = context.get_current_actor()
+
+        async for message in context.thread.history(limit=100):
+            if len(message.embeds) == 1 and message.author.id == self.bot.user.id:
+                embed = message.embeds[0]
+                if embed.image.url is not None:
+                    await message.delete()
+                    break
+
+        if current_actor.is_enemy:
+            await self.opponent_turn(context)
+            return
 
         enemy = context.opponent.enemy
         embed = self.get_combat_embed(context)
         image = discord.File(f"./img/enemies/{enemy.image}", enemy.image)
         await context.thread.send("", embed=embed, files=[image])
 
-        current_actor = context.get_current_actor()
-
-        if not current_actor.is_enemy:
-            embed = self.get_character_turn_embed(context)
-            view = CombatTurnView(self.controller, current_actor, context)
-            await context.thread.send("", embed=embed, view=view)
-            return
-
-        await self.opponent_turn(context)
+        embed = self.get_character_turn_embed(context)
+        view = CombatTurnView(self.controller, current_actor, context)
+        await context.thread.send("", embed=embed, view=view)
+        return
