@@ -6,6 +6,7 @@ from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
+from events.types import EncounterEventType
 
 
 class Encounter:
@@ -67,7 +68,7 @@ class EncounterContext:
         self.actors = sorted(
             self.actors, key=lambda item: item.initiative, reverse=True
         )
-        self.actors: deque = deque(self.actors)
+        self.actors: deque[Actor] = deque(self.actors)
 
     def get_last_actor(self) -> Actor:
         if len(self.combat_events) <= 0:
@@ -93,3 +94,9 @@ class EncounterContext:
         result = self.actors.copy()
         result.rotate(-(index + 1))
         return result
+
+    def is_concluded(self) -> bool:
+        for event in self.encounter_events:
+            if event.encounter_event_type == EncounterEventType.END:
+                return True
+        return False

@@ -4,8 +4,8 @@ import secrets
 
 import discord
 from bot import CrunchyBot
+from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
-from control.encounter_manager import EncounterManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from datalayer.database import Database

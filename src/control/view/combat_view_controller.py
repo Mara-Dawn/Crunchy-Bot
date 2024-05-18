@@ -4,7 +4,6 @@ import discord
 from combat.actors import Character
 from combat.encounter import EncounterContext
 from combat.skills.skill import Skill
-from combat.skills.types import SkillEffect
 from datalayer.database import Database
 from discord.ext import commands
 from events.combat_event import CombatEvent
@@ -12,6 +11,8 @@ from events.encounter_event import EncounterEvent
 from events.types import CombatEventType, EncounterEventType, UIEventType
 from events.ui_event import UIEvent
 
+from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
@@ -30,6 +31,12 @@ class CombatViewController(ViewController):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.event_manager: EventManager = controller.get_service(EventManager)
+        self.encounter_manager: EncounterManager = controller.get_service(
+            EncounterManager
+        )
+        self.embed_manager: CombatEmbedManager = controller.get_service(
+            CombatEmbedManager
+        )
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -88,6 +95,10 @@ class CombatViewController(ViewController):
         context: EncounterContext,
         view_id: int,
     ):
+        await self.encounter_manager.delete_previous_combat_info(context.thread)
+        message = await interaction.original_response()
+        channel = message.channel
+        await message.delete()
 
         event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
         await self.controller.dispatch_ui_event(event)
@@ -95,27 +106,15 @@ class CombatViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        skill_value = character.get_skill_value(skill)
-
-        title = f"Turn of *{character.name}*"
-        content = f"<@{character.id}> used **{skill.name}**"
-
-        match skill.skill_effect:
-            case SkillEffect.PHYSICAL_DAMAGE:
-                content += f" and deals **{skill_value}** physical damage to *{context.opponent.name}*."
-            case SkillEffect.MAGICAL_DAMAGE:
-                content += f" and deals **{skill_value}** magical damage to *{context.opponent.name}*."
-
-        embed = discord.Embed(
-            title=title, description=content, color=discord.Colour.blurple()
+        embed = self.embed_manager.get_turn_completed_embed(
+            character, context.opponent, skill
         )
 
-        message = await interaction.original_response()
-        channel = message.channel
-        await message.delete()
         await channel.send("", embed=embed)
 
         self.controller.detach_view_by_id(view_id)
+
+        skill_value = character.get_skill_value(skill)
 
         event = CombatEvent(
             datetime.datetime.now(),
