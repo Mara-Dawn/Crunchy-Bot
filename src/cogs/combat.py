@@ -137,6 +137,7 @@ class Combat(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def spawn_encounter(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         bean_channels = await self.settings_manager.get_beans_channels(
             interaction.guild_id
         )

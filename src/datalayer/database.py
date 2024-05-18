@@ -439,13 +439,29 @@ class Database:
     ENCOUNTER_ENEMY_TYPE_COL = "encn_enemy_type"
     ENCOUNTER_ENEMY_HEALTH_COL = "encn_enemy_health"
     ENCOUNTER_MESSAGE_ID_COL = "encn_message_id"
+    ENCOUNTER_CHANNEL_ID_COL = "encn_channel_id"
     CREATE_ENCOUNTER_TABLE = f"""
     CREATE TABLE if not exists {ENCOUNTER_TABLE} (
         {ENCOUNTER_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
         {ENCOUNTER_GUILD_ID_COL} INTEGER,
         {ENCOUNTER_ENEMY_TYPE_COL} TEXT,
         {ENCOUNTER_ENEMY_HEALTH_COL} INTEGER,
-        {ENCOUNTER_MESSAGE_ID_COL} INTEGER
+        {ENCOUNTER_MESSAGE_ID_COL} INTEGER,
+        {ENCOUNTER_CHANNEL_ID_COL} INTEGER
+    );"""
+
+    ENCOUNTER_THREAD_TABLE = "encounterthreads"
+    ENCOUNTER_THREAD_ID_COL = "enth_id"
+    ENCOUNTER_THREAD_ENCOUNTER_ID_COL = "enth_encounter_id"
+    ENCOUNTER_THREAD_GUILD_ID_COL = "enth_guild_id"
+    ENCOUNTER_THREAD_CHANNEL_ID_COL = "enth_channel_id"
+    CREATE_ENCOUNTER_THREAD_TABLE = f"""
+    CREATE TABLE if not exists {ENCOUNTER_THREAD_TABLE} (
+        {ENCOUNTER_THREAD_ID_COL} INTEGER,
+        {ENCOUNTER_THREAD_ENCOUNTER_ID_COL} INTEGER REFERENCES {ENCOUNTER_TABLE} ({ENCOUNTER_ID_COL}), 
+        {ENCOUNTER_THREAD_GUILD_ID_COL} INTEGER,
+        {ENCOUNTER_THREAD_CHANNEL_ID_COL} INTEGER,
+        PRIMARY KEY ({ENCOUNTER_THREAD_ENCOUNTER_ID_COL})
     );"""
 
     ENCOUNTER_EVENT_TABLE = "encounterevents"
@@ -543,6 +559,7 @@ class Database:
             await db.execute(self.CREATE_ENCOUNTER_TABLE)
             await db.execute(self.CREATE_ENCOUNTER_EVENT_TABLE)
             await db.execute(self.CREATE_COMBAT_EVENT_TABLE)
+            await db.execute(self.CREATE_ENCOUNTER_THREAD_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -929,14 +946,36 @@ class Database:
             {self.ENCOUNTER_GUILD_ID_COL},
             {self.ENCOUNTER_ENEMY_TYPE_COL},
             {self.ENCOUNTER_ENEMY_HEALTH_COL},
-            {self.ENCOUNTER_MESSAGE_ID_COL})
-            VALUES (?, ?, ?, ?);
+            {self.ENCOUNTER_MESSAGE_ID_COL},
+            {self.ENCOUNTER_CHANNEL_ID_COL})
+            VALUES (?, ?, ?, ?, ?);
         """
         task = (
             encounter.guild_id,
             encounter.enemy_type.value,
-            encounter.max_health,
+            encounter.max_hp,
             encounter.message_id,
+            encounter.channel_id,
+        )
+
+        return await self.__query_insert(command, task)
+
+    async def log_encounter_thread(
+        self, encounter_id: int, thread_id: int, guild_id: int, channel_id: int
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.ENCOUNTER_THREAD_TABLE} (
+            {self.ENCOUNTER_THREAD_ID_COL},
+            {self.ENCOUNTER_THREAD_ENCOUNTER_ID_COL},
+            {self.ENCOUNTER_THREAD_GUILD_ID_COL},
+            {self.ENCOUNTER_THREAD_CHANNEL_ID_COL})
+            VALUES (?, ?, ?, ?);
+        """
+        task = (
+            thread_id,
+            encounter_id,
+            guild_id,
+            channel_id,
         )
 
         return await self.__query_insert(command, task)
@@ -2615,6 +2654,18 @@ class Database:
 
         return int(rows[0][self.GUILD_SEASON_GUILD_LEVEL_COL])
 
+    async def get_encounter_by_encounter_id(self, encounter_id: int) -> Encounter:
+        command = f""" 
+            SELECT * FROM {self.ENCOUNTER_TABLE} 
+            WHERE {self.ENCOUNTER_ID_COL} = {int(encounter_id)}
+            LIMIT 1;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return None
+
+        return Encounter.from_db_row(rows[0])
+
     async def get_encounter_by_message_id(
         self, guild_id: int, message_id: int
     ) -> Encounter:
@@ -2701,6 +2752,28 @@ class Database:
 
         return participants
 
+    async def get_encounter_participants_by_encounter_id(
+        self, encounter_id: int
+    ) -> list[int]:
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = ?;
+        """
+
+        task = (EncounterEventType.MEMBER_ENGAGE.value, encounter_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        participants = []
+        for row in rows:
+            member_id = row[self.ENCOUNTER_EVENT_MEMBER_ID]
+            participants.append(member_id)
+
+        return participants
+
     async def get_last_encounter_spawn_event(self, guild_id: int) -> EncounterEvent:
         command = f"""
             SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
@@ -2715,3 +2788,45 @@ class Database:
             return None
 
         return EncounterEvent.from_db_row(rows[0])
+
+    async def get_encounter_thread(self, encounter_id: int) -> int:
+        command = f""" 
+            SELECT * FROM {self.ENCOUNTER_THREAD_TABLE} 
+            WHERE {self.ENCOUNTER_THREAD_ENCOUNTER_ID_COL} = {int(encounter_id)}
+            LIMIT 1;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return None
+
+        return int(rows[0][self.ENCOUNTER_THREAD_ID_COL])
+
+    async def get_encounter_events_by_encounter_id(
+        self, encounter_id: int
+    ) -> list[EncounterEvent]:
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = {int(encounter_id)}
+            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return []
+
+        return [EncounterEvent.from_db_row(row) for row in rows]
+
+    async def get_combat_events_by_encounter_id(
+        self, encounter_id: int
+    ) -> list[CombatEvent]:
+        command = f"""
+            SELECT * FROM {self.COMBAT_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
+            WHERE {self.COMBAT_EVENT_ENCOUNTER_ID_COL} = {int(encounter_id)}
+            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return []
+
+        return [CombatEvent.from_db_row(row) for row in rows]

@@ -13,11 +13,13 @@ class BotEvent(ABC):
         guild_id: int,
         event_type: EventType,
         id: int = None,
+        synchronized: bool = False,
     ):
         self.datetime = datetime
         self.guild_id = guild_id
         self.type = event_type
         self.id = id
+        self.synchronized = synchronized
 
     def get_timestamp(self) -> int:
         return int(self.datetime.timestamp())

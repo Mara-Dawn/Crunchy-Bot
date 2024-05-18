@@ -21,7 +21,7 @@ class CombatEvent(BotEvent):
         combat_event_type: EncounterEventType,
         id: int = None,
     ):
-        super().__init__(timestamp, guild_id, EventType.ENCOUNTER, id)
+        super().__init__(timestamp, guild_id, EventType.COMBAT, id)
         self.encounter_id = encounter_id
         self.member_id = member_id
         self.target_id = target_id
@@ -59,6 +59,6 @@ class CombatEvent(BotEvent):
             target_id=row[Database.COMBAT_EVENT_TARGET_ID],
             skill_type=SkillType(row[Database.COMBAT_EVENT_SKILL_TYPE]),
             skill_value=row[Database.COMBAT_EVENT_SKILL_VALUE],
-            encounter_event_type=CombatEventType(row[Database.COMBAT_EVENT_TYPE_COL]),
+            combat_event_type=CombatEventType(row[Database.COMBAT_EVENT_TYPE_COL]),
             id=row[Database.EVENT_ID_COL],
         )

@@ -158,3 +158,4 @@ class UIEventType(str, Enum):
     GARDEN_PLOT_BLOCK = "garden_plot_block"
 
     COMBAT_ENGAGE = "combat_engage"
+    COMBAT_USE_SKILL = "combat_use_skill"

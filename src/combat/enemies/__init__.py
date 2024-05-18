@@ -16,11 +16,12 @@ from items import BoxSeed, CatSeed, YellowSeed
 #             max_hp=110,
 #             skills=[],
 #             loot_table=[],
-#             weighting=100,
 #             min_drop_count=None,
 #             max_drop_count=None,
 #             min_beans_reward=None,
 #             max_beans_reward=None,
+#             weighting=100,
+#             initiative=10,
 #         )
 
 
@@ -35,6 +36,7 @@ class MindGoblin(Enemy):
             level=1,
             min_hp=90,
             max_hp=110,
-            skills=[NormalAttack],
+            skills=[NormalAttack()],
             loot_table=[BoxSeed, CatSeed, YellowSeed],
+            initiative=5,
         )

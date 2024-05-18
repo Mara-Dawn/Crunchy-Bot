@@ -7,6 +7,7 @@ class SkillType(str, Enum):
     MAGIC_ATTACK = "MagicAttack"
 
 
-class DamageType(Enum):
-    PHYSICAL = 0
-    MAGIC = 1
+class SkillEffect(Enum):
+    PHYSICAL_DAMAGE = 0
+    MAGICAL_DAMAGE = 1
+    HEALING = 2

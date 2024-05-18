@@ -46,6 +46,8 @@ class EventManager(Service):
         self.log_name = "Events"
 
     async def listen_for_event(self, event: BotEvent):
+        synchronize_events = []  # for events that need to be sent after db write
+
         match event.type:
             case EventType.JAIL:
                 jail_event: JailEvent = event
@@ -87,11 +89,18 @@ class EventManager(Service):
 
                 if notification is not None:
                     await self.mod_notification(prediction_event.guild_id, notification)
+            case EventType.COMBAT:
+                synchronize_events.append(event)
 
-        from_user = event.get_causing_user_id()
-        args = event.get_type_specific_args()
-        await self.database.log_event(event)
-        self.__log_event(event, from_user, *args)
+        if not event.synchronized:
+            from_user = event.get_causing_user_id()
+            args = event.get_type_specific_args()
+            await self.database.log_event(event)
+            self.__log_event(event, from_user, *args)
+
+        for event in synchronize_events:
+            event.synchronized = True
+            self.controller.dispatch_event(event)
 
     def __log_event(self, event: BotEvent, member_id: int, *args):
         event_type = event.type

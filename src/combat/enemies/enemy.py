@@ -52,6 +52,7 @@ class Enemy:
         min_beans_reward: int = None,
         max_beans_reward: int = None,
         weighting: int = 100,
+        initiative: int = 10,
     ):
         self.name = name
         self.type = type
@@ -68,6 +69,7 @@ class Enemy:
         self.min_beans_reward = min_beans_reward
         self.max_beans_reward = max_beans_reward
         self.weighting = weighting
+        self.initiative = initiative
 
         if self.min_drop_count is None:
             self.min_drop_count = self.LOOT_MIN_AMOUNT_BY_LVL[self.level]
