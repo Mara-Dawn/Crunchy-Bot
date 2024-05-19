@@ -126,6 +126,9 @@ class Lottery(BeansGroup):
 
         today = datetime.datetime.now(datetime.UTC).date()
         saturday = today + datetime.timedelta((5 - today.weekday()) % 7)
+        if today == saturday:
+            saturday += datetime.timedelta(weeks=1)
+
         next_draw = datetime.datetime(
             year=saturday.year,
             month=saturday.month,

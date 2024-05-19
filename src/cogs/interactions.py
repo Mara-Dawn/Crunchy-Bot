@@ -3,6 +3,7 @@ import datetime
 import discord
 from bot import CrunchyBot
 from bot_util import Tenor
+from control.ai_manager import AIManager
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.interaction_manager import InteractionManager
@@ -10,6 +11,7 @@ from control.item_manager import ItemManager
 from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
+from control.types import AIVersion
 from datalayer.database import Database
 from datalayer.types import UserInteraction
 from discord import app_commands
@@ -34,6 +36,7 @@ class Interactions(commands.Cog):
             InteractionManager
         )
         self.jail_manager: JailManager = self.controller.get_service(JailManager)
+        self.ai_manager: AIManager = self.controller.get_service(AIManager)
 
         self.ctx_menu = app_commands.ContextMenu(
             name="Slap",
@@ -141,7 +144,7 @@ class Interactions(commands.Cog):
             interaction, message.author, UserInteraction.FART
         )
 
-    def __get_response(
+    async def __get_response(
         self,
         interaction_type: UserInteraction,
         interaction: discord.Interaction,
@@ -149,11 +152,26 @@ class Interactions(commands.Cog):
     ) -> str:
         match interaction_type:
             case UserInteraction.SLAP:
-                return f"<@{user.id}> was slapped by <@{interaction.user.id}>!"
+                # return f"<@{user.id}> was slapped by <@{interaction.user.id}>!"
+                prompt = f"{user.display_name} was slapped by {interaction.user.display_name}! "
             case UserInteraction.PET:
-                return f"<@{user.id}> recieved pets from <@{interaction.user.id}>!"
+                # return f"<@{user.id}> recieved pets from <@{interaction.user.id}>!"
+                prompt = f"{user.display_name} recieved pets from {interaction.user.display_name}! "
             case UserInteraction.FART:
-                return f"<@{user.id}> was farted on by <@{interaction.user.id}>!"
+                # return f"<@{user.id}> was farted on by <@{interaction.user.id}>!"
+                prompt = f"{user.display_name} was farted on by {interaction.user.display_name}! "
+
+        prompt += (
+            "Please write a short information message about this while mentioning both the person doing the "
+            "action and the person on the recieving end. Instead of their actual names use the discord user ping style expression "
+            f"<@{interaction.user.id}> in place of my name and the expression <@{user.id}> instead of the targets name. "
+            "Be specific about the action used and create a small creative description of the events. "
+            "Keep it short, 20 words or less."
+        )
+        response = await self.ai_manager.prompt(
+            interaction.user.display_name, prompt, ai_version=AIVersion.GPT4
+        )
+        return response + "\n"
 
     async def __get_response_embed(
         self,
@@ -202,7 +220,7 @@ class Interactions(commands.Cog):
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
 
         embed = await self.__get_response_embed(command_type)
-        response = self.__get_response(command_type, interaction, user)
+        response = await self.__get_response(command_type, interaction, user)
 
         user_items = []
 

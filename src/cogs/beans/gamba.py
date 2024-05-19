@@ -337,7 +337,7 @@ class Gamba(commands.Cog):
 
         if result > loss:
             prompt += " please mention the amount of beans i won."
-            prompt += " please keep the formatting between the backticks (including them) like in my message."
+            prompt += " Pleae use the same exact formatting to display the amount of beans, including the back tick characters."
 
         prompt += " Also keep it super concise, 25 words or less preferably unless its a jackpot, and refer to the gamble as gamba."
 

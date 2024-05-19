@@ -109,6 +109,13 @@ class Bully(commands.Cog):
                 if item.group == ItemGroup.DEBUFF:
                     if message.author.id != user_id:
                         continue
+                    if (
+                        message.channel.id
+                        in await self.settings_manager.get_haunt_exclude_channels(
+                            guild_id
+                        )
+                    ):
+                        continue
                     await self.modify_message(item.type, message)
                     return
 
@@ -117,6 +124,10 @@ class Bully(commands.Cog):
         channel = message.channel
         author = message.author
         guild_id = message.guild.id
+        attachments = message.attachments
+
+        if len(content) <= 0:
+            return
 
         await message.delete()
 
@@ -140,6 +151,8 @@ class Bully(commands.Cog):
             case ItemType.NERD_DEBUFF:
                 generated_content = await self.ai_manager.nerdify(content)
 
+        generated_content = generated_content + f"\n||original message: {content}||"
+
         if channel.id not in self.webhooks:
             webhooks = await message.channel.webhooks()
             if webhooks is not None:
@@ -153,11 +166,17 @@ class Bully(commands.Cog):
                     name="Possession"
                 )
 
+        files = [await attachment.to_file() for attachment in attachments]
+
         await self.webhooks[channel.id].send(
             content=generated_content,
             username=author.display_name,
             avatar_url=author.display_avatar,
+            files=files,
         )
+
+        if len(generated_content) <= 0:
+            return
 
         event = InventoryEvent(
             datetime.datetime.now(),
@@ -236,6 +255,44 @@ class Bully(commands.Cog):
             self.__cog_name__,
             interaction,
             f"Resuming bullying in {channel.name}.",
+            args=[channel],
+        )
+
+    @group.command(
+        name="disable_haunts", description="Stop haunting in specific channels."
+    )
+    @app_commands.describe(channel="Stop haunting for this channel.")
+    @app_commands.check(__has_permission)
+    async def disable_haunts(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ):
+        await interaction.response.defer(ephemeral=True)
+        await self.settings_manager.add_haunt_exclude_channel(
+            interaction.guild_id, channel.id
+        )
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Stopping haunting in {channel.name}.",
+            args=[channel],
+        )
+
+    @group.command(
+        name="reenable_haunts", description="Reenable haunting for specific channels."
+    )
+    @app_commands.describe(channel="Reenable haunting for this channel.")
+    @app_commands.check(__has_permission)
+    async def reenable_haunts(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ):
+        await interaction.response.defer(ephemeral=True)
+        await self.settings_manager.remove_haunt_exclude_channel(
+            interaction.guild_id, channel.id
+        )
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Resuming haunting in {channel.name}.",
             args=[channel],
         )
 

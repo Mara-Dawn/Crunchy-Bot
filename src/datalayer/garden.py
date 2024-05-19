@@ -324,62 +324,13 @@ class Plot:
         if not self.plant.allow_modifiers:
             return age
 
-        water_events = self.modifiers.water_events
-        watered_hours = 0
-        if (
-            water_events is not None
-            and len(water_events) > 0
-            and self.plant.allow_modifiers
-        ):
-            previous = now
-            for event in water_events:
-                delta = previous - event.datetime
-                hours = delta.total_seconds() / self.TIME_MODIFIER
-                watered_hours += min(24, hours)
-                previous = event.datetime
+        watered_hours = self.get_watered_hours()
+        fertile_hours = self.get_fertilizer_hours()
+        flash_bean_data = self.get_flash_bean_hours()
 
-        last_fertilized = self.modifiers.last_fertilized
-        fertile_hours = 0
-        if last_fertilized is not None and self.plant.allow_modifiers:
-            fertilizer_active_before_plant = max(0, last_fertilized - age)
-            fertilizer_active = min(last_fertilized, YellowBeanPlant.MODIFIER_DURATON)
-            fertile_hours = min(age, fertilizer_active - fertilizer_active_before_plant)
-            fertile_hours = fertile_hours * YellowBeanPlant.MODIFIER
-
-        flash_bean_events = self.modifiers.flash_bean_events
         flash_bean_hours = 0
-        threshold = FlashBeanPlant.MODIFIER_DURATON + self.plant.grow_hours
-        if len(flash_bean_events) > 0 and self.plant.allow_modifiers:
-            remove_events = {}
-            for event in flash_bean_events:
-                if event.garden_event_type == GardenEventType.REMOVE:
-                    remove_events[event.plot_id] = event.datetime
-                    continue
-
-                delta = now - event.datetime
-                last_flash_bean = delta.total_seconds() / self.TIME_MODIFIER
-                if last_flash_bean > threshold:
-                    continue
-
-                last_flash_bean = delta.total_seconds() / self.TIME_MODIFIER
-                flash_bean_active_before_plant = max(0, last_flash_bean - age)
-
-                max_duration = FlashBeanPlant.MODIFIER_DURATON
-
-                # In case Flash Bean was removed early
-                if event.plot_id in remove_events:
-                    duration_delta = remove_events[event.plot_id] - event.datetime
-                    max_duration = min(
-                        max_duration,
-                        duration_delta.total_seconds() / self.TIME_MODIFIER,
-                    )
-                    del remove_events[event.plot_id]
-
-                flash_bean_active = min(last_flash_bean, max_duration)
-                hours = max(
-                    0, min(age, flash_bean_active - flash_bean_active_before_plant)
-                )
-                flash_bean_hours += hours * FlashBeanPlant.MODIFIER
+        for hours in flash_bean_data:
+            flash_bean_hours += hours
 
         return int(age + watered_hours + fertile_hours + flash_bean_hours)
 
@@ -387,9 +338,9 @@ class Plot:
         hours = self.get_hours_since_last_water()
         if hours is None:
             return False
-        return self.get_hours_since_last_water() < 24
+        return hours < 24
 
-    def get_hours_since_last_water(self) -> int | None:
+    def get_hours_since_last_water(self) -> float | None:
         if (
             self.modifiers is None
             or self.modifiers.water_events is None
@@ -399,16 +350,27 @@ class Plot:
 
         now = datetime.datetime.now()
         delta = now - self.modifiers.water_events[0].datetime
-        hours = int(delta.total_seconds() / self.TIME_MODIFIER)
+        hours = delta.total_seconds() / self.TIME_MODIFIER
         return hours
 
-    def get_hours_since_last_flash_bean(self) -> int | None:
+    def get_dry_datetime(self) -> datetime.datetime:
+        if (
+            self.modifiers is None
+            or self.modifiers.water_events is None
+            or len(self.modifiers.water_events) <= 0
+        ):
+            return None
+
+        latest = self.modifiers.water_events[0].datetime
+        return latest + datetime.timedelta(hours=24)
+
+    def get_hours_since_last_flash_bean(self) -> float | None:
         if self.modifiers is None or len(self.modifiers.flash_bean_events) <= 0:
             return None
 
         now = datetime.datetime.now()
         delta = now - self.modifiers.flash_bean_events[0].datetime
-        hours = int(delta.total_seconds() / self.TIME_MODIFIER)
+        hours = delta.total_seconds() / self.TIME_MODIFIER
         return hours
 
     def get_active_flash_bean_count(self) -> int | None:
@@ -437,6 +399,178 @@ class Plot:
                 count += 1
 
         return count
+
+    def get_watered_hours(self) -> float:
+        now = datetime.datetime.now()
+        water_events = self.modifiers.water_events
+        watered_hours = 0
+        if (
+            water_events is not None
+            and len(water_events) > 0
+            and self.plant.allow_modifiers
+        ):
+            previous = now
+            for event in water_events:
+                delta = previous - event.datetime
+                hours = delta.total_seconds() / self.TIME_MODIFIER
+                watered_hours += min(24, hours)
+                previous = event.datetime
+
+        return watered_hours
+
+    def get_fertilizer_hours(self) -> float:
+        now = datetime.datetime.now()
+        delta = now - self.plant_datetime
+        age = delta.total_seconds() / self.TIME_MODIFIER
+
+        last_fertilized = self.modifiers.last_fertilized
+        fertile_hours = 0
+        if last_fertilized is not None and self.plant.allow_modifiers:
+            fertilizer_active_before_plant = max(0, last_fertilized - age)
+            fertilizer_active = min(last_fertilized, YellowBeanPlant.MODIFIER_DURATON)
+            fertile_hours = max(
+                0, min(age, fertilizer_active - fertilizer_active_before_plant)
+            )
+            fertile_hours = fertile_hours * YellowBeanPlant.MODIFIER
+
+        return fertile_hours
+
+    def get_flash_bean_hours(self, remaining_growth: bool = False) -> list[float]:
+        now = datetime.datetime.now()
+        delta = now - self.plant_datetime
+        age = delta.total_seconds() / self.TIME_MODIFIER
+
+        flash_bean_events = self.modifiers.flash_bean_events
+        flash_bean_hours = []
+        threshold = FlashBeanPlant.MODIFIER_DURATON + self.plant.grow_hours
+        if len(flash_bean_events) > 0 and self.plant.allow_modifiers:
+            remove_events = {}
+            for event in flash_bean_events:
+                if (
+                    event.garden_event_type == GardenEventType.REMOVE
+                    or event.garden_event_type == GardenEventType.HARVEST
+                ):
+                    remove_events[event.plot_id] = event.datetime
+                    continue
+
+                delta = now - event.datetime
+                last_flash_bean = delta.total_seconds() / self.TIME_MODIFIER
+                if last_flash_bean > threshold:
+                    continue
+
+                last_flash_bean = delta.total_seconds() / self.TIME_MODIFIER
+                flash_bean_active_before_plant = max(0, last_flash_bean - age)
+
+                max_duration = FlashBeanPlant.MODIFIER_DURATON
+
+                # In case Flash Bean was removed early
+                if event.plot_id in remove_events:
+                    duration_delta = remove_events[event.plot_id] - event.datetime
+                    max_duration = min(
+                        max_duration,
+                        duration_delta.total_seconds() / self.TIME_MODIFIER,
+                    )
+                    del remove_events[event.plot_id]
+
+                flash_bean_active = min(last_flash_bean, max_duration)
+
+                if remaining_growth:
+                    remaining = max(0, max_duration - flash_bean_active)
+                    if remaining > 0:
+                        flash_bean_hours.append(remaining * FlashBeanPlant.MODIFIER)
+                        continue
+
+                hours = max(
+                    0, min(age, flash_bean_active - flash_bean_active_before_plant)
+                )
+                if hours > 0:
+                    flash_bean_hours.append(hours * FlashBeanPlant.MODIFIER)
+
+        return flash_bean_hours
+
+    def get_estimated_harvest_datetime(self) -> datetime.datetime:
+        if self.plant is None:
+            return None
+
+        if self.get_status() == PlotState.READY:
+            return None
+
+        now = datetime.datetime.now()
+        delta = now - self.plant_datetime
+        age = delta.total_seconds() / self.TIME_MODIFIER
+        hours_until_ready = self.plant.grow_hours - age
+
+        if not self.plant.allow_modifiers:
+            ready_datetime = now + datetime.timedelta(hours=hours_until_ready)
+            return ready_datetime
+
+        modifiers = []
+
+        projected_water_hours = 0
+        last_watered = self.get_hours_since_last_water()
+        if last_watered is not None:
+            water_left = 24 - last_watered
+            projected_water_hours = max(0, water_left)
+        if projected_water_hours > 0:
+            modifiers.append((projected_water_hours, 1))
+
+        projected_fertile_hours = 0
+        last_fertilized = self.modifiers.last_fertilized
+        if last_fertilized is not None:
+            fertilizer_left = YellowBeanPlant.MODIFIER_DURATON - last_fertilized
+            projected_fertile_hours = max(0, fertilizer_left)
+        if projected_fertile_hours > 0:
+            modifiers.append((projected_fertile_hours, YellowBeanPlant.MODIFIER))
+
+        flash_bean_hours = self.get_flash_bean_hours(remaining_growth=True)
+        for hours in flash_bean_hours:
+            hours_normalized = hours / FlashBeanPlant.MODIFIER
+            if hours_normalized > 0:
+                modifiers.append((hours_normalized, FlashBeanPlant.MODIFIER))
+
+        remaining_hours = 0
+        while hours_until_ready > 0:
+            shortest = None
+
+            if len(modifiers) <= 0:
+                remaining_hours += hours_until_ready
+                break
+
+            # modifiers is a list of tuples (avtive_hours, buff_modifier)
+            # active hours is the time the buff will be active from this point onward
+            # find shortest active_hours of all buffs to determine interval where all buffs are active
+            for hours, _ in modifiers:
+                if shortest is None or shortest > hours:
+                    shortest = hours
+
+            # calculate the total modifier for the previously determined interval
+            new_modifiers = []
+            modifier_sum = 1
+            for hours, modifier in modifiers:
+                modifier_sum += modifier
+                if hours > shortest:
+                    remaining = hours - shortest
+                    new_modifiers.append((remaining, modifier))
+
+            shortest_total_value = shortest * modifier_sum
+
+            if shortest_total_value < hours_until_ready:
+                # if plant is not ready after shortest inverval passed
+                # remove shortest interval from modifier list
+                # add the normalized interval to remaining grow hours
+                # find next shortest interval starting after the previous shortest
+                hours_until_ready -= shortest_total_value
+                modifiers = new_modifiers
+                remaining_hours += shortest / modifier_sum
+                continue
+
+            # plant will be ready within shortest interval:
+            # sum of modifiers will be active for the entire remaining duration
+            remaining_hours += hours_until_ready / modifier_sum
+            hours_until_ready = 0
+
+        ready_datetime = now + datetime.timedelta(hours=remaining_hours)
+        return ready_datetime
 
     def empty(self):
         return self.plant is None
@@ -470,6 +604,9 @@ class UserGarden:
         self.plots = plots
         self.user_seeds = user_seeds
 
+    def get_plot_number(self, plot: Plot):
+        return self.PLOT_ORDER.index((plot.x, plot.y)) + 1
+
     def get_plot(self, x: int, y: int) -> Plot:
         for plot in self.plots:
             if plot.x == x and plot.y == y:
@@ -491,6 +628,38 @@ class UserGarden:
                 if plot.notified and no_spam:
                     return []
         return plots
+
+    def get_next_harvest_plot(self) -> Plot:
+        soonest_plot = None
+        timestamp = None
+
+        for plot in self.plots:
+            if plot.get_status() == PlotState.READY:
+                continue
+            harvest = plot.get_estimated_harvest_datetime()
+            if harvest is None:
+                continue
+            if timestamp is None or timestamp > harvest:
+                timestamp = harvest
+                soonest_plot = plot
+
+        return soonest_plot
+
+    def get_next_water_plot(self) -> Plot:
+        soonest_plot = None
+        hours = 0
+
+        for plot in self.plots:
+            if plot.get_status() == PlotState.READY:
+                continue
+            if not plot.plant.allow_modifiers:
+                continue
+            last_watered = plot.get_hours_since_last_water()
+            if last_watered is not None and last_watered > hours:
+                hours = last_watered
+                soonest_plot = plot
+
+        return soonest_plot
 
     @staticmethod
     def get_plant_by_type(plant_type: PlantType):

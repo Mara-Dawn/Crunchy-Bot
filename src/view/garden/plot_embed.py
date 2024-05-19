@@ -13,6 +13,7 @@ class PlotEmbed(discord.Embed):
         last_fertilized = plot.modifiers.last_fertilized
         last_flash_bean = plot.get_hours_since_last_flash_bean()
         flash_beans_active = plot.get_active_flash_bean_count()
+        ready_timestamp = plot.get_estimated_harvest_datetime()
 
         plant_name = None
         if plot.plant is not None:
@@ -24,8 +25,14 @@ class PlotEmbed(discord.Embed):
 
         description = f"**Plot {plot_nr + 1} - Row: {plot.y+1}, Column: {plot.x+1}**\n"
 
+        if ready_timestamp is not None:
+            description += (
+                f"*Estimated to be ready <t:{int(ready_timestamp.timestamp())}:R>*\n"
+            )
         if last_watered is not None and plot.plant.allow_modifiers:
-            description += f"*{last_watered} hours since this plot was last watered.*\n"
+            description += (
+                f"*{int(last_watered)} hours since this plot was last watered.*\n"
+            )
         if last_fertilized is not None:
             fertilizer_left = YellowBeanPlant.MODIFIER_DURATON - last_fertilized
             if fertilizer_left >= 0:
@@ -36,9 +43,9 @@ class PlotEmbed(discord.Embed):
             flash_bean_left = FlashBeanPlant.MODIFIER_DURATON - last_flash_bean
             if flash_bean_left >= 0:
                 description += (
-                    f"*Flash bean buff will run out in {flash_bean_left} hours*\n"
+                    f"*Flash bean buff will run out in {int(flash_bean_left)} hours*\n"
                 )
-        if flash_beans_active > 0:
+        if flash_beans_active > 1:
             description += (
                 f"*You currently have {flash_beans_active} active Flash Beans*\n"
             )

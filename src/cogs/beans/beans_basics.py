@@ -57,6 +57,8 @@ class BeansBasics(BeansGroup):
         if not await self.__check_enabled(interaction):
             return
 
+        await interaction.response.defer()
+
         guild_id = interaction.guild_id
         user_id = interaction.user.id
 
@@ -78,10 +80,23 @@ class BeansBasics(BeansGroup):
             )
             await self.controller.dispatch_event(event)
 
+            prompt = (
+                "Please tell me three differen things in the following order. "
+                "First, please welcome me to the new beans season in 10 words or less. "
+                "Second, introduce yourself in 10 words or less. "
+                f"Third, inform me about the fact that I receive `🅱️{amount}` beans to get started in 10 words or less. "
+                "Use the same exact formatting to display the amount of beans, including the back tick characters."
+            )
+            response = await self.ai_manager.prompt(
+                interaction.user.display_name, prompt
+            )
+
+            # response = f"Welcome to the new Beans Season <@{user_id}>! Here are `🅱️{amount}` beans to get you started."
+
             await self.bot.command_response(
                 module=self.__cog_name__,
                 interaction=interaction,
-                message=f"Welcome to the new Beans Season <@{user_id}>! Here are `🅱️{amount}` beans to get you started.",
+                message=response,
                 args=[amount],
                 ephemeral=False,
             )
@@ -96,11 +111,21 @@ class BeansBasics(BeansGroup):
             current_date = datetime.datetime.now().date()
             last_daily_beans_date = last_daily_beans_event.datetime.date()
 
+            prompt = (
+                "I already got my daily beans but i still tried to get them again. "
+                "Please inform me about my greedy behaviour and tell me that i have to wait until tomorrow to get more. "
+                "Also keep it short, 15 words or less."
+            )
+            response = await self.ai_manager.prompt(
+                interaction.user.display_name, prompt
+            )
+            # response = "You already got your daily beans, dummy! Try again tomorrow."
+
             if current_date == last_daily_beans_date:
                 await self.bot.command_response(
                     self.__cog_name__,
                     interaction,
-                    "You already got your daily beans, dummy! Try again tomorrow.",
+                    response,
                     ephemeral=False,
                 )
                 return
@@ -115,10 +140,19 @@ class BeansBasics(BeansGroup):
         )
         await self.controller.dispatch_event(event)
 
+        prompt = (
+            f"Please inform me about the fact that I receive `🅱️{amount}` beans for my daily beans payout. "
+            "Use the same exact formatting to display the amount of beans, including the back tick characters. "
+            "Keep it short, 20 words or less."
+        )
+        response = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+
+        # response = f"<@{user_id}> got their daily dose of `🅱️{amount}` beans."
+
         await self.bot.command_response(
             module=self.__cog_name__,
             interaction=interaction,
-            message=f"<@{user_id}> got their daily dose of `🅱️{amount}` beans.",
+            message=response,
             args=[amount],
             ephemeral=False,
         )
@@ -133,6 +167,7 @@ class BeansBasics(BeansGroup):
     ) -> None:
         if not await self.__check_enabled(interaction):
             return
+        await interaction.response.defer()
 
         user = user if user is not None else interaction.user
         user_id = user.id
@@ -141,10 +176,18 @@ class BeansBasics(BeansGroup):
 
         current_balance = await self.database.get_member_beans(guild_id, user_id)
 
+        prompt = (
+            f"Please inform me about the fact that user {user.display_name} currently has a bean balance of `🅱️{current_balance}`. "
+            "Use the same exact formatting to display the amount of beans, including the back tick characters. "
+            "Keep it short, 20 words or less."
+        )
+        response = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+        # response = f"<@{user_id}> currently has `🅱️{current_balance}` beans."
+
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
-            f"<@{user_id}> currently has `🅱️{current_balance}` beans.",
+            response,
             args=[user.display_name],
             ephemeral=False,
         )
@@ -207,10 +250,19 @@ class BeansBasics(BeansGroup):
         current_balance = await self.database.get_member_beans(guild_id, user_id)
 
         if current_balance < amount:
+            prompt = (
+                "I Tried to transfer some of my beans to another user, but i chose an amount of beans greater than my current bean balance. "
+                "Please scold me about the fact that I dont have enough beans for the transfer. "
+                "Keep it short, 15 words or less."
+            )
+            response = await self.ai_manager.prompt(
+                interaction.user.display_name, prompt
+            )
+            # response = "You dont have that many beans, idiot."
             await self.bot.command_response(
                 module=self.__cog_name__,
                 interaction=interaction,
-                message="You dont have that many beans, idiot.",
+                message=response,
                 ephemeral=False,
             )
             return
@@ -224,7 +276,17 @@ class BeansBasics(BeansGroup):
         event = BeansEvent(now, guild_id, BeansEventType.USER_TRANSFER, user.id, amount)
         await self.controller.dispatch_event(event)
 
-        response = f"`🅱️{abs(amount)}` beans were transferred from <@{interaction.user.id}> to <@{user.id}>."
+        prompt = (
+            f"I just transferred `🅱️{abs(amount)}` beans from my own account to {user.display_name}. "
+            "Please write a short information message containing the amount of beans that were transferred "
+            "and the two participants of the transfer. Instead of their actual names use the expression "
+            f"<@{interaction.user.id}> in place of my name and the expression <@{user.id}> instead of the targets name. "
+            "For the bean amount, please ue the same exact formatting to display it, including the back tick characters and 🅱️ currency symbol. "
+            "Keep it short, 20 words or less."
+        )
+        response = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+        # response = f"`🅱️{abs(amount)}` beans were transferred from <@{interaction.user.id}> to <@{user.id}>."
+        response += f"\n*{interaction.user.display_name} -> {user.display_name}:* `🅱️{abs(amount)}`"
 
         await self.bot.command_response(
             self.__cog_name__,
