@@ -1,7 +1,7 @@
 import discord
 from combat.actors import Character
 from combat.encounter import EncounterContext
-from combat.skills.skill import Skill
+from combat.skills.skill import SkillData
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -21,8 +21,8 @@ class CombatTurnView(ViewMenu):
         self.member_id = character.member.id
         self.blocked = False
 
-        for skill in character.skills:
-            self.add_item(SkillButton(skill))
+        for skill_data in character.skill_data:
+            self.add_item(SkillButton(skill_data))
 
         self.controller_type = ControllerType.COMBAT
         self.controller.register_view(self)
@@ -37,7 +37,7 @@ class CombatTurnView(ViewMenu):
             case UIEventType.RESUME_INTERACTIONS:
                 self.blocked = False
 
-    async def use_skill(self, interaction: discord.Interaction, skill: Skill):
+    async def use_skill(self, interaction: discord.Interaction, skill_data: SkillData):
         await interaction.response.defer()
 
         if self.blocked:
@@ -45,7 +45,7 @@ class CombatTurnView(ViewMenu):
 
         event = UIEvent(
             UIEventType.COMBAT_USE_SKILL,
-            (interaction, skill, self.character, self.context),
+            (interaction, skill_data, self.character, self.context),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -53,10 +53,19 @@ class CombatTurnView(ViewMenu):
 
 class SkillButton(discord.ui.Button):
 
-    def __init__(self, skill: Skill):
-        self.skill = skill
-        super().__init__(label=skill.name, style=discord.ButtonStyle.green)
+    def __init__(self, skill_data: SkillData):
+        self.skill_data = skill_data
+
+        disabled = False
+        if skill_data.on_cooldown():
+            disabled = True
+
+        super().__init__(
+            label=skill_data.skill.name,
+            style=discord.ButtonStyle.green,
+            disabled=disabled,
+        )
 
     async def callback(self, interaction: discord.Interaction):
         view: CombatTurnView = self.view
-        await view.use_skill(interaction, self.skill)
+        await view.use_skill(interaction, self.skill_data)

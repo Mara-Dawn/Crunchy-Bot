@@ -1,6 +1,6 @@
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
-from combat.skills import NormalAttack
+from combat.skills import DeezNuts
 from items import BoxSeed, CatSeed, YellowSeed
 
 # class Example(Enemy):
@@ -36,7 +36,7 @@ class MindGoblin(Enemy):
             level=1,
             min_hp=90,
             max_hp=110,
-            skills=[NormalAttack()],
+            skills=[DeezNuts()],
             loot_table=[BoxSeed, CatSeed, YellowSeed],
             initiative=5,
         )

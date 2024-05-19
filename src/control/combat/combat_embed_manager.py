@@ -1,7 +1,9 @@
+import asyncio
+
 import discord
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext
-from combat.skills import Skill
+from combat.skills.skill import SkillData
 from combat.skills.types import SkillEffect
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_enemy_manager import CombatEnemyManager
@@ -59,16 +61,20 @@ class CombatEmbedManager(Service):
     def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = f"> ~* {enemy.name} *~"
-        content = f'```python\n"{enemy.description}"```'
+        title = "Encounter Overview"
+        content = "Information about the current encounter."
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
         )
+        enemy.add_to_embed(embed)
+
+        embed.add_field(name="Level", value=f"**{enemy.level}**")
+
         current_hp = self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
         )
-        health = f"{current_hp}/{context.opponent.max_hp}\n"
-        embed.add_field(name="Health", value=health, inline=False)
+        health = f"**{current_hp}**/{context.opponent.max_hp}"
+        embed.add_field(name="Enemy Health", value=health)
 
         initiative_list = context.get_current_initiative()
         initiative_display = ""
@@ -80,16 +86,16 @@ class CombatEmbedManager(Service):
             )
             display_hp = f"[{current_hp}/{actor.max_hp}]" if not actor.is_enemy else ""
             if initiative_display == "":
-                initiative_display += f"\n{number}. >*{actor.name}*< {display_hp}"
+                initiative_display += f"\n{number}. >> {actor.name} << {display_hp}"
                 continue
             initiative_display += f"\n{number}. {actor.name} {display_hp}"
-
+        initiative_display = f"```python\n{initiative_display}```"
         embed.add_field(name="Turn Order:", value=initiative_display, inline=False)
         embed.set_image(url=f"attachment://{enemy.image}")
 
         return embed
 
-    def get_combat_concluded_embed(self, context: EncounterContext) -> discord.Embed:
+    def get_combat_success_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
         title = f"> ~* {enemy.name} *~"
@@ -100,11 +106,32 @@ class CombatEmbedManager(Service):
         current_hp = self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
         )
-        health = f"{current_hp}/{context.opponent.max_hp}\n"
+        health = f"**{current_hp}**/{context.opponent.max_hp}\n"
         embed.add_field(name="Health", value=health, inline=False)
 
         defeated_message = f"You successfully defeated *{enemy.name}*."
         embed.add_field(name="Congratulations!", value=defeated_message, inline=False)
+
+        embed.set_image(url=f"attachment://{enemy.image}")
+
+        return embed
+
+    def get_combat_failed_embed(self, context: EncounterContext) -> discord.Embed:
+        enemy = context.opponent.enemy
+
+        title = f"> ~* {enemy.name} *~"
+        content = f'```python\n"{enemy.description}"```'
+        embed = discord.Embed(
+            title=title, description=content, color=discord.Colour.red()
+        )
+        current_hp = self.actor_manager.get_actor_current_hp(
+            context.opponent, context.combat_events
+        )
+        health = f"{current_hp}/{context.opponent.max_hp}\n"
+        embed.add_field(name="Health", value=health, inline=False)
+
+        defeated_message = f"You were defeated by *{enemy.name}*."
+        embed.add_field(name="Failure!", value=defeated_message, inline=False)
 
         embed.set_image(url=f"attachment://{enemy.image}")
 
@@ -122,21 +149,28 @@ class CombatEmbedManager(Service):
         current_hp = self.actor_manager.get_actor_current_hp(
             actor, context.combat_events
         )
-        health = f"{current_hp}/{actor.max_hp}\n"
-        embed.add_field(name="Health:", value=health, inline=False)
+        health = f"**{current_hp}**/{actor.max_hp}"
+        embed.add_field(name="Your Health:", value=health, inline=False)
 
-        embed.add_field(name="Skills:", value="", inline=False)
+        embed.add_field(name="Your Skills:", value="", inline=False)
 
-        for skill in actor.skills:
+        for skill in actor.skill_data:
             skill.add_to_embed(embed=embed)
 
         return embed
 
-    def get_turn_completed_embed(
-        self, from_actor: Actor, to_actor: Actor, skill: Skill
-    ) -> discord.Embed:
-        skill_value = from_actor.get_skill_value(skill)
-        title = f"Turn of *{from_actor.name}*"
+    async def handle_actor_turn_embed(
+        self,
+        from_actor: Actor,
+        to_actor: Actor,
+        skill_data: SkillData,
+        skill_value: int,
+        context: EncounterContext,
+        message: discord.Message = None,
+    ):
+        color = discord.Color.blurple()
+        if from_actor.is_enemy:
+            color = discord.Color.red()
 
         from_name = f"<@{from_actor.id}>"
         if from_actor.is_enemy:
@@ -146,27 +180,98 @@ class CombatEmbedManager(Service):
         if to_actor.is_enemy:
             to_name = f"*{to_actor.name}*"
 
-        content = f"{from_name} used **{skill.name}**"
+        title = f"Turn of *{from_actor.name}*"
+        skill = skill_data.skill
+
+        description = f"{from_name} chose the action"
+
+        embed = discord.Embed(title=title, description=description, color=color)
+        skill_data.add_to_embed(embed)
+
+        if message is None:
+            message = await context.thread.send(embed=embed)
+        else:
+            await message.edit(content="", embed=embed, attachments=[], view=None)
+
+        await asyncio.sleep(2.5)
+
+        outcome_title = ""
         damage_info = ""
+        content = f"{from_name} used **{skill.name}**"
+        current_hp = self.actor_manager.get_actor_current_hp(
+            to_actor, context.combat_events
+        )
 
         match skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
+                outcome_title = "Attack Damage"
+                damage_info = f"**{skill_value}** [phys]"
                 content += f" and deals **{skill_value}** physical damage to {to_name}."
-                damage_info = f"{skill_value} [phys]"
+                current_hp = max(0, current_hp - skill_value)
             case SkillEffect.MAGICAL_DAMAGE:
+                outcome_title = "Spell Damage"
+                damage_info = f"**{skill_value}** [magic]"
                 content += f" and deals **{skill_value}** magical damage to {to_name}."
-                damage_info = f"{skill_value} [magic]"
+                current_hp = max(0, current_hp - skill_value)
 
-        color = discord.Color.blurple()
-        if from_actor.is_enemy:
-            color = discord.Color.red()
+        embed = discord.Embed(title=title, description=description, color=color)
+        skill_data.add_to_embed(embed)
+        embed.add_field(name="Target", value=to_name, inline=True)
+        embed.add_field(name=outcome_title, value="", inline=True)
+        embed.add_field(name="Remaining Health", value="", inline=True)
+        await message.edit(embed=embed)
 
-        embed = discord.Embed(title=title, description=content, color=color)
-        embed.add_field(name="Target", value=to_name)
-        embed.add_field(name="Skill", value=skill.name)
-        if damage_info != "":
-            embed.add_field(name="Damage", value=damage_info)
-        return embed
+        await asyncio.sleep(1.5)
+
+        loading_icons = [
+            "🎲",
+            "🎲🎲",
+            "🎲🎲🎲",
+        ]
+
+        i = 0
+        current = i
+        while i <= 8:
+            current = i % len(loading_icons)
+            icon = loading_icons[current]
+
+            embed = discord.Embed(title=title, description=description, color=color)
+            skill_data.add_to_embed(embed)
+            embed.add_field(name="Target", value=to_name, inline=True)
+            embed.add_field(name=outcome_title, value=icon, inline=True)
+            embed.add_field(name="Remaining Health", value="", inline=True)
+
+            await message.edit(embed=embed)
+            await asyncio.sleep((1 / 15) * (i * 1.5))
+            i += 1
+
+        embed = discord.Embed(title=title, description=description, color=color)
+        skill_data.add_to_embed(embed)
+        embed.add_field(name="Target", value=to_name, inline=True)
+        embed.add_field(name=outcome_title, value=damage_info, inline=True)
+        embed.add_field(name="Remaining Health", value="", inline=True)
+        await message.edit(embed=embed)
+
+        await asyncio.sleep(1)
+
+        display_hp = f"**{current_hp}**/{to_actor.max_hp}"
+
+        embed = discord.Embed(title=title, description=description, color=color)
+        skill_data.add_to_embed(embed)
+        embed.add_field(name="Target", value=to_name, inline=True)
+        embed.add_field(name=outcome_title, value=damage_info, inline=True)
+        embed.add_field(name="Remaining Health", value=display_hp, inline=True)
+        await message.edit(embed=embed)
+
+        await asyncio.sleep(1)
+
+        embed = discord.Embed(title=title, description=description, color=color)
+        skill_data.add_to_embed(embed)
+        embed.add_field(name="Target", value=to_name, inline=True)
+        embed.add_field(name=outcome_title, value=damage_info, inline=True)
+        embed.add_field(name="Remaining Health", value=display_hp, inline=True)
+        embed.add_field(name="Outcome", value=content, inline=False)
+        await message.edit(embed=embed)
 
     def get_turn_skip_embed(self, actor: Actor, reason: str) -> discord.Embed:
         title = f"Turn of *{actor.name}*"

@@ -1,9 +1,10 @@
+import asyncio
 import datetime
 
 import discord
 from combat.actors import Character
 from combat.encounter import EncounterContext
-from combat.skills.skill import Skill
+from combat.skills.skill import SkillData
 from datalayer.database import Database
 from discord.ext import commands
 from events.combat_event import CombatEvent
@@ -45,11 +46,11 @@ class CombatViewController(ViewController):
                 await self.player_engage(interaction)
             case UIEventType.COMBAT_USE_SKILL:
                 interaction = event.payload[0]
-                skill = event.payload[1]
+                skill_data = event.payload[1]
                 character = event.payload[2]
                 context = event.payload[3]
                 await self.player_action(
-                    interaction, skill, character, context, event.view_id
+                    interaction, skill_data, character, context, event.view_id
                 )
 
     async def player_engage(self, interaction: discord.Interaction):
@@ -90,31 +91,32 @@ class CombatViewController(ViewController):
     async def player_action(
         self,
         interaction: discord.Interaction,
-        skill: Skill,
+        skill_data: SkillData,
         character: Character,
         context: EncounterContext,
         view_id: int,
     ):
-        await self.encounter_manager.delete_previous_combat_info(context.thread)
-        message = await interaction.original_response()
-        channel = message.channel
-        await message.delete()
-
         event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
         await self.controller.dispatch_ui_event(event)
 
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        embed = self.embed_manager.get_turn_completed_embed(
-            character, context.opponent, skill
-        )
+        skill_value = character.get_skill_value(skill_data)
 
-        await channel.send("", embed=embed)
+        message = await interaction.original_response()
+
+        await self.embed_manager.handle_actor_turn_embed(
+            character,
+            context.opponent,
+            skill_data,
+            skill_value,
+            context,
+            message=message,
+        )
+        await asyncio.sleep(2)
 
         self.controller.detach_view_by_id(view_id)
-
-        skill_value = character.get_skill_value(skill)
 
         event = CombatEvent(
             datetime.datetime.now(),
@@ -122,7 +124,7 @@ class CombatViewController(ViewController):
             context.encounter.id,
             member_id,
             context.opponent.id,
-            skill.type,
+            skill_data.skill.type,
             skill_value,
             CombatEventType.MEMBER_TURN,
         )

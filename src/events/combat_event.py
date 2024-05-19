@@ -57,7 +57,11 @@ class CombatEvent(BotEvent):
             encounter_id=row[Database.COMBAT_EVENT_ENCOUNTER_ID_COL],
             member_id=row[Database.COMBAT_EVENT_MEMBER_ID],
             target_id=row[Database.COMBAT_EVENT_TARGET_ID],
-            skill_type=SkillType(row[Database.COMBAT_EVENT_SKILL_TYPE]),
+            skill_type=(
+                SkillType(row[Database.COMBAT_EVENT_SKILL_TYPE])
+                if row[Database.COMBAT_EVENT_SKILL_TYPE] is not None
+                else None
+            ),
             skill_value=row[Database.COMBAT_EVENT_SKILL_VALUE],
             combat_event_type=CombatEventType(row[Database.COMBAT_EVENT_TYPE_COL]),
             id=row[Database.EVENT_ID_COL],

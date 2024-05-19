@@ -68,6 +68,7 @@ class EncounterContext:
         self.actors = sorted(
             self.actors, key=lambda item: item.initiative, reverse=True
         )
+        self.beginning_actor = self.actors[0]
         self.actors: deque[Actor] = deque(self.actors)
 
     def get_last_actor(self) -> Actor:

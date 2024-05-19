@@ -6,6 +6,8 @@ class SkillType(str, Enum):
     HEAVY_ATTACK = "HeavyAttack"
     MAGIC_ATTACK = "MagicAttack"
 
+    DEEZ_NUTS = "DeezNuts"
+
 
 class SkillEffect(Enum):
     PHYSICAL_DAMAGE = 0

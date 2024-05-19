@@ -1,3 +1,4 @@
+import discord
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
 from items.item import Item
@@ -80,3 +81,19 @@ class Enemy:
             self.min_beans_reward = 95 * self.level
         if self.max_beans_reward is None:
             self.max_beans_reward = 105 * self.level
+
+    def add_to_embed(
+        self, embed: discord.Embed, show_info: bool = False, max_width: int = 56
+    ) -> None:
+        title = f"> ~* {self.name} *~"
+        description = f'"{self.description}"'
+
+        if len(description) < max_width:
+            spacing = max_width - len(description)
+            description += " " * spacing
+
+        info_block = f"```python\n{description}```"
+        if show_info:
+            info_block += f"```ansi\n[37m{self.information}```"
+
+        embed.add_field(name=title, value=info_block, inline=False)

@@ -14,6 +14,8 @@ from combat.skills.types import SkillEffect, SkillType
 #             base_value=1,
 #         )
 
+# Base skills
+
 
 class NormalAttack(Skill):
 
@@ -21,7 +23,7 @@ class NormalAttack(Skill):
         super().__init__(
             name="Normal Attack",
             type=SkillType.NORMAL_ATTACK,
-            description="Attack the enemy with your weapon.",
+            description="You perform a swing with your weapon.",
             information="This is the most basic attack you can use. Comes with physical weapons.",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
@@ -35,7 +37,7 @@ class HeavyAttack(Skill):
         super().__init__(
             name="Heavy Attack",
             type=SkillType.HEAVY_ATTACK,
-            description="You perform a strong swing with your weapon.",
+            description="You perform a forceful strike with your weapon.",
             information="Your other basic weapon skill that comes with physical weapons.",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
@@ -54,4 +56,24 @@ class MagicAttack(Skill):
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=0,
             base_value=2,
+        )
+
+
+# Special Skills
+
+
+# Enemy Skills
+
+
+class DeezNuts(Skill):
+
+    def __init__(self):
+        super().__init__(
+            name="Deez Nuts",
+            type=SkillType.DEEZ_NUTS,
+            description="He Slaps you with his mighty stick and forces his nuts into your mouth.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=5,
         )
