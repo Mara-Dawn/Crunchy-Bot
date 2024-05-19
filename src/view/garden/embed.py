@@ -10,7 +10,27 @@ class GardenEmbed(discord.Embed):
         bot: commands.Bot,
         garden: UserGarden,
     ):
-        description = "Your very own peaceful garden."
+        description = "Your very own peaceful garden.\n"
+
+        next_harvest = garden.get_next_harvest_plot()
+        next_watering = garden.get_next_water_plot()
+
+        if next_harvest is not None:
+            plot_nr = garden.get_plot_number(next_harvest)
+            timestamp = int(next_harvest.get_estimated_harvest_datetime().timestamp())
+            description += f"\nNext Harvest: Plot {plot_nr} <t:{timestamp}:R>"
+
+        if next_watering is not None:
+            plot_nr = garden.get_plot_number(next_watering)
+            hours = 24 - next_watering.get_hours_since_last_water()
+            timestamp = int(next_watering.get_dry_datetime().timestamp())
+            if hours > 0:
+
+                description += (
+                    f"\nDriest Plot: Plot {plot_nr} will be dry in <t:{timestamp}:R>."
+                )
+            else:
+                description += f"\nDriest Plot: Plot {plot_nr} needs water."
 
         super().__init__(
             title="Bean Garden",

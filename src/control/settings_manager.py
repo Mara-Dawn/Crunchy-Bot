@@ -62,6 +62,7 @@ class SettingsManager(Service):
     BULLY_SUBSETTINGS_KEY = "bully"
     BULLY_ENABLED_KEY = "bully_enabled"
     BULLY_EXCLUDED_CHANNELS_KEY = "bully_channels"
+    BULLY_EXCLUDED_HAUNT_CHANNELS_KEY = "no_haunt_channels"
 
     PREDICTIONS_SUBSETTINGS_KEY = "predictions"
     PREDICTIONS_ENABLED_KEY = "predictions_enabled"
@@ -230,6 +231,12 @@ class SettingsManager(Service):
             self.BULLY_EXCLUDED_CHANNELS_KEY,
             [],
             "Channels excluded from bullying",
+            "handle_channels_value",
+        )
+        bully_settings.add_setting(
+            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            [],
+            "Channels excluded from haunting ghosts",
             "handle_channels_value",
         )
 
@@ -919,6 +926,46 @@ class SettingsManager(Service):
             guild,
             self.BULLY_SUBSETTINGS_KEY,
             self.BULLY_EXCLUDED_CHANNELS_KEY,
+            channels,
+        )
+
+    async def get_haunt_exclude_channels(self, guild: int) -> list[int]:
+        return [
+            int(x)
+            for x in await self.get_setting(
+                guild,
+                self.BULLY_SUBSETTINGS_KEY,
+                self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            )
+        ]
+
+    async def set_haunt_exclude_channels(self, guild: int, channels: list[int]) -> None:
+        await self.update_setting(
+            guild,
+            self.BULLY_SUBSETTINGS_KEY,
+            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            channels,
+        )
+
+    async def add_haunt_exclude_channel(self, guild: int, channel: int) -> None:
+        channels = await self.get_haunt_exclude_channels(guild)
+        if channel not in channels:
+            channels.append(channel)
+        await self.update_setting(
+            guild,
+            self.BULLY_SUBSETTINGS_KEY,
+            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            channels,
+        )
+
+    async def remove_haunt_exclude_channel(self, guild: int, channel: int) -> None:
+        channels = await self.get_haunt_exclude_channels(guild)
+        if channel in channels:
+            channels.remove(channel)
+        await self.update_setting(
+            guild,
+            self.BULLY_SUBSETTINGS_KEY,
+            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
             channels,
         )
 

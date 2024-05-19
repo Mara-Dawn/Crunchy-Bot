@@ -926,6 +926,8 @@ class GhostBean(Item):
 # Debuffs
 class Debuff(Item):
 
+    DEBUFF_DURATION = 15
+
     DEBUFFS = [
         ItemType.EGIRL_DEBUFF,
         ItemType.RELIGION_DEBUFF,
@@ -969,7 +971,7 @@ class HighAsFrick(Debuff):
         )
         self.information = (
             "You gain this debuff after harvesting the Baked Beans plant. "
-            "Your next 7 messages will become stoner talk instead."
+            f"Your next {Debuff.DEBUFF_DURATION} messages will become stoner talk instead."
         )
         self.emoji = "💨"
 
@@ -987,7 +989,7 @@ class UwUfy(Debuff):
         )
         self.information = (
             "You gain this debuff when someone uses a ghost bean on you. "
-            "Your next 7 messages will become uwu egirl talk."
+            f"Your next {Debuff.DEBUFF_DURATION} messages will become uwu egirl talk."
         )
         self.emoji = "💞"
 
@@ -1005,7 +1007,7 @@ class Religify(Debuff):
         )
         self.information = (
             "You gain this debuff when someone uses a ghost bean on you. "
-            "Your next 7 messages will become religious fanatic talk."
+            f"Your next {Debuff.DEBUFF_DURATION} messages will become religious fanatic talk."
         )
         self.emoji = "⛪"
 
@@ -1023,7 +1025,7 @@ class Alcoholify(Debuff):
         )
         self.information = (
             "You gain this debuff when someone uses a ghost bean on you. "
-            "Your next 7 messages will become alcoholic talk."
+            f"Your next {Debuff.DEBUFF_DURATION} messages will become alcoholic talk."
         )
         self.emoji = "🍺"
 
@@ -1041,7 +1043,7 @@ class Weebify(Debuff):
         )
         self.information = (
             "You gain this debuff when someone uses a ghost bean on you. "
-            "Your next 7 messages will become weeb talk."
+            f"Your next {Debuff.DEBUFF_DURATION} messages will become weeb talk."
         )
         self.emoji = "🗾"
 
@@ -1059,7 +1061,7 @@ class Britify(Debuff):
         )
         self.information = (
             "You gain this debuff when someone uses a ghost bean on you. "
-            "Your next 7 messages will become brit talk."
+            f"Your next {Debuff.DEBUFF_DURATION} messages will become brit talk."
         )
         self.emoji = "😩"
 
@@ -1077,7 +1079,7 @@ class Meowify(Debuff):
         )
         self.information = (
             "You gain this debuff when someone uses a ghost bean on you. "
-            "Your next 7 messages will become cat talk."
+            f"Your next {Debuff.DEBUFF_DURATION} messages will become cat talk."
         )
         self.emoji = "😸"
 
@@ -1095,7 +1097,7 @@ class Nerdify(Debuff):
         )
         self.information = (
             "You gain this debuff when someone uses a ghost bean on you. "
-            "Your next 7 messages will become nerd talk."
+            f"Your next {Debuff.DEBUFF_DURATION} messages will become nerd talk."
         )
         self.emoji = "🤓"
 
@@ -1409,7 +1411,7 @@ class BakedSeed(BaseSeed):
             "Available as a rare drop from lootboxes."
             "\nTakes 2-4 Days to grow, depending on water."
             "\nProduces 420 - 690 beans when harvested."
-            "\nWhen harvested they will make you stoned and turn your next 7 messages into stoner talk gibberish."
+            f"\nWhen harvested they will make you stoned and turn your next {Debuff.DEBUFF_DURATION} messages into stoner talk gibberish."
         )
         self.emoji = BakedBeanPlant.READY_EMOJI
 

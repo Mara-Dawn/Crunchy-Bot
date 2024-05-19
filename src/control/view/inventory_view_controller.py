@@ -160,7 +160,7 @@ class InventoryViewController(ViewController):
                     guild_id,
                     target.id,
                     ghost,
-                    7,
+                    Debuff.DEBUFF_DURATION,
                 )
                 await self.controller.dispatch_event(event)
                 event = InventoryEvent(

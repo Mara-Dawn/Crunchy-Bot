@@ -2,6 +2,8 @@ import datetime
 
 import discord
 from bot import CrunchyBot
+from control.ai_manager import AIManager
+from control.types import AIVersion
 from discord import app_commands
 from discord.ext import commands, tasks
 from events.garden_event import GardenEvent
@@ -18,6 +20,7 @@ class Garden(BeansGroup):
 
     def __init__(self, bot: CrunchyBot) -> None:
         super().__init__(bot)
+        self.ai_manager: AIManager = self.controller.get_service(AIManager)
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -82,12 +85,6 @@ class Garden(BeansGroup):
         for guild in self.bot.guilds:
 
             gardens = await self.database.get_guild_gardens(guild.id)
-
-            self.logger.log(
-                "sys",
-                f"found {len(gardens)} gardens.",
-                cog=self.__cog_name__,
-            )
             for garden in gardens:
                 plots = garden.notification_pending_plots()
                 if len(plots) > 0:
@@ -108,10 +105,23 @@ class Garden(BeansGroup):
                             f"Sending garden notification to {user.display_name}",
                             cog=self.__cog_name__,
                         )
-                        message = (
-                            f"Hey there, some of your plants on {guild.name} are ready to be harvested.\n"
-                            "Make sure to drop by and visit your */beans garden* to not miss out on your rewards!"
+                        # message = (
+                        #     f"Hey there, some of your plants on {guild.name} are ready to be harvested.\n"
+                        #     "Make sure to drop by and visit your */beans garden* to not miss out on your rewards!"
+                        # )
+
+                        prompt = (
+                            f"Please create a short notification message adressed to a user named {user.display_name}. "
+                            f"Inform them about their beans garden on server {guild.name} having some plants that are ready for harvest. "
+                            "Also mention that they should come visit their garden soon to take care of them so they wont miss out on the rewards. "
                         )
+
+                        message = await self.ai_manager.prompt(
+                            name=user.display_name,
+                            text_prompt=prompt,
+                            ai_version=AIVersion.GPT4,
+                        )
+
                         await user.send(message)
 
     @app_commands.command(name="garden", description="Plant beans in your garden.")
