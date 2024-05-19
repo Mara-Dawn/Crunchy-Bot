@@ -23,7 +23,7 @@ class ShopUserSelectView(ShopResponseView):
         super().__init__(controller, interaction, item, parent_id)
 
         self.user_select = UserPicker()
-        self.confirm_button = ConfirmButton()
+        self.confirm_button = ConfirmButton(label="Confirm")
         self.cancel_button = CancelButton()
 
         self.refresh_elements()
