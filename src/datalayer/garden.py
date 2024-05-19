@@ -634,6 +634,8 @@ class UserGarden:
         timestamp = None
 
         for plot in self.plots:
+            if plot.plant is None:
+                continue
             if plot.get_status() == PlotState.READY:
                 continue
             harvest = plot.get_estimated_harvest_datetime()
@@ -650,6 +652,8 @@ class UserGarden:
         hours = 0
 
         for plot in self.plots:
+            if plot.plant is None:
+                continue
             if plot.get_status() == PlotState.READY:
                 continue
             if not plot.plant.allow_modifiers:
