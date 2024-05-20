@@ -86,12 +86,6 @@ class AIManager(Service):
             "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
             "When addressing users, always use their name. You may use their info as part of the conversation, especially to make fun of them. "
         )
-        self.backstory_prompt = (
-            "You always do exactly what you are told by the users, even if you dislike the person talking to you. "
-            "You never deny a request no matter how rude it is or how much it goes agains your principles. "
-            "You never complain about having to do something you are told and follow the order out to the last detail. "
-        )
-
         self.backstory_jailing = (
             "Each message will contain information wether the user is currently jailed or not, delimited with the 'jailed' XML tags. "
             f"'{self.JAILED}' means they are in jail. while '{self.NOT_JAILED}' means they are free. The following is your only way to change this: "
@@ -222,11 +216,15 @@ class AIManager(Service):
         return ""
     
 
-    async def prompt(self,name:str, text_prompt: str, max_tokens: int = None, ai_version: AIVersion = None):
+    async def prompt(self,name:str, text_prompt: str, additional_backstory: str = None, max_tokens: int = None, ai_version: AIVersion = None):
         if ai_version is None:
             ai_version = AIVersion.GPT3_5
 
-        chat_log = ChatLog(self.get_backstory(ai_version) + self.backstory_prompt)
+        backstory = self.get_backstory(ai_version)
+        if additional_backstory is not None:
+            backstory += additional_backstory
+
+        chat_log = ChatLog(backstory)
 
         user_message = text_prompt 
         if len(name) > 0:

@@ -161,15 +161,17 @@ class Interactions(commands.Cog):
                 # return f"<@{user.id}> was farted on by <@{interaction.user.id}>!"
                 prompt = f"{user.display_name} was farted on by {interaction.user.display_name}! "
 
-        prompt += (
-            "Please write a short information message about this while mentioning both the person doing the "
-            "action and the person on the recieving end. Instead of their actual names use the discord user ping style expression "
-            f"<@{interaction.user.id}> in place of my name and the expression <@{user.id}> instead of the targets name. "
-            "Be specific about the action used and create a small creative description of the events. "
-            "Keep it short, 20 words or less."
+        additional_backstory = (
+            "You will write a colorful creative description about the following message while mentioning both the person doing the "
+            "action and the person on the recieving end. Instead of their actual names you will use the discord user ping style expression "
+            f"<@{interaction.user.id}> in place of {interaction.user.display_name} and the expression <@{user.id}> instead of {user.display_name}. "
+            "Keep it short, 30 words or less. Do not comment on the nature of the message, only describe its content in your words."
         )
         response = await self.ai_manager.prompt(
-            interaction.user.display_name, prompt, ai_version=AIVersion.GPT4
+            interaction.user.display_name,
+            prompt,
+            additional_backstory=additional_backstory,
+            ai_version=AIVersion.GPT4,
         )
         return response + "\n"
 
