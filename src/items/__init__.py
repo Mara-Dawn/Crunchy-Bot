@@ -10,6 +10,7 @@ from datalayer.garden import (
     SpeedBeanPlant,
     YellowBeanPlant,
 )
+from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, PlantType
 
 from items.item import Item
@@ -877,7 +878,7 @@ class MimicDetector(Item):
             name="Useful Foxgirl",
             type=ItemType.MIMIC_DETECTOR,
             group=ItemGroup.LOOTBOX,
-            shop_category=ShopCategory.FUN,
+            shop_category=ShopCategory.LOOTBOX,
             description=(
                 "Compared to her less than useful cat sisters, she is genuinely happy to help you out."
                 " With her superior sense of smell she can identify mimics before you open them! "
@@ -967,8 +968,7 @@ class HighAsFrick(Debuff):
         self.name = "Blazed out of your Mind"
         self.type = ItemType.HIGH_AS_FRICK
         self.description = (
-            "You found this special shiny bean while harvesting your last bean plant. "
-            "It looks really juicy, maybe it will produce even more beans!"
+            "You got high of your own supply and must now suffer the conseqences. "
         )
         self.information = (
             "You gain this debuff after harvesting the Baked Beans plant. "
@@ -1137,8 +1137,8 @@ class ChestBeansReward(Item):
             type=ItemType.CHEST_BEANS,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
-            description="",
-            information="",
+            description="Lootbox reward containing beans.",
+            information=f"Can contain between {LootBox.LARGE_MIN_BEANS} and {LootBox.LARGE_MAX_BEANS} beans.",
             emoji="🅱️",
             cost=cost,
             value=None,
@@ -1159,8 +1159,8 @@ class ChestMimic(Item):
             type=ItemType.CHEST_MIMIC,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
-            description="",
-            information="",
+            description="Lootbox 'reward' that gnaws at your ankles and eats some of your beans.",
+            information=f"May eat between {LootBox.SMALL_MIN_BEANS} and {LootBox.SMALL_MAX_BEANS} beans. Never removes more beans than you own.",
             emoji="😠",
             cost=cost,
             value=None,
@@ -1181,8 +1181,12 @@ class ChestLargeMimic(Item):
             type=ItemType.CHEST_LARGE_MIMIC,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
-            description="",
-            information="",
+            description="Lootbox 'reward' that can seriously mess you up. Removes a large amount of beans and sends you to jail as well.",
+            information=(
+                f"May eat between {LootBox.LARGE_MIN_BEANS} and {LootBox.LARGE_MAX_BEANS} beans. "
+                "Never removes more beans than you own. Can only remove up to 10% of your total seasonal high score. "
+                "If you have a hazmat suit equipped, it consumes up to 5 stacks of it instead of sending you to jail."
+            ),
             emoji="😡",
             cost=cost,
             value=None,
@@ -1203,8 +1207,11 @@ class ChestSpookMimic(Item):
             type=ItemType.CHEST_SPOOK_MIMIC,
             group=ItemGroup.LOOTBOX,
             shop_category=ShopCategory.LOOTBOX,
-            description="",
-            information="",
+            description="Lootbox 'reward' that gnaws at your ankles and eats some of your beans. It also possesses you with a random ghost.",
+            information=(
+                f"May eat between {LootBox.SMALL_MIN_BEANS} and {LootBox.SMALL_MAX_BEANS} beans. "
+                "Never removes more beans than you own. The ghost will possess you for 15 of your messages."
+            ),
             emoji="😨",
             cost=cost,
             value=None,
