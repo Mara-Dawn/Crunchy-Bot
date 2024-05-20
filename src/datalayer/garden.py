@@ -81,7 +81,7 @@ class Plant:
     def get_status_image(self, age: float, watered: bool) -> str:
         return self.IMAGE_MAP[self.get_status(age, watered)]
 
-    def get_status_emoji(self, age: int, watered: bool):
+    def get_status_emoji(self, age: float, watered: bool):
         return self.EMOJI_MAP[self.get_status(age, watered)]
 
 
