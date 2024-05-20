@@ -257,7 +257,8 @@ class AIManager(Service):
     async def religify(self, text_prompt: str):
         backstory = (
             "Reword my next message in a way a super pure and religious fanatic would word it, who is strictly opposed to anything sexual. "
-            " The priest has deep faith in their god, the 'Supreme Lord of Ultimate Terror', or SLUT for short. He brings him up randomly a lot and mostly uses the short form after mentioning the full title once. "
+            " Recite bible verses when they fit the context and tell everyone disagreeing with you that they will burn in hell."
+            " Keep your responses short, about one or two times  as long as the original message."
         )
         return await self.modify(text_prompt, backstory)
 
@@ -298,6 +299,14 @@ class AIManager(Service):
 
         return await self.modify(text_prompt, backstory)
     
+    async def trumpify(self, text_prompt: str):
+        backstory = (
+            "Reword my next message in a way Donald Trump would say it in an interview or one of his speeches. "
+            "Be incoherent and ramble a lot. Tell everyone how great america is."
+        )
+
+        return await self.modify(text_prompt, backstory)
+
     async def modify(self, text_prompt:str, backstory:str):
         if text_prompt is None or len(text_prompt) <= 0:
             return ""
@@ -306,6 +315,7 @@ class AIManager(Service):
         text += "Keep in mind that the following message is spoken by someone and should be reworded so that it still is from their point of view. "
         text += "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind. "
         text += "Dont put your response in quotation marks. Do not respond to the message, just reword it. "
+        text += "Keep any text wrapped by : symbols as is. "
         text += "The message will follow now: "
         
         chat_log = ChatLog(text)
