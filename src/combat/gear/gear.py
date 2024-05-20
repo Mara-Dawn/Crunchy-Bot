@@ -1,38 +1,66 @@
 import discord
+from combat.gear.types import GearRarity, GearSlot
 from discord.ext import commands
 from items.item import Item
-from items.types import ItemGroup, ItemType, ShopCategory
+from items.types import ItemGroup, ShopCategory
 
+
+class GearBase:
+
+    def __init__(
+        self,
+        name: str, 
+        description: str,
+        information: str,
+        emoji: str,
+        cost: int,
+        slot: GearSlot,
+        min_level: int,
+        max_level: int,
+        
+        weight: int = None,
+        permanent: bool = False,
+        secret: bool = False,
+    ):
+        self.name = name
+        self.description = description
+        self.information = information
+        self.emoji = emoji
+        self.cost = cost
+        self.slot = slot
+        self.min_level = min_level
+        self.max_level = max_level
+
+        self.weight = weight
+        if self.weight is None:
+            self.weight = max(self.cost, 100)
+        self.permanent = permanent
+        self.secret = secret
 
 class Gear(Item):
 
     def __init__(
         self,
         name: str, 
-        type: ItemType,
-        description: str,
-        information: str,
-        emoji: str,
-        cost: int,
-        
-        weight: int = None,
-        permanent: bool = False,
-        secret: bool = False,
+        base: GearBase,
+        rarity: GearRarity,
+        level: int,
+
     ):
         super().__init__(
             name=name,
-            type=type,
+            type=None,
             group=ItemGroup.GEAR,
             shop_category=ShopCategory.GEAR,
-            description=description,
-            information=information,
-            emoji=emoji,
-            cost=cost,
+            description=base.description,
+            information=base.information,
+            emoji=base.emoji,
+            cost=base.cost,
             value=None,
             hide_in_shop=True,
-            weight=weight,
-            permanent=permanent,
-            secret=secret
+            weight=base.weight,
+            permanent=base.permanent,
+            secret=base.secret
         )
     
     def get_embed(self, bot: commands.Bot, color=None, amount_in_cart: int = 1, show_price = True, show_info: bool = False) -> discord.Embed:
