@@ -61,6 +61,7 @@ class ItemType(str, Enum):
     BRIT_DEBUFF = "Britify"
     MEOW_DEBUFF = "Meowify"
     NERD_DEBUFF = "Nerdify"
+    TRUMP_DEBUFF = "Trumpify"
 
     BEAN_SEED = "BaseSeed"
     RARE_SEED = "RareSeed"
