@@ -1,5 +1,7 @@
 import discord
-from combat.gear.types import GearRarity, GearSlot
+from combat.gear import *  # noqa: F403
+from combat.gear.types import GearModifierType, GearRarity, GearSlot
+from combat.skills.types import SkillType
 from discord.ext import commands
 from items.item import Item
 from items.types import ItemGroup, ShopCategory
@@ -12,12 +14,12 @@ class GearBase:
         name: str, 
         description: str,
         information: str,
-        emoji: str,
-        cost: int,
         slot: GearSlot,
         min_level: int,
         max_level: int,
-        
+        base_modifiers: list[GearModifierType],
+        base_skills: list[SkillType] = None, 
+        cost: int = 0,
         weight: int = None,
         permanent: bool = False,
         secret: bool = False,
@@ -25,17 +27,35 @@ class GearBase:
         self.name = name
         self.description = description
         self.information = information
-        self.emoji = emoji
         self.cost = cost
         self.slot = slot
         self.min_level = min_level
         self.max_level = max_level
+        self.base_modifiers = base_modifiers
+
+        self.base_skills = base_skills
+        if self.base_skills is None:
+            self.base_skills = []
 
         self.weight = weight
         if self.weight is None:
             self.weight = max(self.cost, 100)
         self.permanent = permanent
         self.secret = secret
+
+        self.emoji = ""
+        match self.slot:
+            case GearSlot.HEAD:
+                self.emoji = "⛑️"
+            case GearSlot.BODY:
+                self.emoji = "🥼"
+            case GearSlot.LEGS:
+                self.emoji = "👖"
+            case GearSlot.WEAPON:
+                self.emoji = "⚔"
+            case GearSlot.ACCESSORY:
+                self.emoji = "💍"
+
 
 class Gear(Item):
 
@@ -45,6 +65,8 @@ class Gear(Item):
         base: GearBase,
         rarity: GearRarity,
         level: int,
+        modifiers: dict[GearModifierType, float],
+        skills: list[SkillType]
 
     ):
         super().__init__(
@@ -62,6 +84,10 @@ class Gear(Item):
             permanent=base.permanent,
             secret=base.secret
         )
+        self.rarity = rarity
+        self.level = level
+        self.modifiers = modifiers
+        self.skills = skills
     
     def get_embed(self, bot: commands.Bot, color=None, amount_in_cart: int = 1, show_price = True, show_info: bool = False) -> discord.Embed:
         emoji = self.emoji

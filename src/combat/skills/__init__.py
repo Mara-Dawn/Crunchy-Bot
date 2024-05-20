@@ -50,7 +50,7 @@ class MagicAttack(Skill):
     def __init__(self):
         super().__init__(
             name="Magic Attack",
-            type=SkillType.HEAVY_ATTACK,
+            type=SkillType.MAGIC_ATTACK,
             description="You perform a basic magical blast with your weapon.",
             information="Your basic magical attack skill. Comes with magical weapons.",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,

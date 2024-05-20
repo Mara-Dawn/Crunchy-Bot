@@ -4,7 +4,7 @@ import discord
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext
 from combat.skills.skill import SkillData
-from combat.skills.types import SkillEffect
+from combat.skills.types import DamageInstance, SkillEffect
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.controller import Controller
@@ -187,7 +187,7 @@ class CombatEmbedManager(Service):
         from_actor: Actor,
         to_actor: Actor,
         skill_data: SkillData,
-        skill_value: int,
+        damage_instance: DamageInstance,
         context: EncounterContext,
         message: discord.Message = None,
     ):
@@ -230,14 +230,17 @@ class CombatEmbedManager(Service):
         match skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
                 outcome_title = "Attack Damage"
-                damage_info = f"**{skill_value}** [phys]"
-                content += f" and deals **{skill_value}** physical damage to {to_name}."
-                current_hp = max(0, current_hp - skill_value)
+                damage_info = f"**{damage_instance.value}** [phys]"
+                content += f" and deals **{damage_instance.value}** physical damage to {to_name}."
+                current_hp = max(0, current_hp - damage_instance.value)
             case SkillEffect.MAGICAL_DAMAGE:
                 outcome_title = "Spell Damage"
-                damage_info = f"**{skill_value}** [magic]"
-                content += f" and deals **{skill_value}** magical damage to {to_name}."
-                current_hp = max(0, current_hp - skill_value)
+                damage_info = f"**{damage_instance.value}** [magic]"
+                content += f" and deals **{damage_instance.value}** magical damage to {to_name}."
+                current_hp = max(0, current_hp - damage_instance.value)
+
+        if damage_instance.is_crit:
+            damage_info = "CRIT! " + damage_info
 
         embed = discord.Embed(title=title, description=description, color=color)
         skill_data.add_to_embed(embed)

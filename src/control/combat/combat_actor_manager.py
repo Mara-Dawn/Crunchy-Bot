@@ -1,6 +1,7 @@
 import discord
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.enemy import Enemy
+from combat.equipment import CharacterEquipment
 from combat.skills import HeavyAttack, NormalAttack, Skill
 from combat.skills.skill import SkillData
 from combat.skills.types import SkillEffect, SkillType
@@ -96,10 +97,12 @@ class CombatActorManager(Service):
 
         skills = [NormalAttack(), HeavyAttack()]
         skill_data = self.get_skill_data(member.id, skills, combat_events)
+        equipment = CharacterEquipment(member.id)
 
         character = Character(
             member=member,
             skill_data=skill_data,
+            equipment=equipment,
             defeated=defeated,
         )
         return character
