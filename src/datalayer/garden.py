@@ -506,11 +506,11 @@ class Plot:
 
         modifiers = []
 
-        projected_water_hours = 0
-        last_watered = self.get_hours_since_last_water()
-        if last_watered is not None:
-            water_left = 24 - last_watered
-            projected_water_hours = max(0, water_left)
+        projected_water_hours = hours_until_ready
+        # last_watered = self.get_hours_since_last_water()
+        # if last_watered is not None:
+        #     water_left = 24 - last_watered
+        #     projected_water_hours = max(0, water_left)
         if projected_water_hours > 0:
             modifiers.append((projected_water_hours, 1))
 
