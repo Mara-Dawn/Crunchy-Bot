@@ -1396,7 +1396,7 @@ class GhostSeed(BaseSeed):
 class BakedSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
-        defaultcost = 500
+        defaultcost = 850
         if cost is None:
             cost = defaultcost
 
@@ -1411,8 +1411,8 @@ class BakedSeed(BaseSeed):
         self.information = (
             "Available as a rare drop from lootboxes."
             "\nTakes 2-4 Days to grow, depending on water."
-            "\nProduces 320 - 420 beans when harvested."
-            "\nWhen harvested they will make you stoned and turn your next 7 messages into stoner talk gibberish."
+            "\nProduces 420 - 690 beans when harvested."
+            f"\nWhen harvested they will make you stoned and turn your next {Debuff.DEBUFF_DURATION} messages into stoner talk gibberish."
         )
         self.emoji = BakedBeanPlant.READY_EMOJI
 
