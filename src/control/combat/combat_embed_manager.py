@@ -58,6 +58,28 @@ class CombatEmbedManager(Service):
 
         return embed
 
+    def add_health_bar(
+        self, embed: discord.Embed, current_hp: int, max_hp: int, max_width: int = 56
+    ):
+        health = f"{current_hp}/{max_hp}"
+        fraction = current_hp / max_hp
+        percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
+
+        bar_start = "|"
+        bar_end = f"| {percentage}%"
+
+        bar_length = max_width - len(bar_start) - len(bar_end)
+
+        missing_health_length = int(bar_length * (1 - fraction))
+        health_length = bar_length - missing_health_length
+
+        missing_health_bar = " " * missing_health_length
+        health_bar = "█" * health_length
+
+        content = "```" + bar_start + health_bar + missing_health_bar + bar_end + "```"
+
+        embed.add_field(name=f"Health: {health}", value=content)
+
     def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
@@ -71,9 +93,8 @@ class CombatEmbedManager(Service):
         current_hp = self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
         )
-        health = f"**{current_hp}**/{context.opponent.max_hp}"
-        embed.add_field(name="Enemy Health", value=health)
-
+        max_hp = context.opponent.max_hp
+        self.add_health_bar(embed, current_hp, max_hp, max_width=38)
         initiative_list = context.get_current_initiative()
         initiative_display = ""
 
@@ -101,11 +122,12 @@ class CombatEmbedManager(Service):
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.green()
         )
+
         current_hp = self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
         )
-        health = f"**{current_hp}**/{context.opponent.max_hp}\n"
-        embed.add_field(name="Health", value=health, inline=False)
+        max_hp = context.opponent.max_hp
+        self.add_health_bar(embed, current_hp, max_hp)
 
         defeated_message = f"You successfully defeated *{enemy.name}*."
         embed.add_field(name="Congratulations!", value=defeated_message, inline=False)
@@ -122,11 +144,12 @@ class CombatEmbedManager(Service):
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
         )
+
         current_hp = self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
         )
-        health = f"{current_hp}/{context.opponent.max_hp}\n"
-        embed.add_field(name="Health", value=health, inline=False)
+        max_hp = context.opponent.max_hp
+        self.add_health_bar(embed, current_hp, max_hp)
 
         defeated_message = f"You were defeated by *{enemy.name}*."
         embed.add_field(name="Failure!", value=defeated_message, inline=False)
@@ -149,8 +172,8 @@ class CombatEmbedManager(Service):
         current_hp = self.actor_manager.get_actor_current_hp(
             actor, context.combat_events
         )
-        health = f"**{current_hp}**/{actor.max_hp}"
-        embed.add_field(name="Your Health:", value=health, inline=False)
+        max_hp = actor.max_hp
+        self.add_health_bar(embed, current_hp, max_hp)
 
         embed.add_field(name="Your Skills:", value="", inline=False)
 
@@ -244,7 +267,7 @@ class CombatEmbedManager(Service):
             embed.add_field(name="Remaining Health", value="", inline=True)
 
             await message.edit(embed=embed)
-            await asyncio.sleep((1 / 10) * (i * 1.5))
+            await asyncio.sleep((1 / 10) * (i * 2))
             i += 1
 
         embed = discord.Embed(title=title, description=description, color=color)
@@ -256,7 +279,10 @@ class CombatEmbedManager(Service):
 
         await asyncio.sleep(1)
 
-        display_hp = f"**{current_hp}**/{to_actor.max_hp}"
+        percentage = f"{round(current_hp/to_actor.max_hp * 100, 1)}".rstrip("0").rstrip(
+            "."
+        )
+        display_hp = f"{percentage}%"
 
         embed = discord.Embed(title=title, description=description, color=color)
         skill_data.add_to_embed(embed)
