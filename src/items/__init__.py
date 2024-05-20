@@ -1318,6 +1318,7 @@ class BoxSeed(BaseSeed):
         self.information = (
             "Available as a rare drop from lootboxes."
             "\nTakes 4-8 Days to grow, depending on water."
+            "\nProduces 900 - 1100 beans when harvested."
             "\nDrops a personal x10 chest when harvested."
         )
         self.emoji = BoxBeanPlant.READY_EMOJI
