@@ -85,7 +85,7 @@ class Enemy:
     def add_to_embed(
         self, embed: discord.Embed, show_info: bool = False, max_width: int = 56
     ) -> None:
-        title = f"> ~* {self.name} *~"
+        title = f"> ~* Lvl. {self.level} - {self.name} *~"
         description = f'"{self.description}"'
 
         if len(description) < max_width:

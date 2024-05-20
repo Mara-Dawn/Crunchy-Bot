@@ -209,7 +209,7 @@ class EncounterManager(Service):
     async def skip_turn(self, actor: Actor, context: EncounterContext):
 
         embed = self.embed_manager.get_turn_skip_embed(
-            actor, f"{actor.name} is defeated."
+            actor, f"{actor.name} is defeated.", context
         )
         await context.thread.send("", embed=embed)
 
@@ -350,6 +350,9 @@ class EncounterManager(Service):
         embed = self.embed_manager.get_combat_embed(context)
 
         if current_actor.id == context.beginning_actor.id:
+            notification = self.embed_manager.get_notification_embed("New Round")
+            await context.thread.send(content="", embed=notification)
+
             await self.delete_previous_combat_info(context.thread)
             enemy = context.opponent.enemy
             image = discord.File(f"./img/enemies/{enemy.image}", enemy.image)

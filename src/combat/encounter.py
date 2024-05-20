@@ -96,6 +96,9 @@ class EncounterContext:
         result.rotate(-(index + 1))
         return result
 
+    def get_current_turn_number(self) -> int:
+        return len(self.combat_events) + 1
+
     def is_concluded(self) -> bool:
         for event in self.encounter_events:
             if event.encounter_event_type == EncounterEventType.END:

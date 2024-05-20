@@ -68,8 +68,6 @@ class CombatEmbedManager(Service):
         )
         enemy.add_to_embed(embed)
 
-        embed.add_field(name="Level", value=f"**{enemy.level}**")
-
         current_hp = self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
         )
@@ -140,7 +138,9 @@ class CombatEmbedManager(Service):
     def get_character_turn_embed(self, context: EncounterContext) -> discord.Embed:
         actor = context.get_current_actor()
 
-        title = f"Turn of {actor.name}"
+        turn_number = context.get_current_turn_number()
+        title = f"Turn {turn_number}: {actor.name}"
+
         content = f"It is your turn <@{actor.id}>. Please select an action."
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.blurple()
@@ -180,7 +180,9 @@ class CombatEmbedManager(Service):
         if to_actor.is_enemy:
             to_name = f"*{to_actor.name}*"
 
-        title = f"Turn of *{from_actor.name}*"
+        turn_number = context.get_current_turn_number()
+        title = f"Turn {turn_number}: {from_actor.name}"
+
         skill = skill_data.skill
 
         description = f"{from_name} chose the action"
@@ -231,7 +233,7 @@ class CombatEmbedManager(Service):
 
         i = 0
         current = i
-        while i <= 8:
+        while i <= 5:
             current = i % len(loading_icons)
             icon = loading_icons[current]
 
@@ -242,7 +244,7 @@ class CombatEmbedManager(Service):
             embed.add_field(name="Remaining Health", value="", inline=True)
 
             await message.edit(embed=embed)
-            await asyncio.sleep((1 / 15) * (i * 1.5))
+            await asyncio.sleep((1 / 10) * (i * 1.5))
             i += 1
 
         embed = discord.Embed(title=title, description=description, color=color)
@@ -273,8 +275,11 @@ class CombatEmbedManager(Service):
         embed.add_field(name="Outcome", value=content, inline=False)
         await message.edit(embed=embed)
 
-    def get_turn_skip_embed(self, actor: Actor, reason: str) -> discord.Embed:
-        title = f"Turn of *{actor.name}*"
+    def get_turn_skip_embed(
+        self, actor: Actor, reason: str, context: EncounterContext
+    ) -> discord.Embed:
+        turn_number = context.get_current_turn_number()
+        title = f"Turn {turn_number}: {actor.name}"
 
         actor_name = f"<@{actor.id}>"
         if actor.is_enemy:
@@ -288,12 +293,14 @@ class CombatEmbedManager(Service):
         embed.add_field(name="Reason", value=reason)
         return embed
 
-    def get_actor_defeated_embed(self, actor: Actor):
-        title = f"*{actor.name}* was defeated!"
-        embed = discord.Embed(title=title, color=discord.Colour.light_grey())
+    def get_notification_embed(self, message: str):
+        embed = discord.Embed(title=message, color=discord.Colour.light_grey())
         return embed
 
+    def get_actor_defeated_embed(self, actor: Actor):
+        message = f"*{actor.name}* was defeated!"
+        return self.get_notification_embed(message)
+
     def get_actor_join_embed(self, user: discord.Member):
-        title = f"*{user.display_name}* joined the battle!"
-        embed = discord.Embed(title=title, color=discord.Colour.light_grey())
-        return embed
+        message = f"*{user.display_name}* joined the battle!"
+        return self.get_notification_embed(message)
