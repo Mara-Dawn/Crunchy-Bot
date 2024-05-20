@@ -62,7 +62,7 @@ class Plant:
         }
         self.emoji = self.READY_EMOJI
 
-    def get_status(self, age: int, watered: bool) -> PlotState:
+    def get_status(self, age: float, watered: bool) -> PlotState:
         if age <= self.seed_hours:
             return (
                 PlotState.SEED_PLANTED
@@ -78,10 +78,10 @@ class Plant:
         else:
             return PlotState.READY
 
-    def get_status_image(self, age: int, watered: bool) -> str:
+    def get_status_image(self, age: float, watered: bool) -> str:
         return self.IMAGE_MAP[self.get_status(age, watered)]
 
-    def get_status_emoji(self, age: int, watered: bool):
+    def get_status_emoji(self, age: float, watered: bool):
         return self.EMOJI_MAP[self.get_status(age, watered)]
 
 
@@ -313,7 +313,7 @@ class Plot:
             return PlotState.EMPTY
         return self.plant.get_status(self.get_age(), self.is_watered())
 
-    def get_age(self) -> int:
+    def get_age(self) -> float:
         if self.plant is None:
             return 0
 
@@ -332,7 +332,7 @@ class Plot:
         for hours in flash_bean_data:
             flash_bean_hours += hours
 
-        return int(age + watered_hours + fertile_hours + flash_bean_hours)
+        return age + watered_hours + fertile_hours + flash_bean_hours
 
     def is_watered(self) -> bool:
         hours = self.get_hours_since_last_water()
@@ -496,8 +496,7 @@ class Plot:
             return None
 
         now = datetime.datetime.now()
-        delta = now - self.plant_datetime
-        age = delta.total_seconds() / self.TIME_MODIFIER
+        age = self.get_age()
         hours_until_ready = self.plant.grow_hours - age
 
         if not self.plant.allow_modifiers:
