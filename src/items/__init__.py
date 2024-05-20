@@ -936,6 +936,7 @@ class Debuff(Item):
         ItemType.BRIT_DEBUFF,
         ItemType.MEOW_DEBUFF,
         ItemType.NERD_DEBUFF,
+        ItemType.TRUMP_DEBUFF,
     ]
 
     def __init__(self, cost: int | None):
@@ -1100,6 +1101,24 @@ class Nerdify(Debuff):
             f"Your next {Debuff.DEBUFF_DURATION} messages will become nerd talk."
         )
         self.emoji = "🤓"
+
+
+class Trumpify(Debuff):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "Grab her by the bean!"
+        self.type = ItemType.TRUMP_DEBUFF
+        self.description = (
+            "You were possessed by the ghost of Donald Trump. "
+            "Im sorry for you this is just unfortunate. "
+            "(We take no responsibility for whatever happens while possessed) "
+        )
+        self.information = (
+            "You gain this debuff when someone uses a ghost bean on you. "
+            f"Your next {Debuff.DEBUFF_DURATION} messages will become trump talk."
+        )
+        self.emoji = "🚽"
 
 
 # Lootbox Extras
