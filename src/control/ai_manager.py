@@ -278,7 +278,7 @@ class AIManager(Service):
 
     async def britify(self, text_prompt: str):
         backstory = (
-            "Reword my next message in ye olde english. Speack with a thick british accent as well and use random typically british phrases. "
+            "Reword my next message in a heavy british accent. Speack with a comically thick british accent and liberally use random typically british phrases and sayings. "
         )
 
         return await self.modify(text_prompt, backstory)
