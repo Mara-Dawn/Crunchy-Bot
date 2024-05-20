@@ -12,7 +12,7 @@ from events.garden_event import GardenEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType, EventType, GardenEventType, UIEventType
 from events.ui_event import UIEvent
-from items import BaseSeed, Debuff
+from items import BaseSeed
 from items.types import ItemType
 from view.garden.embed import GardenEmbed
 from view.garden.plot_embed import PlotEmbed
@@ -173,7 +173,7 @@ class GardenViewController(ViewController):
                 message = f"You harvest a Piss Bean Plant and gain `🅱️{reward}`."
                 message += "\nThe soil seems more fertile too! Looks like plants will grow faster on this plot for a while."
             case PlantType.BAKED_BEAN:
-                reward = random.randint(420, 690)
+                reward = random.randint(320, 420)
                 message = f"You harvest a Baked Bean Plant and gain `🅱️{reward}`."
                 message += "\nAs soon as you pick them up you feel a sudden hit of absolute dankness smash your brain and sweep you off your feet. Good luck."
                 event = InventoryEvent(
@@ -181,7 +181,7 @@ class GardenViewController(ViewController):
                     guild_id,
                     member_id,
                     ItemType.HIGH_AS_FRICK,
-                    Debuff.DEBUFF_DURATION,
+                    7,
                 )
                 await self.controller.dispatch_event(event)
             case PlantType.GHOST_BEAN:
