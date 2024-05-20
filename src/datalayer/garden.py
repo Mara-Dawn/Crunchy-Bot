@@ -496,8 +496,7 @@ class Plot:
             return None
 
         now = datetime.datetime.now()
-        delta = now - self.plant_datetime
-        age = delta.total_seconds() / self.TIME_MODIFIER
+        age = self.get_age()
         hours_until_ready = self.plant.grow_hours - age
 
         if not self.plant.allow_modifiers:
