@@ -79,17 +79,15 @@ class InteractionManager(Service):
         active_items: list[Item],
         already_interacted: bool,
         self_target: bool,
-    ) -> tuple[InteractionModifiers, str]:
+    ) -> tuple[InteractionModifiers, str, list[Item]]:
         response = ""
         modifiers = InteractionModifiers()
         guild_id = interaction.guild_id
         user_id = interaction.user.id
+        items_used = []
 
         if self_target:
-            return (
-                modifiers,
-                response,
-            )
+            return (modifiers, response, items_used)
 
         for item in active_items:
             if item.group == ItemGroup.BONUS_ATTEMPT:
@@ -104,23 +102,22 @@ class InteractionManager(Service):
             )
 
         if already_interacted and modifiers.bonus_attempt is None:
-            return (
-                modifiers,
-                response,
-            )
+            return (modifiers, response, items_used)
 
         modifiers.item_modifier = 0
 
         for item in active_items:
-            response += await self.use_jail_item(modifiers, item, guild_id, user_id)
+            message, use_item = await self.use_jail_item(
+                modifiers, item, guild_id, user_id
+            )
+            response += message
+            if use_item:
+                items_used.append(item)
 
         if modifiers.item_modifier == 0:
             modifiers.item_modifier = 1
 
-        return (
-            modifiers,
-            response,
-        )
+        return (modifiers, response, items_used)
 
     async def get_jail_target_item_modifiers(
         self,
@@ -178,19 +175,19 @@ class InteractionManager(Service):
         user: discord.Member,
         command_type: UserInteraction,
         active_items: list[Item],
-    ) -> str:
+    ) -> tuple[str, list[Item]]:
         guild_id = interaction.guild_id
 
         affected_jail = await self.jail_manager.get_active_jail(guild_id, user)
         if affected_jail is None:
-            return ""
+            return "", []
 
         already_interacted = await self.event_manager.has_jail_event_from_user(
             affected_jail.id, interaction.user.id, command_type
         )
         self_target = interaction.user.id == user.id
 
-        modifiers, user_item_info = await self.get_jail_item_modifiers(
+        modifiers, user_item_info, items_used = await self.get_jail_item_modifiers(
             interaction, active_items, already_interacted, self_target
         )
 
@@ -201,16 +198,10 @@ class InteractionManager(Service):
                     self.__get_already_used_log_msg(command_type, interaction, user),
                     cog=self.log_name,
                 )
-                return self.__get_already_used_msg(command_type, user)
+                return self.__get_already_used_msg(command_type, user), []
 
-            event = InventoryEvent(
-                datetime.datetime.now(),
-                interaction.guild_id,
-                interaction.user.id,
-                modifiers.bonus_attempt.type,
-                -1,
-            )
-            await self.controller.dispatch_event(event)
+            items_used.append(modifiers.bonus_attempt)
+
             self.logger.log(
                 interaction.guild_id,
                 f"Item {modifiers.bonus_attempt.name} was used.",
@@ -336,11 +327,12 @@ class InteractionManager(Service):
         if modifiers.satan_boost and satan_release:
             response += f"\n<@{interaction.user.id}> pays the price of making a deal with the devil and goes to jail as well. They will be released <t:{satan_release}:R>."
 
-        return response
+        return response, items_used
 
     async def use_jail_item(
         self, modifiers: InteractionModifiers, item: Item, guild_id: int, user_id: int
     ):
+        consume_item = False
         match item.group:
             case ItemGroup.VALUE_MODIFIER:
                 if item.type == ItemType.SATAN_FART:
@@ -348,7 +340,7 @@ class InteractionManager(Service):
                         guild_id, user_id
                     )
                     if len(affected_jails) > 0:
-                        return ""
+                        return "", consume_item
                     modifiers.satan_boost = True
                 modifiers.item_modifier += item.value
             case ItemGroup.AUTO_CRIT:
@@ -360,24 +352,17 @@ class InteractionManager(Service):
             case ItemGroup.FLAT_BONUS:
                 modifiers.flat_bonus += item.value
             case _:
-                return ""
+                return "", consume_item
 
         if not item.permanent:
-            event = InventoryEvent(
-                datetime.datetime.now(),
-                guild_id,
-                user_id,
-                item.type,
-                -1,
-            )
-            await self.controller.dispatch_event(event)
+            consume_item = True
 
         self.logger.log(
             guild_id,
             f"Item {item.name} was used.",
             cog=self.log_name,
         )
-        return f"* {item.name}\n"
+        return f"* {item.name}\n", consume_item
 
     async def handle_major_action_items(
         self, items: list[Item], member: discord.Member, target_user: discord.Member
