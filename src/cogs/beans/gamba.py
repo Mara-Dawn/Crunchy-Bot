@@ -65,22 +65,6 @@ class Gamba(commands.Cog):
             )
             return False
 
-        stun_base_duration = (
-            await self.item_manager.get_item(guild_id, ItemType.BAT)
-        ).value
-        stunned_remaining = await self.event_manager.get_stunned_remaining(
-            guild_id, interaction.user.id, stun_base_duration
-        )
-        if stunned_remaining > 0:
-            timestamp_now = int(datetime.datetime.now().timestamp())
-            remaining = int(timestamp_now + stunned_remaining)
-            await self.bot.command_response(
-                self.__cog_name__,
-                interaction,
-                f"You are currently stunned from a bat attack. Try again <t:{remaining}:R>",
-            )
-            return False
-
         return True
 
     async def __gamba_items(
