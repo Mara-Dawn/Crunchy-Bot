@@ -1,4 +1,5 @@
 import datetime
+import re
 import typing
 
 import discord
@@ -127,6 +128,9 @@ class Bully(commands.Cog):
         attachments = message.attachments
 
         if len(content) <= 0:
+            return
+
+        if len(re.sub(r"<:\w*:\d*>", "", content)) == 0:
             return
 
         await message.delete()
