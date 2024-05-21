@@ -17,6 +17,7 @@ from datalayer.types import UserInteraction
 from discord import app_commands
 from discord.ext import commands
 from events.interaction_event import InteractionEvent
+from events.inventory_event import InventoryEvent
 from items.types import ItemGroup, ItemType
 
 
@@ -254,13 +255,32 @@ class Interactions(commands.Cog):
             if len(major_action_response) <= 0:
                 has_major_jail_actions = False
 
+        items_used = None
         if not has_major_jail_actions:
-            response += await self.interaction_manager.user_command_interaction(
-                interaction, user, command_type, user_items
+            message, items_used = (
+                await self.interaction_manager.user_command_interaction(
+                    interaction, user, command_type, user_items
+                )
             )
+
+            response += message
+
 
         await interaction.channel.send(response)
         await interaction.followup.send(embed=embed)
+
+        if items_used is None:
+            return
+
+        for item in items_used:
+            event = InventoryEvent(
+                datetime.datetime.now(),
+                interaction.guild.id,
+                interaction.user.id,
+                item.type,
+                -1,
+            )
+            await self.controller.dispatch_event(event)
 
     @commands.Cog.listener()
     async def on_ready(self):
