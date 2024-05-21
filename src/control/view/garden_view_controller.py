@@ -131,7 +131,7 @@ class GardenViewController(ViewController):
                 reward = random.randint(450, 550)
                 message = f"You harvest a Bean Plant and gain `🅱️{reward}`."
             case PlantType.RARE_BEAN:
-                reward = random.randint(1400, 1600)
+                reward = random.randint(1900, 2100)
                 message = f"You harvest a Rare Bean Plant and gain `🅱️{reward}`."
             case PlantType.CRYSTAL_BEAN:
                 reward = random.randint(5000, 6000)

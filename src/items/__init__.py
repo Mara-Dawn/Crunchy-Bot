@@ -1284,7 +1284,7 @@ class RareSeed(BaseSeed):
         self.information = (
             "Has a small chance of dropping when harvesting any bean plant."
             "\nTakes 5-10 Days to grow, depending on water."
-            "\nProduces 1400 - 1600 beans when harvested."
+            "\nProduces 1900 - 2100 beans when harvested."
         )
         self.emoji = RareBeanPlant.READY_EMOJI
 
