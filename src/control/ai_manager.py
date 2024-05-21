@@ -315,7 +315,6 @@ class AIManager(Service):
         text += "Keep in mind that the following message is spoken by someone and should be reworded so that it still is from their point of view. "
         text += "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind. "
         text += "Dont put your response in quotation marks. Do not respond to the message, just reword it. "
-        text += "Keep any text that matches the regex '<a?:\w*:\d*>' as is. Never use the expression '<a?:\w*:\d*>' in your responses though. "
         text += "The message will follow now: "
         
         chat_log = ChatLog(text)
