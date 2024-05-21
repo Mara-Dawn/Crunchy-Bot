@@ -45,7 +45,7 @@ class CombatEmbedManager(Service):
 
         embed = discord.Embed(title=title, color=discord.Colour.purple())
 
-        enemy_name = f"> ~* {enemy.name} *~"
+        enemy_name = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
         content = f'```python\n"{enemy.description}"```'
         embed.add_field(name=enemy_name, value=content, inline=False)
 
@@ -59,7 +59,12 @@ class CombatEmbedManager(Service):
         return embed
 
     def add_health_bar(
-        self, embed: discord.Embed, current_hp: int, max_hp: int, max_width: int = 45
+        self,
+        embed: discord.Embed,
+        current_hp: int,
+        max_hp: int,
+        hide_hp: bool = True,
+        max_width: int = 45,
     ):
         health = f"{current_hp}/{max_hp}"
         fraction = current_hp / max_hp
@@ -78,7 +83,11 @@ class CombatEmbedManager(Service):
 
         content = "```" + bar_start + health_bar + missing_health_bar + bar_end + "```"
 
-        embed.add_field(name=f"Health: {health}", value=content)
+        title = "Health:"
+        if not hide_hp:
+            title += f" {health}"
+
+        embed.add_field(name=title, value=content)
 
     def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
@@ -103,7 +112,9 @@ class CombatEmbedManager(Service):
             current_hp = self.actor_manager.get_actor_current_hp(
                 actor, context.combat_events
             )
-            display_hp = f"[{current_hp}/{actor.max_hp}]" if not actor.is_enemy else ""
+            fraction = current_hp / actor.max_hp
+            percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
+            display_hp = f"[{percentage}%]" if not actor.is_enemy else ""
             if initiative_display == "":
                 initiative_display += f"\n{number}. >> {actor.name} << {display_hp}"
                 continue
@@ -173,12 +184,12 @@ class CombatEmbedManager(Service):
             actor, context.combat_events
         )
         max_hp = actor.max_hp
-        self.add_health_bar(embed, current_hp, max_hp)
+        self.add_health_bar(embed, current_hp, max_hp, hide_hp=False)
 
         embed.add_field(name="Your Skills:", value="", inline=False)
 
-        for skill in actor.skill_data:
-            skill.add_to_embed(embed=embed)
+        for skill in actor.skills:
+            actor.get_skill_data(skill).add_to_embed(embed=embed, show_data=True)
 
         if actor.image is not None:
             embed.set_thumbnail(url=actor.image)
@@ -230,7 +241,7 @@ class CombatEmbedManager(Service):
         else:
             await message.edit(content="", embed=embed, view=None)
 
-        await asyncio.sleep(2.5)
+        await asyncio.sleep(1.5)
 
         outcome_title = ""
         damage_info = ""
@@ -262,7 +273,7 @@ class CombatEmbedManager(Service):
         embed.add_field(name="Remaining Health", value="", inline=True)
         await message.edit(embed=embed)
 
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(1)
 
         loading_icons = [
             "🎲",

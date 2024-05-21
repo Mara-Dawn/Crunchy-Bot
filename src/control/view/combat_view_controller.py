@@ -102,7 +102,7 @@ class CombatViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        damage_instance = character.get_skill_value(skill_data.skill)
+        damage_instance = character.get_skill_damage(skill_data.skill)
 
         message = await interaction.original_response()
 

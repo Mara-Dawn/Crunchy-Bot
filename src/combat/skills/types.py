@@ -9,10 +9,10 @@ class SkillType(str, Enum):
     DEEZ_NUTS = "DeezNuts"
 
 
-class SkillEffect(Enum):
-    PHYSICAL_DAMAGE = 0
-    MAGICAL_DAMAGE = 1
-    HEALING = 2
+class SkillEffect(str, Enum):
+    PHYSICAL_DAMAGE = "Physical"
+    MAGICAL_DAMAGE = "Magical"
+    HEALING = "Healing"
 
 
 class DamageInstance:
@@ -35,4 +35,4 @@ class DamageInstance:
         if self.is_crit:
             self.value *= self.critical_modifier
 
-        self.value = int(self.value)
+        self.value: int = int(self.value)

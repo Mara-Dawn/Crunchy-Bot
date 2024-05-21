@@ -74,10 +74,14 @@ class CombatActorManager(Service):
                 break
 
         skills = enemy.skills
-        skill_data = self.get_skill_data(None, skills, combat_events)
+        skill_cooldowns = self.get_skill_cooldowns(None, skills, combat_events)
 
         return Opponent(
-            enemy=enemy, max_hp=max_hp, skill_data=skill_data, defeated=defeated
+            enemy=enemy,
+            max_hp=max_hp,
+            skills=skills,
+            skill_cooldowns=skill_cooldowns,
+            defeated=defeated,
         )
 
     def get_character(
@@ -96,12 +100,13 @@ class CombatActorManager(Service):
                 break
 
         skills = [NormalAttack(), HeavyAttack()]
-        skill_data = self.get_skill_data(member.id, skills, combat_events)
+        skill_cooldowns = self.get_skill_cooldowns(member.id, skills, combat_events)
         equipment = CharacterEquipment(member.id)
 
         character = Character(
             member=member,
-            skill_data=skill_data,
+            skills=skills,
+            skill_cooldowns=skill_cooldowns,
             equipment=equipment,
             defeated=defeated,
         )
@@ -110,7 +115,7 @@ class CombatActorManager(Service):
     def get_undefeated_actors(self, actors: list[Actor]):
         return [actor for actor in actors if not actor.defeated]
 
-    def get_skill_data(
+    def get_skill_cooldowns(
         self, actor_id: int, skills: list[Skill], combat_events: list[CombatEvent]
     ) -> list[SkillData]:
         cooldowns = {}
@@ -122,12 +127,11 @@ class CombatActorManager(Service):
                     if skill_type not in cooldowns:
                         cooldowns[skill_type] = last_used
                 last_used += 1
-        skill_data = []
+        skill_data = {}
 
         for skill in skills:
             last_used = None
             if skill.type in cooldowns:
                 last_used = cooldowns[skill.type]
-            data = SkillData(skill=skill, last_used=last_used)
-            skill_data.append(data)
+            skill_data[skill.type] = last_used
         return skill_data

@@ -51,7 +51,7 @@ class CharacterEquipment:
             CharacterAttribute.CRIT_DAMAGE: 1.5,
             CharacterAttribute.PHYS_DAMAGE_REDUCTION: 0,
             CharacterAttribute.MAGIC_DAMAGE_REDUCTION: 0,
-            CharacterAttribute.MAX_HEALTH: 100,
+            CharacterAttribute.MAX_HEALTH: 50,
         }
 
         self.gear_modifiers: dict[GearModifierType, float] = {}

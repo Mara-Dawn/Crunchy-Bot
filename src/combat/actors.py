@@ -5,7 +5,7 @@ from combat.enemies.enemy import Enemy
 from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill, SkillData
-from combat.skills.types import DamageInstance, SkillEffect
+from combat.skills.types import DamageInstance, SkillEffect, SkillType
 
 
 class Actor:
@@ -17,7 +17,8 @@ class Actor:
         max_hp: int,
         initiative: int,
         is_enemy: bool,
-        skill_data: list[SkillData],
+        skills: list[Skill],
+        skill_cooldowns: dict[SkillType, int],
         defeated: bool,
         image: str,
     ):
@@ -26,37 +27,50 @@ class Actor:
         self.max_hp = max_hp
         self.initiative = initiative
         self.is_enemy = is_enemy
-        self.skill_data = skill_data
+        self.skills = skills
+        self.skill_cooldowns = skill_cooldowns
         self.defeated = defeated
         self.image = image
+
+    def get_skill_data(self, skill: Skill) -> SkillData:
+        pass
+
+    def get_skill_damage(self, skill: Skill, force_roll: int = None) -> DamageInstance:
+        pass
 
 
 class Character(Actor):
 
+    BASE_INITIATIVE = 10
+
     def __init__(
         self,
         member: discord.Member,
-        skill_data: list[SkillData],
+        skills: list[Skill],
+        skill_cooldowns: dict[SkillType, int],
         equipment: CharacterEquipment,
         defeated: bool,
     ):
+        self.member = member
+        self.equipment = equipment
+        max_hp = self.equipment.attributes[CharacterAttribute.MAX_HEALTH]
+        initiative = (
+            self.BASE_INITIATIVE
+            + self.equipment.gear_modifiers[GearModifierType.DEXTERITY]
+        )
         super().__init__(
             id=member.id,
             name=member.display_name,
-            max_hp=100,
-            initiative=10,
+            max_hp=max_hp,
+            initiative=initiative,
             is_enemy=False,
-            skill_data=skill_data,
+            skills=skills,
+            skill_cooldowns=skill_cooldowns,
             defeated=defeated,
             image=member.avatar.url,
         )
-        self.member = member
-        self.equipment = equipment
 
-    def get_skill_value(self, skill: Skill) -> DamageInstance:
-
-        skill_base_value = skill.base_value
-
+    def get_skill_data(self, skill: Skill) -> SkillData:
         weapon_min_roll = self.equipment.weapon.modifiers[
             GearModifierType.WEAPON_DAMAGE_MIN
         ]
@@ -64,7 +78,26 @@ class Character(Actor):
             GearModifierType.WEAPON_DAMAGE_MAX
         ]
 
-        weapon_roll = random.randint(weapon_min_roll, weapon_max_roll)
+        return SkillData(
+            skill=skill,
+            last_used=self.skill_cooldowns[skill.type],
+            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll).value,
+            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll).value,
+        )
+
+    def get_skill_damage(self, skill: Skill, force_roll: int = None) -> DamageInstance:
+        skill_base_value = skill.base_value
+
+        weapon_roll = force_roll
+        if weapon_roll is None:
+            weapon_min_roll = self.equipment.weapon.modifiers[
+                GearModifierType.WEAPON_DAMAGE_MIN
+            ]
+            weapon_max_roll = self.equipment.weapon.modifiers[
+                GearModifierType.WEAPON_DAMAGE_MAX
+            ]
+
+            weapon_roll = random.randint(weapon_min_roll, weapon_max_roll)
 
         modifier = 1
 
@@ -102,7 +135,12 @@ class Character(Actor):
 class Opponent(Actor):
 
     def __init__(
-        self, enemy: Enemy, max_hp: int, skill_data: list[SkillData], defeated: bool
+        self,
+        enemy: Enemy,
+        max_hp: int,
+        skills: list[Skill],
+        skill_cooldowns: dict[SkillType, int],
+        defeated: bool,
     ):
         super().__init__(
             id=None,
@@ -110,13 +148,25 @@ class Opponent(Actor):
             max_hp=max_hp,
             initiative=enemy.initiative,
             is_enemy=True,
-            skill_data=skill_data,
+            skills=skills,
+            skill_cooldowns=skill_cooldowns,
             defeated=defeated,
             image=f"attachment://{enemy.image}",
         )
         self.enemy = enemy
 
-    def get_skill_value(self, skill: Skill) -> DamageInstance:
+    def get_skill_data(self, skill: Skill) -> SkillData:
+        weapon_min_roll = self.enemy.min_dmg
+        weapon_max_roll = self.enemy.max_dmg
+
+        return SkillData(
+            skill=skill,
+            last_used=self.skill_cooldowns[skill.type],
+            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll).value,
+            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll).value,
+        )
+
+    def get_skill_damage(self, skill: Skill, force_roll: int = None) -> DamageInstance:
 
         skill_base_value = skill.base_value
 

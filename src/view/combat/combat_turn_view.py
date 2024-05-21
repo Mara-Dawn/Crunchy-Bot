@@ -21,7 +21,8 @@ class CombatTurnView(ViewMenu):
         self.member_id = character.member.id
         self.blocked = False
 
-        for skill_data in character.skill_data:
+        for skill in character.skills:
+            skill_data = character.get_skill_data(skill)
             self.add_item(SkillButton(skill_data))
 
         self.controller_type = ControllerType.COMBAT

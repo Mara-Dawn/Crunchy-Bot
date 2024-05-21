@@ -232,9 +232,9 @@ class EncounterManager(Service):
     async def opponent_turn(self, context: EncounterContext):
         opponent = context.opponent
 
-        skill_data = random.choice(opponent.skill_data)
-        skill = skill_data.skill
-        damage_instance = opponent.get_skill_value(skill)
+        skill = random.choice(opponent.skills)
+        skill_data = opponent.get_skill_data(skill)
+        damage_instance = opponent.get_skill_damage(skill)
 
         target = random.choice(context.combatants)
 
