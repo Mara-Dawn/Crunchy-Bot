@@ -234,12 +234,12 @@ class EncounterManager(Service):
 
         skill_data = random.choice(opponent.skill_data)
         skill = skill_data.skill
-        skill_value = opponent.get_skill_value(skill_data)
+        damage_instance = opponent.get_skill_value(skill)
 
         target = random.choice(context.combatants)
 
         await self.embed_manager.handle_actor_turn_embed(
-            opponent, target, skill_data, skill_value, context
+            opponent, target, skill_data, damage_instance, context
         )
         await asyncio.sleep(2)
 
@@ -250,7 +250,7 @@ class EncounterManager(Service):
             opponent.id,
             target.id,
             skill.type,
-            skill_value,
+            damage_instance.value,
             CombatEventType.ENEMY_TURN,
         )
         await self.controller.dispatch_event(event)

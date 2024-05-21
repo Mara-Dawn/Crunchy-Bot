@@ -46,6 +46,8 @@ class Enemy:
         level: int,
         min_hp: int,
         max_hp: int,
+        min_dmg: int,
+        max_dmg: int,
         skills: list[Skill],
         loot_table: list[Item],
         min_drop_count: int = None,
@@ -54,6 +56,8 @@ class Enemy:
         max_beans_reward: int = None,
         weighting: int = 100,
         initiative: int = 10,
+        crit_chance: float = 0.1,
+        crit_mod: float = 1.5,
     ):
         self.name = name
         self.type = type
@@ -63,6 +67,8 @@ class Enemy:
         self.level = level
         self.min_hp = min_hp
         self.max_hp = max_hp
+        self.min_dmg = min_dmg
+        self.max_dmg = max_dmg
         self.skills = skills
         self.loot_table = loot_table
         self.min_drop_count = min_drop_count
@@ -71,6 +77,8 @@ class Enemy:
         self.max_beans_reward = max_beans_reward
         self.weighting = weighting
         self.initiative = initiative
+        self.crit_chance = crit_chance
+        self.crit_mod = crit_mod
 
         if self.min_drop_count is None:
             self.min_drop_count = self.LOOT_MIN_AMOUNT_BY_LVL[self.level]

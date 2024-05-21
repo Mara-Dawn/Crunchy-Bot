@@ -59,7 +59,7 @@ class CombatEmbedManager(Service):
         return embed
 
     def add_health_bar(
-        self, embed: discord.Embed, current_hp: int, max_hp: int, max_width: int = 56
+        self, embed: discord.Embed, current_hp: int, max_hp: int, max_width: int = 45
     ):
         health = f"{current_hp}/{max_hp}"
         fraction = current_hp / max_hp
@@ -83,12 +83,12 @@ class CombatEmbedManager(Service):
     def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = "Encounter Overview"
-        content = "Information about the current encounter."
+        title = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
+        content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
         )
-        enemy.add_to_embed(embed)
+        # enemy.add_to_embed(embed)
 
         current_hp = self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
@@ -117,7 +117,7 @@ class CombatEmbedManager(Service):
     def get_combat_success_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = f"> ~* {enemy.name} *~"
+        title = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.green()
@@ -127,7 +127,7 @@ class CombatEmbedManager(Service):
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
-        self.add_health_bar(embed, current_hp, max_hp)
+        self.add_health_bar(embed, current_hp, max_hp, max_width=38)
 
         defeated_message = f"You successfully defeated *{enemy.name}*."
         embed.add_field(name="Congratulations!", value=defeated_message, inline=False)
@@ -139,7 +139,7 @@ class CombatEmbedManager(Service):
     def get_combat_failed_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = f"> ~* {enemy.name} *~"
+        title = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
@@ -149,7 +149,7 @@ class CombatEmbedManager(Service):
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
-        self.add_health_bar(embed, current_hp, max_hp)
+        self.add_health_bar(embed, current_hp, max_hp, max_width=38)
 
         defeated_message = f"You were defeated by *{enemy.name}*."
         embed.add_field(name="Failure!", value=defeated_message, inline=False)
@@ -180,6 +180,9 @@ class CombatEmbedManager(Service):
         for skill in actor.skill_data:
             skill.add_to_embed(embed=embed)
 
+        if actor.image is not None:
+            embed.set_thumbnail(url=actor.image)
+
         return embed
 
     async def handle_actor_turn_embed(
@@ -203,6 +206,14 @@ class CombatEmbedManager(Service):
         if to_actor.is_enemy:
             to_name = f"*{to_actor.name}*"
 
+        files = []
+        if from_actor.is_enemy:
+            files = [
+                discord.File(
+                    f"./img/enemies/{from_actor.enemy.image}", from_actor.enemy.image
+                )
+            ]
+
         turn_number = context.get_current_turn_number()
         title = f"Turn {turn_number}: {from_actor.name}"
 
@@ -211,12 +222,13 @@ class CombatEmbedManager(Service):
         description = f"{from_name} chose the action"
 
         embed = discord.Embed(title=title, description=description, color=color)
+        embed.set_thumbnail(url=from_actor.image)
         skill_data.add_to_embed(embed)
 
         if message is None:
-            message = await context.thread.send(embed=embed)
+            message = await context.thread.send(embed=embed, files=files)
         else:
-            await message.edit(content="", embed=embed, attachments=[], view=None)
+            await message.edit(content="", embed=embed, view=None)
 
         await asyncio.sleep(2.5)
 
@@ -243,6 +255,7 @@ class CombatEmbedManager(Service):
             damage_info = "CRIT! " + damage_info
 
         embed = discord.Embed(title=title, description=description, color=color)
+        embed.set_thumbnail(url=from_actor.image)
         skill_data.add_to_embed(embed)
         embed.add_field(name="Target", value=to_name, inline=True)
         embed.add_field(name=outcome_title, value="", inline=True)
@@ -264,6 +277,7 @@ class CombatEmbedManager(Service):
             icon = loading_icons[current]
 
             embed = discord.Embed(title=title, description=description, color=color)
+            embed.set_thumbnail(url=from_actor.image)
             skill_data.add_to_embed(embed)
             embed.add_field(name="Target", value=to_name, inline=True)
             embed.add_field(name=outcome_title, value=icon, inline=True)
@@ -274,6 +288,7 @@ class CombatEmbedManager(Service):
             i += 1
 
         embed = discord.Embed(title=title, description=description, color=color)
+        embed.set_thumbnail(url=from_actor.image)
         skill_data.add_to_embed(embed)
         embed.add_field(name="Target", value=to_name, inline=True)
         embed.add_field(name=outcome_title, value=damage_info, inline=True)
@@ -288,6 +303,7 @@ class CombatEmbedManager(Service):
         display_hp = f"{percentage}%"
 
         embed = discord.Embed(title=title, description=description, color=color)
+        embed.set_thumbnail(url=from_actor.image)
         skill_data.add_to_embed(embed)
         embed.add_field(name="Target", value=to_name, inline=True)
         embed.add_field(name=outcome_title, value=damage_info, inline=True)
@@ -297,6 +313,7 @@ class CombatEmbedManager(Service):
         await asyncio.sleep(1)
 
         embed = discord.Embed(title=title, description=description, color=color)
+        embed.set_thumbnail(url=from_actor.image)
         skill_data.add_to_embed(embed)
         embed.add_field(name="Target", value=to_name, inline=True)
         embed.add_field(name=outcome_title, value=damage_info, inline=True)
@@ -319,6 +336,8 @@ class CombatEmbedManager(Service):
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.light_grey()
         )
+        if actor.image is not None:
+            embed.set_thumbnail(url=actor.image)
         embed.add_field(name="Reason", value=reason)
         return embed
 

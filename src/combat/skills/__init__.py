@@ -75,5 +75,5 @@ class DeezNuts(Skill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
-            base_value=5,
+            base_value=2,
         )

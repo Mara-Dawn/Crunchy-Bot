@@ -19,6 +19,7 @@ class Actor:
         is_enemy: bool,
         skill_data: list[SkillData],
         defeated: bool,
+        image: str,
     ):
         self.id = id
         self.name = name
@@ -27,6 +28,7 @@ class Actor:
         self.is_enemy = is_enemy
         self.skill_data = skill_data
         self.defeated = defeated
+        self.image = image
 
 
 class Character(Actor):
@@ -46,6 +48,7 @@ class Character(Actor):
             is_enemy=False,
             skill_data=skill_data,
             defeated=defeated,
+            image=member.avatar.url,
         )
         self.member = member
         self.equipment = equipment
@@ -109,10 +112,31 @@ class Opponent(Actor):
             is_enemy=True,
             skill_data=skill_data,
             defeated=defeated,
+            image=f"attachment://{enemy.image}",
         )
         self.enemy = enemy
 
-    def get_skill_value(self, skill_data: SkillData) -> int:
-        if skill_data not in self.skill_data:
-            return 0
-        return skill_data.skill.base_value
+    def get_skill_value(self, skill: Skill) -> DamageInstance:
+
+        skill_base_value = skill.base_value
+
+        weapon_min_roll = self.enemy.min_dmg
+        weapon_max_roll = self.enemy.max_dmg
+
+        weapon_roll = random.randint(weapon_min_roll, weapon_max_roll)
+
+        crit_roll = random.random()
+        critical_hit = False
+        critical_modifier = 1
+        if crit_roll < self.enemy.crit_chance:
+            critical_hit = True
+            critical_modifier = self.enemy.crit_mod
+
+        damage_instance = DamageInstance(
+            weapon_roll=weapon_roll,
+            skill_base=skill_base_value,
+            modifier=1,
+            critical_modifier=critical_modifier,
+            is_crit=critical_hit,
+        )
+        return damage_instance
