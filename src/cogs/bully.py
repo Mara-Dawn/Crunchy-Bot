@@ -130,8 +130,21 @@ class Bully(commands.Cog):
         if len(content) <= 0:
             return
 
-        if len(re.sub(r"<:\w*:\d*>", "", content)) == 0:
+        if len(re.sub(r"<a?:\w*:\d*>", "", content)) == 0:
             return
+
+        filtered_message = ""
+        start = 0
+        for match in re.finditer(r"<a?:\w*:\d*>", content):
+            end, newstart = match.span()
+            filtered_message += content[start:end]
+            emoji = match.group()
+            emoji_id = emoji.split("<")[1].split(":")[-1].rstrip(">")
+            if self.bot.get_emoji(int(emoji_id)) is not None:
+                filtered_message += emoji
+            start = newstart
+        filtered_message += content[start:]
+        content = " ".join(filtered_message.split())
 
         await message.delete()
 
