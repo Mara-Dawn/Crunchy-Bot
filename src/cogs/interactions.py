@@ -265,7 +265,6 @@ class Interactions(commands.Cog):
 
             response += message
 
-
         await interaction.channel.send(response)
         await interaction.followup.send(embed=embed)
 

@@ -2199,6 +2199,7 @@ class Database:
             SELECT * FROM {self.LOOTBOX_TABLE}
             INNER JOIN {self.LOOTBOX_EVENT_TABLE} ON {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_LOOTBOX_ID_COL} = {self.LOOTBOX_TABLE}.{self.LOOTBOX_ID_COL}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
+            LEFT JOIN {self.LOOTBOX_ITEM_TABLE} ON {self.LOOTBOX_ITEM_TABLE}.{self.LOOTBOX_ITEM_LOOTBOX_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_LOOTBOX_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
             AND {self.EVENT_TIMESTAMP_COL} <= ?
@@ -2214,7 +2215,15 @@ class Database:
             (
                 row[self.LOOTBOX_EVENT_MEMBER_COL],
                 LootBox.from_db_row(
-                    row, (await self.get_lootbox_items(row[self.LOOTBOX_ID_COL]))
+                    row,
+                    {
+                        ItemType(item_row[self.LOOTBOX_ITEM_TYPE_COL]): int(
+                            item_row[self.LOOTBOX_ITEM_AMOUNT_COL]
+                        )
+                        for item_row in rows
+                        if item_row[self.LOOTBOX_ITEM_LOOTBOX_ID_COL]
+                        == row[self.LOOTBOX_ID_COL]
+                    },
                 ),
             )
             for row in rows
