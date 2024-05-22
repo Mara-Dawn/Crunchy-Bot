@@ -86,9 +86,6 @@ class CharacterEquipment:
         self.attributes[CharacterAttribute.MAX_HEALTH] += self.gear_modifiers[
             GearModifierType.CONSTITUTION
         ]
-
-        healing_bonus = max(
-            self.attributes[CharacterAttribute.PHYS_DAMAGE_INCREASE],
-            self.attributes[CharacterAttribute.MAGIC_DAMAGE_INCREASE],
+        self.attributes[CharacterAttribute.HEALING_BONUS] += (
+            self.gear_modifiers[GearModifierType.HEALING] / 100
         )
-        self.attributes[CharacterAttribute.HEALING_BONUS] += healing_bonus

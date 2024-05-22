@@ -13,8 +13,9 @@ from combat.skills.types import SkillType
 #             slot=GearSlot.HEAD,
 #             min_level=1,
 #             max_level=2,
-#             base_skills=[],
-#             base_modifiers=[GearModifierType.ARMOR],
+#             skills=[],
+#             modifiers=[GearModifierType.ARMOR],
+#             scaling=1,
 #             cost=0,
 #             weight=None,
 #             permanent=False,
@@ -38,12 +39,12 @@ class Stick_T0(GearBase):
             information="Your basic starting weapon. Deals physical Damage.",
             slot=GearSlot.HEAD,
             min_level=1,
-            max_level=2,
-            base_modifiers=[
+            max_level=3,
+            modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
-            base_skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
         )
 
 
@@ -57,12 +58,12 @@ class Wand_T0(GearBase):
             information="Your basic starting weapon. Deals magical Damage.",
             slot=GearSlot.HEAD,
             min_level=1,
-            max_level=2,
-            base_modifiers=[
+            max_level=3,
+            modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
-            base_skills=[SkillType.MAGIC_ATTACK],
+            skills=[SkillType.MAGIC_ATTACK],
         )
 
 
@@ -79,8 +80,8 @@ class HeadGear_T0(GearBase):
             information="Tier 0 head piece.",
             slot=GearSlot.HEAD,
             min_level=1,
-            max_level=2,
-            base_modifiers=[GearModifierType.ARMOR],
+            max_level=3,
+            modifiers=[GearModifierType.ARMOR],
         )
 
 
@@ -97,8 +98,8 @@ class BodyGear_T0(GearBase):
             information="Tier 0 body piece.",
             slot=GearSlot.BODY,
             min_level=1,
-            max_level=2,
-            base_modifiers=[GearModifierType.ARMOR],
+            max_level=3,
+            modifiers=[GearModifierType.ARMOR],
         )
 
 
@@ -115,6 +116,24 @@ class LegGear_T0(GearBase):
             information="Tier 0 leg piece.",
             slot=GearSlot.LEGS,
             min_level=1,
-            max_level=2,
-            base_modifiers=[GearModifierType.ARMOR],
+            max_level=3,
+            modifiers=[GearModifierType.ARMOR],
+        )
+
+
+## Accessory Bases
+
+
+class Necklace_T0(GearBase):
+
+    def __init__(self):
+        super().__init__(
+            name="Nifty Necklace",
+            type=GearBaseType.NECKLACE_T0,
+            description="This necklace looks like it has seen a lot of use. With a bit of polish it might not look too shabby!",
+            information="Tier 0 accessory",
+            slot=GearSlot.ACCESSORY,
+            min_level=1,
+            max_level=3,
+            modifiers=[GearModifierType.DEXTERITY],
         )

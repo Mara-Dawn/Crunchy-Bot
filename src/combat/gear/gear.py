@@ -1,5 +1,5 @@
+
 import discord
-from combat.gear import *  # noqa: F403
 from combat.gear.types import (
     EnchantmentType,
     GearBaseType,
@@ -43,8 +43,9 @@ class GearBase:
         slot: GearSlot,
         min_level: int,
         max_level: int,
-        base_modifiers: list[GearModifierType],
-        base_skills: list[SkillType] = None, 
+        modifiers: list[GearModifierType],
+        skills: list[SkillType] = None, 
+        scaling: int = 1,
         cost: int = 0,
         weight: int = None,
         permanent: bool = False,
@@ -58,12 +59,13 @@ class GearBase:
         self.slot = slot
         self.min_level = min_level
         self.max_level = max_level
-        self.base_modifiers = base_modifiers
+        self.modifiers = modifiers
 
-        self.base_skills = base_skills
-        if self.base_skills is None:
-            self.base_skills = []
-
+        self.skills = skills
+        if self.skills is None:
+            self.skills = []
+        
+        self.scaling = scaling
         self.weight = weight
         if self.weight is None:
             self.weight = max(self.cost, 100)
@@ -83,6 +85,55 @@ class GearBase:
             case GearSlot.ACCESSORY:
                 self.emoji = "💍"
 
+    
+    def get_allowed_modifiers(self):
+        match self.slot:
+            case GearSlot.HEAD:
+                return [
+                    GearModifierType.DEFENSE,
+                    GearModifierType.CONSTITUTION,
+                    GearModifierType.HEALING,
+                    GearModifierType.ATTACK,
+                    GearModifierType.MAGIC,
+                ]
+            case GearSlot.BODY:
+                return [
+                    GearModifierType.DEFENSE,
+                    GearModifierType.CONSTITUTION,
+                    GearModifierType.HEALING,
+                    GearModifierType.CRIT_DAMAGE,
+                    GearModifierType.CRIT_RATE,
+                    GearModifierType.ATTACK,
+                    GearModifierType.MAGIC,
+                ]
+            case GearSlot.LEGS:
+                return [
+                    GearModifierType.DEFENSE,
+                    GearModifierType.CONSTITUTION,
+                    GearModifierType.HEALING,
+                    GearModifierType.DEXTERITY,
+                    GearModifierType.ATTACK,
+                    GearModifierType.MAGIC,
+                ]
+            case GearSlot.WEAPON:
+                return [
+                    GearModifierType.HEALING,
+                    GearModifierType.CRIT_DAMAGE,
+                    GearModifierType.CRIT_RATE,
+                    GearModifierType.DEXTERITY,
+                    GearModifierType.ATTACK,
+                    GearModifierType.MAGIC,
+                ]
+            case GearSlot.ACCESSORY:
+                return [
+                    GearModifierType.CONSTITUTION,
+                    GearModifierType.HEALING,
+                    GearModifierType.CRIT_DAMAGE,
+                    GearModifierType.CRIT_RATE,
+                    GearModifierType.ATTACK,
+                    GearModifierType.MAGIC,
+                ]
+
 
 class Gear(Item):
 
@@ -96,6 +147,8 @@ class Gear(Item):
         skills: list[SkillType],
         enchantments: list[Enchantment]
     ):
+        if name == "":
+            name = base.name
         super().__init__(
             name=name,
             type=None,

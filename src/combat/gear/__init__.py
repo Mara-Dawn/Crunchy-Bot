@@ -16,7 +16,7 @@ class DefaultStick(Gear):
             level=1,
             modifiers={
                 GearModifierType.WEAPON_DAMAGE_MIN: 1,
-                GearModifierType.WEAPON_DAMAGE_MAX: 3,
+                GearModifierType.WEAPON_DAMAGE_MAX: 2,
             },
             skills=[],
         )
@@ -33,7 +33,7 @@ class DefaultWand(Gear):
             level=1,
             modifiers={
                 GearModifierType.WEAPON_DAMAGE_MIN: 1,
-                GearModifierType.WEAPON_DAMAGE_MAX: 3,
+                GearModifierType.WEAPON_DAMAGE_MAX: 2,
             },
             skills=[],
         )

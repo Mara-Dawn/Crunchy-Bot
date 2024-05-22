@@ -24,12 +24,13 @@ class EnchantmentType(str, Enum):
 class GearModifierType(str, Enum):
     WEAPON_DAMAGE_MIN = "Weapon Min Damage"
     WEAPON_DAMAGE_MAX = "Weapon Max Damage"
+    ARMOR = "Armor"
     ATTACK = "Attack"
+    HEALING = "Healing"
     MAGIC = "Magic"
     CRIT_RATE = "Crit Rate"
     CRIT_DAMAGE = "Crit Damage"
     DEFENSE = "Defense"
-    ARMOR = "Armor"
     DEXTERITY = "Dexterity"
     CONSTITUTION = "Constitution"
 
@@ -37,9 +38,14 @@ class GearModifierType(str, Enum):
 class GearBaseType(str, Enum):
     STICK_T0 = "Stick_T0"
     WAND_T0 = "Wand_T0"
+
     HEADGEAR_T0 = "HeadGear_T0"
+
     BODYGEAR_T0 = "BodyGear_T0"
+
     LEGGEAR_T0 = "LegGear_T0"
+
+    NECKLACE_T0 = "Necklace_T0"
 
 
 class CharacterAttribute(str, Enum):
