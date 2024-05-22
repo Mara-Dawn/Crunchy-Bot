@@ -6,10 +6,11 @@ from events.ui_event import UIEvent
 from items.item import Item
 from items.types import ShopCategory
 from view.catalogue.embed import CatalogEmbed
+from view.elements import CategoryFilter, ImplementsCategoryFilter
 from view.view_menu import ViewMenu
 
 
-class CatalogView(ViewMenu):
+class CatalogView(ViewMenu, ImplementsCategoryFilter):
 
     def __init__(
         self,
@@ -26,7 +27,7 @@ class CatalogView(ViewMenu):
         self.current_page = 0
         self.filter: list[ShopCategory] = []
         self.filtered_items = []
-        self.__filter_items()
+        self.filter_items()
         self.item_count = len(self.filtered_items)
         self.page_count = int(self.item_count / CatalogEmbed.ITEMS_PER_PAGE) + (
             self.item_count % CatalogEmbed.ITEMS_PER_PAGE > 0
@@ -38,9 +39,12 @@ class CatalogView(ViewMenu):
     async def listen_for_ui_event(self, event: UIEvent):
         pass
 
-    def __filter_items(self):
+    def filter_items(self):
+        category_filer = self.filter
+        if len(category_filer) == 0:
+            category_filer = [category for category in ShopCategory]
         self.filtered_items = [
-            item for item in self.items if item.shop_category in self.filter
+            item for item in self.items if item.shop_category in category_filer
         ]
         self.item_count = len(self.filtered_items)
         self.page_count = int(self.item_count / CatalogEmbed.ITEMS_PER_PAGE) + (
@@ -56,13 +60,13 @@ class CatalogView(ViewMenu):
         page_display = f"Page {self.current_page + 1}/{self.page_count}"
 
         self.clear_items()
-        self.add_item(FilterDropdown(self.filter))
+        self.add_item(CategoryFilter(self.filter))
         self.add_item(PageButton("<", False))
         self.add_item(CurrentPageButton(page_display))
         self.add_item(PageButton(">", True))
 
     async def refresh_ui(self):
-        self.__filter_items()
+        self.filter_items()
         self.refresh_elements()
 
         start_offset = CatalogEmbed.ITEMS_PER_PAGE * self.current_page
@@ -103,53 +107,6 @@ class CatalogView(ViewMenu):
     async def on_timeout(self):
         with contextlib.suppress(discord.HTTPException):
             await self.message.edit(view=None)
-
-
-class FilterDropdown(discord.ui.Select):
-
-    CATEGORY_TITLE_MAP = {
-        ShopCategory.LOOTBOX: "Lootbox related Items",
-        ShopCategory.FUN: "General use items",
-        ShopCategory.INTERACTION: "Interaction related Items",
-        ShopCategory.SLAP: "Slap Related Items",
-        ShopCategory.PET: "Pet Related Items",
-        ShopCategory.FART: "Fart Related Items",
-        ShopCategory.JAIL: "Jail Related Items",
-        ShopCategory.GARDEN: "Garden Related Items",
-    }
-
-    def __init__(
-        self,
-        selected: list[ShopCategory],
-    ):
-
-        options = []
-
-        for category in ShopCategory:
-
-            option = discord.SelectOption(
-                label=self.CATEGORY_TITLE_MAP[category],
-                description="",
-                value=category,
-                default=(category in selected),
-            )
-
-            options.append(option)
-
-        super().__init__(
-            placeholder="Select a Category",
-            min_values=1,
-            max_values=len(ShopCategory),
-            options=options,
-            row=0,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: CatalogView = self.view
-
-        if await view.interaction_check(interaction):
-            result = [ShopCategory(int(value)) for value in self.values]
-            await view.set_filter(interaction, result)
 
 
 class PageButton(discord.ui.Button):

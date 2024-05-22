@@ -1,6 +1,7 @@
 import discord
 from datalayer.inventory import UserInventory
 from discord.ext import commands
+from items.item import Item
 from items.types import ItemState, ItemType
 
 
@@ -12,7 +13,7 @@ class InventoryEmbed(discord.Embed):
         self,
         bot: commands.Bot,
         inventory: UserInventory,
-        start_offset: int = 0,
+        display_items: list[Item] = None,
     ):
         super().__init__(
             title=f"Inventory of {inventory.member_display_name}\nBeans: `🅱️{inventory.balance}`",
@@ -22,16 +23,15 @@ class InventoryEmbed(discord.Embed):
         author_name = bot.user.display_name
         author_img = bot.user.display_avatar
         self.set_author(name=author_name, icon_url=author_img)
-        inventory_items = inventory.items
 
-        if len(inventory_items) == 0:
+        if display_items is None:
+            display_items = []
+
+        if len(display_items) == 0:
             self.add_field(name="", value="There is nothing here.", inline=False)
             return
 
-        end_offset = min((start_offset + self.ITEMS_PER_PAGE), len(inventory_items))
-        display = inventory_items[start_offset:end_offset]
-
-        for item in display:
+        for item in display_items:
             count = inventory.get_item_count(item.type)
             disabled = inventory.get_item_state(item.type) is ItemState.DISABLED
             match item.type:

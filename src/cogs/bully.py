@@ -122,6 +122,7 @@ class Bully(commands.Cog):
 
     async def modify_message(self, item_type: ItemType, message: discord.Message):
         content = message.content
+        original_message = content
         channel = message.channel
         author = message.author
         guild_id = message.guild.id
@@ -170,7 +171,7 @@ class Bully(commands.Cog):
             case ItemType.TRUMP_DEBUFF:
                 generated_content = await self.ai_manager.trumpify(content)
 
-        generated_content = generated_content + f"\n||original message: {content}||"
+        generated_content = generated_content + f"\n||original message: {original_message}||"
 
         if channel.id not in self.webhooks:
             webhooks = await message.channel.webhooks()
