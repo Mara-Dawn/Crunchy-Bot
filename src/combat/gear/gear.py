@@ -1,10 +1,35 @@
 import discord
 from combat.gear import *  # noqa: F403
-from combat.gear.types import GearModifierType, GearRarity, GearSlot
+from combat.gear.types import (
+    EnchantmentType,
+    GearBaseType,
+    GearModifierType,
+    GearRarity,
+    GearSlot,
+)
 from combat.skills.types import SkillType
 from discord.ext import commands
 from items.item import Item
 from items.types import ItemGroup, ShopCategory
+
+
+class Enchantment:
+
+    def __init__(
+        self,
+        name: str, 
+        type: EnchantmentType,
+        description: str,
+        information: str,
+        min_level: int,
+        max_level: int,
+    ):
+        self.name = name
+        self.type = type
+        self.description = description
+        self.information = information
+        self.min_level = min_level
+        self.max_level = max_level
 
 
 class GearBase:
@@ -12,6 +37,7 @@ class GearBase:
     def __init__(
         self,
         name: str, 
+        type: GearBaseType,
         description: str,
         information: str,
         slot: GearSlot,
@@ -25,6 +51,7 @@ class GearBase:
         secret: bool = False,
     ):
         self.name = name
+        self.type = type
         self.description = description
         self.information = information
         self.cost = cost
@@ -66,8 +93,8 @@ class Gear(Item):
         rarity: GearRarity,
         level: int,
         modifiers: dict[GearModifierType, float],
-        skills: list[SkillType]
-
+        skills: list[SkillType],
+        enchantments: list[Enchantment]
     ):
         super().__init__(
             name=name,
@@ -84,10 +111,12 @@ class Gear(Item):
             permanent=base.permanent,
             secret=base.secret
         )
+        self.base = base
         self.rarity = rarity
         self.level = level
         self.modifiers = modifiers
         self.skills = skills
+        self.enchantments = enchantments
     
     def get_embed(self, bot: commands.Bot, color=None, amount_in_cart: int = 1, show_price = True, show_info: bool = False) -> discord.Embed:
         emoji = self.emoji

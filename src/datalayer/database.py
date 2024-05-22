@@ -6,6 +6,7 @@ import aiosqlite
 import discord
 from bot_util import BotUtil
 from combat.encounter import Encounter
+from combat.gear import Gear
 from control.logger import BotLogger
 from discord.ext import commands
 from events.bat_event import BatEvent
@@ -496,6 +497,45 @@ class Database:
         {COMBAT_EVENT_SKILL_VALUE} INTEGER, 
         {COMBAT_EVENT_TYPE_COL} TEXT, 
         PRIMARY KEY ({COMBAT_EVENT_ID_COL})
+    );"""
+
+    USER_GEAR_TABLE = "usergear"
+    USER_GEAR_ID_COL = "usgr_id"
+    USER_GEAR_GUILD_ID_COL = "usgr_guild_id"
+    USER_GEAR_MEMBER_ID_COL = "usgr_member_id"
+    USER_GEAR_BASE_TYPE_COL = "usgr_base_type"
+    USER_GEAR_LEVEL_COL = "usgr_level"
+    USER_GEAR_RARITY_COL = "usgr_rarity"
+    CREATE_USER_GEAR_TABLE = f"""
+    CREATE TABLE if not exists {USER_GEAR_TABLE} (
+        {USER_GEAR_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
+        {USER_GEAR_GUILD_ID_COL} INTEGER,
+        {USER_GEAR_MEMBER_ID_COL} INTEGER,
+        {USER_GEAR_BASE_TYPE_COL} TEXT,
+        {USER_GEAR_LEVEL_COL} INTEGER,
+        {USER_GEAR_RARITY_COL} TEXT
+    );"""
+
+    USER_GEAR_MODIFIER_TABLE = "usergearmodifiers"
+    USER_GEAR_MODIFIER_GEAR_ID_COL = "ugmo_gear_id"
+    USER_GEAR_MODIFIER_TYPE_COL = "ugmo_type"
+    USER_GEAR_MODIFIER_VALUE_ID_COL = "ugmo_value"
+    CREATE_USER_GEAR_MODIFIER_TABLE = f"""
+    CREATE TABLE if not exists {USER_GEAR_MODIFIER_TABLE} (
+        {USER_GEAR_MODIFIER_GEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_GEAR_MODIFIER_TYPE_COL} TEXT,
+        {USER_GEAR_MODIFIER_VALUE_ID_COL} REAL
+        PRIMARY KEY ({USER_GEAR_MODIFIER_GEAR_ID_COL}, {USER_GEAR_MODIFIER_TYPE_COL})
+    );"""
+
+    USER_GEAR_SKILL_TABLE = "usergearskills"
+    USER_GEAR_SKILL_GEAR_ID_COL = "usk_gear_id"
+    USER_GEAR_SKILL_TYPE_COL = "ugsk_type"
+    CREATE_USER_GEAR_SKILL_TABLE = f"""
+    CREATE TABLE if not exists {USER_GEAR_SKILL_TABLE} (
+        {USER_GEAR_SKILL_GEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_GEAR_SKILL_TYPE_COL} TEXT,
+        PRIMARY KEY ({USER_GEAR_SKILL_GEAR_ID_COL}, {USER_GEAR_SKILL_TYPE_COL})
     );"""
 
     PERMANENT_ITEMS = [
@@ -2830,3 +2870,60 @@ class Database:
             return []
 
         return [CombatEvent.from_db_row(row) for row in rows]
+
+    async def log_user_gear_modifiers(self, gear_id: int, gear: Gear):
+        command = f"""
+            INSERT INTO {self.USER_GEAR_MODIFIER_TABLE} (
+            {self.USER_GEAR_MODIFIER_GEAR_ID_COL},
+            {self.USER_GEAR_MODIFIER_TYPE_COL},
+            {self.USER_GEAR_MODIFIER_VALUE_ID_COL})
+            VALUES (?, ?, ?);
+        """
+
+        for modifier, value in gear.modifiers.items():
+            task = (
+                gear_id,
+                modifier.value,
+                value,
+            )
+            await self.__query_insert(command, task)
+
+    async def log_user_gear_skills(self, gear_id: int, gear: Gear):
+        command = f"""
+            INSERT INTO {self.USER_GEAR_SKILL_TABLE} (
+            {self.USER_GEAR_SKILL_GEAR_ID_COL},
+            {self.USER_GEAR_SKILL_TYPE_COL})
+            VALUES (?, ?);
+        """
+
+        for skill_type in gear.skills:
+            task = (
+                gear_id,
+                skill_type.value,
+            )
+            await self.__query_insert(command, task)
+
+    async def log_user_gear(self, guild_id: int, member_id: int, gear: Gear):
+        command = f"""
+            INSERT INTO {self.USER_GEAR_TABLE} (
+            {self.USER_GEAR_GUILD_ID_COL},
+            {self.USER_GEAR_MEMBER_ID_COL},
+            {self.USER_GEAR_BASE_TYPE_COL},
+            {self.USER_GEAR_LEVEL_COL},
+            {self.USER_GEAR_RARITY_COL})
+            VALUES (?, ?, ?, ?, ?);
+        """
+        task = (
+            guild_id,
+            member_id,
+            gear.base.type.value,
+            gear.level,
+            gear.rarity.value,
+        )
+
+        insert_id = await self.__query_insert(command, task)
+
+        await self.log_user_gear_modifiers(insert_id, gear)
+        await self.log_user_gear_skills(insert_id, gear)
+
+        return insert_id

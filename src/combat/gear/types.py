@@ -17,6 +17,10 @@ class GearRarity(str, Enum):
     UNIQUE = "Unique"
 
 
+class EnchantmentType(str, Enum):
+    EXAMPLE = "example"
+
+
 class GearModifierType(str, Enum):
     WEAPON_DAMAGE_MIN = "Weapon Min Damage"
     WEAPON_DAMAGE_MAX = "Weapon Max Damage"
@@ -28,6 +32,14 @@ class GearModifierType(str, Enum):
     ARMOR = "Armor"
     DEXTERITY = "Dexterity"
     CONSTITUTION = "Constitution"
+
+
+class GearBaseType(str, Enum):
+    STICK_T0 = "Stick_T0"
+    WAND_T0 = "Wand_T0"
+    HEADGEAR_T0 = "HeadGear_T0"
+    BODYGEAR_T0 = "BodyGear_T0"
+    LEGGEAR_T0 = "LegGear_T0"
 
 
 class CharacterAttribute(str, Enum):
