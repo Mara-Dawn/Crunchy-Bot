@@ -46,7 +46,7 @@ class CategoryFilter(discord.ui.Select):
 
         super().__init__(
             placeholder="Select a Category",
-            min_values=1,
+            min_values=0,
             max_values=len(ShopCategory),
             options=options,
             row=row,

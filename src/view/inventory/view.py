@@ -31,7 +31,7 @@ class InventoryView(ViewMenu, ImplementsCategoryFilter):
         self.current_page = 0
         self.selected: ItemType = None
 
-        self.filter: list[ShopCategory] = [category for category in ShopCategory]
+        self.filter: list[ShopCategory] = []
         self.filtered_items = []
         self.display_items = []
         self.item_count = 0
@@ -64,8 +64,13 @@ class InventoryView(ViewMenu, ImplementsCategoryFilter):
                 await self.refresh_ui(inventory=inventory)
 
     def filter_items(self):
+        category_filer = self.filter
+        if len(category_filer) == 0:
+            category_filer = [category for category in ShopCategory]
         self.filtered_items = [
-            item for item in self.inventory.items if item.shop_category in self.filter
+            item
+            for item in self.inventory.items
+            if item.shop_category in category_filer
         ]
         self.item_count = len(self.filtered_items)
         self.page_count = int(self.item_count / InventoryEmbed.ITEMS_PER_PAGE) + (

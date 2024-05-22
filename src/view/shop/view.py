@@ -98,6 +98,9 @@ class ShopView(ViewMenu):
 
         self.disabled = disabled
 
+        if self.selected is None:
+            self.selected = self.items[start].type
+
         self.clear_items()
         self.add_item(Dropdown(self.items[start:end], self.selected, disabled))
         self.add_item(PageButton("<", False, disabled))

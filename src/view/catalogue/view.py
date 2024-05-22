@@ -40,8 +40,11 @@ class CatalogView(ViewMenu, ImplementsCategoryFilter):
         pass
 
     def filter_items(self):
+        category_filer = self.filter
+        if len(category_filer) == 0:
+            category_filer = [category for category in ShopCategory]
         self.filtered_items = [
-            item for item in self.items if item.shop_category in self.filter
+            item for item in self.items if item.shop_category in category_filer
         ]
         self.item_count = len(self.filtered_items)
         self.page_count = int(self.item_count / CatalogEmbed.ITEMS_PER_PAGE) + (
