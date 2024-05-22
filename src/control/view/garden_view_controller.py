@@ -141,6 +141,8 @@ class GardenViewController(ViewController):
                 message = f"You harvest a Speed Bean Plant and gain `🅱️{reward}`."
             case PlantType.BOX_BEAN:
                 reward = random.randint(900, 1100)
+                message = f"You harvest a Treasure Bean Plant and gain `🅱️{reward}`."
+                message = "\nIt kind of looks like a lootbox, just way bigger!"
                 await self.item_manager.drop_private_loot_box(interaction, size=10)
             case PlantType.CAT_BEAN:
                 reward = random.randint(450, 550)
