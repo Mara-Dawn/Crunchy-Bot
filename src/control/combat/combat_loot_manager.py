@@ -16,12 +16,6 @@ class CombatLootManager(Service):
 
     ITEM_LEVEL_MIN_DROP = 0.6
 
-    NORMAL_SCALING = -15
-    MAGIC_SCALING = 1
-    RARE_SCALING = 6
-    LEGENDARY_SCALING = 1
-    UNIQUE_SCALING = 1.5
-
     MIN_RARITY_LVL = {
         GearRarity.NORMAL: 0,
         GearRarity.MAGIC: 1,
@@ -45,7 +39,7 @@ class CombatLootManager(Service):
     }
 
     MODIFIER_COUNT = {
-        GearRarity.NORMAL: 0,
+        GearRarity.NORMAL: 1,
         GearRarity.MAGIC: 2,
         GearRarity.RARE: 3,
         GearRarity.LEGENDARY: 4,
@@ -227,7 +221,7 @@ class CombatLootManager(Service):
 
     async def test(self):
         # levels = range(1, 13)
-        levels = range(1, 5)
+        levels = range(9, 13)
 
         for level in levels:
             print("#" * 30)
