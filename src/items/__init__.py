@@ -1328,7 +1328,7 @@ class CrystalSeed(BaseSeed):
 class BoxSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
-        defaultcost = 750
+        defaultcost = 1000
         if cost is None:
             cost = defaultcost
 
