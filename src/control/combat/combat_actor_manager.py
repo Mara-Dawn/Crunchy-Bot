@@ -1,8 +1,7 @@
 import discord
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.enemy import Enemy
-from combat.equipment import CharacterEquipment
-from combat.skills import HeavyAttack, NormalAttack, Skill
+from combat.skills import Skill
 from combat.skills.skill import SkillData
 from combat.skills.types import SkillEffect, SkillType
 from control.combat.combat_skill_manager import CombatSkillManager
@@ -41,13 +40,15 @@ class CombatActorManager(Service):
         instance = skill()
         return instance
 
-    def get_actor_current_hp(self, actor: Actor, combat_events: list[CombatEvent]):
+    async def get_actor_current_hp(
+        self, actor: Actor, combat_events: list[CombatEvent]
+    ):
         health = actor.max_hp
 
         for event in combat_events:
             if event.target_id != actor.id:
                 continue
-            skill = self.skill_manager.get_skill(event.skill_type)
+            skill = await self.skill_manager.get_skill(event.skill_type)
             match skill.skill_effect:
                 case SkillEffect.PHYSICAL_DAMAGE:
                     health -= event.skill_value
@@ -84,7 +85,7 @@ class CombatActorManager(Service):
             defeated=defeated,
         )
 
-    def get_character(
+    async def get_character(
         self,
         member: discord.Member,
         encounter_events: list[EncounterEvent],
@@ -99,9 +100,24 @@ class CombatActorManager(Service):
                 defeated = True
                 break
 
-        skills = [NormalAttack(), HeavyAttack()]
+        equipment = await self.database.get_user_equipment(member.guild.id, member.id)
+
+        skill_types = []
+
+        weapon_skills = equipment.weapon.base.skills
+        skill_types.extend(weapon_skills)
+
+        skill_types.extend(
+            await self.database.get_user_equipped_skills(member.guild.id, member.id)
+        )
+        skills = []
+        for skill_type in skill_types:
+            skill = await self.skill_manager.get_skill(skill_type)
+            skills.append(skill)
+            if len(skills) >= 4:
+                break
+
         skill_cooldowns = self.get_skill_cooldowns(member.id, skills, combat_events)
-        equipment = CharacterEquipment(member.id)
 
         character = Character(
             member=member,

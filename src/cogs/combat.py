@@ -4,7 +4,7 @@ import secrets
 
 import discord
 from bot import CrunchyBot
-from control.combat.combat_loot_manager import CombatLootManager
+from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
 from control.logger import BotLogger
@@ -30,7 +30,7 @@ class Combat(commands.Cog):
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
         )
-        self.testing: CombatLootManager = self.controller.get_service(CombatLootManager)
+        self.testing: CombatGearManager = self.controller.get_service(CombatGearManager)
         self.enemy_timers = {}
 
     @staticmethod
@@ -58,7 +58,7 @@ class Combat(commands.Cog):
     @commands.Cog.listener("on_ready")
     async def on_ready_combat(self):
         # self.random_encounter_task.start()
-        await self.testing.test()
+        # await self.testing.test()
         self.logger.log("init", "Combat loaded.", cog=self.__cog_name__)
 
     @commands.Cog.listener("on_guild_join")

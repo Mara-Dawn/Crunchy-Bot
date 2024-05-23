@@ -19,6 +19,7 @@ class DefaultStick(Gear):
                 GearModifierType.WEAPON_DAMAGE_MAX: 2,
             },
             skills=[],
+            enchantments=[],
         )
 
 
@@ -36,6 +37,7 @@ class DefaultWand(Gear):
                 GearModifierType.WEAPON_DAMAGE_MAX: 2,
             },
             skills=[],
+            enchantments=[],
         )
 
 
@@ -52,6 +54,7 @@ class DefaultCap(Gear):
                 GearModifierType.ARMOR: 5,
             },
             skills=[],
+            enchantments=[],
         )
 
 
@@ -68,6 +71,7 @@ class DefaultShirt(Gear):
                 GearModifierType.ARMOR: 15,
             },
             skills=[],
+            enchantments=[],
         )
 
 
@@ -84,4 +88,5 @@ class DefaultPants(Gear):
                 GearModifierType.ARMOR: 10,
             },
             skills=[],
+            enchantments=[],
         )

@@ -89,7 +89,7 @@ class CombatEmbedManager(Service):
 
         embed.add_field(name=title, value=content)
 
-    def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
+    async def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
         title = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
@@ -99,7 +99,7 @@ class CombatEmbedManager(Service):
         )
         # enemy.add_to_embed(embed)
 
-        current_hp = self.actor_manager.get_actor_current_hp(
+        current_hp = await self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
@@ -109,7 +109,7 @@ class CombatEmbedManager(Service):
 
         for idx, actor in enumerate(initiative_list):
             number = idx + 1
-            current_hp = self.actor_manager.get_actor_current_hp(
+            current_hp = await self.actor_manager.get_actor_current_hp(
                 actor, context.combat_events
             )
             fraction = current_hp / actor.max_hp
@@ -125,7 +125,7 @@ class CombatEmbedManager(Service):
 
         return embed
 
-    def get_combat_success_embed(self, context: EncounterContext) -> discord.Embed:
+    async def get_combat_success_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
         title = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
@@ -134,7 +134,7 @@ class CombatEmbedManager(Service):
             title=title, description=content, color=discord.Colour.green()
         )
 
-        current_hp = self.actor_manager.get_actor_current_hp(
+        current_hp = await self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
@@ -147,7 +147,7 @@ class CombatEmbedManager(Service):
 
         return embed
 
-    def get_combat_failed_embed(self, context: EncounterContext) -> discord.Embed:
+    async def get_combat_failed_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
         title = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
@@ -156,7 +156,7 @@ class CombatEmbedManager(Service):
             title=title, description=content, color=discord.Colour.red()
         )
 
-        current_hp = self.actor_manager.get_actor_current_hp(
+        current_hp = await self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
@@ -169,7 +169,7 @@ class CombatEmbedManager(Service):
 
         return embed
 
-    def get_character_turn_embed(self, context: EncounterContext) -> discord.Embed:
+    async def get_character_turn_embed(self, context: EncounterContext) -> discord.Embed:
         actor = context.get_current_actor()
 
         turn_number = context.get_current_turn_number()
@@ -180,7 +180,7 @@ class CombatEmbedManager(Service):
             title=title, description=content, color=discord.Colour.blurple()
         )
 
-        current_hp = self.actor_manager.get_actor_current_hp(
+        current_hp = await self.actor_manager.get_actor_current_hp(
             actor, context.combat_events
         )
         max_hp = actor.max_hp
@@ -246,7 +246,7 @@ class CombatEmbedManager(Service):
         outcome_title = ""
         damage_info = ""
         content = f"{from_name} used **{skill.name}**"
-        current_hp = self.actor_manager.get_actor_current_hp(
+        current_hp = await self.actor_manager.get_actor_current_hp(
             to_actor, context.combat_events
         )
 

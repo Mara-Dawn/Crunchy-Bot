@@ -192,7 +192,7 @@ class EncounterManager(Service):
         combatants = []
 
         for member in members:
-            combatant = self.actor_manager.get_character(
+            combatant = await self.actor_manager.get_character(
                 member, encounter_events, combat_events
             )
             combatants.append(combatant)
@@ -258,9 +258,9 @@ class EncounterManager(Service):
     async def conclude_encounter(self, context: EncounterContext, success: bool = True):
 
         if success:
-            embed = self.embed_manager.get_combat_success_embed(context)
+            embed = await self.embed_manager.get_combat_success_embed(context)
         else:
-            embed = self.embed_manager.get_combat_failed_embed(context)
+            embed = await self.embed_manager.get_combat_failed_embed(context)
 
         enemy = context.opponent.enemy
         image = discord.File(f"./img/enemies/{enemy.image}", enemy.image)
@@ -285,7 +285,7 @@ class EncounterManager(Service):
                     already_defeated.append(event.member_id)
 
         for actor in context.actors:
-            health = self.actor_manager.get_actor_current_hp(
+            health = await self.actor_manager.get_actor_current_hp(
                 actor, context.combat_events
             )
 
@@ -347,7 +347,7 @@ class EncounterManager(Service):
 
         current_actor = context.get_current_actor()
 
-        embed = self.embed_manager.get_combat_embed(context)
+        embed = await self.embed_manager.get_combat_embed(context)
 
         if current_actor.id == context.beginning_actor.id:
             notification = self.embed_manager.get_notification_embed("New Round")
@@ -372,7 +372,7 @@ class EncounterManager(Service):
             await self.skip_turn(current_actor, context)
             return
 
-        embed = self.embed_manager.get_character_turn_embed(context)
+        embed = await self.embed_manager.get_character_turn_embed(context)
         view = CombatTurnView(self.controller, current_actor, context)
         await context.thread.send(f"<@{current_actor.id}>", embed=embed, view=view)
         return

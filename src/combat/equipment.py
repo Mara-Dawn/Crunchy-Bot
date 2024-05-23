@@ -22,14 +22,6 @@ class CharacterEquipment:
         self.leg_gear = leg_gear
         self.accessory_1 = accessory_1
         self.accessory_2 = accessory_2
-        self.gear: list[Gear] = [
-            self.weapon,
-            self.head_gear,
-            self.body_gear,
-            self.leg_gear,
-            self.accessory_1,
-            self.accessory_2,
-        ]
 
         if self.weapon is None:
             self.weapon = DefaultStick()
@@ -43,10 +35,19 @@ class CharacterEquipment:
         if self.leg_gear is None:
             self.leg_gear = DefaultPants()
 
+        self.gear: list[Gear] = [
+            self.weapon,
+            self.head_gear,
+            self.body_gear,
+            self.leg_gear,
+            self.accessory_1,
+            self.accessory_2,
+        ]
+
         self.attributes: dict[CharacterAttribute, float] = {
-            CharacterAttribute.PHYS_DAMAGE_INCREASE: 1,
-            CharacterAttribute.MAGIC_DAMAGE_INCREASE: 1,
-            CharacterAttribute.HEALING_BONUS: 1,
+            CharacterAttribute.PHYS_DAMAGE_INCREASE: 0,
+            CharacterAttribute.MAGIC_DAMAGE_INCREASE: 0,
+            CharacterAttribute.HEALING_BONUS: 0,
             CharacterAttribute.CRIT_RATE: 0.1,
             CharacterAttribute.CRIT_DAMAGE: 1.5,
             CharacterAttribute.PHYS_DAMAGE_REDUCTION: 0,

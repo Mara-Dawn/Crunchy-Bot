@@ -6,7 +6,10 @@ import aiosqlite
 import discord
 from bot_util import BotUtil
 from combat.encounter import Encounter
+from combat.equipment import CharacterEquipment
 from combat.gear import Gear
+from combat.gear.types import GearBaseType, GearModifierType, GearRarity
+from combat.skills.types import SkillType
 from control.logger import BotLogger
 from discord.ext import commands
 from events.bat_event import BatEvent
@@ -503,28 +506,32 @@ class Database:
     USER_GEAR_ID_COL = "usgr_id"
     USER_GEAR_GUILD_ID_COL = "usgr_guild_id"
     USER_GEAR_MEMBER_ID_COL = "usgr_member_id"
+    USER_GEAR_NAME_COL = "usgr_name"
     USER_GEAR_BASE_TYPE_COL = "usgr_base_type"
     USER_GEAR_LEVEL_COL = "usgr_level"
     USER_GEAR_RARITY_COL = "usgr_rarity"
+    USER_GEAR_GENERATOR_VERSION_COL = "usgr_generator_version"
     CREATE_USER_GEAR_TABLE = f"""
     CREATE TABLE if not exists {USER_GEAR_TABLE} (
         {USER_GEAR_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
         {USER_GEAR_GUILD_ID_COL} INTEGER,
         {USER_GEAR_MEMBER_ID_COL} INTEGER,
+        {USER_GEAR_NAME_COL} TEXT,
         {USER_GEAR_BASE_TYPE_COL} TEXT,
         {USER_GEAR_LEVEL_COL} INTEGER,
-        {USER_GEAR_RARITY_COL} TEXT
+        {USER_GEAR_RARITY_COL} TEXT,
+        {USER_GEAR_GENERATOR_VERSION_COL} TEXT
     );"""
 
     USER_GEAR_MODIFIER_TABLE = "usergearmodifiers"
     USER_GEAR_MODIFIER_GEAR_ID_COL = "ugmo_gear_id"
     USER_GEAR_MODIFIER_TYPE_COL = "ugmo_type"
-    USER_GEAR_MODIFIER_VALUE_ID_COL = "ugmo_value"
+    USER_GEAR_MODIFIER_VALUE_COL = "ugmo_value"
     CREATE_USER_GEAR_MODIFIER_TABLE = f"""
     CREATE TABLE if not exists {USER_GEAR_MODIFIER_TABLE} (
         {USER_GEAR_MODIFIER_GEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
         {USER_GEAR_MODIFIER_TYPE_COL} TEXT,
-        {USER_GEAR_MODIFIER_VALUE_ID_COL} REAL
+        {USER_GEAR_MODIFIER_VALUE_COL} REAL,
         PRIMARY KEY ({USER_GEAR_MODIFIER_GEAR_ID_COL}, {USER_GEAR_MODIFIER_TYPE_COL})
     );"""
 
@@ -536,6 +543,40 @@ class Database:
         {USER_GEAR_SKILL_GEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
         {USER_GEAR_SKILL_TYPE_COL} TEXT,
         PRIMARY KEY ({USER_GEAR_SKILL_GEAR_ID_COL}, {USER_GEAR_SKILL_TYPE_COL})
+    );"""
+
+    USER_EQUIPMENT_TABLE = "userequipment"
+    USER_EQUIPMENT_GUILD_ID_COL = "useq_guild_id"
+    USER_EQUIPMENT_MEMBER_ID_COL = "useq_member_id"
+    USER_EQUIPMENT_WEAPON_ID_COL = "useq_weapon_id"
+    USER_EQUIPMENT_HEADGEAR_ID_COL = "useq_headgearr_id"
+    USER_EQUIPMENT_BODYGEAR_ID_COL = "useq_bodygear_id"
+    USER_EQUIPMENT_LEGGEAR_ID_COL = "useq_leggear_id"
+    USER_EQUIPMENT_ACCESSORY_1_ID_COL = "useq_accessory_1_id"
+    USER_EQUIPMENT_ACCESSORY_2_ID_COL = "useq_accessory_2_id"
+    CREATE_USER_EQUIPMENT_TABLE = f"""
+    CREATE TABLE if not exists {USER_EQUIPMENT_TABLE} (
+        {USER_EQUIPMENT_GUILD_ID_COL} INTEGER,
+        {USER_EQUIPMENT_MEMBER_ID_COL} INTEGER,
+        {USER_EQUIPMENT_WEAPON_ID_COL} INTEGER,
+        {USER_EQUIPMENT_HEADGEAR_ID_COL} INTEGER,
+        {USER_EQUIPMENT_BODYGEAR_ID_COL} INTEGER,
+        {USER_EQUIPMENT_LEGGEAR_ID_COL} INTEGER,
+        {USER_EQUIPMENT_ACCESSORY_1_ID_COL} INTEGER,
+        {USER_EQUIPMENT_ACCESSORY_2_ID_COL} INTEGER,
+        PRIMARY KEY ({USER_EQUIPMENT_GUILD_ID_COL}, {USER_EQUIPMENT_MEMBER_ID_COL})
+    );"""
+
+    USER_EQUIPPED_SKILLS_TABLE = "userequippedskills"
+    USER_EQUIPPED_SKILLS_GUILD_ID_COL = "uses_guild_id"
+    USER_EQUIPPED_SKILLS_MEMBER_ID_COL = "uses_member_id"
+    USER_EQUIPPED_SKILLS_SKILL_TYPE_COL = "uses_skill_type"
+    CREATE_USER_EQUIPPED_SKILLS_TABLE = f"""
+    CREATE TABLE if not exists {USER_EQUIPPED_SKILLS_TABLE} (
+        {USER_EQUIPPED_SKILLS_GUILD_ID_COL} INTEGER,
+        {USER_EQUIPPED_SKILLS_MEMBER_ID_COL} INTEGER,
+        {USER_EQUIPPED_SKILLS_SKILL_TYPE_COL} TEXT,
+        PRIMARY KEY ({USER_EQUIPPED_SKILLS_GUILD_ID_COL}, {USER_EQUIPPED_SKILLS_MEMBER_ID_COL}, {USER_EQUIPPED_SKILLS_SKILL_TYPE_COL})
     );"""
 
     PERMANENT_ITEMS = [
@@ -600,6 +641,11 @@ class Database:
             await db.execute(self.CREATE_ENCOUNTER_EVENT_TABLE)
             await db.execute(self.CREATE_COMBAT_EVENT_TABLE)
             await db.execute(self.CREATE_ENCOUNTER_THREAD_TABLE)
+            await db.execute(self.CREATE_USER_GEAR_TABLE)
+            await db.execute(self.CREATE_USER_GEAR_MODIFIER_TABLE)
+            await db.execute(self.CREATE_USER_GEAR_SKILL_TABLE)
+            await db.execute(self.CREATE_USER_EQUIPMENT_TABLE)
+            await db.execute(self.CREATE_USER_EQUIPPED_SKILLS_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -2876,7 +2922,7 @@ class Database:
             INSERT INTO {self.USER_GEAR_MODIFIER_TABLE} (
             {self.USER_GEAR_MODIFIER_GEAR_ID_COL},
             {self.USER_GEAR_MODIFIER_TYPE_COL},
-            {self.USER_GEAR_MODIFIER_VALUE_ID_COL})
+            {self.USER_GEAR_MODIFIER_VALUE_COL})
             VALUES (?, ?, ?);
         """
 
@@ -2927,3 +2973,123 @@ class Database:
         await self.log_user_gear_skills(insert_id, gear)
 
         return insert_id
+
+    async def get_gear_by_id(self, gear_id: int) -> Gear:
+        if gear_id is None:
+            return None
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            LEFT JOIN {self.USER_GEAR_MODIFIER_TABLE} ON {self.USER_GEAR_MODIFIER_GEAR_ID_COL} = {self.USER_GEAR_ID_COL}
+            LEFT JOIN {self.USER_GEAR_SKILL_TABLE} ON {self.USER_GEAR_SKILL_GEAR_ID_COL} = {self.USER_GEAR_ID_COL}
+            WHERE {self.USER_GEAR_ID_COL} = {int(gear_id)}
+            ;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return None
+
+        name = rows[0][self.USER_GEAR_NAME_COL]
+        gear_base = GearBaseType(rows[0][self.USER_GEAR_BASE_TYPE_COL])
+        rarity = GearRarity(rows[0][self.USER_GEAR_RARITY_COL])
+        level = rows[0][self.USER_GEAR_LEVEL_COL]
+
+        modifiers = {}
+        skills = []
+
+        for row in rows:
+            skill_name = row[self.USER_GEAR_SKILL_TYPE_COL]
+            if skill_name is not None:
+                skill_type = SkillType(skill_name)
+                skills.append(skill_type)
+
+            modifier_name = row[self.USER_GEAR_MODIFIER_TYPE_COL]
+            if modifier_name is None:
+                continue
+            modifier_type = GearModifierType(modifier_name)
+            if modifier_type not in modifiers:
+                modifiers[modifier_type] = row[self.USER_GEAR_MODIFIER_VALUE_COL]
+
+        return Gear(
+            name=name,
+            base=gear_base,
+            rarity=rarity,
+            level=level,
+            modifiers=modifiers,
+            skills=skills,
+            enchantments=[],
+        )
+
+    async def create_user_equipment(self, guild_id: int, user_id: int) -> int:
+        command = f"""
+            INSERT OR IGNORE INTO {self.USER_EQUIPMENT_TABLE}
+            ({self.USER_EQUIPMENT_GUILD_ID_COL}, {self.USER_EQUIPMENT_MEMBER_ID_COL}) 
+            VALUES(?, ?);
+        """
+        task = (guild_id, user_id)
+
+        insert_id = await self.__query_insert(command, task)
+
+        return insert_id
+
+    async def get_user_equipped_skills(
+        self, guild_id: int, member_id: int
+    ) -> list[SkillType]:
+        command = f""" 
+            SELECT * FROM {self.USER_EQUIPPED_SKILLS_TABLE} 
+            WHERE {self.USER_EQUIPPED_SKILLS_GUILD_ID_COL} = ?
+            AND {self.USER_EQUIPPED_SKILLS_MEMBER_ID_COL} = ?
+            ;
+        """
+
+        task = (guild_id, member_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        skill_types = []
+
+        for row in rows:
+            skill_type = SkillType(row[self.USER_EQUIPPED_SKILLS_SKILL_TYPE_COL])
+            skill_types.append(skill_type)
+
+        return skill_types
+
+    async def get_user_equipment(
+        self, guild_id: int, member_id: int
+    ) -> CharacterEquipment:
+        await self.create_user_equipment(guild_id, member_id)
+
+        command = f""" 
+            SELECT * FROM {self.USER_EQUIPMENT_TABLE} 
+            WHERE {self.USER_EQUIPMENT_GUILD_ID_COL} = ?
+            AND {self.USER_EQUIPMENT_MEMBER_ID_COL} = ?
+            LIMIT 1;
+        """
+
+        task = (guild_id, member_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return None
+        row = rows[0]
+
+        weapon = await self.get_gear_by_id(row[self.USER_EQUIPMENT_WEAPON_ID_COL])
+        head_gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_HEADGEAR_ID_COL])
+        body_gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_BODYGEAR_ID_COL])
+        leg_gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_LEGGEAR_ID_COL])
+        accessory_1 = await self.get_gear_by_id(
+            row[self.USER_EQUIPMENT_ACCESSORY_1_ID_COL]
+        )
+        accessory_2 = await self.get_gear_by_id(
+            row[self.USER_EQUIPMENT_ACCESSORY_2_ID_COL]
+        )
+
+        return CharacterEquipment(
+            member_id=member_id,
+            weapon=weapon,
+            head_gear=head_gear,
+            body_gear=body_gear,
+            leg_gear=leg_gear,
+            accessory_1=accessory_1,
+            accessory_2=accessory_2,
+        )

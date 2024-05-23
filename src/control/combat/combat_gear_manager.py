@@ -12,7 +12,9 @@ from discord.ext import commands
 from events.bot_event import BotEvent
 
 
-class CombatLootManager(Service):
+class CombatGearManager(Service):
+
+    GENERATOR_VERSION = "0.0.1"
 
     ITEM_LEVEL_MIN_DROP = 0.6
 
@@ -183,6 +185,7 @@ class CombatLootManager(Service):
     async def generate_gear_piece(
         self,
         guild_id: int,
+        member_id: int,
         enemy_level: int,
     ) -> Gear:
         guild_level = await self.database.get_guild_level(guild_id)
@@ -193,6 +196,9 @@ class CombatLootManager(Service):
         modifiers = await self.get_random_modifiers(gear_base, item_level, rarity)
 
         # add skills
+        skills = []
+        skills.extend(gear_base.skills)
+
         # add enchantments
 
         gear_item = Gear(
@@ -201,15 +207,20 @@ class CombatLootManager(Service):
             rarity=rarity,
             level=item_level,
             modifiers=modifiers,
-            skills=[],
+            skills=skills,
             enchantments=[],
         )
+
+        if member_id is not None:
+            await self.database.log_user_gear(
+                guild_id=guild_id, member_id=member_id, gear=gear_item
+            )
 
         return gear_item
 
     async def test_generation(self):
         for _ in range(10):
-            gear = await self.generate_gear_piece(1197312669179461683, 1)
+            gear = await self.generate_gear_piece(1197312669179461683, None, 1)
             print("Gear:")
             print(f"{gear.base.name}")
             print(f"{gear.rarity.value}")

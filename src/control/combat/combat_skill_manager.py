@@ -25,7 +25,7 @@ class CombatSkillManager(Service):
     async def listen_for_event(self, event: BotEvent):
         pass
 
-    def get_skill(self, skill_type: SkillType) -> Skill:
+    async def get_skill(self, skill_type: SkillType) -> Skill:
         skill = globals()[skill_type]
         instance = skill()
         return instance
