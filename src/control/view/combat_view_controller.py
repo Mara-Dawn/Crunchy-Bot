@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 
 import discord
@@ -7,9 +6,8 @@ from combat.encounter import EncounterContext
 from combat.skills.skill import SkillData
 from datalayer.database import Database
 from discord.ext import commands
-from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
-from events.types import CombatEventType, EncounterEventType, UIEventType
+from events.types import EncounterEventType, UIEventType
 from events.ui_event import UIEvent
 
 from control.combat.combat_embed_manager import CombatEmbedManager
@@ -99,35 +97,9 @@ class CombatViewController(ViewController):
         event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
         await self.controller.dispatch_ui_event(event)
 
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
-
-        damage_instance = character.get_skill_damage(
-            skill_data.skill, combatant_count=len(context.combatants)
-        )
-
         message = await interaction.original_response()
+        await message.delete()
 
-        await self.embed_manager.handle_actor_turn_embed(
-            character,
-            context.opponent,
-            skill_data,
-            damage_instance,
-            context,
-            message=message,
-        )
-        await asyncio.sleep(2)
+        await self.encounter_manager.combatant_turn(context, character, skill_data)
 
         self.controller.detach_view_by_id(view_id)
-
-        event = CombatEvent(
-            datetime.datetime.now(),
-            guild_id,
-            context.encounter.id,
-            member_id,
-            context.opponent.id,
-            skill_data.skill.type,
-            damage_instance.scaled_value,
-            CombatEventType.MEMBER_TURN,
-        )
-        await self.controller.dispatch_event(event)

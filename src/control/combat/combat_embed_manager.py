@@ -64,7 +64,7 @@ class CombatEmbedManager(Service):
         current_hp: int,
         max_hp: int,
         hide_hp: bool = True,
-        max_width: int = 45,
+        max_width: int = 44,
     ):
         health = f"{current_hp}/{max_hp}"
         fraction = current_hp / max_hp
@@ -89,6 +89,21 @@ class CombatEmbedManager(Service):
 
         embed.add_field(name=title, value=content)
 
+    def add_text_bar(
+        self,
+        embed: discord.Embed,
+        name: str,
+        value: str,
+        max_width: int = 45,
+    ):
+        spacing = ""
+        content_length = len(value)
+        if content_length < max_width:
+            spacing = " " * (max_width - content_length)
+
+        embed_content = "```\n" + value + spacing + "```"
+        embed.add_field(name=name, value=embed_content, inline=False)
+
     async def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
@@ -97,30 +112,21 @@ class CombatEmbedManager(Service):
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
         )
-        # enemy.add_to_embed(embed)
 
         current_hp = await self.actor_manager.get_actor_current_hp(
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
         self.add_health_bar(embed, current_hp, max_hp, max_width=38)
-        initiative_list = context.get_current_initiative()
-        initiative_display = ""
 
-        for idx, actor in enumerate(initiative_list):
-            number = idx + 1
-            current_hp = await self.actor_manager.get_actor_current_hp(
-                actor, context.combat_events
-            )
-            fraction = current_hp / actor.max_hp
-            percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
-            display_hp = f"[{percentage}%]" if not actor.is_enemy else ""
-            if initiative_display == "":
-                initiative_display += f"\n{number}. >> {actor.name} << {display_hp}"
-                continue
-            initiative_display += f"\n{number}. {actor.name} {display_hp}"
-        initiative_display = f"```python\n{initiative_display}```"
-        embed.add_field(name="Turn Order:", value=initiative_display, inline=False)
+        skill_list = []
+        for skill in enemy.skills:
+            skill_list.append(skill.name)
+
+        self.add_text_bar(
+            embed, name="Skills:", value=",".join(skill_list), max_width=38
+        )
+
         embed.set_image(url=f"attachment://{enemy.image}")
 
         return embed
@@ -221,14 +227,6 @@ class CombatEmbedManager(Service):
         if to_actor.is_enemy:
             to_name = f"*{to_actor.name}*"
 
-        files = []
-        if from_actor.is_enemy:
-            files = [
-                discord.File(
-                    f"./img/enemies/{from_actor.enemy.image}", from_actor.enemy.image
-                )
-            ]
-
         turn_number = context.get_current_turn_number()
         title = f"Turn {turn_number}: {from_actor.name}"
 
@@ -240,10 +238,7 @@ class CombatEmbedManager(Service):
         embed.set_thumbnail(url=from_actor.image)
         skill_data.add_to_embed(embed)
 
-        if message is None:
-            message = await context.thread.send(embed=embed, files=files)
-        else:
-            await message.edit(content="", embed=embed, view=None)
+        yield embed
 
         await asyncio.sleep(1.5)
 
@@ -278,8 +273,9 @@ class CombatEmbedManager(Service):
         skill_data.add_to_embed(embed)
         embed.add_field(name="Target", value=to_name, inline=True)
         embed.add_field(name=outcome_title, value="", inline=True)
-        embed.add_field(name="Remaining Health", value="", inline=True)
-        await message.edit(embed=embed)
+        embed.add_field(name="Target Health", value="", inline=True)
+
+        yield embed
 
         await asyncio.sleep(1)
 
@@ -300,9 +296,9 @@ class CombatEmbedManager(Service):
             skill_data.add_to_embed(embed)
             embed.add_field(name="Target", value=to_name, inline=True)
             embed.add_field(name=outcome_title, value=icon, inline=True)
-            embed.add_field(name="Remaining Health", value="", inline=True)
+            embed.add_field(name="Target Health", value="", inline=True)
+            yield embed
 
-            await message.edit(embed=embed)
             await asyncio.sleep((1 / 10) * (i * 2))
             i += 1
 
@@ -311,8 +307,8 @@ class CombatEmbedManager(Service):
         skill_data.add_to_embed(embed)
         embed.add_field(name="Target", value=to_name, inline=True)
         embed.add_field(name=outcome_title, value=damage_info, inline=True)
-        embed.add_field(name="Remaining Health", value="", inline=True)
-        await message.edit(embed=embed)
+        embed.add_field(name="Target Health", value="", inline=True)
+        yield embed
 
         await asyncio.sleep(1)
 
@@ -326,8 +322,8 @@ class CombatEmbedManager(Service):
         skill_data.add_to_embed(embed)
         embed.add_field(name="Target", value=to_name, inline=True)
         embed.add_field(name=outcome_title, value=damage_info, inline=True)
-        embed.add_field(name="Remaining Health", value=display_hp, inline=True)
-        await message.edit(embed=embed)
+        embed.add_field(name="Target Health", value=display_hp, inline=True)
+        yield embed
 
         await asyncio.sleep(1)
 
@@ -336,9 +332,9 @@ class CombatEmbedManager(Service):
         skill_data.add_to_embed(embed)
         embed.add_field(name="Target", value=to_name, inline=True)
         embed.add_field(name=outcome_title, value=damage_info, inline=True)
-        embed.add_field(name="Remaining Health", value=display_hp, inline=True)
+        embed.add_field(name="Target Health", value=display_hp, inline=True)
         embed.add_field(name="Outcome", value=content, inline=False)
-        await message.edit(embed=embed)
+        yield embed
 
     def get_turn_skip_embed(
         self, actor: Actor, reason: str, context: EncounterContext
@@ -353,21 +349,58 @@ class CombatEmbedManager(Service):
         content = f"{actor_name}'s turn is skipped."
 
         embed = discord.Embed(
-            title=title, description=content, color=discord.Colour.light_grey()
+            title=title, description="", color=discord.Colour.light_grey()
         )
+        self.add_text_bar(embed, "", content)
+
         if actor.image is not None:
             embed.set_thumbnail(url=actor.image)
         embed.add_field(name="Reason", value=reason)
         return embed
 
-    def get_notification_embed(self, message: str):
-        embed = discord.Embed(title=message, color=discord.Colour.light_grey())
+    async def get_round_embed(self, context: EncounterContext):
+        embed = discord.Embed(title="New Round", color=discord.Colour.green())
+        initiative_list = context.get_current_initiative()
+        initiative_display = ""
+
+        for idx, actor in enumerate(initiative_list):
+            number = idx + 1
+            current_hp = await self.actor_manager.get_actor_current_hp(
+                actor, context.combat_events
+            )
+            fraction = current_hp / actor.max_hp
+            percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
+            display_hp = f"[{percentage}%]" if not actor.is_enemy else ""
+            if initiative_display == "":
+                width = 45
+                text = f"{number}. >> {actor.name} << {display_hp}"
+                spacing = " " * max(0, width - len(text))
+                initiative_display += f"\n{text}{spacing}"
+                continue
+            initiative_display += f"\n{number}. {actor.name} {display_hp}"
+        initiative_display = f"```python\n{initiative_display}```"
+        embed.add_field(name="Turn Order:", value=initiative_display, inline=False)
+
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
         return embed
 
-    def get_actor_defeated_embed(self, actor: Actor):
-        message = f"*{actor.name}* was defeated!"
-        return self.get_notification_embed(message)
+    def get_notification_embed(
+        self, title: str, message: str, actor: Actor = None
+    ) -> discord.Embed:
+        embed = discord.Embed(title=title, color=discord.Colour.light_grey())
+        self.add_text_bar(embed, "", message)
+        if actor is not None:
+            embed.set_thumbnail(url=actor.image)
+        return embed
 
-    def get_actor_join_embed(self, user: discord.Member):
-        message = f"*{user.display_name}* joined the battle!"
-        return self.get_notification_embed(message)
+    def get_actor_defeated_embed(self, actor: Actor) -> discord.Embed:
+        title = f"*{actor.name}* was defeated!"
+        message = ""
+        if not actor.is_enemy:
+            message = "Their future turns will be skipped."
+        return self.get_notification_embed(title, message, actor)
+
+    def get_actor_join_embed(self, user: discord.Member) -> discord.Embed:
+        title = "A new player joined the battle!"
+        message = f"Good luck {user.display_name}!"
+        return self.get_notification_embed(title, message)

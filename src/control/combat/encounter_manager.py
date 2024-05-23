@@ -3,10 +3,11 @@ import datetime
 import random
 
 import discord
-from combat.actors import Actor
+from combat.actors import Actor, Character
 from combat.encounter import Encounter, EncounterContext
 from combat.enemies import *  # noqa: F403
 from combat.enemies.types import EnemyType
+from combat.skills.skill import SkillData
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_enemy_manager import CombatEnemyManager
@@ -162,6 +163,7 @@ class EncounterManager(Service):
         await thread.add_user(user)
 
         embed = self.embed_manager.get_actor_join_embed(user)
+        embed.set_thumbnail(url=user.display_avatar.url)
         await thread.send("", embed=embed)
 
         if new_thread:
@@ -206,12 +208,16 @@ class EncounterManager(Service):
             thread=thread,
         )
 
-    async def skip_turn(self, actor: Actor, context: EncounterContext):
+    async def skip_turn(
+        self, actor: Actor, context: EncounterContext, turn_message: discord.Message
+    ):
 
         embed = self.embed_manager.get_turn_skip_embed(
             actor, f"{actor.name} is defeated.", context
         )
-        await context.thread.send("", embed=embed)
+        previous_embeds = turn_message.embeds
+        current_embeds = previous_embeds.append(embed)
+        await turn_message.edit("", embeds=current_embeds)
 
         combat_event_type = CombatEventType.MEMBER_SKIP_TURN
         if actor.is_enemy:
@@ -229,6 +235,8 @@ class EncounterManager(Service):
         )
         await self.controller.dispatch_event(event)
 
+        return embed
+
     async def opponent_turn(self, context: EncounterContext):
         opponent = context.opponent
 
@@ -241,9 +249,26 @@ class EncounterManager(Service):
 
         target = random.choice(context.combatants)
 
-        await self.embed_manager.handle_actor_turn_embed(
-            opponent, target, skill_data, damage_instance, context
+        turn_message = await self.get_previous_turn_message(context.thread)
+        previous_embeds = turn_message.embeds
+
+        image = discord.File(
+            f"./img/enemies/{opponent.enemy.image}", opponent.enemy.image
         )
+
+        initial_embed = True
+        async for embed in self.embed_manager.handle_actor_turn_embed(
+            opponent, target, skill_data, damage_instance, context
+        ):
+            attachments = [image]
+            current_embeds = previous_embeds + [embed]
+
+            if initial_embed:
+                initial_embed = False
+                await turn_message.edit(embeds=current_embeds, attachments=attachments)
+            else:
+                await turn_message.edit(embeds=current_embeds)
+
         await asyncio.sleep(2)
 
         event = CombatEvent(
@@ -255,6 +280,36 @@ class EncounterManager(Service):
             skill.type,
             damage_instance.scaled_value,
             CombatEventType.ENEMY_TURN,
+        )
+        await self.controller.dispatch_event(event)
+
+    async def combatant_turn(
+        self, context: EncounterContext, character: Character, skill_data: SkillData
+    ):
+
+        damage_instance = character.get_skill_damage(
+            skill_data.skill, combatant_count=len(context.combatants)
+        )
+
+        turn_message = await self.get_previous_turn_message(context.thread)
+        previous_embeds = turn_message.embeds
+        async for embed in self.embed_manager.handle_actor_turn_embed(
+            character, context.opponent, skill_data, damage_instance, context
+        ):
+            current_embeds = previous_embeds + [embed]
+            await turn_message.edit(embeds=current_embeds, attachments=[])
+
+        await asyncio.sleep(2)
+
+        event = CombatEvent(
+            datetime.datetime.now(),
+            context.encounter.guild_id,
+            context.encounter.id,
+            character.id,
+            context.opponent.id,
+            skill_data.skill.type,
+            damage_instance.scaled_value,
+            CombatEventType.MEMBER_TURN,
         )
         await self.controller.dispatch_event(event)
 
@@ -321,7 +376,15 @@ class EncounterManager(Service):
                     await message.delete()
                     break
 
-    async def get_previous_combat_info(self, thread: discord.Thread):
+    async def get_previous_turn_message(self, thread: discord.Thread):
+        async for message in thread.history(limit=100):
+            if len(message.embeds) >= 1 and message.author.id == self.bot.user.id:
+                embed = message.embeds[0]
+                if embed.title == "New Round":
+                    return message
+        return None
+
+    async def get_previous_enemy_info(self, thread: discord.Thread):
         async for message in thread.history(limit=100):
             if len(message.embeds) == 1 and message.author.id == self.bot.user.id:
                 embed = message.embeds[0]
@@ -350,20 +413,27 @@ class EncounterManager(Service):
 
         current_actor = context.get_current_actor()
 
-        embed = await self.embed_manager.get_combat_embed(context)
+        enemy_embed = await self.embed_manager.get_combat_embed(context)
+        round_embed = await self.embed_manager.get_round_embed(context)
 
         if current_actor.id == context.beginning_actor.id:
-            notification = self.embed_manager.get_notification_embed("New Round")
-            await context.thread.send(content="", embed=notification)
 
             await self.delete_previous_combat_info(context.thread)
             enemy = context.opponent.enemy
             image = discord.File(f"./img/enemies/{enemy.image}", enemy.image)
-            await context.thread.send("", embed=embed, files=[image])
+            await context.thread.send("", embed=enemy_embed, files=[image])
+
+            await context.thread.send(content="", embed=round_embed)
+
         else:
-            message = await self.get_previous_combat_info(context.thread)
+            message = await self.get_previous_enemy_info(context.thread)
             if message is not None:
-                await message.edit(embed=embed)
+                await message.edit(embed=enemy_embed)
+            round_message = await self.get_previous_turn_message(context.thread)
+            if round_message is not None:
+                round_embeds = round_message.embeds
+                round_embeds[0] = round_embed
+                await round_message.edit(embeds=round_embeds)
 
         await asyncio.sleep(2)
 
@@ -375,7 +445,9 @@ class EncounterManager(Service):
             await self.skip_turn(current_actor, context)
             return
 
-        embed = await self.embed_manager.get_character_turn_embed(context)
+        enemy_embed = await self.embed_manager.get_character_turn_embed(context)
         view = CombatTurnView(self.controller, current_actor, context)
-        await context.thread.send(f"<@{current_actor.id}>", embed=embed, view=view)
+        await context.thread.send(
+            f"<@{current_actor.id}>", embed=enemy_embed, view=view
+        )
         return

@@ -38,7 +38,7 @@ class MindGoblin(Enemy):
             level=1,
             min_hp=20,
             max_hp=30,
-            min_dmg=1,
+            min_dmg=2,
             max_dmg=4,
             skills=[DeezNuts()],
             loot_table=[BoxSeed, CatSeed, YellowSeed],

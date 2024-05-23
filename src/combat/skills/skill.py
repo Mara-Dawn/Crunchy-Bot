@@ -41,7 +41,7 @@ class SkillData:
         embed: discord.Embed,
         show_info: bool = False,
         show_data: bool = False,
-        max_width: int = 43,
+        max_width: int = 44,
     ) -> None:
         title = f"> {self.skill.name} "
         description = f'"{self.skill.description}"'
