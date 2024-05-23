@@ -234,7 +234,10 @@ class EncounterManager(Service):
 
         skill = random.choice(opponent.skills)
         skill_data = opponent.get_skill_data(skill)
-        damage_instance = opponent.get_skill_damage(skill)
+
+        damage_instance = opponent.get_skill_damage(
+            skill, combatant_count=len(context.combatants)
+        )
 
         target = random.choice(context.combatants)
 
@@ -250,7 +253,7 @@ class EncounterManager(Service):
             opponent.id,
             target.id,
             skill.type,
-            damage_instance.value,
+            damage_instance.scaled_value,
             CombatEventType.ENEMY_TURN,
         )
         await self.controller.dispatch_event(event)

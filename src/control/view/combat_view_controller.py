@@ -102,7 +102,9 @@ class CombatViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        damage_instance = character.get_skill_damage(skill_data.skill)
+        damage_instance = character.get_skill_damage(
+            skill_data.skill, combatant_count=len(context.combatants)
+        )
 
         message = await interaction.original_response()
 
@@ -125,7 +127,7 @@ class CombatViewController(ViewController):
             member_id,
             context.opponent.id,
             skill_data.skill.type,
-            damage_instance.value,
+            damage_instance.scaled_value,
             CombatEventType.MEMBER_TURN,
         )
         await self.controller.dispatch_event(event)

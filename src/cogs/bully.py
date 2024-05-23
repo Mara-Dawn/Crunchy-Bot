@@ -128,6 +128,9 @@ class Bully(commands.Cog):
         guild_id = message.guild.id
         attachments = message.attachments
 
+        if channel.type == "public_thread" or channel.type == "private_thread":
+            return
+
         if len(content) <= 0:
             return
 
@@ -171,7 +174,9 @@ class Bully(commands.Cog):
             case ItemType.TRUMP_DEBUFF:
                 generated_content = await self.ai_manager.trumpify(content)
 
-        generated_content = generated_content + f"\n||original message: {original_message}||"
+        generated_content = (
+            generated_content + f"\n||original message: {original_message}||"
+        )
 
         if channel.id not in self.webhooks:
             webhooks = await message.channel.webhooks()

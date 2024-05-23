@@ -10,6 +10,9 @@ from combat.skills.types import DamageInstance, SkillEffect, SkillType
 
 class Actor:
 
+    CHARACTER_SCALING_FACOTR = 0.9
+    OPPONENT_SCALING_FACTOR = 0.8
+
     def __init__(
         self,
         id: int,
@@ -35,7 +38,9 @@ class Actor:
     def get_skill_data(self, skill: Skill) -> SkillData:
         pass
 
-    def get_skill_damage(self, skill: Skill, force_roll: int = None) -> DamageInstance:
+    def get_skill_damage(
+        self, skill: Skill, combatant_count: int = 1, force_roll: int = None
+    ) -> DamageInstance:
         pass
 
 
@@ -81,11 +86,13 @@ class Character(Actor):
         return SkillData(
             skill=skill,
             last_used=self.skill_cooldowns[skill.type],
-            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll).value,
-            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll).value,
+            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll).raw_value,
+            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll).raw_value,
         )
 
-    def get_skill_damage(self, skill: Skill, force_roll: int = None) -> DamageInstance:
+    def get_skill_damage(
+        self, skill: Skill, combatant_count: int = 1, force_roll: int = None
+    ) -> DamageInstance:
         skill_base_value = skill.base_value
 
         weapon_roll = force_roll
@@ -113,6 +120,10 @@ class Character(Actor):
             case SkillEffect.HEALING:
                 modifier += self.equipment.attributes[CharacterAttribute.HEALING_BONUS]
 
+        encounter_scaling = 1
+        if combatant_count > 1:
+            encounter_scaling = 1 / combatant_count * self.CHARACTER_SCALING_FACOTR
+
         crit_roll = random.random()
         critical_hit = False
         critical_modifier = 1
@@ -127,6 +138,7 @@ class Character(Actor):
             skill_base=skill_base_value,
             modifier=modifier,
             critical_modifier=critical_modifier,
+            encounter_scaling=encounter_scaling,
             is_crit=critical_hit,
         )
         return damage_instance
@@ -162,11 +174,13 @@ class Opponent(Actor):
         return SkillData(
             skill=skill,
             last_used=self.skill_cooldowns[skill.type],
-            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll).value,
-            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll).value,
+            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll).raw_value,
+            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll).raw_value,
         )
 
-    def get_skill_damage(self, skill: Skill, force_roll: int = None) -> DamageInstance:
+    def get_skill_damage(
+        self, skill: Skill, combatant_count: int = 1, force_roll: int = None
+    ) -> DamageInstance:
 
         skill_base_value = skill.base_value
 
@@ -174,6 +188,11 @@ class Opponent(Actor):
         weapon_max_roll = self.enemy.max_dmg
 
         weapon_roll = random.randint(weapon_min_roll, weapon_max_roll)
+
+        modifier = 1
+        encounter_scaling = 1
+        if combatant_count > 1:
+            encounter_scaling = combatant_count * self.OPPONENT_SCALING_FACTOR
 
         crit_roll = random.random()
         critical_hit = False
@@ -185,8 +204,9 @@ class Opponent(Actor):
         damage_instance = DamageInstance(
             weapon_roll=weapon_roll,
             skill_base=skill_base_value,
-            modifier=1,
+            modifier=modifier,
             critical_modifier=critical_modifier,
+            encounter_scaling=encounter_scaling,
             is_crit=critical_hit,
         )
         return damage_instance

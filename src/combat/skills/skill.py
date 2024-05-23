@@ -41,14 +41,15 @@ class SkillData:
         embed: discord.Embed,
         show_info: bool = False,
         show_data: bool = False,
-        max_width: int = 42,
+        max_width: int = 43,
     ) -> None:
-        title = f"> ~* {self.skill.name} *~"
+        title = f"> {self.skill.name} "
         description = f'"{self.skill.description}"'
+
         cooldown_info = ""
         if self.skill.cooldown > 0 and self.on_cooldown():
             cooldown_remaining = self.skill.cooldown - self.last_used
-            cooldown_info = f"\n*available in {cooldown_remaining}* turns."
+            cooldown_info = f"\n[35mavailable in {cooldown_remaining} turn(s)[0m"
 
         if len(description) < max_width:
             spacing = max_width - len(description)
@@ -57,32 +58,46 @@ class SkillData:
         prefixes = []
         suffixes = []
 
+        info_block = f"```python\n{description}```"
+
         if show_data:
-            prefixes.append(f"Cooldown: {self.skill.cooldown}")
-            prefixes.append(f'Effect: "{self.skill.skill_effect.value}"')
-            suffixes.append(f"Damage: {self.min_roll} - {self.max_roll}")
+            # Type
+            type_text = f"    Type: {self.skill.skill_effect.value}"
+            type_text_colored = f"    Type: [35m{self.skill.skill_effect.value}[0m"
+            prefixes.append((type_text_colored, len(type_text)))
 
-        info_block = f"{cooldown_info}```python\n{description}\n\n"
+            # Cooldoqwn
+            cooldown_text = f"Cooldown: {self.skill.cooldown} Turn(s)"
+            cooldown_text_colored = f"Cooldown: [35m{self.skill.cooldown} Turn(s)[0m"
+            prefixes.append((cooldown_text_colored, len(cooldown_text)))
 
-        lines = max(len(prefixes), len(suffixes))
+            # Type
+            damage_text = f"Damage: {self.min_roll} - {self.max_roll}"
+            damage_text_colored = (
+                f"Damage: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m"
+            )
+            suffixes.append((damage_text_colored, len(damage_text)))
 
-        for line in range(lines):
-            len_prefix = 0
-            len_suffix = 0
-            prefix = ""
-            suffix = ""
-            if len(prefixes) > line:
-                len_prefix = len(prefixes[line])
-                prefix = prefixes[line]
-            if len(suffixes) > line:
-                len_suffix = len(suffixes[line])
-                suffix = suffixes[line]
+            info_block += "```ansi\n"
 
-            spacing_width = max_width - len_prefix - len_suffix
-            spacing = " " * spacing_width
-            info_block += f"{prefix}{spacing}{suffix}\n"
+            lines = max(len(prefixes), len(suffixes))
 
-        info_block += "```"
+            for line in range(lines):
+                prefix = ""
+                suffix = ""
+                if len(prefixes) > line:
+                    len_prefix = prefixes[line][1]
+                    prefix = prefixes[line][0]
+                if len(suffixes) > line:
+                    len_suffix = suffixes[line][1]
+                    suffix = suffixes[line][0]
+
+                spacing_width = max_width - len_prefix - len_suffix
+                spacing = " " * spacing_width
+                info_block += f"{prefix}{spacing}{suffix}\n"
+
+            info_block += cooldown_info
+            info_block += "```\n\n"
 
         if show_info:
             info_block += f"```ansi\n[37m{self.skill.information}```"

@@ -125,7 +125,9 @@ class CombatEmbedManager(Service):
 
         return embed
 
-    async def get_combat_success_embed(self, context: EncounterContext) -> discord.Embed:
+    async def get_combat_success_embed(
+        self, context: EncounterContext
+    ) -> discord.Embed:
         enemy = context.opponent.enemy
 
         title = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
@@ -169,7 +171,9 @@ class CombatEmbedManager(Service):
 
         return embed
 
-    async def get_character_turn_embed(self, context: EncounterContext) -> discord.Embed:
+    async def get_character_turn_embed(
+        self, context: EncounterContext
+    ) -> discord.Embed:
         actor = context.get_current_actor()
 
         turn_number = context.get_current_turn_number()
@@ -250,17 +254,21 @@ class CombatEmbedManager(Service):
             to_actor, context.combat_events
         )
 
+        display_dmg = damage_instance.value
+        if from_actor.is_enemy:
+            display_dmg = damage_instance.scaled_value
+
         match skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
                 outcome_title = "Attack Damage"
-                damage_info = f"**{damage_instance.value}** [phys]"
-                content += f" and deals **{damage_instance.value}** physical damage to {to_name}."
-                current_hp = max(0, current_hp - damage_instance.value)
+                damage_info = f"**{display_dmg}** [phys]"
+                content += f" and deals **{display_dmg}** physical damage to {to_name}."
+                current_hp = max(0, current_hp - damage_instance.scaled_value)
             case SkillEffect.MAGICAL_DAMAGE:
                 outcome_title = "Spell Damage"
-                damage_info = f"**{damage_instance.value}** [magic]"
-                content += f" and deals **{damage_instance.value}** magical damage to {to_name}."
-                current_hp = max(0, current_hp - damage_instance.value)
+                damage_info = f"**{display_dmg}** [magic]"
+                content += f" and deals **{display_dmg}** magical damage to {to_name}."
+                current_hp = max(0, current_hp - damage_instance.scaled_value)
 
         if damage_instance.is_crit:
             damage_info = "CRIT! " + damage_info
