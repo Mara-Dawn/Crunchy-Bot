@@ -6,7 +6,7 @@ from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
-from events.types import EncounterEventType
+from events.types import CombatEventType, EncounterEventType
 
 
 class Encounter:
@@ -97,7 +97,16 @@ class EncounterContext:
         return result
 
     def get_current_turn_number(self) -> int:
-        return len(self.combat_events) + 1
+        turn_count = 1
+        for event in self.combat_events:
+            if event.combat_event_type not in [
+                CombatEventType.ENEMY_END_TURN,
+                CombatEventType.MEMBER_END_TURN,
+            ]:
+                continue
+            turn_count += 1
+
+        return turn_count
 
     def is_concluded(self) -> bool:
         for event in self.encounter_events:

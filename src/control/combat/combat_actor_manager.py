@@ -13,7 +13,7 @@ from discord.ext import commands
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
-from events.types import EncounterEventType
+from events.types import CombatEventType, EncounterEventType
 
 
 class CombatActorManager(Service):
@@ -47,6 +47,8 @@ class CombatActorManager(Service):
 
         for event in combat_events:
             if event.target_id != actor.id:
+                continue
+            if event.skill_type is None:
                 continue
             skill = await self.skill_manager.get_skill(event.skill_type)
             match skill.skill_effect:
@@ -142,7 +144,12 @@ class CombatActorManager(Service):
                     skill_type = event.skill_type
                     if skill_type not in cooldowns:
                         cooldowns[skill_type] = last_used
-                last_used += 1
+                if event.combat_event_type in [
+                    CombatEventType.ENEMY_END_TURN,
+                    CombatEventType.MEMBER_END_TURN,
+                ]:
+                    last_used += 1
+
         skill_data = {}
 
         for skill in skills:

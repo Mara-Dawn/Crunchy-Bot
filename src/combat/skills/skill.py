@@ -13,6 +13,7 @@ class Skill:
         skill_effect: SkillEffect,
         cooldown: int,
         base_value: int,
+        hits: int = 1,
     ):
         self.name = name
         self.type = type
@@ -21,6 +22,7 @@ class Skill:
         self.skill_effect = skill_effect
         self.cooldown = cooldown
         self.base_value = base_value
+        self.hits = hits
 
 
 class SkillData:
@@ -49,7 +51,7 @@ class SkillData:
         cooldown_info = ""
         if self.skill.cooldown > 0 and self.on_cooldown():
             cooldown_remaining = self.skill.cooldown - self.last_used
-            cooldown_info = f"\n[35mavailable in {cooldown_remaining} turn(s)[0m"
+            cooldown_info = f"\navailable in [35m{cooldown_remaining}[0m turn(s)"
 
         if len(description) < max_width:
             spacing = max_width - len(description)

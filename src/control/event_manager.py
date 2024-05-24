@@ -10,12 +10,14 @@ from datalayer.types import Season, UserInteraction
 from discord.ext import commands
 from events.bat_event import BatEvent
 from events.bot_event import BotEvent
+from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.jail_event import JailEvent
 from events.notification_event import NotificationEvent
 from events.prediction_event import PredictionEvent
 from events.types import (
     BeansEventType,
+    CombatEventType,
     EncounterEventType,
     EventType,
     JailEventType,
@@ -95,7 +97,12 @@ class EventManager(Service):
                 if notification is not None:
                     await self.mod_notification(prediction_event.guild_id, notification)
             case EventType.COMBAT:
-                synchronized = True
+                combat_event: CombatEvent = event
+                if combat_event.combat_event_type in [
+                    CombatEventType.ENEMY_END_TURN,
+                    CombatEventType.MEMBER_END_TURN,
+                ]:
+                    synchronized = True
             case EventType.ENCOUNTER:
                 encounter_event: EncounterEvent = event
                 if encounter_event.encounter_event_type in [

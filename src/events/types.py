@@ -86,8 +86,8 @@ class EncounterEventType(str, Enum):
 class CombatEventType(str, Enum):
     MEMBER_TURN = "member_turn"
     ENEMY_TURN = "enemy_turn"
-    MEMBER_SKIP_TURN = "skip_turn"
-    ENEMY_SKIP_TURN = "skip_turn"
+    MEMBER_END_TURN = "member_end_turn"
+    ENEMY_END_TURN = "enemy_end_turn"
 
 
 class UIEventType(str, Enum):

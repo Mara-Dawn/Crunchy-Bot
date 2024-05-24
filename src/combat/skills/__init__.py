@@ -12,6 +12,7 @@ from combat.skills.types import SkillEffect, SkillType
 #             damage_type=DamageType.PHYSICAL,
 #             cooldown=60,
 #             base_value=1,
+#             hits=1,
 #         )
 
 # Base skills
@@ -76,4 +77,5 @@ class DeezNuts(Skill):
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
             base_value=2,
+            hits=1,
         )

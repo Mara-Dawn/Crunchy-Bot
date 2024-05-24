@@ -1,9 +1,10 @@
 import asyncio
+import copy
 
 import discord
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext
-from combat.skills.skill import SkillData
+from combat.skills.skill import Skill, SkillData
 from combat.skills.types import DamageInstance, SkillEffect
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_enemy_manager import CombatEnemyManager
@@ -206,14 +207,43 @@ class CombatEmbedManager(Service):
 
         return embed
 
+    async def get_embed_attack_data(
+        self,
+        current_actor: Actor,
+        skill: Skill,
+        damage_instance: DamageInstance,
+        current_hp: int,
+    ):
+        outcome_title = ""
+        damage_info = ""
+        new_hp = current_hp
+
+        display_dmg = damage_instance.value
+        if current_actor.is_enemy:
+            display_dmg = damage_instance.scaled_value
+
+        match skill.skill_effect:
+            case SkillEffect.PHYSICAL_DAMAGE:
+                outcome_title = "Attack Damage"
+                damage_info = f"**{display_dmg}** [phys]"
+                new_hp = max(0, current_hp - damage_instance.scaled_value)
+            case SkillEffect.MAGICAL_DAMAGE:
+                outcome_title = "Spell Damage"
+                damage_info = f"**{display_dmg}** [magic]"
+                new_hp = max(0, current_hp - damage_instance.scaled_value)
+
+        if damage_instance.is_crit:
+            damage_info = "CRIT! " + damage_info
+
+        return outcome_title, damage_info, new_hp
+
     async def handle_actor_turn_embed(
         self,
         from_actor: Actor,
-        to_actor: Actor,
+        to_actors: list[Actor],
         skill_data: SkillData,
-        damage_instance: DamageInstance,
+        damage_instances: list[DamageInstance],
         context: EncounterContext,
-        message: discord.Message = None,
     ):
         color = discord.Color.blurple()
         if from_actor.is_enemy:
@@ -222,10 +252,6 @@ class CombatEmbedManager(Service):
         from_name = f"<@{from_actor.id}>"
         if from_actor.is_enemy:
             from_name = f"*{from_actor.name}*"
-
-        to_name = f"<@{to_actor.id}>"
-        if to_actor.is_enemy:
-            to_name = f"*{to_actor.name}*"
 
         turn_number = context.get_current_turn_number()
         title = f"Turn {turn_number}: {from_actor.name}"
@@ -240,101 +266,85 @@ class CombatEmbedManager(Service):
 
         yield embed
 
-        await asyncio.sleep(1.5)
+        full_embed = discord.Embed(title=title, description=description, color=color)
+        full_embed.set_thumbnail(url=from_actor.image)
+        skill_data.add_to_embed(full_embed)
 
-        outcome_title = ""
-        damage_info = ""
-        content = f"{from_name} used **{skill.name}**"
-        current_hp = await self.actor_manager.get_actor_current_hp(
-            to_actor, context.combat_events
-        )
+        hp_cache = {}
 
-        display_dmg = damage_instance.value
-        if from_actor.is_enemy:
-            display_dmg = damage_instance.scaled_value
+        for index, instance in enumerate(damage_instances):
+            await asyncio.sleep(1.5)
 
-        match skill.skill_effect:
-            case SkillEffect.PHYSICAL_DAMAGE:
-                outcome_title = "Attack Damage"
-                damage_info = f"**{display_dmg}** [phys]"
-                content += f" and deals **{display_dmg}** physical damage to {to_name}."
-                current_hp = max(0, current_hp - damage_instance.scaled_value)
-            case SkillEffect.MAGICAL_DAMAGE:
-                outcome_title = "Spell Damage"
-                damage_info = f"**{display_dmg}** [magic]"
-                content += f" and deals **{display_dmg}** magical damage to {to_name}."
-                current_hp = max(0, current_hp - damage_instance.scaled_value)
+            target = to_actors[index]
 
-        if damage_instance.is_crit:
-            damage_info = "CRIT! " + damage_info
+            to_name = f"<@{target.id}>"
+            if target.is_enemy:
+                to_name = f"*{target.name}*"
 
-        embed = discord.Embed(title=title, description=description, color=color)
-        embed.set_thumbnail(url=from_actor.image)
-        skill_data.add_to_embed(embed)
-        embed.add_field(name="Target", value=to_name, inline=True)
-        embed.add_field(name=outcome_title, value="", inline=True)
-        embed.add_field(name="Target Health", value="", inline=True)
+            if target.id not in hp_cache:
+                current_hp = await self.actor_manager.get_actor_current_hp(
+                    target, context.combat_events
+                )
+            else:
+                current_hp = hp_cache[target.id]
 
-        yield embed
+            outcome_title, damage_info, new_hp = await self.get_embed_attack_data(
+                current_actor=from_actor,
+                skill=skill,
+                damage_instance=instance,
+                current_hp=current_hp,
+            )
 
-        await asyncio.sleep(1)
+            current_hp = new_hp
+            hp_cache[target.id] = current_hp
 
-        loading_icons = [
-            "🎲",
-            "🎲🎲",
-            "🎲🎲🎲",
-        ]
-
-        i = 0
-        current = i
-        while i <= 5:
-            current = i % len(loading_icons)
-            icon = loading_icons[current]
-
-            embed = discord.Embed(title=title, description=description, color=color)
-            embed.set_thumbnail(url=from_actor.image)
-            skill_data.add_to_embed(embed)
+            embed = copy.deepcopy(full_embed)
             embed.add_field(name="Target", value=to_name, inline=True)
-            embed.add_field(name=outcome_title, value=icon, inline=True)
+            embed.add_field(name=outcome_title, value="", inline=True)
+            embed.add_field(name="Target Health", value="", inline=True)
+
+            yield embed
+
+            await asyncio.sleep(1)
+
+            loading_icons = [
+                "🎲",
+                "🎲🎲",
+                "🎲🎲🎲",
+            ]
+
+            i = 0
+            current = i
+            while i <= 5:
+                current = i % len(loading_icons)
+                icon = loading_icons[current]
+
+                embed = copy.deepcopy(full_embed)
+                embed.add_field(name="Target", value=to_name, inline=True)
+                embed.add_field(name=outcome_title, value=icon, inline=True)
+                embed.add_field(name="Target Health", value="", inline=True)
+                yield embed
+
+                await asyncio.sleep((1 / 10) * (i * 2))
+                i += 1
+
+            embed = copy.deepcopy(full_embed)
+            embed.add_field(name="Target", value=to_name, inline=True)
+            embed.add_field(name=outcome_title, value=damage_info, inline=True)
             embed.add_field(name="Target Health", value="", inline=True)
             yield embed
 
-            await asyncio.sleep((1 / 10) * (i * 2))
-            i += 1
+            await asyncio.sleep(1)
 
-        embed = discord.Embed(title=title, description=description, color=color)
-        embed.set_thumbnail(url=from_actor.image)
-        skill_data.add_to_embed(embed)
-        embed.add_field(name="Target", value=to_name, inline=True)
-        embed.add_field(name=outcome_title, value=damage_info, inline=True)
-        embed.add_field(name="Target Health", value="", inline=True)
-        yield embed
+            percentage = f"{round(current_hp/target.max_hp * 100, 1)}".rstrip(
+                "0"
+            ).rstrip(".")
+            display_hp = f"{percentage}%"
 
-        await asyncio.sleep(1)
-
-        percentage = f"{round(current_hp/to_actor.max_hp * 100, 1)}".rstrip("0").rstrip(
-            "."
-        )
-        display_hp = f"{percentage}%"
-
-        embed = discord.Embed(title=title, description=description, color=color)
-        embed.set_thumbnail(url=from_actor.image)
-        skill_data.add_to_embed(embed)
-        embed.add_field(name="Target", value=to_name, inline=True)
-        embed.add_field(name=outcome_title, value=damage_info, inline=True)
-        embed.add_field(name="Target Health", value=display_hp, inline=True)
-        yield embed
-
-        await asyncio.sleep(1)
-
-        embed = discord.Embed(title=title, description=description, color=color)
-        embed.set_thumbnail(url=from_actor.image)
-        skill_data.add_to_embed(embed)
-        embed.add_field(name="Target", value=to_name, inline=True)
-        embed.add_field(name=outcome_title, value=damage_info, inline=True)
-        embed.add_field(name="Target Health", value=display_hp, inline=True)
-        embed.add_field(name="Outcome", value=content, inline=False)
-        yield embed
+            full_embed.add_field(name="Target", value=to_name, inline=True)
+            full_embed.add_field(name=outcome_title, value=damage_info, inline=True)
+            full_embed.add_field(name="Target Health", value=display_hp, inline=True)
+            yield full_embed
 
     def get_turn_skip_embed(
         self, actor: Actor, reason: str, context: EncounterContext

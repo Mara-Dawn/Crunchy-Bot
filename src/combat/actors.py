@@ -11,7 +11,7 @@ from combat.skills.types import DamageInstance, SkillEffect, SkillType
 class Actor:
 
     CHARACTER_SCALING_FACOTR = 0.9
-    OPPONENT_SCALING_FACTOR = 0.8
+    OPPONENT_SCALING_FACTOR = 1.05
 
     def __init__(
         self,
@@ -40,7 +40,7 @@ class Actor:
 
     def get_skill_damage(
         self, skill: Skill, combatant_count: int = 1, force_roll: int = None
-    ) -> DamageInstance:
+    ) -> list[DamageInstance]:
         pass
 
 
@@ -86,25 +86,25 @@ class Character(Actor):
         return SkillData(
             skill=skill,
             last_used=self.skill_cooldowns[skill.type],
-            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll).raw_value,
-            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll).raw_value,
+            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll)[
+                0
+            ].raw_value,
+            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll)[
+                0
+            ].raw_value,
         )
 
     def get_skill_damage(
         self, skill: Skill, combatant_count: int = 1, force_roll: int = None
-    ) -> DamageInstance:
+    ) -> list[DamageInstance]:
         skill_base_value = skill.base_value
 
-        weapon_roll = force_roll
-        if weapon_roll is None:
-            weapon_min_roll = self.equipment.weapon.modifiers[
-                GearModifierType.WEAPON_DAMAGE_MIN
-            ]
-            weapon_max_roll = self.equipment.weapon.modifiers[
-                GearModifierType.WEAPON_DAMAGE_MAX
-            ]
-
-            weapon_roll = random.randint(weapon_min_roll, weapon_max_roll)
+        weapon_min_roll = self.equipment.weapon.modifiers[
+            GearModifierType.WEAPON_DAMAGE_MIN
+        ]
+        weapon_max_roll = self.equipment.weapon.modifiers[
+            GearModifierType.WEAPON_DAMAGE_MAX
+        ]
 
         modifier = 1
 
@@ -124,24 +124,33 @@ class Character(Actor):
         if combatant_count > 1:
             encounter_scaling = 1 / combatant_count * self.CHARACTER_SCALING_FACOTR
 
-        crit_roll = random.random()
-        critical_hit = False
-        critical_modifier = 1
-        if crit_roll < self.equipment.attributes[CharacterAttribute.CRIT_RATE]:
-            critical_hit = True
-            critical_modifier = self.equipment.attributes[
-                CharacterAttribute.CRIT_DAMAGE
-            ]
+        attack_count = skill.hits
+        attacks = []
+        for _ in range(attack_count):
+            weapon_roll = force_roll
+            if weapon_roll is None:
+                weapon_roll = random.randint(weapon_min_roll, weapon_max_roll)
 
-        damage_instance = DamageInstance(
-            weapon_roll=weapon_roll,
-            skill_base=skill_base_value,
-            modifier=modifier,
-            critical_modifier=critical_modifier,
-            encounter_scaling=encounter_scaling,
-            is_crit=critical_hit,
-        )
-        return damage_instance
+            crit_roll = random.random()
+            critical_hit = False
+            critical_modifier = 1
+            if crit_roll < self.equipment.attributes[CharacterAttribute.CRIT_RATE]:
+                critical_hit = True
+                critical_modifier = self.equipment.attributes[
+                    CharacterAttribute.CRIT_DAMAGE
+                ]
+
+            damage_instance = DamageInstance(
+                weapon_roll=weapon_roll,
+                skill_base=skill_base_value,
+                modifier=modifier,
+                critical_modifier=critical_modifier,
+                encounter_scaling=encounter_scaling,
+                is_crit=critical_hit,
+            )
+            attacks.append(damage_instance)
+
+        return attacks
 
 
 class Opponent(Actor):
@@ -174,39 +183,50 @@ class Opponent(Actor):
         return SkillData(
             skill=skill,
             last_used=self.skill_cooldowns[skill.type],
-            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll).raw_value,
-            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll).raw_value,
+            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll)[
+                0
+            ].raw_value,
+            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll)[
+                0
+            ].raw_value,
         )
 
     def get_skill_damage(
         self, skill: Skill, combatant_count: int = 1, force_roll: int = None
-    ) -> DamageInstance:
+    ) -> list[DamageInstance]:
 
         skill_base_value = skill.base_value
 
         weapon_min_roll = self.enemy.min_dmg
         weapon_max_roll = self.enemy.max_dmg
 
-        weapon_roll = random.randint(weapon_min_roll, weapon_max_roll)
-
         modifier = 1
         encounter_scaling = 1
+        attack_count = skill.hits
         if combatant_count > 1:
-            encounter_scaling = combatant_count * self.OPPONENT_SCALING_FACTOR
+            attack_count *= max(1, int(combatant_count * 0.7))
+            encounter_scaling = (
+                combatant_count / attack_count * Actor.OPPONENT_SCALING_FACTOR
+            )
 
-        crit_roll = random.random()
-        critical_hit = False
-        critical_modifier = 1
-        if crit_roll < self.enemy.crit_chance:
-            critical_hit = True
-            critical_modifier = self.enemy.crit_mod
+        attacks = []
+        for _ in range(attack_count):
+            weapon_roll = random.randint(weapon_min_roll, weapon_max_roll)
+            crit_roll = random.random()
+            critical_hit = False
+            critical_modifier = 1
+            if crit_roll < self.enemy.crit_chance:
+                critical_hit = True
+                critical_modifier = self.enemy.crit_mod
 
-        damage_instance = DamageInstance(
-            weapon_roll=weapon_roll,
-            skill_base=skill_base_value,
-            modifier=modifier,
-            critical_modifier=critical_modifier,
-            encounter_scaling=encounter_scaling,
-            is_crit=critical_hit,
-        )
-        return damage_instance
+            damage_instance = DamageInstance(
+                weapon_roll=weapon_roll,
+                skill_base=skill_base_value,
+                modifier=modifier,
+                critical_modifier=critical_modifier,
+                encounter_scaling=encounter_scaling,
+                is_crit=critical_hit,
+            )
+            attacks.append(damage_instance)
+
+        return attacks
