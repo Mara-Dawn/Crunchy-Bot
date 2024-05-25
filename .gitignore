@@ -9,7 +9,7 @@ tmp/
 fonts/meh/
 !.devcontainer/devcontainer.json
 !.vscode/launch.json
-test.py
+src/test.py
 
 
 # Byte-compiled / optimized / DLL files
