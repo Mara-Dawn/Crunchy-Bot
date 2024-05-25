@@ -181,7 +181,7 @@ class Gear(Item):
         enchantments: list[Enchantment],
         id: int = None,
     ):
-        if name == "":
+        if name == "" or name is None:
             name = base.name
         super().__init__(
             name=name,

@@ -11,6 +11,7 @@ from combat.skills.skill import SkillData
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_enemy_manager import CombatEnemyManager
+from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
 from control.item_manager import ItemManager
@@ -55,6 +56,9 @@ class EncounterManager(Service):
         )
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
+        )
+        self.gear_manager: CombatGearManager = self.controller.get_service(
+            CombatGearManager
         )
         self.log_name = "Encounter"
 
@@ -367,6 +371,34 @@ class EncounterManager(Service):
             EncounterEventType.END,
         )
         await self.controller.dispatch_event(event)
+
+        if success:
+            await self.payout_loot(context)
+
+    async def payout_loot(self, context: EncounterContext):
+        loot = await self.gear_manager.roll_enemy_loot(context)
+
+        for member, member_loot in loot.items():
+            embeds = []
+            loot_head_embed = await self.embed_manager.get_loot_embed(
+                member, member_loot[0]
+            )
+            embeds.append(loot_head_embed)
+            files = {}
+            for gear in member_loot[1]:
+                embeds.append(gear.get_embed())
+                if gear.base.name not in files:
+                    file = discord.File(
+                        f"./{gear.base.image_path}{gear.base.image}",
+                        gear.base.image,
+                    )
+                    files[gear.base.name] = file
+            files = list(files.values())
+
+            if member_loot[2] is not None:
+                embeds.append(member_loot[2].get_embed(self.bot))
+
+            await context.thread.send(f"<@{member.id}>", files=files, embeds=embeds)
 
     async def context_needs_update_check(self, context: EncounterContext) -> bool:
         already_defeated = []

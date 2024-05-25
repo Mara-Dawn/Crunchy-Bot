@@ -1,7 +1,7 @@
 import discord
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
-from items.item import Item
+from items.types import ItemType
 
 
 class Enemy:
@@ -36,6 +36,21 @@ class Enemy:
         12: 4,
     }
 
+    LOOT_BONUS_CHANCE_BY_LVL = {
+        1: 0.1,
+        2: 0.2,
+        3: 0.3,
+        4: 0.4,
+        5: 0.5,
+        6: 0.6,
+        7: 0.7,
+        8: 0.8,
+        9: 0.9,
+        10: 1,
+        11: 1,
+        12: 1,
+    }
+
     def __init__(
         self,
         name: str,
@@ -49,11 +64,12 @@ class Enemy:
         min_dmg: int,
         max_dmg: int,
         skills: list[Skill],
-        loot_table: list[Item],
-        min_drop_count: int = None,
-        max_drop_count: int = None,
+        loot_table: list[ItemType],
+        min_gear_drop_count: int = None,
+        max_gear_drop_count: int = None,
         min_beans_reward: int = None,
         max_beans_reward: int = None,
+        bonus_loot_chance: float = None,
         weighting: int = 100,
         initiative: int = 10,
         crit_chance: float = 0.1,
@@ -71,24 +87,28 @@ class Enemy:
         self.max_dmg = max_dmg
         self.skills = skills
         self.loot_table = loot_table
-        self.min_drop_count = min_drop_count
-        self.max_drop_count = max_drop_count
+        self.min_gear_drop_count = min_gear_drop_count
+        self.max_gear_drop_count = max_gear_drop_count
         self.min_beans_reward = min_beans_reward
         self.max_beans_reward = max_beans_reward
+        self.bonus_loot_chance = bonus_loot_chance
         self.weighting = weighting
         self.initiative = initiative
         self.crit_chance = crit_chance
         self.crit_mod = crit_mod
 
-        if self.min_drop_count is None:
-            self.min_drop_count = self.LOOT_MIN_AMOUNT_BY_LVL[self.level]
-        if self.max_drop_count is None:
-            self.max_drop_count = self.LOOT_MAX_AMOUNT_BY_LVL[self.level]
+        if self.min_gear_drop_count is None:
+            self.min_gear_drop_count = self.LOOT_MIN_AMOUNT_BY_LVL[self.level]
+        if self.max_gear_drop_count is None:
+            self.max_gear_drop_count = self.LOOT_MAX_AMOUNT_BY_LVL[self.level]
 
         if self.min_beans_reward is None:
             self.min_beans_reward = 95 * self.level
         if self.max_beans_reward is None:
             self.max_beans_reward = 105 * self.level
+
+        if self.bonus_loot_chance is None:
+            self.bonus_loot_chance = self.LOOT_BONUS_CHANCE_BY_LVL[self.level]
 
     def add_to_embed(
         self, embed: discord.Embed, show_info: bool = False, max_width: int = 56

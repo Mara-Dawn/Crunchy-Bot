@@ -129,7 +129,7 @@ class Character(Actor):
         for _ in range(attack_count):
             weapon_roll = force_roll
             if weapon_roll is None:
-                weapon_roll = random.randint(weapon_min_roll, weapon_max_roll)
+                weapon_roll = random.randint(int(weapon_min_roll), int(weapon_max_roll))
 
             crit_roll = random.random()
             critical_hit = False

@@ -8,6 +8,7 @@ from bot_util import BotUtil
 from combat.encounter import Encounter
 from combat.equipment import CharacterEquipment
 from combat.gear import Gear
+from combat.gear.bases import *  # noqa: F403
 from combat.gear.types import GearBaseType, GearModifierType, GearRarity, GearSlot
 from combat.skills.types import SkillType
 from control.logger import BotLogger
@@ -2991,7 +2992,9 @@ class Database:
 
         id = rows[0][self.USER_GEAR_ID_COL]
         name = rows[0][self.USER_GEAR_NAME_COL]
-        gear_base = GearBaseType(rows[0][self.USER_GEAR_BASE_TYPE_COL])
+        gear_base_type = GearBaseType(rows[0][self.USER_GEAR_BASE_TYPE_COL])
+        base_class = globals()[gear_base_type]
+        gear_base: GearBase = base_class()  # noqa: F405
         rarity = GearRarity(rows[0][self.USER_GEAR_RARITY_COL])
         level = rows[0][self.USER_GEAR_LEVEL_COL]
 

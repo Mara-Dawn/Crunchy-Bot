@@ -1,6 +1,7 @@
 import random
 import secrets
 
+from combat.encounter import EncounterContext
 from combat.gear.bases import *  # noqa: F403
 from combat.gear.gear import Gear, GearBase
 from combat.gear.types import GearBaseType, GearModifierType, GearRarity, GearSlot
@@ -212,11 +213,50 @@ class CombatGearManager(Service):
         )
 
         if member_id is not None:
-            await self.database.log_user_gear(
+            gear_item.id = await self.database.log_user_gear(
                 guild_id=guild_id, member_id=member_id, gear=gear_item
             )
 
         return gear_item
+
+    async def roll_enemy_loot(self, context: EncounterContext):
+        enemy = context.opponent.enemy
+
+        loot = {}
+
+        for combatant in context.combatants:
+
+            guild_id = combatant.member.guild.id
+            member_id = combatant.member.id
+
+            beans_amount = random.randint(
+                enemy.min_beans_reward, enemy.max_beans_reward
+            )
+            gear_amount = random.randint(
+                enemy.min_gear_drop_count, enemy.max_gear_drop_count
+            )
+            bonus_loot_drop = random.random() < enemy.bonus_loot_chance
+
+            gear = []
+            for _ in range(gear_amount):
+                gear_piece = await self.generate_gear_piece(
+                    guild_id, member_id, enemy.level
+                )
+                gear.append(gear_piece)
+
+            bonus_loot = None
+            if bonus_loot_drop and len(enemy.loot_table) > 0:
+                weights = [
+                    (await self.get_item(guild_id, x)).weight for x in enemy.loot_table
+                ]
+                weights = [1.0 / w for w in weights]
+                sum_weights = sum(weights)
+                weights = [w / sum_weights for w in weights]
+                bonus_loot = random.choices(enemy.loot_table, weights=weights)[0]
+
+            loot[combatant.member] = (beans_amount, gear, bonus_loot)
+
+        return loot
 
     async def test_generation(self):
         for _ in range(10):

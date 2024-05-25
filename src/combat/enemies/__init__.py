@@ -1,7 +1,7 @@
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
 from combat.skills import DeezNuts
-from items import BoxSeed, CatSeed, YellowSeed
+from items.types import ItemType
 
 # class Example(Enemy):
 #     def __init__(self):
@@ -18,8 +18,8 @@ from items import BoxSeed, CatSeed, YellowSeed
 #             max_dmg=1,
 #             skills=[],
 #             loot_table=[],
-#             min_drop_count=None,
-#             max_drop_count=None,
+#             min_gear_drop_count=None,
+#             max_gear_drop_count=None,
 #             min_beans_reward=None,
 #             max_beans_reward=None,
 #             weighting=100,
@@ -36,11 +36,13 @@ class MindGoblin(Enemy):
             information="Mind goblin' deez nuts?",
             image="mind_goblin.png",
             level=1,
-            min_hp=18,
-            max_hp=25,
+            min_hp=3,
+            max_hp=4,
+            # min_hp=18,
+            # max_hp=25,
             min_dmg=2,
             max_dmg=4,
             skills=[DeezNuts()],
-            loot_table=[BoxSeed, CatSeed, YellowSeed],
+            loot_table=[ItemType.BOX_SEED, ItemType.CAT_SEED, ItemType.YELLOW_SEED],
             initiative=5,
         )

@@ -207,6 +207,14 @@ class CombatEmbedManager(Service):
 
         return embed
 
+    async def get_loot_embed(self, member: discord.Member, beans: int):
+        title = f"{member.display_name}'s Loot"
+        embed = discord.Embed(title=title, color=discord.Colour.green())
+        message = f"You gain `🅱️{beans}` and the following items:"
+        self.add_text_bar(embed, "", message)
+        embed.set_thumbnail(url=member.display_avatar.url)
+        return embed
+
     async def get_embed_attack_data(
         self,
         current_actor: Actor,

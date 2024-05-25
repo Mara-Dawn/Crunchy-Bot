@@ -258,7 +258,7 @@ class Dropdown(discord.ui.Select):
         view: EquipmentSelectView = self.view
 
         if await view.interaction_check(interaction):
-            await view.set_selected(interaction, self.values)
+            await view.set_selected(interaction, [int(value) for value in self.values])
 
 
 class PageButton(discord.ui.Button):
