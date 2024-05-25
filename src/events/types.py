@@ -161,3 +161,8 @@ class UIEventType(str, Enum):
 
     COMBAT_ENGAGE = "combat_engage"
     COMBAT_USE_SKILL = "combat_use_skill"
+
+    GEAR_EQUIP = "gear_equip"
+    GEAR_DISMANTLE = "gear_dismantle"
+    GEAR_OPEN_SECELT = "gear_open_select"
+    GEAR_OPEN_OVERVIEW = "gear_open_overview"

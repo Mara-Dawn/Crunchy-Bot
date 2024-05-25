@@ -33,7 +33,7 @@ class Enchantment:
 class GearBase:
 
     DEFAULT_IMAGE_PATH = "img/gear/default/"
-    DEFAULT_IMAGES = {
+    IMAGE_NAMES = {
         GearSlot.WEAPON: "weapon.png",
         GearSlot.HEAD: "head.png",
         GearSlot.BODY: "body.png",
@@ -58,6 +58,7 @@ class GearBase:
         permanent: bool = False,
         secret: bool = False,
         image: str = None,
+        image_path: str = None,
     ):
         self.name = name
         self.type = type
@@ -69,6 +70,7 @@ class GearBase:
         self.max_level = max_level
         self.modifiers = modifiers
         self.image = image
+        self.image_path = image_path
 
         self.skills = skills
         if self.skills is None:
@@ -95,7 +97,11 @@ class GearBase:
                 self.emoji = "💍"
 
         if self.image is None:
-            self.image = self.DEFAULT_IMAGES[self.slot]
+            self.image = self.IMAGE_NAMES[self.slot]
+        
+        if self.image_path is None:
+            self.image_path = self.DEFAULT_IMAGE_PATH
+
 
     def get_allowed_modifiers(self):
         match self.slot:
@@ -173,6 +179,7 @@ class Gear(Item):
         modifiers: dict[GearModifierType, float],
         skills: list[SkillType],
         enchantments: list[Enchantment],
+        id: int = None,
     ):
         if name == "":
             name = base.name
@@ -197,6 +204,7 @@ class Gear(Item):
         self.modifiers = modifiers
         self.skills = skills
         self.enchantments = enchantments
+        self.id = id
 
     def get_embed(
         self,

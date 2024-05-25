@@ -2,8 +2,9 @@ from enum import Enum
 
 import discord
 from combat.actors import Character
-from combat.gear.gear import GearBase
+from combat.gear.types import GearSlot
 from control.controller import Controller
+from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.combat.embed import AttributesHeadEmbed, EquipmentHeadEmbed, SkillsHeadEmbed
@@ -32,8 +33,8 @@ class EquipmentView(ViewMenu):
         self.blocked = False
         self.state = EquipmentViewState.GEAR
 
-        # self.controller_type = ControllerType.EQUIPMENT
-        # self.controller.register_view(self)
+        self.controller_type = ControllerType.EQUIPMENT
+        self.controller.register_view(self)
         self.refresh_elements()
 
     async def listen_for_ui_event(self, event: UIEvent):
@@ -52,15 +53,20 @@ class EquipmentView(ViewMenu):
         stats_button_disabled = False
         skills_button_disabled = False
 
+        self.clear_items()
         match self.state:
             case EquipmentViewState.GEAR:
                 gear_button_disabled = True
+                self.add_item(SelectWeapon())
+                self.add_item(SelectHeadGear())
+                self.add_item(SelectBodyArmor())
+                self.add_item(SelectLegs())
+                self.add_item(SelectAccessory())
             case EquipmentViewState.STATS:
                 stats_button_disabled = True
             case EquipmentViewState.SKILLS:
                 skills_button_disabled = True
 
-        self.clear_items()
         self.add_item(GearButton(gear_button_disabled))
         self.add_item(StatsButton(stats_button_disabled))
         self.add_item(SkillsButton(skills_button_disabled))
@@ -81,35 +87,35 @@ class EquipmentView(ViewMenu):
                 embeds.append(self.character.equipment.weapon.get_embed())
                 files.append(
                     discord.File(
-                        f"./{GearBase.DEFAULT_IMAGE_PATH}{self.character.equipment.weapon.base.image}",
+                        f"./{self.character.equipment.weapon.base.image_path}{self.character.equipment.weapon.base.image}",
                         self.character.equipment.weapon.base.image,
                     )
                 )
                 embeds.append(self.character.equipment.head_gear.get_embed())
                 files.append(
                     discord.File(
-                        f"./{GearBase.DEFAULT_IMAGE_PATH}{self.character.equipment.head_gear.base.image}",
+                        f"./{self.character.equipment.head_gear.base.image_path}{self.character.equipment.head_gear.base.image}",
                         self.character.equipment.head_gear.base.image,
                     )
                 )
                 embeds.append(self.character.equipment.body_gear.get_embed())
                 files.append(
                     discord.File(
-                        f"./{GearBase.DEFAULT_IMAGE_PATH}{self.character.equipment.body_gear.base.image}",
+                        f"./{self.character.equipment.body_gear.base.image_path}{self.character.equipment.body_gear.base.image}",
                         self.character.equipment.body_gear.base.image,
                     )
                 )
                 embeds.append(self.character.equipment.leg_gear.get_embed())
                 files.append(
                     discord.File(
-                        f"./{GearBase.DEFAULT_IMAGE_PATH}{self.character.equipment.leg_gear.base.image}",
+                        f"./{self.character.equipment.leg_gear.base.image_path}{self.character.equipment.leg_gear.base.image}",
                         self.character.equipment.leg_gear.base.image,
                     )
                 )
                 embeds.append(self.character.equipment.accessory_1.get_embed())
                 files.append(
                     discord.File(
-                        f"./{GearBase.DEFAULT_IMAGE_PATH}{self.character.equipment.accessory_1.base.image}",
+                        f"./{self.character.equipment.accessory_1.base.image_path}{self.character.equipment.accessory_1.base.image}",
                         self.character.equipment.accessory_1.base.image,
                     )
                 )
@@ -120,7 +126,7 @@ class EquipmentView(ViewMenu):
                 ):
                     files.append(
                         discord.File(
-                            f"./{GearBase.DEFAULT_IMAGE_PATH}{self.character.equipment.accessory_2.base.image}",
+                            f"./{self.character.equipment.accessory_2.base.image_path}{self.character.equipment.accessory_2.base.image}",
                             self.character.equipment.accessory_2.base.image,
                         )
                     )
@@ -148,13 +154,22 @@ class EquipmentView(ViewMenu):
         self.state = state
         await self.refresh_ui()
 
+    async def change_gear(self, interaction: discord.Interaction, slot: GearSlot):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.GEAR_OPEN_SECELT,
+            (interaction, slot),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
 
 class GearButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
 
         super().__init__(
-            label="Gear", style=discord.ButtonStyle.green, disabled=disabled, row=0
+            label="Gear", style=discord.ButtonStyle.blurple, disabled=disabled, row=0
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -168,7 +183,7 @@ class StatsButton(discord.ui.Button):
 
         super().__init__(
             label="Attributes",
-            style=discord.ButtonStyle.green,
+            style=discord.ButtonStyle.blurple,
             disabled=disabled,
             row=0,
         )
@@ -184,10 +199,86 @@ class SkillsButton(discord.ui.Button):
 
         super().__init__(
             label="Skills",
-            style=discord.ButtonStyle.green,
+            style=discord.ButtonStyle.blurple,
             disabled=disabled,
+            row=0,
         )
 
     async def callback(self, interaction: discord.Interaction):
         view: EquipmentView = self.view
         await view.set_state(EquipmentViewState.SKILLS, interaction)
+
+
+class SelectWeapon(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Change Weapon",
+            style=discord.ButtonStyle.grey,
+            disabled=disabled,
+            row=1,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+        await view.change_gear(interaction, GearSlot.WEAPON)
+
+
+class SelectHeadGear(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Change Headgear",
+            style=discord.ButtonStyle.grey,
+            disabled=disabled,
+            row=1,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+        await view.change_gear(interaction, GearSlot.HEAD)
+
+
+class SelectBodyArmor(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Change Body",
+            style=discord.ButtonStyle.grey,
+            disabled=disabled,
+            row=1,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+        await view.change_gear(interaction, GearSlot.BODY)
+
+
+class SelectLegs(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Change Bottoms",
+            style=discord.ButtonStyle.grey,
+            disabled=disabled,
+            row=2,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+        await view.change_gear(interaction, GearSlot.LEGS)
+
+
+class SelectAccessory(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Change Accessory",
+            style=discord.ButtonStyle.grey,
+            disabled=disabled,
+            row=2,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+        await view.change_gear(interaction, GearSlot.ACCESSORY)

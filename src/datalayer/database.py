@@ -8,7 +8,7 @@ from bot_util import BotUtil
 from combat.encounter import Encounter
 from combat.equipment import CharacterEquipment
 from combat.gear import Gear
-from combat.gear.types import GearBaseType, GearModifierType, GearRarity
+from combat.gear.types import GearBaseType, GearModifierType, GearRarity, GearSlot
 from combat.skills.types import SkillType
 from control.logger import BotLogger
 from discord.ext import commands
@@ -2989,6 +2989,7 @@ class Database:
         if not rows:
             return None
 
+        id = rows[0][self.USER_GEAR_ID_COL]
         name = rows[0][self.USER_GEAR_NAME_COL]
         gear_base = GearBaseType(rows[0][self.USER_GEAR_BASE_TYPE_COL])
         rarity = GearRarity(rows[0][self.USER_GEAR_RARITY_COL])
@@ -3018,6 +3019,7 @@ class Database:
             modifiers=modifiers,
             skills=skills,
             enchantments=[],
+            id=id,
         )
 
     async def create_user_equipment(self, guild_id: int, user_id: int) -> int:
@@ -3094,9 +3096,38 @@ class Database:
             accessory_2=accessory_2,
         )
 
-    async def get_user_armory(
-        self, guild_id: int, member_id: int
-    ) -> list[Gear]:
+    async def update_user_equipment(
+        self, guild_id: int, member_id: int, gear: Gear, acc_slot_2: bool = False
+    ):
+        await self.create_user_equipment(guild_id, member_id)
+
+        column = ""
+
+        match gear.base.slot:
+            case GearSlot.WEAPON:
+                column = self.USER_EQUIPMENT_WEAPON_ID_COL
+            case GearSlot.HEAD:
+                column = self.USER_EQUIPMENT_HEADGEAR_ID_COL
+            case GearSlot.BODY:
+                column = self.USER_EQUIPMENT_BODYGEAR_ID_COL
+            case GearSlot.LEGS:
+                column = self.USER_EQUIPMENT_LEGGEAR_ID_COL
+            case GearSlot.ACCESSORY:
+                column = self.USER_EQUIPMENT_ACCESSORY_1_ID_COL
+                if acc_slot_2:
+                    column = self.USER_EQUIPMENT_ACCESSORY_2_ID_COL
+
+        command = f"""
+            UPDATE {self.USER_EQUIPMENT_TABLE} SET
+            {column}
+            = ?
+            WHERE {self.USER_EQUIPMENT_GUILD_ID_COL} = ?
+            AND {self.USER_EQUIPMENT_MEMBER_ID_COL} = ?;
+        """
+        task = (gear.id, guild_id, member_id)
+        await self.__query_insert(command, task)
+
+    async def get_user_armory(self, guild_id: int, member_id: int) -> list[Gear]:
 
         command = f""" 
             SELECT * FROM {self.USER_GEAR_TABLE} 
@@ -3112,5 +3143,5 @@ class Database:
         for row in rows:
             gear_piece = await self.get_gear_by_id(row[self.USER_GEAR_ID_COL])
             armory.append(gear_piece)
-        
+
         return armory
