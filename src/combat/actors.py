@@ -168,7 +168,7 @@ class Character(Actor):
                     CharacterAttribute.PHYS_DAMAGE_REDUCTION
                 ]
                 flat_reduction = int(
-                    self.equipment.gear_modifiers[GearModifierType.ARMOR] / 20
+                    self.equipment.gear_modifiers[GearModifierType.ARMOR] / 4
                 )
             case SkillEffect.MAGICAL_DAMAGE:
                 modifier -= self.equipment.attributes[

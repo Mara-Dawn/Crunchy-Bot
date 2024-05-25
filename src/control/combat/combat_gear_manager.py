@@ -31,9 +31,9 @@ class CombatGearManager(Service):
     MIN_RARITY_LVL = {
         GearRarity.NORMAL: 0,
         GearRarity.MAGIC: 1,
-        GearRarity.RARE: 3,
-        GearRarity.LEGENDARY: 6,
-        GearRarity.UNIQUE: 4,
+        GearRarity.RARE: 2,
+        GearRarity.LEGENDARY: 5,
+        GearRarity.UNIQUE: 3,
     }
     RARITY_WEIGHTS = {
         GearRarity.NORMAL: 100,
@@ -72,8 +72,8 @@ class CombatGearManager(Service):
     ]
 
     MODIFIER_BASE = {
-        GearModifierType.WEAPON_DAMAGE_MIN: 1,
-        GearModifierType.WEAPON_DAMAGE_MAX: 3,
+        GearModifierType.WEAPON_DAMAGE_MIN: 8,
+        GearModifierType.WEAPON_DAMAGE_MAX: 15,
         GearModifierType.ARMOR: 5,
         GearModifierType.ATTACK: 1,
         GearModifierType.MAGIC: 1,
@@ -208,7 +208,10 @@ class CombatGearManager(Service):
             + self.MODIFIER_SCALING[modifier_type] * base.scaling * item_level
         ) * slot_scaling
 
-        min_roll = base_value * (1 - self.MODIFIER_RANGE[modifier_type])
+        min_roll = max(
+            self.MODIFIER_BASE[modifier_type] * slot_scaling,
+            base_value * (1 - self.MODIFIER_RANGE[modifier_type]),
+        )
         max_roll = base_value * (1 + self.MODIFIER_RANGE[modifier_type])
 
         return min_roll, max_roll

@@ -22,8 +22,8 @@ class DefaultStick(Gear):
             rarity=GearRarity.NORMAL,
             level=1,
             modifiers={
-                GearModifierType.WEAPON_DAMAGE_MIN: 1,
-                GearModifierType.WEAPON_DAMAGE_MAX: 2,
+                GearModifierType.WEAPON_DAMAGE_MIN: 5,
+                GearModifierType.WEAPON_DAMAGE_MAX: 10,
             },
             skills=[],
             enchantments=[],
@@ -41,8 +41,8 @@ class DefaultWand(Gear):
             rarity=GearRarity.NORMAL,
             level=1,
             modifiers={
-                GearModifierType.WEAPON_DAMAGE_MIN: 1,
-                GearModifierType.WEAPON_DAMAGE_MAX: 2,
+                GearModifierType.WEAPON_DAMAGE_MIN: 5,
+                GearModifierType.WEAPON_DAMAGE_MAX: 10,
             },
             skills=[],
             enchantments=[],

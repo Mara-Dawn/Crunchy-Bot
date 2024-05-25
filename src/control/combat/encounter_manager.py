@@ -98,7 +98,9 @@ class EncounterManager(Service):
 
     async def create_encounter(self, guild_id: int):
         max_encounter_level = await self.database.get_guild_level(guild_id)
-        min_encounter_level = int(max_encounter_level * self.ENCOUNTER_MIN_LVL_SCALING)
+        min_encounter_level = max(
+            1, int(max_encounter_level * self.ENCOUNTER_MIN_LVL_SCALING)
+        )
 
         encounter_level = random.randint(min_encounter_level, max_encounter_level)
 
@@ -234,15 +236,18 @@ class EncounterManager(Service):
         )
 
     async def skip_turn(
-        self, actor: Actor, context: EncounterContext, turn_message: discord.Message
+        self,
+        actor: Actor,
+        context: EncounterContext,
     ):
 
+        turn_message = await self.get_previous_turn_message(context.thread)
         embed = self.embed_manager.get_turn_skip_embed(
             actor, f"{actor.name} is defeated.", context
         )
         previous_embeds = turn_message.embeds
-        current_embeds = previous_embeds.append(embed)
-        await turn_message.edit("", embeds=current_embeds)
+        current_embeds = previous_embeds + [embed]
+        await turn_message.edit(embeds=current_embeds)
 
         combat_event_type = CombatEventType.MEMBER_END_TURN
         if actor.is_enemy:

@@ -65,7 +65,7 @@ class CharacterEquipment:
             CharacterAttribute.CRIT_DAMAGE: 1.5,
             CharacterAttribute.PHYS_DAMAGE_REDUCTION: 0,
             CharacterAttribute.MAGIC_DAMAGE_REDUCTION: 0,
-            CharacterAttribute.MAX_HEALTH: 50,
+            CharacterAttribute.MAX_HEALTH: 250,
         }
 
         self.gear_modifiers: dict[GearModifierType, float] = {}
@@ -97,9 +97,9 @@ class CharacterEquipment:
         self.attributes[CharacterAttribute.MAGIC_DAMAGE_REDUCTION] += (
             self.gear_modifiers[GearModifierType.DEFENSE] / 100
         )
-        self.attributes[CharacterAttribute.MAX_HEALTH] += self.gear_modifiers[
-            GearModifierType.CONSTITUTION
-        ]
+        self.attributes[CharacterAttribute.MAX_HEALTH] += (
+            5 * self.gear_modifiers[GearModifierType.CONSTITUTION]
+        )
         self.attributes[CharacterAttribute.HEALING_BONUS] += (
             self.gear_modifiers[GearModifierType.HEALING] / 100
         )
