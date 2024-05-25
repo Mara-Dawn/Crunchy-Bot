@@ -5,6 +5,7 @@ import secrets
 import discord
 from bot import CrunchyBot
 from control.combat.combat_actor_manager import CombatActorManager
+from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
@@ -13,6 +14,7 @@ from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from discord import app_commands
 from discord.ext import commands, tasks
+from view.combat.embed import EquipmentHeadEmbed
 from view.combat.equipment_view import EquipmentView
 
 
@@ -33,6 +35,9 @@ class Combat(commands.Cog):
             SettingsManager
         )
         self.testing: CombatGearManager = self.controller.get_service(CombatGearManager)
+        self.embed_manager: CombatEmbedManager = self.controller.get_service(
+            CombatEmbedManager
+        )
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
@@ -180,7 +185,17 @@ class Combat(commands.Cog):
         character = await self.actor_manager.get_character(interaction.user)
         view = EquipmentView(self.controller, interaction, character)
 
-        message = await interaction.followup.send("", view=view)
+        embeds = []
+        embeds.append(EquipmentHeadEmbed(interaction.user))
+
+        loading_embed = discord.Embed(
+            title="Loadin Gear", color=discord.Colour.light_grey()
+        )
+        self.embed_manager.add_text_bar(loading_embed, "", "Please Wait...")
+        loading_embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embeds.append(loading_embed)
+
+        message = await interaction.followup.send("", embeds=embeds, view=view)
         view.set_message(message)
         await view.refresh_ui()
 

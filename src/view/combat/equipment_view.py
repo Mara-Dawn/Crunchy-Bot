@@ -84,42 +84,60 @@ class EquipmentView(ViewMenu):
         match self.state:
             case EquipmentViewState.GEAR:
                 embeds.append(EquipmentHeadEmbed(self.member))
-                embeds.append(self.character.equipment.weapon.get_embed())
+                embeds.append(
+                    self.character.equipment.weapon.get_embed(title="Weapon Slot")
+                )
                 files.append(
                     discord.File(
                         f"./{self.character.equipment.weapon.base.image_path}{self.character.equipment.weapon.base.image}",
                         self.character.equipment.weapon.base.image,
                     )
                 )
-                embeds.append(self.character.equipment.head_gear.get_embed())
+                embeds.append(
+                    self.character.equipment.head_gear.get_embed(title="Head Gear Slot")
+                )
                 files.append(
                     discord.File(
                         f"./{self.character.equipment.head_gear.base.image_path}{self.character.equipment.head_gear.base.image}",
                         self.character.equipment.head_gear.base.image,
                     )
                 )
-                embeds.append(self.character.equipment.body_gear.get_embed())
+                embeds.append(
+                    self.character.equipment.body_gear.get_embed(
+                        title="Body Armor Slot"
+                    )
+                )
                 files.append(
                     discord.File(
                         f"./{self.character.equipment.body_gear.base.image_path}{self.character.equipment.body_gear.base.image}",
                         self.character.equipment.body_gear.base.image,
                     )
                 )
-                embeds.append(self.character.equipment.leg_gear.get_embed())
+                embeds.append(
+                    self.character.equipment.leg_gear.get_embed(title="Leg Gear Slot")
+                )
                 files.append(
                     discord.File(
                         f"./{self.character.equipment.leg_gear.base.image_path}{self.character.equipment.leg_gear.base.image}",
                         self.character.equipment.leg_gear.base.image,
                     )
                 )
-                embeds.append(self.character.equipment.accessory_1.get_embed())
+                embeds.append(
+                    self.character.equipment.accessory_1.get_embed(
+                        title="Accessory Slot 1"
+                    )
+                )
                 files.append(
                     discord.File(
                         f"./{self.character.equipment.accessory_1.base.image_path}{self.character.equipment.accessory_1.base.image}",
                         self.character.equipment.accessory_1.base.image,
                     )
                 )
-                embeds.append(self.character.equipment.accessory_2.get_embed())
+                embeds.append(
+                    self.character.equipment.accessory_2.get_embed(
+                        title="Accessory Slot 2"
+                    )
+                )
                 if (
                     self.character.equipment.accessory_1.base.image
                     != self.character.equipment.accessory_2.base.image

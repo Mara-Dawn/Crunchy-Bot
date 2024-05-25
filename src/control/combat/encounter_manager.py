@@ -31,6 +31,7 @@ from view.combat.engage_view import EnemyEngageView
 class EncounterManager(Service):
 
     TURN_WAIT = 4
+    ENCOUNTER_MIN_LVL_SCALE = 0.75
 
     def __init__(
         self,
@@ -93,11 +94,16 @@ class EncounterManager(Service):
                 await self.refresh_encounter_thread(combat_event.encounter_id)
 
     async def create_encounter(self, guild_id: int):
-        encounter_level = await self.database.get_guild_level(guild_id)
+        max_encounter_level = await self.database.get_guild_level(guild_id)
+        min_encounter_level = int(max_encounter_level * self.ENCOUNTER_MIN_LVL_SCALE)
+
+        encounter_level = random.randint(min_encounter_level, max_encounter_level)
 
         enemies = [self.enemy_manager.get_enemy(enemy_type) for enemy_type in EnemyType]
         possible_enemies = [
-            enemy for enemy in enemies if enemy.level <= encounter_level
+            enemy
+            for enemy in enemies
+            if encounter_level >= enemy.min_level and encounter_level <= enemy.max_level
         ]
 
         spawn_weights = [enemy.weighting for enemy in possible_enemies]
@@ -108,7 +114,7 @@ class EncounterManager(Service):
         enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
         enemy_health = random.randint(enemy.min_hp, enemy.max_hp)
 
-        return Encounter(guild_id, enemy.type, enemy_health)
+        return Encounter(guild_id, enemy.type, enemy_health, encounter_level)
 
     async def spawn_encounter(self, guild: discord.Guild, channel_id: int):
         log_message = f"Encounter was spawned in {guild.name}."
@@ -396,7 +402,7 @@ class EncounterManager(Service):
             files = list(files.values())
 
             if member_loot[2] is not None:
-                embeds.append(member_loot[2].get_embed(self.bot))
+                embeds.append(member_loot[2].get_embed(self.bot, show_price=False))
 
             await context.thread.send(f"<@{member.id}>", files=files, embeds=embeds)
 

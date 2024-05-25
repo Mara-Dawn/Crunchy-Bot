@@ -442,6 +442,7 @@ class Database:
     ENCOUNTER_ID_COL = "encn_id"
     ENCOUNTER_GUILD_ID_COL = "encn_guild_id"
     ENCOUNTER_ENEMY_TYPE_COL = "encn_enemy_type"
+    ENCOUNTER_ENEMY_LEVEL_COL = "encn_enemy_level"
     ENCOUNTER_ENEMY_HEALTH_COL = "encn_enemy_health"
     ENCOUNTER_MESSAGE_ID_COL = "encn_message_id"
     ENCOUNTER_CHANNEL_ID_COL = "encn_channel_id"
@@ -450,6 +451,7 @@ class Database:
         {ENCOUNTER_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
         {ENCOUNTER_GUILD_ID_COL} INTEGER,
         {ENCOUNTER_ENEMY_TYPE_COL} TEXT,
+        {ENCOUNTER_ENEMY_LEVEL_COL} INTEGER,
         {ENCOUNTER_ENEMY_HEALTH_COL} INTEGER,
         {ENCOUNTER_MESSAGE_ID_COL} INTEGER,
         {ENCOUNTER_CHANNEL_ID_COL} INTEGER
@@ -1032,14 +1034,16 @@ class Database:
             INSERT INTO {self.ENCOUNTER_TABLE} (
             {self.ENCOUNTER_GUILD_ID_COL},
             {self.ENCOUNTER_ENEMY_TYPE_COL},
+            {self.ENCOUNTER_ENEMY_LEVEL_COL},
             {self.ENCOUNTER_ENEMY_HEALTH_COL},
             {self.ENCOUNTER_MESSAGE_ID_COL},
             {self.ENCOUNTER_CHANNEL_ID_COL})
-            VALUES (?, ?, ?, ?, ?);
+            VALUES (?, ?, ?, ?, ?, ?);
         """
         task = (
             encounter.guild_id,
             encounter.enemy_type.value,
+            encounter.enemy_level,
             encounter.max_hp,
             encounter.message_id,
             encounter.channel_id,

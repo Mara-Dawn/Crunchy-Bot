@@ -15,6 +15,7 @@ class Encounter:
         self,
         guild_id: int,
         enemy_type: EnemyType,
+        enemy_level: int,
         max_hp: int,
         message_id: int = None,
         channel_id: int = None,
@@ -22,6 +23,7 @@ class Encounter:
     ):
         self.guild_id = guild_id
         self.enemy_type = enemy_type
+        self.enemy_level = enemy_level
         self.max_hp = max_hp
         self.message_id = message_id
         self.channel_id = channel_id
@@ -37,6 +39,7 @@ class Encounter:
         return Encounter(
             guild_id=int(row[Database.ENCOUNTER_GUILD_ID_COL]),
             enemy_type=EnemyType(row[Database.ENCOUNTER_ENEMY_TYPE_COL]),
+            enemy_level=int(row[Database.ENCOUNTER_ENEMY_HEALTH_COL]),
             max_hp=int(row[Database.ENCOUNTER_ENEMY_HEALTH_COL]),
             message_id=int(row[Database.ENCOUNTER_MESSAGE_ID_COL]),
             channel_id=int(row[Database.ENCOUNTER_CHANNEL_ID_COL]),

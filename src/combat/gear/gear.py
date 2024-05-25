@@ -6,7 +6,7 @@ from combat.gear.types import (
     GearRarity,
     GearSlot,
 )
-from combat.skills.types import SkillType
+from combat.skills.types import SkillEffect, SkillType
 from items.item import Item
 from items.types import ItemGroup, ShopCategory
 
@@ -98,10 +98,9 @@ class GearBase:
 
         if self.image is None:
             self.image = self.IMAGE_NAMES[self.slot]
-        
+
         if self.image_path is None:
             self.image_path = self.DEFAULT_IMAGE_PATH
-
 
     def get_allowed_modifiers(self):
         match self.slot:
@@ -214,9 +213,9 @@ class Gear(Item):
         max_width: int = 44,
     ) -> discord.Embed:
         if title is None:
-            title = self.base.slot.value
+            title = f"{self.rarity.value} {self.base.slot.value}"
 
-        title = f"> {title} Slot"
+        title = f"> {title}"
 
         description = f'"{self.description}"'
         color = self.RARITY_COLOR_HEX_MAP[self.rarity]
@@ -231,15 +230,44 @@ class Gear(Item):
             max_len = GearModifierType.max_name_len()
             info_block += "```ansi\n"
 
+            name = "Item Level"
+            value = self.level
+            spacing = " " * (max_len - len(name))
+            line_colored = f"{spacing}{name}: [32m{self.level}[0m\n"
+            info_block += line_colored
+
             name = "Rarity"
             spacing = " " * (max_len - len(name))
             line_colored = f"{spacing}{name}: {self.RARITY_COLOR_MAP[self.rarity]}{self.rarity.value}[0m\n"
             info_block += line_colored
 
-            for modifier_type, value in self.modifiers.items():
-                name = modifier_type.value
+            if self.base.slot == GearSlot.WEAPON and len(self.base.skills) > 0:
+                damage_types = []
+                for skill_type in self.base.skills:
+                    if skill_type == SkillType.MAGIC_ATTACK:
+                        damage_types.append(SkillEffect.MAGICAL_DAMAGE)
+                    elif skill_type in [
+                        SkillType.NORMAL_ATTACK,
+                        SkillType.HEAVY_ATTACK,
+                    ]:
+                        damage_types.append(SkillEffect.PHYSICAL_DAMAGE)
+
+                name = "Damage Type"
                 spacing = " " * (max_len - len(name))
+                value = "[0m,[35m".join([type.value for type in damage_types])
                 line_colored = f"{spacing}{name}: [35m{value}[0m\n"
+                info_block += line_colored
+
+            index_map = {v: i for i, v in enumerate(GearModifierType.prio())}
+            sorted_modifiers = dict(
+                sorted(self.modifiers.items(), key=lambda pair: index_map[pair[0]])
+            )
+
+            for modifier_type, value in sorted_modifiers.items():
+                name = modifier_type.value
+                display_value = GearModifierType.display_value(modifier_type, value)
+                spacing = " " * (max_len - len(name))
+                line_colored = f"{spacing}{name}: [35m{display_value}[0m\n"
                 info_block += line_colored
 
             info_block += "```"

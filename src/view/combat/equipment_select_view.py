@@ -2,7 +2,7 @@ import contextlib
 
 import discord
 from combat.gear.gear import Gear
-from combat.gear.types import GearSlot
+from combat.gear.types import GearModifierType, GearSlot
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -103,8 +103,8 @@ class EquipmentSelectView(ViewMenu):
             max_values = 2
 
         self.clear_items()
-        if len(self.filtered_items) > 0:
-            self.add_item(Dropdown(self.filtered_items, self.selected, max_values))
+        if len(self.display_items) > 0:
+            self.add_item(Dropdown(self.display_items, self.selected, max_values))
         self.add_item(PageButton("<", False))
         self.add_item(SelectButton(disabled))
         self.add_item(PageButton(">", True))
@@ -117,10 +117,14 @@ class EquipmentSelectView(ViewMenu):
     ):
         if self.message is None:
             return
+
         if gear_inventory is not None:
             self.gear = gear_inventory
             self.filter_items()
             self.current_page = min(self.current_page, (self.page_count - 1))
+
+        if len(self.filtered_items) <= 0:
+            return
 
         if self.selected is None or len(self.selected) <= 0:
             disabled = True
@@ -136,7 +140,7 @@ class EquipmentSelectView(ViewMenu):
 
         refresh_selected = []
         for selected in self.selected:
-            if selected in self.filtered_items:
+            if selected in self.display_items:
                 refresh_selected.append(selected)
         self.selected = refresh_selected
 
@@ -144,7 +148,7 @@ class EquipmentSelectView(ViewMenu):
         files = {}
         embeds.append(SelectGearHeadEmbed(self.member))
 
-        for gear in self.filtered_items:
+        for gear in self.display_items:
             embeds.append(gear.get_embed())
             if gear.base.name not in files:
                 file = discord.File(
@@ -237,9 +241,25 @@ class Dropdown(discord.ui.Select):
         options = []
 
         for item in gear:
+            name = item.name
+            if name is None or name == "":
+                name = item.base.slot.value
+
+            description = [f"ILVL: {item.level}"]
+            for modifier_type, value in item.modifiers.items():
+                label = GearModifierType.short_label(modifier_type)
+                value = GearModifierType.display_value(modifier_type, value)
+                description.append(f"{label}: {value}")
+
+            description = " | ".join(description)
+            description = (
+                (description[:95] + "..") if len(description) > 95 else description
+            )
+            label = f"{name} [{item.rarity.value}] "
+
             option = discord.SelectOption(
-                label=item.name,
-                description=f"{item.rarity.value}",
+                label=label,
+                description=description,
                 value=item.id,
                 default=(item in selected),
             )

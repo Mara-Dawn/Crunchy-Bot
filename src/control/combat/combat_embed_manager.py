@@ -46,7 +46,7 @@ class CombatEmbedManager(Service):
 
         embed = discord.Embed(title=title, color=discord.Colour.purple())
 
-        enemy_name = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
+        enemy_name = f"> ~* Lvl. {enemy.min_level} - {enemy.name} *~"
         content = f'```python\n"{enemy.description}"```'
         embed.add_field(name=enemy_name, value=content, inline=False)
 
@@ -108,7 +108,7 @@ class CombatEmbedManager(Service):
     async def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
+        title = f"> ~* Lvl. {enemy.min_level} - {enemy.name} *~"
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
@@ -137,7 +137,7 @@ class CombatEmbedManager(Service):
     ) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
+        title = f"> ~* Lvl. {enemy.min_level} - {enemy.name} *~"
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.green()
@@ -159,7 +159,7 @@ class CombatEmbedManager(Service):
     async def get_combat_failed_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = f"> ~* Lvl. {enemy.level} - {enemy.name} *~"
+        title = f"> ~* Lvl. {enemy.min_level} - {enemy.name} *~"
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
@@ -210,7 +210,7 @@ class CombatEmbedManager(Service):
     async def get_loot_embed(self, member: discord.Member, beans: int):
         title = f"{member.display_name}'s Loot"
         embed = discord.Embed(title=title, color=discord.Colour.green())
-        message = f"You gain `🅱️{beans}` and the following items:"
+        message = f"You gain 🅱️{beans} beans and the following items:"
         self.add_text_bar(embed, "", message)
         embed.set_thumbnail(url=member.display_avatar.url)
         return embed

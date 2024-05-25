@@ -124,8 +124,9 @@ class CharacterEquipment:
         max_len = GearModifierType.max_name_len()
         for modifier_type, value in self.gear_modifiers.items():
             name = modifier_type.value
+            display_value = GearModifierType.display_value(modifier_type, value)
             spacing = " " * (max_len - len(name))
-            line_colored = f"{spacing}{name}: [35m{value}[0m\n"
+            line_colored = f"{spacing}{name}: [35m{display_value}[0m\n"
             info_block += line_colored
         info_block += "```"
         embed.add_field(name=modifier_title, value=info_block, inline=True)
@@ -135,8 +136,9 @@ class CharacterEquipment:
         max_len = CharacterAttribute.max_name_len()
         for attribute_type, value in self.attributes.items():
             name = attribute_type.value
+            display_value = CharacterAttribute.display_value(attribute_type, value)
             spacing = " " * (max_len - len(name))
-            line_colored = f"{spacing}{name}: [35m{value}[0m\n"
+            line_colored = f"{spacing}{name}: [35m{display_value}[0m\n"
             info_block += line_colored
         info_block += "```"
         embed.add_field(name=attribute_title, value=info_block, inline=True)

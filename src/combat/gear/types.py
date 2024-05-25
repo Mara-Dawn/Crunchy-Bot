@@ -22,6 +22,7 @@ class EnchantmentType(str, Enum):
 
 
 class GearModifierType(str, Enum):
+
     WEAPON_DAMAGE_MIN = "Min Damage"
     WEAPON_DAMAGE_MAX = "Max Damage"
     ARMOR = "Armor"
@@ -40,6 +41,67 @@ class GearModifierType(str, Enum):
         for name in GearModifierType:
             max_len = max(max_len, len(name.value))
         return max_len
+
+    @staticmethod
+    def short_label(modifier_type: "GearModifierType"):
+        label_map = {
+            GearModifierType.WEAPON_DAMAGE_MIN: "MIN DMG",
+            GearModifierType.WEAPON_DAMAGE_MAX: "MAX DMG",
+            GearModifierType.ARMOR: "ARM",
+            GearModifierType.DEXTERITY: "DEX",
+            GearModifierType.CONSTITUTION: "CON",
+            GearModifierType.DEFENSE: "DEF",
+            GearModifierType.ATTACK: "ATK",
+            GearModifierType.MAGIC: "MGC",
+            GearModifierType.HEALING: "HLG",
+            GearModifierType.CRIT_RATE: "CRT %",
+            GearModifierType.CRIT_DAMAGE: "CRT DMG",
+        }
+
+        return label_map[modifier_type]
+
+    @staticmethod
+    def display_value(modifier_type: "GearModifierType", value: float):
+        integer_modifiers = [
+            GearModifierType.WEAPON_DAMAGE_MIN,
+            GearModifierType.WEAPON_DAMAGE_MAX,
+            GearModifierType.ARMOR,
+            GearModifierType.CONSTITUTION,
+            GearModifierType.DEXTERITY,
+        ]
+
+        float_modifiers = [
+            GearModifierType.DEFENSE,
+            GearModifierType.ATTACK,
+            GearModifierType.MAGIC,
+            GearModifierType.HEALING,
+            GearModifierType.CRIT_RATE,
+            GearModifierType.CRIT_DAMAGE,
+        ]
+
+        if modifier_type in integer_modifiers:
+            display_value = value
+            return f"{int(display_value)}"
+
+        if modifier_type in float_modifiers:
+            display_value = value
+            return f"{display_value:.2f}%"
+
+    @staticmethod
+    def prio():
+        return [
+            GearModifierType.WEAPON_DAMAGE_MIN,
+            GearModifierType.WEAPON_DAMAGE_MAX,
+            GearModifierType.ARMOR,
+            GearModifierType.DEXTERITY,
+            GearModifierType.CONSTITUTION,
+            GearModifierType.DEFENSE,
+            GearModifierType.ATTACK,
+            GearModifierType.MAGIC,
+            GearModifierType.HEALING,
+            GearModifierType.CRIT_RATE,
+            GearModifierType.CRIT_DAMAGE,
+        ]
 
 
 class GearBaseType(str, Enum):
@@ -104,3 +166,24 @@ class CharacterAttribute(str, Enum):
         for name in CharacterAttribute:
             max_len = max(max_len, len(name.value))
         return max_len
+
+    @staticmethod
+    def display_value(attribute_type: "CharacterAttribute", value: float):
+        integer_modifiers = [CharacterAttribute.MAX_HEALTH]
+
+        percentage_modifiers = [
+            CharacterAttribute.PHYS_DAMAGE_INCREASE,
+            CharacterAttribute.MAGIC_DAMAGE_INCREASE,
+            CharacterAttribute.HEALING_BONUS,
+            CharacterAttribute.CRIT_RATE,
+            CharacterAttribute.CRIT_DAMAGE,
+            CharacterAttribute.PHYS_DAMAGE_REDUCTION,
+            CharacterAttribute.MAGIC_DAMAGE_REDUCTION,
+        ]
+
+        if attribute_type in integer_modifiers:
+            return f"{int(value)}"
+
+        if attribute_type in percentage_modifiers:
+            percentage = value * 100
+            return f"{percentage:.1f}%"

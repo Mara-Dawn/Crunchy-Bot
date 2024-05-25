@@ -58,7 +58,8 @@ class Enemy:
         description: str,
         information: str,
         image: str,
-        level: int,
+        min_level: int,
+        max_level: int,
         min_hp: int,
         max_hp: int,
         min_dmg: int,
@@ -80,7 +81,8 @@ class Enemy:
         self.description = description
         self.information = information
         self.image = image
-        self.level = level
+        self.min_level = min_level
+        self.max_level = max_level
         self.min_hp = min_hp
         self.max_hp = max_hp
         self.min_dmg = min_dmg
@@ -98,22 +100,22 @@ class Enemy:
         self.crit_mod = crit_mod
 
         if self.min_gear_drop_count is None:
-            self.min_gear_drop_count = self.LOOT_MIN_AMOUNT_BY_LVL[self.level]
+            self.min_gear_drop_count = self.LOOT_MIN_AMOUNT_BY_LVL[self.min_level]
         if self.max_gear_drop_count is None:
-            self.max_gear_drop_count = self.LOOT_MAX_AMOUNT_BY_LVL[self.level]
+            self.max_gear_drop_count = self.LOOT_MAX_AMOUNT_BY_LVL[self.min_level]
 
         if self.min_beans_reward is None:
-            self.min_beans_reward = 95 * self.level
+            self.min_beans_reward = 95 * self.min_level
         if self.max_beans_reward is None:
-            self.max_beans_reward = 105 * self.level
+            self.max_beans_reward = 105 * self.min_level
 
         if self.bonus_loot_chance is None:
-            self.bonus_loot_chance = self.LOOT_BONUS_CHANCE_BY_LVL[self.level]
+            self.bonus_loot_chance = self.LOOT_BONUS_CHANCE_BY_LVL[self.min_level]
 
     def add_to_embed(
         self, embed: discord.Embed, show_info: bool = False, max_width: int = 56
     ) -> None:
-        title = f"> ~* Lvl. {self.level} - {self.name} *~"
+        title = f"> ~* Lvl. {self.min_level} - {self.name} *~"
         description = f'"{self.description}"'
 
         if len(description) < max_width:

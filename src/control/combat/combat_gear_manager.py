@@ -6,6 +6,7 @@ from combat.gear.bases import *  # noqa: F403
 from combat.gear.gear import Gear, GearBase
 from combat.gear.types import GearBaseType, GearModifierType, GearRarity, GearSlot
 from control.controller import Controller
+from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
@@ -114,16 +115,17 @@ class CombatGearManager(Service):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.log_name = "Combat Loot"
+        self.item_manager: ItemManager = self.controller.get_service(ItemManager)
 
     async def listen_for_event(self, event: BotEvent):
         pass
 
-    async def get_bases_by_lvl(self, min_lvl: int, max_lvl: int) -> list[GearBase]:
+    async def get_bases_by_lvl(self, item_level: int) -> list[GearBase]:
         matching_bases = []
         for base_type in GearBaseType:
             base_class = globals()[base_type]
             base: GearBase = base_class()
-            if base.min_level <= min_lvl and base.max_level >= max_lvl:
+            if item_level >= base.min_level and item_level <= base.max_level:
                 matching_bases.append(base)
 
         return matching_bases
@@ -131,7 +133,10 @@ class CombatGearManager(Service):
     async def get_random_base(self, item_level: int) -> GearBase:
         max_level = item_level
         min_level = max(1, int(item_level * self.ITEM_LEVEL_MIN_DROP))
-        bases = await self.get_bases_by_lvl(min_level, max_level)
+
+        drop_item_level = random.randint(min_level, max_level)
+
+        bases = await self.get_bases_by_lvl(drop_item_level)
         base = secrets.choice(bases)
         return base
 
@@ -240,19 +245,21 @@ class CombatGearManager(Service):
             gear = []
             for _ in range(gear_amount):
                 gear_piece = await self.generate_gear_piece(
-                    guild_id, member_id, enemy.level
+                    guild_id, member_id, enemy.min_level
                 )
                 gear.append(gear_piece)
 
             bonus_loot = None
             if bonus_loot_drop and len(enemy.loot_table) > 0:
-                weights = [
-                    (await self.get_item(guild_id, x)).weight for x in enemy.loot_table
+                loot_items = [
+                    (await self.item_manager.get_item(guild_id, x))
+                    for x in enemy.loot_table
                 ]
+                weights = [item.weight for item in loot_items]
                 weights = [1.0 / w for w in weights]
                 sum_weights = sum(weights)
                 weights = [w / sum_weights for w in weights]
-                bonus_loot = random.choices(enemy.loot_table, weights=weights)[0]
+                bonus_loot = random.choices(loot_items, weights=weights)[0]
 
             loot[combatant.member] = (beans_amount, gear, bonus_loot)
 

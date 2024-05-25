@@ -19,7 +19,7 @@ class DefaultStick(Gear):
         super().__init__(
             name="",
             base=Stick_T0(),
-            rarity=GearRarity.UNIQUE,
+            rarity=GearRarity.NORMAL,
             level=1,
             modifiers={
                 GearModifierType.WEAPON_DAMAGE_MIN: 1,
@@ -55,7 +55,7 @@ class DefaultCap(Gear):
         super().__init__(
             name="",
             base=HeadGear_T0(),
-            rarity=GearRarity.MAGIC,
+            rarity=GearRarity.NORMAL,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 5,
@@ -72,7 +72,7 @@ class DefaultShirt(Gear):
         super().__init__(
             name="",
             base=BodyGear_T0(),
-            rarity=GearRarity.RARE,
+            rarity=GearRarity.NORMAL,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 15,
@@ -89,7 +89,7 @@ class DefaultPants(Gear):
         super().__init__(
             name="",
             base=LegGear_T0(),
-            rarity=GearRarity.LEGENDARY,
+            rarity=GearRarity.NORMAL,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 10,
