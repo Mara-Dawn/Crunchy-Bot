@@ -12,6 +12,7 @@ from combat.gear import (
     DefaultCap,
     DefaultPants,
     DefaultShirt,
+    DefaultStick,
     DefaultWand,
     Gear,
 )
@@ -521,6 +522,7 @@ class Database:
     USER_GEAR_LEVEL_COL = "usgr_level"
     USER_GEAR_RARITY_COL = "usgr_rarity"
     USER_GEAR_GENERATOR_VERSION_COL = "usgr_generator_version"
+    USER_GEAR_IS_SCRAPPED_COL = "usgr_is_scrapped"
     CREATE_USER_GEAR_TABLE = f"""
     CREATE TABLE if not exists {USER_GEAR_TABLE} (
         {USER_GEAR_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -530,7 +532,8 @@ class Database:
         {USER_GEAR_BASE_TYPE_COL} TEXT,
         {USER_GEAR_LEVEL_COL} INTEGER,
         {USER_GEAR_RARITY_COL} TEXT,
-        {USER_GEAR_GENERATOR_VERSION_COL} TEXT
+        {USER_GEAR_GENERATOR_VERSION_COL} TEXT,
+        {USER_GEAR_IS_SCRAPPED_COL} TEXT
     );"""
 
     USER_GEAR_MODIFIER_TABLE = "usergearmodifiers"
@@ -2971,8 +2974,9 @@ class Database:
             {self.USER_GEAR_BASE_TYPE_COL},
             {self.USER_GEAR_LEVEL_COL},
             {self.USER_GEAR_RARITY_COL},
-            {self.USER_GEAR_GENERATOR_VERSION_COL})
-            VALUES (?, ?, ?, ?, ?, ?);
+            {self.USER_GEAR_GENERATOR_VERSION_COL},
+            {self.USER_GEAR_IS_SCRAPPED_COL})
+            VALUES (?, ?, ?, ?, ?, ?, ?);
         """
         task = (
             guild_id,
@@ -2981,6 +2985,7 @@ class Database:
             gear.level,
             gear.rarity.value,
             generator_version,
+            0,
         )
 
         insert_id = await self.__query_insert(command, task)
@@ -2999,6 +3004,7 @@ class Database:
             LEFT JOIN {self.USER_GEAR_MODIFIER_TABLE} ON {self.USER_GEAR_MODIFIER_GEAR_ID_COL} = {self.USER_GEAR_ID_COL}
             LEFT JOIN {self.USER_GEAR_SKILL_TABLE} ON {self.USER_GEAR_SKILL_GEAR_ID_COL} = {self.USER_GEAR_ID_COL}
             WHERE {self.USER_GEAR_ID_COL} = {int(gear_id)}
+            AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
             ;
         """
         rows = await self.__query_select(command)
@@ -3039,6 +3045,17 @@ class Database:
             enchantments=[],
             id=id,
         )
+
+    async def delete_gear_by_id(self, gear_id: int):
+        if gear_id is None:
+            return 
+        command = f"""
+            UPDATE {self.USER_GEAR_TABLE} SET
+            {self.USER_GEAR_IS_SCRAPPED_COL} = 1
+            WHERE {self.USER_GEAR_ID_COL} = {int(gear_id)};
+        """
+
+        await self.__query_insert(command)
 
     async def create_user_equipment(self, guild_id: int, user_id: int) -> int:
         command = f"""
@@ -3099,7 +3116,7 @@ class Database:
             case GearSlot.WEAPON:
                 gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_WEAPON_ID_COL])
                 if gear is None:
-                    gear = DefaultWand()
+                    gear = DefaultStick()
                 equipped.append(gear)
             case GearSlot.HEAD:
                 gear = await self.get_gear_by_id(
@@ -3158,7 +3175,18 @@ class Database:
             return None
         row = rows[0]
 
-        weapon = await self.get_gear_by_id(row[self.USER_EQUIPMENT_WEAPON_ID_COL])
+        weapon = None
+        weapon_id = row[self.USER_EQUIPMENT_WEAPON_ID_COL]
+        if weapon_id is not None and weapon_id < 0:
+            match weapon_id:
+                case -1:
+                    weapon = DefaultStick()
+                case -2:
+                    weapon = DefaultWand()
+        
+        if weapon is None:
+            weapon = await self.get_gear_by_id(weapon_id)
+
         head_gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_HEADGEAR_ID_COL])
         body_gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_BODYGEAR_ID_COL])
         leg_gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_LEGGEAR_ID_COL])
@@ -3186,19 +3214,20 @@ class Database:
 
         column = ""
 
-        match gear.base.slot:
-            case GearSlot.WEAPON:
-                column = self.USER_EQUIPMENT_WEAPON_ID_COL
-            case GearSlot.HEAD:
-                column = self.USER_EQUIPMENT_HEADGEAR_ID_COL
-            case GearSlot.BODY:
-                column = self.USER_EQUIPMENT_BODYGEAR_ID_COL
-            case GearSlot.LEGS:
-                column = self.USER_EQUIPMENT_LEGGEAR_ID_COL
-            case GearSlot.ACCESSORY:
-                column = self.USER_EQUIPMENT_ACCESSORY_1_ID_COL
-                if acc_slot_2:
-                    column = self.USER_EQUIPMENT_ACCESSORY_2_ID_COL
+        if acc_slot_2:
+            column = self.USER_EQUIPMENT_ACCESSORY_2_ID_COL
+        else:
+            match gear.base.slot:
+                case GearSlot.WEAPON:
+                    column = self.USER_EQUIPMENT_WEAPON_ID_COL
+                case GearSlot.HEAD:
+                    column = self.USER_EQUIPMENT_HEADGEAR_ID_COL
+                case GearSlot.BODY:
+                    column = self.USER_EQUIPMENT_BODYGEAR_ID_COL
+                case GearSlot.LEGS:
+                    column = self.USER_EQUIPMENT_LEGGEAR_ID_COL
+                case GearSlot.ACCESSORY:
+                    column = self.USER_EQUIPMENT_ACCESSORY_1_ID_COL
 
         command = f"""
             UPDATE {self.USER_EQUIPMENT_TABLE} SET
@@ -3207,7 +3236,12 @@ class Database:
             WHERE {self.USER_EQUIPMENT_GUILD_ID_COL} = ?
             AND {self.USER_EQUIPMENT_MEMBER_ID_COL} = ?;
         """
-        task = (gear.id, guild_id, member_id)
+
+        id = None
+        if gear is not None:
+            id = gear.id
+
+        task = (id, guild_id, member_id)
         await self.__query_insert(command, task)
 
     async def get_user_armory(self, guild_id: int, member_id: int) -> list[Gear]:
@@ -3216,6 +3250,7 @@ class Database:
             SELECT * FROM {self.USER_GEAR_TABLE} 
             WHERE {self.USER_GEAR_GUILD_ID_COL} = ?
             AND {self.USER_GEAR_MEMBER_ID_COL} = ?
+            AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
             ;
         """
         task = (guild_id, member_id)

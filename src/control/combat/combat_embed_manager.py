@@ -194,7 +194,7 @@ class CombatEmbedManager(Service):
         current_hp = await self.actor_manager.get_actor_current_hp(
             actor, context.combat_events
         )
-        max_hp = actor.max_hp
+        max_hp = int(actor.max_hp)
         self.add_health_bar(embed, current_hp, max_hp, hide_hp=False)
 
         embed.add_field(name="Your Skills:", value="", inline=False)

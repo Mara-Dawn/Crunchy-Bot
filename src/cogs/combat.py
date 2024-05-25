@@ -14,6 +14,7 @@ from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from discord import app_commands
 from discord.ext import commands, tasks
+from items.types import ItemType
 from view.combat.embed import EquipmentHeadEmbed
 from view.combat.equipment_view import EquipmentView
 
@@ -176,6 +177,9 @@ class Combat(commands.Cog):
         # if not await self.__check_enabled(interaction):
         #     return
 
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
         log_message = (
             f"{interaction.user.name} used command `{interaction.command.name}`."
         )
@@ -183,7 +187,15 @@ class Combat(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         character = await self.actor_manager.get_character(interaction.user)
-        view = EquipmentView(self.controller, interaction, character)
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        view = EquipmentView(self.controller, interaction, character, scrap_balance)
 
         embeds = []
         embeds.append(EquipmentHeadEmbed(interaction.user))

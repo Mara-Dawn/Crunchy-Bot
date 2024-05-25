@@ -20,6 +20,7 @@ class EquipmentSelectView(ViewMenu):
         interaction: discord.Interaction,
         gear_inventory: list[Gear],
         currently_equipped: list[Gear],
+        scrap_balance: int,
         slot: GearSlot,
     ):
         super().__init__(timeout=300)
@@ -30,6 +31,7 @@ class EquipmentSelectView(ViewMenu):
         self.guild_id = interaction.guild_id
         self.gear = gear_inventory
         self.current = currently_equipped
+        self.scrap_balance = scrap_balance
 
         self.current_page = 0
         self.selected: list[Gear] = []
@@ -56,7 +58,18 @@ class EquipmentSelectView(ViewMenu):
         )
 
     async def listen_for_ui_event(self, event: UIEvent):
-        pass
+        match event.type:
+            case UIEventType.SCRAP_BALANCE_CHANGED:
+                guild_id = event.payload[0]
+                member_id = event.payload[1]
+                balance = event.payload[2]
+                if member_id != self.member_id or guild_id != self.guild_id:
+                    return
+                await self.refresh_ui(scrap_balance=balance)
+                return
+
+        if event.view_id != self.id:
+            return
 
     def filter_items(self):
         self.filtered_items = [
@@ -124,21 +137,41 @@ class EquipmentSelectView(ViewMenu):
         if self.filter == GearSlot.ACCESSORY:
             max_values = 2
 
+        disable_equip = disabled
+        if len(self.selected) > max_values:
+            disable_equip = True
+
+        disable_dismantle = disabled
+        for selected_gear in self.selected:
+            if selected_gear.id in [gear.id for gear in self.current]:
+                disable_dismantle = True
+
+            if selected_gear.id < 0:
+                # Default Gear
+                disable_dismantle = True
+
         self.clear_items()
         if len(self.display_items) > 0:
-            self.add_item(Dropdown(self.display_items, self.selected, max_values))
+            self.add_item(Dropdown(self.display_items, self.selected))
         self.add_item(PageButton("<", False))
-        self.add_item(SelectButton(disabled))
+        self.add_item(SelectButton(disable_equip))
         self.add_item(PageButton(">", True))
         self.add_item(CurrentPageButton(page_display))
-        self.add_item(DismantleButton(disabled))
+        self.add_item(DismantleButton(disable_dismantle))
         self.add_item(BackButton())
+        self.add_item(ScrapBalanceButton(self.scrap_balance))
 
     async def refresh_ui(
-        self, gear_inventory: list[Gear] = None, disabled: bool = False
+        self,
+        gear_inventory: list[Gear] = None,
+        scrap_balance: int = None,
+        disabled: bool = False,
     ):
         if self.message is None:
             return
+
+        if scrap_balance is not None:
+            self.scrap_balance = scrap_balance
 
         if gear_inventory is not None:
             self.gear = gear_inventory
@@ -215,7 +248,7 @@ class SelectButton(discord.ui.Button):
     def __init__(self, disabled: bool = True):
 
         super().__init__(
-            label="Select",
+            label="Equip",
             style=discord.ButtonStyle.green,
             row=1,
             disabled=disabled,
@@ -234,7 +267,7 @@ class DismantleButton(discord.ui.Button):
         super().__init__(
             label="Dismantle",
             style=discord.ButtonStyle.red,
-            row=1,
+            row=2,
             disabled=disabled,
         )
 
@@ -268,7 +301,6 @@ class Dropdown(discord.ui.Select):
         self,
         gear: list[Gear],
         selected: list[Gear],
-        max_values: int = 1,
         disabled: bool = False,
     ):
 
@@ -299,7 +331,7 @@ class Dropdown(discord.ui.Select):
             )
             options.append(option)
 
-        max_values = min(2, len(gear))
+        max_values = min(SelectGearHeadEmbed.ITEMS_PER_PAGE, len(gear))
 
         super().__init__(
             placeholder="Select a piece of equipment.",
@@ -338,3 +370,16 @@ class CurrentPageButton(discord.ui.Button):
         super().__init__(
             label=label, style=discord.ButtonStyle.grey, row=1, disabled=True
         )
+
+
+class ScrapBalanceButton(discord.ui.Button):
+
+    def __init__(self, balance: int):
+        self.balance = balance
+        super().__init__(label=f"⚙️{balance}", style=discord.ButtonStyle.blurple, row=1)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentSelectView = self.view
+
+        if await view.interaction_check(interaction):
+            await interaction.response.defer(ephemeral=True)

@@ -167,3 +167,5 @@ class UIEventType(str, Enum):
     GEAR_DISMANTLE = "gear_dismantle"
     GEAR_OPEN_SECELT = "gear_open_select"
     GEAR_OPEN_OVERVIEW = "gear_open_overview"
+
+    SCRAP_BALANCE_CHANGED = "scrap_balance_changed"

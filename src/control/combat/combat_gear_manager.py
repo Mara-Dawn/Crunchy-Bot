@@ -182,19 +182,9 @@ class CombatGearManager(Service):
         modifier_types.extend(base.modifiers)
 
         for modifier_type in modifier_types:
-            slot_scaling = (
-                self.SLOT_SCALING[base.slot]
-                if modifier_type not in self.NON_BASE_SCALING_MODIFIERS
-                else 1
+            min_roll, max_roll = await self.get_modifier_boundaries(
+                base, item_level, modifier_type
             )
-
-            base_value = (
-                self.MODIFIER_BASE[modifier_type]
-                + self.MODIFIER_SCALING[modifier_type] * base.scaling * item_level
-            ) * slot_scaling
-
-            min_roll = base_value * (1 - self.MODIFIER_RANGE[modifier_type])
-            max_roll = base_value * (1 + self.MODIFIER_RANGE[modifier_type])
             value = random.uniform(min_roll, max_roll)
 
             if modifier_type in self.INT_MODIFIERS:
@@ -203,6 +193,25 @@ class CombatGearManager(Service):
             modifiers[modifier_type] = value
 
         return modifiers
+
+    async def get_modifier_boundaries(
+        self, base: GearBase, item_level: int, modifier_type: GearModifierType
+    ):
+        slot_scaling = (
+            self.SLOT_SCALING[base.slot]
+            if modifier_type not in self.NON_BASE_SCALING_MODIFIERS
+            else 1
+        )
+
+        base_value = (
+            self.MODIFIER_BASE[modifier_type]
+            + self.MODIFIER_SCALING[modifier_type] * base.scaling * item_level
+        ) * slot_scaling
+
+        min_roll = base_value * (1 - self.MODIFIER_RANGE[modifier_type])
+        max_roll = base_value * (1 + self.MODIFIER_RANGE[modifier_type])
+
+        return min_roll, max_roll
 
     async def generate_gear_piece(
         self,
@@ -293,6 +302,23 @@ class CombatGearManager(Service):
             DefaultStick(),
             DefaultWand(),
         ]
+
+    async def get_gear_score(self, gear: Gear) -> float:
+        item_level_weight = 1
+        rarity_weight = 1
+
+        rarity_weight = {
+            GearRarity.NORMAL: 1,
+            GearRarity.MAGIC: 3,
+            GearRarity.RARE: 5,
+            GearRarity.LEGENDARY: 10,
+            GearRarity.UNIQUE: 8,
+        }
+
+        gear_score = gear.level * item_level_weight
+        gear_score *= rarity_weight[gear.rarity]
+
+        return gear_score
 
     async def test_generation(self):
         for _ in range(10):

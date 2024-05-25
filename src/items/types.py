@@ -74,6 +74,8 @@ class ItemType(str, Enum):
     BAKED_SEED = "BakedSeed"
     FLASH_SEED = "FlashSeed"
 
+    SCRAP = "Scrap"
+
 
 class ItemState(str, Enum):
     ENABLED = "enabled"

@@ -61,7 +61,7 @@ class CombatActorManager(Service):
 
             if health <= 0:
                 return 0
-        return health
+        return int(health)
 
     def get_opponent(
         self,

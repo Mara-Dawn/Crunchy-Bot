@@ -17,7 +17,7 @@ class DefaultStick(Gear):
     def __init__(self):
 
         super().__init__(
-            name="",
+            name="Stick",
             base=Stick_T0(),
             rarity=GearRarity.NORMAL,
             level=1,
@@ -36,7 +36,7 @@ class DefaultWand(Gear):
     def __init__(self):
 
         super().__init__(
-            name="",
+            name="Wand",
             base=Wand_T0(),
             rarity=GearRarity.NORMAL,
             level=1,
@@ -55,7 +55,7 @@ class DefaultCap(Gear):
     def __init__(self):
 
         super().__init__(
-            name="",
+            name="Cap",
             base=HeadGear_T0(),
             rarity=GearRarity.NORMAL,
             level=1,
@@ -73,7 +73,7 @@ class DefaultShirt(Gear):
     def __init__(self):
 
         super().__init__(
-            name="",
+            name="Shirt",
             base=BodyGear_T0(),
             rarity=GearRarity.NORMAL,
             level=1,
@@ -91,7 +91,7 @@ class DefaultPants(Gear):
     def __init__(self):
 
         super().__init__(
-            name="",
+            name="Pants",
             base=LegGear_T0(),
             rarity=GearRarity.NORMAL,
             level=1,

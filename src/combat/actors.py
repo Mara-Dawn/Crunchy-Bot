@@ -11,7 +11,7 @@ from combat.skills.types import DamageInstance, SkillEffect, SkillType
 class Actor:
 
     CHARACTER_ENCOUNTER_SCALING_FACOTR = 0.9
-    OPPONENT_ENCOUNTER_SCALING_FACTOR = 1.05
+    OPPONENT_ENCOUNTER_SCALING_FACTOR = 1.2
     OPPONENT_LEVEL_SCALING_FACTOR = 0.5
 
     def __init__(
@@ -229,7 +229,9 @@ class Opponent(Actor):
         weapon_min_roll = self.enemy.min_dmg
         weapon_max_roll = self.enemy.max_dmg
 
-        modifier = 1 + (self.OPPONENT_LEVEL_SCALING_FACTOR * (self.level - self.enemy.min_level))
+        modifier = 1 + (
+            self.OPPONENT_LEVEL_SCALING_FACTOR * (self.level - self.enemy.min_level)
+        )
 
         match skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
