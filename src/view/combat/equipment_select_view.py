@@ -3,6 +3,7 @@ import contextlib
 import discord
 from combat.gear.gear import Gear
 from combat.gear.types import GearModifierType, GearSlot
+from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -42,6 +43,9 @@ class EquipmentSelectView(ViewMenu):
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
         self.refresh_elements()
+        self.embed_manager: CombatEmbedManager = controller.get_service(
+            CombatEmbedManager
+        )
 
     async def listen_for_ui_event(self, event: UIEvent):
         pass
@@ -123,9 +127,6 @@ class EquipmentSelectView(ViewMenu):
             self.filter_items()
             self.current_page = min(self.current_page, (self.page_count - 1))
 
-        if len(self.filtered_items) <= 0:
-            return
-
         if self.selected is None or len(self.selected) <= 0:
             disabled = True
 
@@ -147,6 +148,16 @@ class EquipmentSelectView(ViewMenu):
         embeds = []
         files = {}
         embeds.append(SelectGearHeadEmbed(self.member))
+
+        if len(self.display_items) <= 0:
+            empty_embed = discord.Embed(
+                title="Empty", color=discord.Colour.light_grey()
+            )
+            self.embed_manager.add_text_bar(
+                empty_embed, "", "Seems like there is nothing here."
+            )
+            empty_embed.set_thumbnail(url=self.controller.bot.user.display_avatar)
+            embeds.append(empty_embed)
 
         for gear in self.display_items:
             embeds.append(gear.get_embed())

@@ -10,9 +10,9 @@ from combat.skills.types import DamageInstance, SkillEffect, SkillType
 
 class Actor:
 
-    CHARACTER_SCALING_FACOTR = 0.9
-    OPPONENT_SCALING_FACTOR = 1.05
-    OPPONENT_LEVEL_SCALING_FACTOR = 0.8
+    CHARACTER_ENCOUNTER_SCALING_FACOTR = 0.9
+    OPPONENT_ENCOUNTER_SCALING_FACTOR = 1.05
+    OPPONENT_LEVEL_SCALING_FACTOR = 0.5
 
     def __init__(
         self,
@@ -42,6 +42,9 @@ class Actor:
     def get_skill_damage(
         self, skill: Skill, combatant_count: int = 1, force_roll: int = None
     ) -> list[DamageInstance]:
+        pass
+
+    def get_damage_after_defense(self, skill: Skill, incoming_damage: int) -> float:
         pass
 
 
@@ -99,7 +102,6 @@ class Character(Actor):
         self, skill: Skill, combatant_count: int = 1, force_roll: int = None
     ) -> list[DamageInstance]:
         skill_base_value = skill.base_value
-
         weapon_min_roll = self.equipment.weapon.modifiers[
             GearModifierType.WEAPON_DAMAGE_MIN
         ]
@@ -123,7 +125,9 @@ class Character(Actor):
 
         encounter_scaling = 1
         if combatant_count > 1:
-            encounter_scaling = 1 / combatant_count * self.CHARACTER_SCALING_FACOTR
+            encounter_scaling = (
+                1 / combatant_count * self.CHARACTER_ENCOUNTER_SCALING_FACOTR
+            )
 
         attack_count = skill.hits
         attacks = []
@@ -152,6 +156,28 @@ class Character(Actor):
             attacks.append(damage_instance)
 
         return attacks
+
+    def get_damage_after_defense(self, skill: Skill, incoming_damage: int) -> float:
+
+        modifier = 1
+        flat_reduction = 0
+
+        match skill.skill_effect:
+            case SkillEffect.PHYSICAL_DAMAGE:
+                modifier -= self.equipment.attributes[
+                    CharacterAttribute.PHYS_DAMAGE_REDUCTION
+                ]
+                flat_reduction = int(
+                    self.equipment.gear_modifiers[GearModifierType.ARMOR] / 20
+                )
+            case SkillEffect.MAGICAL_DAMAGE:
+                modifier -= self.equipment.attributes[
+                    CharacterAttribute.MAGIC_DAMAGE_REDUCTION
+                ]
+            case SkillEffect.HEALING:
+                pass
+
+        return int(max(0, ((incoming_damage - flat_reduction) * modifier)))
 
 
 class Opponent(Actor):
@@ -203,24 +229,40 @@ class Opponent(Actor):
         weapon_min_roll = self.enemy.min_dmg
         weapon_max_roll = self.enemy.max_dmg
 
-        modifier = 1 + (self.OPPONENT_LEVEL_SCALING_FACTOR * self.level)
+        modifier = 1 + (self.OPPONENT_LEVEL_SCALING_FACTOR * (self.level - self.enemy.min_level))
+
+        match skill.skill_effect:
+            case SkillEffect.PHYSICAL_DAMAGE:
+                modifier += self.enemy.attributes[
+                    CharacterAttribute.PHYS_DAMAGE_INCREASE
+                ]
+            case SkillEffect.MAGICAL_DAMAGE:
+                modifier += self.emeny.attributes[
+                    CharacterAttribute.MAGIC_DAMAGE_INCREASE
+                ]
+            case SkillEffect.HEALING:
+                modifier += self.emeny.attributes[CharacterAttribute.HEALING_BONUS]
+
         encounter_scaling = 1
         attack_count = skill.hits
         if combatant_count > 1:
             attack_count *= max(1, int(combatant_count * 0.7))
             encounter_scaling = (
-                combatant_count / attack_count * Actor.OPPONENT_SCALING_FACTOR
+                combatant_count / attack_count * Actor.OPPONENT_ENCOUNTER_SCALING_FACTOR
             )
 
         attacks = []
         for _ in range(attack_count):
             weapon_roll = random.randint(weapon_min_roll, weapon_max_roll)
+
             crit_roll = random.random()
             critical_hit = False
             critical_modifier = 1
-            if crit_roll < self.enemy.crit_chance:
+            if crit_roll < self.enemy.attributes[CharacterAttribute.CRIT_RATE]:
                 critical_hit = True
-                critical_modifier = self.enemy.crit_mod
+                critical_modifier = self.enemy.attributes[
+                    CharacterAttribute.CRIT_DAMAGE
+                ]
 
             damage_instance = DamageInstance(
                 weapon_roll=weapon_roll,
@@ -233,3 +275,22 @@ class Opponent(Actor):
             attacks.append(damage_instance)
 
         return attacks
+
+    def get_damage_after_defense(self, skill: Skill, incoming_damage: int) -> float:
+
+        modifier = 1
+        flat_reduction = 0
+
+        match skill.skill_effect:
+            case SkillEffect.PHYSICAL_DAMAGE:
+                modifier -= self.enemy.attributes[
+                    CharacterAttribute.PHYS_DAMAGE_REDUCTION
+                ]
+            case SkillEffect.MAGICAL_DAMAGE:
+                modifier -= self.enemy.attributes[
+                    CharacterAttribute.MAGIC_DAMAGE_REDUCTION
+                ]
+            case SkillEffect.HEALING:
+                pass
+
+        return int(max(0, ((incoming_damage - flat_reduction) * modifier)))

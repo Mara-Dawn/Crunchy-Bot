@@ -218,6 +218,7 @@ class CombatEmbedManager(Service):
     async def get_embed_attack_data(
         self,
         current_actor: Actor,
+        target: Actor,
         skill: Skill,
         damage_instance: DamageInstance,
         current_hp: int,
@@ -226,19 +227,23 @@ class CombatEmbedManager(Service):
         damage_info = ""
         new_hp = current_hp
 
+        total_damage = target.get_damage_after_defense(
+            skill, damage_instance.scaled_value
+        )
+
         display_dmg = damage_instance.value
         if current_actor.is_enemy:
-            display_dmg = damage_instance.scaled_value
+            display_dmg = total_damage
 
         match skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
                 outcome_title = "Attack Damage"
                 damage_info = f"**{display_dmg}** [phys]"
-                new_hp = max(0, current_hp - damage_instance.scaled_value)
+                new_hp = max(0, current_hp - total_damage)
             case SkillEffect.MAGICAL_DAMAGE:
                 outcome_title = "Spell Damage"
                 damage_info = f"**{display_dmg}** [magic]"
-                new_hp = max(0, current_hp - damage_instance.scaled_value)
+                new_hp = max(0, current_hp - total_damage)
 
         if damage_instance.is_crit:
             damage_info = "CRIT! " + damage_info
@@ -298,6 +303,7 @@ class CombatEmbedManager(Service):
 
             outcome_title, damage_info, new_hp = await self.get_embed_attack_data(
                 current_actor=from_actor,
+                target=target,
                 skill=skill,
                 damage_instance=instance,
                 current_hp=current_hp,

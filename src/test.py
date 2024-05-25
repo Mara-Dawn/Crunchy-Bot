@@ -14,6 +14,8 @@ if __name__ == "__main__":
             print(encounter_scaling)
             attack_count = max(1, int(encounter_scaling))
             print(attack_count)
-            encounter_scaling = count / attack_count * Actor.OPPONENT_SCALING_FACTOR
+            encounter_scaling = (
+                count / attack_count * Actor.OPPONENT_ENCOUNTER_SCALING_FACTOR
+            )
             print(encounter_scaling)
             print(attack_count * encounter_scaling)

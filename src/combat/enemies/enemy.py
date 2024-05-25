@@ -1,5 +1,6 @@
 import discord
 from combat.enemies.types import EnemyType
+from combat.gear.types import CharacterAttribute
 from combat.skills.skill import Skill
 from items.types import ItemType
 
@@ -73,8 +74,7 @@ class Enemy:
         bonus_loot_chance: float = None,
         weighting: int = 100,
         initiative: int = 10,
-        crit_chance: float = 0.1,
-        crit_mod: float = 1.5,
+        attribute_overrides: dict[CharacterAttribute, float] = None,
     ):
         self.name = name
         self.type = type
@@ -96,8 +96,21 @@ class Enemy:
         self.bonus_loot_chance = bonus_loot_chance
         self.weighting = weighting
         self.initiative = initiative
-        self.crit_chance = crit_chance
-        self.crit_mod = crit_mod
+
+        self.attributes: dict[CharacterAttribute, float] = {
+            CharacterAttribute.PHYS_DAMAGE_INCREASE: 0,
+            CharacterAttribute.MAGIC_DAMAGE_INCREASE: 0,
+            CharacterAttribute.HEALING_BONUS: 0,
+            CharacterAttribute.CRIT_RATE: 0.1,
+            CharacterAttribute.CRIT_DAMAGE: 1.5,
+            CharacterAttribute.PHYS_DAMAGE_REDUCTION: 0,
+            CharacterAttribute.MAGIC_DAMAGE_REDUCTION: 0,
+            CharacterAttribute.MAX_HEALTH: 50,
+        }
+
+        if attribute_overrides is not None:
+            for attribute_type, value in attribute_overrides:
+                self.attributes[attribute_type] = value
 
         if self.min_gear_drop_count is None:
             self.min_gear_drop_count = self.LOOT_MIN_AMOUNT_BY_LVL[self.min_level]

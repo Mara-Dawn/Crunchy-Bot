@@ -5,6 +5,7 @@ from datalayer.database import Database
 from discord.ext import commands
 from events.types import UIEventType
 from events.ui_event import UIEvent
+from view.combat.embed import EquipmentHeadEmbed, SelectGearHeadEmbed
 from view.combat.equipment_select_view import EquipmentSelectView
 from view.combat.equipment_view import EquipmentView
 
@@ -64,8 +65,18 @@ class EquipmentViewController(ViewController):
 
         view = EquipmentSelectView(self.controller, interaction, gear_inventory, slot)
 
+        embeds = []
+        embeds.append(SelectGearHeadEmbed(interaction.user))
+
+        loading_embed = discord.Embed(
+            title="Loadin Gear", color=discord.Colour.light_grey()
+        )
+        self.embed_manager.add_text_bar(loading_embed, "", "Please Wait...")
+        loading_embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embeds.append(loading_embed)
+
         message = await interaction.original_response()
-        await message.edit(view=view)
+        await message.edit(embeds=embeds, view=view, attachments=[])
         view.set_message(message)
         await view.refresh_ui()
         self.controller.detach_view_by_id(view_id)
@@ -74,8 +85,18 @@ class EquipmentViewController(ViewController):
         character = await self.actor_manager.get_character(interaction.user)
         view = EquipmentView(self.controller, interaction, character)
 
+        embeds = []
+        embeds.append(EquipmentHeadEmbed(interaction.user))
+
+        loading_embed = discord.Embed(
+            title="Loadin Gear", color=discord.Colour.light_grey()
+        )
+        self.embed_manager.add_text_bar(loading_embed, "", "Please Wait...")
+        loading_embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embeds.append(loading_embed)
+
         message = await interaction.original_response()
-        await message.edit(view=view)
+        await message.edit(embeds=embeds, view=view, attachments=[])
         view.set_message(message)
         await view.refresh_ui()
         self.controller.detach_view_by_id(view_id)

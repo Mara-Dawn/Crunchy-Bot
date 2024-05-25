@@ -6,7 +6,7 @@ class EquipmentHeadEmbed(discord.Embed):
     def __init__(
         self,
         member: discord.Member,
-        max_width: int = 44,
+        max_width: int = 45,
     ):
         description = "Here you can see the gear you are currently wearing."
         if len(description) < max_width:
@@ -28,7 +28,7 @@ class AttributesHeadEmbed(discord.Embed):
     def __init__(
         self,
         member: discord.Member,
-        max_width: int = 44,
+        max_width: int = 45,
     ):
         description = "Here you can see how your gear affects you in combat."
         if len(description) < max_width:
@@ -50,7 +50,7 @@ class SkillsHeadEmbed(discord.Embed):
     def __init__(
         self,
         member: discord.Member,
-        max_width: int = 44,
+        max_width: int = 45,
     ):
         description = "Here you can see your currently active skills."
         if len(description) < max_width:
@@ -74,7 +74,7 @@ class SelectGearHeadEmbed(discord.Embed):
     def __init__(
         self,
         member: discord.Member,
-        max_width: int = 44,
+        max_width: int = 45,
     ):
         description = "Select the piece of gear you want to equip."
         if len(description) < max_width:

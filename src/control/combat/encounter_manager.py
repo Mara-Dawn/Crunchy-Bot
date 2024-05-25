@@ -31,7 +31,8 @@ from view.combat.engage_view import EnemyEngageView
 class EncounterManager(Service):
 
     TURN_WAIT = 4
-    ENCOUNTER_MIN_LVL_SCALE = 0.75
+    ENCOUNTER_MIN_LVL_SCALING = 0.75
+    ENEMY_HEALTH_SCALING = 0.6
 
     def __init__(
         self,
@@ -95,7 +96,7 @@ class EncounterManager(Service):
 
     async def create_encounter(self, guild_id: int):
         max_encounter_level = await self.database.get_guild_level(guild_id)
-        min_encounter_level = int(max_encounter_level * self.ENCOUNTER_MIN_LVL_SCALE)
+        min_encounter_level = int(max_encounter_level * self.ENCOUNTER_MIN_LVL_SCALING)
 
         encounter_level = random.randint(min_encounter_level, max_encounter_level)
 
@@ -113,6 +114,9 @@ class EncounterManager(Service):
 
         enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
         enemy_health = random.randint(enemy.min_hp, enemy.max_hp)
+        enemy_health *= 1 + (
+            self.ENEMY_HEALTH_SCALING * (encounter_level - enemy.min_level)
+        )
 
         return Encounter(guild_id, enemy.type, encounter_level, enemy_health)
 
