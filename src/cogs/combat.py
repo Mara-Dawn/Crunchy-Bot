@@ -68,7 +68,7 @@ class Combat(commands.Cog):
     @commands.Cog.listener("on_ready")
     async def on_ready_combat(self):
         # self.random_encounter_task.start()
-        # await self.testing.test()
+        await self.testing.test()
         self.logger.log("init", "Combat loaded.", cog=self.__cog_name__)
 
     @commands.Cog.listener("on_guild_join")

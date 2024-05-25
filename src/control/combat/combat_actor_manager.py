@@ -66,6 +66,7 @@ class CombatActorManager(Service):
     def get_opponent(
         self,
         enemy: Enemy,
+        enemy_level: int,
         max_hp: int,
         encounter_events: list[EncounterEvent],
         combat_events: list[CombatEvent],
@@ -81,6 +82,7 @@ class CombatActorManager(Service):
 
         return Opponent(
             enemy=enemy,
+            level=enemy_level,
             max_hp=max_hp,
             skills=skills,
             skill_cooldowns=skill_cooldowns,

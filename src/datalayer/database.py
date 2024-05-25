@@ -561,12 +561,12 @@ class Database:
     CREATE TABLE if not exists {USER_EQUIPMENT_TABLE} (
         {USER_EQUIPMENT_GUILD_ID_COL} INTEGER,
         {USER_EQUIPMENT_MEMBER_ID_COL} INTEGER,
-        {USER_EQUIPMENT_WEAPON_ID_COL} INTEGER,
-        {USER_EQUIPMENT_HEADGEAR_ID_COL} INTEGER,
-        {USER_EQUIPMENT_BODYGEAR_ID_COL} INTEGER,
-        {USER_EQUIPMENT_LEGGEAR_ID_COL} INTEGER,
-        {USER_EQUIPMENT_ACCESSORY_1_ID_COL} INTEGER,
-        {USER_EQUIPMENT_ACCESSORY_2_ID_COL} INTEGER,
+        {USER_EQUIPMENT_WEAPON_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_EQUIPMENT_HEADGEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_EQUIPMENT_BODYGEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_EQUIPMENT_LEGGEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_EQUIPMENT_ACCESSORY_1_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_EQUIPMENT_ACCESSORY_2_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
         PRIMARY KEY ({USER_EQUIPMENT_GUILD_ID_COL}, {USER_EQUIPMENT_MEMBER_ID_COL})
     );"""
 
@@ -2954,15 +2954,16 @@ class Database:
             )
             await self.__query_insert(command, task)
 
-    async def log_user_gear(self, guild_id: int, member_id: int, gear: Gear):
+    async def log_user_gear(self, guild_id: int, member_id: int, gear: Gear, generator_version: str):
         command = f"""
             INSERT INTO {self.USER_GEAR_TABLE} (
             {self.USER_GEAR_GUILD_ID_COL},
             {self.USER_GEAR_MEMBER_ID_COL},
             {self.USER_GEAR_BASE_TYPE_COL},
             {self.USER_GEAR_LEVEL_COL},
-            {self.USER_GEAR_RARITY_COL})
-            VALUES (?, ?, ?, ?, ?);
+            {self.USER_GEAR_RARITY_COL},
+            {self.USER_GEAR_GENERATOR_VERSION_COL})
+            VALUES (?, ?, ?, ?, ?, ?);
         """
         task = (
             guild_id,
@@ -2970,6 +2971,7 @@ class Database:
             gear.base.type.value,
             gear.level,
             gear.rarity.value,
+            generator_version,
         )
 
         insert_id = await self.__query_insert(command, task)

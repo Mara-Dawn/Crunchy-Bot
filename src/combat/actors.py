@@ -12,6 +12,7 @@ class Actor:
 
     CHARACTER_SCALING_FACOTR = 0.9
     OPPONENT_SCALING_FACTOR = 1.05
+    OPPONENT_LEVEL_SCALING_FACTOR = 0.8
 
     def __init__(
         self,
@@ -158,6 +159,7 @@ class Opponent(Actor):
     def __init__(
         self,
         enemy: Enemy,
+        level: int,
         max_hp: int,
         skills: list[Skill],
         skill_cooldowns: dict[SkillType, int],
@@ -174,6 +176,7 @@ class Opponent(Actor):
             defeated=defeated,
             image=f"attachment://{enemy.image}",
         )
+        self.level = level
         self.enemy = enemy
 
     def get_skill_data(self, skill: Skill) -> SkillData:
@@ -200,7 +203,7 @@ class Opponent(Actor):
         weapon_min_roll = self.enemy.min_dmg
         weapon_max_roll = self.enemy.max_dmg
 
-        modifier = 1
+        modifier = 1 + (self.OPPONENT_LEVEL_SCALING_FACTOR * self.level)
         encounter_scaling = 1
         attack_count = skill.hits
         if combatant_count > 1:

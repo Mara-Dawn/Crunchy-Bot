@@ -68,7 +68,7 @@ class CombatGearManager(Service):
         GearModifierType.CRIT_DAMAGE: 1,
         GearModifierType.CRIT_RATE: 1,
         GearModifierType.DEFENSE: 1,
-        GearModifierType.CONSTITUTION: 5,
+        GearModifierType.CONSTITUTION: 3,
         GearModifierType.DEXTERITY: 1,
     }
     MODIFIER_SCALING = {
@@ -171,11 +171,8 @@ class CombatGearManager(Service):
         for modifier_type in modifier_types:
             base_value = (
                 self.MODIFIER_BASE[modifier_type]
-                + self.SLOT_SCALING[base.slot]
-                * self.MODIFIER_SCALING[modifier_type]
-                * base.scaling
-                * item_level
-            )
+                + self.MODIFIER_SCALING[modifier_type] * base.scaling * item_level
+            ) * self.SLOT_SCALING[base.slot]
 
             min_roll = base_value * (1 - self.MODIFIER_RANGE[modifier_type])
             max_roll = base_value * (1 + self.MODIFIER_RANGE[modifier_type])
@@ -219,7 +216,10 @@ class CombatGearManager(Service):
 
         if member_id is not None:
             gear_item.id = await self.database.log_user_gear(
-                guild_id=guild_id, member_id=member_id, gear=gear_item
+                guild_id=guild_id,
+                member_id=member_id,
+                gear=gear_item,
+                generator_version=self.GENERATOR_VERSION,
             )
 
         return gear_item
@@ -245,7 +245,7 @@ class CombatGearManager(Service):
             gear = []
             for _ in range(gear_amount):
                 gear_piece = await self.generate_gear_piece(
-                    guild_id, member_id, enemy.min_level
+                    guild_id, member_id, context.opponent.level
                 )
                 gear.append(gear_piece)
 
@@ -310,7 +310,7 @@ class CombatGearManager(Service):
             print("-" * 30)
             print("Bases:")
             print("-" * 30)
-            bases = await self.get_bases_by_lvl(level, level)
+            bases = await self.get_bases_by_lvl(level)
 
             for base in bases:
                 print(f"  {base.type.value}:")
@@ -321,11 +321,8 @@ class CombatGearManager(Service):
                 for modifier_type in allowed_modifiers:
                     base_value = (
                         self.MODIFIER_BASE[modifier_type]
-                        + self.SLOT_SCALING[base.slot]
-                        * self.MODIFIER_SCALING[modifier_type]
-                        * base.scaling
-                        * level
-                    )
+                        + self.MODIFIER_SCALING[modifier_type] * base.scaling * level
+                    ) * self.SLOT_SCALING[base.slot]
 
                     min_roll = base_value * (1 - self.MODIFIER_RANGE[modifier_type])
                     max_roll = base_value * (1 + self.MODIFIER_RANGE[modifier_type])

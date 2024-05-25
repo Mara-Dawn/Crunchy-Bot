@@ -39,7 +39,7 @@ class Encounter:
         return Encounter(
             guild_id=int(row[Database.ENCOUNTER_GUILD_ID_COL]),
             enemy_type=EnemyType(row[Database.ENCOUNTER_ENEMY_TYPE_COL]),
-            enemy_level=int(row[Database.ENCOUNTER_ENEMY_HEALTH_COL]),
+            enemy_level=int(row[Database.ENCOUNTER_ENEMY_LEVEL_COL]),
             max_hp=int(row[Database.ENCOUNTER_ENEMY_HEALTH_COL]),
             message_id=int(row[Database.ENCOUNTER_MESSAGE_ID_COL]),
             channel_id=int(row[Database.ENCOUNTER_CHANNEL_ID_COL]),

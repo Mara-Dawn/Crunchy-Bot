@@ -114,7 +114,7 @@ class EncounterManager(Service):
         enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
         enemy_health = random.randint(enemy.min_hp, enemy.max_hp)
 
-        return Encounter(guild_id, enemy.type, enemy_health, encounter_level)
+        return Encounter(guild_id, enemy.type, encounter_level, enemy_health)
 
     async def spawn_encounter(self, guild: discord.Guild, channel_id: int):
         log_message = f"Encounter was spawned in {guild.name}."
@@ -197,7 +197,11 @@ class EncounterManager(Service):
 
         enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
         opponent = self.actor_manager.get_opponent(
-            enemy, encounter.max_hp, encounter_events, combat_events
+            enemy,
+            encounter.enemy_level,
+            encounter.max_hp,
+            encounter_events,
+            combat_events,
         )
 
         combatant_ids = await self.database.get_encounter_participants_by_encounter_id(
