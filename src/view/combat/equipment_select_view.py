@@ -19,6 +19,7 @@ class EquipmentSelectView(ViewMenu):
         controller: Controller,
         interaction: discord.Interaction,
         gear_inventory: list[Gear],
+        currently_equipped: list[Gear],
         slot: GearSlot,
     ):
         super().__init__(timeout=300)
@@ -28,6 +29,7 @@ class EquipmentSelectView(ViewMenu):
         self.member = interaction.user
         self.guild_id = interaction.guild_id
         self.gear = gear_inventory
+        self.current = currently_equipped
 
         self.current_page = 0
         self.selected: list[Gear] = []
@@ -39,6 +41,12 @@ class EquipmentSelectView(ViewMenu):
         self.page_count = 1
         self.filter_items()
         self.message = None
+
+        self.selected = [
+            gear
+            for gear in self.filtered_items
+            if gear.id in [gear.id for gear in self.current]
+        ]
 
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
@@ -59,6 +67,16 @@ class EquipmentSelectView(ViewMenu):
             self.item_count % SelectGearHeadEmbed.ITEMS_PER_PAGE > 0
         )
         self.page_count = max(self.page_count, 1)
+
+        self.filtered_items = sorted(
+            self.filtered_items,
+            key=lambda x: (
+                (x.id in [gear.id for gear in self.current]),
+                x.level,
+                Gear.RARITY_SORT_MAP[x.rarity],
+            ),
+            reverse=True,
+        )
 
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         await interaction.response.defer()
@@ -160,13 +178,18 @@ class EquipmentSelectView(ViewMenu):
             embeds.append(empty_embed)
 
         for gear in self.display_items:
-            embeds.append(gear.get_embed())
-            if gear.base.name not in files:
+            equipped = False
+            if gear.id in [gear.id for gear in self.current]:
+                equipped = True
+
+            embeds.append(gear.get_embed(equipped=equipped))
+            file_path = f"./{gear.base.image_path}{gear.base.image}"
+            if file_path not in files:
                 file = discord.File(
-                    f"./{gear.base.image_path}{gear.base.image}",
+                    file_path,
                     gear.base.image,
                 )
-                files[gear.base.name] = file
+                files[file_path] = file
 
         files = list(files.values())
 
@@ -275,6 +298,8 @@ class Dropdown(discord.ui.Select):
                 default=(item in selected),
             )
             options.append(option)
+
+        max_values = min(2, len(gear))
 
         super().__init__(
             placeholder="Select a piece of equipment.",

@@ -2,6 +2,14 @@ import random
 import secrets
 
 from combat.encounter import EncounterContext
+from combat.gear import (
+    DefaultAccessory,
+    DefaultCap,
+    DefaultPants,
+    DefaultShirt,
+    DefaultStick,
+    DefaultWand,
+)
 from combat.gear.bases import *  # noqa: F403
 from combat.gear.gear import Gear, GearBase
 from combat.gear.types import GearBaseType, GearModifierType, GearRarity, GearSlot
@@ -57,6 +65,11 @@ class CombatGearManager(Service):
         GearSlot.LEGS: 2,
         GearSlot.ACCESSORY: 1,
     }
+
+    NON_BASE_SCALING_MODIFIERS = [
+        GearModifierType.WEAPON_DAMAGE_MIN,
+        GearModifierType.WEAPON_DAMAGE_MAX,
+    ]
 
     MODIFIER_BASE = {
         GearModifierType.WEAPON_DAMAGE_MIN: 1,
@@ -169,10 +182,16 @@ class CombatGearManager(Service):
         modifier_types.extend(base.modifiers)
 
         for modifier_type in modifier_types:
+            slot_scaling = (
+                self.SLOT_SCALING[base.slot]
+                if modifier_type not in self.NON_BASE_SCALING_MODIFIERS
+                else 1
+            )
+
             base_value = (
                 self.MODIFIER_BASE[modifier_type]
                 + self.MODIFIER_SCALING[modifier_type] * base.scaling * item_level
-            ) * self.SLOT_SCALING[base.slot]
+            ) * slot_scaling
 
             min_roll = base_value * (1 - self.MODIFIER_RANGE[modifier_type])
             max_roll = base_value * (1 + self.MODIFIER_RANGE[modifier_type])
@@ -264,6 +283,16 @@ class CombatGearManager(Service):
             loot[combatant.member] = (beans_amount, gear, bonus_loot)
 
         return loot
+
+    async def get_default_gear(self) -> list[Gear]:
+        return [
+            DefaultAccessory(),
+            DefaultCap(),
+            DefaultPants(),
+            DefaultShirt(),
+            DefaultStick(),
+            DefaultWand(),
+        ]
 
     async def test_generation(self):
         for _ in range(10):

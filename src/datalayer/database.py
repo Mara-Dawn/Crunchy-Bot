@@ -7,7 +7,14 @@ import discord
 from bot_util import BotUtil
 from combat.encounter import Encounter
 from combat.equipment import CharacterEquipment
-from combat.gear import Gear
+from combat.gear import (
+    DefaultAccessory,
+    DefaultCap,
+    DefaultPants,
+    DefaultShirt,
+    DefaultWand,
+    Gear,
+)
 from combat.gear.bases import *  # noqa: F403
 from combat.gear.types import GearBaseType, GearModifierType, GearRarity, GearSlot
 from combat.skills.types import SkillType
@@ -2954,7 +2961,9 @@ class Database:
             )
             await self.__query_insert(command, task)
 
-    async def log_user_gear(self, guild_id: int, member_id: int, gear: Gear, generator_version: str):
+    async def log_user_gear(
+        self, guild_id: int, member_id: int, gear: Gear, generator_version: str
+    ):
         command = f"""
             INSERT INTO {self.USER_GEAR_TABLE} (
             {self.USER_GEAR_GUILD_ID_COL},
@@ -3065,6 +3074,71 @@ class Database:
             skill_types.append(skill_type)
 
         return skill_types
+
+    async def get_user_equipment_slot(
+        self, guild_id: int, member_id: int, gear_slot: GearSlot
+    ) -> list[Gear]:
+        await self.create_user_equipment(guild_id, member_id)
+
+        command = f""" 
+            SELECT * FROM {self.USER_EQUIPMENT_TABLE} 
+            WHERE {self.USER_EQUIPMENT_GUILD_ID_COL} = ?
+            AND {self.USER_EQUIPMENT_MEMBER_ID_COL} = ?
+            LIMIT 1;
+        """
+
+        task = (guild_id, member_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+        row = rows[0]
+
+        equipped = []
+
+        match gear_slot:
+            case GearSlot.WEAPON:
+                gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_WEAPON_ID_COL])
+                if gear is None:
+                    gear = DefaultWand()
+                equipped.append(gear)
+            case GearSlot.HEAD:
+                gear = await self.get_gear_by_id(
+                    row[self.USER_EQUIPMENT_HEADGEAR_ID_COL]
+                )
+                if gear is None:
+                    gear = DefaultCap()
+                equipped.append(gear)
+            case GearSlot.BODY:
+                gear = await self.get_gear_by_id(
+                    row[self.USER_EQUIPMENT_BODYGEAR_ID_COL]
+                )
+                if gear is None:
+                    gear = DefaultShirt()
+                equipped.append(gear)
+            case GearSlot.LEGS:
+                gear = await self.get_gear_by_id(
+                    row[self.USER_EQUIPMENT_LEGGEAR_ID_COL]
+                )
+                if gear is None:
+                    gear = DefaultPants()
+                equipped.append(gear)
+            case GearSlot.ACCESSORY:
+                gear_1 = await self.get_gear_by_id(
+                    row[self.USER_EQUIPMENT_ACCESSORY_1_ID_COL]
+                )
+                gear_2 = await self.get_gear_by_id(
+                    row[self.USER_EQUIPMENT_ACCESSORY_2_ID_COL]
+                )
+                if gear_1 is not None:
+                    equipped.append(gear_1)
+                if gear_2 is not None:
+                    equipped.append(gear_2)
+
+                if gear_1 is None and gear_2 is None:
+                    gear = DefaultAccessory()
+                    equipped.append(gear)
+
+        return equipped
 
     async def get_user_equipment(
         self, guild_id: int, member_id: int

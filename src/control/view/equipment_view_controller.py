@@ -11,6 +11,7 @@ from view.combat.equipment_view import EquipmentView
 
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
 from control.event_manager import EventManager
@@ -39,6 +40,9 @@ class EquipmentViewController(ViewController):
         self.embed_manager: CombatEmbedManager = controller.get_service(
             CombatEmbedManager
         )
+        self.gear_manager: CombatGearManager = self.controller.get_service(
+            CombatGearManager
+        )
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -61,9 +65,28 @@ class EquipmentViewController(ViewController):
     ):
         guild_id = interaction.guild.id
         member_id = interaction.user.id
-        gear_inventory = await self.database.get_user_armory(guild_id, member_id)
 
-        view = EquipmentSelectView(self.controller, interaction, gear_inventory, slot)
+        encounters = await self.database.get_active_encounter_participants(guild_id)
+
+        for _, participants in encounters.items():
+            if member_id in participants:
+                await interaction.followup.send(
+                    "You cannot change your gear while you are involved in an active combat.",
+                    ephemeral=True,
+                )
+                return
+
+        gear_inventory = await self.database.get_user_armory(guild_id, member_id)
+        default_gear = await self.gear_manager.get_default_gear()
+        gear_inventory.extend(default_gear)
+
+        currently_equipped = await self.database.get_user_equipment_slot(
+            guild_id, member_id, slot
+        )
+
+        view = EquipmentSelectView(
+            self.controller, interaction, gear_inventory, currently_equipped, slot
+        )
 
         embeds = []
         embeds.append(SelectGearHeadEmbed(interaction.user))

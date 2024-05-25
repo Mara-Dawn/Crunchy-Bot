@@ -69,7 +69,7 @@ class SkillsHeadEmbed(discord.Embed):
 
 class SelectGearHeadEmbed(discord.Embed):
 
-    ITEMS_PER_PAGE = 7
+    ITEMS_PER_PAGE = 5
 
     def __init__(
         self,

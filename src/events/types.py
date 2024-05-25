@@ -36,6 +36,7 @@ class BeansEventType(str, Enum):
     PRESTIGE = "prestige"
     BEAN_PLANT = "bean_plant"
     BEAN_HARVEST = "bean_harvest"
+    COMBAT_LOOT = "combat_loot"
 
 
 class JailEventType(str, Enum):

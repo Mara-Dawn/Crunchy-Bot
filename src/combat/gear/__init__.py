@@ -27,6 +27,7 @@ class DefaultStick(Gear):
             },
             skills=[],
             enchantments=[],
+            id=-1,
         )
 
 
@@ -45,6 +46,7 @@ class DefaultWand(Gear):
             },
             skills=[],
             enchantments=[],
+            id=-2,
         )
 
 
@@ -62,6 +64,7 @@ class DefaultCap(Gear):
             },
             skills=[],
             enchantments=[],
+            id=-3,
         )
 
 
@@ -79,6 +82,7 @@ class DefaultShirt(Gear):
             },
             skills=[],
             enchantments=[],
+            id=-4,
         )
 
 
@@ -96,6 +100,7 @@ class DefaultPants(Gear):
             },
             skills=[],
             enchantments=[],
+            id=-5,
         )
 
 
@@ -111,4 +116,5 @@ class DefaultAccessory(Gear):
             modifiers={},
             skills=[],
             enchantments=[],
+            id=-6,
         )

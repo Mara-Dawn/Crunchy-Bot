@@ -169,6 +169,14 @@ class Gear(Item):
         GearRarity.UNIQUE: discord.Color(int("2aa198", 16)),
     }
 
+    RARITY_SORT_MAP = {
+        GearRarity.NORMAL: 0,
+        GearRarity.MAGIC: 1,
+        GearRarity.RARE: 2,
+        GearRarity.LEGENDARY: 3,
+        GearRarity.UNIQUE: 4,
+    }
+
     def __init__(
         self,
         name: str,
@@ -210,6 +218,7 @@ class Gear(Item):
         title: str = None,
         show_data: bool = True,
         show_info: bool = False,
+        equipped: bool = False,
         max_width: int = 44,
     ) -> discord.Embed:
         if title is None:
@@ -217,8 +226,11 @@ class Gear(Item):
 
         title = f"> {title}"
 
-        description = f'"{self.description}"'
         color = self.RARITY_COLOR_HEX_MAP[self.rarity]
+        if equipped:
+            title += " [EQUIPPED]"
+
+        description = f'"{self.description}"'
 
         info_block = "```ansi\n"
         info_block += f"{self.RARITY_COLOR_MAP[self.rarity]}~* {self.name} *~[0m"
@@ -245,12 +257,14 @@ class Gear(Item):
                 damage_types = []
                 for skill_type in self.base.skills:
                     if skill_type == SkillType.MAGIC_ATTACK:
-                        damage_types.append(SkillEffect.MAGICAL_DAMAGE)
+                        effect = SkillEffect.MAGICAL_DAMAGE
                     elif skill_type in [
                         SkillType.NORMAL_ATTACK,
                         SkillType.HEAVY_ATTACK,
                     ]:
-                        damage_types.append(SkillEffect.PHYSICAL_DAMAGE)
+                        effect = SkillEffect.PHYSICAL_DAMAGE
+                    if effect not in damage_types:
+                        damage_types.append(effect)
 
                 name = "Damage Type"
                 spacing = " " * (max_len - len(name))
@@ -263,12 +277,38 @@ class Gear(Item):
                 sorted(self.modifiers.items(), key=lambda pair: index_map[pair[0]])
             )
 
+            flat_damage_modifiers = {}
+
+            modifier_block = ""
+
             for modifier_type, value in sorted_modifiers.items():
+                if modifier_type in [
+                    GearModifierType.WEAPON_DAMAGE_MIN,
+                    GearModifierType.WEAPON_DAMAGE_MAX,
+                ]:
+                    flat_damage_modifiers[modifier_type] = value
+                    continue
                 name = modifier_type.value
                 display_value = GearModifierType.display_value(modifier_type, value)
                 spacing = " " * (max_len - len(name))
                 line_colored = f"{spacing}{name}: [35m{display_value}[0m\n"
-                info_block += line_colored
+                modifier_block += line_colored
+
+            if len(flat_damage_modifiers) == 2:
+                name = "Hit Damage"
+                display_value_min = GearModifierType.display_value(
+                    GearModifierType.WEAPON_DAMAGE_MIN,
+                    flat_damage_modifiers[GearModifierType.WEAPON_DAMAGE_MIN],
+                )
+                display_value_max = GearModifierType.display_value(
+                    GearModifierType.WEAPON_DAMAGE_MAX,
+                    flat_damage_modifiers[GearModifierType.WEAPON_DAMAGE_MAX],
+                )
+                spacing = " " * (max_len - len(name))
+                line_colored = f"{spacing}{name}: [35m{display_value_min}[0m - [35m{display_value_max}[0m\n"
+                modifier_block = line_colored + modifier_block
+
+            info_block += modifier_block
 
             info_block += "```"
 

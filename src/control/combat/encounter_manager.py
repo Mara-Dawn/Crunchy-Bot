@@ -20,10 +20,12 @@ from control.service import Service
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from discord.ext import commands
+from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
-from events.types import CombatEventType, EncounterEventType, EventType
+from events.inventory_event import InventoryEvent
+from events.types import BeansEventType, CombatEventType, EncounterEventType, EventType
 from view.combat.combat_turn_view import CombatTurnView
 from view.combat.engage_view import EnemyEngageView
 
@@ -31,7 +33,7 @@ from view.combat.engage_view import EnemyEngageView
 class EncounterManager(Service):
 
     TURN_WAIT = 4
-    ENCOUNTER_MIN_LVL_SCALING = 0.75
+    ENCOUNTER_MIN_LVL_SCALING = 0.65
     ENEMY_HEALTH_SCALING = 0.6
 
     def __init__(
@@ -297,6 +299,9 @@ class EncounterManager(Service):
         await asyncio.sleep(2)
 
         for index, instance in enumerate(damage_instances):
+            total_damage = targets[index].get_damage_after_defense(
+                skill, instance.scaled_value
+            )
             event = CombatEvent(
                 datetime.datetime.now(),
                 context.encounter.guild_id,
@@ -304,7 +309,7 @@ class EncounterManager(Service):
                 opponent.id,
                 targets[index].id,
                 skill.type,
-                instance.scaled_value,
+                total_damage,
                 CombatEventType.ENEMY_TURN,
             )
             await self.controller.dispatch_event(event)
@@ -343,6 +348,9 @@ class EncounterManager(Service):
         await asyncio.sleep(2)
 
         for instance in damage_instances:
+            total_damage = context.opponent.get_damage_after_defense(
+                skill_data.skill, instance.scaled_value
+            )
             event = CombatEvent(
                 datetime.datetime.now(),
                 context.encounter.guild_id,
@@ -350,7 +358,7 @@ class EncounterManager(Service):
                 character.id,
                 context.opponent.id,
                 skill_data.skill.type,
-                instance.scaled_value,
+                total_damage,
                 CombatEventType.MEMBER_TURN,
             )
             await self.controller.dispatch_event(event)
@@ -392,27 +400,66 @@ class EncounterManager(Service):
     async def payout_loot(self, context: EncounterContext):
         loot = await self.gear_manager.roll_enemy_loot(context)
 
+        now = datetime.datetime.now()
+
         for member, member_loot in loot.items():
+
+            await asyncio.sleep(2)
+            beans = member_loot[0]
             embeds = []
-            loot_head_embed = await self.embed_manager.get_loot_embed(
-                member, member_loot[0]
-            )
+            loot_head_embed = await self.embed_manager.get_loot_embed(member, beans)
             embeds.append(loot_head_embed)
-            files = {}
+
+            message = await context.thread.send(f"<@{member.id}>", embeds=embeds)
+
+            event = BeansEvent(
+                now,
+                member.guild.id,
+                BeansEventType.COMBAT_LOOT,
+                member.id,
+                beans,
+            )
+            await self.controller.dispatch_event(event)
+
+            already_dropped = []
             for gear in member_loot[1]:
                 embeds.append(gear.get_embed())
-                if gear.base.name not in files:
-                    file = discord.File(
-                        f"./{gear.base.image_path}{gear.base.image}",
-                        gear.base.image,
-                    )
-                    files[gear.base.name] = file
-            files = list(files.values())
 
-            if member_loot[2] is not None:
-                embeds.append(member_loot[2].get_embed(self.bot, show_price=False))
+                await asyncio.sleep(2.5)
 
-            await context.thread.send(f"<@{member.id}>", files=files, embeds=embeds)
+                already_dropped.append(gear)
+
+                files = {}
+                for gear in already_dropped:
+
+                    file_path = f"./{gear.base.image_path}{gear.base.image}"
+                    if file_path not in files:
+                        file = discord.File(
+                            file_path,
+                            gear.base.image,
+                        )
+                        files[file_path] = file
+
+                attachments = list(files.values())
+                await message.edit(embeds=embeds, attachments=attachments)
+
+            # files = list(files.values())
+            item = member_loot[2]
+            if item is not None:
+                embeds.append(item.get_embed(self.bot, show_price=False))
+
+                await asyncio.sleep(2.5)
+
+                await message.edit(embeds=embeds)
+
+                event = InventoryEvent(
+                    now,
+                    member.guild.id,
+                    member.id,
+                    item.type,
+                    1,
+                )
+                await self.controller.dispatch_event(event)
 
     async def context_needs_update_check(self, context: EncounterContext) -> bool:
         already_defeated = []

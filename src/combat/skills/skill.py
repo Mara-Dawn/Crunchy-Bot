@@ -70,7 +70,7 @@ class SkillData:
 
             # Cooldoqwn
             cooldown_text = f"Cooldown: {self.skill.cooldown} Turn(s)"
-            cooldown_text_colored = f"Cooldown: [35m{self.skill.cooldown} Turn(s)[0m"
+            cooldown_text_colored = f"Cooldown: [35m{self.skill.cooldown}[0m Turn(s)"
             prefixes.append((cooldown_text_colored, len(cooldown_text)))
 
             # Type
