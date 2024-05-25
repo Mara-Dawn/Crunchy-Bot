@@ -22,8 +22,8 @@ class EnchantmentType(str, Enum):
 
 
 class GearModifierType(str, Enum):
-    WEAPON_DAMAGE_MIN = "Weapon Min Damage"
-    WEAPON_DAMAGE_MAX = "Weapon Max Damage"
+    WEAPON_DAMAGE_MIN = "Min Damage"
+    WEAPON_DAMAGE_MAX = "Max Damage"
     ARMOR = "Armor"
     ATTACK = "Attack"
     HEALING = "Healing"
@@ -34,8 +34,17 @@ class GearModifierType(str, Enum):
     DEXTERITY = "Dexterity"
     CONSTITUTION = "Constitution"
 
+    @staticmethod
+    def max_name_len():
+        max_len = 0
+        for name in GearModifierType:
+            max_len = max(max_len, len(name.value))
+        return max_len
+
 
 class GearBaseType(str, Enum):
+    EMPTY = "Empty"
+
     STICK_T0 = "Stick_T0"
     STICK_T1 = "Stick_T1"
     STICK_T2 = "Stick_T2"
@@ -88,3 +97,10 @@ class CharacterAttribute(str, Enum):
     PHYS_DAMAGE_REDUCTION = "Physical Damare Reduction"
     MAGIC_DAMAGE_REDUCTION = "Magical Damage Reduction"
     MAX_HEALTH = "Maximum Health"
+
+    @staticmethod
+    def max_name_len():
+        max_len = 0
+        for name in CharacterAttribute:
+            max_len = max(max_len, len(name.value))
+        return max_len

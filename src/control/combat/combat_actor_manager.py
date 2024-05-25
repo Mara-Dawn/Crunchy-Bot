@@ -90,9 +90,15 @@ class CombatActorManager(Service):
     async def get_character(
         self,
         member: discord.Member,
-        encounter_events: list[EncounterEvent],
-        combat_events: list[CombatEvent],
+        encounter_events: list[EncounterEvent] = None,
+        combat_events: list[CombatEvent] = None,
     ) -> Character:
+        if encounter_events is None:
+            encounter_events = []
+
+        if combat_events is None:
+            combat_events = []
+
         defeated = False
         for event in encounter_events:
             if (
@@ -143,7 +149,7 @@ class CombatActorManager(Service):
                 if event.skill_type is not None:
                     skill_type = event.skill_type
                     if skill_type not in cooldowns:
-                        cooldowns[skill_type] = last_used
+                        cooldowns[skill_type] = max(0, last_used - 1)
                 if event.combat_event_type in [
                     CombatEventType.ENEMY_END_TURN,
                     CombatEventType.MEMBER_END_TURN,

@@ -3093,3 +3093,24 @@ class Database:
             accessory_1=accessory_1,
             accessory_2=accessory_2,
         )
+
+    async def get_user_armory(
+        self, guild_id: int, member_id: int
+    ) -> list[Gear]:
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            WHERE {self.USER_GEAR_GUILD_ID_COL} = ?
+            AND {self.USER_GEAR_MEMBER_ID_COL} = ?
+            ;
+        """
+        task = (guild_id, member_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+        armory = []
+        for row in rows:
+            gear_piece = await self.get_gear_by_id(row[self.USER_GEAR_ID_COL])
+            armory.append(gear_piece)
+        
+        return armory

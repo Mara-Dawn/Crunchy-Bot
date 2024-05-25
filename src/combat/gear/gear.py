@@ -1,4 +1,3 @@
-
 import discord
 from combat.gear.types import (
     EnchantmentType,
@@ -8,7 +7,6 @@ from combat.gear.types import (
     GearSlot,
 )
 from combat.skills.types import SkillType
-from discord.ext import commands
 from items.item import Item
 from items.types import ItemGroup, ShopCategory
 
@@ -17,7 +15,7 @@ class Enchantment:
 
     def __init__(
         self,
-        name: str, 
+        name: str,
         type: EnchantmentType,
         description: str,
         information: str,
@@ -34,9 +32,18 @@ class Enchantment:
 
 class GearBase:
 
+    DEFAULT_IMAGE_PATH = "img/gear/default/"
+    DEFAULT_IMAGES = {
+        GearSlot.WEAPON: "weapon.png",
+        GearSlot.HEAD: "head.png",
+        GearSlot.BODY: "body.png",
+        GearSlot.LEGS: "legs.png",
+        GearSlot.ACCESSORY: "accessory.png",
+    }
+
     def __init__(
         self,
-        name: str, 
+        name: str,
         type: GearBaseType,
         description: str,
         information: str,
@@ -44,12 +51,13 @@ class GearBase:
         min_level: int,
         max_level: int,
         modifiers: list[GearModifierType],
-        skills: list[SkillType] = None, 
+        skills: list[SkillType] = None,
         scaling: int = 1,
         cost: int = 0,
         weight: int = None,
         permanent: bool = False,
         secret: bool = False,
+        image: str = None,
     ):
         self.name = name
         self.type = type
@@ -60,11 +68,12 @@ class GearBase:
         self.min_level = min_level
         self.max_level = max_level
         self.modifiers = modifiers
+        self.image = image
 
         self.skills = skills
         if self.skills is None:
             self.skills = []
-        
+
         self.scaling = scaling
         self.weight = weight
         if self.weight is None:
@@ -85,7 +94,9 @@ class GearBase:
             case GearSlot.ACCESSORY:
                 self.emoji = "💍"
 
-    
+        if self.image is None:
+            self.image = self.DEFAULT_IMAGES[self.slot]
+
     def get_allowed_modifiers(self):
         match self.slot:
             case GearSlot.HEAD:
@@ -137,15 +148,31 @@ class GearBase:
 
 class Gear(Item):
 
+    RARITY_COLOR_MAP = {
+        GearRarity.NORMAL: "[38m",  # ffffff
+        GearRarity.MAGIC: "[34m",  # 268bd2
+        GearRarity.RARE: "[33m",  # b58900
+        GearRarity.LEGENDARY: "[31m",  # #a43033
+        GearRarity.UNIQUE: "[36m",  # 2aa198
+    }
+
+    RARITY_COLOR_HEX_MAP = {
+        GearRarity.NORMAL: discord.Color(int("ffffff", 16)),
+        GearRarity.MAGIC: discord.Color(int("268bd2", 16)),
+        GearRarity.RARE: discord.Color(int("b58900", 16)),
+        GearRarity.LEGENDARY: discord.Color(int("a43033", 16)),
+        GearRarity.UNIQUE: discord.Color(int("2aa198", 16)),
+    }
+
     def __init__(
         self,
-        name: str, 
+        name: str,
         base: GearBase,
         rarity: GearRarity,
         level: int,
         modifiers: dict[GearModifierType, float],
         skills: list[SkillType],
-        enchantments: list[Enchantment]
+        enchantments: list[Enchantment],
     ):
         if name == "":
             name = base.name
@@ -162,7 +189,7 @@ class Gear(Item):
             hide_in_shop=True,
             weight=base.weight,
             permanent=base.permanent,
-            secret=base.secret
+            secret=base.secret,
         )
         self.base = base
         self.rarity = rarity
@@ -170,102 +197,90 @@ class Gear(Item):
         self.modifiers = modifiers
         self.skills = skills
         self.enchantments = enchantments
-    
-    def get_embed(self, bot: commands.Bot, color=None, amount_in_cart: int = 1, show_price = True, show_info: bool = False) -> discord.Embed:
-        emoji = self.emoji
-        if isinstance(self.emoji, int):
-            emoji = str(bot.get_emoji(self.emoji))
 
-        if color is None:
-            color=discord.Colour.purple()
+    def get_embed(
+        self,
+        title: str = None,
+        show_data: bool = True,
+        show_info: bool = False,
+        max_width: int = 44,
+    ) -> discord.Embed:
+        if title is None:
+            title = self.base.slot.value
 
-        title = f'> ~* {emoji} {self.name} {emoji}  *~'
+        title = f"> {title} Slot"
 
-        if self.permanent:
-            title = f'> ~* {emoji} *{self.name}* {emoji} *~'
+        description = f'"{self.description}"'
+        color = self.RARITY_COLOR_HEX_MAP[self.rarity]
 
-        description = self.description
-        max_width = 53
+        info_block = "```ansi\n"
+        info_block += f"{self.RARITY_COLOR_MAP[self.rarity]}~* {self.name} *~[0m"
+        spacing = " " * (max_width - len(self.name) - len(self.base.slot.value) - 8)
+        info_block += f"{spacing}[{self.base.slot.value}]"
+        info_block += "```"
+
+        if show_data and len(self.modifiers) > 0:
+            max_len = GearModifierType.max_name_len()
+            info_block += "```ansi\n"
+
+            name = "Rarity"
+            spacing = " " * (max_len - len(name))
+            line_colored = f"{spacing}{name}: {self.RARITY_COLOR_MAP[self.rarity]}{self.rarity.value}[0m\n"
+            info_block += line_colored
+
+            for modifier_type, value in self.modifiers.items():
+                name = modifier_type.value
+                spacing = " " * (max_len - len(name))
+                line_colored = f"{spacing}{name}: [35m{value}[0m\n"
+                info_block += line_colored
+
+            info_block += "```"
+
+        info_block += f"```python\n{description}```"
+
+        if show_info and len(self.information) > 0:
+            info_block += f"```ansi\n[37m{self.information}```"
+
+        embed = discord.Embed(title=title, description=info_block, color=color)
+        embed.set_thumbnail(url=f"attachment://{self.base.image}")
+        return embed
+
+    def add_to_embed(
+        self,
+        embed: discord.Embed,
+        title: str = None,
+        show_data: bool = True,
+        show_info: bool = False,
+        max_width: int = 44,
+    ) -> None:
+        if title is None:
+            title = self.base.slot.value
+        description = f'"{self.description}"'
+
         if len(description) < max_width:
             spacing = max_width - len(description)
-            description += ' '*spacing
+            description += " " * spacing
 
-        suffix = ''
-        spacing = 0
-        if show_price:    
-            if self.permanent:
-                suffix = f'🅱️[34m{self.cost*amount_in_cart}'
-                suffix_len = len(suffix) - 5
-            else:
-                suffix = f'🅱️{self.cost*amount_in_cart}'
-                suffix_len = len(suffix)
-            spacing = max_width - suffix_len 
-        info_block = f'```python\n"{description}"\n\n{' '*spacing}{suffix}```'
+        info_block = f"```python\n{description}```"
 
-        if self.permanent:
-            info_block = f'```ansi\n[33m"{description}"[0m\n\n{' '*spacing}{suffix}```'
-        
+        if show_data:
+            max_len = GearModifierType.max_name_len()
+
+            info_block += "```ansi\n"
+            info_block += f"{self.RARITY_COLOR_MAP[self.rarity]}{self.name}[0m\n"
+            info_block += "-" * max_width + "\n"
+            info_block += f"{self.base.slot.value}\n"
+            info_block += "-" * max_width + "\n"
+
+            for modifier_type, value in self.modifiers.items():
+                name = modifier_type.value
+                spacing = " " * (max_len - len(name))
+                line_colored = f"{spacing}{name}: [35m{value}[0m\n"
+                info_block += line_colored
+
+            info_block += "```"
+
         if show_info:
-            info_block += f'```ansi\n[37m{self.information}```'
-        
-        embed = discord.Embed(title=title, description=info_block, color=color)
-        
-        return embed
-    
-    def add_to_embed(self, bot: commands.Bot, embed: discord.Embed, max_width: int, count: int=None, show_price: bool = False, name_suffix: str='', disabled: bool = False, show_info: bool = False) -> None:
-        emoji = self.emoji
-        if isinstance(self.emoji, int):
-            emoji = str(bot.get_emoji(self.emoji))
+            info_block += f"```ansi\n[37m{self.skill.information}```"
 
-        title = f'> ~*  {emoji} {self.name} {emoji}  *~ {name_suffix}'
-
-        if self.permanent:
-            title = f'> ~* {emoji} *{self.name}* {emoji} *~ {name_suffix}'
-
-        description = self.description
-        
-        prefix = ''
-        suffix = ''
-
-        if self.permanent:
-            if show_price:
-                if count is None:
-                    suffix = f'🅱️[34m{self.cost}'
-                else:
-                    prefix = f'owned: [34m{count}[0m'
-                    suffix = f'🅱️[34m{self.cost}'
-            else:
-                if count is not None:
-                    if disabled:
-                        prefix = "[DISABLED]"
-                    suffix = f'amount: [34m{count}'
-
-            suffix_len = len(suffix) - 5
-            prefix_len = max(0, len(prefix) - 5)
-
-            spacing = max_width - prefix_len - suffix_len
-            info_block = f'```ansi\n[33m"{description}"[0m\n\n{prefix}{' '*spacing}{suffix}```'
-        else:
-            if show_price:
-                if count is None:
-                    suffix = f'🅱️{self.cost}'
-                else:
-                    prefix = f'owned: {count}'
-                    suffix = f'🅱️{self.cost}'
-            else:
-                if count is not None:
-                    if disabled:
-                        prefix = "[DISABLED]"
-                    suffix = f'amount: {count}'
-
-            suffix_len = len(suffix) 
-            prefix_len = len(prefix)
-
-            spacing = max_width - prefix_len - suffix_len
-            info_block = f'```python\n"{description}"\n\n{prefix}{' '*spacing}{suffix}```'
-        
-        if show_info:
-            info_block += f'```ansi\n[37m{self.information}```'
-
-        
         embed.add_field(name=title, value=info_block, inline=False)

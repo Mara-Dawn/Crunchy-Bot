@@ -1,4 +1,11 @@
-from combat.gear import DefaultCap, DefaultPants, DefaultShirt, DefaultStick
+import discord
+from combat.gear import (
+    DefaultAccessory,
+    DefaultCap,
+    DefaultPants,
+    DefaultShirt,
+    DefaultStick,
+)
 from combat.gear.gear import Gear
 from combat.gear.types import CharacterAttribute, GearModifierType
 
@@ -34,6 +41,12 @@ class CharacterEquipment:
 
         if self.leg_gear is None:
             self.leg_gear = DefaultPants()
+
+        if self.accessory_1 is None:
+            self.accessory_1 = DefaultAccessory()
+
+        if self.accessory_2 is None:
+            self.accessory_2 = DefaultAccessory()
 
         self.gear: list[Gear] = [
             self.weapon,
@@ -90,3 +103,77 @@ class CharacterEquipment:
         self.attributes[CharacterAttribute.HEALING_BONUS] += (
             self.gear_modifiers[GearModifierType.HEALING] / 100
         )
+
+    def get_embed(
+        self,
+        title: str,
+        max_width: int = 44,
+    ) -> None:
+        description = "See how your gear affects your characters performance in combat."
+        if len(description) < max_width:
+            spacing = max_width - len(description)
+            description += " " * spacing
+        description = f"```\n{description}```"
+
+        embed = discord.Embed(
+            title=title, description=description, color=discord.Color.purple()
+        )
+
+        modifier_title = "Total Gear Modifiers:"
+        info_block = "```ansi\n"
+        max_len = GearModifierType.max_name_len()
+        for modifier_type, value in self.gear_modifiers.items():
+            name = modifier_type.value
+            spacing = " " * (max_len - len(name))
+            line_colored = f"{spacing}{name}: [35m{value}[0m\n"
+            info_block += line_colored
+        info_block += "```"
+        embed.add_field(name=modifier_title, value=info_block, inline=True)
+
+        attribute_title = "Character Attributes:"
+        info_block = "```ansi\n"
+        max_len = CharacterAttribute.max_name_len()
+        for attribute_type, value in self.attributes.items():
+            name = attribute_type.value
+            spacing = " " * (max_len - len(name))
+            line_colored = f"{spacing}{name}: [35m{value}[0m\n"
+            info_block += line_colored
+        info_block += "```"
+        embed.add_field(name=attribute_title, value=info_block, inline=True)
+
+        return embed
+
+    def add_to_embed(
+        self,
+        embed: discord.Embed,
+        title: str,
+        max_width: int = 44,
+    ) -> None:
+
+        info_block = "```ansi\n"
+
+        info_block += "-" * max_width + "\n"
+        info_block += "Total Gear Modifiers:\n"
+        info_block += "-" * max_width + "\n"
+
+        max_len = GearModifierType.max_name_len()
+        for modifier_type, value in self.gear_modifiers.items():
+            name = modifier_type.value
+            spacing = " " * (max_len - len(name))
+            line_colored = f"{spacing}{name}: [35m{value}[0m\n"
+            info_block += line_colored
+
+        info_block += "-" * max_width + "\n"
+        info_block += "Character Attributes:\n"
+        info_block += "-" * max_width + "\n"
+
+        max_len = CharacterAttribute.max_name_len()
+        for attribute_type, value in self.attributes.items():
+            name = attribute_type.value
+            spacing = " " * (max_len - len(name))
+            line_colored = f"{spacing}{name}: [35m{value}[0m\n"
+            info_block += line_colored
+
+        info_block += "```"
+
+        embed.add_field(name=title, value=info_block, inline=False)

@@ -25,7 +25,22 @@ from combat.skills.types import SkillType
 
 # Base Items
 
-# Tier 0
+
+class Empty(GearBase):
+
+    def __init__(self):
+        super().__init__(
+            name="Empty",
+            type=GearBaseType.EMPTY,
+            description="This equipment slot is empty.",
+            information="Defeat enemies to obtain items you can equip in this slot.",
+            slot=GearSlot.ACCESSORY,
+            min_level=99,
+            max_level=99,
+            modifiers=[],
+            skills=[],
+            scaling=1,
+        )
 
 
 class Stick_T0(GearBase):

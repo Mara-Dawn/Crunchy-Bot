@@ -99,7 +99,7 @@ class SkillData:
                 info_block += f"{prefix}{spacing}{suffix}\n"
 
             info_block += cooldown_info
-            info_block += "```\n\n"
+            info_block += "```"
 
         if show_info:
             info_block += f"```ansi\n[37m{self.skill.information}```"

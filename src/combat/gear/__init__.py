@@ -1,4 +1,11 @@
-from combat.gear.bases import BodyGear_T0, HeadGear_T0, LegGear_T0, Stick_T0, Wand_T0
+from combat.gear.bases import (
+    BodyGear_T0,
+    Empty,
+    HeadGear_T0,
+    LegGear_T0,
+    Stick_T0,
+    Wand_T0,
+)
 from combat.gear.gear import Gear
 from combat.gear.types import GearModifierType, GearRarity
 
@@ -12,7 +19,7 @@ class DefaultStick(Gear):
         super().__init__(
             name="",
             base=Stick_T0(),
-            rarity=GearRarity.NORMAL,
+            rarity=GearRarity.UNIQUE,
             level=1,
             modifiers={
                 GearModifierType.WEAPON_DAMAGE_MIN: 1,
@@ -48,7 +55,7 @@ class DefaultCap(Gear):
         super().__init__(
             name="",
             base=HeadGear_T0(),
-            rarity=GearRarity.NORMAL,
+            rarity=GearRarity.MAGIC,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 5,
@@ -65,7 +72,7 @@ class DefaultShirt(Gear):
         super().__init__(
             name="",
             base=BodyGear_T0(),
-            rarity=GearRarity.NORMAL,
+            rarity=GearRarity.RARE,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 15,
@@ -82,11 +89,26 @@ class DefaultPants(Gear):
         super().__init__(
             name="",
             base=LegGear_T0(),
-            rarity=GearRarity.NORMAL,
+            rarity=GearRarity.LEGENDARY,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 10,
             },
+            skills=[],
+            enchantments=[],
+        )
+
+
+class DefaultAccessory(Gear):
+
+    def __init__(self):
+
+        super().__init__(
+            name="",
+            base=Empty(),
+            rarity=GearRarity.NORMAL,
+            level=1,
+            modifiers={},
             skills=[],
             enchantments=[],
         )

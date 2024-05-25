@@ -4,6 +4,7 @@ import secrets
 
 import discord
 from bot import CrunchyBot
+from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
@@ -12,6 +13,7 @@ from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from discord import app_commands
 from discord.ext import commands, tasks
+from view.combat.equipment_view import EquipmentView
 
 
 class Combat(commands.Cog):
@@ -31,6 +33,9 @@ class Combat(commands.Cog):
             SettingsManager
         )
         self.testing: CombatGearManager = self.controller.get_service(CombatGearManager)
+        self.actor_manager: CombatActorManager = self.controller.get_service(
+            CombatActorManager
+        )
         self.enemy_timers = {}
 
     @staticmethod
@@ -156,6 +161,28 @@ class Combat(commands.Cog):
             self.__cog_name__, interaction, "Encounter successfully spawned."
         )
         await self.__reevaluate_next_enemy(interaction.guild.id)
+
+    @app_commands.command(
+        name="equipment",
+        description="Manage your combat equipment and skills.",
+    )
+    @app_commands.guild_only()
+    async def equipment(self, interaction: discord.Interaction):
+        # if not await self.__check_enabled(interaction):
+        #     return
+
+        log_message = (
+            f"{interaction.user.name} used command `{interaction.command.name}`."
+        )
+        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
+        await interaction.response.defer(ephemeral=True)
+
+        character = await self.actor_manager.get_character(interaction.user)
+        view = EquipmentView(self.controller, interaction, character)
+
+        message = await interaction.followup.send("", view=view)
+        view.set_message(message)
+        await view.refresh_ui()
 
 
 async def setup(bot):
