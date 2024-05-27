@@ -177,7 +177,7 @@ class Character(Actor):
             case SkillEffect.HEALING:
                 pass
 
-        return int(max(0, ((incoming_damage - flat_reduction) * modifier)))
+        return int(max(0, ((incoming_damage * modifier) - flat_reduction)))
 
 
 class Opponent(Actor):

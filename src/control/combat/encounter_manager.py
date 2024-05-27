@@ -187,7 +187,14 @@ class EncounterManager(Service):
 
         embed = self.embed_manager.get_actor_join_embed(user)
         embed.set_thumbnail(url=user.display_avatar.url)
-        await thread.send("", embed=embed)
+
+        turn_message = await self.get_previous_turn_message(thread)
+        if turn_message is None:
+            await thread.send("", embed=embed)
+        else:
+            previous_embeds = turn_message.embeds
+            embeds = previous_embeds + [embed]
+            await turn_message.edit(embeds=embeds)
 
         if new_thread:
             await self.refresh_encounter_thread(encounter_id)

@@ -366,9 +366,7 @@ class CombatEmbedManager(Service):
         turn_number = context.get_current_turn_number()
         title = f"Turn {turn_number}: {actor.name}"
 
-        actor_name = f"<@{actor.id}>"
-        if actor.is_enemy:
-            actor_name = f"*{actor.id}*"
+        actor_name = f"*{actor.id}*"
 
         content = f"{actor_name}'s turn is skipped."
 
