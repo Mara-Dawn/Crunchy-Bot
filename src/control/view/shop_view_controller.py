@@ -133,6 +133,9 @@ class ShopViewController(ViewController):
                 )
                 return
 
+        event = UIEvent(UIEventType.SHOP_DISABLE, True, view_id)
+        await self.controller.dispatch_ui_event(event)
+
         # instantly used items and items with confirmation modals
         match item.group:
             case ItemGroup.IMMEDIATE_USE | ItemGroup.SUBSCRIPTION:
@@ -153,9 +156,6 @@ class ShopViewController(ViewController):
                 view.set_message(message)
                 await view.refresh_ui()
 
-                event = UIEvent(UIEventType.SHOP_DISABLE, True, view_id)
-                await self.controller.dispatch_ui_event(event)
-
                 return
 
         event = BeansEvent(
@@ -173,6 +173,10 @@ class ShopViewController(ViewController):
                 await self.item_manager.drop_private_loot_box(
                     interaction, size=item.base_amount
                 )
+
+                event = UIEvent(UIEventType.SHOP_DISABLE, False, view_id)
+                await self.controller.dispatch_ui_event(event)
+
                 return
 
         # All other items get added to the inventory awaiting their trigger
@@ -195,6 +199,9 @@ class ShopViewController(ViewController):
         success_message = f"You successfully bought one **{item.name}** for `🅱️{item.cost}` beans. Remaining balance: `🅱️{new_user_balance}`\n Use */inventory* to check your inventory."
 
         await interaction.followup.send(success_message, ephemeral=True)
+
+        event = UIEvent(UIEventType.SHOP_DISABLE, False, view_id)
+        await self.controller.dispatch_ui_event(event)
 
     async def send_inventory_message(self, interaction: discord.Interaction):
         inventory = await self.item_manager.get_user_inventory(
