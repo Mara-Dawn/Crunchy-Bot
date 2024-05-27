@@ -4,7 +4,7 @@ import random
 
 import discord
 from combat.actors import Actor, Character
-from combat.encounter import Encounter, EncounterContext
+from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.enemies.types import EnemyType
 from combat.skills.skill import SkillData
@@ -277,16 +277,7 @@ class EncounterManager(Service):
     async def opponent_turn(self, context: EncounterContext):
         opponent = context.opponent
 
-        skill = random.choice(opponent.skills)
-        skill_data = opponent.get_skill_data(skill)
-
-        damage_instances = opponent.get_skill_damage(
-            skill, combatant_count=len(context.combatants)
-        )
-
-        targets = []
-        for _ in range(len(damage_instances)):
-            targets.append(random.choice(context.combatants))
+        turn_data = await self.actor_manager.calculate_opponent_turn(context)
 
         turn_message = await self.get_previous_turn_message(context.thread)
         previous_embeds = turn_message.embeds
@@ -297,7 +288,7 @@ class EncounterManager(Service):
 
         initial_embed = True
         async for embed in self.embed_manager.handle_actor_turn_embed(
-            opponent, targets, skill_data, damage_instances, context
+            turn_data, context
         ):
             attachments = [image]
             current_embeds = previous_embeds + [embed]
@@ -310,21 +301,22 @@ class EncounterManager(Service):
 
         await asyncio.sleep(2)
 
-        for index, instance in enumerate(damage_instances):
-            total_damage = targets[index].get_damage_after_defense(
-                skill, instance.scaled_value
-            )
-            event = CombatEvent(
-                datetime.datetime.now(),
-                context.encounter.guild_id,
-                context.encounter.id,
-                opponent.id,
-                targets[index].id,
-                skill.type,
-                total_damage,
-                CombatEventType.ENEMY_TURN,
-            )
-            await self.controller.dispatch_event(event)
+        for turn in turn_data:
+            for target, damage_instance, _ in turn.damage_data:
+                total_damage = target.get_damage_after_defense(
+                    turn.skill, damage_instance.scaled_value
+                )
+                event = CombatEvent(
+                    datetime.datetime.now(),
+                    context.encounter.guild_id,
+                    context.encounter.id,
+                    opponent.id,
+                    target.id,
+                    turn.skill.type,
+                    total_damage,
+                    CombatEventType.ENEMY_TURN,
+                )
+                await self.controller.dispatch_event(event)
 
         event = CombatEvent(
             datetime.datetime.now(),
@@ -349,31 +341,48 @@ class EncounterManager(Service):
         turn_message = await self.get_previous_turn_message(context.thread)
         previous_embeds = turn_message.embeds
 
-        targets = [context.opponent] * len(damage_instances)
+        damage_data = []
+
+        for instance in damage_instances:
+            target = context.opponent
+            total_damage = target.get_damage_after_defense(
+                skill_data.skill, instance.scaled_value
+            )
+
+            current_hp = await self.actor_manager.get_actor_current_hp(
+                target, context.combat_events
+            )
+
+            new_target_hp = max(0, current_hp - total_damage)
+            damage_data.append((target, instance, new_target_hp))
+
+        turn_data = [TurnData(character, skill_data.skill, damage_data)]
 
         async for embed in self.embed_manager.handle_actor_turn_embed(
-            character, targets, skill_data, damage_instances, context
+            turn_data, context
         ):
             current_embeds = previous_embeds + [embed]
             await turn_message.edit(embeds=current_embeds, attachments=[])
 
         await asyncio.sleep(2)
 
-        for instance in damage_instances:
-            total_damage = context.opponent.get_damage_after_defense(
-                skill_data.skill, instance.scaled_value
-            )
-            event = CombatEvent(
-                datetime.datetime.now(),
-                context.encounter.guild_id,
-                context.encounter.id,
-                character.id,
-                context.opponent.id,
-                skill_data.skill.type,
-                total_damage,
-                CombatEventType.MEMBER_TURN,
-            )
-            await self.controller.dispatch_event(event)
+        for turn in turn_data:
+            for target, damage_instance, _ in turn.damage_data:
+                total_damage = target.get_damage_after_defense(
+                    turn.skill, damage_instance.scaled_value
+                )
+                event = CombatEvent(
+                    datetime.datetime.now(),
+                    context.encounter.guild_id,
+                    context.encounter.id,
+                    character.id,
+                    context.opponent.id,
+                    skill_data.skill.type,
+                    total_damage,
+                    CombatEventType.MEMBER_TURN,
+                )
+                await self.controller.dispatch_event(event)
+
         event = CombatEvent(
             datetime.datetime.now(),
             context.encounter.guild_id,

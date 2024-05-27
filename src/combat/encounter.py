@@ -4,6 +4,8 @@ from typing import Any
 import discord
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
+from combat.skills.skill import Skill
+from combat.skills.types import DamageInstance
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.types import CombatEventType, EncounterEventType
@@ -83,6 +85,9 @@ class EncounterContext:
             if actor.id == last_actor:
                 return actor
 
+    def get_active_combatants(self) -> Actor:
+        return [actor for actor in self.combatants if not actor.defeated]
+
     def get_current_actor(self) -> Actor:
         initiative_list = self.get_current_initiative()
         if len(initiative_list) <= 0:
@@ -116,3 +121,16 @@ class EncounterContext:
             if event.encounter_event_type == EncounterEventType.END:
                 return True
         return False
+
+
+class TurnData:
+
+    def __init__(
+        self,
+        actor: Actor,
+        skill: Skill,
+        damage_data: list[tuple[Actor, DamageInstance, int]],
+    ):
+        self.actor = actor
+        self.skill = skill
+        self.damage_data = damage_data

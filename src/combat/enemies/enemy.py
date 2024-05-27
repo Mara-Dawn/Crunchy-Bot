@@ -75,6 +75,7 @@ class Enemy:
         weighting: int = 100,
         initiative: int = 10,
         attribute_overrides: dict[CharacterAttribute, float] = None,
+        actions_per_turn: int = 1,
     ):
         self.name = name
         self.type = type
@@ -96,6 +97,7 @@ class Enemy:
         self.bonus_loot_chance = bonus_loot_chance
         self.weighting = weighting
         self.initiative = initiative
+        self.actions_per_turn = actions_per_turn
 
         self.attributes: dict[CharacterAttribute, float] = {
             CharacterAttribute.PHYS_DAMAGE_INCREASE: 0,

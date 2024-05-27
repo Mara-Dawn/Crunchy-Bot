@@ -228,6 +228,7 @@ class Gear(Item):
 
         color = self.RARITY_COLOR_HEX_MAP[self.rarity]
         if equipped:
+            color = discord.Color(int("000000",16))
             title += " [EQUIPPED]"
 
         description = f'"{self.description}"'

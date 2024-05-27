@@ -1,5 +1,8 @@
+import random
+
 import discord
 from combat.actors import Actor, Character, Opponent
+from combat.encounter import EncounterContext, TurnData
 from combat.enemies.enemy import Enemy
 from combat.skills import Skill
 from combat.skills.skill import SkillData
@@ -166,3 +169,75 @@ class CombatActorManager(Service):
                 last_used = cooldowns[skill.type]
             skill_data[skill.type] = last_used
         return skill_data
+
+    async def calculate_opponent_turn_data(
+        self,
+        context: EncounterContext,
+        skill: Skill,
+        available_targets: list[Actor],
+        hp_cache: dict[int, int],
+    ):
+        damage_instances = context.opponent.get_skill_damage(
+            skill, combatant_count=len(context.combatants)
+        )
+
+        damage_data = []
+
+        for instance in damage_instances:
+
+            target = random.choice(available_targets)
+
+            if target.id not in hp_cache:
+                current_hp = await self.get_actor_current_hp(
+                    target, context.combat_events
+                )
+            else:
+                current_hp = hp_cache[target.id]
+
+            total_damage = target.get_damage_after_defense(skill, instance.scaled_value)
+
+            new_target_hp = max(0, current_hp - total_damage)
+
+            damage_data.append((target, instance, new_target_hp))
+
+            hp_cache[target.id] = new_target_hp
+            available_targets = [
+                actor
+                for actor in available_targets
+                if actor.id not in hp_cache or hp_cache[actor.id] > 0
+            ]
+
+        return TurnData(actor=context.opponent, skill=skill, damage_data=damage_data)
+
+    async def calculate_opponent_turn(
+        self,
+        context: EncounterContext,
+    ) -> list[TurnData]:
+        opponent = context.opponent
+
+        available_skills = []
+
+        for skill in opponent.skills:
+            skill_data = opponent.get_skill_data(skill)
+            if not skill_data.on_cooldown():
+                available_skills.append(skill)
+
+        skills_to_use = []
+
+        for skill in available_skills:
+            skills_to_use.append(skill)
+            if len(skills_to_use) >= opponent.enemy.actions_per_turn:
+                break
+
+        available_targets = context.get_active_combatants()
+
+        hp_cache = {}
+        turn_data = []
+        for skill in skills_to_use:
+            turn_data.append(
+                await self.calculate_opponent_turn_data(
+                    context, skill, available_targets, hp_cache
+                )
+            )
+
+        return turn_data

@@ -239,18 +239,21 @@ class Opponent(Actor):
                     CharacterAttribute.PHYS_DAMAGE_INCREASE
                 ]
             case SkillEffect.MAGICAL_DAMAGE:
-                modifier += self.emeny.attributes[
+                modifier += self.enemy.attributes[
                     CharacterAttribute.MAGIC_DAMAGE_INCREASE
                 ]
             case SkillEffect.HEALING:
-                modifier += self.emeny.attributes[CharacterAttribute.HEALING_BONUS]
+                modifier += self.enemy.attributes[CharacterAttribute.HEALING_BONUS]
 
         encounter_scaling = 1
         attack_count = skill.hits
         if combatant_count > 1:
-            attack_count *= max(1, int(combatant_count * 0.7))
+            attack_count_scaling = max(1, combatant_count * 0.7)
+            attack_count = int(attack_count * attack_count_scaling)
             encounter_scaling = (
-                combatant_count / attack_count * Actor.OPPONENT_ENCOUNTER_SCALING_FACTOR
+                combatant_count
+                / attack_count_scaling
+                * Actor.OPPONENT_ENCOUNTER_SCALING_FACTOR
             )
 
         attacks = []

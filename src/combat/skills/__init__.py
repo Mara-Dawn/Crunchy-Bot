@@ -72,10 +72,25 @@ class DeezNuts(Skill):
         super().__init__(
             name="Deez Nuts",
             type=SkillType.DEEZ_NUTS,
-            description="He Slaps you with his mighty stick and forces his nuts into your mouth.",
+            description="He forces his nuts into your mouth.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=1,
+            base_value=3,
+            hits=1,
+        )
+
+
+class Bonk(Skill):
+
+    def __init__(self):
+        super().__init__(
+            name="Bonk",
+            type=SkillType.BONK,
+            description="He Slaps you with his mighty stick.",
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
-            base_value=2,
-            hits=1,
+            base_value=1,
+            hits=2,
         )
