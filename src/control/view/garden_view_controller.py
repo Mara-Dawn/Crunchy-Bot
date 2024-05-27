@@ -142,7 +142,7 @@ class GardenViewController(ViewController):
             case PlantType.BOX_BEAN:
                 reward = random.randint(900, 1100)
                 message = f"You harvest a Treasure Bean Plant and gain `🅱️{reward}`."
-                message = "\nIt kind of looks like a lootbox, just way bigger!"
+                message += "\nIt kind of looks like a lootbox, just way bigger!"
                 await self.item_manager.drop_private_loot_box(interaction, size=10)
             case PlantType.CAT_BEAN:
                 reward = random.randint(450, 550)
@@ -213,7 +213,7 @@ class GardenViewController(ViewController):
         roll = random.random()
         rare_seed_chance = 0.1
         speed_seed_chance = 0.1
-        crystal_seed_chance = 0.01
+        crystal_seed_chance = 0.02
 
         item_type = None
         if roll <= rare_seed_chance:

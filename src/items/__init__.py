@@ -609,7 +609,7 @@ class CatGirl(Item):
 class CrappyDrawing(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 8000
+        defaultcost = 12000
 
         if cost is None:
             cost = defaultcost
@@ -1358,7 +1358,7 @@ class CrystalSeed(BaseSeed):
 class BoxSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
-        defaultcost = 750
+        defaultcost = 1000
         if cost is None:
             cost = defaultcost
 

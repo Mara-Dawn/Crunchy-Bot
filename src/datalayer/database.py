@@ -2080,6 +2080,8 @@ class Database:
         transformed = {}
         for row in rows:
             user_id = row[self.INVENTORY_EVENT_MEMBER_COL]
+            if row[self.INVENTORY_EVENT_ITEM_TYPE_COL] not in ItemType:
+                continue
             item_type = ItemType(row[self.INVENTORY_EVENT_ITEM_TYPE_COL])
             amount = row[f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"]
             if amount <= 0:
@@ -2179,6 +2181,7 @@ class Database:
             ]
             for row in rows
             if row[f"SUM({self.INVENTORY_EVENT_AMOUNT_COL})"] > 0
+            and row[self.INVENTORY_EVENT_ITEM_TYPE_COL] in ItemType
         }
         result = transformed | permanent_items
         return result
