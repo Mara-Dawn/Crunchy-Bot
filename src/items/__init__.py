@@ -609,7 +609,7 @@ class CatGirl(Item):
 class CrappyDrawing(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 8000
+        defaultcost = 12000
 
         if cost is None:
             cost = defaultcost
