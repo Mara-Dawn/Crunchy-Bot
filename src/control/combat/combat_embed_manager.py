@@ -128,6 +128,14 @@ class CombatEmbedManager(Service):
             embed, name="Skills:", value=", ".join(skill_list), max_width=38
         )
 
+        if enemy.information != "":
+            self.add_text_bar(
+                embed,
+                name="Additional Information:",
+                value=enemy.information,
+                max_width=38,
+            )
+
         embed.set_image(url=f"attachment://{enemy.image}")
 
         return embed

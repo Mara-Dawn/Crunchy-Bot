@@ -99,6 +99,8 @@ class Enemy:
         self.initiative = initiative
         self.actions_per_turn = actions_per_turn
 
+        self.attribute_overrides = attribute_overrides
+
         self.attributes: dict[CharacterAttribute, float] = {
             CharacterAttribute.PHYS_DAMAGE_INCREASE: 0,
             CharacterAttribute.MAGIC_DAMAGE_INCREASE: 0,
