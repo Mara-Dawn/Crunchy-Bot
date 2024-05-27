@@ -186,6 +186,7 @@ class Gear(Item):
         modifiers: dict[GearModifierType, float],
         skills: list[SkillType],
         enchantments: list[Enchantment],
+        locked: bool = False,
         id: int = None,
     ):
         if name == "" or name is None:
@@ -211,6 +212,7 @@ class Gear(Item):
         self.modifiers = modifiers
         self.skills = skills
         self.enchantments = enchantments
+        self.locked = locked
         self.id = id
 
     def get_embed(
@@ -219,6 +221,7 @@ class Gear(Item):
         show_data: bool = True,
         show_info: bool = False,
         equipped: bool = False,
+        show_locked_state: bool = False,
         max_width: int = 44,
     ) -> discord.Embed:
         if title is None:
@@ -227,9 +230,15 @@ class Gear(Item):
         title = f"> {title}"
 
         color = self.RARITY_COLOR_HEX_MAP[self.rarity]
+
+        if self.id < 0:
+            color = discord.Color.dark_grey()
+
         if equipped:
-            color = discord.Color(int("000000",16))
+            color = discord.Color(int("000000", 16))
             title += " [EQUIPPED]"
+        elif self.locked and show_locked_state:
+            title += " [LOCKED]"
 
         description = f'"{self.description}"'
 

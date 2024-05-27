@@ -88,10 +88,25 @@ class EquipmentViewController(ViewController):
                 interaction = event.payload[0]
                 selected = event.payload[1]
                 await self.equip_gear(interaction, selected, event.view_id)
+            case UIEventType.GEAR_LOCK:
+                interaction = event.payload[0]
+                selected = event.payload[1]
+                await self.update_gear_lock(
+                    interaction, selected, lock=True, view_id=event.view_id
+                )
+            case UIEventType.GEAR_UNLOCK:
+                interaction = event.payload[0]
+                selected = event.payload[1]
+                await self.update_gear_lock(
+                    interaction, selected, lock=False, view_id=event.view_id
+                )
             case UIEventType.GEAR_DISMANTLE:
                 interaction = event.payload[0]
                 selected = event.payload[1]
-                await self.dismantle_gear(interaction, selected, event.view_id)
+                scrap_all = event.payload[2]
+                await self.dismantle_gear(
+                    interaction, selected, scrap_all, event.view_id
+                )
 
     async def open_gear_select(
         self, interaction: discord.Interaction, slot: GearSlot, view_id: int
@@ -208,8 +223,34 @@ class EquipmentViewController(ViewController):
 
         await self.open_gear_overview(interaction, view_id)
 
+    async def update_gear_lock(
+        self,
+        interaction: discord.Interaction,
+        selected: list[Gear],
+        lock: bool,
+        view_id: int,
+    ):
+        if selected is None or len(selected) <= 0:
+            return
+
+        gear_slot = None
+        for gear in selected:
+            if gear_slot is None:
+                gear_slot = gear.base.slot
+            await self.database.update_lock_gear_by_id(gear.id, lock=lock)
+
+        if gear_slot is None:
+            await self.open_gear_overview(interaction, view_id)
+            return
+
+        await self.open_gear_select(interaction, gear_slot, view_id)
+
     async def dismantle_gear(
-        self, interaction: discord.Interaction, selected: list[Gear], view_id: int
+        self,
+        interaction: discord.Interaction,
+        selected: list[Gear],
+        scrap_all: bool,
+        view_id: int,
     ):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
@@ -217,8 +258,15 @@ class EquipmentViewController(ViewController):
         now = datetime.datetime.now()
         gear_slot = None
 
-        for gear in selected:
-            if gear_slot is None:
+        gear_to_scrap = selected
+
+        if scrap_all:
+            gear_to_scrap = await self.database.get_scrappable_gear_by_user(
+                guild_id, member_id
+            )
+
+        for gear in gear_to_scrap:
+            if not scrap_all and gear_slot is None:
                 gear_slot = gear.base.slot
             gear_score = await self.gear_manager.get_gear_score(gear)
 

@@ -184,6 +184,8 @@ class CombatActorManager(Service):
         damage_data = []
 
         for instance in damage_instances:
+            if len(available_targets) <= 0:
+                break
 
             target = random.choice(available_targets)
 

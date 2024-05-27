@@ -12,7 +12,7 @@ class Skill:
         information: str,
         skill_effect: SkillEffect,
         cooldown: int,
-        base_value: int,
+        base_value: float,
         hits: int = 1,
     ):
         self.name = name

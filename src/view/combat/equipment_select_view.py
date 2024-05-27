@@ -85,6 +85,7 @@ class EquipmentSelectView(ViewMenu):
             self.filtered_items,
             key=lambda x: (
                 (x.id in [gear.id for gear in self.current]),
+                not x.locked,
                 x.level,
                 Gear.RARITY_SORT_MAP[x.rarity],
             ),
@@ -107,12 +108,35 @@ class EquipmentSelectView(ViewMenu):
         await self.controller.dispatch_ui_event(event)
 
     async def dismantle_gear(
+        self, interaction: discord.Interaction, scrap_all: bool = False
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.GEAR_DISMANTLE,
+            (interaction, self.selected, scrap_all),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def lock_selected(
         self,
         interaction: discord.Interaction,
     ):
         await interaction.response.defer()
         event = UIEvent(
-            UIEventType.GEAR_DISMANTLE,
+            UIEventType.GEAR_LOCK,
+            (interaction, self.selected),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def unlock_selected(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.GEAR_UNLOCK,
             (interaction, self.selected),
             self.id,
         )
@@ -157,9 +181,11 @@ class EquipmentSelectView(ViewMenu):
         self.add_item(SelectButton(disable_equip))
         self.add_item(PageButton(">", True))
         self.add_item(CurrentPageButton(page_display))
-        self.add_item(DismantleButton(disable_dismantle))
-        self.add_item(BackButton())
         self.add_item(ScrapBalanceButton(self.scrap_balance))
+        self.add_item(ScrapSelectedButton(disable_dismantle))
+        self.add_item(LockButton(disabled))
+        self.add_item(UnlockButton(disabled))
+        self.add_item(BackButton())
 
     async def refresh_ui(
         self,
@@ -215,7 +241,7 @@ class EquipmentSelectView(ViewMenu):
             if gear.id in [gear.id for gear in self.current]:
                 equipped = True
 
-            embeds.append(gear.get_embed(equipped=equipped))
+            embeds.append(gear.get_embed(equipped=equipped, show_locked_state=True))
             file_path = f"./{gear.base.image_path}{gear.base.image}"
             if file_path not in files:
                 file = discord.File(
@@ -261,11 +287,11 @@ class SelectButton(discord.ui.Button):
             await view.select_gear(interaction)
 
 
-class DismantleButton(discord.ui.Button):
+class ScrapSelectedButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         super().__init__(
-            label="Dismantle",
+            label="Scrap Selected",
             style=discord.ButtonStyle.red,
             row=2,
             disabled=disabled,
@@ -276,6 +302,57 @@ class DismantleButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.dismantle_gear(interaction)
+
+
+class ScrapAllButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Scrap All (non locked)",
+            style=discord.ButtonStyle.red,
+            row=2,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentSelectView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.dismantle_gear(interaction, scrap_all=True)
+
+
+class LockButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Lock Selected",
+            style=discord.ButtonStyle.gray,
+            row=2,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentSelectView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.lock_selected(interaction)
+
+
+class UnlockButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Unlock Selected",
+            style=discord.ButtonStyle.gray,
+            row=2,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentSelectView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.unlock_selected(interaction)
 
 
 class BackButton(discord.ui.Button):

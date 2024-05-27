@@ -76,7 +76,7 @@ class DeezNuts(Skill):
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=1,
-            base_value=3,
+            base_value=2,
             hits=1,
         )
 
@@ -87,7 +87,7 @@ class Bonk(Skill):
         super().__init__(
             name="Bonk",
             type=SkillType.BONK,
-            description="He Slaps you with his mighty stick.",
+            description="He Slaps you multiple times with his mighty stick.",
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,

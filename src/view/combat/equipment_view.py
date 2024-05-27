@@ -68,6 +68,7 @@ class EquipmentView(ViewMenu):
                 self.add_item(SelectBodyArmor())
                 self.add_item(SelectLegs())
                 self.add_item(SelectAccessory())
+                self.add_item(ScrapAllButton())
             case EquipmentViewState.STATS:
                 stats_button_disabled = True
             case EquipmentViewState.SKILLS:
@@ -190,6 +191,15 @@ class EquipmentView(ViewMenu):
         event = UIEvent(
             UIEventType.GEAR_OPEN_SECELT,
             (interaction, slot),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def dismantle_gear(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.GEAR_DISMANTLE,
+            (interaction, [], True),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -356,3 +366,20 @@ class ScrapBalanceButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await interaction.response.defer(ephemeral=True)
+
+
+class ScrapAllButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Scrap All (non locked)",
+            style=discord.ButtonStyle.red,
+            row=2,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.dismantle_gear(interaction)

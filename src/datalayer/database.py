@@ -523,6 +523,7 @@ class Database:
     USER_GEAR_RARITY_COL = "usgr_rarity"
     USER_GEAR_GENERATOR_VERSION_COL = "usgr_generator_version"
     USER_GEAR_IS_SCRAPPED_COL = "usgr_is_scrapped"
+    USER_GEAR_IS_LOCKED_COL = "usgr_is_locked"
     CREATE_USER_GEAR_TABLE = f"""
     CREATE TABLE if not exists {USER_GEAR_TABLE} (
         {USER_GEAR_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -533,7 +534,8 @@ class Database:
         {USER_GEAR_LEVEL_COL} INTEGER,
         {USER_GEAR_RARITY_COL} TEXT,
         {USER_GEAR_GENERATOR_VERSION_COL} TEXT,
-        {USER_GEAR_IS_SCRAPPED_COL} TEXT
+        {USER_GEAR_IS_SCRAPPED_COL} INTEGER,
+        {USER_GEAR_IS_LOCKED_COL} INTEGER
     );"""
 
     USER_GEAR_MODIFIER_TABLE = "usergearmodifiers"
@@ -2978,8 +2980,9 @@ class Database:
             {self.USER_GEAR_LEVEL_COL},
             {self.USER_GEAR_RARITY_COL},
             {self.USER_GEAR_GENERATOR_VERSION_COL},
-            {self.USER_GEAR_IS_SCRAPPED_COL})
-            VALUES (?, ?, ?, ?, ?, ?, ?);
+            {self.USER_GEAR_IS_SCRAPPED_COL},
+            {self.USER_GEAR_IS_LOCKED_COL})
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
         """
         task = (
             guild_id,
@@ -2988,6 +2991,7 @@ class Database:
             gear.level,
             gear.rarity.value,
             generator_version,
+            0,
             0,
         )
 
@@ -3021,6 +3025,7 @@ class Database:
         gear_base: GearBase = base_class()  # noqa: F405
         rarity = GearRarity(rows[0][self.USER_GEAR_RARITY_COL])
         level = rows[0][self.USER_GEAR_LEVEL_COL]
+        locked = int(rows[0][self.USER_GEAR_IS_LOCKED_COL]) == 1
 
         modifiers = {}
         skills = []
@@ -3046,12 +3051,13 @@ class Database:
             modifiers=modifiers,
             skills=skills,
             enchantments=[],
+            locked=locked,
             id=id,
         )
 
     async def delete_gear_by_id(self, gear_id: int):
         if gear_id is None:
-            return 
+            return
         command = f"""
             UPDATE {self.USER_GEAR_TABLE} SET
             {self.USER_GEAR_IS_SCRAPPED_COL} = 1
@@ -3059,6 +3065,21 @@ class Database:
         """
 
         await self.__query_insert(command)
+
+    async def update_lock_gear_by_id(self, gear_id: int, lock: bool):
+
+        lock_value = 1 if lock else 0
+
+        if gear_id is None:
+            return
+        command = f"""
+            UPDATE {self.USER_GEAR_TABLE} SET
+            {self.USER_GEAR_IS_LOCKED_COL} = ?
+            WHERE {self.USER_GEAR_ID_COL} = ?;
+        """
+        task = (lock_value, gear_id)
+
+        await self.__query_insert(command, task)
 
     async def create_user_equipment(self, guild_id: int, user_id: int) -> int:
         command = f"""
@@ -3186,7 +3207,7 @@ class Database:
                     weapon = DefaultStick()
                 case -2:
                     weapon = DefaultWand()
-        
+
         if weapon is None:
             weapon = await self.get_gear_by_id(weapon_id)
 
@@ -3243,9 +3264,33 @@ class Database:
         id = None
         if gear is not None:
             id = gear.id
+            await self.update_lock_gear_by_id(id, lock=True)
 
         task = (id, guild_id, member_id)
         await self.__query_insert(command, task)
+
+    async def get_scrappable_gear_by_user(
+        self, guild_id: int, member_id: int
+    ) -> list[Gear]:
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            WHERE {self.USER_GEAR_GUILD_ID_COL} = ?
+            AND {self.USER_GEAR_MEMBER_ID_COL} = ?
+            AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
+            AND {self.USER_GEAR_IS_LOCKED_COL} = 0
+            ;
+        """
+        task = (guild_id, member_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+        gear = []
+        for row in rows:
+            gear_piece = await self.get_gear_by_id(row[self.USER_GEAR_ID_COL])
+            gear.append(gear_piece)
+
+        return gear
 
     async def get_user_armory(self, guild_id: int, member_id: int) -> list[Gear]:
 
