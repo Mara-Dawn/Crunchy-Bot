@@ -1468,7 +1468,7 @@ class BakedSeed(BaseSeed):
             "Available as a rare drop from lootboxes."
             "\nTakes 2-4 Days to grow, depending on water."
             "\nProduces 420 - 690 beans when harvested."
-            f"\nWhen harvested they will make you stoned and turn your next {Debuff.DEBUFF_DURATION} messages into stoner talk gibberish."
+            "\nWhen harvested they will make you stoned and turn your next few messages into stoner talk gibberish."
         )
         self.emoji = BakedBeanPlant.READY_EMOJI
 
