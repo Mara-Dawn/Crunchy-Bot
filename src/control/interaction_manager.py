@@ -370,7 +370,7 @@ class InteractionManager(Service):
     ):
         response = ""
 
-        if member.id == target_user.id:
+        if member.id == target_user.id or target_user.id == self.bot.user.id:
             return response
 
         for item in items:
