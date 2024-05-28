@@ -99,6 +99,7 @@ class InteractionManager(Service):
             return (
                 modifiers,
                 response,
+                items_used,
             )
 
         if already_interacted and modifiers.bonus_attempt is None:
