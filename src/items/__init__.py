@@ -1544,7 +1544,6 @@ class UsefulCatGirl(Item):
             emoji="🐈",
             cost=cost,
             value=1,
-            max_amount=1,
             trigger=[ItemTrigger.PET, ItemTrigger.SLAP],
             hide_in_shop=True,
             permanent=True,
