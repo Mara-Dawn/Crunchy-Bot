@@ -12,7 +12,7 @@ from events.garden_event import GardenEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType, EventType, GardenEventType, UIEventType
 from events.ui_event import UIEvent
-from items import BaseSeed, Debuff
+from items import BaseSeed
 from items.types import ItemType
 from view.garden.embed import GardenEmbed
 from view.garden.plot_embed import PlotEmbed
@@ -183,7 +183,7 @@ class GardenViewController(ViewController):
                     guild_id,
                     member_id,
                     ItemType.HIGH_AS_FRICK,
-                    Debuff.DEBUFF_DURATION,
+                    5,
                 )
                 await self.controller.dispatch_event(event)
             case PlantType.GHOST_BEAN:
