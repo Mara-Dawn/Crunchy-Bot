@@ -63,11 +63,11 @@ class EquipmentView(ViewMenu):
         match self.state:
             case EquipmentViewState.GEAR:
                 gear_button_disabled = True
-                self.add_item(SelectWeapon())
-                self.add_item(SelectHeadGear())
-                self.add_item(SelectBodyArmor())
-                self.add_item(SelectLegs())
-                self.add_item(SelectAccessory())
+                self.add_item(SelectGearSlot(GearSlot.WEAPON))
+                self.add_item(SelectGearSlot(GearSlot.HEAD))
+                self.add_item(SelectGearSlot(GearSlot.BODY))
+                self.add_item(SelectGearSlot(GearSlot.LEGS))
+                self.add_item(SelectGearSlot(GearSlot.ACCESSORY))
                 self.add_item(ScrapAllButton())
             case EquipmentViewState.STATS:
                 stats_button_disabled = True
@@ -209,8 +209,6 @@ class GearButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         color = discord.ButtonStyle.grey
-        if disabled:
-            color = discord.ButtonStyle.red
 
         super().__init__(label="Gear", style=color, disabled=disabled, row=0)
 
@@ -223,8 +221,6 @@ class StatsButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         color = discord.ButtonStyle.grey
-        if disabled:
-            color = discord.ButtonStyle.red
 
         super().__init__(
             label="Attributes",
@@ -242,8 +238,6 @@ class SkillsButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         color = discord.ButtonStyle.grey
-        if disabled:
-            color = discord.ButtonStyle.red
 
         super().__init__(
             label="Skills",
@@ -257,79 +251,20 @@ class SkillsButton(discord.ui.Button):
         await view.set_state(EquipmentViewState.SKILLS, interaction)
 
 
-class SelectWeapon(discord.ui.Button):
+class SelectGearSlot(discord.ui.Button):
 
-    def __init__(self, disabled: bool = False):
+    def __init__(self, slot: GearSlot, disabled: bool = False, row: int = 1):
         super().__init__(
-            label="Change Weapon",
+            label=slot.value,
             style=discord.ButtonStyle.green,
             disabled=disabled,
-            row=1,
+            row=row,
         )
+        self.slot = slot
 
     async def callback(self, interaction: discord.Interaction):
         view: EquipmentView = self.view
-        await view.change_gear(interaction, GearSlot.WEAPON)
-
-
-class SelectHeadGear(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False):
-        super().__init__(
-            label="Change Headgear",
-            style=discord.ButtonStyle.green,
-            disabled=disabled,
-            row=1,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentView = self.view
-        await view.change_gear(interaction, GearSlot.HEAD)
-
-
-class SelectBodyArmor(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False):
-        super().__init__(
-            label="Change Body",
-            style=discord.ButtonStyle.green,
-            disabled=disabled,
-            row=1,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentView = self.view
-        await view.change_gear(interaction, GearSlot.BODY)
-
-
-class SelectLegs(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False):
-        super().__init__(
-            label="Change Bottoms",
-            style=discord.ButtonStyle.green,
-            disabled=disabled,
-            row=2,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentView = self.view
-        await view.change_gear(interaction, GearSlot.LEGS)
-
-
-class SelectAccessory(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False):
-        super().__init__(
-            label="Change Accessory",
-            style=discord.ButtonStyle.green,
-            disabled=disabled,
-            row=2,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentView = self.view
-        await view.change_gear(interaction, GearSlot.ACCESSORY)
+        await view.change_gear(interaction, self.slot)
 
 
 class ForgeButton(discord.ui.Button):

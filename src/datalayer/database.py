@@ -3055,16 +3055,19 @@ class Database:
             id=id,
         )
 
-    async def delete_gear_by_id(self, gear_id: int):
-        if gear_id is None:
+    async def delete_gear_by_ids(self, gear_ids: list[int]):
+        if gear_ids is None or len(gear_ids) == 0:
             return
+
+        list_sanitized = self.__list_sanitizer(gear_ids)
+
         command = f"""
             UPDATE {self.USER_GEAR_TABLE} SET
             {self.USER_GEAR_IS_SCRAPPED_COL} = 1
-            WHERE {self.USER_GEAR_ID_COL} = {int(gear_id)};
+            WHERE {self.USER_GEAR_ID_COL} IN {list_sanitized};
         """
-
-        await self.__query_insert(command)
+        task = (gear_ids)
+        await self.__query_insert(command, task)
 
     async def update_lock_gear_by_id(self, gear_id: int, lock: bool):
 

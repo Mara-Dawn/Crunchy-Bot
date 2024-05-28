@@ -9,6 +9,7 @@ from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.combat.embed import SelectGearHeadEmbed
+from view.combat.equipment_view import SelectGearSlot
 from view.view_menu import ViewMenu
 
 
@@ -43,12 +44,6 @@ class EquipmentSelectView(ViewMenu):
         self.page_count = 1
         self.filter_items()
         self.message = None
-
-        self.selected = [
-            gear
-            for gear in self.filtered_items
-            if gear.id in [gear.id for gear in self.current]
-        ]
 
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
@@ -85,7 +80,7 @@ class EquipmentSelectView(ViewMenu):
             self.filtered_items,
             key=lambda x: (
                 (x.id in [gear.id for gear in self.current]),
-                not x.locked,
+                x.locked,
                 x.level,
                 Gear.RARITY_SORT_MAP[x.rarity],
             ),
@@ -154,6 +149,15 @@ class EquipmentSelectView(ViewMenu):
         )
         await self.controller.dispatch_ui_event(event)
 
+    async def change_gear(self, interaction: discord.Interaction, slot: GearSlot):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.GEAR_OPEN_SECELT,
+            (interaction, slot),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     def refresh_elements(self, disabled: bool = False):
         page_display = f"Page {self.current_page + 1}/{self.page_count}"
 
@@ -186,6 +190,31 @@ class EquipmentSelectView(ViewMenu):
         self.add_item(LockButton(disabled))
         self.add_item(UnlockButton(disabled))
         self.add_item(BackButton())
+        self.add_item(
+            SelectGearSlot(
+                GearSlot.WEAPON, row=3, disabled=(self.filter == GearSlot.WEAPON)
+            )
+        )
+        self.add_item(
+            SelectGearSlot(
+                GearSlot.HEAD, row=3, disabled=(self.filter == GearSlot.HEAD)
+            )
+        )
+        self.add_item(
+            SelectGearSlot(
+                GearSlot.BODY, row=3, disabled=(self.filter == GearSlot.BODY)
+            )
+        )
+        self.add_item(
+            SelectGearSlot(
+                GearSlot.LEGS, row=3, disabled=(self.filter == GearSlot.LEGS)
+            )
+        )
+        self.add_item(
+            SelectGearSlot(
+                GearSlot.ACCESSORY, row=3, disabled=(self.filter == GearSlot.ACCESSORY)
+            )
+        )
 
     async def refresh_ui(
         self,
@@ -361,7 +390,7 @@ class BackButton(discord.ui.Button):
         super().__init__(
             label="Back",
             style=discord.ButtonStyle.gray,
-            row=2,
+            row=4,
             disabled=disabled,
         )
 
@@ -411,7 +440,7 @@ class Dropdown(discord.ui.Select):
         max_values = min(SelectGearHeadEmbed.ITEMS_PER_PAGE, len(gear))
 
         super().__init__(
-            placeholder="Select a piece of equipment.",
+            placeholder="Select one or more pieces of equipment.",
             min_values=1,
             max_values=max_values,
             options=options,

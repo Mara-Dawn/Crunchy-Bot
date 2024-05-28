@@ -2,8 +2,8 @@ from enum import Enum
 
 
 class GearSlot(str, Enum):
-    HEAD = "Headpiece"
-    BODY = "Body Armor"
+    HEAD = "Head"
+    BODY = "Body"
     LEGS = "Bottoms"
     WEAPON = "Weapon"
     ACCESSORY = "Accessory"

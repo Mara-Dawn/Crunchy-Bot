@@ -22,12 +22,11 @@ class DefaultStick(Gear):
             rarity=GearRarity.NORMAL,
             level=1,
             modifiers={
-                GearModifierType.WEAPON_DAMAGE_MIN: 5,
-                GearModifierType.WEAPON_DAMAGE_MAX: 10,
+                GearModifierType.WEAPON_DAMAGE_MIN: 7,
+                GearModifierType.WEAPON_DAMAGE_MAX: 12,
             },
             skills=[],
             enchantments=[],
-            locked=True,
             id=-1,
         )
 
@@ -42,12 +41,11 @@ class DefaultWand(Gear):
             rarity=GearRarity.NORMAL,
             level=1,
             modifiers={
-                GearModifierType.WEAPON_DAMAGE_MIN: 5,
-                GearModifierType.WEAPON_DAMAGE_MAX: 10,
+                GearModifierType.WEAPON_DAMAGE_MIN: 7,
+                GearModifierType.WEAPON_DAMAGE_MAX: 12,
             },
             skills=[],
             enchantments=[],
-            locked=True,
             id=-2,
         )
 
@@ -66,7 +64,6 @@ class DefaultCap(Gear):
             },
             skills=[],
             enchantments=[],
-            locked=True,
             id=-3,
         )
 
@@ -85,7 +82,6 @@ class DefaultShirt(Gear):
             },
             skills=[],
             enchantments=[],
-            locked=True,
             id=-4,
         )
 
@@ -104,7 +100,6 @@ class DefaultPants(Gear):
             },
             skills=[],
             enchantments=[],
-            locked=True,
             id=-5,
         )
 
@@ -121,6 +116,5 @@ class DefaultAccessory(Gear):
             modifiers={},
             skills=[],
             enchantments=[],
-            locked=True,
             id=-6,
         )

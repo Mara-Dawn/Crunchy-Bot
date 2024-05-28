@@ -8,7 +8,7 @@ from items.types import ItemType
 class Enemy:
 
     LOOT_MIN_AMOUNT_BY_LVL = {
-        1: 1,
+        1: 7,
         2: 1,
         3: 1,
         4: 1,
@@ -23,7 +23,7 @@ class Enemy:
     }
 
     LOOT_MAX_AMOUNT_BY_LVL = {
-        1: 2,
+        1: 8,
         2: 2,
         3: 2,
         4: 2,

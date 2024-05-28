@@ -73,13 +73,13 @@ class CombatGearManager(Service):
 
     MODIFIER_BASE = {
         GearModifierType.WEAPON_DAMAGE_MIN: 8,
-        GearModifierType.WEAPON_DAMAGE_MAX: 15,
+        GearModifierType.WEAPON_DAMAGE_MAX: 12,
         GearModifierType.ARMOR: 5,
-        GearModifierType.ATTACK: 1,
-        GearModifierType.MAGIC: 1,
-        GearModifierType.HEALING: 1,
-        GearModifierType.CRIT_DAMAGE: 1,
-        GearModifierType.CRIT_RATE: 1,
+        GearModifierType.ATTACK: 2,
+        GearModifierType.MAGIC: 2,
+        GearModifierType.HEALING: 2,
+        GearModifierType.CRIT_DAMAGE: 3,
+        GearModifierType.CRIT_RATE: 3,
         GearModifierType.DEFENSE: 1,
         GearModifierType.CONSTITUTION: 3,
         GearModifierType.DEXTERITY: 1,
@@ -88,27 +88,27 @@ class CombatGearManager(Service):
         GearModifierType.WEAPON_DAMAGE_MIN: 0.3,
         GearModifierType.WEAPON_DAMAGE_MAX: 0.3,
         GearModifierType.ARMOR: 0.3,
-        GearModifierType.ATTACK: 0.5,
-        GearModifierType.MAGIC: 0.5,
+        GearModifierType.ATTACK: 0.6,
+        GearModifierType.MAGIC: 0.6,
         GearModifierType.HEALING: 0.5,
         GearModifierType.CRIT_DAMAGE: 0.5,
-        GearModifierType.CRIT_RATE: 0.5,
+        GearModifierType.CRIT_RATE: 0.05,
         GearModifierType.DEFENSE: 0.5,
         GearModifierType.CONSTITUTION: 0.3,
         GearModifierType.DEXTERITY: 0.3,
     }
     MODIFIER_RANGE = {
-        GearModifierType.WEAPON_DAMAGE_MIN: 0.15,
-        GearModifierType.WEAPON_DAMAGE_MAX: 0.15,
-        GearModifierType.ARMOR: 0.15,
-        GearModifierType.ATTACK: 0.15,
-        GearModifierType.MAGIC: 0.15,
-        GearModifierType.HEALING: 0.15,
-        GearModifierType.CRIT_DAMAGE: 0.15,
-        GearModifierType.CRIT_RATE: 0.15,
-        GearModifierType.DEFENSE: 0.15,
-        GearModifierType.CONSTITUTION: 0.15,
-        GearModifierType.DEXTERITY: 0.15,
+        GearModifierType.WEAPON_DAMAGE_MIN: 0.1,
+        GearModifierType.WEAPON_DAMAGE_MAX: 0.1,
+        GearModifierType.ARMOR: 0.1,
+        GearModifierType.ATTACK: 0.1,
+        GearModifierType.MAGIC: 0.1,
+        GearModifierType.HEALING: 0.1,
+        GearModifierType.CRIT_DAMAGE: 0.1,
+        GearModifierType.CRIT_RATE: 0.1,
+        GearModifierType.DEFENSE: 0.1,
+        GearModifierType.CONSTITUTION: 0.1,
+        GearModifierType.DEXTERITY: 0.1,
     }
     INT_MODIFIERS = [
         GearModifierType.WEAPON_DAMAGE_MIN,
@@ -205,7 +205,10 @@ class CombatGearManager(Service):
 
         base_value = (
             self.MODIFIER_BASE[modifier_type]
-            + self.MODIFIER_SCALING[modifier_type] * base.scaling * item_level
+            + self.MODIFIER_BASE[modifier_type]
+            * base.scaling
+            * (self.MODIFIER_SCALING[modifier_type])
+            * (item_level - 1)
         ) * slot_scaling
 
         min_roll = max(
@@ -336,57 +339,31 @@ class CombatGearManager(Service):
                 print(f"  {mod.name}: {value}")
 
     async def test(self):
-        # levels = range(1, 13)
-        levels = range(9, 13)
+        # levels = range(9, 13)
 
-        for level in levels:
+        for base_type in GearBaseType:
+            base_class = globals()[base_type]
+            base: GearBase = base_class()
+
+            if base.slot != GearSlot.WEAPON:
+                continue
+
             print("#" * 30)
+            print(f"Base: {base.type.value}")
             print("#" * 30)
-            print(f"\nLevel: {level}")
             print("-" * 30)
-            print("Rarities:")
+            print("Levels:")
             print("-" * 30)
-            weights = {}
 
-            for rarity, weight in self.RARITY_WEIGHTS.items():
-                weight += level * self.RARITY_SCALING[rarity]
-
-                weight = max(0, weight)
-
-                if self.MIN_RARITY_LVL[rarity] > level:
-                    weight = 0
-
-                weights[rarity] = weight
-
-            sum_weights = sum(weights.values())
-            # weights = {k: v / sum_weights for k, v in weights.items()}
-
-            for rarity, weight in weights.items():
-                percent = weight / sum_weights * 100
-                print(f"{rarity.value}: {percent:.02f}%")
-
-            print("-" * 30)
-            print("Bases:")
-            print("-" * 30)
-            bases = await self.get_bases_by_lvl(level)
-
-            for base in bases:
-                print(f"  {base.type.value}:")
+            for level in range(base.min_level, base.max_level):
+                print(f"  {level}:")
                 allowed_modifiers = base.get_allowed_modifiers()
 
                 allowed_modifiers.extend(base.modifiers)
 
                 for modifier_type in allowed_modifiers:
-                    base_value = (
-                        self.MODIFIER_BASE[modifier_type]
-                        + self.MODIFIER_SCALING[modifier_type] * base.scaling * level
-                    ) * self.SLOT_SCALING[base.slot]
-
-                    min_roll = base_value * (1 - self.MODIFIER_RANGE[modifier_type])
-                    max_roll = base_value * (1 + self.MODIFIER_RANGE[modifier_type])
-
-                    if modifier_type in self.INT_MODIFIERS:
-                        min_roll = int(min_roll)
-                        max_roll = int(max_roll)
+                    min_roll, max_roll = await self.get_modifier_boundaries(
+                        base, level, modifier_type
+                    )
 
                     print(f"    {modifier_type.value}: {min_roll:.2f} - {max_roll:.2f}")

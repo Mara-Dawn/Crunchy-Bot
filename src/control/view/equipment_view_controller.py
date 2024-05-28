@@ -221,7 +221,7 @@ class EquipmentViewController(ViewController):
                 guild_id, member_id, selected[1], acc_slot_2=True
             )
 
-        await self.open_gear_overview(interaction, view_id)
+        await self.open_gear_select(interaction, selected[0].base.slot, view_id)
 
     async def update_gear_lock(
         self,
@@ -265,26 +265,31 @@ class EquipmentViewController(ViewController):
                 guild_id, member_id
             )
 
+        total_scraps = 0
+
         for gear in gear_to_scrap:
             if not scrap_all and gear_slot is None:
                 gear_slot = gear.base.slot
-            gear_score = await self.gear_manager.get_gear_score(gear)
 
-            event = InventoryEvent(
-                now,
-                guild_id,
-                member_id,
-                ItemType.SCRAP,
-                gear_score,
-            )
-            await self.controller.dispatch_event(event)
+            total_scraps += await self.gear_manager.get_gear_score(gear)
 
-            await self.database.delete_gear_by_id(gear.id)
             self.logger.log(
                 guild_id,
                 f"Gear piece was scrapped: lvl.{gear.level} {gear.rarity.value} {gear.name}",
                 cog="Equipment",
             )
+
+        await self.database.delete_gear_by_ids([gear.id for gear in gear_to_scrap])
+
+        if total_scraps > 0:
+            event = InventoryEvent(
+                now,
+                guild_id,
+                member_id,
+                ItemType.SCRAP,
+                total_scraps,
+            )
+            await self.controller.dispatch_event(event)
 
         if gear_slot is None:
             await self.open_gear_overview(interaction, view_id)

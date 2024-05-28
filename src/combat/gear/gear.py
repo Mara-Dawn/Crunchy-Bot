@@ -234,17 +234,21 @@ class Gear(Item):
         if self.id < 0:
             color = discord.Color.dark_grey()
 
+        name = f"~* {self.name} *~"
+        suffix = ""
         if equipped:
             color = discord.Color(int("000000", 16))
-            title += " [EQUIPPED]"
+            suffix += " [EQUIPPED]"
         elif self.locked and show_locked_state:
-            title += " [LOCKED]"
+            suffix += " [🔒]"
 
         description = f'"{self.description}"'
 
         info_block = "```ansi\n"
-        info_block += f"{self.RARITY_COLOR_MAP[self.rarity]}~* {self.name} *~[0m"
-        spacing = " " * (max_width - len(self.name) - len(self.base.slot.value) - 8)
+        info_block += f"{self.RARITY_COLOR_MAP[self.rarity]}{name}[0m{suffix}"
+        spacing = " " * (
+            max_width - len(name) - len(self.base.slot.value) - len(suffix) - 2
+        )
         info_block += f"{spacing}[{self.base.slot.value}]"
         info_block += "```"
 
@@ -327,7 +331,7 @@ class Gear(Item):
         if show_info and len(self.information) > 0:
             info_block += f"```ansi\n[37m{self.information}```"
 
-        embed = discord.Embed(title=title, description=info_block, color=color)
+        embed = discord.Embed(title="", description=info_block, color=color)
         embed.set_thumbnail(url=f"attachment://{self.base.image}")
         return embed
 
