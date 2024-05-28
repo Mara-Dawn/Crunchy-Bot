@@ -99,6 +99,7 @@ class InteractionManager(Service):
             return (
                 modifiers,
                 response,
+                items_used,
             )
 
         if already_interacted and modifiers.bonus_attempt is None:
@@ -369,7 +370,7 @@ class InteractionManager(Service):
     ):
         response = ""
 
-        if member.id == target_user.id:
+        if member.id == target_user.id or target_user.id == self.bot.user.id:
             return response
 
         for item in items:
