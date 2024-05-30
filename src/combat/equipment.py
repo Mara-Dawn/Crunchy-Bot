@@ -1,6 +1,7 @@
 import discord
 from combat.gear import (
-    DefaultAccessory,
+    DefaultAccessory1,
+    DefaultAccessory2,
     DefaultCap,
     DefaultPants,
     DefaultShirt,
@@ -43,10 +44,10 @@ class CharacterEquipment:
             self.leg_gear = DefaultPants()
 
         if self.accessory_1 is None:
-            self.accessory_1 = DefaultAccessory()
+            self.accessory_1 = DefaultAccessory1()
 
         if self.accessory_2 is None:
-            self.accessory_2 = DefaultAccessory()
+            self.accessory_2 = DefaultAccessory2()
 
         self.gear: list[Gear] = [
             self.weapon,

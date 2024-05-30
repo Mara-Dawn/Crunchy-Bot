@@ -4,8 +4,7 @@ import discord
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext, TurnData
 from combat.enemies.enemy import Enemy
-from combat.skills.skill import CharacterSkill
-from combat.skills.skills import Skill
+from combat.skills.skill import CharacterSkill, Skill
 from combat.skills.types import SkillEffect, SkillType
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
@@ -53,8 +52,8 @@ class CombatActorManager(Service):
                 continue
             if event.skill_type is None:
                 continue
-            skill = await self.skill_manager.get_skill(event.skill_type)
-            match skill.skill_effect:
+            base_skill = await self.skill_manager.get_base_skill(event.skill_type)
+            match base_skill.skill_effect:
                 case SkillEffect.PHYSICAL_DAMAGE:
                     health -= event.skill_value
                 case SkillEffect.MAGICAL_DAMAGE:
@@ -66,7 +65,7 @@ class CombatActorManager(Service):
                 return 0
         return int(health)
 
-    def get_opponent(
+    async def get_opponent(
         self,
         enemy: Enemy,
         enemy_level: int,
@@ -75,13 +74,23 @@ class CombatActorManager(Service):
         combat_events: list[CombatEvent],
     ) -> Opponent:
         defeated = False
+        encounter_id = None
         for event in encounter_events:
+            if encounter_id is None:
+                encounter_id = event.encounter_id
             if event.encounter_event_type == EncounterEventType.ENEMY_DEFEAT:
                 defeated = True
                 break
 
-        skills = enemy.skills
+        skills = []
+        for skill_type in enemy.skill_types:
+            skill = await self.skill_manager.get_enemy_skill(skill_type)
+            skills.append(skill)
+
         skill_cooldowns = self.get_skill_cooldowns(None, skills, combat_events)
+        skill_stacks_used = await self.database.get_opponent_skill_stacks_used(
+            encounter_id
+        )
 
         return Opponent(
             enemy=enemy,
@@ -89,6 +98,7 @@ class CombatActorManager(Service):
             max_hp=max_hp,
             skills=skills,
             skill_cooldowns=skill_cooldowns,
+            skill_stacks_used=skill_stacks_used,
             defeated=defeated,
         )
 
@@ -122,7 +132,7 @@ class CombatActorManager(Service):
 
         skills = []
         for skill_type in skill_types:
-            skill = await self.skill_manager.get_skill(skill_type)
+            skill = await self.skill_manager.get_weapon_skill(skill_type)
             skills.append(skill)
 
         equipped_skills = await self.database.get_user_equipped_skills(

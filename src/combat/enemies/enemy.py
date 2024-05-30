@@ -1,9 +1,8 @@
-from random import random
+import random
 
 import discord
 from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearBaseType
-from combat.skills.skills import EnemySkill
 from combat.skills.types import SkillType
 from items.types import ItemType
 
@@ -68,7 +67,7 @@ class Enemy:
         max_hp: int,
         min_dmg: int,
         max_dmg: int,
-        skills: list[EnemySkill],
+        skill_types: list[SkillType],
         item_loot_table: list[ItemType],
         gear_loot_table: list[GearBaseType],
         skill_loot_table: list[SkillType],
@@ -93,7 +92,7 @@ class Enemy:
         self.max_hp = max_hp
         self.min_dmg = min_dmg
         self.max_dmg = max_dmg
-        self.skills = skills
+        self.skill_types = skill_types
         self.item_loot_table = item_loot_table
         self.gear_loot_table = gear_loot_table
         self.skill_loot_table = skill_loot_table

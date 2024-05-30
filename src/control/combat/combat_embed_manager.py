@@ -8,6 +8,7 @@ from combat.skills.skill import Skill
 from combat.skills.types import DamageInstance, SkillEffect
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_enemy_manager import CombatEnemyManager
+from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -32,6 +33,9 @@ class CombatEmbedManager(Service):
         )
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
+        )
+        self.skill_manager: CombatSkillManager = self.controller.get_service(
+            CombatSkillManager
         )
         self.log_name = "Combat Embeds"
 
@@ -121,7 +125,8 @@ class CombatEmbedManager(Service):
         self.add_health_bar(embed, current_hp, max_hp, max_width=38)
 
         skill_list = []
-        for skill in enemy.skills:
+        for skill_type in enemy.skill_types:
+            skill = await self.skill_manager.get_enemy_skill(skill_type)
             skill_list.append(skill.name)
 
         self.add_text_bar(
@@ -212,10 +217,17 @@ class CombatEmbedManager(Service):
         head_embed.add_field(name="Your Skills:", value="", inline=False)
         embeds.append(head_embed)
 
+        files = []
         for skill in actor.skills:
             embeds.append(actor.get_skill_data(skill).get_embed(show_data=True))
+            file = discord.File(
+                f"./{skill.base_skill.image_path}{skill.base_skill.image}",
+                skill.base_skill.attachment_name,
+            )
+            if file.filename not in [file.filename for file in files]:
+                files.append(file)
 
-        return embeds
+        return embeds, files
 
     async def get_loot_embed(self, member: discord.Member, beans: int):
         title = f"{member.display_name}'s Loot"
@@ -243,7 +255,7 @@ class CombatEmbedManager(Service):
         if current_actor.is_enemy:
             display_dmg = total_damage
 
-        match skill.skill_effect:
+        match skill.base_skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
                 outcome_title = "Attack Damage"
                 damage_info = f"**{display_dmg}** [phys]"
@@ -266,9 +278,9 @@ class CombatEmbedManager(Service):
         if actor.is_enemy:
             color = discord.Color.red()
 
-        actor_name = f"<@{actor.id}>"
-        if actor.is_enemy:
-            actor_name = f"*{actor.name}*"
+        # actor_name = f"<@{actor.id}>"
+        # if actor.is_enemy:
+        #     actor_name = f"*{actor.name}*"
 
         turn_number = context.get_current_turn_number()
         title = f"Turn {turn_number}: {actor.name}"
@@ -280,19 +292,17 @@ class CombatEmbedManager(Service):
 
             skill = skill_data.skill
 
-            description = f"{actor_name} chose the action"
+            # description = f"{actor_name} chose the action"
 
             if full_embed is None:
-                full_embed = discord.Embed(
-                    title=title, description=description, color=color
-                )
+                full_embed = discord.Embed(title=title, description="", color=color)
                 full_embed.set_thumbnail(url=actor.image)
                 skill_data.add_to_embed(full_embed)
 
                 yield full_embed
             else:
                 embed = copy.deepcopy(full_embed)
-                embed.add_field(name="", value=description)
+                # embed.add_field(name="", value=description)
                 skill_data.add_to_embed(embed)
                 full_embed = embed
 

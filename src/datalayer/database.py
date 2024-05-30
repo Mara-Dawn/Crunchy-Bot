@@ -8,7 +8,8 @@ from bot_util import BotUtil
 from combat.encounter import Encounter
 from combat.equipment import CharacterEquipment
 from combat.gear import (
-    DefaultAccessory,
+    DefaultAccessory1,
+    DefaultAccessory2,
     DefaultCap,
     DefaultPants,
     DefaultShirt,
@@ -3004,7 +3005,7 @@ class Database:
         task = (
             guild_id,
             member_id,
-            drop.base_type.value,
+            drop.base.base_type.value,
             drop.type.value,
             drop.level,
             drop.rarity.value,
@@ -3015,7 +3016,7 @@ class Database:
 
         insert_id = await self.__query_insert(command, task)
 
-        if drop.base_type == Base.GEAR:
+        if drop.base.base_type == Base.GEAR:
             gear: Gear = drop
             await self.log_user_gear_modifiers(insert_id, gear)
             await self.log_user_gear_skills(insert_id, gear)
@@ -3229,12 +3230,13 @@ class Database:
                 )
                 if gear_1 is not None:
                     equipped.append(gear_1)
+                else:
+                    equipped.append(DefaultAccessory1())
+
                 if gear_2 is not None:
                     equipped.append(gear_2)
-
-                if gear_1 is None and gear_2 is None:
-                    gear = DefaultAccessory()
-                    equipped.append(gear)
+                else:
+                    equipped.append(DefaultAccessory2())
 
         return equipped
 
@@ -3396,7 +3398,7 @@ class Database:
 
     async def get_user_skill_stacks_used(
         self, guild_id: int, member_id: int
-    ) -> dict[int, int]:
+    ) -> dict[SkillType, int]:
         command = f"""
             SELECT * FROM {self.COMBAT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
@@ -3422,17 +3424,47 @@ class Database:
             ]:
                 current_encounter = False
 
-            skill_id = row[self.USER_EQUIPPED_SKILLS_SKILL_ID_COL]
-            skill_type = SkillType(rows[self.USER_GEAR_TYPE_COL])
+            skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
             base_class = globals()[skill_type]
             base_skill: BaseSkill = base_class()  # noqa: F405
 
             if not current_encounter and base_skill.reset_after_encounter:
                 continue
 
-            if skill_id not in stacks_used:
-                stacks_used[skill_id] = 1
+            if skill_type not in stacks_used:
+                stacks_used[skill_type] = 1
             else:
-                stacks_used[skill_id] += 1
+                stacks_used[skill_type] += 1
+
+        return stacks_used
+
+    async def get_opponent_skill_stacks_used(
+        self, encounter_id: int
+    ) -> dict[SkillType, int]:
+        command = f"""
+            SELECT * FROM {self.COMBAT_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
+            WHERE {self.COMBAT_EVENT_ENCOUNTER_ID_COL} = {int(encounter_id)}
+            ORDER BY {self.EVENT_ID_COL} DESC;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return {}
+
+        stacks_used = {}
+        for row in rows:
+            event_type = row[self.COMBAT_EVENT_TYPE_COL]
+            if event_type in [
+                CombatEventType.ENEMY_END_TURN,
+                CombatEventType.MEMBER_END_TURN,
+            ]:
+                break
+
+            skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
+
+            if skill_type not in stacks_used:
+                stacks_used[skill_type] = 1
+            else:
+                stacks_used[skill_type] += 1
 
         return stacks_used

@@ -1,6 +1,6 @@
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
-from combat.skills.skills import Bonk, DeezNuts
+from combat.skills.types import SkillType
 from items.types import ItemType
 
 # class Example(Enemy):
@@ -46,12 +46,14 @@ class MindGoblin(Enemy):
             # max_hp=120,
             min_dmg=16,
             max_dmg=25,
-            skills=[DeezNuts(), Bonk()],
+            skill_types=[SkillType.DEEZ_NUTS, SkillType.BONK],
             item_loot_table=[
                 ItemType.BOX_SEED,
                 ItemType.CAT_SEED,
                 ItemType.YELLOW_SEED,
             ],
+            gear_loot_table=[],
+            skill_loot_table=[],
             initiative=5,
             actions_per_turn=1,
         )

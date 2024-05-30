@@ -54,6 +54,7 @@ class GearBase(DroppableBase):
         skills: list[SkillType] = None,
         scaling: int = 1,
         weight: int = None,
+        droppable: bool = True,
         permanent: bool = False,
         secret: bool = False,
         image: str = None,
@@ -66,6 +67,7 @@ class GearBase(DroppableBase):
             min_level=min_level,
             max_level=max_level,
             weight=weight,
+            droppable=droppable,
         )
         self.name = name
         self.type = type
@@ -85,6 +87,8 @@ class GearBase(DroppableBase):
 
         if self.image is None:
             self.image = self.IMAGE_NAMES[self.slot]
+
+        self.attachment_name = f"{self.type.name}_{self.image}"
 
         if self.image_path is None:
             self.image_path = self.DEFAULT_IMAGE_PATH
@@ -165,8 +169,8 @@ class Gear(Droppable):
             image=base.image,
             image_path=base.image_path,
         )
-        if name == "" or name is None:
-            name = base.name
+        if self.name == "" or self.name is None:
+            self.name = base.name
         self.base = base
         self.rarity = rarity
         self.level = level
@@ -186,21 +190,22 @@ class Gear(Droppable):
     ) -> discord.Embed:
         color = self.RARITY_COLOR_HEX_MAP[self.rarity]
 
-        if self.id < 0:
-            color = discord.Color.dark_grey()
-
         name = f"~* {self.name} *~"
         suffix = ""
         if equipped:
-            color = discord.Color(int("000000", 16))
+            color = discord.Color.purple()
             suffix += " [EQUIPPED]"
         elif self.locked and show_locked_state:
             suffix += " [🔒]"
 
         description = f'"{self.description}"'
 
+        name_rarity = self.rarity
+        if self.rarity == Rarity.DEFAULT:
+            name_rarity = Rarity.NORMAL
+
         info_block = "```ansi\n"
-        info_block += f"{self.RARITY_COLOR_MAP[self.rarity]}{name}[0m{suffix}"
+        info_block += f"{self.RARITY_COLOR_MAP[name_rarity]}{name}[0m{suffix}"
         spacing = " " * (
             max_width - len(name) - len(self.base.slot.value) - len(suffix) - 2
         )
@@ -287,7 +292,7 @@ class Gear(Droppable):
             info_block += f"```ansi\n[37m{self.information}```"
 
         embed = discord.Embed(title="", description=info_block, color=color)
-        embed.set_thumbnail(url=f"attachment://{self.base.image}")
+        embed.set_thumbnail(url=f"attachment://{self.base.attachment_name}")
         return embed
 
     def add_to_embed(

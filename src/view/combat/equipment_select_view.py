@@ -178,9 +178,11 @@ class EquipmentSelectView(ViewMenu):
                 # Default Gear
                 disable_dismantle = True
 
+        equipped = [gear.id for gear in self.current if gear.base.slot == self.filter]
+
         self.clear_items()
         if len(self.display_items) > 0:
-            self.add_item(Dropdown(self.display_items, self.selected))
+            self.add_item(Dropdown(self.display_items, self.selected, equipped))
         self.add_item(PageButton("<", False))
         self.add_item(SelectButton(disable_equip))
         self.add_item(PageButton(">", True))
@@ -193,29 +195,29 @@ class EquipmentSelectView(ViewMenu):
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.WEAPON,
-                row=3,
+                row=0,
                 disabled=(self.filter == EquipmentSlot.WEAPON),
             )
         )
         self.add_item(
             SelectGearSlot(
-                EquipmentSlot.HEAD, row=3, disabled=(self.filter == EquipmentSlot.HEAD)
+                EquipmentSlot.HEAD, row=0, disabled=(self.filter == EquipmentSlot.HEAD)
             )
         )
         self.add_item(
             SelectGearSlot(
-                EquipmentSlot.BODY, row=3, disabled=(self.filter == EquipmentSlot.BODY)
+                EquipmentSlot.BODY, row=0, disabled=(self.filter == EquipmentSlot.BODY)
             )
         )
         self.add_item(
             SelectGearSlot(
-                EquipmentSlot.LEGS, row=3, disabled=(self.filter == EquipmentSlot.LEGS)
+                EquipmentSlot.LEGS, row=0, disabled=(self.filter == EquipmentSlot.LEGS)
             )
         )
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.ACCESSORY,
-                row=3,
+                row=0,
                 disabled=(self.filter == EquipmentSlot.ACCESSORY),
             )
         )
@@ -279,7 +281,7 @@ class EquipmentSelectView(ViewMenu):
             if file_path not in files:
                 file = discord.File(
                     file_path,
-                    gear.base.image,
+                    gear.base.attachment_name,
                 )
                 files[file_path] = file
 
@@ -309,7 +311,7 @@ class SelectButton(discord.ui.Button):
         super().__init__(
             label="Equip",
             style=discord.ButtonStyle.green,
-            row=1,
+            row=2,
             disabled=disabled,
         )
 
@@ -326,7 +328,7 @@ class ScrapSelectedButton(discord.ui.Button):
         super().__init__(
             label="Scrap Selected",
             style=discord.ButtonStyle.red,
-            row=2,
+            row=3,
             disabled=disabled,
         )
 
@@ -343,7 +345,7 @@ class ScrapAllButton(discord.ui.Button):
         super().__init__(
             label="Scrap All (non locked)",
             style=discord.ButtonStyle.red,
-            row=2,
+            row=3,
             disabled=disabled,
         )
 
@@ -360,7 +362,7 @@ class LockButton(discord.ui.Button):
         super().__init__(
             label="Lock Selected",
             style=discord.ButtonStyle.gray,
-            row=2,
+            row=3,
             disabled=disabled,
         )
 
@@ -377,7 +379,7 @@ class UnlockButton(discord.ui.Button):
         super().__init__(
             label="Unlock Selected",
             style=discord.ButtonStyle.gray,
-            row=2,
+            row=3,
             disabled=disabled,
         )
 
@@ -411,6 +413,7 @@ class Dropdown(discord.ui.Select):
         self,
         gear: list[Gear],
         selected: list[Gear],
+        equipped: list[Gear],
         disabled: bool = False,
     ):
 
@@ -420,6 +423,10 @@ class Dropdown(discord.ui.Select):
             name = item.name
             if name is None or name == "":
                 name = item.base.slot.value
+            elif item.id in equipped:
+                name += " [EQUIPPED]"
+            elif item.locked:
+                name += " [🔒]"
 
             description = [f"ILVL: {item.level}"]
             for modifier_type, value in item.modifiers.items():
@@ -431,7 +438,7 @@ class Dropdown(discord.ui.Select):
             description = (
                 (description[:95] + "..") if len(description) > 95 else description
             )
-            label = f"{name} [{item.rarity.value}] "
+            label = f"[{item.rarity.value}] {name}"
 
             option = discord.SelectOption(
                 label=label,
@@ -445,10 +452,10 @@ class Dropdown(discord.ui.Select):
 
         super().__init__(
             placeholder="Select one or more pieces of equipment.",
-            min_values=1,
+            min_values=0,
             max_values=max_values,
             options=options,
-            row=0,
+            row=1,
             disabled=disabled,
         )
 
@@ -464,7 +471,7 @@ class PageButton(discord.ui.Button):
     def __init__(self, label: str, right: bool, disabled: bool = False):
         self.right = right
         super().__init__(
-            label=label, style=discord.ButtonStyle.grey, row=1, disabled=disabled
+            label=label, style=discord.ButtonStyle.grey, row=2, disabled=disabled
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -478,7 +485,7 @@ class CurrentPageButton(discord.ui.Button):
 
     def __init__(self, label: str):
         super().__init__(
-            label=label, style=discord.ButtonStyle.grey, row=1, disabled=True
+            label=label, style=discord.ButtonStyle.grey, row=2, disabled=True
         )
 
 
@@ -486,7 +493,7 @@ class ScrapBalanceButton(discord.ui.Button):
 
     def __init__(self, balance: int):
         self.balance = balance
-        super().__init__(label=f"⚙️{balance}", style=discord.ButtonStyle.blurple, row=1)
+        super().__init__(label=f"⚙️{balance}", style=discord.ButtonStyle.blurple, row=2)
 
     async def callback(self, interaction: discord.Interaction):
         view: EquipmentSelectView = self.view

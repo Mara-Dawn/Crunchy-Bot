@@ -23,7 +23,7 @@ class Actor:
         is_enemy: bool,
         skills: list[Skill],
         skill_cooldowns: dict[SkillType, int],
-        skill_stacks_used: dict[int, int],
+        skill_stacks_used: dict[SkillType, int],
         defeated: bool,
         image: str,
     ):
@@ -59,7 +59,7 @@ class Character(Actor):
         member: discord.Member,
         skills: list[Skill],
         skill_cooldowns: dict[SkillType, int],
-        skill_stacks_used: dict[int, int],
+        skill_stacks_used: dict[SkillType, int],
         equipment: CharacterEquipment,
         defeated: bool,
     ):
@@ -91,11 +91,11 @@ class Character(Actor):
             GearModifierType.WEAPON_DAMAGE_MAX
         ]
 
-        skill_id = skill.id
+        skill_type = skill.type
         stacks_used = 0
 
-        if skill_id in self.skill_stacks_used:
-            stacks_used = self.skill_stacks_used[skill_id]
+        if skill_type in self.skill_stacks_used:
+            stacks_used = self.skill_stacks_used[skill_type]
 
         return CharacterSkill(
             skill=skill,
@@ -200,7 +200,7 @@ class Opponent(Actor):
         max_hp: int,
         skills: list[Skill],
         skill_cooldowns: dict[SkillType, int],
-        skill_stacks_used: dict[int, int],
+        skill_stacks_used: dict[SkillType, int],
         defeated: bool,
     ):
         super().__init__(
@@ -222,9 +222,16 @@ class Opponent(Actor):
         weapon_min_roll = self.enemy.min_dmg
         weapon_max_roll = self.enemy.max_dmg
 
+        skill_type = skill.type
+        stacks_used = 0
+
+        if skill_type in self.skill_stacks_used:
+            stacks_used = self.skill_stacks_used[skill_type]
+
         return CharacterSkill(
             skill=skill,
             last_used=self.skill_cooldowns[skill.base_skill.skill_type],
+            stacks_used=stacks_used,
             min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll)[
                 0
             ].raw_value,

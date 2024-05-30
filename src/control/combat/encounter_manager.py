@@ -211,7 +211,7 @@ class EncounterManager(Service):
         thread = self.bot.get_channel(encounter.channel_id).get_thread(thread_id)
 
         enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
-        opponent = self.actor_manager.get_opponent(
+        opponent = await self.actor_manager.get_opponent(
             enemy,
             encounter.enemy_level,
             encounter.max_hp,
@@ -312,8 +312,9 @@ class EncounterManager(Service):
                     context.encounter.id,
                     opponent.id,
                     target.id,
-                    turn.skill.skill_type,
+                    turn.skill.base_skill.skill_type,
                     total_damage,
+                    None,
                     CombatEventType.ENEMY_TURN,
                 )
                 await self.controller.dispatch_event(event)
@@ -323,6 +324,7 @@ class EncounterManager(Service):
             context.encounter.guild_id,
             context.encounter.id,
             opponent.id,
+            None,
             None,
             None,
             None,
@@ -380,8 +382,9 @@ class EncounterManager(Service):
                     context.encounter.id,
                     character.id,
                     context.opponent.id,
-                    skill_data.skill.skill_type,
+                    skill_data.skill.base_skill.skill_type,
                     total_damage,
+                    skill_data.skill.id,
                     CombatEventType.MEMBER_TURN,
                 )
                 await self.controller.dispatch_event(event)
@@ -391,6 +394,7 @@ class EncounterManager(Service):
             context.encounter.guild_id,
             context.encounter.id,
             character.id,
+            None,
             None,
             None,
             None,
@@ -460,7 +464,7 @@ class EncounterManager(Service):
                     if file_path not in files:
                         file = discord.File(
                             file_path,
-                            drop.base.image,
+                            drop.base.attachment_name,
                         )
                         files[file_path] = file
 
@@ -597,9 +601,11 @@ class EncounterManager(Service):
             await self.skip_turn(current_actor, context)
             return
 
-        enemy_embeds = await self.embed_manager.get_character_turn_embeds(context)
+        enemy_embeds, files = await self.embed_manager.get_character_turn_embeds(
+            context
+        )
         view = CombatTurnView(self.controller, current_actor, context)
         await context.thread.send(
-            f"<@{current_actor.id}>", embeds=enemy_embeds, view=view
+            f"<@{current_actor.id}>", embeds=enemy_embeds, files=files, view=view
         )
         return

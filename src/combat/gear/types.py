@@ -11,6 +11,7 @@ class EquipmentSlot(str, Enum):
 
 
 class Rarity(str, Enum):
+    DEFAULT = "Default"
     NORMAL = "Normal"
     MAGIC = "Magic"
     RARE = "Rare"
@@ -112,7 +113,6 @@ class Base(str, Enum):
 
 class GearBaseType(str, Enum):
     EMPTY = "Empty"
-    SKILL = "Skill"
 
     STICK_T0 = "Stick_T0"
     STICK_T1 = "Stick_T1"

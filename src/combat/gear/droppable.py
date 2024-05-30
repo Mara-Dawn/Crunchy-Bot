@@ -13,6 +13,7 @@ class DroppableBase:
         min_level: int,
         max_level: int,
         weight: int = None,
+        droppable: bool = True,
     ):
         self.base_type = base_type
         self.type = type
@@ -20,6 +21,7 @@ class DroppableBase:
         self.min_level = min_level
         self.max_level = max_level
         self.weight = weight
+        self.droppable = droppable
         if self.weight is None:
             self.weight = 100
 
@@ -27,6 +29,7 @@ class DroppableBase:
 class Droppable:
 
     RARITY_COLOR_MAP = {
+        Rarity.DEFAULT: "[30m",  # ffffff
         Rarity.NORMAL: "[38m",  # ffffff
         Rarity.MAGIC: "[34m",  # 268bd2
         Rarity.RARE: "[33m",  # b58900
@@ -35,6 +38,7 @@ class Droppable:
     }
 
     RARITY_COLOR_HEX_MAP = {
+        Rarity.DEFAULT: discord.Color.dark_gray(),
         Rarity.NORMAL: discord.Color(int("ffffff", 16)),
         Rarity.MAGIC: discord.Color(int("268bd2", 16)),
         Rarity.RARE: discord.Color(int("b58900", 16)),
@@ -43,11 +47,12 @@ class Droppable:
     }
 
     RARITY_SORT_MAP = {
-        Rarity.NORMAL: 0,
-        Rarity.MAGIC: 1,
-        Rarity.RARE: 2,
-        Rarity.LEGENDARY: 3,
-        Rarity.UNIQUE: 4,
+        Rarity.DEFAULT: 0,
+        Rarity.NORMAL: 1,
+        Rarity.MAGIC: 2,
+        Rarity.RARE: 3,
+        Rarity.LEGENDARY: 4,
+        Rarity.UNIQUE: 5,
     }
 
     def __init__(

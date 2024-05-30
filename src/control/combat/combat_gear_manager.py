@@ -4,7 +4,8 @@ from combat.actors import Character
 from combat.encounter import EncounterContext
 from combat.enemies.enemy import Enemy
 from combat.gear import (
-    DefaultAccessory,
+    DefaultAccessory1,
+    DefaultAccessory2,
     DefaultCap,
     DefaultPants,
     DefaultShirt,
@@ -159,6 +160,10 @@ class CombatGearManager(Service):
         for base_type in base_types:
             base_class = globals()[base_type]
             base: DroppableBase = base_class()
+
+            if not base.droppable:
+                continue
+
             if item_level >= base.min_level and item_level <= base.max_level:
                 matching_bases.append(base)
 
@@ -171,6 +176,9 @@ class CombatGearManager(Service):
         drop_item_level = random.randint(min_level, max_level)
 
         bases = await self.get_bases_by_lvl(drop_item_level)
+
+        if len(bases) <= 0:
+            return None
 
         gear_base_types = enemy.gear_loot_table
         skill_base_types = enemy.skill_loot_table
@@ -256,24 +264,6 @@ class CombatGearManager(Service):
 
         return min_roll, max_roll
 
-    async def get_random_skill(
-        self,
-        context: EncounterContext,
-    ):
-        possible_skill_types = (
-            context.opponent.enemy.skill_loot_table + Skill.BASE_LOOT_SKILLS
-        )
-
-        possible_skills = [
-            await self.skill_manager.get_skill(x) for x in possible_skill_types
-        ]
-
-        weights = [skill.weight for skill in possible_skills]
-        weights = [1.0 / w for w in weights]
-        sum_weights = sum(weights)
-        weights = [w / sum_weights for w in weights]
-        return random.choices(possible_skills, weights=weights)[0]
-
     async def generate_drop(
         self,
         combatant: Character,
@@ -289,6 +279,9 @@ class CombatGearManager(Service):
         item_level = min(enemy_level, guild_level)
 
         droppable_base = await self.get_random_base(item_level, enemy)
+
+        if droppable_base is None:
+            return None
 
         rarity = await self.get_random_rarity(item_level)
 
@@ -333,10 +326,10 @@ class CombatGearManager(Service):
                 )
 
                 if member_id is not None:
-                    gear_item.id = await self.database.log_user_gear(
+                    gear_item.id = await self.database.log_user_drop(
                         guild_id=guild_id,
                         member_id=member_id,
-                        gear=gear_item,
+                        drop=gear_item,
                         generator_version=self.GENERATOR_VERSION,
                     )
 
@@ -358,7 +351,8 @@ class CombatGearManager(Service):
             drops = []
             for _ in range(loot_amount):
                 drop = await self.generate_drop(combatant, context)
-                drops.append(drop)
+                if drop is not None:
+                    drops.append(drop)
 
             bonus_loot = None
             if bonus_loot_drop and len(enemy.item_loot_table) > 0:
@@ -378,7 +372,8 @@ class CombatGearManager(Service):
 
     async def get_default_gear(self) -> list[Gear]:
         return [
-            DefaultAccessory(),
+            DefaultAccessory1(),
+            DefaultAccessory2(),
             DefaultCap(),
             DefaultPants(),
             DefaultShirt(),

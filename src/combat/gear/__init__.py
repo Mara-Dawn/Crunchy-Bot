@@ -19,7 +19,7 @@ class DefaultStick(Gear):
         super().__init__(
             name="Stick",
             base=Stick_T0(),
-            rarity=Rarity.NORMAL,
+            rarity=Rarity.DEFAULT,
             level=1,
             modifiers={
                 GearModifierType.WEAPON_DAMAGE_MIN: 7,
@@ -38,7 +38,7 @@ class DefaultWand(Gear):
         super().__init__(
             name="Wand",
             base=Wand_T0(),
-            rarity=Rarity.NORMAL,
+            rarity=Rarity.DEFAULT,
             level=1,
             modifiers={
                 GearModifierType.WEAPON_DAMAGE_MIN: 7,
@@ -57,7 +57,7 @@ class DefaultCap(Gear):
         super().__init__(
             name="Cap",
             base=HeadGear_T0(),
-            rarity=Rarity.NORMAL,
+            rarity=Rarity.DEFAULT,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 4,
@@ -75,7 +75,7 @@ class DefaultShirt(Gear):
         super().__init__(
             name="Shirt",
             base=BodyGear_T0(),
-            rarity=Rarity.NORMAL,
+            rarity=Rarity.DEFAULT,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 12,
@@ -93,7 +93,7 @@ class DefaultPants(Gear):
         super().__init__(
             name="Pants",
             base=LegGear_T0(),
-            rarity=Rarity.NORMAL,
+            rarity=Rarity.DEFAULT,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 8,
@@ -104,17 +104,33 @@ class DefaultPants(Gear):
         )
 
 
-class DefaultAccessory(Gear):
+class DefaultAccessory1(Gear):
 
     def __init__(self):
 
         super().__init__(
-            name="Empty",
+            name="",
             base=Empty(),
-            rarity=Rarity.NORMAL,
+            rarity=Rarity.DEFAULT,
             level=1,
             modifiers={},
             skills=[],
             enchantments=[],
             id=-6,
+        )
+
+
+class DefaultAccessory2(Gear):
+
+    def __init__(self):
+
+        super().__init__(
+            name="",
+            base=Empty(),
+            rarity=Rarity.DEFAULT,
+            level=1,
+            modifiers={},
+            skills=[],
+            enchantments=[],
+            id=-7,
         )

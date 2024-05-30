@@ -1,11 +1,10 @@
-from combat.gear.types import Rarity
-from combat.skills.skill import BaseSkill, Skill
+from combat.skills.skill import BaseSkill
 from combat.skills.types import SkillEffect, SkillType
 
 # Base skills
 
 
-class NormalAttackBase(BaseSkill):
+class NormalAttack(BaseSkill):
 
     def __init__(self):
         super().__init__(
@@ -19,19 +18,11 @@ class NormalAttackBase(BaseSkill):
             hits=1,
             stacks=None,
             reset_after_encounter=False,
+            droppable=False,
         )
 
 
-class NormalAttack(Skill):
-    def __init__(self):
-        super().__init__(
-            base_skill=NormalAttackBase(),
-            rarity=Rarity.NORMAL,
-            level=1,
-        )
-
-
-class HeavyAttackBase(BaseSkill):
+class HeavyAttack(BaseSkill):
 
     def __init__(self):
         super().__init__(
@@ -42,19 +33,11 @@ class HeavyAttackBase(BaseSkill):
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
             scaling=4,
+            droppable=False,
         )
 
 
-class HeavyAttack(Skill):
-    def __init__(self):
-        super().__init__(
-            base_skill=HeavyAttackBase(),
-            rarity=Rarity.NORMAL,
-            level=1,
-        )
-
-
-class MagicAttackBase(BaseSkill):
+class MagicAttack(BaseSkill):
 
     def __init__(self):
         super().__init__(
@@ -65,15 +48,7 @@ class MagicAttackBase(BaseSkill):
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=0,
             scaling=2,
-        )
-
-
-class MagicAttack(Skill):
-    def __init__(self):
-        super().__init__(
-            base_skill=MagicAttackBase(),
-            rarity=Rarity.NORMAL,
-            level=1,
+            droppable=False,
         )
 
 
@@ -115,19 +90,10 @@ class GigaBonk(BaseSkill):
 # Enemy Skills
 
 
-class EnemySkill(Skill):
-    def __init__(self, base_skill: BaseSkill):
-        super().__init__(
-            base_skill=base_skill,
-            rarity=Rarity.NORMAL,
-            level=1,
-        )
-
-
-class DeezNuts(EnemySkill):
+class DeezNuts(BaseSkill):
 
     def __init__(self):
-        base_skill = BaseSkill(
+        super().__init__(
             name="Deez Nuts",
             skill_type=SkillType.DEEZ_NUTS,
             description="He forces his nuts into your mouth.",
@@ -136,14 +102,14 @@ class DeezNuts(EnemySkill):
             cooldown=1,
             scaling=2,
             hits=1,
+            droppable=False,
         )
-        super().__init__(base_skill)
 
 
-class Bonk(EnemySkill):
+class Bonk(BaseSkill):
 
     def __init__(self):
-        base_skill = BaseSkill(
+        super().__init__(
             name="Bonk",
             skill_type=SkillType.BONK,
             description="He Slaps you multiple times with his mighty stick.",
@@ -152,5 +118,5 @@ class Bonk(EnemySkill):
             cooldown=0,
             scaling=1,
             hits=2,
+            droppable=False,
         )
-        super().__init__(base_skill)

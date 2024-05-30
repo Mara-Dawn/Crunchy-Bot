@@ -7,7 +7,11 @@ from combat.skills.types import SkillEffect, SkillType
 class BaseSkill(DroppableBase):
 
     DEFAULT_IMAGE_PATH = "img/skills/"
-    DEFAULT_IMAGE_NAME = "default.png"
+    DEFAULT_IMAGE_NAME = {
+        SkillEffect.PHYSICAL_DAMAGE: "physical.png",
+        SkillEffect.MAGICAL_DAMAGE: "magical.png",
+        SkillEffect.HEALING: "healing.png",
+    }
 
     def __init__(
         self,
@@ -20,6 +24,7 @@ class BaseSkill(DroppableBase):
         scaling: float,
         min_level: int = 1,
         max_level: int = 99,
+        droppable: bool = True,
         hits: int = 1,
         stacks: int = None,
         reset_after_encounter: bool = False,
@@ -34,6 +39,7 @@ class BaseSkill(DroppableBase):
             min_level=min_level,
             max_level=max_level,
             weight=weight,
+            droppable=droppable,
         )
         self.name = name
         self.skill_type = skill_type
@@ -49,7 +55,9 @@ class BaseSkill(DroppableBase):
         self.image_path = image_path
 
         if self.image is None:
-            self.image = self.DEFAULT_IMAGE_NAME
+            self.image = self.DEFAULT_IMAGE_NAME[self.skill_effect]
+
+        self.attachment_name = f"{self.type.name}_{self.image}"
 
         if self.image_path is None:
             self.image_path = self.DEFAULT_IMAGE_PATH
@@ -65,7 +73,7 @@ class Skill(Droppable):
     EFFECT_COLOR_MAP = {
         SkillEffect.PHYSICAL_DAMAGE: discord.Color(int("F5A9B8", 16)),
         SkillEffect.MAGICAL_DAMAGE: discord.Color(int("5BCEFA", 16)),
-        SkillEffect.HEALING: discord.Color(int("ffffff", 16)),
+        SkillEffect.HEALING: discord.Color.green(),
     }
 
     def __init__(
@@ -107,7 +115,7 @@ class Skill(Droppable):
         show_locked_state: bool = False,
         max_width: int = 44,
     ) -> discord.Embed:
-        color = self.EFFECT_COLOR_MAP[self.skill_effect]
+        color = self.EFFECT_COLOR_MAP[self.base_skill.skill_effect]
 
         name = f"~/ {self.name} \\*~"
         suffix = ""
@@ -141,11 +149,11 @@ class Skill(Droppable):
             name = "Rarity"
             spacing = " " * (max_len - len(name))
             rarity_line = f"{spacing}{name}: {self.rarity.value}"
-            rarity_line_colored = f"{spacing}{name}: {Droppable.RARITY_COLOR_MAP[self.rarity]}{self.rarity.value}[0m\n"
+            rarity_line_colored = f"{spacing}{name}: {Droppable.RARITY_COLOR_MAP[self.rarity]}{self.rarity.value}[0m"
             prefixes.append((rarity_line_colored, len(rarity_line)))
 
             # Base Value
-            name = "Base Value"
+            name = "Power"
             base_value_text = f"{name}: {self.scaling}"
             base_value_text_colored = f"{name}: [35m{self.scaling}[0m"
             suffixes.append((base_value_text_colored, len(base_value_text)))
@@ -154,7 +162,9 @@ class Skill(Droppable):
             name = "Type"
             spacing = " " * (max_len - len(name))
             type_text = f"{spacing}{name}: {self.base_skill.skill_effect.value}"
-            type_text_colored = f"{spacing}{name}: [35m{self.skill_effect.value}[0m"
+            type_text_colored = (
+                f"{spacing}{name}: [35m{self.base_skill.skill_effect.value}[0m"
+            )
             prefixes.append((type_text_colored, len(type_text)))
 
             # Cooldown
@@ -177,8 +187,11 @@ class Skill(Droppable):
 
                 if self.base_skill.reset_after_encounter:
                     append = " (per Combat)"
-                    stacks_text += append
-                    stacks_text_colored += append
+                else:
+                    append = " (Total)"
+
+                stacks_text += append
+                stacks_text_colored += append
 
                 prefixes.append((stacks_text_colored, len(stacks_text)))
 
@@ -208,7 +221,7 @@ class Skill(Droppable):
             info_block += f"```ansi\n[37m{self.information}```"
 
         embed = discord.Embed(title="", description=info_block, color=color)
-        embed.set_thumbnail(url=f"attachment://{self.base_skill.image}")
+        embed.set_thumbnail(url=f"attachment://{self.base_skill.attachment_name}")
         return embed
 
 
@@ -229,14 +242,14 @@ class CharacterSkill:
         self.max_roll = max_roll
 
     def on_cooldown(self):
-        if self.last_used is None:
+        if self.last_used is None or self.skill.base_skill.cooldown is None:
             return False
-        return self.last_used < self.skill.cooldown
+        return self.last_used < self.skill.base_skill.cooldown
 
     def stacks_left(self):
-        if self.stacks_used is None:
+        if self.skill.base_skill.stacks is None or self.stacks_used is None:
             return None
-        return self.skill.base_skill.stacks - self.skill.cooldown
+        return self.skill.base_skill.stacks - self.stacks_used
 
     def get_embed(
         self,
@@ -309,10 +322,13 @@ class CharacterSkill:
                 stacks_text = f"{spacing}{name}: {self.stacks_left()}/{max_stacks}"
                 stacks_text_colored = f"{spacing}{name}: [35m{self.stacks_left()}[0m/[35m{max_stacks}[0m"
 
-                if self.skill.base_skill.reset_after_encounter:
+                if self.skill.base_skill.reset_afVter_encounter:
                     append = " (per Combat)"
-                    stacks_text += append
-                    stacks_text_colored += append
+                else:
+                    append = " (Total)"
+
+                stacks_text += append
+                stacks_text_colored += append
 
                 prefixes.append((stacks_text_colored, len(stacks_text)))
 
@@ -347,7 +363,7 @@ class CharacterSkill:
             info_block += f"```ansi\n[37m{self.skill.base_skill.information}```"
 
         embed = discord.Embed(title="", description=info_block, color=color)
-        embed.set_thumbnail(url=f"attachment://{self.skill.base_skill.image}")
+        embed.set_thumbnail(url=f"attachment://{self.skill.base_skill.attachment_name}")
         return embed
 
     def add_to_embed(
@@ -355,14 +371,14 @@ class CharacterSkill:
         embed: discord.Embed,
         show_info: bool = False,
         show_data: bool = False,
-        max_width: int = 44,
+        max_width: int = 45,
     ) -> None:
         title = f"> {self.skill.name} "
         description = f'"{self.skill.description}"'
 
         cooldown_info = ""
-        if self.skill.cooldown > 0 and self.on_cooldown():
-            cooldown_remaining = self.skill.cooldown - self.last_used
+        if self.skill.base_skill.cooldown > 0 and self.on_cooldown():
+            cooldown_remaining = self.base_skill.skill.cooldown - self.last_used
             cooldown_info = f"\navailable in [35m{cooldown_remaining}[0m turn(s)"
 
         if len(description) < max_width:
@@ -376,15 +392,17 @@ class CharacterSkill:
 
         if show_data:
             # Type
-            type_text = f"    Type: {self.skill.skill_effect.value}"
-            type_text_colored = f"    Type: [35m{self.skill.skill_effect.value}[0m"
+            type_text = f"    Type: {self.skill.base_skill.skill_effect.value}"
+            type_text_colored = (
+                f"    Type: [35m{self.skill.base_skill.skill_effect.value}[0m"
+            )
             prefixes.append((type_text_colored, len(type_text)))
 
             # Cooldoqwn
             if self.cooldown > 0:
-                cooldown_text = f"Cooldown: {self.skill.cooldown} Turn(s)"
+                cooldown_text = f"Cooldown: {self.skill.base_skill.cooldown} Turn(s)"
                 cooldown_text_colored = (
-                    f"Cooldown: [35m{self.skill.cooldown}[0m Turn(s)"
+                    f"Cooldown: [35m{self.skill.base_skill.cooldown}[0m Turn(s)"
                 )
                 prefixes.append((cooldown_text_colored, len(cooldown_text)))
 
@@ -417,6 +435,6 @@ class CharacterSkill:
             info_block += "```"
 
         if show_info:
-            info_block += f"```ansi\n[37m{self.skill.information}```"
+            info_block += f"```ansi\n[37m{self.skill.base_skill.information}```"
 
         embed.add_field(name=title, value=info_block, inline=False)
