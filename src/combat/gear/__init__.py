@@ -7,7 +7,7 @@ from combat.gear.bases import (
     Wand_T0,
 )
 from combat.gear.gear import Gear
-from combat.gear.types import GearModifierType, GearRarity
+from combat.gear.types import GearModifierType, Rarity
 
 # Starting Gear
 
@@ -19,7 +19,7 @@ class DefaultStick(Gear):
         super().__init__(
             name="Stick",
             base=Stick_T0(),
-            rarity=GearRarity.NORMAL,
+            rarity=Rarity.NORMAL,
             level=1,
             modifiers={
                 GearModifierType.WEAPON_DAMAGE_MIN: 7,
@@ -38,7 +38,7 @@ class DefaultWand(Gear):
         super().__init__(
             name="Wand",
             base=Wand_T0(),
-            rarity=GearRarity.NORMAL,
+            rarity=Rarity.NORMAL,
             level=1,
             modifiers={
                 GearModifierType.WEAPON_DAMAGE_MIN: 7,
@@ -57,7 +57,7 @@ class DefaultCap(Gear):
         super().__init__(
             name="Cap",
             base=HeadGear_T0(),
-            rarity=GearRarity.NORMAL,
+            rarity=Rarity.NORMAL,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 4,
@@ -75,7 +75,7 @@ class DefaultShirt(Gear):
         super().__init__(
             name="Shirt",
             base=BodyGear_T0(),
-            rarity=GearRarity.NORMAL,
+            rarity=Rarity.NORMAL,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 12,
@@ -93,7 +93,7 @@ class DefaultPants(Gear):
         super().__init__(
             name="Pants",
             base=LegGear_T0(),
-            rarity=GearRarity.NORMAL,
+            rarity=Rarity.NORMAL,
             level=1,
             modifiers={
                 GearModifierType.ARMOR: 8,
@@ -109,9 +109,9 @@ class DefaultAccessory(Gear):
     def __init__(self):
 
         super().__init__(
-            name="",
+            name="Empty",
             base=Empty(),
-            rarity=GearRarity.NORMAL,
+            rarity=Rarity.NORMAL,
             level=1,
             modifiers={},
             skills=[],

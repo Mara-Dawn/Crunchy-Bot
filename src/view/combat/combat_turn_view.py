@@ -1,7 +1,7 @@
 import discord
 from combat.actors import Character
 from combat.encounter import EncounterContext
-from combat.skills.skill import SkillData
+from combat.skills.skill import CharacterSkill
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -38,7 +38,9 @@ class CombatTurnView(ViewMenu):
             case UIEventType.RESUME_INTERACTIONS:
                 self.blocked = False
 
-    async def use_skill(self, interaction: discord.Interaction, skill_data: SkillData):
+    async def use_skill(
+        self, interaction: discord.Interaction, skill_data: CharacterSkill
+    ):
         await interaction.response.defer()
 
         if self.blocked:
@@ -54,11 +56,14 @@ class CombatTurnView(ViewMenu):
 
 class SkillButton(discord.ui.Button):
 
-    def __init__(self, skill_data: SkillData):
+    def __init__(self, skill_data: CharacterSkill):
         self.skill_data = skill_data
 
         disabled = False
         if skill_data.on_cooldown():
+            disabled = True
+
+        if skill_data.stacks_left() is not None and skill_data.stacks_left() <= 0:
             disabled = True
 
         super().__init__(

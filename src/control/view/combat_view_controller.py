@@ -3,7 +3,7 @@ import datetime
 import discord
 from combat.actors import Character
 from combat.encounter import EncounterContext
-from combat.skills.skill import SkillData
+from combat.skills.skill import CharacterSkill
 from datalayer.database import Database
 from discord.ext import commands
 from events.encounter_event import EncounterEvent
@@ -89,7 +89,7 @@ class CombatViewController(ViewController):
     async def player_action(
         self,
         interaction: discord.Interaction,
-        skill_data: SkillData,
+        skill_data: CharacterSkill,
         character: Character,
         context: EncounterContext,
         view_id: int,

@@ -6,6 +6,9 @@ class SkillType(str, Enum):
     HEAVY_ATTACK = "HeavyAttack"
     MAGIC_ATTACK = "MagicAttack"
 
+    SECOND_WIND = "SecondWind"
+    GIGA_BONK = "GigaBonk"
+
     DEEZ_NUTS = "DeezNuts"
     BONK = "Bonk"
 

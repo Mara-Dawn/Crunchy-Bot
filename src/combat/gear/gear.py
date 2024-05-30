@@ -1,14 +1,14 @@
 import discord
+from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import (
+    Base,
     EnchantmentType,
+    EquipmentSlot,
     GearBaseType,
     GearModifierType,
-    GearRarity,
-    GearSlot,
+    Rarity,
 )
 from combat.skills.types import SkillEffect, SkillType
-from items.item import Item
-from items.types import ItemGroup, ShopCategory
 
 
 class Enchantment:
@@ -30,15 +30,15 @@ class Enchantment:
         self.max_level = max_level
 
 
-class GearBase:
+class GearBase(DroppableBase):
 
     DEFAULT_IMAGE_PATH = "img/gear/default/"
     IMAGE_NAMES = {
-        GearSlot.WEAPON: "weapon.png",
-        GearSlot.HEAD: "head.png",
-        GearSlot.BODY: "body.png",
-        GearSlot.LEGS: "legs.png",
-        GearSlot.ACCESSORY: "accessory.png",
+        EquipmentSlot.WEAPON: "weapon.png",
+        EquipmentSlot.HEAD: "head.png",
+        EquipmentSlot.BODY: "body.png",
+        EquipmentSlot.LEGS: "legs.png",
+        EquipmentSlot.ACCESSORY: "accessory.png",
     }
 
     def __init__(
@@ -47,27 +47,30 @@ class GearBase:
         type: GearBaseType,
         description: str,
         information: str,
-        slot: GearSlot,
+        slot: EquipmentSlot,
         min_level: int,
         max_level: int,
         modifiers: list[GearModifierType],
         skills: list[SkillType] = None,
         scaling: int = 1,
-        cost: int = 0,
         weight: int = None,
         permanent: bool = False,
         secret: bool = False,
         image: str = None,
         image_path: str = None,
     ):
+        super().__init__(
+            base_type=Base.GEAR,
+            type=type,
+            slot=slot,
+            min_level=min_level,
+            max_level=max_level,
+            weight=weight,
+        )
         self.name = name
         self.type = type
         self.description = description
         self.information = information
-        self.cost = cost
-        self.slot = slot
-        self.min_level = min_level
-        self.max_level = max_level
         self.modifiers = modifiers
         self.image = image
         self.image_path = image_path
@@ -77,24 +80,8 @@ class GearBase:
             self.skills = []
 
         self.scaling = scaling
-        self.weight = weight
-        if self.weight is None:
-            self.weight = max(self.cost, 100)
         self.permanent = permanent
         self.secret = secret
-
-        self.emoji = ""
-        match self.slot:
-            case GearSlot.HEAD:
-                self.emoji = "⛑️"
-            case GearSlot.BODY:
-                self.emoji = "🥼"
-            case GearSlot.LEGS:
-                self.emoji = "👖"
-            case GearSlot.WEAPON:
-                self.emoji = "⚔"
-            case GearSlot.ACCESSORY:
-                self.emoji = "💍"
 
         if self.image is None:
             self.image = self.IMAGE_NAMES[self.slot]
@@ -104,7 +91,7 @@ class GearBase:
 
     def get_allowed_modifiers(self):
         match self.slot:
-            case GearSlot.HEAD:
+            case EquipmentSlot.HEAD:
                 return [
                     GearModifierType.DEFENSE,
                     GearModifierType.CONSTITUTION,
@@ -112,7 +99,7 @@ class GearBase:
                     GearModifierType.ATTACK,
                     GearModifierType.MAGIC,
                 ]
-            case GearSlot.BODY:
+            case EquipmentSlot.BODY:
                 return [
                     GearModifierType.DEFENSE,
                     GearModifierType.CONSTITUTION,
@@ -122,7 +109,7 @@ class GearBase:
                     GearModifierType.ATTACK,
                     GearModifierType.MAGIC,
                 ]
-            case GearSlot.LEGS:
+            case EquipmentSlot.LEGS:
                 return [
                     GearModifierType.DEFENSE,
                     GearModifierType.CONSTITUTION,
@@ -131,7 +118,7 @@ class GearBase:
                     GearModifierType.ATTACK,
                     GearModifierType.MAGIC,
                 ]
-            case GearSlot.WEAPON:
+            case EquipmentSlot.WEAPON:
                 return [
                     GearModifierType.HEALING,
                     GearModifierType.CRIT_DAMAGE,
@@ -140,7 +127,7 @@ class GearBase:
                     GearModifierType.ATTACK,
                     GearModifierType.MAGIC,
                 ]
-            case GearSlot.ACCESSORY:
+            case EquipmentSlot.ACCESSORY:
                 return [
                     GearModifierType.CONSTITUTION,
                     GearModifierType.HEALING,
@@ -151,37 +138,13 @@ class GearBase:
                 ]
 
 
-class Gear(Item):
-
-    RARITY_COLOR_MAP = {
-        GearRarity.NORMAL: "[38m",  # ffffff
-        GearRarity.MAGIC: "[34m",  # 268bd2
-        GearRarity.RARE: "[33m",  # b58900
-        GearRarity.LEGENDARY: "[31m",  # #a43033
-        GearRarity.UNIQUE: "[36m",  # 2aa198
-    }
-
-    RARITY_COLOR_HEX_MAP = {
-        GearRarity.NORMAL: discord.Color(int("ffffff", 16)),
-        GearRarity.MAGIC: discord.Color(int("268bd2", 16)),
-        GearRarity.RARE: discord.Color(int("b58900", 16)),
-        GearRarity.LEGENDARY: discord.Color(int("a43033", 16)),
-        GearRarity.UNIQUE: discord.Color(int("2aa198", 16)),
-    }
-
-    RARITY_SORT_MAP = {
-        GearRarity.NORMAL: 0,
-        GearRarity.MAGIC: 1,
-        GearRarity.RARE: 2,
-        GearRarity.LEGENDARY: 3,
-        GearRarity.UNIQUE: 4,
-    }
+class Gear(Droppable):
 
     def __init__(
         self,
         name: str,
         base: GearBase,
-        rarity: GearRarity,
+        rarity: Rarity,
         level: int,
         modifiers: dict[GearModifierType, float],
         skills: list[SkillType],
@@ -189,23 +152,21 @@ class Gear(Item):
         locked: bool = False,
         id: int = None,
     ):
-        if name == "" or name is None:
-            name = base.name
         super().__init__(
             name=name,
-            type=None,
-            group=ItemGroup.GEAR,
-            shop_category=ShopCategory.GEAR,
+            base=base,
+            type=base.type,
             description=base.description,
             information=base.information,
-            emoji=base.emoji,
-            cost=base.cost,
-            value=None,
-            hide_in_shop=True,
-            weight=base.weight,
-            permanent=base.permanent,
-            secret=base.secret,
+            slot=base.slot,
+            rarity=rarity,
+            level=level,
+            scaling=base.scaling,
+            image=base.image,
+            image_path=base.image_path,
         )
+        if name == "" or name is None:
+            name = base.name
         self.base = base
         self.rarity = rarity
         self.level = level
@@ -217,18 +178,12 @@ class Gear(Item):
 
     def get_embed(
         self,
-        title: str = None,
         show_data: bool = True,
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
         max_width: int = 44,
     ) -> discord.Embed:
-        if title is None:
-            title = f"{self.rarity.value} {self.base.slot.value}"
-
-        title = f"> {title}"
-
         color = self.RARITY_COLOR_HEX_MAP[self.rarity]
 
         if self.id < 0:
@@ -267,7 +222,7 @@ class Gear(Item):
             line_colored = f"{spacing}{name}: {self.RARITY_COLOR_MAP[self.rarity]}{self.rarity.value}[0m\n"
             info_block += line_colored
 
-            if self.base.slot == GearSlot.WEAPON and len(self.base.skills) > 0:
+            if self.base.slot == EquipmentSlot.WEAPON and len(self.base.skills) > 0:
                 damage_types = []
                 for skill_type in self.base.skills:
                     if skill_type == SkillType.MAGIC_ATTACK:

@@ -2,7 +2,7 @@ from enum import Enum
 
 import discord
 from combat.actors import Character
-from combat.gear.types import GearSlot
+from combat.gear.types import EquipmentSlot
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -63,11 +63,11 @@ class EquipmentView(ViewMenu):
         match self.state:
             case EquipmentViewState.GEAR:
                 gear_button_disabled = True
-                self.add_item(SelectGearSlot(GearSlot.WEAPON))
-                self.add_item(SelectGearSlot(GearSlot.HEAD))
-                self.add_item(SelectGearSlot(GearSlot.BODY))
-                self.add_item(SelectGearSlot(GearSlot.LEGS))
-                self.add_item(SelectGearSlot(GearSlot.ACCESSORY))
+                self.add_item(SelectGearSlot(EquipmentSlot.WEAPON))
+                self.add_item(SelectGearSlot(EquipmentSlot.HEAD))
+                self.add_item(SelectGearSlot(EquipmentSlot.BODY))
+                self.add_item(SelectGearSlot(EquipmentSlot.LEGS))
+                self.add_item(SelectGearSlot(EquipmentSlot.ACCESSORY))
                 self.add_item(ScrapAllButton())
             case EquipmentViewState.STATS:
                 stats_button_disabled = True
@@ -94,64 +94,46 @@ class EquipmentView(ViewMenu):
 
         self.refresh_elements()
         embeds = []
-        files = []
+        files: list[discord.File] = []
         match self.state:
             case EquipmentViewState.GEAR:
                 embeds.append(EquipmentHeadEmbed(self.member))
-                embeds.append(
-                    self.character.equipment.weapon.get_embed(title="Weapon Slot")
-                )
+                embeds.append(self.character.equipment.weapon.get_embed())
                 files.append(
                     discord.File(
                         f"./{self.character.equipment.weapon.base.image_path}{self.character.equipment.weapon.base.image}",
                         self.character.equipment.weapon.base.image,
                     )
                 )
-                embeds.append(
-                    self.character.equipment.head_gear.get_embed(title="Head Gear Slot")
-                )
+                embeds.append(self.character.equipment.head_gear.get_embed())
                 files.append(
                     discord.File(
                         f"./{self.character.equipment.head_gear.base.image_path}{self.character.equipment.head_gear.base.image}",
                         self.character.equipment.head_gear.base.image,
                     )
                 )
-                embeds.append(
-                    self.character.equipment.body_gear.get_embed(
-                        title="Body Armor Slot"
-                    )
-                )
+                embeds.append(self.character.equipment.body_gear.get_embed())
                 files.append(
                     discord.File(
                         f"./{self.character.equipment.body_gear.base.image_path}{self.character.equipment.body_gear.base.image}",
                         self.character.equipment.body_gear.base.image,
                     )
                 )
-                embeds.append(
-                    self.character.equipment.leg_gear.get_embed(title="Leg Gear Slot")
-                )
+                embeds.append(self.character.equipment.leg_gear.get_embed())
                 files.append(
                     discord.File(
                         f"./{self.character.equipment.leg_gear.base.image_path}{self.character.equipment.leg_gear.base.image}",
                         self.character.equipment.leg_gear.base.image,
                     )
                 )
-                embeds.append(
-                    self.character.equipment.accessory_1.get_embed(
-                        title="Accessory Slot 1"
-                    )
-                )
+                embeds.append(self.character.equipment.accessory_1.get_embed())
                 files.append(
                     discord.File(
                         f"./{self.character.equipment.accessory_1.base.image_path}{self.character.equipment.accessory_1.base.image}",
                         self.character.equipment.accessory_1.base.image,
                     )
                 )
-                embeds.append(
-                    self.character.equipment.accessory_2.get_embed(
-                        title="Accessory Slot 2"
-                    )
-                )
+                embeds.append(self.character.equipment.accessory_2.get_embed())
                 if (
                     self.character.equipment.accessory_1.base.image
                     != self.character.equipment.accessory_2.base.image
@@ -168,11 +150,18 @@ class EquipmentView(ViewMenu):
                 embeds.append(self.character.equipment.get_embed(title=title))
             case EquipmentViewState.SKILLS:
                 embed = SkillsHeadEmbed(self.member)
-                for skill in self.character.skills:
-                    self.character.get_skill_data(skill).add_to_embed(
-                        embed, show_data=True
-                    )
                 embeds.append(embed)
+                for skill in self.character.skills:
+                    skill_embed = self.character.get_skill_data(skill).get_embed(
+                        show_data=True
+                    )
+                    embeds.append(skill_embed)
+                    file = discord.File(
+                        f"./{skill.base_skill.image_path}{skill.base_skill.image}",
+                        skill.base_skill.image,
+                    )
+                    if file.filename not in [file.filename for file in files]:
+                        files.append(file)
 
         try:
             await self.message.edit(embeds=embeds, attachments=files, view=self)
@@ -186,7 +175,7 @@ class EquipmentView(ViewMenu):
         self.state = state
         await self.refresh_ui()
 
-    async def change_gear(self, interaction: discord.Interaction, slot: GearSlot):
+    async def change_gear(self, interaction: discord.Interaction, slot: EquipmentSlot):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.GEAR_OPEN_SECELT,
@@ -253,7 +242,7 @@ class SkillsButton(discord.ui.Button):
 
 class SelectGearSlot(discord.ui.Button):
 
-    def __init__(self, slot: GearSlot, disabled: bool = False, row: int = 1):
+    def __init__(self, slot: EquipmentSlot, disabled: bool = False, row: int = 1):
         super().__init__(
             label=slot.value,
             style=discord.ButtonStyle.green,

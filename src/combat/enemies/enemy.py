@@ -1,7 +1,10 @@
+from random import random
+
 import discord
 from combat.enemies.types import EnemyType
-from combat.gear.types import CharacterAttribute
-from combat.skills.skill import Skill
+from combat.gear.types import CharacterAttribute, GearBaseType
+from combat.skills.skills import EnemySkill
+from combat.skills.types import SkillType
 from items.types import ItemType
 
 
@@ -65,8 +68,10 @@ class Enemy:
         max_hp: int,
         min_dmg: int,
         max_dmg: int,
-        skills: list[Skill],
-        loot_table: list[ItemType],
+        skills: list[EnemySkill],
+        item_loot_table: list[ItemType],
+        gear_loot_table: list[GearBaseType],
+        skill_loot_table: list[SkillType],
         min_gear_drop_count: int = None,
         max_gear_drop_count: int = None,
         min_beans_reward: int = None,
@@ -89,7 +94,9 @@ class Enemy:
         self.min_dmg = min_dmg
         self.max_dmg = max_dmg
         self.skills = skills
-        self.loot_table = loot_table
+        self.item_loot_table = item_loot_table
+        self.gear_loot_table = gear_loot_table
+        self.skill_loot_table = skill_loot_table
         self.min_gear_drop_count = min_gear_drop_count
         self.max_gear_drop_count = max_gear_drop_count
         self.min_beans_reward = min_beans_reward
@@ -116,18 +123,24 @@ class Enemy:
             for attribute_type, value in attribute_overrides:
                 self.attributes[attribute_type] = value
 
-        if self.min_gear_drop_count is None:
-            self.min_gear_drop_count = self.LOOT_MIN_AMOUNT_BY_LVL[self.min_level]
-        if self.max_gear_drop_count is None:
-            self.max_gear_drop_count = self.LOOT_MAX_AMOUNT_BY_LVL[self.min_level]
-
-        if self.min_beans_reward is None:
-            self.min_beans_reward = 95 * self.min_level
-        if self.max_beans_reward is None:
-            self.max_beans_reward = 105 * self.min_level
-
         if self.bonus_loot_chance is None:
             self.bonus_loot_chance = self.LOOT_BONUS_CHANCE_BY_LVL[self.min_level]
+
+    def roll_beans_amount(self, level: int):
+        if self.min_beans_reward is None:
+            self.min_beans_reward = 95 * level
+        if self.max_beans_reward is None:
+            self.max_beans_reward = 105 * level
+
+        return random.randint(self.min_beans_reward, self.max_beans_reward)
+
+    def roll_loot_amount(self, level: int):
+        if self.min_gear_drop_count is None:
+            self.min_gear_drop_count = self.LOOT_MIN_AMOUNT_BY_LVL[level]
+        if self.max_gear_drop_count is None:
+            self.max_gear_drop_count = self.LOOT_MAX_AMOUNT_BY_LVL[level]
+
+        return random.randint(self.min_gear_drop_count, self.max_gear_drop_count)
 
     def add_to_embed(
         self, embed: discord.Embed, show_info: bool = False, max_width: int = 56

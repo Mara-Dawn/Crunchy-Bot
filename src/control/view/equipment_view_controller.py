@@ -2,7 +2,7 @@ import datetime
 
 import discord
 from combat.gear.gear import Gear
-from combat.gear.types import GearSlot
+from combat.gear.types import EquipmentSlot
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
@@ -109,7 +109,7 @@ class EquipmentViewController(ViewController):
                 )
 
     async def open_gear_select(
-        self, interaction: discord.Interaction, slot: GearSlot, view_id: int
+        self, interaction: discord.Interaction, slot: EquipmentSlot, view_id: int
     ):
         guild_id = interaction.guild.id
         member_id = interaction.user.id
@@ -209,7 +209,7 @@ class EquipmentViewController(ViewController):
 
         if len(selected) == 1:
             await self.database.update_user_equipment(guild_id, member_id, selected[0])
-            if selected[0].base.slot == GearSlot.ACCESSORY:
+            if selected[0].base.slot == EquipmentSlot.ACCESSORY:
                 await self.database.update_user_equipment(
                     guild_id, member_id, None, acc_slot_2=True
                 )

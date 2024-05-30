@@ -1,5 +1,5 @@
-from combat.skills import *  # noqa: F403
-from combat.skills import Skill
+from combat.skills.skill import Skill
+from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillType
 from control.controller import Controller
 from control.logger import BotLogger

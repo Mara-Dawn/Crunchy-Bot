@@ -1,15 +1,16 @@
 from enum import Enum
 
 
-class GearSlot(str, Enum):
+class EquipmentSlot(str, Enum):
     HEAD = "Head"
     BODY = "Body"
     LEGS = "Bottoms"
     WEAPON = "Weapon"
     ACCESSORY = "Accessory"
+    SKILL = "Skill"
 
 
-class GearRarity(str, Enum):
+class Rarity(str, Enum):
     NORMAL = "Normal"
     MAGIC = "Magic"
     RARE = "Rare"
@@ -104,8 +105,14 @@ class GearModifierType(str, Enum):
         ]
 
 
+class Base(str, Enum):
+    GEAR = "Gear"
+    SKILL = "Skill"
+
+
 class GearBaseType(str, Enum):
     EMPTY = "Empty"
+    SKILL = "Skill"
 
     STICK_T0 = "Stick_T0"
     STICK_T1 = "Stick_T1"

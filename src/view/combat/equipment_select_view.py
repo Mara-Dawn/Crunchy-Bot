@@ -2,7 +2,7 @@ import contextlib
 
 import discord
 from combat.gear.gear import Gear
-from combat.gear.types import GearModifierType, GearSlot
+from combat.gear.types import EquipmentSlot, GearModifierType
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
 from control.types import ControllerType
@@ -22,7 +22,7 @@ class EquipmentSelectView(ViewMenu):
         gear_inventory: list[Gear],
         currently_equipped: list[Gear],
         scrap_balance: int,
-        slot: GearSlot,
+        slot: EquipmentSlot,
     ):
         super().__init__(timeout=300)
         self.controller = controller
@@ -149,7 +149,7 @@ class EquipmentSelectView(ViewMenu):
         )
         await self.controller.dispatch_ui_event(event)
 
-    async def change_gear(self, interaction: discord.Interaction, slot: GearSlot):
+    async def change_gear(self, interaction: discord.Interaction, slot: EquipmentSlot):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.GEAR_OPEN_SECELT,
@@ -162,7 +162,7 @@ class EquipmentSelectView(ViewMenu):
         page_display = f"Page {self.current_page + 1}/{self.page_count}"
 
         max_values = 1
-        if self.filter == GearSlot.ACCESSORY:
+        if self.filter == EquipmentSlot.ACCESSORY:
             max_values = 2
 
         disable_equip = disabled
@@ -192,27 +192,31 @@ class EquipmentSelectView(ViewMenu):
         self.add_item(BackButton())
         self.add_item(
             SelectGearSlot(
-                GearSlot.WEAPON, row=3, disabled=(self.filter == GearSlot.WEAPON)
+                EquipmentSlot.WEAPON,
+                row=3,
+                disabled=(self.filter == EquipmentSlot.WEAPON),
             )
         )
         self.add_item(
             SelectGearSlot(
-                GearSlot.HEAD, row=3, disabled=(self.filter == GearSlot.HEAD)
+                EquipmentSlot.HEAD, row=3, disabled=(self.filter == EquipmentSlot.HEAD)
             )
         )
         self.add_item(
             SelectGearSlot(
-                GearSlot.BODY, row=3, disabled=(self.filter == GearSlot.BODY)
+                EquipmentSlot.BODY, row=3, disabled=(self.filter == EquipmentSlot.BODY)
             )
         )
         self.add_item(
             SelectGearSlot(
-                GearSlot.LEGS, row=3, disabled=(self.filter == GearSlot.LEGS)
+                EquipmentSlot.LEGS, row=3, disabled=(self.filter == EquipmentSlot.LEGS)
             )
         )
         self.add_item(
             SelectGearSlot(
-                GearSlot.ACCESSORY, row=3, disabled=(self.filter == GearSlot.ACCESSORY)
+                EquipmentSlot.ACCESSORY,
+                row=3,
+                disabled=(self.filter == EquipmentSlot.ACCESSORY),
             )
         )
 

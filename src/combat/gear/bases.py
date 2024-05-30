@@ -1,5 +1,5 @@
 from combat.gear.gear import GearBase
-from combat.gear.types import GearBaseType, GearModifierType, GearSlot
+from combat.gear.types import EquipmentSlot, GearBaseType, GearModifierType
 from combat.skills.types import SkillType
 
 # Example
@@ -34,7 +34,7 @@ class Empty(GearBase):
             type=GearBaseType.EMPTY,
             description="This equipment slot is empty.",
             information="Defeat enemies to obtain items you can equip in this slot.",
-            slot=GearSlot.ACCESSORY,
+            slot=EquipmentSlot.ACCESSORY,
             min_level=99,
             max_level=99,
             modifiers=[],
@@ -54,7 +54,7 @@ class Tier0(GearBase):
         type: GearBaseType,
         description: str,
         information: str,
-        slot: GearSlot,
+        slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
     ):
@@ -80,7 +80,7 @@ class Stick_T0(Tier0):
             type=GearBaseType.STICK_T0,
             description="The ol' reliable. Your trusty stick would never let you down. Just give em a good whack and theyll surely shut up. ",
             information="Your basic starting weapon. Deals physical Damage.",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -97,7 +97,7 @@ class Wand_T0(Tier0):
             type=GearBaseType.WAND_T0,
             description="Looks like someone tried to fix it with duct tape after breaking it. I hope it wont blow up.",
             information="Your basic starting weapon. Deals magical Damage.",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -114,7 +114,7 @@ class HeadGear_T0(Tier0):
             type=GearBaseType.HEADGEAR_T0,
             description="A stylish hat that might not protect you from harm but looks hella wicked.",
             information="Tier 0 head piece.",
-            slot=GearSlot.HEAD,
+            slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -127,7 +127,7 @@ class BodyGear_T0(Tier0):
             type=GearBaseType.BODYGEAR_T0,
             description="A really stylish shirt that perfectly fits your body type. Sadly it doesnt do much against enemy attacks.",
             information="Tier 0 body piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -140,7 +140,7 @@ class LegGear_T0(Tier0):
             type=GearBaseType.LEGGEAR_T0,
             description="Mom picked these for you, they are super comfy and make your butt look good.",
             information="Tier 0 leg piece.",
-            slot=GearSlot.LEGS,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -153,7 +153,7 @@ class Necklace_T0(Tier0):
             type=GearBaseType.NECKLACE_T0,
             description="This necklace looks like it has seen a lot of use. With a bit of polish it might not look too shabby!",
             information="Tier 0 accessory",
-            slot=GearSlot.ACCESSORY,
+            slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
         )
 
@@ -169,7 +169,7 @@ class Tier1(GearBase):
         type: GearBaseType,
         description: str,
         information: str,
-        slot: GearSlot,
+        slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
     ):
@@ -195,7 +195,7 @@ class Stick_T1(Tier1):
             type=GearBaseType.STICK_T1,
             description="",
             information="",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -212,7 +212,7 @@ class Wand_T1(Tier1):
             type=GearBaseType.WAND_T1,
             description="",
             information="",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -229,7 +229,7 @@ class HeadGear_T1(Tier1):
             type=GearBaseType.HEADGEAR_T1,
             description="",
             information="Tier 1 head piece.",
-            slot=GearSlot.HEAD,
+            slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -242,7 +242,7 @@ class BodyGear_T1(Tier1):
             type=GearBaseType.BODYGEAR_T1,
             description="",
             information="Tier 1 body piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -255,7 +255,7 @@ class LegGear_T1(Tier1):
             type=GearBaseType.LEGGEAR_T1,
             description="",
             information="Tier 1 leg piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -268,7 +268,7 @@ class Necklace_T1(Tier1):
             type=GearBaseType.NECKLACE_T1,
             description="",
             information="Tier 1 accessory",
-            slot=GearSlot.ACCESSORY,
+            slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
         )
 
@@ -284,7 +284,7 @@ class Tier2(GearBase):
         type: GearBaseType,
         description: str,
         information: str,
-        slot: GearSlot,
+        slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
     ):
@@ -310,7 +310,7 @@ class Stick_T2(Tier2):
             type=GearBaseType.STICK_T2,
             description="",
             information="",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -327,7 +327,7 @@ class Wand_T2(Tier2):
             type=GearBaseType.WAND_T2,
             description="",
             information="",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -344,7 +344,7 @@ class HeadGear_T2(Tier2):
             type=GearBaseType.HEADGEAR_T2,
             description="",
             information="Tier 2 head piece.",
-            slot=GearSlot.HEAD,
+            slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -357,7 +357,7 @@ class BodyGear_T2(Tier2):
             type=GearBaseType.BODYGEAR_T2,
             description="",
             information="Tier 2 body piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -370,7 +370,7 @@ class LegGear_T2(Tier2):
             type=GearBaseType.LEGGEAR_T2,
             description="",
             information="Tier 2 leg piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -383,7 +383,7 @@ class Necklace_T2(Tier2):
             type=GearBaseType.NECKLACE_T2,
             description="",
             information="Tier 2 accessory",
-            slot=GearSlot.ACCESSORY,
+            slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
         )
 
@@ -399,7 +399,7 @@ class Tier3(GearBase):
         type: GearBaseType,
         description: str,
         information: str,
-        slot: GearSlot,
+        slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
     ):
@@ -425,7 +425,7 @@ class Stick_T3(Tier3):
             type=GearBaseType.STICK_T3,
             description="",
             information="",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -442,7 +442,7 @@ class Wand_T3(Tier3):
             type=GearBaseType.WAND_T3,
             description="",
             information="",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -459,7 +459,7 @@ class HeadGear_T3(Tier3):
             type=GearBaseType.HEADGEAR_T3,
             description="",
             information="Tier 3 head piece.",
-            slot=GearSlot.HEAD,
+            slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -472,7 +472,7 @@ class BodyGear_T3(Tier3):
             type=GearBaseType.BODYGEAR_T3,
             description="",
             information="Tier 3 body piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -485,7 +485,7 @@ class LegGear_T3(Tier3):
             type=GearBaseType.LEGGEAR_T3,
             description="",
             information="Tier 3 leg piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -498,7 +498,7 @@ class Necklace_T3(Tier3):
             type=GearBaseType.NECKLACE_T3,
             description="",
             information="Tier 3 accessory",
-            slot=GearSlot.ACCESSORY,
+            slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
         )
 
@@ -514,7 +514,7 @@ class Tier4(GearBase):
         type: GearBaseType,
         description: str,
         information: str,
-        slot: GearSlot,
+        slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
     ):
@@ -540,7 +540,7 @@ class Stick_T4(Tier4):
             type=GearBaseType.STICK_T4,
             description="",
             information="",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -557,7 +557,7 @@ class Wand_T4(Tier4):
             type=GearBaseType.WAND_T4,
             description="",
             information="",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -574,7 +574,7 @@ class HeadGear_T4(Tier4):
             type=GearBaseType.HEADGEAR_T4,
             description="",
             information="Tier 4 head piece.",
-            slot=GearSlot.HEAD,
+            slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -587,7 +587,7 @@ class BodyGear_T4(Tier4):
             type=GearBaseType.BODYGEAR_T4,
             description="",
             information="Tier 4 body piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -600,7 +600,7 @@ class LegGear_T4(Tier4):
             type=GearBaseType.LEGGEAR_T4,
             description="",
             information="Tier 4 leg piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -613,7 +613,7 @@ class Necklace_T4(Tier4):
             type=GearBaseType.NECKLACE_T4,
             description="",
             information="Tier 4 accessory",
-            slot=GearSlot.ACCESSORY,
+            slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
         )
 
@@ -629,7 +629,7 @@ class Tier5(GearBase):
         type: GearBaseType,
         description: str,
         information: str,
-        slot: GearSlot,
+        slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
     ):
@@ -655,7 +655,7 @@ class Stick_T5(Tier5):
             type=GearBaseType.STICK_T5,
             description="",
             information="",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -672,7 +672,7 @@ class Wand_T5(Tier5):
             type=GearBaseType.WAND_T5,
             description="",
             information="",
-            slot=GearSlot.WEAPON,
+            slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
@@ -689,7 +689,7 @@ class HeadGear_T5(Tier5):
             type=GearBaseType.HEADGEAR_T5,
             description="",
             information="Tier 5 head piece.",
-            slot=GearSlot.HEAD,
+            slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -702,7 +702,7 @@ class BodyGear_T5(Tier5):
             type=GearBaseType.BODYGEAR_T5,
             description="",
             information="Tier 5 body piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -715,7 +715,7 @@ class LegGear_T5(Tier5):
             type=GearBaseType.LEGGEAR_T5,
             description="",
             information="Tier 5 leg piece.",
-            slot=GearSlot.BODY,
+            slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -728,6 +728,6 @@ class Necklace_T5(Tier5):
             type=GearBaseType.NECKLACE_T5,
             description="",
             information="Tier 5 accessory",
-            slot=GearSlot.ACCESSORY,
+            slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
         )

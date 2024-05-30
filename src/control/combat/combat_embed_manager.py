@@ -186,16 +186,17 @@ class CombatEmbedManager(Service):
 
         return embed
 
-    async def get_character_turn_embed(
+    async def get_character_turn_embeds(
         self, context: EncounterContext
-    ) -> discord.Embed:
+    ) -> list[discord.Embed]:
         actor = context.get_current_actor()
+        embeds = []
 
         turn_number = context.get_current_turn_number()
         title = f"Turn {turn_number}: {actor.name}"
 
         content = f"It is your turn <@{actor.id}>. Please select an action."
-        embed = discord.Embed(
+        head_embed = discord.Embed(
             title=title, description=content, color=discord.Colour.blurple()
         )
 
@@ -203,17 +204,18 @@ class CombatEmbedManager(Service):
             actor, context.combat_events
         )
         max_hp = int(actor.max_hp)
-        self.add_health_bar(embed, current_hp, max_hp, hide_hp=False)
-
-        embed.add_field(name="Your Skills:", value="", inline=False)
-
-        for skill in actor.skills:
-            actor.get_skill_data(skill).add_to_embed(embed=embed, show_data=True)
+        self.add_health_bar(head_embed, current_hp, max_hp, hide_hp=False)
 
         if actor.image is not None:
-            embed.set_thumbnail(url=actor.image)
+            head_embed.set_thumbnail(url=actor.image)
 
-        return embed
+        head_embed.add_field(name="Your Skills:", value="", inline=False)
+        embeds.append(head_embed)
+
+        for skill in actor.skills:
+            embeds.append(actor.get_skill_data(skill).get_embed(show_data=True))
+
+        return embeds
 
     async def get_loot_embed(self, member: discord.Member, beans: int):
         title = f"{member.display_name}'s Loot"

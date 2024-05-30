@@ -4,8 +4,8 @@ import discord
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext, TurnData
 from combat.enemies.enemy import Enemy
-from combat.skills import Skill
-from combat.skills.skill import SkillData
+from combat.skills.skill import CharacterSkill
+from combat.skills.skills import Skill
 from combat.skills.types import SkillEffect, SkillType
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
@@ -120,22 +120,30 @@ class CombatActorManager(Service):
         weapon_skills = equipment.weapon.base.skills
         skill_types.extend(weapon_skills)
 
-        skill_types.extend(
-            await self.database.get_user_equipped_skills(member.guild.id, member.id)
-        )
         skills = []
         for skill_type in skill_types:
             skill = await self.skill_manager.get_skill(skill_type)
             skills.append(skill)
+
+        equipped_skills = await self.database.get_user_equipped_skills(
+            member.guild.id, member.id
+        )
+
+        for skill in equipped_skills:
             if len(skills) >= 4:
                 break
+            skills.append(skill)
 
         skill_cooldowns = self.get_skill_cooldowns(member.id, skills, combat_events)
+        skill_stacks_used = await self.database.get_user_skill_stacks_used(
+            member.guild.id, member.id
+        )
 
         character = Character(
             member=member,
             skills=skills,
             skill_cooldowns=skill_cooldowns,
+            skill_stacks_used=skill_stacks_used,
             equipment=equipment,
             defeated=defeated,
         )
@@ -146,7 +154,7 @@ class CombatActorManager(Service):
 
     def get_skill_cooldowns(
         self, actor_id: int, skills: list[Skill], combat_events: list[CombatEvent]
-    ) -> list[SkillData]:
+    ) -> list[CharacterSkill]:
         cooldowns = {}
         last_used = 0
         for event in combat_events:
@@ -165,9 +173,10 @@ class CombatActorManager(Service):
 
         for skill in skills:
             last_used = None
-            if skill.type in cooldowns:
-                last_used = cooldowns[skill.type]
-            skill_data[skill.type] = last_used
+            skill_type = skill.base_skill.skill_type
+            if skill_type in cooldowns:
+                last_used = cooldowns[skill_type]
+            skill_data[skill_type] = last_used
         return skill_data
 
     async def calculate_opponent_turn_data(

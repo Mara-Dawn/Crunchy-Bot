@@ -7,7 +7,7 @@ from combat.actors import Actor, Character
 from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.enemies.types import EnemyType
-from combat.skills.skill import SkillData
+from combat.skills.skill import CharacterSkill
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_enemy_manager import CombatEnemyManager
@@ -312,7 +312,7 @@ class EncounterManager(Service):
                     context.encounter.id,
                     opponent.id,
                     target.id,
-                    turn.skill.type,
+                    turn.skill.skill_type,
                     total_damage,
                     CombatEventType.ENEMY_TURN,
                 )
@@ -331,7 +331,10 @@ class EncounterManager(Service):
         await self.controller.dispatch_event(event)
 
     async def combatant_turn(
-        self, context: EncounterContext, character: Character, skill_data: SkillData
+        self,
+        context: EncounterContext,
+        character: Character,
+        skill_data: CharacterSkill,
     ):
 
         damage_instances = character.get_skill_damage(
@@ -377,7 +380,7 @@ class EncounterManager(Service):
                     context.encounter.id,
                     character.id,
                     context.opponent.id,
-                    skill_data.skill.type,
+                    skill_data.skill.skill_type,
                     total_damage,
                     CombatEventType.MEMBER_TURN,
                 )
@@ -443,21 +446,21 @@ class EncounterManager(Service):
             await self.controller.dispatch_event(event)
 
             already_dropped = []
-            for gear in member_loot[1]:
-                embeds.append(gear.get_embed())
+            for drop in member_loot[1]:
+                embeds.append(drop.get_embed())
 
                 await asyncio.sleep(2.5)
 
-                already_dropped.append(gear)
+                already_dropped.append(drop)
 
                 files = {}
-                for gear in already_dropped:
+                for drop in already_dropped:
 
-                    file_path = f"./{gear.base.image_path}{gear.base.image}"
+                    file_path = f"./{drop.base.image_path}{drop.base.image}"
                     if file_path not in files:
                         file = discord.File(
                             file_path,
-                            gear.base.image,
+                            drop.base.image,
                         )
                         files[file_path] = file
 
@@ -594,9 +597,9 @@ class EncounterManager(Service):
             await self.skip_turn(current_actor, context)
             return
 
-        enemy_embed = await self.embed_manager.get_character_turn_embed(context)
+        enemy_embeds = await self.embed_manager.get_character_turn_embeds(context)
         view = CombatTurnView(self.controller, current_actor, context)
         await context.thread.send(
-            f"<@{current_actor.id}>", embed=enemy_embed, view=view
+            f"<@{current_actor.id}>", embeds=enemy_embeds, view=view
         )
         return

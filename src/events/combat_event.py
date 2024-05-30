@@ -18,6 +18,7 @@ class CombatEvent(BotEvent):
         target_id: int,
         skill_type: SkillType,
         skill_value: int,
+        skill_id: int,
         combat_event_type: EncounterEventType,
         id: int = None,
     ):
@@ -27,6 +28,7 @@ class CombatEvent(BotEvent):
         self.target_id = target_id
         self.skill_type = skill_type
         self.skill_value = skill_value
+        self.skill_id = skill_id
         self.combat_event_type = combat_event_type
         self.id = id
 
@@ -39,6 +41,7 @@ class CombatEvent(BotEvent):
             self.target_id,
             self.skill_type,
             self.skill_value,
+            self.skill_id,
             self.combat_event_type,
         ]
 
@@ -63,6 +66,7 @@ class CombatEvent(BotEvent):
                 else None
             ),
             skill_value=row[Database.COMBAT_EVENT_SKILL_VALUE],
+            skill_id=row[Database.COMBAT_EVENT_SKILL_ID],
             combat_event_type=CombatEventType(row[Database.COMBAT_EVENT_TYPE_COL]),
             id=row[Database.EVENT_ID_COL],
         )
