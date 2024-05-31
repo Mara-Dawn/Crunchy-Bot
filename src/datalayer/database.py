@@ -3332,8 +3332,8 @@ class Database:
         task = (id, guild_id, member_id)
         await self.__query_insert(command, task)
 
-    async def get_scrappable_gear_by_user(
-        self, guild_id: int, member_id: int
+    async def get_scrappable_equipment_by_user(
+        self, guild_id: int, member_id: int, type: Base = Base.GEAR
     ) -> list[Gear]:
 
         command = f""" 
@@ -3345,16 +3345,20 @@ class Database:
             AND {self.USER_GEAR_IS_LOCKED_COL} = 0
             ;
         """
-        task = (guild_id, member_id, Base.GEAR)
+        task = (guild_id, member_id, type.value)
         rows = await self.__query_select(command, task)
         if not rows:
             return []
-        gear = []
+        equipment = []
         for row in rows:
-            gear_piece = await self.get_gear_by_id(row[self.USER_GEAR_ID_COL])
-            gear.append(gear_piece)
+            match type:
+                case Base.GEAR:
+                    item = await self.get_gear_by_id(row[self.USER_GEAR_ID_COL])
+                case Base.SKILL:
+                    item = await self.get_skill_by_id(row[self.USER_GEAR_ID_COL])
+            equipment.append(item)
 
-        return gear
+        return equipment
 
     async def get_user_skill_inventory(
         self, guild_id: int, member_id: int

@@ -225,35 +225,40 @@ class EquipmentSelectView(
             SelectGearSlot(
                 EquipmentSlot.WEAPON,
                 row=0,
-                disabled=(self.filter == EquipmentSlot.WEAPON or disabled),
+                selected=(self.filter == EquipmentSlot.WEAPON),
+                disabled=disabled,
             )
         )
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.HEAD,
                 row=0,
-                disabled=(self.filter == EquipmentSlot.HEAD or disabled),
+                selected=(self.filter == EquipmentSlot.HEAD),
+                disabled=disabled,
             )
         )
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.BODY,
                 row=0,
-                disabled=(self.filter == EquipmentSlot.BODY or disabled),
+                selected=(self.filter == EquipmentSlot.BODY),
+                disabled=disabled,
             )
         )
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.LEGS,
                 row=0,
-                disabled=(self.filter == EquipmentSlot.LEGS or disabled),
+                selected=(self.filter == EquipmentSlot.LEGS),
+                disabled=disabled,
             )
         )
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.ACCESSORY,
                 row=0,
-                disabled=(self.filter == EquipmentSlot.ACCESSORY or disabled),
+                selected=(self.filter == EquipmentSlot.ACCESSORY),
+                disabled=disabled,
             )
         )
 

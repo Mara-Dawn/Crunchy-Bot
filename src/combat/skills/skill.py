@@ -68,12 +68,19 @@ class Skill(Droppable):
     BASE_LOOT_SKILLS = [
         SkillType.SECOND_WIND,
         SkillType.GIGA_BONK,
+        SkillType.FIRE_BALL,
     ]
 
     EFFECT_COLOR_MAP = {
         SkillEffect.PHYSICAL_DAMAGE: discord.Color(int("F5A9B8", 16)),
         SkillEffect.MAGICAL_DAMAGE: discord.Color(int("5BCEFA", 16)),
         SkillEffect.HEALING: discord.Color.green(),
+    }
+
+    EFFECT_LABEL_MAP = {
+        SkillEffect.PHYSICAL_DAMAGE: "Damage",
+        SkillEffect.MAGICAL_DAMAGE: "Damage",
+        SkillEffect.HEALING: "Healing",
     }
 
     RARITY_SORT_MAP = {
@@ -130,9 +137,10 @@ class Skill(Droppable):
         show_locked_state: bool = False,
         max_width: int = 44,
     ) -> discord.Embed:
-        color = self.EFFECT_COLOR_MAP[self.base_skill.skill_effect]
+        # color = self.EFFECT_COLOR_MAP[self.base_skill.skill_effect]
+        color = self.RARITY_COLOR_HEX_MAP[self.rarity]
 
-        name = f"~/ {self.name} \\*~"
+        name = f"<- {self.name} ->"
         suffix = ""
         if equipped:
             color = discord.Color.purple()
@@ -142,10 +150,13 @@ class Skill(Droppable):
 
         info_block = "```ansi\n"
         info_block += f"{Droppable.RARITY_COLOR_MAP[self.rarity]}{name}[0m{suffix}"
-        spacing = " " * (
-            max_width - len(name) - len(self.base.slot.value) - len(suffix) - 2
-        )
-        info_block += f"{spacing}[{self.base.slot.value}]"
+
+        slot = self.base.slot.value
+        if SkillType.is_weapon_skill(self.base_skill.skill_type):
+            slot = "Weapon Skill"
+
+        spacing = " " * (max_width - len(name) - len(slot) - len(suffix) - 2)
+        info_block += f"{spacing}[{slot}]"
         info_block += "```"
 
         description = f'"{self.description}"'
@@ -158,7 +169,14 @@ class Skill(Droppable):
         suffixes = []
 
         if show_data:
-            max_len = 9
+            max_len = 11
+
+            # Item Level
+            name = "Item Level"
+            spacing = " " * (max_len - len(name))
+            level_line = f"{spacing}{name}: {self.level}"
+            level_line_colored = f"{spacing}{name}: [32m{self.level}[0m"
+            prefixes.append((level_line_colored, len(level_line)))
 
             # Rarity
             name = "Rarity"
@@ -168,7 +186,7 @@ class Skill(Droppable):
             prefixes.append((rarity_line_colored, len(rarity_line)))
 
             # Base Value
-            name = "Power"
+            name = "Skill Power"
             base_value_text = f"{name}: {self.scaling}"
             base_value_text_colored = f"{name}: [35m{self.scaling}[0m"
             suffixes.append((base_value_text_colored, len(base_value_text)))
@@ -269,12 +287,17 @@ class CharacterSkill:
     def get_embed(
         self,
         show_data: bool = True,
+        show_full_data: bool = False,
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
         max_width: int = 44,
     ) -> discord.Embed:
-        color = self.skill.EFFECT_COLOR_MAP[self.skill.base_skill.skill_effect]
+        # color = self.skill.EFFECT_COLOR_MAP[self.skill.base_skill.skill_effect]
+        color = self.skill.RARITY_COLOR_HEX_MAP[self.skill.rarity]
+
+        if self.stacks_left() is not None and self.stacks_left() <= 0:
+            color = discord.Color.dark_grey()
 
         suffix = ""
         if equipped:
@@ -282,20 +305,19 @@ class CharacterSkill:
             suffix += " [EQUIPPED]"
         elif self.skill.locked and show_locked_state:
             suffix += " [🔒]"
-        name = f"~/ {self.skill.base_skill.name} \\~"
+        name = f"<- {self.skill.base_skill.name} ->"
 
         info_block = "```ansi\n"
         info_block += (
             f"{Droppable.RARITY_COLOR_MAP[self.skill.rarity]}{name}[0m{suffix}"
         )
-        spacing = " " * (
-            max_width
-            - len(name)
-            - len(self.skill.base_skill.slot.value)
-            - len(suffix)
-            - 2
-        )
-        info_block += f"{spacing}[{self.skill.base_skill.slot.value}]"
+
+        slot = self.skill.base_skill.slot.value
+        if SkillType.is_weapon_skill(self.skill.base_skill.skill_type):
+            slot = "Weapon Skill"
+
+        spacing = " " * (max_width - len(name) - len(slot) - len(suffix) - 2)
+        info_block += f"{spacing}[{slot}]"
         info_block += "```"
 
         description = f'"{self.skill.base_skill.description}"'
@@ -308,19 +330,28 @@ class CharacterSkill:
         suffixes = []
 
         if show_data:
-            max_len = 9
+            max_len = 11
 
-            # Rarity
-            name = "Rarity"
-            spacing = " " * (max_len - len(name))
-            rarity_line = f"{spacing}{name}: {self.skill.rarity.value}"
-            rarity_line_colored = f"{spacing}{name}: {Droppable.RARITY_COLOR_MAP[self.skill.rarity]}{self.skill.rarity.value}[0m"
-            prefixes.append((rarity_line_colored, len(rarity_line)))
+            if show_full_data:
+                # Item Level
+                name = "Skill Level"
+                spacing = " " * (max_len - len(name))
+                level_line = f"{spacing}{name}: {self.skill.level}"
+                level_line_colored = f"{spacing}{name}: [32m{self.skill.level}[0m"
+                prefixes.append((level_line_colored, len(level_line)))
+
+                # Rarity
+                name = "Rarity"
+                spacing = " " * (max_len - len(name))
+                rarity_line = f"{spacing}{name}: {self.skill.rarity.value}"
+                rarity_line_colored = f"{spacing}{name}: {Droppable.RARITY_COLOR_MAP[self.skill.rarity]}{self.skill.rarity.value}[0m"
+                prefixes.append((rarity_line_colored, len(rarity_line)))
 
             # Damage
-            damage_text = f"Damage: {self.min_roll} - {self.max_roll}"
+            caption = self.skill.EFFECT_LABEL_MAP[self.skill.base_skill.skill_effect]
+            damage_text = f"{caption}: {self.min_roll} - {self.max_roll}"
             damage_text_colored = (
-                f"Damage: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m"
+                f"{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m"
             )
             suffixes.append((damage_text_colored, len(damage_text)))
 

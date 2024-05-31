@@ -248,13 +248,13 @@ class SkillSelectView(
         disable_equip = disabled
         disable_dismantle = disabled
         disable_locking = disabled
-        for equipped_skill in self.selected:
-            if equipped_skill is None:
+        for equipped_skill_data in self.selected:
+            if equipped_skill_data is None:
                 continue
-            if equipped_skill.id in [skill.id for skill in self.equipped_skills]:
+            if equipped_skill_data.id in [skill.id for skill in self.equipped_skills]:
                 disable_dismantle = True
 
-            if equipped_skill.id is None or equipped_skill.id < 0:
+            if equipped_skill_data.id is None or equipped_skill_data.id < 0:
                 # Default Gear
                 disable_dismantle = True
 
@@ -268,11 +268,11 @@ class SkillSelectView(
         match self.state:
             case SkillViewState.EQUIP:
                 if len(self.display_skill_data) > 0:
-                    for slot, equipped_skill in self.selected_slots.items():
+                    for slot, equipped_skill_data in self.selected_slots.items():
                         selected_skill_data = None
-                        if equipped_skill is not None:
+                        if equipped_skill_data is not None:
                             selected_skill_data = self.character.get_skill_data(
-                                equipped_skill
+                                equipped_skill_data
                             )
                         self.add_item(
                             Dropdown(
@@ -293,16 +293,16 @@ class SkillSelectView(
                 if len(self.selected) > 1:
                     disable_equip = True
                 elif len(self.selected) == 1:
-                    equipped_skill = self.selected[0]
-                    if equipped_skill.id in [
+                    equipped_skill_data = self.selected[0]
+                    if equipped_skill_data.id in [
                         skill.id for skill in self.equipped_skills
                     ]:
                         disable_equip = True
 
                 if len(self.display_skill_data) > 0:
                     selected_skill_data = []
-                    for equipped_skill in self.selected:
-                        skill_data = self.character.get_skill_data(equipped_skill)
+                    for equipped_skill_data in self.selected:
+                        skill_data = self.character.get_skill_data(equipped_skill_data)
                         selected_skill_data.append(skill_data)
                     self.add_item(
                         Dropdown(
@@ -331,8 +331,8 @@ class SkillSelectView(
 
                 if len(self.display_skill_data) > 0:
                     selected_skill_data = []
-                    for equipped_skill in self.selected:
-                        skill_data = self.character.get_skill_data(equipped_skill)
+                    for equipped_skill_data in self.selected:
+                        skill_data = self.character.get_skill_data(equipped_skill_data)
                         selected_skill_data.append(skill_data)
                     self.add_item(
                         Dropdown(
@@ -354,10 +354,10 @@ class SkillSelectView(
                 self.add_item(CurrentPageButton(page_display, row=1))
                 self.add_item(ScrapBalanceButton(self.scrap_balance, row=1))
 
-                for slot, equipped_skill in self.equipped_skill_slots.items():
+                for slot, equipped_skill_data in self.equipped_skill_slot_data.items():
                     self.add_item(
                         SkillSlotButton(
-                            equipped_skill,
+                            equipped_skill_data,
                             slot,
                         )
                     )
@@ -422,7 +422,9 @@ class SkillSelectView(
             self.display_skill_data.append(skill_data)
 
             embeds.append(
-                skill_data.get_embed(equipped=equipped, show_locked_state=True)
+                skill_data.get_embed(
+                    equipped=equipped, show_full_data=True, show_locked_state=True
+                )
             )
             file_path = f"./{skill.base.image_path}{skill.base.image}"
             if file_path not in files:
@@ -534,13 +536,17 @@ class CancelButton(discord.ui.Button):
 
 class SkillSlotButton(discord.ui.Button):
 
-    def __init__(self, current: Skill, slot: int, disabled: bool = False, row: int = 2):
+    def __init__(
+        self, current: CharacterSkill, slot: int, disabled: bool = False, row: int = 2
+    ):
         label = "Empty"
         self.skill = current
         self.slot = slot
         if current is not None:
-            label = f"{current.name}"
-            if current.id is None:
+            label = f"{current.skill.name}"
+            if current.stacks_left() is not None:
+                label += f" ({current.stacks_left()}/{current.skill.base_skill.stacks})"
+            if current.skill.id is None:
                 disabled = True
 
         super().__init__(

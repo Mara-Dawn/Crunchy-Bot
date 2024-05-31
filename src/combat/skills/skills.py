@@ -80,7 +80,7 @@ class SecondWind(BaseSkill):
         super().__init__(
             name="Second Wind",
             skill_type=SkillType.SECOND_WIND,
-            description="",
+            description="Heal yourself for a small amount.",
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=0,
@@ -96,12 +96,28 @@ class GigaBonk(BaseSkill):
         super().__init__(
             name="Giga Bonk",
             skill_type=SkillType.GIGA_BONK,
-            description="",
+            description="A MASSIVE swing with your weapon!",
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=5,
             scaling=6,
             stacks=3,
+            reset_after_encounter=False,
+        )
+
+
+class FireBall(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Fire Ball",
+            skill_type=SkillType.FIRE_BALL,
+            description="A true classic. Extremely powerful and highly effective.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            scaling=10,
+            stacks=1,
             reset_after_encounter=False,
         )
 

@@ -2,7 +2,7 @@ import datetime
 
 import discord
 from combat.gear.gear import Gear
-from combat.gear.types import EquipmentSlot
+from combat.gear.types import Base, EquipmentSlot
 from combat.skills.skill import Skill
 from datalayer.database import Database
 from discord.ext import commands
@@ -333,9 +333,14 @@ class EquipmentViewController(ViewController):
         gear_to_scrap = selected
 
         if scrap_all:
-            gear_to_scrap = await self.database.get_scrappable_gear_by_user(
-                guild_id, member_id
-            )
+            if gear_slot == EquipmentSlot.SKILL:
+                gear_to_scrap = await self.database.get_scrappable_equipment_by_user(
+                    guild_id, member_id, type=Base.SKILL
+                )
+            else:
+                gear_to_scrap = await self.database.get_scrappable_equipment_by_user(
+                    guild_id, member_id
+                )
 
         total_scraps = 0
 
@@ -365,6 +370,11 @@ class EquipmentViewController(ViewController):
             return
 
         if gear_slot == EquipmentSlot.SKILL:
+            if scrap_all:
+                await self.open_gear_overview(
+                    interaction, view_id, state=EquipmentViewState.SKILLS
+                )
+                return
             await self.refresh_skill_view(interaction, SkillViewState.MANAGE, view_id)
             return
 

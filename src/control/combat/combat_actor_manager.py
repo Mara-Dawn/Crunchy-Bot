@@ -130,7 +130,9 @@ class CombatActorManager(Service):
         skill_slots = {}
 
         for slot, skill_type in enumerate(weapon_skills):
-            skill = await self.skill_manager.get_weapon_skill(skill_type)
+            skill = await self.skill_manager.get_weapon_skill(
+                skill_type, equipment.weapon.rarity, equipment.weapon.level
+            )
             skill_slots[slot] = skill
 
         equipped_skills = await self.database.get_user_equipped_skills(

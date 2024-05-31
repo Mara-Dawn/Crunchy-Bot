@@ -58,15 +58,15 @@ class EquipmentView(ViewMenu):
         if not self.loaded:
             disabled = True
 
-        gear_button_disabled = disabled
-        stats_button_disabled = disabled
-        skills_button_disabled = disabled
-        forge_button_disabled = disabled
+        gear_button_selected = False
+        stats_button_selected = False
+        skills_button_selected = False
+        forge_button_selected = False
 
         self.clear_items()
         match self.state:
             case EquipmentViewState.GEAR:
-                gear_button_disabled = True
+                gear_button_selected = True
                 self.add_item(SelectGearSlot(EquipmentSlot.WEAPON, disabled=disabled))
                 self.add_item(SelectGearSlot(EquipmentSlot.HEAD, disabled=disabled))
                 self.add_item(SelectGearSlot(EquipmentSlot.BODY, disabled=disabled))
@@ -76,18 +76,21 @@ class EquipmentView(ViewMenu):
                 )
                 self.add_item(ScrapAllButton(disabled=disabled))
             case EquipmentViewState.STATS:
-                stats_button_disabled = True
+                stats_button_selected = True
             case EquipmentViewState.SKILLS:
-                skills_button_disabled = True
-                self.add_item(SkillEquipButton(disabled=disabled))
+                skills_button_selected = True
                 self.add_item(SkillManageButton(disabled=disabled))
+                self.add_item(SkillEquipButton(disabled=disabled))
+                self.add_item(
+                    ScrapAllButton(slot=EquipmentSlot.SKILL, disabled=disabled)
+                )
             case EquipmentViewState.FORGE:
-                forge_button_disabled = True
+                forge_button_selected = True
 
-        self.add_item(GearButton(gear_button_disabled))
-        self.add_item(StatsButton(stats_button_disabled))
-        self.add_item(SkillsButton(skills_button_disabled))
-        self.add_item(ForgeButton(forge_button_disabled))
+        self.add_item(GearButton(selected=gear_button_selected, disabled=disabled))
+        self.add_item(StatsButton(selected=stats_button_selected, disabled=disabled))
+        self.add_item(SkillsButton(selected=skills_button_selected, disabled=disabled))
+        self.add_item(ForgeButton(selected=forge_button_selected, disabled=disabled))
         self.add_item(ScrapBalanceButton(self.scrap_balance))
 
     async def refresh_ui(
@@ -169,7 +172,7 @@ class EquipmentView(ViewMenu):
                 embeds.append(embed)
                 for skill in self.character.skills:
                     skill_embed = self.character.get_skill_data(skill).get_embed(
-                        show_data=True
+                        show_data=True, show_full_data=True
                     )
                     embeds.append(skill_embed)
                     file = discord.File(
@@ -200,11 +203,13 @@ class EquipmentView(ViewMenu):
         )
         await self.controller.dispatch_ui_event(event)
 
-    async def dismantle_gear(self, interaction: discord.Interaction):
+    async def dismantle_gear(
+        self, interaction: discord.Interaction, slot: EquipmentSlot = None
+    ):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.GEAR_DISMANTLE,
-            (interaction, [], True, None),
+            (interaction, [], True, slot),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -230,10 +235,15 @@ class EquipmentView(ViewMenu):
 
 class GearButton(discord.ui.Button):
 
-    def __init__(self, disabled: bool = False):
+    def __init__(self, selected: bool = False, disabled: bool = True):
         color = discord.ButtonStyle.grey
 
-        super().__init__(label="Gear", style=color, disabled=disabled, row=0)
+        label = "Gear"
+        if selected:
+            label = f">{label}<"
+            disabled = True
+
+        super().__init__(label=label, style=color, disabled=disabled, row=0)
 
     async def callback(self, interaction: discord.Interaction):
         view: EquipmentView = self.view
@@ -242,11 +252,16 @@ class GearButton(discord.ui.Button):
 
 class StatsButton(discord.ui.Button):
 
-    def __init__(self, disabled: bool = False):
+    def __init__(self, selected: bool = False, disabled: bool = True):
         color = discord.ButtonStyle.grey
 
+        label = "Attributes"
+        if selected:
+            label = f">{label}<"
+            disabled = True
+
         super().__init__(
-            label="Attributes",
+            label=label,
             style=color,
             disabled=disabled,
             row=0,
@@ -259,11 +274,16 @@ class StatsButton(discord.ui.Button):
 
 class SkillsButton(discord.ui.Button):
 
-    def __init__(self, disabled: bool = False):
+    def __init__(self, selected: bool = False, disabled: bool = True):
         color = discord.ButtonStyle.grey
 
+        label = "Skills"
+        if selected:
+            label = f">{label}<"
+            disabled = True
+
         super().__init__(
-            label="Skills",
+            label=label,
             style=color,
             disabled=disabled,
             row=0,
@@ -276,9 +296,21 @@ class SkillsButton(discord.ui.Button):
 
 class SelectGearSlot(discord.ui.Button):
 
-    def __init__(self, slot: EquipmentSlot, disabled: bool = False, row: int = 1):
+    def __init__(
+        self,
+        slot: EquipmentSlot,
+        selected: bool = False,
+        disabled: bool = False,
+        row: int = 1,
+    ):
+
+        label = slot.value
+        if selected:
+            label = f">{label}<"
+            disabled = True
+
         super().__init__(
-            label=slot.value,
+            label=label,
             style=discord.ButtonStyle.green,
             disabled=disabled,
             row=row,
@@ -292,13 +324,16 @@ class SelectGearSlot(discord.ui.Button):
 
 class ForgeButton(discord.ui.Button):
 
-    def __init__(self, disabled: bool = True):
+    def __init__(self, selected: bool = False, disabled: bool = True):
         color = discord.ButtonStyle.grey
 
-        disabled = True
+        label = "Bean Forge"
+        if selected:
+            label = f">{label}<"
+            disabled = True
 
         super().__init__(
-            label="Bean Forge",
+            label=label,
             style=color,
             row=0,
             disabled=disabled,
@@ -360,9 +395,15 @@ class SkillEquipButton(discord.ui.Button):
 
 class ScrapAllButton(discord.ui.Button):
 
-    def __init__(self, disabled: bool = False):
+    def __init__(self, slot: EquipmentSlot = None, disabled: bool = False):
+        self.slot = slot
+
+        label = "Scrap non locked Gear"
+        if slot == EquipmentSlot.SKILL:
+            label = "Scrap non locked Skills"
+
         super().__init__(
-            label="Scrap non locked Gear",
+            label=label,
             style=discord.ButtonStyle.red,
             row=2,
             disabled=disabled,
@@ -372,4 +413,4 @@ class ScrapAllButton(discord.ui.Button):
         view: EquipmentView = self.view
 
         if await view.interaction_check(interaction):
-            await view.dismantle_gear(interaction)
+            await view.dismantle_gear(interaction, slot=self.slot)

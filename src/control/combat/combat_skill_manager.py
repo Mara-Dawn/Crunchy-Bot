@@ -26,10 +26,12 @@ class CombatSkillManager(Service):
     async def listen_for_event(self, event: BotEvent):
         pass
 
-    async def get_weapon_skill(self, skill_type: SkillType) -> Skill:
+    async def get_weapon_skill(
+        self, skill_type: SkillType, rarity: Rarity, level: int
+    ) -> Skill:
         skill = globals()[skill_type]
         instance = skill()
-        weapon_skill = Skill(base_skill=instance, rarity=Rarity.NORMAL, level=1)
+        weapon_skill = Skill(base_skill=instance, rarity=rarity, level=level)
         return weapon_skill
 
     async def get_enemy_skill(self, skill_type: SkillType) -> Skill:
