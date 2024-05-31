@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class SkillType(str, Enum):
+    EMPTY = "EmptySkill"
     NORMAL_ATTACK = "NormalAttack"
     HEAVY_ATTACK = "HeavyAttack"
     MAGIC_ATTACK = "MagicAttack"

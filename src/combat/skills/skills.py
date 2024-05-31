@@ -4,6 +4,25 @@ from combat.skills.types import SkillEffect, SkillType
 # Base skills
 
 
+class EmptySkill(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Empty",
+            skill_type=SkillType.EMPTY,
+            description="This skill slot is currently empty.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            scaling=1,
+            hits=1,
+            stacks=None,
+            reset_after_encounter=False,
+            droppable=False,
+            image="empty.png",
+        )
+
+
 class NormalAttack(BaseSkill):
 
     def __init__(self):

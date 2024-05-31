@@ -89,3 +89,27 @@ class SelectGearHeadEmbed(discord.Embed):
             description=description,
         )
         self.set_thumbnail(url=member.display_avatar.url)
+
+
+class SelectSkillHeadEmbed(discord.Embed):
+
+    ITEMS_PER_PAGE = 5
+
+    def __init__(
+        self,
+        member: discord.Member,
+        max_width: int = 45,
+    ):
+        description = "Select the skills you want to equip."
+        if len(description) < max_width:
+            spacing = max_width - len(description)
+            description += " " * spacing
+
+        description = f"```python\n{description}```"
+
+        super().__init__(
+            title="Skill Select",
+            color=discord.Colour.purple(),
+            description=description,
+        )
+        self.set_thumbnail(url=member.display_avatar.url)

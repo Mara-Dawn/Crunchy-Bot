@@ -27,6 +27,7 @@ from combat.gear.types import (
     Rarity,
 )
 from combat.skills.skill import BaseSkill, Skill
+from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillType
 from control.logger import BotLogger
 from discord.ext import commands
@@ -3038,7 +3039,6 @@ class Database:
             return None
 
         id = rows[0][self.USER_GEAR_ID_COL]
-        name = rows[0][self.USER_GEAR_NAME_COL]
         skill_type = SkillType(rows[0][self.USER_GEAR_TYPE_COL])
         base_class = globals()[skill_type]
         base_skill: BaseSkill = base_class()  # noqa: F405
@@ -3047,7 +3047,6 @@ class Database:
         locked = int(rows[0][self.USER_GEAR_IS_LOCKED_COL]) == 1
 
         return Skill(
-            name=name,
             base_skill=base_skill,
             rarity=rarity,
             level=level,
@@ -3468,3 +3467,42 @@ class Database:
                 stacks_used[skill_type] += 1
 
         return stacks_used
+
+    async def clear_selected_user_skills(
+        self,
+        guild_id: int,
+        member_id: int,
+        skill_id: int = None,
+    ):
+        command = f""" 
+            DELETE FROM {self.USER_EQUIPPED_SKILLS_TABLE} 
+            WHERE {self.USER_EQUIPPED_SKILLS_GUILD_ID_COL} = ?
+            AND {self.USER_EQUIPPED_SKILLS_MEMBER_ID_COL} = ?
+        """
+
+        if skill_id is not None:
+            command += f"""
+                AND {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL} = {int(skill_id)}
+            """
+
+        command += ";"
+
+        task = (guild_id, member_id)
+        return await self.__query_insert(command, task)
+
+    async def set_selected_user_skills(
+        self, guild_id: int, member_id: int, skills: list[Skill]
+    ):
+        await self.clear_selected_user_skills(guild_id, member_id)
+
+        for skill in skills:
+            command = f"""
+                INSERT INTO {self.USER_EQUIPPED_SKILLS_TABLE} (
+                {self.USER_EQUIPPED_SKILLS_GUILD_ID_COL}, 
+                {self.USER_EQUIPPED_SKILLS_MEMBER_ID_COL}, 
+                {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL}, 
+                {self.USER_EQUIPPED_SKILLS_SKILL_TYPE_COL}) 
+                VALUES (?, ?, ?, ?);
+            """
+            task = (guild_id, member_id, skill.id, skill.type)
+            await self.__query_insert(command, task)

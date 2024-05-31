@@ -93,13 +93,17 @@ class Character(Actor):
 
         skill_type = skill.type
         stacks_used = 0
+        last_used = None
 
         if skill_type in self.skill_stacks_used:
             stacks_used = self.skill_stacks_used[skill_type]
 
+        if skill_type in self.skill_cooldowns:
+            last_used = self.skill_cooldowns[skill.base_skill.skill_type]
+
         return CharacterSkill(
             skill=skill,
-            last_used=self.skill_cooldowns[skill.base_skill.skill_type],
+            last_used=last_used,
             stacks_used=stacks_used,
             min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll)[
                 0

@@ -170,4 +170,8 @@ class UIEventType(str, Enum):
     GEAR_LOCK = "gear_lock"
     GEAR_UNLOCK = "gear_unlock"
 
+    SKILL_EQUIP_VIEW = "skill_equip_view"
+    SKILL_MANAGE_VIEW = "skill_manage_view"
+    SKILLS_EQUIP = "skills_equip"
+
     SCRAP_BALANCE_CHANGED = "scrap_balance_changed"

@@ -3,6 +3,7 @@ import datetime
 import discord
 from combat.gear.gear import Gear
 from combat.gear.types import EquipmentSlot
+from combat.skills.skill import Skill
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
@@ -10,9 +11,14 @@ from events.inventory_event import InventoryEvent
 from events.types import EventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemType
-from view.combat.embed import EquipmentHeadEmbed, SelectGearHeadEmbed
+from view.combat.embed import (
+    EquipmentHeadEmbed,
+    SelectGearHeadEmbed,
+    SelectSkillHeadEmbed,
+)
 from view.combat.equipment_select_view import EquipmentSelectView
-from view.combat.equipment_view import EquipmentView
+from view.combat.equipment_view import EquipmentView, EquipmentViewState
+from view.combat.skill_select_view import SkillSelectView, SkillViewState
 
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
@@ -107,6 +113,20 @@ class EquipmentViewController(ViewController):
                 await self.dismantle_gear(
                     interaction, selected, scrap_all, event.view_id
                 )
+            case UIEventType.SKILL_EQUIP_VIEW:
+                interaction = event.payload
+                await self.open_skill_view(
+                    interaction, SkillViewState.EQUIP, event.view_id
+                )
+            case UIEventType.SKILL_MANAGE_VIEW:
+                interaction = event.payload
+                await self.open_skill_view(
+                    interaction, SkillViewState.MANAGE, event.view_id
+                )
+            case UIEventType.SKILLS_EQUIP:
+                interaction = event.payload[0]
+                skills = event.payload[1]
+                await self.set_selected_skills(interaction, skills, event.view_id)
 
     async def open_gear_select(
         self, interaction: discord.Interaction, slot: EquipmentSlot, view_id: int
@@ -152,7 +172,7 @@ class EquipmentViewController(ViewController):
         embeds.append(SelectGearHeadEmbed(interaction.user))
 
         loading_embed = discord.Embed(
-            title="Loadin Gear", color=discord.Colour.light_grey()
+            title="Loading Gear", color=discord.Colour.light_grey()
         )
         self.embed_manager.add_text_bar(loading_embed, "", "Please Wait...")
         loading_embed.set_thumbnail(url=self.bot.user.display_avatar)
@@ -164,7 +184,12 @@ class EquipmentViewController(ViewController):
         await view.refresh_ui()
         self.controller.detach_view_by_id(view_id)
 
-    async def open_gear_overview(self, interaction: discord.Interaction, view_id: int):
+    async def open_gear_overview(
+        self,
+        interaction: discord.Interaction,
+        view_id: int,
+        state: EquipmentViewState = EquipmentViewState.GEAR,
+    ):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
@@ -296,3 +321,51 @@ class EquipmentViewController(ViewController):
             return
 
         await self.open_gear_select(interaction, gear_slot, view_id)
+
+    async def open_skill_view(
+        self, interaction: discord.Interaction, state: SkillViewState, view_id: int
+    ):
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        character = await self.actor_manager.get_character(interaction.user)
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        user_skills = await self.database.get_user_skill_inventory(guild_id, member_id)
+
+        view = SkillSelectView(
+            self.controller, interaction, character, user_skills, scrap_balance, state
+        )
+
+        embeds = []
+        embeds.append(SelectSkillHeadEmbed(interaction.user))
+
+        loading_embed = discord.Embed(
+            title="Loading Skills", color=discord.Colour.light_grey()
+        )
+        self.embed_manager.add_text_bar(loading_embed, "", "Please Wait...")
+        loading_embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embeds.append(loading_embed)
+
+        message = await interaction.original_response()
+        await message.edit(embeds=embeds, view=view, attachments=[])
+        view.set_message(message)
+        await view.refresh_ui()
+        self.controller.detach_view_by_id(view_id)
+
+    async def set_selected_skills(
+        self, interaction: discord.Interaction, skills: list[Skill], view_id: int
+    ):
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        await self.database.set_selected_user_skills(guild_id, member_id, skills)
+        await self.open_gear_overview(
+            interaction, view_id=view_id, state=EquipmentViewState.SKILLS
+        )

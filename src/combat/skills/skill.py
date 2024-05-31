@@ -76,6 +76,21 @@ class Skill(Droppable):
         SkillEffect.HEALING: discord.Color.green(),
     }
 
+    RARITY_SORT_MAP = {
+        Rarity.DEFAULT: 0,
+        Rarity.NORMAL: 1,
+        Rarity.MAGIC: 2,
+        Rarity.RARE: 3,
+        Rarity.LEGENDARY: 4,
+        Rarity.UNIQUE: 5,
+    }
+
+    EFFECT_SORT_MAP = {
+        SkillEffect.PHYSICAL_DAMAGE: 0,
+        SkillEffect.MAGICAL_DAMAGE: 1,
+        SkillEffect.HEALING: 2,
+    }
+
     def __init__(
         self,
         base_skill: BaseSkill,
@@ -120,7 +135,7 @@ class Skill(Droppable):
         name = f"~/ {self.name} \\*~"
         suffix = ""
         if equipped:
-            color = discord.Color(int("000000", 16))
+            color = discord.Color.purple()
             suffix += " [EQUIPPED]"
         elif self.locked and show_locked_state:
             suffix += " [🔒]"
@@ -255,16 +270,30 @@ class CharacterSkill:
         self,
         show_data: bool = True,
         show_info: bool = False,
+        equipped: bool = False,
+        show_locked_state: bool = False,
         max_width: int = 44,
     ) -> discord.Embed:
         color = self.skill.EFFECT_COLOR_MAP[self.skill.base_skill.skill_effect]
 
+        suffix = ""
+        if equipped:
+            color = discord.Color.purple()
+            suffix += " [EQUIPPED]"
+        elif self.skill.locked and show_locked_state:
+            suffix += " [🔒]"
         name = f"~/ {self.skill.base_skill.name} \\~"
 
         info_block = "```ansi\n"
-        info_block += f"{Droppable.RARITY_COLOR_MAP[self.skill.rarity]}{name}[0m"
+        info_block += (
+            f"{Droppable.RARITY_COLOR_MAP[self.skill.rarity]}{name}[0m{suffix}"
+        )
         spacing = " " * (
-            max_width - len(name) - len(self.skill.base_skill.slot.value) - 2
+            max_width
+            - len(name)
+            - len(self.skill.base_skill.slot.value)
+            - len(suffix)
+            - 2
         )
         info_block += f"{spacing}[{self.skill.base_skill.slot.value}]"
         info_block += "```"
@@ -322,7 +351,7 @@ class CharacterSkill:
                 stacks_text = f"{spacing}{name}: {self.stacks_left()}/{max_stacks}"
                 stacks_text_colored = f"{spacing}{name}: [35m{self.stacks_left()}[0m/[35m{max_stacks}[0m"
 
-                if self.skill.base_skill.reset_afVter_encounter:
+                if self.skill.base_skill.reset_after_encounter:
                     append = " (per Combat)"
                 else:
                     append = " (Total)"
