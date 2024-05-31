@@ -580,12 +580,15 @@ class Database:
     USER_EQUIPPED_SKILLS_MEMBER_ID_COL = "uses_member_id"
     USER_EQUIPPED_SKILLS_SKILL_ID_COL = "uses_skill_id"
     USER_EQUIPPED_SKILLS_SKILL_TYPE_COL = "uses_skill_type"
+    USER_EQUIPPED_SKILLS_SLOT_COL = "uses_skill_slot"
     CREATE_USER_EQUIPPED_SKILLS_TABLE = f"""
     CREATE TABLE if not exists {USER_EQUIPPED_SKILLS_TABLE} (
-        {USER_EQUIPPED_SKILLS_SKILL_ID_COL} INTEGER PRIMARY KEY,
+        {USER_EQUIPPED_SKILLS_SKILL_ID_COL} INTEGER,
         {USER_EQUIPPED_SKILLS_GUILD_ID_COL} INTEGER,
         {USER_EQUIPPED_SKILLS_MEMBER_ID_COL} INTEGER,
-        {USER_EQUIPPED_SKILLS_SKILL_TYPE_COL} TEXT
+        {USER_EQUIPPED_SKILLS_SKILL_TYPE_COL} TEXT,
+        {USER_EQUIPPED_SKILLS_SLOT_COL} INTEGER,
+        PRIMARY KEY ({USER_EQUIPPED_SKILLS_SKILL_ID_COL}, {USER_EQUIPPED_SKILLS_SLOT_COL})
     );"""
 
     COMBAT_EVENT_TABLE = "combatevents"
@@ -3031,7 +3034,6 @@ class Database:
         command = f""" 
             SELECT * FROM {self.USER_GEAR_TABLE} 
             WHERE {self.USER_GEAR_ID_COL} = {int(skill_id)}
-            AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
             ;
         """
         rows = await self.__query_select(command)
@@ -3150,7 +3152,7 @@ class Database:
 
     async def get_user_equipped_skills(
         self, guild_id: int, member_id: int
-    ) -> list[int]:
+    ) -> dict[int, Skill]:
         command = f""" 
             SELECT * FROM {self.USER_EQUIPPED_SKILLS_TABLE} 
             WHERE {self.USER_EQUIPPED_SKILLS_GUILD_ID_COL} = ?
@@ -3158,18 +3160,21 @@ class Database:
             ;
         """
 
+        skills = {}
+        for index in range(4):
+            skills[index] = None
+
         task = (guild_id, member_id)
         rows = await self.__query_select(command, task)
         if not rows:
-            return []
-
-        skills = []
+            return skills
 
         for row in rows:
             skill_id = row[self.USER_EQUIPPED_SKILLS_SKILL_ID_COL]
+            slot = row[self.USER_EQUIPPED_SKILLS_SLOT_COL]
             skill = await self.get_skill_by_id(skill_id)
             if skill is not None:
-                skills.append(skill)
+                skills[slot] = skill
 
         return skills
 
@@ -3357,6 +3362,7 @@ class Database:
 
         command = f""" 
             SELECT * FROM {self.USER_GEAR_TABLE} 
+            LEFT JOIN {self.USER_EQUIPPED_SKILLS_TABLE} ON {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL} = {self.USER_GEAR_ID_COL}
             WHERE {self.USER_GEAR_GUILD_ID_COL} = ?
             AND {self.USER_GEAR_MEMBER_ID_COL} = ?
             AND {self.USER_GEAR_BASE_TYPE_COL} = ?
@@ -3369,6 +3375,8 @@ class Database:
             return []
         skills = []
         for row in rows:
+            if row[self.USER_EQUIPPED_SKILLS_SKILL_ID_COL] is not None:
+                continue
             gear_piece = await self.get_skill_by_id(row[self.USER_GEAR_ID_COL])
             skills.append(gear_piece)
 
@@ -3397,15 +3405,15 @@ class Database:
 
     async def get_user_skill_stacks_used(
         self, guild_id: int, member_id: int
-    ) -> dict[SkillType, int]:
+    ) -> dict[int, int]:
         command = f"""
             SELECT * FROM {self.COMBAT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
-            INNER JOIN {self.USER_EQUIPPED_SKILLS_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL}
             INNER JOIN {self.USER_GEAR_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_GEAR_ID_COL}
+            LEFT JOIN {self.USER_EQUIPPED_SKILLS_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND {self.COMBAT_EVENT_MEMBER_ID} = ?
-            and {self.USER_GEAR_IS_SCRAPPED_COL} = ?
+            AND ({self.USER_GEAR_IS_SCRAPPED_COL} = ? OR {self.COMBAT_EVENT_SKILL_ID} = {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL})
             ORDER BY {self.EVENT_ID_COL} DESC;
         """
         task = (guild_id, member_id, 0)
@@ -3413,27 +3421,34 @@ class Database:
         if not rows:
             return {}
 
-        stacks_used = {}
-        current_encounter = True
-        for row in rows:
-            event_type = row[self.COMBAT_EVENT_TYPE_COL]
-            if event_type in [
-                CombatEventType.ENEMY_END_TURN,
-                CombatEventType.MEMBER_END_TURN,
-            ]:
-                current_encounter = False
+        active_encounters = await self.get_active_encounter_participants(guild_id)
 
+        current_encounter_id = None
+
+        for encounter_id, members in active_encounters.items():
+            if member_id in members:
+                current_encounter_id = encounter_id
+                break
+
+        stacks_used = {}
+        for row in rows:
             skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
+            skill_id = row[self.COMBAT_EVENT_SKILL_ID]
             base_class = globals()[skill_type]
             base_skill: BaseSkill = base_class()  # noqa: F405
 
-            if not current_encounter and base_skill.reset_after_encounter:
-                continue
+            if base_skill.reset_after_encounter:
+                if current_encounter_id is None:
+                    continue
 
-            if skill_type not in stacks_used:
-                stacks_used[skill_type] = 1
+                encounter_id = row[self.COMBAT_EVENT_ENCOUNTER_ID_COL]
+                if current_encounter_id != encounter_id:
+                    continue
+
+            if skill_id not in stacks_used:
+                stacks_used[skill_id] = 1
             else:
-                stacks_used[skill_type] += 1
+                stacks_used[skill_id] += 1
 
         return stacks_used
 
@@ -3491,18 +3506,22 @@ class Database:
         return await self.__query_insert(command, task)
 
     async def set_selected_user_skills(
-        self, guild_id: int, member_id: int, skills: list[Skill]
+        self, guild_id: int, member_id: int, skills: dict[int, Skill]
     ):
         await self.clear_selected_user_skills(guild_id, member_id)
 
-        for skill in skills:
+        skill_ids = [skill.id for skill in skills.values()]
+        await self.delete_gear_by_ids(skill_ids)
+
+        for slot, skill in skills.items():
             command = f"""
                 INSERT INTO {self.USER_EQUIPPED_SKILLS_TABLE} (
                 {self.USER_EQUIPPED_SKILLS_GUILD_ID_COL}, 
                 {self.USER_EQUIPPED_SKILLS_MEMBER_ID_COL}, 
                 {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL}, 
-                {self.USER_EQUIPPED_SKILLS_SKILL_TYPE_COL}) 
-                VALUES (?, ?, ?, ?);
+                {self.USER_EQUIPPED_SKILLS_SKILL_TYPE_COL}, 
+                {self.USER_EQUIPPED_SKILLS_SLOT_COL}) 
+                VALUES (?, ?, ?, ?, ?);
             """
-            task = (guild_id, member_id, skill.id, skill.type)
+            task = (guild_id, member_id, skill.id, skill.type, slot)
             await self.__query_insert(command, task)

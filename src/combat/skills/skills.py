@@ -100,7 +100,7 @@ class GigaBonk(BaseSkill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=5,
-            scaling=10,
+            scaling=6,
             stacks=3,
             reset_after_encounter=False,
         )

@@ -173,5 +173,6 @@ class UIEventType(str, Enum):
     SKILL_EQUIP_VIEW = "skill_equip_view"
     SKILL_MANAGE_VIEW = "skill_manage_view"
     SKILLS_EQUIP = "skills_equip"
+    SKILL_EQUIP = "skill_equip"
 
     SCRAP_BALANCE_CHANGED = "scrap_balance_changed"

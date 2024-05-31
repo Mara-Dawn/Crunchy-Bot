@@ -125,24 +125,23 @@ class CombatActorManager(Service):
 
         equipment = await self.database.get_user_equipment(member.guild.id, member.id)
 
-        skill_types = []
-
         weapon_skills = equipment.weapon.base.skills
-        skill_types.extend(weapon_skills)
 
-        skills = []
-        for skill_type in skill_types:
+        skill_slots = {}
+
+        for slot, skill_type in enumerate(weapon_skills):
             skill = await self.skill_manager.get_weapon_skill(skill_type)
-            skills.append(skill)
+            skill_slots[slot] = skill
 
         equipped_skills = await self.database.get_user_equipped_skills(
             member.guild.id, member.id
         )
 
-        for skill in equipped_skills:
-            if len(skills) >= 4:
-                break
-            skills.append(skill)
+        for index in range(4):
+            if index not in skill_slots:
+                skill_slots[index] = equipped_skills[index]
+
+        skills = [skill for skill in skill_slots.values() if skill is not None]
 
         skill_cooldowns = self.get_skill_cooldowns(member.id, skills, combat_events)
         skill_stacks_used = await self.database.get_user_skill_stacks_used(
@@ -151,7 +150,7 @@ class CombatActorManager(Service):
 
         character = Character(
             member=member,
-            skills=skills,
+            skill_slots=skill_slots,
             skill_cooldowns=skill_cooldowns,
             skill_stacks_used=skill_stacks_used,
             equipment=equipment,

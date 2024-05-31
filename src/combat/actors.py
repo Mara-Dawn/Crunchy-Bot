@@ -57,9 +57,9 @@ class Character(Actor):
     def __init__(
         self,
         member: discord.Member,
-        skills: list[Skill],
+        skill_slots: dict[int, Skill],
         skill_cooldowns: dict[SkillType, int],
-        skill_stacks_used: dict[SkillType, int],
+        skill_stacks_used: dict[int, int],
         equipment: CharacterEquipment,
         defeated: bool,
     ):
@@ -70,13 +70,14 @@ class Character(Actor):
             self.BASE_INITIATIVE
             + self.equipment.gear_modifiers[GearModifierType.DEXTERITY]
         )
+        self.skill_slots = skill_slots
         super().__init__(
             id=member.id,
             name=member.display_name,
             max_hp=max_hp,
             initiative=initiative,
             is_enemy=False,
-            skills=skills,
+            skills=[skill for skill in skill_slots.values() if skill is not None],
             skill_cooldowns=skill_cooldowns,
             skill_stacks_used=skill_stacks_used,
             defeated=defeated,
@@ -92,11 +93,12 @@ class Character(Actor):
         ]
 
         skill_type = skill.type
+        skill_id = skill.id
         stacks_used = 0
         last_used = None
 
-        if skill_type in self.skill_stacks_used:
-            stacks_used = self.skill_stacks_used[skill_type]
+        if skill_id in self.skill_stacks_used:
+            stacks_used = self.skill_stacks_used[skill_id]
 
         if skill_type in self.skill_cooldowns:
             last_used = self.skill_cooldowns[skill.base_skill.skill_type]
@@ -204,7 +206,7 @@ class Opponent(Actor):
         max_hp: int,
         skills: list[Skill],
         skill_cooldowns: dict[SkillType, int],
-        skill_stacks_used: dict[SkillType, int],
+        skill_stacks_used: dict[int, int],
         defeated: bool,
     ):
         super().__init__(
@@ -226,11 +228,11 @@ class Opponent(Actor):
         weapon_min_roll = self.enemy.min_dmg
         weapon_max_roll = self.enemy.max_dmg
 
-        skill_type = skill.type
+        skill_id = skill.id
         stacks_used = 0
 
-        if skill_type in self.skill_stacks_used:
-            stacks_used = self.skill_stacks_used[skill_type]
+        if skill_id in self.skill_stacks_used:
+            stacks_used = self.skill_stacks_used[skill_id]
 
         return CharacterSkill(
             skill=skill,

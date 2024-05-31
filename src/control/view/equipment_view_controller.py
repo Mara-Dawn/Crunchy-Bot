@@ -88,8 +88,9 @@ class EquipmentViewController(ViewController):
                 slot = event.payload[1]
                 await self.open_gear_select(interaction, slot, event.view_id)
             case UIEventType.GEAR_OPEN_OVERVIEW:
-                interaction = event.payload
-                await self.open_gear_overview(interaction, event.view_id)
+                interaction = event.payload[0]
+                state = event.payload[1]
+                await self.open_gear_overview(interaction, event.view_id, state)
             case UIEventType.GEAR_EQUIP:
                 interaction = event.payload[0]
                 selected = event.payload[1]
@@ -110,8 +111,9 @@ class EquipmentViewController(ViewController):
                 interaction = event.payload[0]
                 selected = event.payload[1]
                 scrap_all = event.payload[2]
+                gear_slot = event.payload[3]
                 await self.dismantle_gear(
-                    interaction, selected, scrap_all, event.view_id
+                    interaction, selected, scrap_all, event.view_id, gear_slot=gear_slot
                 )
             case UIEventType.SKILL_EQUIP_VIEW:
                 interaction = event.payload
@@ -127,6 +129,45 @@ class EquipmentViewController(ViewController):
                 interaction = event.payload[0]
                 skills = event.payload[1]
                 await self.set_selected_skills(interaction, skills, event.view_id)
+
+    async def refresh_gear_select(
+        self, interaction: discord.Interaction, slot: EquipmentSlot, view_id: int
+    ):
+
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+
+        encounters = await self.database.get_active_encounter_participants(guild_id)
+
+        for _, participants in encounters.items():
+            if member_id in participants:
+                await interaction.followup.send(
+                    "You cannot change your gear while you are involved in an active combat.",
+                    ephemeral=True,
+                )
+                return
+
+        gear_inventory = await self.database.get_user_armory(guild_id, member_id)
+        default_gear = await self.gear_manager.get_default_gear()
+        gear_inventory.extend(default_gear)
+
+        currently_equipped = await self.database.get_user_equipment_slot(
+            guild_id, member_id, slot
+        )
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        view: EquipmentSelectView = self.controller.get_view(view_id)
+        await view.refresh_ui(
+            gear_inventory=gear_inventory,
+            currently_equipped=currently_equipped,
+            scrap_balance=scrap_balance,
+        )
 
     async def open_gear_select(
         self, interaction: discord.Interaction, slot: EquipmentSlot, view_id: int
@@ -202,7 +243,9 @@ class EquipmentViewController(ViewController):
         if ItemType.SCRAP in user_items:
             scrap_balance = user_items[ItemType.SCRAP]
 
-        view = EquipmentView(self.controller, interaction, character, scrap_balance)
+        view = EquipmentView(
+            self.controller, interaction, character, scrap_balance, state
+        )
 
         embeds = []
         embeds.append(EquipmentHeadEmbed(interaction.user))
@@ -246,7 +289,7 @@ class EquipmentViewController(ViewController):
                 guild_id, member_id, selected[1], acc_slot_2=True
             )
 
-        await self.open_gear_select(interaction, selected[0].base.slot, view_id)
+        await self.refresh_gear_select(interaction, selected[0].base.slot, view_id)
 
     async def update_gear_lock(
         self,
@@ -268,7 +311,11 @@ class EquipmentViewController(ViewController):
             await self.open_gear_overview(interaction, view_id)
             return
 
-        await self.open_gear_select(interaction, gear_slot, view_id)
+        if gear_slot == EquipmentSlot.SKILL:
+            await self.refresh_skill_view(interaction, SkillViewState.MANAGE, view_id)
+            return
+
+        await self.refresh_gear_select(interaction, gear_slot, view_id)
 
     async def dismantle_gear(
         self,
@@ -276,12 +323,12 @@ class EquipmentViewController(ViewController):
         selected: list[Gear],
         scrap_all: bool,
         view_id: int,
+        gear_slot: EquipmentSlot = None,
     ):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
         now = datetime.datetime.now()
-        gear_slot = None
 
         gear_to_scrap = selected
 
@@ -293,9 +340,6 @@ class EquipmentViewController(ViewController):
         total_scraps = 0
 
         for gear in gear_to_scrap:
-            if not scrap_all and gear_slot is None:
-                gear_slot = gear.base.slot
-
             total_scraps += await self.gear_manager.get_gear_score(gear)
 
             self.logger.log(
@@ -320,7 +364,50 @@ class EquipmentViewController(ViewController):
             await self.open_gear_overview(interaction, view_id)
             return
 
-        await self.open_gear_select(interaction, gear_slot, view_id)
+        if gear_slot == EquipmentSlot.SKILL:
+            await self.refresh_skill_view(interaction, SkillViewState.MANAGE, view_id)
+            return
+
+        await self.refresh_gear_select(interaction, gear_slot, view_id)
+
+    async def refresh_skill_view(
+        self, interaction: discord.Interaction, state: SkillViewState, view_id: int
+    ):
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        character = await self.actor_manager.get_character(interaction.user)
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        user_skills = await self.database.get_user_skill_inventory(guild_id, member_id)
+
+        view = SkillSelectView(
+            self.controller, interaction, character, user_skills, scrap_balance, state
+        )
+
+        embeds = []
+        embeds.append(SelectSkillHeadEmbed(interaction.user))
+
+        loading_embed = discord.Embed(
+            title="Loading Skills", color=discord.Colour.light_grey()
+        )
+        self.embed_manager.add_text_bar(loading_embed, "", "Please Wait...")
+        loading_embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embeds.append(loading_embed)
+
+        view: SkillSelectView = self.controller.get_view(view_id)
+        await view.refresh_ui(
+            character=character,
+            skill_inventory=user_skills,
+            scrap_balance=scrap_balance,
+            state=state,
+        )
 
     async def open_skill_view(
         self, interaction: discord.Interaction, state: SkillViewState, view_id: int
@@ -360,7 +447,7 @@ class EquipmentViewController(ViewController):
         self.controller.detach_view_by_id(view_id)
 
     async def set_selected_skills(
-        self, interaction: discord.Interaction, skills: list[Skill], view_id: int
+        self, interaction: discord.Interaction, skills: dict[int, Skill], view_id: int
     ):
         guild_id = interaction.guild_id
         member_id = interaction.user.id

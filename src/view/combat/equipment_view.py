@@ -26,7 +26,7 @@ class EquipmentView(ViewMenu):
         interaction: discord.Interaction,
         character: Character,
         scrap_balance: int,
-        state: EquipmentViewState = EquipmentViewState.GEAR
+        state: EquipmentViewState = EquipmentViewState.GEAR,
     ):
         super().__init__(timeout=None)
         self.controller = controller
@@ -34,9 +34,9 @@ class EquipmentView(ViewMenu):
         self.member_id = character.member.id
         self.guild_id = character.member.guild.id
         self.member = interaction.user
-        self.blocked = False
         self.state = state
         self.scrap_balance = scrap_balance
+        self.loaded = False
 
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
@@ -53,29 +53,34 @@ class EquipmentView(ViewMenu):
                 await self.refresh_ui(scrap_balance=balance)
                 return
 
-    def refresh_elements(self):
+    def refresh_elements(self, disabled: bool = False):
 
-        gear_button_disabled = False
-        stats_button_disabled = False
-        skills_button_disabled = False
-        forge_button_disabled = False
+        if not self.loaded:
+            disabled = True
+
+        gear_button_disabled = disabled
+        stats_button_disabled = disabled
+        skills_button_disabled = disabled
+        forge_button_disabled = disabled
 
         self.clear_items()
         match self.state:
             case EquipmentViewState.GEAR:
                 gear_button_disabled = True
-                self.add_item(SelectGearSlot(EquipmentSlot.WEAPON))
-                self.add_item(SelectGearSlot(EquipmentSlot.HEAD))
-                self.add_item(SelectGearSlot(EquipmentSlot.BODY))
-                self.add_item(SelectGearSlot(EquipmentSlot.LEGS))
-                self.add_item(SelectGearSlot(EquipmentSlot.ACCESSORY))
-                self.add_item(ScrapAllButton())
+                self.add_item(SelectGearSlot(EquipmentSlot.WEAPON, disabled=disabled))
+                self.add_item(SelectGearSlot(EquipmentSlot.HEAD, disabled=disabled))
+                self.add_item(SelectGearSlot(EquipmentSlot.BODY, disabled=disabled))
+                self.add_item(SelectGearSlot(EquipmentSlot.LEGS, disabled=disabled))
+                self.add_item(
+                    SelectGearSlot(EquipmentSlot.ACCESSORY, disabled=disabled)
+                )
+                self.add_item(ScrapAllButton(disabled=disabled))
             case EquipmentViewState.STATS:
                 stats_button_disabled = True
             case EquipmentViewState.SKILLS:
                 skills_button_disabled = True
-                self.add_item(SkillEquipButton())
-                self.add_item(SkillManageButton())
+                self.add_item(SkillEquipButton(disabled=disabled))
+                self.add_item(SkillManageButton(disabled=disabled))
             case EquipmentViewState.FORGE:
                 forge_button_disabled = True
 
@@ -85,7 +90,12 @@ class EquipmentView(ViewMenu):
         self.add_item(ForgeButton(forge_button_disabled))
         self.add_item(ScrapBalanceButton(self.scrap_balance))
 
-    async def refresh_ui(self, character: Character = None, scrap_balance: int = None):
+    async def refresh_ui(
+        self,
+        character: Character = None,
+        scrap_balance: int = None,
+        disabled: bool = False,
+    ):
         if self.message is None:
             return
 
@@ -95,7 +105,10 @@ class EquipmentView(ViewMenu):
         if character is not None:
             self.character = character
 
-        self.refresh_elements()
+        if self.character is not None and self.scrap_balance is not None:
+            self.loaded = True
+
+        self.refresh_elements(disabled=disabled)
         embeds = []
         files: list[discord.File] = []
         match self.state:
@@ -191,7 +204,7 @@ class EquipmentView(ViewMenu):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.GEAR_DISMANTLE,
-            (interaction, [], True),
+            (interaction, [], True, None),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -281,8 +294,6 @@ class ForgeButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = True):
         color = discord.ButtonStyle.grey
-        if disabled:
-            color = discord.ButtonStyle.red
 
         disabled = True
 
@@ -334,7 +345,7 @@ class SkillEquipButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         super().__init__(
-            label="Change Equipped SKills",
+            label="Quick Select",
             style=discord.ButtonStyle.green,
             row=1,
             disabled=disabled,
@@ -351,7 +362,7 @@ class ScrapAllButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         super().__init__(
-            label="Scrap All (non locked)",
+            label="Scrap non locked Gear",
             style=discord.ButtonStyle.red,
             row=2,
             disabled=disabled,

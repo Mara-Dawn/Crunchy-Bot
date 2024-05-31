@@ -8,12 +8,27 @@ from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
+from view.combat.elements import (
+    BackButton,
+    CurrentPageButton,
+    ImplementsBack,
+    ImplementsLocking,
+    ImplementsPages,
+    ImplementsScrapping,
+    LockButton,
+    PageButton,
+    ScrapBalanceButton,
+    ScrapSelectedButton,
+    UnlockButton,
+)
 from view.combat.embed import SelectGearHeadEmbed
-from view.combat.equipment_view import SelectGearSlot
+from view.combat.equipment_view import EquipmentViewState, SelectGearSlot
 from view.view_menu import ViewMenu
 
 
-class EquipmentSelectView(ViewMenu):
+class EquipmentSelectView(
+    ViewMenu, ImplementsPages, ImplementsBack, ImplementsLocking, ImplementsScrapping
+):
 
     def __init__(
         self,
@@ -44,6 +59,7 @@ class EquipmentSelectView(ViewMenu):
         self.page_count = 1
         self.filter_items()
         self.message = None
+        self.loaded = False
 
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
@@ -80,7 +96,7 @@ class EquipmentSelectView(ViewMenu):
             self.filtered_items,
             key=lambda x: (
                 (x.id in [gear.id for gear in self.current]),
-                x.locked,
+                # x.locked,
                 x.level,
                 Gear.RARITY_SORT_MAP[x.rarity],
             ),
@@ -102,13 +118,16 @@ class EquipmentSelectView(ViewMenu):
         )
         await self.controller.dispatch_ui_event(event)
 
-    async def dismantle_gear(
+    async def scrap_selected(
         self, interaction: discord.Interaction, scrap_all: bool = False
     ):
         await interaction.response.defer()
+
+        scrappable = [item for item in self.selected if not item.locked]
+
         event = UIEvent(
             UIEventType.GEAR_DISMANTLE,
-            (interaction, self.selected, scrap_all),
+            (interaction, scrappable, scrap_all, self.filter),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -130,9 +149,14 @@ class EquipmentSelectView(ViewMenu):
         interaction: discord.Interaction,
     ):
         await interaction.response.defer()
+        items = [
+            item
+            for item in self.selected
+            if item.id not in [item.id for item in self.current]
+        ]
         event = UIEvent(
             UIEventType.GEAR_UNLOCK,
-            (interaction, self.selected),
+            (interaction, items),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -144,7 +168,7 @@ class EquipmentSelectView(ViewMenu):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.GEAR_OPEN_OVERVIEW,
-            interaction,
+            (interaction, EquipmentViewState.GEAR),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -160,6 +184,9 @@ class EquipmentSelectView(ViewMenu):
 
     def refresh_elements(self, disabled: bool = False):
         page_display = f"Page {self.current_page + 1}/{self.page_count}"
+
+        if not self.loaded:
+            disabled = True
 
         max_values = 1
         if self.filter == EquipmentSlot.ACCESSORY:
@@ -182,49 +209,58 @@ class EquipmentSelectView(ViewMenu):
 
         self.clear_items()
         if len(self.display_items) > 0:
-            self.add_item(Dropdown(self.display_items, self.selected, equipped))
-        self.add_item(PageButton("<", False))
-        self.add_item(SelectButton(disable_equip))
-        self.add_item(PageButton(">", True))
+            self.add_item(
+                Dropdown(self.display_items, self.selected, equipped, disabled=disabled)
+            )
+        self.add_item(PageButton("<", False, disabled=disabled))
+        self.add_item(SelectButton(disabled=disable_equip))
+        self.add_item(PageButton(">", True, disabled=disabled))
         self.add_item(CurrentPageButton(page_display))
         self.add_item(ScrapBalanceButton(self.scrap_balance))
-        self.add_item(ScrapSelectedButton(disable_dismantle))
-        self.add_item(LockButton(disabled))
-        self.add_item(UnlockButton(disabled))
-        self.add_item(BackButton())
+        self.add_item(ScrapSelectedButton(disabled=disable_dismantle))
+        self.add_item(LockButton(disabled=disabled))
+        self.add_item(UnlockButton(disabled=disabled))
+        self.add_item(BackButton(disabled=disabled))
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.WEAPON,
                 row=0,
-                disabled=(self.filter == EquipmentSlot.WEAPON),
+                disabled=(self.filter == EquipmentSlot.WEAPON or disabled),
             )
         )
         self.add_item(
             SelectGearSlot(
-                EquipmentSlot.HEAD, row=0, disabled=(self.filter == EquipmentSlot.HEAD)
+                EquipmentSlot.HEAD,
+                row=0,
+                disabled=(self.filter == EquipmentSlot.HEAD or disabled),
             )
         )
         self.add_item(
             SelectGearSlot(
-                EquipmentSlot.BODY, row=0, disabled=(self.filter == EquipmentSlot.BODY)
+                EquipmentSlot.BODY,
+                row=0,
+                disabled=(self.filter == EquipmentSlot.BODY or disabled),
             )
         )
         self.add_item(
             SelectGearSlot(
-                EquipmentSlot.LEGS, row=0, disabled=(self.filter == EquipmentSlot.LEGS)
+                EquipmentSlot.LEGS,
+                row=0,
+                disabled=(self.filter == EquipmentSlot.LEGS or disabled),
             )
         )
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.ACCESSORY,
                 row=0,
-                disabled=(self.filter == EquipmentSlot.ACCESSORY),
+                disabled=(self.filter == EquipmentSlot.ACCESSORY or disabled),
             )
         )
 
     async def refresh_ui(
         self,
         gear_inventory: list[Gear] = None,
+        currently_equipped: list[Gear] = None,
         scrap_balance: int = None,
         disabled: bool = False,
     ):
@@ -236,11 +272,15 @@ class EquipmentSelectView(ViewMenu):
 
         if gear_inventory is not None:
             self.gear = gear_inventory
-            self.filter_items()
-            self.current_page = min(self.current_page, (self.page_count - 1))
 
-        if self.selected is None or len(self.selected) <= 0:
-            disabled = True
+        if currently_equipped is not None:
+            self.current = currently_equipped
+
+        if None not in [self.scrap_balance, self.gear, self.current]:
+            self.loaded = True
+
+        self.filter_items()
+        self.current_page = min(self.current_page, (self.page_count - 1))
 
         start_offset = SelectGearHeadEmbed.ITEMS_PER_PAGE * self.current_page
         end_offset = min(
@@ -249,13 +289,13 @@ class EquipmentSelectView(ViewMenu):
         )
         self.display_items = self.filtered_items[start_offset:end_offset]
 
-        self.refresh_elements(disabled)
+        self.selected = [
+            item
+            for item in self.display_items
+            if item.id in [selected.id for selected in self.selected]
+        ]
 
-        refresh_selected = []
-        for selected in self.selected:
-            if selected in self.display_items:
-                refresh_selected.append(selected)
-        self.selected = refresh_selected
+        self.refresh_elements(disabled)
 
         embeds = []
         files = {}
@@ -322,91 +362,6 @@ class SelectButton(discord.ui.Button):
             await view.select_gear(interaction)
 
 
-class ScrapSelectedButton(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False):
-        super().__init__(
-            label="Scrap Selected",
-            style=discord.ButtonStyle.red,
-            row=3,
-            disabled=disabled,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentSelectView = self.view
-
-        if await view.interaction_check(interaction):
-            await view.dismantle_gear(interaction)
-
-
-class ScrapAllButton(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False):
-        super().__init__(
-            label="Scrap All (non locked)",
-            style=discord.ButtonStyle.red,
-            row=3,
-            disabled=disabled,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentSelectView = self.view
-
-        if await view.interaction_check(interaction):
-            await view.dismantle_gear(interaction, scrap_all=True)
-
-
-class LockButton(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False):
-        super().__init__(
-            label="Lock Selected",
-            style=discord.ButtonStyle.gray,
-            row=3,
-            disabled=disabled,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentSelectView = self.view
-
-        if await view.interaction_check(interaction):
-            await view.lock_selected(interaction)
-
-
-class UnlockButton(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False):
-        super().__init__(
-            label="Unlock Selected",
-            style=discord.ButtonStyle.gray,
-            row=3,
-            disabled=disabled,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentSelectView = self.view
-
-        if await view.interaction_check(interaction):
-            await view.unlock_selected(interaction)
-
-
-class BackButton(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False):
-        super().__init__(
-            label="Back",
-            style=discord.ButtonStyle.gray,
-            row=4,
-            disabled=disabled,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentSelectView = self.view
-
-        if await view.interaction_check(interaction):
-            await view.go_back(interaction)
-
-
 class Dropdown(discord.ui.Select):
 
     def __init__(
@@ -429,6 +384,7 @@ class Dropdown(discord.ui.Select):
                 name += " [🔒]"
 
             description = [f"ILVL: {item.level}"]
+
             for modifier_type, value in item.modifiers.items():
                 label = GearModifierType.short_label(modifier_type)
                 value = GearModifierType.display_value(modifier_type, value)
@@ -444,7 +400,7 @@ class Dropdown(discord.ui.Select):
                 label=label,
                 description=description,
                 value=item.id,
-                default=(item in selected),
+                default=(item.id in [item.id for item in selected]),
             )
             options.append(option)
 
@@ -464,39 +420,3 @@ class Dropdown(discord.ui.Select):
 
         if await view.interaction_check(interaction):
             await view.set_selected(interaction, [int(value) for value in self.values])
-
-
-class PageButton(discord.ui.Button):
-
-    def __init__(self, label: str, right: bool, disabled: bool = False):
-        self.right = right
-        super().__init__(
-            label=label, style=discord.ButtonStyle.grey, row=2, disabled=disabled
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentSelectView = self.view
-
-        if await view.interaction_check(interaction):
-            await view.flip_page(interaction, self.right)
-
-
-class CurrentPageButton(discord.ui.Button):
-
-    def __init__(self, label: str):
-        super().__init__(
-            label=label, style=discord.ButtonStyle.grey, row=2, disabled=True
-        )
-
-
-class ScrapBalanceButton(discord.ui.Button):
-
-    def __init__(self, balance: int):
-        self.balance = balance
-        super().__init__(label=f"⚙️{balance}", style=discord.ButtonStyle.blurple, row=2)
-
-    async def callback(self, interaction: discord.Interaction):
-        view: EquipmentSelectView = self.view
-
-        if await view.interaction_check(interaction):
-            await interaction.response.defer(ephemeral=True)

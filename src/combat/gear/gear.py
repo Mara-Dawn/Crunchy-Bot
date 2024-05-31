@@ -175,6 +175,12 @@ class Gear(Droppable):
         self.rarity = rarity
         self.level = level
         self.modifiers = modifiers
+
+        index_map = {v: i for i, v in enumerate(GearModifierType.prio())}
+        self.modifiers = dict(
+            sorted(self.modifiers.items(), key=lambda pair: index_map[pair[0]])
+        )
+
         self.skills = skills
         self.enchantments = enchantments
         self.locked = locked
@@ -246,16 +252,11 @@ class Gear(Droppable):
                 line_colored = f"{spacing}{name}: [35m{value}[0m\n"
                 info_block += line_colored
 
-            index_map = {v: i for i, v in enumerate(GearModifierType.prio())}
-            sorted_modifiers = dict(
-                sorted(self.modifiers.items(), key=lambda pair: index_map[pair[0]])
-            )
-
             flat_damage_modifiers = {}
 
             modifier_block = ""
 
-            for modifier_type, value in sorted_modifiers.items():
+            for modifier_type, value in self.modifiers.items():
                 if modifier_type in [
                     GearModifierType.WEAPON_DAMAGE_MIN,
                     GearModifierType.WEAPON_DAMAGE_MAX,
