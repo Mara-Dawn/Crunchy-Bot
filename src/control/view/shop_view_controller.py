@@ -197,7 +197,14 @@ class ShopViewController(ViewController):
             case UIEventType.SHOP_BUY:
                 interaction = event.payload[0]
                 selected_item = event.payload[1]
-                await self.buy(interaction, selected_item, event.view_id)
+
+                shop_interaction = ShopInteraction(
+                    interaction=interaction,
+                    selected=selected_item,
+                    view_id=event.view_id,
+                )
+                await self.shop_queue.put(shop_interaction)
+
             case UIEventType.SHOP_CHANGED:
                 guild_id = event.payload[0]
                 member_id = event.payload[1]
@@ -213,14 +220,6 @@ class ShopViewController(ViewController):
             UIEventType.SHOP_REFRESH, (new_user_balance, user_items), view_id
         )
         await self.controller.dispatch_ui_event(event)
-
-    async def buy(
-        self, interaction: discord.Interaction, selected: ItemType, view_id: int
-    ):
-        shop_interaction = ShopInteraction(
-            interaction=interaction, selected=selected, view_id=view_id
-        )
-        await self.shop_queue.put(shop_interaction)
 
     async def send_inventory_message(self, interaction: discord.Interaction):
         inventory = await self.item_manager.get_user_inventory(

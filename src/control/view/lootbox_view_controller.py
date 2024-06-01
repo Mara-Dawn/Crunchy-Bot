@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import random
 import secrets
@@ -26,6 +27,14 @@ from control.logger import BotLogger
 from control.view.view_controller import ViewController
 
 
+class LootboxInteraction:
+    def __init__(
+        self, interaction: discord.Interaction, owner_id: int, view_id: int
+    ):
+        self.interaction = interaction
+        self.owner_id = owner_id
+        self.view_id = view_id
+
 class MimicProtectedException(Exception):
     pass
 
@@ -44,12 +53,18 @@ class LootBoxViewController(ViewController):
         self.event_manager: EventManager = controller.get_service(EventManager)
         self.jail_manager: JailManager = self.controller.get_service(JailManager)
 
+        self.queue = asyncio.Queue()
+        self.request_worker = asyncio.create_task(self.lootbox_claim_worker())
+
+
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
             case UIEventType.CLAIM_LOOTBOX:
                 interaction = event.payload[0]
                 owner_id = event.payload[1]
-                await self.handle_lootbox_claim(interaction, owner_id, event.view_id)
+
+                request = LootboxInteraction(interaction=interaction, owner_id=owner_id, view_id=event.view_id)
+                await self.queue.put(request)
 
     async def lootbox_checks(self, interaction: discord.Interaction,   owner_id: int) -> bool:
         guild_id = interaction.guild_id
@@ -302,45 +317,52 @@ class LootBoxViewController(ViewController):
 
         return True
 
-    async def handle_lootbox_claim(
-        self, interaction: discord.Interaction, owner_id: int, view_id: int
-    ):
-        event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
-        await self.controller.dispatch_ui_event(event)
+    async def lootbox_claim_worker(self):
+        while True:
+            request = await self.queue.get()
 
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
+            interaction = request.interaction
+            owner_id = request.owner_id
+            view_id = request.view_id
 
-        if not await self.lootbox_checks(interaction, owner_id):
-            event = UIEvent(UIEventType.RESUME_INTERACTIONS, None, view_id)
+            event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
             await self.controller.dispatch_ui_event(event)
-            return
 
-        message = await interaction.original_response()
-        loot_box = await self.database.get_loot_box_by_message_id(guild_id, message.id)
+            guild_id = interaction.guild_id
+            member_id = interaction.user.id
 
-        title = "A Random Treasure has Appeared"
-        if owner_id is not None:
-            title = f"{interaction.user.display_name}'s Random Treasure Chest"
+            if not await self.lootbox_checks(interaction, owner_id):
+                event = UIEvent(UIEventType.RESUME_INTERACTIONS, None, view_id)
+                await self.controller.dispatch_ui_event(event)
+                continue
 
-        description = f"This treasure was claimed by: \n <@{member_id}>"
-        description += "\n\nYou slowly open the chest and reveal..."
-        embed = discord.Embed(
-            title=title, description=description, color=discord.Colour.purple()
-        )
+            message = await interaction.original_response()
+            loot_box = await self.database.get_loot_box_by_message_id(guild_id, message.id)
 
-        if not await self.handle_lootbox_items(interaction, loot_box, embed):
-            event = UIEvent(UIEventType.RESUME_INTERACTIONS, None, view_id)
-            await self.controller.dispatch_ui_event(event)
-            return
+            title = "A Random Treasure has Appeared"
+            if owner_id is not None:
+                title = f"{interaction.user.display_name}'s Random Treasure Chest"
 
-        self.controller.detach_view_by_id(view_id)
+            description = f"This treasure was claimed by: \n <@{member_id}>"
+            description += "\n\nYou slowly open the chest and reveal..."
+            embed = discord.Embed(
+                title=title, description=description, color=discord.Colour.purple()
+            )
 
-        event_type = LootBoxEventType.CLAIM
-        if owner_id is not None:
-            event_type = LootBoxEventType.OPEN
+            if not await self.handle_lootbox_items(interaction, loot_box, embed):
+                event = UIEvent(UIEventType.RESUME_INTERACTIONS, None, view_id)
+                await self.controller.dispatch_ui_event(event)
+                continue
 
-        event = LootBoxEvent(
-            datetime.datetime.now(), guild_id, loot_box.id, member_id, event_type
-        )
-        await self.controller.dispatch_event(event)
+            self.controller.detach_view_by_id(view_id)
+
+            event_type = LootBoxEventType.CLAIM
+            if owner_id is not None:
+                event_type = LootBoxEventType.OPEN
+
+            event = LootBoxEvent(
+                datetime.datetime.now(), guild_id, loot_box.id, member_id, event_type
+            )
+            await self.controller.dispatch_event(event)
+            
+            self.queue.task_done()
