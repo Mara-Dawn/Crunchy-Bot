@@ -24,7 +24,7 @@ from view.combat.elements import (
     ScrapSelectedButton,
     UnlockButton,
 )
-from view.combat.embed import SelectSkillHeadEmbed
+from view.combat.embed import ManageSkillHeadEmbed, SelectSkillHeadEmbed
 from view.combat.equipment_view import EquipmentViewState
 from view.view_menu import ViewMenu
 
@@ -411,7 +411,11 @@ class SkillSelectView(
         embeds = []
         files = {}
 
-        embeds.append(SelectSkillHeadEmbed(self.member))
+        match self.state:
+            case SkillViewState.EQUIP:
+                embeds.append(SelectSkillHeadEmbed(self.member))
+            case SkillViewState.MANAGE | SkillViewState.SELECT_MODE:
+                embeds.append(ManageSkillHeadEmbed(self.member))
 
         for skill in self.display_items:
             equipped = False

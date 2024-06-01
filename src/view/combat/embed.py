@@ -52,7 +52,7 @@ class SkillsHeadEmbed(discord.Embed):
         member: discord.Member,
         max_width: int = 45,
     ):
-        description = "Here you can see your currently active skills."
+        description = "Here you can see your currently equipped skills.\n"
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += " " * spacing
@@ -69,19 +69,19 @@ class SkillsHeadEmbed(discord.Embed):
 
 class SelectGearHeadEmbed(discord.Embed):
 
-    ITEMS_PER_PAGE = 5
+    ITEMS_PER_PAGE = 4
 
     def __init__(
         self,
         member: discord.Member,
         max_width: int = 45,
     ):
-        description = "Select the piece of gear you want to equip."
+        description = "Manage your gear here. Equip pieces, lock them to keep them safe or scrap anything you don't need."
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += " " * spacing
 
-        description = f"```python\n{description}```"
+        description = f"```ansi\n{description}```"
 
         super().__init__(
             title="Gear Select",
@@ -91,21 +91,47 @@ class SelectGearHeadEmbed(discord.Embed):
         self.set_thumbnail(url=member.display_avatar.url)
 
 
-class SelectSkillHeadEmbed(discord.Embed):
+class ManageSkillHeadEmbed(discord.Embed):
 
-    ITEMS_PER_PAGE = 5
+    ITEMS_PER_PAGE = 4
 
     def __init__(
         self,
         member: discord.Member,
         max_width: int = 45,
     ):
-        description = "Select the skills you want to equip."
+        description = "Manage your skills here. Equip new ones, lock the ones you want to keep safe and scrap the ones you don't need.\n\n"
+        description += "Once you equip a skill it will be removed from your inventory. Equipping a new skill [31mwill override the old one[0m."
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += " " * spacing
 
-        description = f"```python\n{description}```"
+        description = f"```ansi\n{description}```"
+
+        super().__init__(
+            title="Manage Skills",
+            color=discord.Colour.purple(),
+            description=description,
+        )
+        self.set_thumbnail(url=member.display_avatar.url)
+
+
+class SelectSkillHeadEmbed(discord.Embed):
+
+    ITEMS_PER_PAGE = 4
+
+    def __init__(
+        self,
+        member: discord.Member,
+        max_width: int = 45,
+    ):
+        description = "Select the skills you want to equip.\n\n"
+        description += "Once you equip a skill it will be removed from your inventory. Equipping a new skill [31mwill override the old one[0m."
+        if len(description) < max_width:
+            spacing = max_width - len(description)
+            description += " " * spacing
+
+        description = f"```ansi\n{description}```"
 
         super().__init__(
             title="Skill Select",

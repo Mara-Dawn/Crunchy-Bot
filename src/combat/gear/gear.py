@@ -218,20 +218,25 @@ class Gear(Droppable):
         info_block += f"{spacing}[{self.base.slot.value}]"
         info_block += "```"
 
-        if show_data and len(self.modifiers) > 0:
-            max_len = GearModifierType.max_name_len()
-            info_block += "```ansi\n"
+        prefixes = []
+        suffixes = []
 
-            name = "Item Level"
-            value = self.level
-            spacing = " " * (max_len - len(name))
-            line_colored = f"{spacing}{name}: [32m{self.level}[0m\n"
-            info_block += line_colored
+        if show_data and len(self.modifiers) > 0:
+            max_len_pre = GearModifierType.max_name_len()
+            max_len_suf = 8
 
             name = "Rarity"
-            spacing = " " * (max_len - len(name))
-            line_colored = f"{spacing}{name}: {self.RARITY_COLOR_MAP[self.rarity]}{self.rarity.value}[0m\n"
-            info_block += line_colored
+            spacing = " " * (max_len_suf - len(self.rarity.value))
+            rarity_line = f"{name}: {self.rarity.value}{spacing}"
+            rarity_line_colored = f"{name}: {self.RARITY_COLOR_MAP[self.rarity]}{self.rarity.value}[0m{spacing}"
+            suffixes.append((rarity_line_colored, len(rarity_line)))
+
+            name = "Level"
+            value = str(self.level)
+            spacing = " " * (max_len_suf - len(value))
+            level_line = f"{name}: {self.level}{spacing}"
+            level_line_colored = f"{name}: [32m{self.level}[0m{spacing}"
+            suffixes.append((level_line_colored, len(level_line)))
 
             if self.base.slot == EquipmentSlot.WEAPON and len(self.base.skills) > 0:
                 damage_types = []
@@ -247,14 +252,28 @@ class Gear(Droppable):
                         damage_types.append(effect)
 
                 name = "Damage Type"
-                spacing = " " * (max_len - len(name))
-                value = "[0m,[35m".join([type.value for type in damage_types])
-                line_colored = f"{spacing}{name}: [35m{value}[0m\n"
-                info_block += line_colored
+                if len(damage_types) > 1:
+                    name += "s"
+                value = ""
+                value_colored = ""
+
+                for damage_type in damage_types:
+                    if value == "":
+                        value += f"{damage_type.value}"
+                        value_colored += f"[35m{damage_type.value}[0m"
+                        spacing = " " * (max_len_pre - len(name))
+                        damage_type_line = f"{spacing}{name}: {value}"
+                        damage_type_line_colored = f"{spacing}{name}: {value_colored}"
+                    else:
+                        value += f"{damage_type.value}"
+                        value_colored += f"[35m{damage_type.value}[0m"
+                        spacing = " " * (max_len_pre)
+                        damage_type_line = f"{spacing}  {value}"
+                        damage_type_line_colored = f"{spacing}  {value_colored}"
+
+                    prefixes.append((damage_type_line_colored, len(damage_type_line)))
 
             flat_damage_modifiers = {}
-
-            modifier_block = ""
 
             for modifier_type, value in self.modifiers.items():
                 if modifier_type in [
@@ -265,9 +284,10 @@ class Gear(Droppable):
                     continue
                 name = modifier_type.value
                 display_value = GearModifierType.display_value(modifier_type, value)
-                spacing = " " * (max_len - len(name))
-                line_colored = f"{spacing}{name}: [35m{display_value}[0m\n"
-                modifier_block += line_colored
+                spacing = " " * (max_len_pre - len(name))
+                line = f"{spacing}{name}: {display_value}"
+                line_colored = f"{spacing}{name}: [35m{display_value}[0m"
+                prefixes.append((line_colored, len(line)))
 
             if len(flat_damage_modifiers) == 2:
                 name = "Hit Damage"
@@ -279,11 +299,29 @@ class Gear(Droppable):
                     GearModifierType.WEAPON_DAMAGE_MAX,
                     flat_damage_modifiers[GearModifierType.WEAPON_DAMAGE_MAX],
                 )
-                spacing = " " * (max_len - len(name))
-                line_colored = f"{spacing}{name}: [35m{display_value_min}[0m - [35m{display_value_max}[0m\n"
-                modifier_block = line_colored + modifier_block
+                spacing = " " * (max_len_pre - len(name))
+                line = f"{spacing}{name}: {display_value_min} - {display_value_max}"
+                line_colored = f"{spacing}{name}: [35m{display_value_min}[0m - [35m{display_value_max}[0m"
+                prefixes.insert(0, (line_colored, len(line)))
 
-            info_block += modifier_block
+            info_block += "```ansi\n"
+            lines = max(len(suffixes), len(prefixes))
+
+            for line in range(lines):
+                prefix = ""
+                suffix = ""
+                len_prefix = 0
+                len_suffix = 0
+                if len(prefixes) > line:
+                    len_prefix = prefixes[line][1]
+                    prefix = prefixes[line][0]
+                if len(suffixes) > line:
+                    len_suffix = suffixes[line][1]
+                    suffix = suffixes[line][0]
+
+                spacing_width = max_width - len_prefix - len_suffix
+                spacing = " " * spacing_width
+                info_block += f"{prefix}{spacing}{suffix}\n"
 
             info_block += "```"
 

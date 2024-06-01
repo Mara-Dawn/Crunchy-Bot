@@ -1,6 +1,6 @@
 import discord
 from combat.gear.types import Base, EquipmentSlot, GearBaseType, Rarity
-from combat.skills.types import SkillType
+from combat.skills.types import SkillEffect, SkillType
 
 
 class DroppableBase:
@@ -35,6 +35,12 @@ class Droppable:
         Rarity.RARE: "[33m",  # b58900
         Rarity.LEGENDARY: "[31m",  # #a43033
         Rarity.UNIQUE: "[36m",  # 2aa198
+    }
+
+    EFFECT_COLOR_MAP = {
+        SkillEffect.PHYSICAL_DAMAGE: "[31m",
+        SkillEffect.MAGICAL_DAMAGE: "[36m",
+        SkillEffect.HEALING: "[32m",
     }
 
     RARITY_COLOR_HEX_MAP = {

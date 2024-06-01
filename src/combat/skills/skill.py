@@ -169,31 +169,33 @@ class Skill(Droppable):
         suffixes = []
 
         if show_data:
-            max_len = 11
-
-            # Item Level
-            name = "Item Level"
-            spacing = " " * (max_len - len(name))
-            level_line = f"{spacing}{name}: {self.level}"
-            level_line_colored = f"{spacing}{name}: [32m{self.level}[0m"
-            prefixes.append((level_line_colored, len(level_line)))
+            max_len_pre = 8
+            max_len_suf = 8
 
             # Rarity
             name = "Rarity"
-            spacing = " " * (max_len - len(name))
-            rarity_line = f"{spacing}{name}: {self.rarity.value}"
-            rarity_line_colored = f"{spacing}{name}: {Droppable.RARITY_COLOR_MAP[self.rarity]}{self.rarity.value}[0m"
-            prefixes.append((rarity_line_colored, len(rarity_line)))
+            spacing = " " * (max_len_suf - len(self.rarity.value))
+            rarity_line = f"{name}: {self.rarity.value}{spacing}"
+            rarity_line_colored = f"{name}: {Droppable.RARITY_COLOR_MAP[self.rarity]}{self.rarity.value}[0m{spacing}"
+            suffixes.append((rarity_line_colored, len(rarity_line)))
+
+            # Item Level
+            name = "Level"
+            spacing = " " * (max_len_suf - len(str(self.level)))
+            level_line = f"{name}: {self.level}{spacing}"
+            level_line_colored = f"{name}: [32m{self.level}[0m{spacing}"
+            suffixes.append((level_line_colored, len(level_line)))
 
             # Base Value
-            name = "Skill Power"
-            base_value_text = f"{name}: {self.scaling}"
-            base_value_text_colored = f"{name}: [35m{self.scaling}[0m"
-            suffixes.append((base_value_text_colored, len(base_value_text)))
+            name = "Power"
+            spacing = " " * (max_len_pre - len(name))
+            base_value_text = f"{spacing}{name}: {self.scaling}"
+            base_value_text_colored = f"{spacing}{name}: [35m{self.scaling}[0m"
+            prefixes.append((base_value_text_colored, len(base_value_text)))
 
             # Type
             name = "Type"
-            spacing = " " * (max_len - len(name))
+            spacing = " " * (max_len_pre - len(name))
             type_text = f"{spacing}{name}: {self.base_skill.skill_effect.value}"
             type_text_colored = (
                 f"{spacing}{name}: [35m{self.base_skill.skill_effect.value}[0m"
@@ -203,10 +205,10 @@ class Skill(Droppable):
             # Cooldown
             if self.base_skill.cooldown > 0:
                 name = "Cooldown"
-                spacing = " " * (max_len - len(name))
-                cooldown_text = f"{spacing}{name}: {self.base_skill.cooldown} Turn(s)"
+                spacing = " " * (max_len_pre - len(name))
+                cooldown_text = f"{spacing}{name}: {self.base_skill.cooldown} Turns"
                 cooldown_text_colored = (
-                    f"{spacing}{name}: [35m{self.base_skill.cooldown}[0m Turn(s)"
+                    f"{spacing}{name}: [35m{self.base_skill.cooldown}[0m Turns"
                 )
                 prefixes.append((cooldown_text_colored, len(cooldown_text)))
 
@@ -214,7 +216,7 @@ class Skill(Droppable):
             max_stacks = self.base_skill.stacks
             if max_stacks is not None and max_stacks > 0:
                 name = "Uses"
-                spacing = " " * (max_len - len(name))
+                spacing = " " * (max_len_pre - len(name))
                 stacks_text = f"{spacing}{name}: {max_stacks} Turn(s)"
                 stacks_text_colored = f"{spacing}{name}: [35m{max_stacks}[0m"
 
@@ -235,6 +237,8 @@ class Skill(Droppable):
             for line in range(lines):
                 prefix = ""
                 suffix = ""
+                len_prefix = 0
+                len_suffix = 0
                 if len(prefixes) > line:
                     len_prefix = prefixes[line][1]
                     prefix = prefixes[line][0]
@@ -330,34 +334,34 @@ class CharacterSkill:
         suffixes = []
 
         if show_data:
-            max_len = 11
+            max_len_pre = 8
+            max_len_suf = 8
 
             if show_full_data:
-                # Item Level
-                name = "Skill Level"
-                spacing = " " * (max_len - len(name))
-                level_line = f"{spacing}{name}: {self.skill.level}"
-                level_line_colored = f"{spacing}{name}: [32m{self.skill.level}[0m"
-                prefixes.append((level_line_colored, len(level_line)))
-
                 # Rarity
                 name = "Rarity"
-                spacing = " " * (max_len - len(name))
-                rarity_line = f"{spacing}{name}: {self.skill.rarity.value}"
-                rarity_line_colored = f"{spacing}{name}: {Droppable.RARITY_COLOR_MAP[self.skill.rarity]}{self.skill.rarity.value}[0m"
-                prefixes.append((rarity_line_colored, len(rarity_line)))
+                spacing = " " * (max_len_suf - len(self.skill.rarity.value))
+                rarity_line = f"{name}: {self.skill.rarity.value}{spacing}"
+                rarity_line_colored = f"{name}: {Droppable.RARITY_COLOR_MAP[self.skill.rarity]}{self.skill.rarity.value}[0m{spacing}"
+                suffixes.append((rarity_line_colored, len(rarity_line)))
+
+                # Item Level
+                name = "Level"
+                spacing = " " * (max_len_suf - len(str(self.skill.level)))
+                level_line = f"{name}: {self.skill.level}{spacing}"
+                level_line_colored = f"{name}: [32m{self.skill.level}[0m{spacing}"
+                suffixes.append((level_line_colored, len(level_line)))
 
             # Damage
             caption = self.skill.EFFECT_LABEL_MAP[self.skill.base_skill.skill_effect]
-            damage_text = f"{caption}: {self.min_roll} - {self.max_roll}"
-            damage_text_colored = (
-                f"{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m"
-            )
-            suffixes.append((damage_text_colored, len(damage_text)))
+            spacing = " " * (max_len_pre - len(caption))
+            damage_text = f"{spacing}{caption}: {self.min_roll} - {self.max_roll}"
+            damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m"
+            prefixes.append((damage_text_colored, len(damage_text)))
 
             # Type
             name = "Type"
-            spacing = " " * (max_len - len(name))
+            spacing = " " * (max_len_pre - len(name))
             type_text = f"{spacing}{name}: {self.skill.base_skill.skill_effect.value}"
             type_text_colored = (
                 f"{spacing}{name}: [35m{self.skill.base_skill.skill_effect.value}[0m"
@@ -367,24 +371,28 @@ class CharacterSkill:
             # Cooldown
             if self.skill.base_skill.cooldown > 0:
                 name = "Cooldown"
-                spacing = " " * (max_len - len(name))
+                spacing = " " * (max_len_pre - len(name))
                 cooldown_text = (
-                    f"{spacing}{name}: {self.skill.base_skill.cooldown} Turn(s)"
+                    f"{spacing}{name}: {self.skill.base_skill.cooldown} Turns"
                 )
-                cooldown_text_colored = f"{spacing}{name}: [35m{self.skill.base_skill.cooldown}[0m Turn(s)"
+                cooldown_text_colored = (
+                    f"{spacing}{name}: [35m{self.skill.base_skill.cooldown}[0m Turns"
+                )
                 prefixes.append((cooldown_text_colored, len(cooldown_text)))
 
             # Stacks
             max_stacks = self.skill.base_skill.stacks
             if max_stacks is not None and max_stacks > 0:
-                name = "Uses left"
-                spacing = " " * (max_len - len(name))
-                stacks_text = f"{spacing}{name}: {self.stacks_left()}/{max_stacks}"
-                stacks_text_colored = f"{spacing}{name}: [35m{self.stacks_left()}[0m/[35m{max_stacks}[0m"
+                name = "Uses"
+                spacing = " " * (max_len_pre - len(name))
 
                 if self.skill.base_skill.reset_after_encounter:
+                    stacks_text = f"{spacing}{name}: {max_stacks}"
+                    stacks_text_colored = f"{spacing}{name}: [35m{max_stacks}[0m"
                     append = " (per Combat)"
                 else:
+                    stacks_text = f"{spacing}{name}: {self.stacks_left()}/{max_stacks}"
+                    stacks_text_colored = f"{spacing}{name}: [35m{self.stacks_left()}[0m/[35m{max_stacks}[0m"
                     append = " (Total)"
 
                 stacks_text += append
@@ -399,6 +407,8 @@ class CharacterSkill:
             for line in range(lines):
                 prefix = ""
                 suffix = ""
+                len_prefix = 0
+                len_suffix = 0
                 if len(prefixes) > line:
                     len_prefix = prefixes[line][1]
                     prefix = prefixes[line][0]
