@@ -124,9 +124,9 @@ class Lottery(BeansGroup):
         for count in lottery_data.values():
             total_pot += item.cost * count
 
-        today = datetime.datetime.now(datetime.UTC).date()
+        today = datetime.datetime.now(datetime.UTC)
         saturday = today + datetime.timedelta((5 - today.weekday()) % 7)
-        if today == saturday:
+        if today.date() == saturday.date() and today.time().hour >= 12:
             saturday += datetime.timedelta(weeks=1)
 
         next_draw = datetime.datetime(
