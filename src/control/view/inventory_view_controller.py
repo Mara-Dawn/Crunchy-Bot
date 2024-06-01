@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import secrets
 
@@ -21,6 +22,54 @@ from control.logger import BotLogger
 from control.view.view_controller import ViewController
 
 
+class InventoryInteraction:
+    def __init__(
+        self,
+        interaction: discord.Interaction,
+        event_type: UIEventType,
+        view_id: int,
+    ):
+        self.interaction = interaction
+        self.event_type = event_type
+        self.view_id = view_id
+
+
+class InventoryItemAction(InventoryInteraction):
+    def __init__(
+        self,
+        interaction: discord.Interaction,
+        item_type: ItemType,
+        item_action: ActionType,
+        view_id: int,
+    ):
+        super().__init__(
+            interaction=interaction,
+            event_type=UIEventType.INVENTORY_ITEM_ACTION,
+            view_id=view_id,
+        )
+        self.item_type = item_type
+        self.item_action = item_action
+
+
+class InventorySellAction(InventoryInteraction):
+    def __init__(
+        self,
+        interaction: discord.Interaction,
+        item_type: ItemType,
+        amount: int,
+        sell_until: bool,
+        view_id: int,
+    ):
+        super().__init__(
+            interaction=interaction,
+            event_type=UIEventType.INVENTORY_SELL,
+            view_id=view_id,
+        )
+        self.item_type = item_type
+        self.amount = amount
+        self.sell_until = sell_until
+
+
 class InventoryViewController(ViewController):
 
     def __init__(
@@ -33,6 +82,23 @@ class InventoryViewController(ViewController):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.item_manager: ItemManager = controller.get_service(ItemManager)
+
+        self.request_queue = asyncio.Queue()
+        self.request_worker = asyncio.create_task(self.inventory_worker())
+
+    async def inventory_worker(self):
+        while True:
+            request: InventoryInteraction = await self.request_queue.get()
+
+            match request.event_type:
+                case UIEventType.INVENTORY_ITEM_ACTION:
+                    action_request: InventoryItemAction = request
+                    await self.item_action(action_request)
+                case UIEventType.INVENTORY_SELL:
+                    sell_request: InventorySellAction = request
+                    await self.sell(sell_request)
+
+            self.request_queue.task_done()
 
     async def listen_for_event(self, event: BotEvent) -> None:
         member_id = None
@@ -58,17 +124,30 @@ class InventoryViewController(ViewController):
                 interaction = event.payload[0]
                 item_type = event.payload[1]
                 item_action = event.payload[2]
-                await self.item_action(
-                    interaction, item_type, item_action, event.view_id
+
+                request = InventoryItemAction(
+                    interaction=interaction,
+                    item_type=item_type,
+                    item_action=item_action,
+                    view_id=event.view_id,
                 )
+                await self.request_queue.put(request)
+
             case UIEventType.INVENTORY_SELL:
                 interaction = event.payload[0]
                 item_type = event.payload[1]
                 amount = event.payload[2]
                 sell_until = event.payload[3]
-                await self.sell(
-                    interaction, item_type, amount, sell_until, event.view_id
+
+                request = InventorySellAction(
+                    interaction=interaction,
+                    item_type=item_type,
+                    amount=amount,
+                    sell_until=sell_until,
+                    view_id=event.view_id,
                 )
+                await self.request_queue.put(request)
+
             case UIEventType.SHOP_RESPONSE_USER_SUBMIT:
                 if event.view_id is not None:
                     return
@@ -80,12 +159,13 @@ class InventoryViewController(ViewController):
 
     async def sell(
         self,
-        interaction: discord.Interaction,
-        item_type: ItemType,
-        amount: int,
-        sell_until: bool,
-        view_id: int,
+        request: InventorySellAction,
     ):
+        interaction = request.interaction
+        item_type = request.item_type
+        amount = request.amount
+        sell_until = request.sell_until
+
         guild_id = interaction.guild_id
         user_id = interaction.user.id
         inventory = await self.item_manager.get_user_inventory(guild_id, user_id)
@@ -181,11 +261,13 @@ class InventoryViewController(ViewController):
 
     async def item_action(
         self,
-        interaction: discord.Interaction,
-        item_type: ItemType,
-        item_action: ActionType,
-        view_id: int,
+        request: InventoryItemAction,
     ):
+        interaction = request.interaction
+        item_type = request.item_type
+        item_action = request.item_action
+        view_id = request.view_id
+
         guild_id = interaction.guild_id
         user_id = interaction.user.id
         item_state = ItemState.ENABLED
