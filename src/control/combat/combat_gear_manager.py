@@ -85,43 +85,43 @@ class CombatGearManager(Service):
     ]
 
     MODIFIER_BASE = {
-        GearModifierType.WEAPON_DAMAGE_MIN: 8,
-        GearModifierType.WEAPON_DAMAGE_MAX: 12,
+        GearModifierType.WEAPON_DAMAGE_MIN: 7,
+        GearModifierType.WEAPON_DAMAGE_MAX: 10,
         GearModifierType.ARMOR: 5,
         GearModifierType.ATTACK: 2,
         GearModifierType.MAGIC: 2,
         GearModifierType.HEALING: 2,
-        GearModifierType.CRIT_DAMAGE: 3,
-        GearModifierType.CRIT_RATE: 3,
+        GearModifierType.CRIT_DAMAGE: 4,
+        GearModifierType.CRIT_RATE: 2,
         GearModifierType.DEFENSE: 1,
         GearModifierType.CONSTITUTION: 3,
         GearModifierType.DEXTERITY: 1,
     }
     MODIFIER_SCALING = {
-        GearModifierType.WEAPON_DAMAGE_MIN: 0.3,
-        GearModifierType.WEAPON_DAMAGE_MAX: 0.3,
+        GearModifierType.WEAPON_DAMAGE_MIN: 0.5,
+        GearModifierType.WEAPON_DAMAGE_MAX: 0.5,
         GearModifierType.ARMOR: 0.3,
         GearModifierType.ATTACK: 0.6,
-        GearModifierType.MAGIC: 0.6,
-        GearModifierType.HEALING: 0.5,
-        GearModifierType.CRIT_DAMAGE: 0.5,
-        GearModifierType.CRIT_RATE: 0.05,
-        GearModifierType.DEFENSE: 0.5,
+        GearModifierType.MAGIC: 0.55,
+        GearModifierType.HEALING: 0.6,
+        GearModifierType.CRIT_DAMAGE: 0.15,
+        GearModifierType.CRIT_RATE: 0.03,
+        GearModifierType.DEFENSE: 0.15,
         GearModifierType.CONSTITUTION: 0.3,
         GearModifierType.DEXTERITY: 0.3,
     }
     MODIFIER_RANGE = {
-        GearModifierType.WEAPON_DAMAGE_MIN: 0.1,
-        GearModifierType.WEAPON_DAMAGE_MAX: 0.1,
-        GearModifierType.ARMOR: 0.1,
-        GearModifierType.ATTACK: 0.1,
-        GearModifierType.MAGIC: 0.1,
-        GearModifierType.HEALING: 0.1,
-        GearModifierType.CRIT_DAMAGE: 0.1,
-        GearModifierType.CRIT_RATE: 0.1,
-        GearModifierType.DEFENSE: 0.1,
-        GearModifierType.CONSTITUTION: 0.1,
-        GearModifierType.DEXTERITY: 0.1,
+        GearModifierType.WEAPON_DAMAGE_MIN: 0.05,
+        GearModifierType.WEAPON_DAMAGE_MAX: 0.05,
+        GearModifierType.ARMOR: 0.05,
+        GearModifierType.ATTACK: 0.05,
+        GearModifierType.MAGIC: 0.05,
+        GearModifierType.HEALING: 0.05,
+        GearModifierType.CRIT_DAMAGE: 0.05,
+        GearModifierType.CRIT_RATE: 0.05,
+        GearModifierType.DEFENSE: 0.05,
+        GearModifierType.CONSTITUTION: 0.05,
+        GearModifierType.DEXTERITY: 0.05,
     }
     INT_MODIFIERS = [
         GearModifierType.WEAPON_DAMAGE_MIN,
@@ -249,12 +249,15 @@ class CombatGearManager(Service):
         )
 
         base_value = (
-            self.MODIFIER_BASE[modifier_type]
-            + self.MODIFIER_BASE[modifier_type]
+            (
+                self.MODIFIER_BASE[modifier_type]
+                + self.MODIFIER_BASE[modifier_type]
+                * (self.MODIFIER_SCALING[modifier_type])
+                * (item_level - 1)
+            )
+            * slot_scaling
             * base.scaling
-            * (self.MODIFIER_SCALING[modifier_type])
-            * (item_level - 1)
-        ) * slot_scaling
+        )
 
         min_roll = max(
             self.MODIFIER_BASE[modifier_type] * slot_scaling,

@@ -34,7 +34,7 @@ class EncounterManager(Service):
 
     TURN_WAIT = 4
     ENCOUNTER_MIN_LVL_SCALING = 0.65
-    ENEMY_HEALTH_SCALING = 0.6
+    ENEMY_HEALTH_SCALING = 2
 
     def __init__(
         self,
