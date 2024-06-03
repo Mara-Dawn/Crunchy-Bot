@@ -174,6 +174,8 @@ class Bully(commands.Cog):
                 generated_content = await self.ai_manager.nerdify(content)
             case ItemType.TRUMP_DEBUFF:
                 generated_content = await self.ai_manager.trumpify(content)
+            case ItemType.MACHO_DEBUFF:
+                generated_content = await self.ai_manager.machofy(content)
 
         generated_content = (
             generated_content + f"\n||original message: {original_message}||"
