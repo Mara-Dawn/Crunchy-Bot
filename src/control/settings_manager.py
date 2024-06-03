@@ -929,7 +929,7 @@ class SettingsManager(Service):
             channels,
         )
 
-    async def get_haunt_exclude_channels(self, guild: int) -> list[int]:
+    async def get_haunt_channels(self, guild: int) -> list[int]:
         return [
             int(x)
             for x in await self.get_setting(
@@ -939,7 +939,7 @@ class SettingsManager(Service):
             )
         ]
 
-    async def set_haunt_exclude_channels(self, guild: int, channels: list[int]) -> None:
+    async def set_haunt_channels(self, guild: int, channels: list[int]) -> None:
         await self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,
@@ -947,8 +947,8 @@ class SettingsManager(Service):
             channels,
         )
 
-    async def add_haunt_exclude_channel(self, guild: int, channel: int) -> None:
-        channels = await self.get_haunt_exclude_channels(guild)
+    async def add_haunt_channel(self, guild: int, channel: int) -> None:
+        channels = await self.get_haunt_channels(guild)
         if channel not in channels:
             channels.append(channel)
         await self.update_setting(
@@ -958,8 +958,8 @@ class SettingsManager(Service):
             channels,
         )
 
-    async def remove_haunt_exclude_channel(self, guild: int, channel: int) -> None:
-        channels = await self.get_haunt_exclude_channels(guild)
+    async def remove_haunt_channel(self, guild: int, channel: int) -> None:
+        channels = await self.get_haunt_channels(guild)
         if channel in channels:
             channels.remove(channel)
         await self.update_setting(
