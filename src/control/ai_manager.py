@@ -258,9 +258,8 @@ class AIManager(Service):
         backstory = (
             "Reword my next message in a way a super pure and religious fanatic would word it, who is strictly opposed to anything sexual. "
             " Recite bible verses when they fit the context and tell everyone disagreeing with you that they will burn in hell."
-            " Keep your responses short, about one or two times  as long as the original message."
         )
-        return await self.modify(text_prompt, backstory)
+        return await self.modify(text_prompt, backstory, length_threshold=15)
 
     async def alcoholify(self, text_prompt: str):
         backstory = (
@@ -297,7 +296,7 @@ class AIManager(Service):
             "He should bellittle others for knowing less than him and use overly technical wors to make himself look smarter."
         )
 
-        return await self.modify(text_prompt, backstory)
+        return await self.modify(text_prompt, backstory, length_threshold=15)
     
     async def trumpify(self, text_prompt: str):
         backstory = (
@@ -307,14 +306,26 @@ class AIManager(Service):
 
         return await self.modify(text_prompt, backstory)
 
-    async def modify(self, text_prompt:str, backstory:str):
+    async def machofy(self, text_prompt: str):
+        backstory = (
+            "Reword my message in a way a muscular, naive, uncultured and arrogant narcissistic person would talk to a girl."
+            "Be over the top macho, overly self confident and think that you are the center of the universe."
+        )
+
+        return await self.modify(text_prompt, backstory)
+
+    async def modify(self, text_prompt:str, backstory:str, length_threshold: int = 10):
         if text_prompt is None or len(text_prompt) <= 0:
             return ""
-        
+
+        word_count = len(text_prompt.split(" "))
+        max_length = max(length_threshold ,int(word_count*1.2))
+
         text = backstory
         text += "Keep in mind that the following message is spoken by someone and should be reworded so that it still is from their point of view. "
         text += "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind. "
         text += "Dont put your response in quotation marks. Do not respond to the message, just reword it. "
+        text += f"Your response has to be {max_length} words long or less. "
         text += "The message will follow now: "
         
         chat_log = ChatLog(text)

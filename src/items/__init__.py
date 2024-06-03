@@ -957,7 +957,8 @@ class Scrap(Item):
 # Debuffs
 class Debuff(Item):
 
-    DEBUFF_DURATION = 15
+    DEBUFF_DURATION = 7
+    DEBUFF_BAKED_DURATION = 3
 
     DEBUFFS = [
         ItemType.EGIRL_DEBUFF,
@@ -967,7 +968,8 @@ class Debuff(Item):
         ItemType.BRIT_DEBUFF,
         ItemType.MEOW_DEBUFF,
         ItemType.NERD_DEBUFF,
-        ItemType.TRUMP_DEBUFF,
+        ItemType.MACHO_DEBUFF,
+        # ItemType.TRUMP_DEBUFF,
     ]
 
     def __init__(self, cost: int | None):
@@ -1149,6 +1151,23 @@ class Trumpify(Debuff):
             "Your next few messages will become trump talk."
         )
         self.emoji = "🚽"
+
+
+class Machofy(Debuff):
+
+    def __init__(self, cost: int | None):
+        super().__init__(cost)
+        self.name = "I am the best."
+        self.type = ItemType.MACHO_DEBUFF
+        self.description = (
+            "You were possessed by the ghost of a massive macho. "
+            "(We take no responsibility for whatever happens while possessed) "
+        )
+        self.information = (
+            "You gain this debuff when someone uses a ghost bean on you. "
+            "Your next few messages will become macho talk."
+        )
+        self.emoji = "😎"
 
 
 # Lootbox Extras

@@ -140,10 +140,10 @@ class ItemManager(Service):
         #     lucky_item_pool[index]: value for index, value in enumerate(lucky_weights)
         # }
         # Spawn Chances
-        mimic_chance = 0.095
+        mimic_chance = 0.1
         large_chest_chance = 0.03
         large_mimic_chance = 0.02
-        spook_mimic_chance = 0.005
+        spook_mimic_chance = 0
         lucky_item_chance = 0.05
 
         random_items = {}
