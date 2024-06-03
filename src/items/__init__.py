@@ -927,17 +927,18 @@ class GhostBean(Item):
 # Debuffs
 class Debuff(Item):
 
-    DEBUFF_DURATION = 15
+    DEBUFF_DURATION = 7
+    DEBUFF_BAKED_DURATION = 3
 
     DEBUFFS = [
         ItemType.EGIRL_DEBUFF,
-        ItemType.RELIGION_DEBUFF,
+        # ItemType.RELIGION_DEBUFF,
         # ItemType.ALCOHOL_DEBUFF,
         ItemType.WEEB_DEBUFF,
         ItemType.BRIT_DEBUFF,
         ItemType.MEOW_DEBUFF,
         ItemType.NERD_DEBUFF,
-        ItemType.TRUMP_DEBUFF,
+        # ItemType.TRUMP_DEBUFF,
     ]
 
     def __init__(self, cost: int | None):

@@ -258,7 +258,6 @@ class AIManager(Service):
         backstory = (
             "Reword my next message in a way a super pure and religious fanatic would word it, who is strictly opposed to anything sexual. "
             " Recite bible verses when they fit the context and tell everyone disagreeing with you that they will burn in hell."
-            " Keep your responses short, about one or two times  as long as the original message."
         )
         return await self.modify(text_prompt, backstory)
 
@@ -315,6 +314,8 @@ class AIManager(Service):
         text += "Keep in mind that the following message is spoken by someone and should be reworded so that it still is from their point of view. "
         text += "The Messages are not directed at you so do not try to respond to them. Just rewrite them with that in mind. "
         text += "Dont put your response in quotation marks. Do not respond to the message, just reword it. "
+        text += "Your reworded message should be almost equal in word count and length to the original input. "
+        text += "At most, you may make it 10% longer but never more than that. "
         text += "The message will follow now: "
         
         chat_log = ChatLog(text)

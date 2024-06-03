@@ -1,4 +1,5 @@
 import datetime
+import random
 import re
 import typing
 
@@ -117,7 +118,10 @@ class Bully(commands.Cog):
                         not in await self.settings_manager.get_jail_channels(guild_id)
                     ):
                         continue
-                    await self.modify_message(item.type, message)
+                    chance = 1 / 4
+                    roll = random.random()
+                    if roll < chance:
+                        await self.modify_message(item.type, message)
                     return
 
     async def modify_message(self, item_type: ItemType, message: discord.Message):
