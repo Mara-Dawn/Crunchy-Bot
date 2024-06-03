@@ -173,7 +173,7 @@ class LootBoxViewController(ViewController):
             guild_id,
             member_id,
             ghost,
-            5,
+            Debuff.DEBUFF_DURATION,
         )
         await self.controller.dispatch_event(event)
 
