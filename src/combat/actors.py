@@ -272,14 +272,16 @@ class Opponent(Actor):
                 modifier += self.enemy.attributes[CharacterAttribute.HEALING_BONUS]
 
         encounter_scaling = 1
-        attack_count = skill.base_skill.hits
+        raw_attack_count = skill.base_skill.hits
+
         if combatant_count > 1:
-            attack_count_scaling = max(1, combatant_count * 0.7)
-            attack_count = int(attack_count * attack_count_scaling)
+            attack_count_scaling = max(1, combatant_count * 0.75)
+            attack_count = int(raw_attack_count * attack_count_scaling)
             encounter_scaling = (
                 combatant_count
-                / attack_count_scaling
                 * Actor.OPPONENT_ENCOUNTER_SCALING_FACTOR
+                * raw_attack_count
+                / attack_count
             )
 
         attacks = []
