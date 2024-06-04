@@ -130,6 +130,20 @@ class EquipmentViewController(ViewController):
                 skills = event.payload[1]
                 await self.set_selected_skills(interaction, skills, event.view_id)
 
+    async def encounter_check(self, interaction: discord.Interaction):
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+        encounters = await self.database.get_active_encounter_participants(guild_id)
+
+        for _, participants in encounters.items():
+            if member_id in participants:
+                await interaction.followup.send(
+                    "You cannot change your gear or skills while you are involved in an active combat.",
+                    ephemeral=True,
+                )
+                return False
+        return True
+
     async def refresh_gear_select(
         self, interaction: discord.Interaction, slot: EquipmentSlot, view_id: int
     ):
@@ -137,15 +151,8 @@ class EquipmentViewController(ViewController):
         guild_id = interaction.guild.id
         member_id = interaction.user.id
 
-        encounters = await self.database.get_active_encounter_participants(guild_id)
-
-        for _, participants in encounters.items():
-            if member_id in participants:
-                await interaction.followup.send(
-                    "You cannot change your gear while you are involved in an active combat.",
-                    ephemeral=True,
-                )
-                return
+        if not await self.encounter_check(interaction):
+            return
 
         gear_inventory = await self.database.get_user_armory(guild_id, member_id)
         default_gear = await self.gear_manager.get_default_gear()
@@ -175,15 +182,8 @@ class EquipmentViewController(ViewController):
         guild_id = interaction.guild.id
         member_id = interaction.user.id
 
-        encounters = await self.database.get_active_encounter_participants(guild_id)
-
-        for _, participants in encounters.items():
-            if member_id in participants:
-                await interaction.followup.send(
-                    "You cannot change your gear while you are involved in an active combat.",
-                    ephemeral=True,
-                )
-                return
+        if not await self.encounter_check(interaction):
+            return
 
         gear_inventory = await self.database.get_user_armory(guild_id, member_id)
         default_gear = await self.gear_manager.get_default_gear()
@@ -269,6 +269,9 @@ class EquipmentViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
+        if not await self.encounter_check(interaction):
+            return
+
         if selected is None or len(selected) <= 0:
             return
 
@@ -298,6 +301,9 @@ class EquipmentViewController(ViewController):
         lock: bool,
         view_id: int,
     ):
+        if not await self.encounter_check(interaction):
+            return
+
         if selected is None or len(selected) <= 0:
             return
 
@@ -325,6 +331,8 @@ class EquipmentViewController(ViewController):
         view_id: int,
         gear_slot: EquipmentSlot = None,
     ):
+        if not await self.encounter_check(interaction):
+            return
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
@@ -422,6 +430,8 @@ class EquipmentViewController(ViewController):
     async def open_skill_view(
         self, interaction: discord.Interaction, state: SkillViewState, view_id: int
     ):
+        if not await self.encounter_check(interaction):
+            return
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
@@ -459,6 +469,8 @@ class EquipmentViewController(ViewController):
     async def set_selected_skills(
         self, interaction: discord.Interaction, skills: dict[int, Skill], view_id: int
     ):
+        if not await self.encounter_check(interaction):
+            return
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 

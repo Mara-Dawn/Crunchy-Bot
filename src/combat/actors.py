@@ -13,6 +13,7 @@ class Actor:
     CHARACTER_ENCOUNTER_SCALING_FACOTR = 0.9
     OPPONENT_ENCOUNTER_SCALING_FACTOR = 1.2
     OPPONENT_LEVEL_SCALING_FACTOR = 0.2
+    SKILL_TYPE_PENALTY = 0.2
 
     def __init__(
         self,
@@ -103,6 +104,11 @@ class Character(Actor):
         if skill_type in self.skill_cooldowns:
             last_used = self.skill_cooldowns[skill.base_skill.skill_type]
 
+        penalty = (
+            self.skill_slots[0].base_skill.skill_effect != skill.base_skill.skill_effect
+            and skill.base_skill.skill_effect != SkillEffect.HEALING
+        )
+
         return CharacterSkill(
             skill=skill,
             last_used=last_used,
@@ -113,6 +119,7 @@ class Character(Actor):
             max_roll=self.get_skill_effect(skill, force_roll=weapon_max_roll)[
                 0
             ].raw_value,
+            penalty=penalty,
         )
 
     def get_skill_effect(
@@ -130,16 +137,21 @@ class Character(Actor):
         ]
 
         modifier = 1
+        base_dmg_type = self.skill_slots[0].base_skill.skill_effect
 
         match skill.base_skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
                 modifier += self.equipment.attributes[
                     CharacterAttribute.PHYS_DAMAGE_INCREASE
                 ]
+                if base_dmg_type != skill.base_skill.skill_effect:
+                    modifier *= self.SKILL_TYPE_PENALTY
             case SkillEffect.MAGICAL_DAMAGE:
                 modifier += self.equipment.attributes[
                     CharacterAttribute.MAGIC_DAMAGE_INCREASE
                 ]
+                if base_dmg_type != skill.base_skill.skill_effect:
+                    modifier *= self.SKILL_TYPE_PENALTY
             case SkillEffect.HEALING:
                 modifier += self.equipment.attributes[CharacterAttribute.HEALING_BONUS]
 

@@ -130,7 +130,7 @@ class EncounterManager(Service):
         self.logger.log(guild.id, log_message, cog=self.log_name)
 
         encounter = await self.create_encounter(guild.id)
-        embed = self.embed_manager.get_spawn_embed(encounter)
+        embed = await self.embed_manager.get_spawn_embed(encounter)
 
         enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
 
@@ -143,6 +143,9 @@ class EncounterManager(Service):
         encounter.channel_id = message.channel.id
 
         encounter_id = await self.database.log_encounter(encounter)
+
+        view.set_message(message)
+        await view.refresh_ui(embed=embed, encounter_id=encounter_id)
 
         event = EncounterEvent(
             datetime.datetime.now(),

@@ -605,6 +605,11 @@ class Dropdown(discord.ui.Select):
                     # disabled = True
                     available = [equipped]
 
+            if len(selected_data) == 1 and selected_data[0].skill.id not in [
+                data.skill.id for data in available
+            ]:
+                available.append(selected_data[0])
+
         max_values = min(max_values, len(available))
 
         equipped_ids = [

@@ -4,7 +4,7 @@ import discord
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext, TurnData
 from combat.enemies.enemy import Enemy
-from combat.skills.skill import CharacterSkill, Skill
+from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect, SkillType
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
@@ -166,7 +166,7 @@ class CombatActorManager(Service):
 
     def get_skill_cooldowns(
         self, actor_id: int, skills: list[Skill], combat_events: list[CombatEvent]
-    ) -> list[CharacterSkill]:
+    ) -> dict[SkillType, int]:
         cooldowns = {}
         last_used = 0
         for event in combat_events:

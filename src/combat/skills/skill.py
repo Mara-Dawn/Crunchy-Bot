@@ -273,12 +273,14 @@ class CharacterSkill:
         stacks_used: int,
         min_roll: int,
         max_roll: int,
+        penalty: bool = False,
     ):
         self.skill = skill
         self.last_used = last_used
         self.stacks_used = stacks_used
         self.min_roll = min_roll
         self.max_roll = max_roll
+        self.penalty = penalty
 
     def on_cooldown(self):
         if self.last_used is None or self.skill.base_skill.cooldown is None:
@@ -357,8 +359,14 @@ class CharacterSkill:
             # Damage
             caption = self.skill.EFFECT_LABEL_MAP[self.skill.base_skill.skill_effect]
             spacing = " " * (max_len_pre - len(caption))
-            damage_text = f"{spacing}{caption}: {self.min_roll} - {self.max_roll}"
-            damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m"
+            penalty = penalty_colored = ""
+            if self.penalty:
+                penalty = " [!]"
+                penalty_colored = f"[30m{penalty}[0m "
+            damage_text = (
+                f"{spacing}{caption}: {self.min_roll} - {self.max_roll}{penalty}"
+            )
+            damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m{penalty_colored}"
             prefixes.append((damage_text_colored, len(damage_text)))
 
             # Type

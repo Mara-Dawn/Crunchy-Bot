@@ -42,8 +42,8 @@ class CombatEmbedManager(Service):
     async def listen_for_event(self, event: BotEvent):
         pass
 
-    def get_spawn_embed(
-        self, encounter: Encounter, show_info: bool = False
+    async def get_spawn_embed(
+        self, encounter: Encounter, done: bool = False, show_info: bool = False
     ) -> discord.Embed:
         enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
         title = "A random Enemy appeared!"
@@ -58,6 +58,18 @@ class CombatEmbedManager(Service):
             enemy_info = f"```ansi\n[37m{enemy.information}```"
             embed.add_field(name="", value=enemy_info, inline=False)
             return embed
+
+        max_encounter_size = enemy.max_players
+        participants = await self.database.get_encounter_participants_by_encounter_id(
+            encounter.id
+        )
+        if not done:
+            participant_info = (
+                f"Active Combatants: {len(participants)}/{max_encounter_size}"
+            )
+        else:
+            participant_info = "This encounter has concluded."
+        embed.add_field(name=participant_info, value="", inline=False)
 
         embed.set_image(url=f"attachment://{enemy.image}")
 
@@ -437,7 +449,9 @@ class CombatEmbedManager(Service):
             message = "Their future turns will be skipped."
         return self.get_notification_embed(title, message, actor)
 
-    def get_actor_join_embed(self, user: discord.Member, additional_message: str = None) -> discord.Embed:
+    def get_actor_join_embed(
+        self, user: discord.Member, additional_message: str = None
+    ) -> discord.Embed:
         title = "A new player joined the battle!"
         message = f"Good luck {user.display_name}!"
         if additional_message is not None:
