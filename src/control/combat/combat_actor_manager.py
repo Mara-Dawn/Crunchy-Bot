@@ -47,7 +47,7 @@ class CombatActorManager(Service):
     ):
         health = actor.max_hp
 
-        for event in combat_events:
+        for event in reversed(combat_events):
             if event.target_id != actor.id:
                 continue
             if event.skill_type is None:
@@ -60,6 +60,7 @@ class CombatActorManager(Service):
                     health -= event.skill_value
                 case SkillEffect.HEALING:
                     health += event.skill_value
+                    health = min(health, actor.max_hp)
 
             if health <= 0:
                 return 0
@@ -218,7 +219,7 @@ class CombatActorManager(Service):
 
             total_damage = target.get_damage_after_defense(skill, instance.scaled_value)
 
-            new_target_hp = max(0, current_hp - total_damage)
+            new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
 
             damage_data.append((target, instance, new_target_hp))
 

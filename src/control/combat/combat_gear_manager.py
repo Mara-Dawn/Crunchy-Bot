@@ -32,6 +32,8 @@ from control.service import Service
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
+from events.encounter_event import EncounterEvent
+from events.types import EncounterEventType
 
 
 class CombatGearManager(Service):
@@ -338,6 +340,18 @@ class CombatGearManager(Service):
 
                 return gear_item
 
+    async def get_combatant_penalty(
+        self, character: Character, encounter_events: list[EncounterEvent]
+    ) -> float:
+        for event in encounter_events:
+            if event.member_id == character.member.id:
+                match event.encounter_event_type:
+                    case EncounterEventType.PENALTY50:
+                        return 0.5
+                    case EncounterEventType.PENALTY75:
+                        return 0.75
+        return 0
+
     async def roll_enemy_loot(self, context: EncounterContext):
         enemy = context.opponent.enemy
 
@@ -347,9 +361,19 @@ class CombatGearManager(Service):
 
             guild_id = combatant.member.guild.id
 
-            beans_amount = enemy.roll_beans_amount(context.opponent.level)
-            loot_amount = enemy.roll_loot_amount(context.opponent.level)
-            bonus_loot_drop = random.random() < enemy.bonus_loot_chance
+            penalty = await self.get_combatant_penalty(
+                combatant, context.encounter_events
+            )
+
+            beans_amount = int(
+                enemy.roll_beans_amount(context.opponent.level) * (1 - penalty)
+            )
+            loot_amount = int(
+                enemy.roll_loot_amount(context.opponent.level) * (1 - penalty)
+            )
+            bonus_loot_drop = random.random() < (
+                enemy.bonus_loot_chance * (1 - penalty)
+            )
 
             drops = []
             for _ in range(loot_amount):

@@ -67,6 +67,7 @@ class Enemy:
         max_hp: int,
         min_dmg: int,
         max_dmg: int,
+        max_players: int,
         skill_types: list[SkillType],
         item_loot_table: list[ItemType],
         gear_loot_table: list[GearBaseType],
@@ -92,6 +93,7 @@ class Enemy:
         self.max_hp = max_hp
         self.min_dmg = min_dmg
         self.max_dmg = max_dmg
+        self.max_players = max_players
         self.skill_types = skill_types
         self.item_loot_table = item_loot_table
         self.gear_loot_table = gear_loot_table

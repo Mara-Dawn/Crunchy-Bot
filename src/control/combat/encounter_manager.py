@@ -167,12 +167,60 @@ class EncounterManager(Service):
         )
         return thread
 
+    async def apply_late_join_penalty(self, encounter_id: int, member_id: int) -> str:
+        encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
+        encounter_events = await self.database.get_encounter_events_by_encounter_id(
+            encounter_id
+        )
+        combat_events = await self.database.get_combat_events_by_encounter_id(
+            encounter_id
+        )
+        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+        opponent = await self.actor_manager.get_opponent(
+            enemy,
+            encounter.enemy_level,
+            encounter.max_hp,
+            encounter_events,
+            combat_events,
+        )
+
+        max_enemy_hp = encounter.max_hp
+        current_enemy_hp = await self.actor_manager.get_actor_current_hp(
+            opponent, combat_events
+        )
+
+        combat_progress = current_enemy_hp / max_enemy_hp
+
+        if combat_progress < 0.5:
+            additional_message = "You joined late, so you will get a 50% loot penalty."
+            event = EncounterEvent(
+                datetime.datetime.now(),
+                encounter.guild_id,
+                encounter.id,
+                member_id,
+                EncounterEventType.PENALTY50,
+            )
+            await self.controller.dispatch_event(event)
+        elif combat_progress <= 0.25:
+            additional_message = "You joined late, so you will get a 75% loot penalty."
+            event = EncounterEvent(
+                datetime.datetime.now(),
+                encounter.guild_id,
+                encounter.id,
+                member_id,
+                EncounterEventType.PENALTY75,
+            )
+            await self.controller.dispatch_event(event)
+
+        return additional_message
+
     async def add_member_to_encounter(self, encounter_id: int, member_id: int):
         thread_id = await self.database.get_encounter_thread(encounter_id)
 
         encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
         thread = None
         new_thread = False
+        additional_message = ""
 
         if thread_id is None:
             thread = await self.create_encounter_thread(encounter)
@@ -180,13 +228,19 @@ class EncounterManager(Service):
         else:
             thread = self.bot.get_channel(encounter.channel_id).get_thread(thread_id)
 
+            additional_message = await self.apply_late_join_penalty(
+                encounter_id, member_id
+            )
+
         if thread is None:
             return
 
         user = self.bot.get_guild(encounter.guild_id).get_member(member_id)
         await thread.add_user(user)
 
-        embed = self.embed_manager.get_actor_join_embed(user)
+        embed = self.embed_manager.get_actor_join_embed(
+            user, additional_message=additional_message
+        )
         embed.set_thumbnail(url=user.display_avatar.url)
 
         turn_message = await self.get_previous_turn_message(thread)
@@ -374,7 +428,9 @@ class EncounterManager(Service):
             if skill_data.skill.base_skill.skill_effect != SkillEffect.HEALING:
                 total_skill_value *= -1
 
-            new_target_hp = max(0, current_hp + total_skill_value)
+            new_target_hp = min(
+                max(0, current_hp + total_skill_value), character.max_hp
+            )
             skill_value_data.append((target, instance, new_target_hp))
 
         turn_data = [TurnData(character, skill_data.skill, skill_value_data)]
@@ -397,7 +453,7 @@ class EncounterManager(Service):
                     context.encounter.guild_id,
                     context.encounter.id,
                     character.id,
-                    context.opponent.id,
+                    target.id,
                     skill_data.skill.base_skill.skill_type,
                     total_damage,
                     skill_data.skill.id,
@@ -525,7 +581,14 @@ class EncounterManager(Service):
                     encounter_event_type = EncounterEventType.ENEMY_DEFEAT
 
                 embed = self.embed_manager.get_actor_defeated_embed(actor)
-                await context.thread.send("", embed=embed)
+
+                turn_message = await self.get_previous_turn_message(context.thread)
+                if turn_message is None:
+                    await context.thread.send("", embed=embed)
+                else:
+                    previous_embeds = turn_message.embeds
+                    embeds = previous_embeds + [embed]
+                    await turn_message.edit(embeds=embeds)
 
                 event = EncounterEvent(
                     datetime.datetime.now(),

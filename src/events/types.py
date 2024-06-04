@@ -82,6 +82,8 @@ class EncounterEventType(str, Enum):
     MEMBER_DEFEAT = "member_defeat"
     ENEMY_DEFEAT = "enemy_defeat"
     END = "end"
+    PENALTY50 = "penalty_50"
+    PENALTY75 = "penalty_75"
 
 
 class CombatEventType(str, Enum):

@@ -11,6 +11,7 @@ from events.types import EncounterEventType, UIEventType
 from events.ui_event import UIEvent
 
 from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
 from control.event_manager import EventManager
@@ -35,6 +36,9 @@ class CombatViewController(ViewController):
         )
         self.embed_manager: CombatEmbedManager = controller.get_service(
             CombatEmbedManager
+        )
+        self.enemy_manager: CombatEnemyManager = self.controller.get_service(
+            CombatEnemyManager
         )
 
     async def listen_for_ui_event(self, event: UIEvent):
@@ -73,6 +77,16 @@ class CombatViewController(ViewController):
         if encounter.id not in encounters:
             await interaction.followup.send(
                 "This encounter has already concluded.",
+                ephemeral=True,
+            )
+            return
+
+        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+        max_encounter_size = enemy.max_players
+
+        if len(encounters[encounter.id]) >= max_encounter_size:
+            await interaction.followup.send(
+                "This encounter is already full.",
                 ephemeral=True,
             )
             return

@@ -437,7 +437,9 @@ class CombatEmbedManager(Service):
             message = "Their future turns will be skipped."
         return self.get_notification_embed(title, message, actor)
 
-    def get_actor_join_embed(self, user: discord.Member) -> discord.Embed:
+    def get_actor_join_embed(self, user: discord.Member, additional_message: str = None) -> discord.Embed:
         title = "A new player joined the battle!"
         message = f"Good luck {user.display_name}!"
+        if additional_message is not None:
+            message += f"\n{additional_message}"
         return self.get_notification_embed(title, message)
