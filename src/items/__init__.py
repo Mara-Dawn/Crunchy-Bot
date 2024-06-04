@@ -821,7 +821,7 @@ class SlapBoost(Item):
 class NoLimitGamba(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 12000
+        defaultcost = 10500
 
         if cost is None:
             cost = defaultcost
