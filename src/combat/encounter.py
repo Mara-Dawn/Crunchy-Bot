@@ -5,7 +5,7 @@ import discord
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
-from combat.skills.types import DamageInstance
+from combat.skills.types import SkillInstance
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.types import CombatEventType, EncounterEventType
@@ -129,7 +129,7 @@ class TurnData:
         self,
         actor: Actor,
         skill: Skill,
-        damage_data: list[tuple[Actor, DamageInstance, int]],
+        damage_data: list[tuple[Actor, SkillInstance, int]],
     ):
         self.actor = actor
         self.skill = skill

@@ -5,7 +5,7 @@ import discord
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.skills.skill import Skill
-from combat.skills.types import DamageInstance, SkillEffect
+from combat.skills.types import SkillEffect, SkillInstance
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.combat_skill_manager import CombatSkillManager
@@ -242,7 +242,7 @@ class CombatEmbedManager(Service):
         current_actor: Actor,
         target: Actor,
         skill: Skill,
-        damage_instance: DamageInstance,
+        damage_instance: SkillInstance,
     ):
         outcome_title = ""
         damage_info = ""
@@ -262,6 +262,9 @@ class CombatEmbedManager(Service):
             case SkillEffect.MAGICAL_DAMAGE:
                 outcome_title = "Spell Damage"
                 damage_info = f"**{display_dmg}** [magic]"
+            case SkillEffect.HEALING:
+                outcome_title = "Healing"
+                damage_info = f"**{display_dmg}**"
 
         if damage_instance.is_crit:
             damage_info = "CRIT! " + damage_info

@@ -1,7 +1,9 @@
+from combat.actors import Actor
+from combat.encounter import EncounterContext
 from combat.gear.types import Rarity
 from combat.skills.skill import Skill
 from combat.skills.skills import *  # noqa: F403
-from combat.skills.types import SkillType
+from combat.skills.types import SkillTarget, SkillType
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -11,6 +13,10 @@ from events.bot_event import BotEvent
 
 
 class CombatSkillManager(Service):
+
+    CHARACTER_ENCOUNTER_SCALING_FACOTR = 0.9
+    OPPONENT_ENCOUNTER_SCALING_FACTOR = 1.2
+    OPPONENT_LEVEL_SCALING_FACTOR = 0.2
 
     def __init__(
         self,
@@ -44,3 +50,13 @@ class CombatSkillManager(Service):
         skill = globals()[skill_type]
         instance = skill()
         return instance
+
+    async def get_character_default_target(
+        self, source: Actor, skill: Skill, context: EncounterContext
+    ) -> Actor:
+
+        match skill.base_skill.default_target:
+            case SkillTarget.OPPONENT:
+                return context.opponent
+            case SkillTarget.SELF:
+                return source

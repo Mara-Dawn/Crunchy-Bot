@@ -5,7 +5,7 @@ from combat.enemies.enemy import Enemy
 from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import CharacterSkill, Skill
-from combat.skills.types import DamageInstance, SkillEffect, SkillType
+from combat.skills.types import SkillEffect, SkillInstance, SkillType
 
 
 class Actor:
@@ -41,9 +41,9 @@ class Actor:
     def get_skill_data(self, skill: Skill) -> CharacterSkill:
         pass
 
-    def get_skill_damage(
+    def get_skill_effect(
         self, skill: Skill, combatant_count: int = 1, force_roll: int = None
-    ) -> list[DamageInstance]:
+    ) -> list[SkillInstance]:
         pass
 
     def get_damage_after_defense(self, skill: Skill, incoming_damage: int) -> float:
@@ -107,17 +107,20 @@ class Character(Actor):
             skill=skill,
             last_used=last_used,
             stacks_used=stacks_used,
-            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll)[
+            min_roll=self.get_skill_effect(skill, force_roll=weapon_min_roll)[
                 0
             ].raw_value,
-            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll)[
+            max_roll=self.get_skill_effect(skill, force_roll=weapon_max_roll)[
                 0
             ].raw_value,
         )
 
-    def get_skill_damage(
-        self, skill: Skill, combatant_count: int = 1, force_roll: int = None
-    ) -> list[DamageInstance]:
+    def get_skill_effect(
+        self,
+        skill: Skill,
+        combatant_count: int = 1,
+        force_roll: int = None,
+    ) -> list[SkillInstance]:
         skill_base_value = skill.base_skill.scaling
         weapon_min_roll = self.equipment.weapon.modifiers[
             GearModifierType.WEAPON_DAMAGE_MIN
@@ -147,7 +150,7 @@ class Character(Actor):
             )
 
         attack_count = skill.base_skill.hits
-        attacks = []
+        skill_instances = []
         for _ in range(attack_count):
             weapon_roll = force_roll
             if weapon_roll is None:
@@ -162,7 +165,7 @@ class Character(Actor):
                     CharacterAttribute.CRIT_DAMAGE
                 ]
 
-            damage_instance = DamageInstance(
+            skill_instance = SkillInstance(
                 weapon_roll=weapon_roll,
                 skill_base=skill_base_value,
                 modifier=modifier,
@@ -170,9 +173,9 @@ class Character(Actor):
                 encounter_scaling=encounter_scaling,
                 is_crit=critical_hit,
             )
-            attacks.append(damage_instance)
+            skill_instances.append(skill_instance)
 
-        return attacks
+        return skill_instances
 
     def get_damage_after_defense(self, skill: Skill, incoming_damage: int) -> float:
 
@@ -238,17 +241,20 @@ class Opponent(Actor):
             skill=skill,
             last_used=self.skill_cooldowns[skill.base_skill.skill_type],
             stacks_used=stacks_used,
-            min_roll=self.get_skill_damage(skill, force_roll=weapon_min_roll)[
+            min_roll=self.get_skill_effect(skill, force_roll=weapon_min_roll)[
                 0
             ].raw_value,
-            max_roll=self.get_skill_damage(skill, force_roll=weapon_max_roll)[
+            max_roll=self.get_skill_effect(skill, force_roll=weapon_max_roll)[
                 0
             ].raw_value,
         )
 
-    def get_skill_damage(
-        self, skill: Skill, combatant_count: int = 1, force_roll: int = None
-    ) -> list[DamageInstance]:
+    def get_skill_effect(
+        self,
+        skill: Skill,
+        combatant_count: int = 1,
+        force_roll: int = None,
+    ) -> list[SkillInstance]:
 
         skill_base_value = skill.base_skill.scaling
 
@@ -273,6 +279,7 @@ class Opponent(Actor):
 
         encounter_scaling = 1
         raw_attack_count = skill.base_skill.hits
+        attack_count = raw_attack_count
 
         if combatant_count > 1:
             attack_count_scaling = max(1, combatant_count * 0.75)
@@ -297,7 +304,7 @@ class Opponent(Actor):
                     CharacterAttribute.CRIT_DAMAGE
                 ]
 
-            damage_instance = DamageInstance(
+            damage_instance = SkillInstance(
                 weapon_roll=weapon_roll,
                 skill_base=skill_base_value,
                 modifier=modifier,

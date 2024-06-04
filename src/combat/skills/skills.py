@@ -1,5 +1,5 @@
 from combat.skills.skill import BaseSkill
-from combat.skills.types import SkillEffect, SkillType
+from combat.skills.types import SkillEffect, SkillTarget, SkillType
 
 # Base skills
 
@@ -84,9 +84,10 @@ class SecondWind(BaseSkill):
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=0,
-            scaling=1,
+            scaling=4,
             stacks=1,
             reset_after_encounter=True,
+            default_target=SkillTarget.SELF,
         )
 
 

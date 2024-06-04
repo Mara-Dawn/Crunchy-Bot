@@ -197,7 +197,7 @@ class CombatActorManager(Service):
         available_targets: list[Actor],
         hp_cache: dict[int, int],
     ):
-        damage_instances = context.opponent.get_skill_damage(
+        damage_instances = context.opponent.get_skill_effect(
             skill, combatant_count=len(context.combatants)
         )
 

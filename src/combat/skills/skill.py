@@ -1,7 +1,7 @@
 import discord
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
-from combat.skills.types import SkillEffect, SkillType
+from combat.skills.types import SkillEffect, SkillTarget, SkillType
 
 
 class BaseSkill(DroppableBase):
@@ -31,6 +31,7 @@ class BaseSkill(DroppableBase):
         weight: int = 100,
         image: str = None,
         image_path: str = None,
+        default_target: SkillTarget = SkillTarget.OPPONENT,
     ):
         super().__init__(
             base_type=Base.SKILL,
@@ -51,6 +52,7 @@ class BaseSkill(DroppableBase):
         self.hits = hits
         self.stacks = stacks
         self.reset_after_encounter = reset_after_encounter
+        self.default_target = default_target
         self.image = image
         self.image_path = image_path
 
@@ -386,13 +388,12 @@ class CharacterSkill:
                 name = "Uses"
                 spacing = " " * (max_len_pre - len(name))
 
+                stacks_text = f"{spacing}{name}: {self.stacks_left()}/{max_stacks}"
+                stacks_text_colored = f"{spacing}{name}: [35m{self.stacks_left()}[0m/[35m{max_stacks}[0m"
+
                 if self.skill.base_skill.reset_after_encounter:
-                    stacks_text = f"{spacing}{name}: {max_stacks}"
-                    stacks_text_colored = f"{spacing}{name}: [35m{max_stacks}[0m"
                     append = " (per Combat)"
                 else:
-                    stacks_text = f"{spacing}{name}: {self.stacks_left()}/{max_stacks}"
-                    stacks_text_colored = f"{spacing}{name}: [35m{self.stacks_left()}[0m/[35m{max_stacks}[0m"
                     append = " (Total)"
 
                 stacks_text += append

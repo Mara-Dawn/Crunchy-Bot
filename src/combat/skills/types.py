@@ -29,7 +29,12 @@ class SkillEffect(str, Enum):
     HEALING = "Healing"
 
 
-class DamageInstance:
+class SkillTarget(Enum):
+    OPPONENT = 0
+    SELF = 1
+
+
+class SkillInstance:
 
     def __init__(
         self,

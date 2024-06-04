@@ -8,6 +8,7 @@ from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.enemies.types import EnemyType
 from combat.skills.skill import CharacterSkill
+from combat.skills.types import SkillEffect
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_enemy_manager import CombatEnemyManager
@@ -337,31 +338,46 @@ class EncounterManager(Service):
         context: EncounterContext,
         character: Character,
         skill_data: CharacterSkill,
+        target: Actor = None,
     ):
+        if target is None:
+            target = await self.skill_manager.get_character_default_target(
+                character, skill_data.skill, context
+            )
 
-        damage_instances = character.get_skill_damage(
+        skill_instances = character.get_skill_effect(
             skill_data.skill, combatant_count=len(context.combatants)
         )
 
         turn_message = await self.get_previous_turn_message(context.thread)
         previous_embeds = turn_message.embeds
 
-        damage_data = []
+        skill_value_data = []
+        hp_cache = {}
 
-        for instance in damage_instances:
-            target = context.opponent
-            total_damage = target.get_damage_after_defense(
+        for instance in skill_instances:
+            total_skill_value = target.get_damage_after_defense(
                 skill_data.skill, instance.scaled_value
             )
 
-            current_hp = await self.actor_manager.get_actor_current_hp(
-                target, context.combat_events
-            )
+            target_id = target.id
+            if target_id is None:
+                target_id = -1
 
-            new_target_hp = max(0, current_hp - total_damage)
-            damage_data.append((target, instance, new_target_hp))
+            if target_id not in hp_cache:
+                hp_cache[target_id] = await self.actor_manager.get_actor_current_hp(
+                    target, context.combat_events
+                )
 
-        turn_data = [TurnData(character, skill_data.skill, damage_data)]
+            current_hp = hp_cache[target_id]
+
+            if skill_data.skill.base_skill.skill_effect != SkillEffect.HEALING:
+                total_skill_value *= -1
+
+            new_target_hp = max(0, current_hp + total_skill_value)
+            skill_value_data.append((target, instance, new_target_hp))
+
+        turn_data = [TurnData(character, skill_data.skill, skill_value_data)]
 
         async for embed in self.embed_manager.handle_actor_turn_embed(
             turn_data, context
