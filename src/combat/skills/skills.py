@@ -14,7 +14,7 @@ class EmptySkill(BaseSkill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
-            scaling=1,
+            base_value=1,
             hits=1,
             stacks=None,
             reset_after_encounter=False,
@@ -33,7 +33,7 @@ class NormalAttack(BaseSkill):
             information="This is the most basic attack you can use. Comes with physical weapons.",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
-            scaling=1,
+            base_value=1,
             hits=1,
             stacks=None,
             reset_after_encounter=False,
@@ -51,7 +51,7 @@ class HeavyAttack(BaseSkill):
             information="Your other basic weapon skill that comes with physical weapons.",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
-            scaling=4,
+            base_value=4,
             droppable=False,
         )
 
@@ -66,7 +66,7 @@ class MagicAttack(BaseSkill):
             information="Your basic magical attack skill. Comes with magical weapons.",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=0,
-            scaling=2,
+            base_value=2,
             droppable=False,
         )
 
@@ -84,7 +84,7 @@ class SecondWind(BaseSkill):
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=0,
-            scaling=4,
+            base_value=3,
             stacks=1,
             reset_after_encounter=True,
             default_target=SkillTarget.SELF,
@@ -101,7 +101,7 @@ class GigaBonk(BaseSkill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=5,
-            scaling=6,
+            base_value=6,
             stacks=3,
             reset_after_encounter=False,
         )
@@ -116,8 +116,8 @@ class FireBall(BaseSkill):
             description="A true classic. Extremely powerful and highly effective.",
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
-            cooldown=0,
-            scaling=10,
+            cooldown=10,
+            base_value=10,
             stacks=1,
             reset_after_encounter=False,
         )
@@ -136,7 +136,7 @@ class DeezNuts(BaseSkill):
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=1,
-            scaling=2,
+            base_value=2,
             hits=1,
             droppable=False,
         )
@@ -152,7 +152,7 @@ class Bonk(BaseSkill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
-            scaling=1,
+            base_value=1,
             hits=2,
             droppable=False,
         )

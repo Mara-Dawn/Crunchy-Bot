@@ -21,7 +21,7 @@ class BaseSkill(DroppableBase):
         information: str,
         skill_effect: SkillEffect,
         cooldown: int,
-        scaling: float,
+        base_value: float,
         min_level: int = 1,
         max_level: int = 99,
         droppable: bool = True,
@@ -48,7 +48,7 @@ class BaseSkill(DroppableBase):
         self.information = information
         self.skill_effect = skill_effect
         self.cooldown = cooldown
-        self.scaling = scaling
+        self.base_value = base_value
         self.hits = hits
         self.stacks = stacks
         self.reset_after_encounter = reset_after_encounter
@@ -100,6 +100,24 @@ class Skill(Droppable):
         SkillEffect.HEALING: 2,
     }
 
+    RARITY_STACKS_SCALING = {
+        Rarity.DEFAULT: 1,
+        Rarity.NORMAL: 1,
+        Rarity.MAGIC: 1.2,
+        Rarity.RARE: 1.5,
+        Rarity.LEGENDARY: 2,
+        Rarity.UNIQUE: 1,
+    }
+
+    RARITY_DAMAGE_SCALING = {
+        Rarity.DEFAULT: 1,
+        Rarity.NORMAL: 1,
+        Rarity.MAGIC: 1.1,
+        Rarity.RARE: 1.2,
+        Rarity.LEGENDARY: 1.3,
+        Rarity.UNIQUE: 1,
+    }
+
     def __init__(
         self,
         base_skill: BaseSkill,
@@ -108,6 +126,15 @@ class Skill(Droppable):
         locked: bool = False,
         id: int = None,
     ):
+        if not SkillType.is_weapon_skill(base_skill.skill_type):
+            base_skill.base_value = (
+                base_skill.base_value * self.RARITY_DAMAGE_SCALING[rarity]
+            )
+        if base_skill.stacks is not None:
+            base_skill.stacks = int(
+                base_skill.stacks * self.RARITY_STACKS_SCALING[rarity]
+            )
+
         super().__init__(
             name=base_skill.name,
             base=base_skill,
@@ -117,7 +144,7 @@ class Skill(Droppable):
             slot=EquipmentSlot.SKILL,
             level=level,
             rarity=rarity,
-            scaling=base_skill.scaling,
+            base_value=base_skill.base_value,
             image=base_skill.image,
             image_path=base_skill.image_path,
         )
@@ -151,7 +178,9 @@ class Skill(Droppable):
             suffix += " [🔒]"
 
         info_block = "```ansi\n"
-        info_block += f"{Droppable.RARITY_COLOR_MAP[self.rarity]}{name}[0m{suffix}"
+        info_block += (
+            f"{Droppable.RARITY_NAME_COLOR_MAP[self.rarity]}{name}[0m{suffix}"
+        )
 
         slot = self.base.slot.value
         if SkillType.is_weapon_skill(self.base_skill.skill_type):
@@ -182,17 +211,17 @@ class Skill(Droppable):
             suffixes.append((rarity_line_colored, len(rarity_line)))
 
             # Item Level
-            name = "Level"
-            spacing = " " * (max_len_suf - len(str(self.level)))
-            level_line = f"{name}: {self.level}{spacing}"
-            level_line_colored = f"{name}: [32m{self.level}[0m{spacing}"
-            suffixes.append((level_line_colored, len(level_line)))
+            # name = "Level"
+            # spacing = " " * (max_len_suf - len(str(self.level)))
+            # level_line = f"{name}: {self.level}{spacing}"
+            # level_line_colored = f"{name}: [32m{self.level}[0m{spacing}"
+            # suffixes.append((level_line_colored, len(level_line)))
 
             # Base Value
             name = "Power"
             spacing = " " * (max_len_pre - len(name))
-            base_value_text = f"{spacing}{name}: {self.scaling}"
-            base_value_text_colored = f"{spacing}{name}: [35m{self.scaling}[0m"
+            base_value_text = f"{spacing}{name}: {self.scaling:.1f}"
+            base_value_text_colored = f"{spacing}{name}: [35m{self.scaling:.1f}[0m"
             prefixes.append((base_value_text_colored, len(base_value_text)))
 
             # Type
@@ -207,12 +236,12 @@ class Skill(Droppable):
             # Cooldown
             if self.base_skill.cooldown > 0:
                 name = "Cooldown"
-                spacing = " " * (max_len_pre - len(name))
-                cooldown_text = f"{spacing}{name}: {self.base_skill.cooldown} Turns"
+                spacing = " " * (max_len_suf - len(f"{self.base_skill.cooldown} Turns"))
+                cooldown_text = f"{name}: {self.base_skill.cooldown} Turns{spacing}"
                 cooldown_text_colored = (
-                    f"{spacing}{name}: [35m{self.base_skill.cooldown}[0m Turns"
+                    f"{name}: [35m{self.base_skill.cooldown}[0m Turns{spacing}"
                 )
-                prefixes.append((cooldown_text_colored, len(cooldown_text)))
+                suffixes.append((cooldown_text_colored, len(cooldown_text)))
 
             # Stacks
             max_stacks = self.base_skill.stacks
@@ -317,7 +346,7 @@ class CharacterSkill:
 
         info_block = "```ansi\n"
         info_block += (
-            f"{Droppable.RARITY_COLOR_MAP[self.skill.rarity]}{name}[0m{suffix}"
+            f"{Droppable.RARITY_NAME_COLOR_MAP[self.skill.rarity]}{name}[0m{suffix}"
         )
 
         slot = self.skill.base_skill.slot.value
@@ -350,11 +379,11 @@ class CharacterSkill:
                 suffixes.append((rarity_line_colored, len(rarity_line)))
 
                 # Item Level
-                name = "Level"
-                spacing = " " * (max_len_suf - len(str(self.skill.level)))
-                level_line = f"{name}: {self.skill.level}{spacing}"
-                level_line_colored = f"{name}: [32m{self.skill.level}[0m{spacing}"
-                suffixes.append((level_line_colored, len(level_line)))
+                # name = "Level"
+                # spacing = " " * (max_len_suf - len(str(self.skill.level)))
+                # level_line = f"{name}: {self.skill.level}{spacing}"
+                # level_line_colored = f"{name}: [32m{self.skill.level}[0m{spacing}"
+                # suffixes.append((level_line_colored, len(level_line)))
 
             # Damage
             caption = self.skill.EFFECT_LABEL_MAP[self.skill.base_skill.skill_effect]
@@ -381,14 +410,16 @@ class CharacterSkill:
             # Cooldown
             if self.skill.base_skill.cooldown > 0:
                 name = "Cooldown"
-                spacing = " " * (max_len_pre - len(name))
+                spacing = " " * (
+                    max_len_suf - len(f"{self.skill.base_skill.cooldown} Turns")
+                )
                 cooldown_text = (
-                    f"{spacing}{name}: {self.skill.base_skill.cooldown} Turns"
+                    f"{name}: {self.skill.base_skill.cooldown} Turns{spacing}"
                 )
                 cooldown_text_colored = (
-                    f"{spacing}{name}: [35m{self.skill.base_skill.cooldown}[0m Turns"
+                    f"{name}: [35m{self.skill.base_skill.cooldown}[0m Turns{spacing}"
                 )
-                prefixes.append((cooldown_text_colored, len(cooldown_text)))
+                suffixes.append((cooldown_text_colored, len(cooldown_text)))
 
             # Stacks
             max_stacks = self.skill.base_skill.stacks

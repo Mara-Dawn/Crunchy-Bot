@@ -29,7 +29,16 @@ class DroppableBase:
 class Droppable:
 
     RARITY_COLOR_MAP = {
-        Rarity.DEFAULT: "[30m",  # ffffff
+        Rarity.DEFAULT: "[30m",
+        Rarity.NORMAL: "[38m",  # ffffff
+        Rarity.MAGIC: "[34m",  # 268bd2
+        Rarity.RARE: "[33m",  # b58900
+        Rarity.LEGENDARY: "[31m",  # #a43033
+        Rarity.UNIQUE: "[36m",  # 2aa198
+    }
+
+    RARITY_NAME_COLOR_MAP = {
+        Rarity.DEFAULT: "[38m",
         Rarity.NORMAL: "[38m",  # ffffff
         Rarity.MAGIC: "[34m",  # 268bd2
         Rarity.RARE: "[33m",  # b58900
@@ -71,7 +80,7 @@ class Droppable:
         slot: EquipmentSlot,
         level: int,
         rarity: Rarity,
-        scaling: int = 1,
+        base_value: int = 1,
         image: str = None,
         image_path: str = None,
     ):
@@ -85,7 +94,7 @@ class Droppable:
         self.rarity = rarity
         self.image = image
         self.image_path = image_path
-        self.scaling = scaling
+        self.scaling = base_value
 
     def get_embed(
         self,

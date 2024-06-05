@@ -11,7 +11,7 @@ from combat.skills.types import SkillEffect, SkillInstance, SkillType
 class Actor:
 
     CHARACTER_ENCOUNTER_SCALING_FACOTR = 0.9
-    OPPONENT_ENCOUNTER_SCALING_FACTOR = 1.2
+    OPPONENT_ENCOUNTER_SCALING_FACTOR = 1.1
     OPPONENT_LEVEL_SCALING_FACTOR = 0.2
     SKILL_TYPE_PENALTY = 0.2
 
@@ -128,7 +128,7 @@ class Character(Actor):
         combatant_count: int = 1,
         force_roll: int = None,
     ) -> list[SkillInstance]:
-        skill_base_value = skill.base_skill.scaling
+        skill_base_value = skill.base_skill.base_value
         weapon_min_roll = self.equipment.weapon.modifiers[
             GearModifierType.WEAPON_DAMAGE_MIN
         ]
@@ -268,7 +268,7 @@ class Opponent(Actor):
         force_roll: int = None,
     ) -> list[SkillInstance]:
 
-        skill_base_value = skill.base_skill.scaling
+        skill_base_value = skill.base_skill.base_value
 
         weapon_min_roll = self.enemy.min_dmg
         weapon_max_roll = self.enemy.max_dmg

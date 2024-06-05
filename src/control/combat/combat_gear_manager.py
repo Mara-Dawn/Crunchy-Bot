@@ -42,6 +42,8 @@ class CombatGearManager(Service):
 
     ITEM_LEVEL_MIN_DROP = 0.6
 
+    SKILL_DROP_CHANCE = 0.15
+
     MIN_RARITY_LVL = {
         Rarity.NORMAL: 0,
         Rarity.MAGIC: 1,
@@ -192,9 +194,28 @@ class CombatGearManager(Service):
             base: DroppableBase = base_class()
             bases.append(base)
 
+        skill_weight = 0
+        gear_weight = 0
+
+        for base in bases:
+            match base.base_type:
+                case Base.SKILL:
+                    skill_weight += base.weight
+                case Base.GEAR:
+                    gear_weight += base.weight
+
+        skill_mod = self.SKILL_DROP_CHANCE * (skill_weight + gear_weight) / skill_weight
+        # Forces chance of skill dropping to self.SKILL_DROP_CHANCE while keeping weights
+
         weights = []
         for base in bases:
-            weights.append(base.weight)
+            weight = base.weight
+            match base.base_type:
+                case Base.SKILL:
+                    weight *= skill_mod
+                case Base.GEAR:
+                    weight *= 1 - skill_mod
+            weights.append(weight)
 
         sum_weights = sum(weights)
         chances = [v / sum_weights for v in weights]

@@ -165,7 +165,7 @@ class Gear(Droppable):
             slot=base.slot,
             rarity=rarity,
             level=level,
-            scaling=base.scaling,
+            base_value=base.scaling,
             image=base.image,
             image_path=base.image_path,
         )

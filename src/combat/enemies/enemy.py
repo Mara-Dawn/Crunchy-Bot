@@ -10,22 +10,7 @@ from items.types import ItemType
 class Enemy:
 
     LOOT_MIN_AMOUNT_BY_LVL = {
-        1: 7,
-        2: 1,
-        3: 1,
-        4: 1,
-        5: 2,
-        6: 2,
-        7: 2,
-        8: 2,
-        9: 3,
-        10: 3,
-        11: 3,
-        12: 3,
-    }
-
-    LOOT_MAX_AMOUNT_BY_LVL = {
-        1: 8,
+        1: 2,
         2: 2,
         3: 2,
         4: 2,
@@ -37,6 +22,21 @@ class Enemy:
         10: 4,
         11: 4,
         12: 4,
+    }
+
+    LOOT_MAX_AMOUNT_BY_LVL = {
+        1: 3,
+        2: 3,
+        3: 4,
+        4: 4,
+        5: 4,
+        6: 4,
+        7: 5,
+        8: 5,
+        9: 5,
+        10: 5,
+        11: 6,
+        12: 6,
     }
 
     LOOT_BONUS_CHANCE_BY_LVL = {
