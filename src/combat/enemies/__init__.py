@@ -40,9 +40,9 @@ class MindGoblin(Enemy):
             image="mind_goblin.png",
             min_level=1,
             max_level=5,
-            health=8,
-            min_dmg=21,
-            max_dmg=26,
+            health=7,
+            min_dmg=18,
+            max_dmg=22,
             max_players=5,
             skill_types=[SkillType.DEEZ_NUTS, SkillType.BONK],
             item_loot_table=[

@@ -10,9 +10,9 @@ from combat.skills.types import SkillEffect, SkillInstance, SkillType
 
 class Actor:
 
-    CHARACTER_ENCOUNTER_SCALING_FACOTR = 1
+    CHARACTER_ENCOUNTER_SCALING_FACOTR = 0.9
     OPPONENT_ENCOUNTER_SCALING_FACTOR = 1.1
-    OPPONENT_LEVEL_SCALING_FACTOR = 0.2
+    OPPONENT_LEVEL_SCALING_FACTOR = 0.15
     SKILL_TYPE_PENALTY = 0.2
 
     def __init__(
