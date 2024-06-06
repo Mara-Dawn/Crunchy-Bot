@@ -35,7 +35,22 @@ class EncounterManager(Service):
 
     TURN_WAIT = 4
     ENCOUNTER_MIN_LVL_SCALING = 0.65
-    ENEMY_HEALTH_SCALING = 2
+
+    # based on avg player strength
+    ENEMY_HEALTH_SCALING = {
+        1: 11,
+        2: 34,
+        3: 72,
+        4: 142,
+        5: 204,
+        6: 341,
+        7: 461,
+        8: 589,
+        9: 764,
+        10: 1114,
+        11: 1486,
+        12: 1751,
+    }
 
     def __init__(
         self,
@@ -118,10 +133,9 @@ class EncounterManager(Service):
         spawn_weights = [w / sum_weights for w in spawn_weights]
 
         enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
-        enemy_health = random.randint(enemy.min_hp, enemy.max_hp)
-        enemy_health *= 1 + (
-            self.ENEMY_HEALTH_SCALING * (encounter_level - enemy.min_level)
-        )
+        roll = random.uniform(0.95, 1.05)
+        enemy_health = enemy.health * self.ENEMY_HEALTH_SCALING[encounter_level]
+        enemy_health *= roll
 
         return Encounter(guild_id, enemy.type, encounter_level, enemy_health)
 

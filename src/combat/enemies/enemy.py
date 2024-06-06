@@ -63,8 +63,7 @@ class Enemy:
         image: str,
         min_level: int,
         max_level: int,
-        min_hp: int,
-        max_hp: int,
+        health: int,
         min_dmg: int,
         max_dmg: int,
         max_players: int,
@@ -89,8 +88,7 @@ class Enemy:
         self.image = image
         self.min_level = min_level
         self.max_level = max_level
-        self.min_hp = min_hp
-        self.max_hp = max_hp
+        self.health = health
         self.min_dmg = min_dmg
         self.max_dmg = max_dmg
         self.max_players = max_players
