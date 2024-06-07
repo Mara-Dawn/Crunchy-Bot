@@ -135,6 +135,12 @@ class CombatViewController(ViewController):
         message = await interaction.original_response()
         await message.delete()
 
-        await self.encounter_manager.combatant_turn(context, character, skill_data)
+        current_context = await self.encounter_manager.load_encounter_context(
+            context.encounter.id
+        )
+
+        await self.encounter_manager.combatant_turn(
+            current_context, character, skill_data
+        )
 
         self.controller.detach_view_by_id(view_id)

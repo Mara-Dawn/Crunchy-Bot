@@ -39,10 +39,9 @@ class MindGoblin(Enemy):
             information="Has tickets to saw con.",
             image="mind_goblin.png",
             min_level=1,
-            max_level=5,
-            health=7,
-            min_dmg=18,
-            max_dmg=22,
+            max_level=3,
+            health=3,
+            damage_scaling=5,
             max_players=5,
             skill_types=[SkillType.DEEZ_NUTS, SkillType.BONK],
             item_loot_table=[

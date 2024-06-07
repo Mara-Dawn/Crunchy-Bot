@@ -393,7 +393,7 @@ class CombatEmbedManager(Service):
         turn_number = context.get_current_turn_number()
         title = f"Turn {turn_number}: {actor.name}"
 
-        actor_name = f"*{actor.name}*"
+        actor_name = f"{actor.name}"
 
         content = f"{actor_name}'s turn is skipped."
 
@@ -454,6 +454,6 @@ class CombatEmbedManager(Service):
     ) -> discord.Embed:
         title = "A new player joined the battle!"
         message = f"Good luck {user.display_name}!"
-        if additional_message is not None:
+        if additional_message is not None and additional_message != "":
             message += f"\n{additional_message}"
         return self.get_notification_embed(title, message)

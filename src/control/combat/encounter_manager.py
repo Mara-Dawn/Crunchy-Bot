@@ -52,6 +52,7 @@ class EncounterManager(Service):
         12: 1751.51,
     }
     ENEMY_HEALTH_LVL_FALLOFF = 0.95
+    AVERAGE_PLAYER_POTENCY = 2
 
     def __init__(
         self,
@@ -135,7 +136,11 @@ class EncounterManager(Service):
 
         enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
         roll = random.uniform(0.95, 1.05)
-        enemy_health = enemy.health * self.ENEMY_HEALTH_SCALING[encounter_level]
+        enemy_health = (
+            enemy.health
+            * self.ENEMY_HEALTH_SCALING[encounter_level]
+            * self.AVERAGE_PLAYER_POTENCY
+        )
         enemy_health *= pow(
             self.ENEMY_HEALTH_LVL_FALLOFF, (encounter_level - enemy.min_level)
         )
@@ -211,6 +216,9 @@ class EncounterManager(Service):
         )
 
         combat_progress = current_enemy_hp / max_enemy_hp
+
+        if combat_progress >= 0.5:
+            return ""
 
         if combat_progress < 0.5:
             additional_message = "You joined late, so you will get a 50% loot penalty."
@@ -342,6 +350,7 @@ class EncounterManager(Service):
             context.encounter.id,
             actor.id,
             actor.id,
+            None,
             None,
             None,
             combat_event_type,

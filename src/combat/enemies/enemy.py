@@ -64,8 +64,7 @@ class Enemy:
         min_level: int,
         max_level: int,
         health: int,
-        min_dmg: int,
-        max_dmg: int,
+        damage_scaling: int,
         max_players: int,
         skill_types: list[SkillType],
         item_loot_table: list[ItemType],
@@ -89,8 +88,7 @@ class Enemy:
         self.min_level = min_level
         self.max_level = max_level
         self.health = health
-        self.min_dmg = min_dmg
-        self.max_dmg = max_dmg
+        self.damage_scaling = damage_scaling
         self.max_players = max_players
         self.skill_types = skill_types
         self.item_loot_table = item_loot_table

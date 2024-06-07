@@ -10,10 +10,27 @@ from combat.skills.types import SkillEffect, SkillInstance, SkillType
 
 class Actor:
 
-    CHARACTER_ENCOUNTER_SCALING_FACOTR = 0.9
-    OPPONENT_ENCOUNTER_SCALING_FACTOR = 1.1
-    OPPONENT_LEVEL_SCALING_FACTOR = 0.15
+    CHARACTER_ENCOUNTER_SCALING_FACOTR = 1
+    OPPONENT_ENCOUNTER_SCALING_FACTOR = 0.95
+    OPPONENT_LEVEL_SCALING_FACTOR = 0.97
+    OPPONENT_DAMAGE_VARIANCE = 0.05
     SKILL_TYPE_PENALTY = 0.2
+
+    # Based on avg player health
+    OPPONENT_DAMAGE_BASE = {
+        1: 274.05,
+        2: 331.78,
+        3: 393.60,
+        4: 471.88,
+        5: 563.82,
+        6: 618.98,
+        7: 671.76,
+        8: 734.08,
+        9: 792.80,
+        10: 845.32,
+        11: 1012.75,
+        12: 1076.95,
+    }
 
     def __init__(
         self,
@@ -239,9 +256,16 @@ class Opponent(Actor):
         self.level = level
         self.enemy = enemy
 
+        multiplier = 0
+        for skill in self.skills:
+            multiplier += skill.base_skill.base_value * skill.base_skill.hits
+
+        self.average_skill_multi = multiplier / len(self.skills)
+
     def get_skill_data(self, skill: Skill) -> CharacterSkill:
-        weapon_min_roll = self.enemy.min_dmg
-        weapon_max_roll = self.enemy.max_dmg
+        base_damage = self.OPPONENT_DAMAGE_BASE[self.level] / self.enemy.damage_scaling
+        weapon_min_roll = int(base_damage * (1 - self.OPPONENT_DAMAGE_VARIANCE))
+        weapon_max_roll = int(base_damage * (1 + self.OPPONENT_DAMAGE_VARIANCE))
 
         skill_id = skill.id
         stacks_used = 0
@@ -269,12 +293,15 @@ class Opponent(Actor):
     ) -> list[SkillInstance]:
 
         skill_base_value = skill.base_skill.base_value
+        skill_scaling = skill_base_value / self.average_skill_multi
 
-        weapon_min_roll = self.enemy.min_dmg
-        weapon_max_roll = self.enemy.max_dmg
+        base_damage = self.OPPONENT_DAMAGE_BASE[self.level] / self.enemy.damage_scaling
 
-        modifier = 1 + (
-            self.OPPONENT_LEVEL_SCALING_FACTOR * (self.level - self.enemy.min_level)
+        weapon_min_roll = int(base_damage * (1 - self.OPPONENT_DAMAGE_VARIANCE))
+        weapon_max_roll = int(base_damage * (1 + self.OPPONENT_DAMAGE_VARIANCE))
+
+        modifier = pow(
+            self.OPPONENT_LEVEL_SCALING_FACTOR, (self.level - self.enemy.min_level)
         )
 
         match skill.base_skill.skill_effect:
@@ -318,7 +345,7 @@ class Opponent(Actor):
 
             damage_instance = SkillInstance(
                 weapon_roll=weapon_roll,
-                skill_base=skill_base_value,
+                skill_base=skill_scaling,
                 modifier=modifier,
                 critical_modifier=critical_modifier,
                 encounter_scaling=encounter_scaling,
