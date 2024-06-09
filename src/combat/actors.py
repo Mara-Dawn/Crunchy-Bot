@@ -1,5 +1,6 @@
 import random
 from collections import Counter
+from functools import lru_cache
 
 import discord
 from combat.enemies.enemy import Enemy
@@ -257,69 +258,72 @@ class Opponent(Actor):
         self.level = level
         self.enemy = enemy
 
-        multiplier = 0
+        self.average_skill_multi = self.get_potency_per_turn()
 
-        # for skill in self.skills:
-        #     cooldown = skill.base_skill.cooldown + 1
-        #     multiplier += skill.base_skill.base_value * skill.base_skill.hits / cooldown
-
-        rotation_length = 1
-        already_used = [1]
-
+    @lru_cache(maxsize=10)  # noqa: B019
+    def get_potency_per_turn(self):
         sorted_skills = sorted(
             self.skills, key=lambda x: x.base_skill.base_value, reverse=True
         )
 
+        max_depth = 1
+        cooldowns: dict[SkillType, int] = {}
+        initial_state: dict[SkillType, int] = {}
+
         for skill in sorted_skills:
-            cooldown = skill.base_skill.cooldown + 1
+            cooldowns[skill.base_skill.type] = skill.base_skill.cooldown
+            initial_state[skill.base_skill.type] = 0
+            max_depth *= skill.base_skill.cooldown + 1
 
-            if cooldown in already_used:
-                continue
+        state_list: list[dict[SkillType, int]] = []
+        skill_count = Counter()
 
-            for value in already_used:
-                if value % cooldown == 0:
-                    already_used.append(cooldown)
+        def get_rotation(
+            state_list: list[dict[SkillType, int]],
+            skill_count: Counter,
+            state: dict[SkillType, int],
+            depth_check: int,
+        ) -> list[dict[SkillType, int]]:
+            if state in state_list or depth_check <= 0:
+                return
+
+            state_list.append(state)
+
+            next_state: dict[SkillType, int] = {}
+
+            skill_chosen = False
+
+            for skill_type, cooldown in state.items():
+                if cooldown <= 0 and not skill_chosen:
+                    next_state[skill_type] = cooldowns[skill_type]
+                    skill_count[skill_type] += 1
+                    skill_chosen = True
                     continue
 
-            rotation_length *= cooldown
-            already_used.append(cooldown)
+                next_state[skill_type] = max(0, cooldown - 1)
 
-        skill_rotation = []
-        for index in range(rotation_length):
-            for skill in sorted_skills:
-                if skill not in skill_rotation:
-                    skill_rotation.append(skill)
-                    break
-                last_used = next(
-                    i
-                    for i in reversed(range(len(skill_rotation)))
-                    if skill_rotation[i] == skill
-                )
-                turns_passed = len(skill_rotation) - last_used - 1
-                if turns_passed >= skill.base_skill.cooldown:
-                    skill_rotation.append(skill)
-                    break
+            if not skill_chosen:
+                raise StopIteration("No available skill found.")
 
-            if len(skill_rotation) != index + 1:
-                skill_rotation.append(None)
+            get_rotation(state_list, skill_count, next_state, (depth_check - 1))
 
-        skill_uses = Counter()
-        for skill in skill_rotation:
-            if skill is None:
-                continue
-            skill_uses[skill.base_skill.type] += 1
+        get_rotation(state_list, skill_count, initial_state, max_depth)
 
-        multiplier = 0
+        rotation_length = len(state_list)
+        potency = 0
+
         for skill in sorted_skills:
-            multiplier += (
-                skill.base_skill.base_value
-                * skill.base_skill.hits
-                * skill_uses[skill.base_skill.type]
+            base_potency = skill.base_skill.base_value * skill.base_skill.hits
+            potency_per_turn = (
+                base_potency
+                * skill_count[skill.base_skill.skill_type]
                 / rotation_length
             )
+            potency += potency_per_turn
 
-        self.average_skill_multi = multiplier
+        return potency
 
+    @lru_cache(maxsize=10)  # noqa: B019
     def get_skill_data(self, skill: Skill) -> CharacterSkill:
         base_damage = self.OPPONENT_DAMAGE_BASE[self.level] / self.enemy.damage_scaling
         weapon_min_roll = int(base_damage * (1 - self.OPPONENT_DAMAGE_VARIANCE))
