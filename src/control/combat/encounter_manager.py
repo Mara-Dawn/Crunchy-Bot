@@ -611,14 +611,21 @@ class EncounterManager(Service):
                     encounter_event_type = EncounterEventType.ENEMY_DEFEAT
 
                 embed = self.embed_manager.get_actor_defeated_embed(actor)
+                files = []
+                if actor.is_enemy:
+                    opponent = context.opponent
+                    image = discord.File(
+                        f"./img/enemies/{opponent.enemy.image}", opponent.enemy.image
+                    )
+                    files = [image]
 
                 turn_message = await self.get_previous_turn_message(context.thread)
                 if turn_message is None:
-                    await context.thread.send("", embed=embed)
+                    await context.thread.send("", embed=embed, files=files)
                 else:
                     previous_embeds = turn_message.embeds
                     embeds = previous_embeds + [embed]
-                    await turn_message.edit(embeds=embeds)
+                    await turn_message.edit(embeds=embeds, attachments=files)
 
                 event = EncounterEvent(
                     datetime.datetime.now(),

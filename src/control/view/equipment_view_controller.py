@@ -474,6 +474,17 @@ class EquipmentViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
+        dupe_check: list[int] = []
+
+        for _, skill in skills.items():
+            if skill.id in dupe_check:
+                await interaction.followup.send(
+                    "You cannot equip the same skill multiple times.",
+                    ephemeral=True,
+                )
+                return
+            dupe_check.append(skill.id)
+
         await self.database.set_selected_user_skills(guild_id, member_id, skills)
         await self.open_gear_overview(
             interaction, view_id=view_id, state=EquipmentViewState.SKILLS

@@ -468,6 +468,10 @@ class SkillSelectView(
 
         if self.state == SkillViewState.EQUIP:
             skill_list = [skill for skill in self.skills if skill.id in skill_ids]
+            skill_list.extend(
+                [skill for skill in self.equipped_skills if skill.id in skill_ids]
+            )
+
             if len(skill_list) <= 0:
                 self.selected_slots[index] = None
             else:

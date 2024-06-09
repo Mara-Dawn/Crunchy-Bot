@@ -134,7 +134,7 @@ class CombatEmbedManager(Service):
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
-        self.add_health_bar(embed, current_hp, max_hp, max_width=33)
+        self.add_health_bar(embed, current_hp, max_hp, max_width=34)
 
         skill_list = []
         for skill_type in enemy.skill_types:
@@ -142,7 +142,7 @@ class CombatEmbedManager(Service):
             skill_list.append(skill.name)
 
         self.add_text_bar(
-            embed, name="Skills:", value=", ".join(skill_list), max_width=38
+            embed, name="Skills:", value=", ".join(skill_list), max_width=34
         )
 
         if enemy.information != "":
@@ -172,7 +172,7 @@ class CombatEmbedManager(Service):
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
-        self.add_health_bar(embed, current_hp, max_hp, max_width=38)
+        self.add_health_bar(embed, current_hp, max_hp, max_width=34)
 
         defeated_message = f"You successfully defeated *{enemy.name}*."
         embed.add_field(name="Congratulations!", value=defeated_message, inline=False)
@@ -194,7 +194,7 @@ class CombatEmbedManager(Service):
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
-        self.add_health_bar(embed, current_hp, max_hp, max_width=38)
+        self.add_health_bar(embed, current_hp, max_hp, max_width=34)
 
         defeated_message = f"You were defeated by *{enemy.name}*."
         embed.add_field(name="Failure!", value=defeated_message, inline=False)
