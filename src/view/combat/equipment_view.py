@@ -2,12 +2,21 @@ from enum import Enum
 
 import discord
 from combat.actors import Character
-from combat.gear.types import EquipmentSlot
+from combat.gear.types import (
+    EquipmentSlot,
+    Rarity,
+)
+from control.combat.combat_gear_manager import CombatGearManager
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
-from view.combat.embed import AttributesHeadEmbed, EquipmentHeadEmbed, SkillsHeadEmbed
+from view.combat.embed import (
+    AttributesHeadEmbed,
+    EquipmentHeadEmbed,
+    ForgeEmbed,
+    SkillsHeadEmbed,
+)
 from view.view_menu import ViewMenu
 
 
@@ -20,12 +29,28 @@ class EquipmentViewState(Enum):
 
 class EquipmentView(ViewMenu):
 
+    SCRAP_ILVL_MAP = {
+        1: 15,
+        2: 40,
+        3: 80,
+        4: 120,
+        5: 180,
+        6: 240,
+        7: 300,
+        8: 350,
+        9: 400,
+        10: 450,
+        11: 500,
+        12: 550,
+    }
+
     def __init__(
         self,
         controller: Controller,
         interaction: discord.Interaction,
         character: Character,
         scrap_balance: int,
+        guild_level: int,
         state: EquipmentViewState = EquipmentViewState.GEAR,
     ):
         super().__init__(timeout=None)
@@ -37,6 +62,22 @@ class EquipmentView(ViewMenu):
         self.state = state
         self.scrap_balance = scrap_balance
         self.loaded = False
+
+        self.guild_level = guild_level
+        self.max_rarity = Rarity.NORMAL
+        for rarity, level in CombatGearManager.MIN_RARITY_LVL.items():
+            if level < self.guild_level:
+                self.max_rarity = rarity
+            else:
+                break
+
+        self.forge_options = {
+            level: scrap
+            for level, scrap in self.SCRAP_ILVL_MAP.items()
+            if level <= self.guild_level
+        }
+        self.max_forge_level = max(self.forge_options.keys())
+        self.selected: int = self.max_forge_level
 
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
@@ -86,6 +127,8 @@ class EquipmentView(ViewMenu):
                 )
             case EquipmentViewState.FORGE:
                 forge_button_selected = True
+                self.add_item(ForgeDropdown(self.forge_options, self.selected))
+                self.add_item(ForgeUseButton())
 
         self.add_item(GearButton(selected=gear_button_selected, disabled=disabled))
         self.add_item(StatsButton(selected=stats_button_selected, disabled=disabled))
@@ -181,6 +224,15 @@ class EquipmentView(ViewMenu):
                     )
                     if file.filename not in [file.filename for file in files]:
                         files.append(file)
+            case EquipmentViewState.FORGE:
+                embed = ForgeEmbed(
+                    self.member,
+                    self.guild_level,
+                    self.max_rarity,
+                )
+                embeds.append(embed)
+                # file = discord.File("./forge.png", "forge.png")
+                # files.append(file)
 
         try:
             await self.message.edit(embeds=embeds, attachments=files, view=self)
@@ -194,11 +246,25 @@ class EquipmentView(ViewMenu):
         self.state = state
         await self.refresh_ui()
 
+    async def set_selected(self, interaction: discord.Interaction, item_level: int):
+        await interaction.response.defer()
+        self.selected = item_level
+        await self.refresh_ui()
+
     async def change_gear(self, interaction: discord.Interaction, slot: EquipmentSlot):
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.GEAR_OPEN_SECELT,
             (interaction, slot),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def use_forge(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        event = UIEvent(
+            UIEventType.FORGE_USE,
+            (interaction, self.selected),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -327,7 +393,7 @@ class ForgeButton(discord.ui.Button):
     def __init__(self, selected: bool = False, disabled: bool = True):
         color = discord.ButtonStyle.grey
 
-        label = "Bean Forge"
+        label = "Forge"
         if selected:
             label = f">{label}<"
             disabled = True
@@ -343,7 +409,7 @@ class ForgeButton(discord.ui.Button):
         view: EquipmentView = self.view
 
         if await view.interaction_check(interaction):
-            await interaction.response.defer(ephemeral=True)
+            await view.set_state(EquipmentViewState.FORGE, interaction)
 
 
 class ScrapBalanceButton(discord.ui.Button):
@@ -414,3 +480,60 @@ class ScrapAllButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.dismantle_gear(interaction, slot=self.slot)
+
+
+class ForgeDropdown(discord.ui.Select):
+
+    def __init__(
+        self,
+        scrap_options: dict[int, int],
+        selected: int,
+        disabled: bool = False,
+    ):
+        options = []
+
+        for item_level, scrap_amount in scrap_options.items():
+            label = f"⚙️{scrap_amount} Scrap"
+            description = f"Gain a random level {item_level} item or skill."
+
+            option = discord.SelectOption(
+                label=label,
+                description=description,
+                value=item_level,
+                default=(item_level == selected),
+            )
+            options.append(option)
+
+        super().__init__(
+            placeholder="Select one or more pieces of equipment.",
+            min_values=1,
+            max_values=1,
+            options=options,
+            row=1,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.set_selected(
+                interaction, [int(value) for value in self.values][0]
+            )
+
+
+class ForgeUseButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Throw Scrap into Forge",
+            style=discord.ButtonStyle.green,
+            row=2,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.use_forge(interaction)

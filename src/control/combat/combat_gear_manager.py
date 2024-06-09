@@ -173,7 +173,9 @@ class CombatGearManager(Service):
 
         return matching_bases
 
-    async def get_random_base(self, item_level: int, enemy: Enemy) -> DroppableBase:
+    async def get_random_base(
+        self, item_level: int, enemy: Enemy = None
+    ) -> DroppableBase:
         max_level = item_level
         min_level = max(1, int(item_level * self.ITEM_LEVEL_MIN_DROP))
 
@@ -184,15 +186,16 @@ class CombatGearManager(Service):
         if len(bases) <= 0:
             return None
 
-        gear_base_types = enemy.gear_loot_table
-        skill_base_types = enemy.skill_loot_table
+        if enemy is not None:
+            skill_base_types = enemy.skill_loot_table
+            gear_base_types = enemy.gear_loot_table
 
-        table_base_types = gear_base_types + skill_base_types
+            table_base_types = gear_base_types + skill_base_types
 
-        for base_type in table_base_types:
-            base_class = globals()[base_type]
-            base: DroppableBase = base_class()
-            bases.append(base)
+            for base_type in table_base_types:
+                base_class = globals()[base_type]
+                base: DroppableBase = base_class()
+                bases.append(base)
 
         skill_weight = 0
         gear_weight = 0
@@ -292,18 +295,11 @@ class CombatGearManager(Service):
 
     async def generate_drop(
         self,
-        combatant: Character,
-        context: EncounterContext,
+        member_id: int,
+        guild_id: int,
+        item_level: int,
+        enemy: Enemy = None,
     ) -> Gear:
-
-        guild_id = combatant.member.guild.id
-        member_id = combatant.member.id
-        enemy_level = context.opponent.level
-        enemy = context.opponent.enemy
-
-        guild_level = await self.database.get_guild_level(guild_id)
-        item_level = min(enemy_level, guild_level)
-
         droppable_base = await self.get_random_base(item_level, enemy)
 
         if droppable_base is None:
@@ -361,6 +357,21 @@ class CombatGearManager(Service):
 
                 return gear_item
 
+    async def generate_encounter_drop(
+        self,
+        combatant: Character,
+        context: EncounterContext,
+    ) -> Gear:
+        guild_id = combatant.member.guild.id
+        member_id = combatant.member.id
+        enemy_level = context.opponent.level
+        enemy = context.opponent.enemy
+
+        guild_level = await self.database.get_guild_level(guild_id)
+        item_level = min(enemy_level, guild_level)
+
+        return await self.generate_drop(member_id, guild_id, item_level, enemy)
+
     async def get_combatant_penalty(
         self, character: Character, encounter_events: list[EncounterEvent]
     ) -> float:
@@ -398,7 +409,7 @@ class CombatGearManager(Service):
 
             drops = []
             for _ in range(loot_amount):
-                drop = await self.generate_drop(combatant, context)
+                drop = await self.generate_encounter_drop(combatant, context)
                 if drop is not None:
                     drops.append(drop)
 

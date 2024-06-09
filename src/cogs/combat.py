@@ -195,7 +195,11 @@ class Combat(commands.Cog):
         if ItemType.SCRAP in user_items:
             scrap_balance = user_items[ItemType.SCRAP]
 
-        view = EquipmentView(self.controller, interaction, character, scrap_balance)
+        guild_level = await self.controller.database.get_guild_level(guild_id)
+
+        view = EquipmentView(
+            self.controller, interaction, character, scrap_balance, guild_level
+        )
 
         embeds = []
         embeds.append(EquipmentHeadEmbed(interaction.user))

@@ -180,6 +180,9 @@ class UIEventType(str, Enum):
     SKILLS_EQUIP = "skills_equip"
     SKILL_EQUIP = "skill_equip"
 
+    FORGE_VIEW = "forge_view"
+    FORGE_USE = "forge_use"
+
     SCRAP_BALANCE_CHANGED = "scrap_balance_changed"
 
     COMBAT_ENGAGE_UPDATE = "combat_engage_update"

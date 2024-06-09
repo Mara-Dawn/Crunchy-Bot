@@ -129,6 +129,10 @@ class EquipmentViewController(ViewController):
                 interaction = event.payload[0]
                 skills = event.payload[1]
                 await self.set_selected_skills(interaction, skills, event.view_id)
+            case UIEventType.FORGE_USE:
+                interaction = event.payload[0]
+                level = event.payload[1]
+                await self.use_forge(interaction, level, event.view_id)
 
     async def encounter_check(self, interaction: discord.Interaction):
         guild_id = interaction.guild.id
@@ -243,8 +247,10 @@ class EquipmentViewController(ViewController):
         if ItemType.SCRAP in user_items:
             scrap_balance = user_items[ItemType.SCRAP]
 
+        guild_level = await self.controller.database.get_guild_level(guild_id)
+
         view = EquipmentView(
-            self.controller, interaction, character, scrap_balance, state
+            self.controller, interaction, character, scrap_balance, guild_level, state
         )
 
         embeds = []
@@ -488,4 +494,48 @@ class EquipmentViewController(ViewController):
         await self.database.set_selected_user_skills(guild_id, member_id, skills)
         await self.open_gear_overview(
             interaction, view_id=view_id, state=EquipmentViewState.SKILLS
+        )
+
+    async def use_forge(
+        self, interaction: discord.Interaction, level: int, view_id: int
+    ):
+        if not await self.encounter_check(interaction):
+            return
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        scrap_value = EquipmentView.SCRAP_ILVL_MAP[level]
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        if scrap_balance < scrap_value:
+            await interaction.followup.send(
+                "You don't have enough scrap for this. Go and scrap some equipment you no longer need and come back.",
+                ephemeral=True,
+            )
+            return
+
+        drop = await self.gear_manager.generate_drop(member_id, guild_id, level)
+
+        event = InventoryEvent(
+            datetime.datetime.now(),
+            guild_id,
+            member_id,
+            ItemType.SCRAP,
+            -scrap_value,
+        )
+        await self.controller.dispatch_event(event)
+
+        file_path = f"./{drop.base.image_path}{drop.base.image}"
+        file = discord.File(
+            file_path,
+            drop.base.attachment_name,
+        )
+        await interaction.followup.send(
+            embed=drop.get_embed(), files=[file], ephemeral=True
         )

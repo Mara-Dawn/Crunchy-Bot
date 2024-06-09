@@ -1,4 +1,5 @@
 import discord
+from combat.gear.types import Rarity
 
 
 class EquipmentHeadEmbed(discord.Embed):
@@ -151,3 +152,33 @@ class SelectSkillHeadEmbed(discord.Embed):
             description=description,
         )
         self.set_thumbnail(url=member.display_avatar.url)
+
+
+class ForgeEmbed(discord.Embed):
+
+    def __init__(
+        self,
+        member: discord.Member,
+        guild_level: int,
+        max_rarity: Rarity,
+        max_width: int = 45,
+    ):
+        description = (
+            "Toss your scrap into this gaping hole and it will spit out random items for you.\n\n"
+            f"Current max item level: [35m{guild_level}[0m\n"
+            f"Current max item rarity: [35m{max_rarity.value}[0m"
+        )
+
+        if len(description) < max_width:
+            spacing = max_width - len(description)
+            description += " " * spacing
+
+        description = f"```ansi\n{description}```"
+
+        super().__init__(
+            title="The Mighty Forge",
+            color=discord.Colour.purple(),
+            description=description,
+        )
+        self.set_thumbnail(url=member.display_avatar.url)
+        # self.set_image(url="attachment://forge.png")

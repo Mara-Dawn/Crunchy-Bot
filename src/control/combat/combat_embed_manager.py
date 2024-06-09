@@ -51,7 +51,7 @@ class CombatEmbedManager(Service):
 
         embed = discord.Embed(title=title, color=discord.Colour.purple())
 
-        enemy_name = f"> ~* Lvl. {encounter.enemy_level} - {enemy.name} *~"
+        enemy_name = f"> ~* {enemy.name} - Lvl. {encounter.opponent.level} *~"
         content = f'```python\n"{enemy.description}"```'
         embed.add_field(name=enemy_name, value=content, inline=False)
 
@@ -125,7 +125,7 @@ class CombatEmbedManager(Service):
     async def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = f"> ~* Lvl. {context.opponent.level} - {enemy.name} *~"
+        title = f"> ~* {enemy.name} - Lvl. {context.opponent.level} *~"
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
@@ -163,7 +163,7 @@ class CombatEmbedManager(Service):
     ) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = f"> ~* Lvl. {context.opponent.level} - {enemy.name} *~"
+        title = f"> ~* {enemy.name} - Lvl. {context.opponent.level} *~"
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.green()
@@ -185,7 +185,7 @@ class CombatEmbedManager(Service):
     async def get_combat_failed_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = f"> ~* Lvl. {context.opponent.level} - {enemy.name} *~"
+        title = f"> ~* {enemy.name} - Lvl. {context.opponent.level} *~"
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
