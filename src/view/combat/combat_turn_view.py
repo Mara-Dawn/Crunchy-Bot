@@ -1,3 +1,5 @@
+import contextlib
+
 import discord
 from combat.actors import Character
 from combat.encounter import EncounterContext
@@ -12,9 +14,13 @@ from view.view_menu import ViewMenu
 class CombatTurnView(ViewMenu):
 
     def __init__(
-        self, controller: Controller, character: Character, context: EncounterContext
+        self,
+        controller: Controller,
+        character: Character,
+        context: EncounterContext,
     ):
-        super().__init__(timeout=None)
+        timeout = context.get_turn_timeout(character.id)
+        super().__init__(timeout=timeout)
         self.controller = controller
         self.character = character
         self.context = context
@@ -52,6 +58,18 @@ class CombatTurnView(ViewMenu):
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
+
+    async def on_timeout(self):
+        with contextlib.suppress(discord.HTTPException):
+            await self.message.delete()
+
+            event = UIEvent(
+                UIEventType.COMBAT_TIMEOUT,
+                (self.character, self.context),
+            )
+            await self.controller.dispatch_ui_event(event)
+
+            self.controller.detach_view(self)
 
 
 class SkillButton(discord.ui.Button):

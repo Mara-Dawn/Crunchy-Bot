@@ -46,6 +46,7 @@ class Actor:
         skill_stacks_used: dict[SkillType, int],
         defeated: bool,
         image: str,
+        timed_out: bool = False,
     ):
         self.id = id
         self.name = name
@@ -56,6 +57,7 @@ class Actor:
         self.skill_cooldowns = skill_cooldowns
         self.skill_stacks_used = skill_stacks_used
         self.defeated = defeated
+        self.timed_out = timed_out
         self.image = image
 
     def get_skill_data(self, skill: Skill) -> CharacterSkill:
@@ -82,6 +84,7 @@ class Character(Actor):
         skill_stacks_used: dict[int, int],
         equipment: CharacterEquipment,
         defeated: bool,
+        timed_out: bool = False,
     ):
         self.member = member
         self.equipment = equipment
@@ -101,6 +104,7 @@ class Character(Actor):
             skill_cooldowns=skill_cooldowns,
             skill_stacks_used=skill_stacks_used,
             defeated=defeated,
+            timed_out=timed_out,
             image=member.avatar.url,
         )
 

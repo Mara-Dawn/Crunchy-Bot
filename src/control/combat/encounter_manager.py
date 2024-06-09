@@ -330,12 +330,12 @@ class EncounterManager(Service):
         self,
         actor: Actor,
         context: EncounterContext,
+        reason: str,
+        timeout: bool = False,
     ):
 
         turn_message = await self.get_previous_turn_message(context.thread)
-        embed = self.embed_manager.get_turn_skip_embed(
-            actor, f"{actor.name} is defeated.", context
-        )
+        embed = self.embed_manager.get_turn_skip_embed(actor, reason, context)
         previous_embeds = turn_message.embeds
         current_embeds = previous_embeds + [embed]
         await turn_message.edit(embeds=current_embeds)
@@ -343,6 +343,20 @@ class EncounterManager(Service):
         combat_event_type = CombatEventType.MEMBER_END_TURN
         if actor.is_enemy:
             combat_event_type = CombatEventType.ENEMY_END_TURN
+
+        if timeout:
+            event = CombatEvent(
+                datetime.datetime.now(),
+                context.encounter.guild_id,
+                context.encounter.id,
+                actor.id,
+                actor.id,
+                None,
+                None,
+                None,
+                CombatEventType.MEMBER_TURN_SKIP,
+            )
+            await self.controller.dispatch_event(event)
 
         event = CombatEvent(
             datetime.datetime.now(),
@@ -430,7 +444,7 @@ class EncounterManager(Service):
             )
 
         skill_instances = character.get_skill_effect(
-            skill_data.skill, combatant_count=len(context.combatants)
+            skill_data.skill, combatant_count=context.get_combat_scale()
         )
 
         turn_message = await self.get_previous_turn_message(context.thread)
@@ -503,6 +517,29 @@ class EncounterManager(Service):
             CombatEventType.MEMBER_END_TURN,
         )
         await self.controller.dispatch_event(event)
+
+    async def combatant_timeout(
+        self,
+        context: EncounterContext,
+        character: Character,
+    ):
+        timeout_count = context.get_timeout_count(character.id)
+        message = (
+            f"{character.name} was inactive for too long, their turn will be skipped."
+        )
+
+        if timeout_count >= EncounterContext.TIMEOUT_COUNT_LIMIT:
+            event = EncounterEvent(
+                datetime.datetime.now(),
+                context.encounter.guild_id,
+                context.encounter.id,
+                character.id,
+                EncounterEventType.MEMBER_TIMEOUT,
+            )
+            await self.controller.dispatch_event(event)
+            message += f"\n They reached {EncounterContext.TIMEOUT_COUNT_LIMIT} total timeouts and will from now on be excluded from the fight."
+
+        await self.skip_turn(character, context, message, timeout=True)
 
     async def conclude_encounter(self, context: EncounterContext, success: bool = True):
 
@@ -678,7 +715,7 @@ class EncounterManager(Service):
             await self.conclude_encounter(context)
             return
 
-        if len(self.actor_manager.get_undefeated_actors(context.combatants)) <= 0:
+        if len(context.get_active_combatants()) <= 0:
             await self.delete_previous_combat_info(context.thread)
             await self.conclude_encounter(context, success=False)
             return
@@ -714,14 +751,25 @@ class EncounterManager(Service):
             return
 
         if current_actor.defeated:
-            await self.skip_turn(current_actor, context)
+            await self.skip_turn(
+                current_actor, context, f"{current_actor.name} is defeated."
+            )
+            return
+
+        if current_actor.timed_out:
+            await self.skip_turn(
+                current_actor,
+                context,
+                f"{current_actor.name} was inactive for too long.",
+            )
             return
 
         enemy_embeds, files = await self.embed_manager.get_character_turn_embeds(
             context
         )
         view = CombatTurnView(self.controller, current_actor, context)
-        await context.thread.send(
+        message = await context.thread.send(
             f"<@{current_actor.id}>", embeds=enemy_embeds, files=files, view=view
         )
+        view.set_message(message)
         return

@@ -116,13 +116,18 @@ class CombatActorManager(Service):
             combat_events = []
 
         defeated = False
+        timed_out = False
         for event in encounter_events:
             if (
                 event.encounter_event_type == EncounterEventType.MEMBER_DEFEAT
                 and event.member_id == member.id
             ):
                 defeated = True
-                break
+            if (
+                event.encounter_event_type == EncounterEventType.MEMBER_TIMEOUT
+                and event.member_id == member.id
+            ):
+                timed_out = True
 
         equipment = await self.database.get_user_equipment(member.guild.id, member.id)
 
@@ -158,6 +163,7 @@ class CombatActorManager(Service):
             skill_stacks_used=skill_stacks_used,
             equipment=equipment,
             defeated=defeated,
+            timed_out=timed_out,
         )
         return character
 
@@ -202,7 +208,7 @@ class CombatActorManager(Service):
 
         for target in available_targets:
             instances = context.opponent.get_skill_effect(
-                skill, combatant_count=len(context.combatants)
+                skill, combatant_count=context.get_combat_scale()
             )
             instance = instances[0]
 
@@ -238,7 +244,7 @@ class CombatActorManager(Service):
             )
 
         damage_instances = context.opponent.get_skill_effect(
-            skill, combatant_count=len(context.combatants)
+            skill, combatant_count=context.get_combat_scale()
         )
 
         for instance in damage_instances:

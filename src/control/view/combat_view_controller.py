@@ -69,6 +69,10 @@ class CombatViewController(ViewController):
                 await self.player_action(
                     interaction, skill_data, character, context, event.view_id
                 )
+            case UIEventType.COMBAT_TIMEOUT:
+                character = event.payload[0]
+                context = event.payload[1]
+                await self.player_timeout(character, context)
 
     async def update_encounter_message(self, encounter_id: int, done: bool):
         encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
@@ -144,3 +148,14 @@ class CombatViewController(ViewController):
         )
 
         self.controller.detach_view_by_id(view_id)
+
+    async def player_timeout(
+        self,
+        character: Character,
+        context: EncounterContext,
+    ):
+        current_context = await self.encounter_manager.load_encounter_context(
+            context.encounter.id
+        )
+
+        await self.encounter_manager.combatant_timeout(current_context, character)

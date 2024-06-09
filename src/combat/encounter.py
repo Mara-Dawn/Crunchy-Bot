@@ -51,6 +51,10 @@ class Encounter:
 
 class EncounterContext:
 
+    DEFAULT_TIMEOUT = 60 * 5
+    SHORT_TIMEOUT = 60
+    TIMEOUT_COUNT_LIMIT = 3
+
     def __init__(
         self,
         encounter: Encounter,
@@ -86,7 +90,14 @@ class EncounterContext:
                 return actor
 
     def get_active_combatants(self) -> Actor:
-        return [actor for actor in self.combatants if not actor.defeated]
+        return [
+            actor
+            for actor in self.combatants
+            if not actor.defeated and not actor.timed_out
+        ]
+
+    def get_combat_scale(self) -> int:
+        return len([actor for actor in self.combatants if not actor.timed_out])
 
     def get_current_actor(self) -> Actor:
         initiative_list = self.get_current_initiative()
@@ -115,6 +126,21 @@ class EncounterContext:
             turn_count += 1
 
         return turn_count
+
+    def get_timeout_count(self, member_id: int) -> int:
+        timeout_count = 0
+        for event in self.combat_events:
+            if event.combat_event_type == CombatEventType.MEMBER_TURN_SKIP:
+                timeout_count += 1
+
+        return timeout_count
+
+    def get_turn_timeout(self, member_id: int) -> int:
+        timeout_count = self.get_timeout_count(member_id)
+        if timeout_count == 0:
+            return self.DEFAULT_TIMEOUT
+        else:
+            return self.SHORT_TIMEOUT
 
     def is_concluded(self) -> bool:
         for event in self.encounter_events:

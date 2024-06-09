@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import datetime
 
 import discord
 from combat.actors import Actor
@@ -213,6 +214,12 @@ class CombatEmbedManager(Service):
         title = f"Turn {turn_number}: {actor.name}"
 
         content = f"It is your turn <@{actor.id}>. Please select an action."
+
+        now = datetime.datetime.now().timestamp()
+        turn_duration = context.get_turn_timeout(actor.id)
+        timeout = int(now + turn_duration)
+
+        content += f"\n\n Otherwise your turn will be skipped <t:{timeout}:R>."
         head_embed = discord.Embed(
             title=title, description=content, color=discord.Colour.blurple()
         )
@@ -496,7 +503,8 @@ class CombatEmbedManager(Service):
 
     async def get_round_embed(self, context: EncounterContext):
         embed = discord.Embed(title="New Round", color=discord.Colour.green())
-        initiative_list = context.get_current_initiative()
+        initiative_list = context.actors
+        current_actor = context.get_current_actor()
         initiative_display = ""
 
         for idx, actor in enumerate(initiative_list):
@@ -507,7 +515,7 @@ class CombatEmbedManager(Service):
             fraction = current_hp / actor.max_hp
             percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
             display_hp = f"[{percentage}%]" if not actor.is_enemy else ""
-            if initiative_display == "":
+            if actor.id == current_actor.id:
                 width = 45
                 text = f"{number}. >> {actor.name} << {display_hp}"
                 spacing = " " * max(0, width - len(text))
