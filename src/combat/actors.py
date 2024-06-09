@@ -1,4 +1,5 @@
 import random
+from collections import Counter
 
 import discord
 from combat.enemies.enemy import Enemy
@@ -257,10 +258,67 @@ class Opponent(Actor):
         self.enemy = enemy
 
         multiplier = 0
-        for skill in self.skills:
-            multiplier += skill.base_skill.base_value * skill.base_skill.hits
 
-        self.average_skill_multi = multiplier / len(self.skills)
+        # for skill in self.skills:
+        #     cooldown = skill.base_skill.cooldown + 1
+        #     multiplier += skill.base_skill.base_value * skill.base_skill.hits / cooldown
+
+        rotation_length = 1
+        already_used = [1]
+
+        sorted_skills = sorted(
+            self.skills, key=lambda x: x.base_skill.base_value, reverse=True
+        )
+
+        for skill in sorted_skills:
+            cooldown = skill.base_skill.cooldown + 1
+
+            if cooldown in already_used:
+                continue
+
+            for value in already_used:
+                if value % cooldown == 0:
+                    already_used.append(cooldown)
+                    continue
+
+            rotation_length *= cooldown
+            already_used.append(cooldown)
+
+        skill_rotation = []
+        for index in range(rotation_length):
+            for skill in sorted_skills:
+                if skill not in skill_rotation:
+                    skill_rotation.append(skill)
+                    break
+                last_used = next(
+                    i
+                    for i in reversed(range(len(skill_rotation)))
+                    if skill_rotation[i] == skill
+                )
+                turns_passed = len(skill_rotation) - last_used - 1
+                if turns_passed >= skill.base_skill.cooldown:
+                    skill_rotation.append(skill)
+                    break
+
+            if len(skill_rotation) != index + 1:
+                skill_rotation.append(None)
+
+        skill_uses = Counter()
+        for skill in skill_rotation:
+            if skill is None:
+                continue
+            skill_uses[skill.base_skill.type] += 1
+
+        multiplier = 0
+        for skill in sorted_skills:
+            multiplier += (
+                skill.base_skill.base_value
+                * skill.base_skill.hits
+                * skill_uses[skill.base_skill.type]
+                / rotation_length
+            )
+
+        self.average_skill_multi = multiplier
 
     def get_skill_data(self, skill: Skill) -> CharacterSkill:
         base_damage = self.OPPONENT_DAMAGE_BASE[self.level] / self.enemy.damage_scaling
@@ -320,7 +378,7 @@ class Opponent(Actor):
         raw_attack_count = skill.base_skill.hits
         attack_count = raw_attack_count
 
-        if combatant_count > 1:
+        if combatant_count > 1 and not skill.base_skill.aoe:
             attack_count_scaling = max(1, combatant_count * 0.75)
             attack_count = int(raw_attack_count * attack_count_scaling)
             encounter_scaling = (

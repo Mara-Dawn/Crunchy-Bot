@@ -11,8 +11,13 @@ class SkillType(str, Enum):
     GIGA_BONK = "GigaBonk"
     FIRE_BALL = "FireBall"
 
+    # Mind Goblin
     DEEZ_NUTS = "DeezNuts"
     BONK = "Bonk"
+
+    # Nice Guy
+    M_LADY = "MLady"
+    FEDORA_TIP = "FedoraTip"
 
     @staticmethod
     def is_weapon_skill(skill_type: "SkillType"):

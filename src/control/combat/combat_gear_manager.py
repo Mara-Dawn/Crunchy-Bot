@@ -42,7 +42,7 @@ class CombatGearManager(Service):
 
     ITEM_LEVEL_MIN_DROP = 0.6
 
-    SKILL_DROP_CHANCE = 0.15
+    SKILL_DROP_CHANCE = 0.1
 
     MIN_RARITY_LVL = {
         Rarity.NORMAL: 0,

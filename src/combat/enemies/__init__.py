@@ -54,3 +54,29 @@ class MindGoblin(Enemy):
             initiative=5,
             actions_per_turn=1,
         )
+
+
+class NiceGuy(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Nice Guy",
+            type=EnemyType.NICE_GUY,
+            description="Why do girls always fall for assholes? Its not fair!",
+            information="No more Mr. Nice Guy!",
+            image="nice_guy.png",
+            min_level=1,
+            max_level=5,
+            health=5,
+            damage_scaling=8,
+            max_players=5,
+            skill_types=[SkillType.M_LADY, SkillType.FEDORA_TIP],
+            item_loot_table=[
+                ItemType.BOX_SEED,
+                ItemType.CAT_SEED,
+                ItemType.YELLOW_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=12,
+            actions_per_turn=1,
+        )

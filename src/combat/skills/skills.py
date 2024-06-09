@@ -156,3 +156,36 @@ class Bonk(BaseSkill):
             hits=2,
             droppable=False,
         )
+
+
+class MLady(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="M'Lady",
+            skill_type=SkillType.M_LADY,
+            description="He hits you with a lethal dose of cringe",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            base_value=4,
+            hits=1,
+            droppable=False,
+        )
+
+
+class FedoraTip(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Tips Fedora",
+            skill_type=SkillType.FEDORA_TIP,
+            description="He tips his hat with a smoothness only possible with hundrets of hours of practice.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            hits=1,
+            aoe=True,
+            droppable=False,
+        )

@@ -5,7 +5,7 @@ from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext, TurnData
 from combat.enemies.enemy import Enemy
 from combat.skills.skill import Skill
-from combat.skills.types import SkillEffect, SkillType
+from combat.skills.types import SkillEffect, SkillInstance, SkillType
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
 from control.logger import BotLogger
@@ -191,6 +191,35 @@ class CombatActorManager(Service):
             skill_data[skill_type] = last_used
         return skill_data
 
+    async def calculate_aoe_skill(
+        self,
+        context: EncounterContext,
+        skill: Skill,
+        available_targets: list[Actor],
+        hp_cache: dict[int, int],
+    ) -> list[tuple[Actor, SkillInstance, float]]:
+        damage_data = []
+
+        for target in available_targets:
+            instances = context.opponent.get_skill_effect(
+                skill, combatant_count=len(context.combatants)
+            )
+            instance = instances[0]
+
+            if target.id not in hp_cache:
+                current_hp = await self.get_actor_current_hp(
+                    target, context.combat_events
+                )
+            else:
+                current_hp = hp_cache[target.id]
+
+            total_damage = target.get_damage_after_defense(skill, instance.scaled_value)
+            new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
+            hp_cache[target.id] = new_target_hp
+
+            damage_data.append((target, instance, new_target_hp))
+        return damage_data
+
     async def calculate_opponent_turn_data(
         self,
         context: EncounterContext,
@@ -198,11 +227,19 @@ class CombatActorManager(Service):
         available_targets: list[Actor],
         hp_cache: dict[int, int],
     ):
+        damage_data = []
+
+        if skill.base_skill.aoe:
+            damage_data = await self.calculate_aoe_skill(
+                context, skill, available_targets, hp_cache
+            )
+            return TurnData(
+                actor=context.opponent, skill=skill, damage_data=damage_data
+            )
+
         damage_instances = context.opponent.get_skill_effect(
             skill, combatant_count=len(context.combatants)
         )
-
-        damage_data = []
 
         for instance in damage_instances:
             if len(available_targets) <= 0:
@@ -240,7 +277,10 @@ class CombatActorManager(Service):
 
         available_skills = []
 
-        for skill in opponent.skills:
+        sorted_skills = sorted(
+            opponent.skills, key=lambda x: x.base_skill.base_value, reverse=True
+        )
+        for skill in sorted_skills:
             skill_data = opponent.get_skill_data(skill)
             if not skill_data.on_cooldown():
                 available_skills.append(skill)

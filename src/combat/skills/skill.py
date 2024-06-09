@@ -28,6 +28,7 @@ class BaseSkill(DroppableBase):
         hits: int = 1,
         stacks: int = None,
         reset_after_encounter: bool = False,
+        aoe: bool = False,
         weight: int = 100,
         image: str = None,
         image_path: str = None,
@@ -52,6 +53,7 @@ class BaseSkill(DroppableBase):
         self.hits = hits
         self.stacks = stacks
         self.reset_after_encounter = reset_after_encounter
+        self.aoe = aoe
         self.default_target = default_target
         self.image = image
         self.image_path = image_path

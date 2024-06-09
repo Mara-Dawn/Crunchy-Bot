@@ -698,7 +698,7 @@ class EncounterManager(Service):
             if round_message is not None:
                 round_embeds = round_message.embeds
                 round_embeds[0] = round_embed
-                await round_message.edit(embeds=round_embeds)
+                await round_message.edit(embeds=round_embeds, attachments=[])
 
         await asyncio.sleep(2)
 
