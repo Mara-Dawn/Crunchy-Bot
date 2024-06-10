@@ -307,10 +307,13 @@ class Stick_T1(Tier1):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="The Good Stick",
             type=GearBaseType.STICK_T1,
-            description="",
-            information="",
+            description=(
+                "You found a really nice and big stick to replace your steady stick with. "
+                "Its bigger, looks more sword-like and made your brain go brr must pick up stick."
+            ),
+            information="Tier 1 physical weapon.",
             slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
@@ -325,10 +328,15 @@ class Wand_T1(Tier1):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Glowy Rock",
             type=GearBaseType.WAND_T1,
-            description="",
-            information="",
+            description=(
+                "You found a really pretty rock at the bed of a river, "
+                "you don't know whether or not its actually meant for "
+                "magic but you started using it as a catalyst for magic "
+                "spells and it seems to be working better than your wonky wand."
+            ),
+            information="Tier 1 magical weapon.",
             slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
@@ -343,9 +351,13 @@ class HeadGear_T1(Tier1):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Coconut Shell",
             type=GearBaseType.HEADGEAR_T1,
-            description="",
+            description=(
+                "During your travels you found and started eating some coconuts, "
+                "but after constantly struggling to break them open it finally "
+                "clicked you could use one as a helmet. Lets hope you cleaned it out properly."
+            ),
             information="Tier 1 head piece.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
@@ -356,9 +368,13 @@ class BodyGear_T1(Tier1):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Thick Leather Jacket",
             type=GearBaseType.BODYGEAR_T1,
-            description="",
+            description=(
+                "You've always thought biker gangs were really cool and awesome "
+                "so one birthday your mom surprised you with a really thick leather jacket. "
+                "It's surprisingly effective as extra protection against attacks."
+            ),
             information="Tier 1 body piece.",
             slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
@@ -369,9 +385,12 @@ class LegGear_T1(Tier1):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Stylish Jeans",
             type=GearBaseType.LEGGEAR_T1,
-            description="",
+            description=(
+                "You have a  REALLY sturdy pair of jeans that just seem impossible to "
+                "break and give you some nice protection against in fights."
+            ),
             information="Tier 1 leg piece.",
             slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
@@ -382,9 +401,30 @@ class Necklace_T1(Tier1):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Fancy Cross",
             type=GearBaseType.NECKLACE_T1,
-            description="",
+            description=(
+                "You don't know where its from or why it looks so fancy, "
+                "but you found a cross that just looks super fancy and you "
+                "keep it with you because it  just seems cool."
+            ),
+            information="Tier 1 accessory",
+            slot=EquipmentSlot.ACCESSORY,
+            modifiers=[GearModifierType.DEXTERITY],
+        )
+
+
+class Necklace_T1_2(Tier1):
+
+    def __init__(self):
+        super().__init__(
+            name="Fake Diamond Ring",
+            type=GearBaseType.NECKLACE_T1_2,
+            description=(
+                "You know its not a real diamond, but wearing something so stylish "
+                "that looks like it should be extremely expensive just gives you "
+                "a huge boost of confidence in combat."
+            ),
             information="Tier 1 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],

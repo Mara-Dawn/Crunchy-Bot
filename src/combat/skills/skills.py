@@ -38,6 +38,7 @@ class NormalAttack(BaseSkill):
             stacks=None,
             reset_after_encounter=False,
             droppable=False,
+            image="normal_attack.png",
         )
 
 
@@ -53,6 +54,7 @@ class HeavyAttack(BaseSkill):
             cooldown=2,
             base_value=4,
             droppable=False,
+            image="heavy_attack.png",
         )
 
 
@@ -68,6 +70,7 @@ class MagicAttack(BaseSkill):
             cooldown=0,
             base_value=2,
             droppable=False,
+            image="magic_attack.png",
         )
 
 
@@ -104,6 +107,7 @@ class GigaBonk(BaseSkill):
             base_value=6,
             stacks=3,
             reset_after_encounter=False,
+            image="giga_bonk.png",
         )
 
 
@@ -120,6 +124,7 @@ class FireBall(BaseSkill):
             base_value=10,
             stacks=1,
             reset_after_encounter=False,
+            image="fire_ball.png",
         )
 
 
