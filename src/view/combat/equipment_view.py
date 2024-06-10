@@ -163,35 +163,50 @@ class EquipmentView(ViewMenu):
                 embeds.append(self.character.equipment.weapon.get_embed())
                 files.append(
                     discord.File(
-                        f"./{self.character.equipment.weapon.base.image_path}{self.character.equipment.weapon.base.image}",
+                        (
+                            f"./{self.character.equipment.weapon.base.image_path}"
+                            f"{self.character.equipment.weapon.base.image}"
+                        ),
                         self.character.equipment.weapon.base.attachment_name,
                     )
                 )
                 embeds.append(self.character.equipment.head_gear.get_embed())
                 files.append(
                     discord.File(
-                        f"./{self.character.equipment.head_gear.base.image_path}{self.character.equipment.head_gear.base.image}",
+                        (
+                            f"./{self.character.equipment.head_gear.base.image_path}"
+                            f"{self.character.equipment.head_gear.base.image}"
+                        ),
                         self.character.equipment.head_gear.base.attachment_name,
                     )
                 )
                 embeds.append(self.character.equipment.body_gear.get_embed())
                 files.append(
                     discord.File(
-                        f"./{self.character.equipment.body_gear.base.image_path}{self.character.equipment.body_gear.base.image}",
+                        (
+                            f"./{self.character.equipment.body_gear.base.image_path}"
+                            f"{self.character.equipment.body_gear.base.image}"
+                        ),
                         self.character.equipment.body_gear.base.attachment_name,
                     )
                 )
                 embeds.append(self.character.equipment.leg_gear.get_embed())
                 files.append(
                     discord.File(
-                        f"./{self.character.equipment.leg_gear.base.image_path}{self.character.equipment.leg_gear.base.image}",
+                        (
+                            f"./{self.character.equipment.leg_gear.base.image_path}"
+                            f"{self.character.equipment.leg_gear.base.image}"
+                        ),
                         self.character.equipment.leg_gear.base.attachment_name,
                     )
                 )
                 embeds.append(self.character.equipment.accessory_1.get_embed())
                 files.append(
                     discord.File(
-                        f"./{self.character.equipment.accessory_1.base.image_path}{self.character.equipment.accessory_1.base.image}",
+                        (
+                            f"./{self.character.equipment.accessory_1.base.image_path}"
+                            f"{self.character.equipment.accessory_1.base.image}"
+                        ),
                         self.character.equipment.accessory_1.base.attachment_name,
                     )
                 )
@@ -202,7 +217,10 @@ class EquipmentView(ViewMenu):
                 ):
                     files.append(
                         discord.File(
-                            f"./{self.character.equipment.accessory_2.base.image_path}{self.character.equipment.accessory_2.base.image}",
+                            (
+                                f"./{self.character.equipment.accessory_2.base.image_path}"
+                                f"{self.character.equipment.accessory_2.base.image}"
+                            ),
                             self.character.equipment.accessory_2.base.attachment_name,
                         )
                     )
