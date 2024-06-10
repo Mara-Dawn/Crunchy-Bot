@@ -114,6 +114,7 @@ class Base(str, Enum):
 class GearBaseType(str, Enum):
     EMPTY = "Empty"
 
+    DEFAULT_PHYS = "DefaultPhys"
     STICK_T0 = "Stick_T0"
     STICK_T1 = "Stick_T1"
     STICK_T2 = "Stick_T2"
@@ -121,6 +122,7 @@ class GearBaseType(str, Enum):
     STICK_T4 = "Stick_T4"
     STICK_T5 = "Stick_T5"
 
+    DEFAULT_MAGICAL = "DefaultMagical"
     WAND_T0 = "Wand_T0"
     WAND_T1 = "Wand_T1"
     WAND_T2 = "Wand_T2"
@@ -128,6 +130,7 @@ class GearBaseType(str, Enum):
     WAND_T4 = "Wand_T4"
     WAND_T5 = "Wand_T5"
 
+    DEFAULT_HEAD = "DefaultHead"
     HEADGEAR_T0 = "HeadGear_T0"
     HEADGEAR_T1 = "HeadGear_T1"
     HEADGEAR_T2 = "HeadGear_T2"
@@ -135,6 +138,7 @@ class GearBaseType(str, Enum):
     HEADGEAR_T4 = "HeadGear_T4"
     HEADGEAR_T5 = "HeadGear_T5"
 
+    DEFAULT_BODY = "DefaultBody"
     BODYGEAR_T0 = "BodyGear_T0"
     BODYGEAR_T1 = "BodyGear_T1"
     BODYGEAR_T2 = "BodyGear_T2"
@@ -142,6 +146,7 @@ class GearBaseType(str, Enum):
     BODYGEAR_T4 = "BodyGear_T4"
     BODYGEAR_T5 = "BodyGear_T5"
 
+    DEFAULT_LEGS = "DefaultLegs"
     LEGGEAR_T0 = "LegGear_T0"
     LEGGEAR_T1 = "LegGear_T1"
     LEGGEAR_T2 = "LegGear_T2"

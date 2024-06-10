@@ -43,6 +43,115 @@ class Empty(GearBase):
         )
 
 
+# default
+
+
+class Default(GearBase):
+
+    def __init__(
+        self,
+        name: str,
+        type: GearBaseType,
+        description: str,
+        information: str,
+        slot: EquipmentSlot,
+        modifiers: list[GearModifierType] = None,
+        skills: list[SkillType] = None,
+        image: str = None,
+    ):
+        super().__init__(
+            name=name,
+            type=type,
+            description=description,
+            information=information,
+            slot=slot,
+            min_level=999,
+            max_level=999,
+            modifiers=modifiers,
+            skills=skills,
+            scaling=1,
+            image=image,
+        )
+
+
+class DefaultPhys(Default):
+
+    def __init__(self):
+        super().__init__(
+            name="Your Bare Fists",
+            type=GearBaseType.DEFAULT_PHYS,
+            description="No weapon? No problem! Just punch them in the face.",
+            information="Default physical weapon. Cannot be scrapped.",
+            slot=EquipmentSlot.WEAPON,
+            modifiers=[
+                GearModifierType.WEAPON_DAMAGE_MIN,
+                GearModifierType.WEAPON_DAMAGE_MAX,
+            ],
+            skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            image="physical.png",
+        )
+
+
+class DefaultMagical(Default):
+
+    def __init__(self):
+        super().__init__(
+            name="Pure Imagination",
+            type=GearBaseType.DEFAULT_MAGICAL,
+            description="If you believe hard enough, you might just be able to cast something.",
+            information="Default magical weapon. Cannot be scrapped.",
+            slot=EquipmentSlot.WEAPON,
+            modifiers=[
+                GearModifierType.WEAPON_DAMAGE_MIN,
+                GearModifierType.WEAPON_DAMAGE_MAX,
+            ],
+            skills=[SkillType.MAGIC_ATTACK],
+            image="magical.png",
+        )
+
+
+class DefaultHead(Default):
+
+    def __init__(self):
+        super().__init__(
+            name="Bald",
+            type=GearBaseType.DEFAULT_HEAD,
+            description="You are bald.",
+            information="Default headgear. Cannot be scrapped.",
+            slot=EquipmentSlot.HEAD,
+            modifiers=[GearModifierType.ARMOR],
+        )
+
+
+class DefaultBody(Default):
+
+    def __init__(self):
+        super().__init__(
+            name="Old Hoodle",
+            type=GearBaseType.DEFAULT_BODY,
+            description=(
+                "You pulled this out of a random trash can. It makes you look "
+                "homeless but at least it keeps you warm."
+            ),
+            information="Default body armor. Cannot be scrapped.",
+            slot=EquipmentSlot.BODY,
+            modifiers=[GearModifierType.ARMOR],
+        )
+
+
+class DefaultLegs(Default):
+
+    def __init__(self):
+        super().__init__(
+            name="Yellow Undies",
+            type=GearBaseType.DEFAULT_LEGS,
+            description="They were white when you bought them.",
+            information="Default leg armor. Cannot be scrapped.",
+            slot=EquipmentSlot.LEGS,
+            modifiers=[GearModifierType.ARMOR],
+        )
+
+
 # Tier 0
 
 
