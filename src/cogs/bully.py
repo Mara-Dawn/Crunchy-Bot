@@ -152,8 +152,6 @@ class Bully(commands.Cog):
         filtered_message += content[start:]
         content = " ".join(filtered_message.split())
 
-        await message.delete()
-
         generated_content = ""
 
         match item_type:
@@ -203,6 +201,8 @@ class Bully(commands.Cog):
             avatar_url=author.display_avatar,
             files=files,
         )
+
+        await message.delete()
 
         if len(generated_content) <= 0:
             return
