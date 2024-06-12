@@ -51,7 +51,7 @@ class CombatEmbedManager(Service):
 
         embed = discord.Embed(title=title, color=discord.Colour.purple())
 
-        enemy_name = f"> ~* {enemy.name} - Lvl. {encounter.opponent.level} *~"
+        enemy_name = f"> ~* {enemy.name} - Lvl. {encounter.enemy_level} *~"
         content = f'```python\n"{enemy.description}"```'
         embed.add_field(name=enemy_name, value=content, inline=False)
 
@@ -71,8 +71,7 @@ class CombatEmbedManager(Service):
         else:
             participant_info = "This encounter has concluded."
         embed.add_field(name=participant_info, value="", inline=False)
-
-        embed.set_image(url=f"attachment://{enemy.image}")
+        embed.set_image(url=enemy.image_url)
 
         return embed
 
@@ -154,7 +153,7 @@ class CombatEmbedManager(Service):
                 max_width=38,
             )
 
-        embed.set_image(url=f"attachment://{enemy.image}")
+        embed.set_image(url=enemy.image_url)
 
         return embed
 
@@ -178,7 +177,7 @@ class CombatEmbedManager(Service):
         defeated_message = f"You successfully defeated *{enemy.name}*."
         embed.add_field(name="Congratulations!", value=defeated_message, inline=False)
 
-        embed.set_image(url=f"attachment://{enemy.image}")
+        embed.set_image(url=enemy.image_url)
 
         return embed
 
@@ -200,7 +199,7 @@ class CombatEmbedManager(Service):
         defeated_message = f"You were defeated by *{enemy.name}*."
         embed.add_field(name="Failure!", value=defeated_message, inline=False)
 
-        embed.set_image(url=f"attachment://{enemy.image}")
+        embed.set_image(url=enemy.image_url)
 
         return embed
 
@@ -228,25 +227,18 @@ class CombatEmbedManager(Service):
             actor, context.combat_events
         )
         max_hp = int(actor.max_hp)
-        self.add_health_bar(head_embed, current_hp, max_hp, hide_hp=False)
+        self.add_health_bar(head_embed, current_hp, max_hp, hide_hp=False, max_width=45)
 
-        if actor.image is not None:
-            head_embed.set_thumbnail(url=actor.image)
+        if actor.image_url is not None:
+            head_embed.set_thumbnail(url=actor.image_url)
 
         head_embed.add_field(name="Your Skills:", value="", inline=False)
         embeds.append(head_embed)
 
-        files = []
         for skill in actor.skills:
             embeds.append(actor.get_skill_data(skill).get_embed(show_data=True))
-            file = discord.File(
-                f"./{skill.base_skill.image_path}{skill.base_skill.image}",
-                skill.base_skill.attachment_name,
-            )
-            if file.filename not in [file.filename for file in files]:
-                files.append(file)
 
-        return embeds, files
+        return embeds
 
     async def get_loot_embed(self, member: discord.Member, beans: int):
         title = f"{member.display_name}'s Loot"
@@ -443,43 +435,37 @@ class CombatEmbedManager(Service):
 
     async def handle_actor_turn_embed(
         self,
-        turn_data: list[TurnData],
+        turn_data: TurnData,
         context: EncounterContext,
     ):
-        actor = turn_data[0].actor
+        actor = turn_data.actor
         color = discord.Color.blurple()
         if actor.is_enemy:
             color = discord.Color.red()
 
-        turn_number = context.get_current_turn_number()
-        title = f"Turn {turn_number}: {actor.name}"
+        # turn_number = context.get_current_turn_number()
+        title = f"{actor.name}"
 
         full_embed = None
 
-        for turn in turn_data:
-            skill_data = actor.get_skill_data(turn.skill)
+        skill_data = actor.get_skill_data(turn_data.skill)
 
-            skill = skill_data.skill
+        skill = skill_data.skill
 
-            if full_embed is None:
-                full_embed = discord.Embed(title=title, description="", color=color)
-                full_embed.set_thumbnail(url=actor.image)
-                skill_data.add_to_embed(full_embed)
+        full_embed = discord.Embed(title="", description="", color=color)
+        full_embed.set_author(name=title, icon_url=actor.image_url)
+        full_embed.set_thumbnail(url=skill.base_skill.image_url)
+        # full_embed.set_footer(text=f"Turn {turn_number}")
+        skill_data.add_to_embed(full_embed)
 
-                yield full_embed
-            else:
-                embed = copy.deepcopy(full_embed)
-                skill_data.add_to_embed(embed)
-                full_embed = embed
+        yield full_embed
 
-                yield full_embed
-
-            if skill.base_skill.aoe:
-                async for embed in self.display_aoe_skill(turn, skill, full_embed):
-                    yield embed
-            else:
-                async for embed in self.display_regular_skill(turn, skill, full_embed):
-                    yield embed
+        if skill.base_skill.aoe:
+            async for embed in self.display_aoe_skill(turn_data, skill, full_embed):
+                yield embed
+        else:
+            async for embed in self.display_regular_skill(turn_data, skill, full_embed):
+                yield embed
 
     def get_turn_skip_embed(
         self, actor: Actor, reason: str, context: EncounterContext
@@ -496,8 +482,8 @@ class CombatEmbedManager(Service):
         )
         self.add_text_bar(embed, "", content)
 
-        if actor.image is not None:
-            embed.set_thumbnail(url=actor.image)
+        if actor.image_url is not None:
+            embed.set_thumbnail(url=actor.image_url)
         embed.add_field(name="Reason", value=reason)
         return embed
 
@@ -534,7 +520,7 @@ class CombatEmbedManager(Service):
         embed = discord.Embed(title=title, color=discord.Colour.light_grey())
         self.add_text_bar(embed, "", message)
         if actor is not None:
-            embed.set_thumbnail(url=actor.image)
+            embed.set_thumbnail(url=actor.image_url)
         return embed
 
     def get_actor_defeated_embed(self, actor: Actor) -> discord.Embed:

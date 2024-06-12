@@ -115,6 +115,16 @@ class EncounterContext:
         result.rotate(-(index + 1))
         return result
 
+    def new_turn(self) -> bool:
+        if len(self.combat_events) == 0:
+            return True
+
+        last_event = self.combat_events[0]
+        return last_event.combat_event_type in [
+            CombatEventType.ENEMY_END_TURN,
+            CombatEventType.MEMBER_END_TURN,
+        ]
+
     def get_current_turn_number(self) -> int:
         turn_count = 1
         for event in self.combat_events:

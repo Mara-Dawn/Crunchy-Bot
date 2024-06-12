@@ -409,7 +409,6 @@ class SkillSelectView(
 
         self.display_skill_data = []
         embeds = []
-        files = {}
 
         match self.state:
             case SkillViewState.EQUIP:
@@ -430,13 +429,6 @@ class SkillSelectView(
                     equipped=equipped, show_full_data=True, show_locked_state=True
                 )
             )
-            file_path = f"./{skill.base.image_path}{skill.base.image}"
-            if file_path not in files:
-                file = discord.File(
-                    file_path,
-                    skill.base.attachment_name,
-                )
-                files[file_path] = file
 
         self.refresh_elements(disabled)
 
@@ -450,13 +442,7 @@ class SkillSelectView(
             empty_embed.set_thumbnail(url=self.controller.bot.user.display_avatar)
             embeds.append(empty_embed)
 
-        files = list(files.values())
-
-        await self.message.edit(embeds=embeds, attachments=files, view=self)
-        # try:
-        #     await self.message.edit(embeds=embeds, attachments=files, view=self)
-        # except (discord.NotFound, discord.HTTPException):
-        #     self.controller.detach_view(self)
+        await self.message.edit(embeds=embeds, view=self)
 
     async def set_selected(
         self,

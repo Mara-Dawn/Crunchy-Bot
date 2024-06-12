@@ -45,7 +45,7 @@ class Actor:
         skill_cooldowns: dict[SkillType, int],
         skill_stacks_used: dict[SkillType, int],
         defeated: bool,
-        image: str,
+        image_url: str,
         timed_out: bool = False,
     ):
         self.id = id
@@ -58,7 +58,7 @@ class Actor:
         self.skill_stacks_used = skill_stacks_used
         self.defeated = defeated
         self.timed_out = timed_out
-        self.image = image
+        self.image_url = image_url
 
     def get_skill_data(self, skill: Skill) -> CharacterSkill:
         pass
@@ -105,7 +105,7 @@ class Character(Actor):
             skill_stacks_used=skill_stacks_used,
             defeated=defeated,
             timed_out=timed_out,
-            image=member.avatar.url,
+            image_url=member.avatar.url,
         )
 
     def get_skill_data(self, skill: Skill) -> CharacterSkill:
@@ -257,7 +257,7 @@ class Opponent(Actor):
             skill_cooldowns=skill_cooldowns,
             skill_stacks_used=skill_stacks_used,
             defeated=defeated,
-            image=f"attachment://{enemy.image}",
+            image_url=enemy.image_url,
         )
         self.level = level
         self.enemy = enemy
@@ -295,18 +295,18 @@ class Opponent(Actor):
 
             next_state: dict[SkillType, int] = {}
 
-            skill_chosen = False
+            skills_chosen = 0
 
             for skill_type, cooldown in state.items():
-                if cooldown <= 0 and not skill_chosen:
+                if cooldown <= 0 and skills_chosen < self.enemy.actions_per_turn:
                     next_state[skill_type] = cooldowns[skill_type]
                     skill_count[skill_type] += 1
-                    skill_chosen = True
+                    skills_chosen += 1
                     continue
 
                 next_state[skill_type] = max(0, cooldown - 1)
 
-            if not skill_chosen:
+            if skills_chosen == 0:
                 raise StopIteration("No available skill found.")
 
             get_rotation(state_list, skill_count, next_state, (depth_check - 1))

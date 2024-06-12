@@ -19,7 +19,7 @@ class EmptySkill(BaseSkill):
             stacks=None,
             reset_after_encounter=False,
             droppable=False,
-            image="empty.png",
+            image_url="https://i.imgur.com/B6TuHg3.png",
         )
 
 
@@ -38,7 +38,7 @@ class NormalAttack(BaseSkill):
             stacks=None,
             reset_after_encounter=False,
             droppable=False,
-            image="normal_attack.png",
+            image_url="https://i.imgur.com/najJyC1.png",
         )
 
 
@@ -54,7 +54,7 @@ class HeavyAttack(BaseSkill):
             cooldown=2,
             base_value=4,
             droppable=False,
-            image="heavy_attack.png",
+            image_url="https://i.imgur.com/1Cf7nVB.png",
         )
 
 
@@ -70,7 +70,7 @@ class MagicAttack(BaseSkill):
             cooldown=0,
             base_value=2,
             droppable=False,
-            image="magic_attack.png",
+            image_url="https://i.imgur.com/RnbJR20.png",
         )
 
 
@@ -91,6 +91,7 @@ class SecondWind(BaseSkill):
             stacks=1,
             reset_after_encounter=True,
             default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/AH7NRhc.png",
         )
 
 
@@ -107,7 +108,7 @@ class GigaBonk(BaseSkill):
             base_value=6,
             stacks=3,
             reset_after_encounter=False,
-            image="giga_bonk.png",
+            image_url="https://i.imgur.com/pq1aJsn.png",
         )
 
 
@@ -124,7 +125,7 @@ class FireBall(BaseSkill):
             base_value=10,
             stacks=1,
             reset_after_encounter=False,
-            image="fire_ball.png",
+            image_url="https://i.imgur.com/tzbLY8h.png",
         )
 
 
@@ -144,6 +145,7 @@ class DeezNuts(BaseSkill):
             base_value=2,
             hits=1,
             droppable=False,
+            image_url="https://i.imgur.com/zr785IX.png",
         )
 
 
@@ -160,6 +162,7 @@ class Bonk(BaseSkill):
             base_value=1,
             hits=2,
             droppable=False,
+            image_url="https://i.imgur.com/FHvWc7b.png",
         )
 
 
@@ -176,6 +179,7 @@ class MLady(BaseSkill):
             base_value=4,
             hits=1,
             droppable=False,
+            image_url="https://i.imgur.com/FHvWc7b.png",
         )
 
 
@@ -193,4 +197,5 @@ class FedoraTip(BaseSkill):
             hits=1,
             aoe=True,
             droppable=False,
+            image_url="https://i.imgur.com/zr785IX.png",
         )

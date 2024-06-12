@@ -33,7 +33,6 @@ from view.combat.engage_view import EnemyEngageView
 
 class EncounterManager(Service):
 
-    TURN_WAIT = 4
     ENCOUNTER_MIN_LVL_SCALING = 0.65
 
     # based on avg player strength
@@ -158,10 +157,9 @@ class EncounterManager(Service):
         enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
 
         view = EnemyEngageView(self.controller)
-        image = discord.File(f"./img/enemies/{enemy.image}", enemy.image)
         channel = guild.get_channel(channel_id)
 
-        message = await channel.send("", embed=embed, view=view, files=[image])
+        message = await channel.send("", embed=embed, view=view)
         encounter.message_id = message.id
         encounter.channel_id = message.channel.id
 
@@ -273,9 +271,7 @@ class EncounterManager(Service):
         embed.set_thumbnail(url=user.display_avatar.url)
 
         turn_message = await self.get_previous_turn_message(thread)
-        if turn_message is None:
-            await thread.send("", embed=embed)
-        else:
+        if turn_message is not None:
             previous_embeds = turn_message.embeds
             embeds = previous_embeds + [embed]
             await turn_message.edit(embeds=embeds)
@@ -378,29 +374,18 @@ class EncounterManager(Service):
 
         turn_data = await self.actor_manager.calculate_opponent_turn(context)
 
-        turn_message = await self.get_previous_turn_message(context.thread)
-        previous_embeds = turn_message.embeds
+        for turn in turn_data:
+            turn_message = await self.get_previous_turn_message(context.thread)
+            previous_embeds = turn_message.embeds
 
-        image = discord.File(
-            f"./img/enemies/{opponent.enemy.image}", opponent.enemy.image
-        )
-
-        initial_embed = True
-        async for embed in self.embed_manager.handle_actor_turn_embed(
-            turn_data, context
-        ):
-            attachments = [image]
-            current_embeds = previous_embeds + [embed]
-
-            if initial_embed:
-                initial_embed = False
-                await turn_message.edit(embeds=current_embeds, attachments=attachments)
-            else:
+            async for embed in self.embed_manager.handle_actor_turn_embed(
+                turn, context
+            ):
+                current_embeds = previous_embeds + [embed]
                 await turn_message.edit(embeds=current_embeds)
 
-        await asyncio.sleep(2)
+            await asyncio.sleep(2)
 
-        for turn in turn_data:
             for target, damage_instance, _ in turn.damage_data:
                 total_damage = target.get_damage_after_defense(
                     turn.skill, damage_instance.scaled_value
@@ -417,6 +402,8 @@ class EncounterManager(Service):
                     CombatEventType.ENEMY_TURN,
                 )
                 await self.controller.dispatch_event(event)
+
+            await self.refresh_encounter_thread(context.encounter.id)
 
         event = CombatEvent(
             datetime.datetime.now(),
@@ -447,9 +434,6 @@ class EncounterManager(Service):
             skill_data.skill, combatant_count=context.get_combat_scale()
         )
 
-        turn_message = await self.get_previous_turn_message(context.thread)
-        previous_embeds = turn_message.embeds
-
         skill_value_data = []
         hp_cache = {}
 
@@ -479,15 +463,16 @@ class EncounterManager(Service):
 
         turn_data = [TurnData(character, skill_data.skill, skill_value_data)]
 
-        async for embed in self.embed_manager.handle_actor_turn_embed(
-            turn_data, context
-        ):
-            current_embeds = previous_embeds + [embed]
-            await turn_message.edit(embeds=current_embeds, attachments=[])
-
-        await asyncio.sleep(2)
-
         for turn in turn_data:
+            turn_message = await self.get_previous_turn_message(context.thread)
+            previous_embeds = turn_message.embeds
+
+            async for embed in self.embed_manager.handle_actor_turn_embed(
+                turn, context
+            ):
+                current_embeds = previous_embeds + [embed]
+                await turn_message.edit(embeds=current_embeds)
+
             for target, damage_instance, _ in turn.damage_data:
                 total_damage = target.get_damage_after_defense(
                     turn.skill, damage_instance.scaled_value
@@ -504,6 +489,8 @@ class EncounterManager(Service):
                     CombatEventType.MEMBER_TURN,
                 )
                 await self.controller.dispatch_event(event)
+
+            await asyncio.sleep(2)
 
         event = CombatEvent(
             datetime.datetime.now(),
@@ -548,9 +535,7 @@ class EncounterManager(Service):
         else:
             embed = await self.embed_manager.get_combat_failed_embed(context)
 
-        enemy = context.opponent.enemy
-        image = discord.File(f"./img/enemies/{enemy.image}", enemy.image)
-        await context.thread.send("", embed=embed, files=[image])
+        await context.thread.send("", embed=embed)
 
         event = EncounterEvent(
             datetime.datetime.now(),
@@ -595,22 +580,8 @@ class EncounterManager(Service):
                 await asyncio.sleep(2.5)
 
                 already_dropped.append(drop)
+                await message.edit(embeds=embeds)
 
-                files = {}
-                for drop in already_dropped:
-
-                    file_path = f"./{drop.base.image_path}{drop.base.image}"
-                    if file_path not in files:
-                        file = discord.File(
-                            file_path,
-                            drop.base.attachment_name,
-                        )
-                        files[file_path] = file
-
-                attachments = list(files.values())
-                await message.edit(embeds=embeds, attachments=attachments)
-
-            # files = list(files.values())
             item = member_loot[2]
             if item is not None:
                 embeds.append(item.get_embed(self.bot, show_price=False))
@@ -648,21 +619,14 @@ class EncounterManager(Service):
                     encounter_event_type = EncounterEventType.ENEMY_DEFEAT
 
                 embed = self.embed_manager.get_actor_defeated_embed(actor)
-                files = []
-                if actor.is_enemy:
-                    opponent = context.opponent
-                    image = discord.File(
-                        f"./img/enemies/{opponent.enemy.image}", opponent.enemy.image
-                    )
-                    files = [image]
-
                 turn_message = await self.get_previous_turn_message(context.thread)
+
                 if turn_message is None:
-                    await context.thread.send("", embed=embed, files=files)
+                    await context.thread.send("", embed=embed)
                 else:
                     previous_embeds = turn_message.embeds
                     embeds = previous_embeds + [embed]
-                    await turn_message.edit(embeds=embeds, attachments=files)
+                    await turn_message.edit(embeds=embeds)
 
                 event = EncounterEvent(
                     datetime.datetime.now(),
@@ -725,24 +689,24 @@ class EncounterManager(Service):
         enemy_embed = await self.embed_manager.get_combat_embed(context)
         round_embed = await self.embed_manager.get_round_embed(context)
 
+        round_message = await self.get_previous_turn_message(context.thread)
+        if round_message is not None:
+            round_embeds = round_message.embeds
+            round_embeds[0] = round_embed
+            await round_message.edit(embeds=round_embeds, attachments=[])
+
+        if not context.new_turn():
+            return
+
         if current_actor.id == context.beginning_actor.id:
-
             await self.delete_previous_combat_info(context.thread)
-            enemy = context.opponent.enemy
-            image = discord.File(f"./img/enemies/{enemy.image}", enemy.image)
-            await context.thread.send("", embed=enemy_embed, files=[image])
-
+            await context.thread.send("", embed=enemy_embed)
             await context.thread.send(content="", embed=round_embed)
 
         else:
             message = await self.get_previous_enemy_info(context.thread)
             if message is not None:
                 await message.edit(embed=enemy_embed)
-            round_message = await self.get_previous_turn_message(context.thread)
-            if round_message is not None:
-                round_embeds = round_message.embeds
-                round_embeds[0] = round_embed
-                await round_message.edit(embeds=round_embeds, attachments=[])
 
         await asyncio.sleep(2)
 
@@ -764,12 +728,10 @@ class EncounterManager(Service):
             )
             return
 
-        enemy_embeds, files = await self.embed_manager.get_character_turn_embeds(
-            context
-        )
+        enemy_embeds = await self.embed_manager.get_character_turn_embeds(context)
         view = CombatTurnView(self.controller, current_actor, context)
         message = await context.thread.send(
-            f"<@{current_actor.id}>", embeds=enemy_embeds, files=files, view=view
+            f"<@{current_actor.id}>", embeds=enemy_embeds, view=view
         )
         view.set_message(message)
         return

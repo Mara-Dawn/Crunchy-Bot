@@ -60,7 +60,7 @@ class Enemy:
         type: EnemyType,
         description: str,
         information: str,
-        image: str,
+        image_url: str,
         min_level: int,
         max_level: int,
         health: int,
@@ -84,7 +84,7 @@ class Enemy:
         self.type = type
         self.description = description
         self.information = information
-        self.image = image
+        self.image_url = image_url
         self.min_level = min_level
         self.max_level = max_level
         self.health = health
@@ -142,7 +142,7 @@ class Enemy:
     def add_to_embed(
         self, embed: discord.Embed, show_info: bool = False, max_width: int = 56
     ) -> None:
-        title = f"> ~* Lvl. {self.min_level} - {self.name} *~"
+        title = f"> ~* {self.name} - Lvl. {self.min_level} *~"
         description = f'"{self.description}"'
 
         if len(description) < max_width:

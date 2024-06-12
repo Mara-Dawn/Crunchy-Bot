@@ -57,7 +57,7 @@ class Default(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
-        image: str = None,
+        image_url: str = None,
     ):
         super().__init__(
             name=name,
@@ -70,7 +70,7 @@ class Default(GearBase):
             modifiers=modifiers,
             skills=skills,
             scaling=1,
-            image=image,
+            image_url=image_url,
         )
 
 
@@ -88,7 +88,7 @@ class DefaultPhys(Default):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
-            image="physical.png",
+            image_url="https://i.imgur.com/QclR1yI.png",
         )
 
 
@@ -106,7 +106,7 @@ class DefaultMagical(Default):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="magical.png",
+            image_url="https://i.imgur.com/YDoeGbR.png",
         )
 
 
@@ -120,6 +120,7 @@ class DefaultHead(Default):
             information="Default headgear. Cannot be scrapped.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/7Emekkj.png",
         )
 
 
@@ -136,6 +137,7 @@ class DefaultBody(Default):
             information="Default body armor. Cannot be scrapped.",
             slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/hG2ADaB.png",
         )
 
 
@@ -149,6 +151,7 @@ class DefaultLegs(Default):
             information="Default leg armor. Cannot be scrapped.",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/SIEPjbA.png",
         )
 
 
@@ -166,7 +169,7 @@ class Tier0(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
-        image: str = None,
+        image_url: str = None,
     ):
         super().__init__(
             name=name,
@@ -179,8 +182,7 @@ class Tier0(GearBase):
             modifiers=modifiers,
             skills=skills,
             scaling=1,
-            image=image,
-            image_path="img/gear/tier0/",
+            image_url=image_url,
         )
 
 
@@ -198,7 +200,6 @@ class Stick_T0(Tier0):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
-            image="stick.png",
         )
 
 
@@ -216,7 +217,6 @@ class Wand_T0(Tier0):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="wand.png",
         )
 
 
@@ -286,7 +286,7 @@ class Tier1(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
-        image: str = None,
+        image_url: str = None,
     ):
         super().__init__(
             name=name,
@@ -299,7 +299,7 @@ class Tier1(GearBase):
             modifiers=modifiers,
             skills=skills,
             scaling=1.5,
-            image=image,
+            image_url=image_url,
         )
 
 
@@ -320,7 +320,7 @@ class Stick_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="stick.png",
+            image_url="stick.png",
         )
 
 
@@ -343,7 +343,7 @@ class Wand_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="wand.png",
+            image_url="wand.png",
         )
 
 
@@ -445,7 +445,7 @@ class Tier2(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
-        image: str = None,
+        image_url: str = None,
     ):
         super().__init__(
             name=name,
@@ -458,7 +458,7 @@ class Tier2(GearBase):
             modifiers=modifiers,
             skills=skills,
             scaling=2,
-            image=image,
+            image_url=image_url,
         )
 
 
@@ -476,7 +476,6 @@ class Stick_T2(Tier2):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="stick.png",
         )
 
 
@@ -494,7 +493,6 @@ class Wand_T2(Tier2):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="wand.png",
         )
 
 
@@ -564,7 +562,7 @@ class Tier3(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
-        image: str = None,
+        image_url: str = None,
     ):
         super().__init__(
             name=name,
@@ -577,7 +575,7 @@ class Tier3(GearBase):
             modifiers=modifiers,
             skills=skills,
             scaling=2.5,
-            image=image,
+            image_url=image_url,
         )
 
 
@@ -595,7 +593,6 @@ class Stick_T3(Tier3):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="stick.png",
         )
 
 
@@ -613,7 +610,6 @@ class Wand_T3(Tier3):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="wand.png",
         )
 
 
@@ -683,7 +679,7 @@ class Tier4(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
-        image: str = None,
+        image_url: str = None,
     ):
         super().__init__(
             name=name,
@@ -696,7 +692,7 @@ class Tier4(GearBase):
             modifiers=modifiers,
             skills=skills,
             scaling=3,
-            image=image,
+            image_url=image_url,
         )
 
 
@@ -714,7 +710,6 @@ class Stick_T4(Tier4):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="stick.png",
         )
 
 
@@ -732,7 +727,6 @@ class Wand_T4(Tier4):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="wand.png",
         )
 
 
@@ -802,7 +796,7 @@ class Tier5(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
-        image: str = None,
+        image_url: str = None,
     ):
         super().__init__(
             name=name,
@@ -815,7 +809,7 @@ class Tier5(GearBase):
             modifiers=modifiers,
             skills=skills,
             scaling=3.5,
-            image=image,
+            image_url=image_url,
         )
 
 
@@ -833,7 +827,6 @@ class Stick_T5(Tier5):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="stick.png",
         )
 
 
@@ -851,7 +844,6 @@ class Wand_T5(Tier5):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image="wand.png",
         )
 
 

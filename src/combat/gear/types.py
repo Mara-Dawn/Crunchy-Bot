@@ -156,7 +156,7 @@ class GearBaseType(str, Enum):
 
     NECKLACE_T0 = "Necklace_T0"
     NECKLACE_T1 = "Necklace_T1"
-    NECKLACE_T1_2 = "Necklace_T1_1"
+    NECKLACE_T1_2 = "Necklace_T1_2"
     NECKLACE_T2 = "Necklace_T2"
     NECKLACE_T3 = "Necklace_T3"
     NECKLACE_T4 = "Necklace_T4"

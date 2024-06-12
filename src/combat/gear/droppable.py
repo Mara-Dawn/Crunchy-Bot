@@ -83,6 +83,7 @@ class Droppable:
         base_value: int = 1,
         image: str = None,
         image_path: str = None,
+        image_url: str = None,
     ):
         self.name = name
         self.base = base
@@ -94,6 +95,7 @@ class Droppable:
         self.rarity = rarity
         self.image = image
         self.image_path = image_path
+        self.image_url = image_url
         self.scaling = base_value
 
     def get_embed(

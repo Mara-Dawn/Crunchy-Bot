@@ -156,74 +156,15 @@ class EquipmentView(ViewMenu):
 
         self.refresh_elements(disabled=disabled)
         embeds = []
-        files: list[discord.File] = []
         match self.state:
             case EquipmentViewState.GEAR:
                 embeds.append(EquipmentHeadEmbed(self.member))
                 embeds.append(self.character.equipment.weapon.get_embed())
-                files.append(
-                    discord.File(
-                        (
-                            f"./{self.character.equipment.weapon.base.image_path}"
-                            f"{self.character.equipment.weapon.base.image}"
-                        ),
-                        self.character.equipment.weapon.base.attachment_name,
-                    )
-                )
                 embeds.append(self.character.equipment.head_gear.get_embed())
-                files.append(
-                    discord.File(
-                        (
-                            f"./{self.character.equipment.head_gear.base.image_path}"
-                            f"{self.character.equipment.head_gear.base.image}"
-                        ),
-                        self.character.equipment.head_gear.base.attachment_name,
-                    )
-                )
                 embeds.append(self.character.equipment.body_gear.get_embed())
-                files.append(
-                    discord.File(
-                        (
-                            f"./{self.character.equipment.body_gear.base.image_path}"
-                            f"{self.character.equipment.body_gear.base.image}"
-                        ),
-                        self.character.equipment.body_gear.base.attachment_name,
-                    )
-                )
                 embeds.append(self.character.equipment.leg_gear.get_embed())
-                files.append(
-                    discord.File(
-                        (
-                            f"./{self.character.equipment.leg_gear.base.image_path}"
-                            f"{self.character.equipment.leg_gear.base.image}"
-                        ),
-                        self.character.equipment.leg_gear.base.attachment_name,
-                    )
-                )
                 embeds.append(self.character.equipment.accessory_1.get_embed())
-                files.append(
-                    discord.File(
-                        (
-                            f"./{self.character.equipment.accessory_1.base.image_path}"
-                            f"{self.character.equipment.accessory_1.base.image}"
-                        ),
-                        self.character.equipment.accessory_1.base.attachment_name,
-                    )
-                )
                 embeds.append(self.character.equipment.accessory_2.get_embed())
-                if (
-                    self.character.equipment.accessory_1.base.attachment_name
-                    != self.character.equipment.accessory_2.base.attachment_name
-                ):
-                    files.append(
-                        discord.File(
-                            (
-                                f"./{self.character.equipment.accessory_2.base.image_path}"
-                                f"{self.character.equipment.accessory_2.base.image}"
-                            ),
-                            self.character.equipment.accessory_2.base.attachment_name,
-                        )
-                    )
             case EquipmentViewState.STATS:
                 embeds.append(AttributesHeadEmbed(self.member))
                 title = f"{self.member.display_name}'s Attributes"
@@ -236,12 +177,6 @@ class EquipmentView(ViewMenu):
                         show_data=True, show_full_data=True
                     )
                     embeds.append(skill_embed)
-                    file = discord.File(
-                        f"./{skill.base_skill.image_path}{skill.base_skill.image}",
-                        skill.base_skill.attachment_name,
-                    )
-                    if file.filename not in [file.filename for file in files]:
-                        files.append(file)
             case EquipmentViewState.FORGE:
                 embed = ForgeEmbed(
                     self.member,
@@ -253,7 +188,7 @@ class EquipmentView(ViewMenu):
                 # files.append(file)
 
         try:
-            await self.message.edit(embeds=embeds, attachments=files, view=self)
+            await self.message.edit(embeds=embeds, view=self)
         except (discord.NotFound, discord.HTTPException):
             self.controller.detach_view(self)
 

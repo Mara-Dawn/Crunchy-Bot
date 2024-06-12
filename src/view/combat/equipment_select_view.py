@@ -303,7 +303,6 @@ class EquipmentSelectView(
         self.refresh_elements(disabled)
 
         embeds = []
-        files = {}
         embeds.append(SelectGearHeadEmbed(self.member))
 
         if len(self.display_items) <= 0:
@@ -322,21 +321,8 @@ class EquipmentSelectView(
                 equipped = True
 
             embeds.append(gear.get_embed(equipped=equipped, show_locked_state=True))
-            file_path = f"./{gear.base.image_path}{gear.base.image}"
-            if file_path not in files:
-                file = discord.File(
-                    file_path,
-                    gear.base.attachment_name,
-                )
-                files[file_path] = file
 
-        files = list(files.values())
-
-        await self.message.edit(embeds=embeds, attachments=files, view=self)
-        # try:
-        #     await self.message.edit(embeds=embeds, attachments=files, view=self)
-        # except (discord.NotFound, discord.HTTPException):
-        #     self.controller.detach_view(self)
+        await self.message.edit(embeds=embeds, view=self)
 
     async def set_selected(self, interaction: discord.Interaction, gear_ids: list[int]):
         await interaction.response.defer()

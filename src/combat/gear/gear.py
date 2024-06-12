@@ -32,13 +32,12 @@ class Enchantment:
 
 class GearBase(DroppableBase):
 
-    DEFAULT_IMAGE_PATH = "img/gear/default/"
-    IMAGE_NAMES = {
-        EquipmentSlot.WEAPON: "weapon.png",
-        EquipmentSlot.HEAD: "head.png",
-        EquipmentSlot.BODY: "body.png",
-        EquipmentSlot.LEGS: "legs.png",
-        EquipmentSlot.ACCESSORY: "accessory.png",
+    DEFAULT_IMAGES = {
+        EquipmentSlot.WEAPON: "https://i.imgur.com/EI1ZWIS.png",
+        EquipmentSlot.HEAD: "https://i.imgur.com/7Emekkj.png",
+        EquipmentSlot.BODY: "https://i.imgur.com/hG2ADaB.png",
+        EquipmentSlot.LEGS: "https://i.imgur.com/SIEPjbA.png",
+        EquipmentSlot.ACCESSORY: "https://i.imgur.com/Bb8dfKg.png",
     }
 
     def __init__(
@@ -57,8 +56,7 @@ class GearBase(DroppableBase):
         droppable: bool = True,
         permanent: bool = False,
         secret: bool = False,
-        image: str = None,
-        image_path: str = None,
+        image_url: str = None,
     ):
         super().__init__(
             base_type=Base.GEAR,
@@ -74,8 +72,7 @@ class GearBase(DroppableBase):
         self.description = description
         self.information = information
         self.modifiers = modifiers
-        self.image = image
-        self.image_path = image_path
+        self.image_url = image_url
 
         self.skills = skills
         if self.skills is None:
@@ -85,13 +82,8 @@ class GearBase(DroppableBase):
         self.permanent = permanent
         self.secret = secret
 
-        if self.image is None:
-            self.image = self.IMAGE_NAMES[self.slot]
-
-        self.attachment_name = f"{self.type.name}_{self.image}"
-
-        if self.image_path is None:
-            self.image_path = self.DEFAULT_IMAGE_PATH
+        if self.image_url is None:
+            self.image_url = self.DEFAULT_IMAGES[self.slot]
 
     def get_allowed_modifiers(self):
         match self.slot:
@@ -166,8 +158,7 @@ class Gear(Droppable):
             rarity=rarity,
             level=level,
             base_value=base.scaling,
-            image=base.image,
-            image_path=base.image_path,
+            image_url=base.image_url,
         )
         if self.name == "" or self.name is None:
             self.name = base.name
@@ -331,45 +322,5 @@ class Gear(Droppable):
             info_block += f"```ansi\n[37m{self.information}```"
 
         embed = discord.Embed(title="", description=info_block, color=color)
-        embed.set_thumbnail(url=f"attachment://{self.base.attachment_name}")
+        embed.set_thumbnail(url=self.image_url)
         return embed
-
-    def add_to_embed(
-        self,
-        embed: discord.Embed,
-        title: str = None,
-        show_data: bool = True,
-        show_info: bool = False,
-        max_width: int = 44,
-    ) -> None:
-        if title is None:
-            title = self.base.slot.value
-        description = f'"{self.description}"'
-
-        if len(description) < max_width:
-            spacing = max_width - len(description)
-            description += " " * spacing
-
-        info_block = f"```python\n{description}```"
-
-        if show_data:
-            max_len = GearModifierType.max_name_len()
-
-            info_block += "```ansi\n"
-            info_block += f"{self.RARITY_COLOR_MAP[self.rarity]}{self.name}[0m\n"
-            info_block += "-" * max_width + "\n"
-            info_block += f"{self.base.slot.value}\n"
-            info_block += "-" * max_width + "\n"
-
-            for modifier_type, value in self.modifiers.items():
-                name = modifier_type.value
-                spacing = " " * (max_len - len(name))
-                line_colored = f"{spacing}{name}: [35m{value}[0m\n"
-                info_block += line_colored
-
-            info_block += "```"
-
-        if show_info:
-            info_block += f"```ansi\n[37m{self.skill.information}```"
-
-        embed.add_field(name=title, value=info_block, inline=False)

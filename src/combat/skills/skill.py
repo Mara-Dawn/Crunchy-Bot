@@ -6,11 +6,10 @@ from combat.skills.types import SkillEffect, SkillTarget, SkillType
 
 class BaseSkill(DroppableBase):
 
-    DEFAULT_IMAGE_PATH = "img/skills/"
-    DEFAULT_IMAGE_NAME = {
-        SkillEffect.PHYSICAL_DAMAGE: "physical.png",
-        SkillEffect.MAGICAL_DAMAGE: "magical.png",
-        SkillEffect.HEALING: "healing.png",
+    DEFAULT_IMAGE = {
+        SkillEffect.PHYSICAL_DAMAGE: "https://i.imgur.com/FHvWc7b.png",
+        SkillEffect.MAGICAL_DAMAGE: "https://i.imgur.com/zr785IX.png",
+        SkillEffect.HEALING: "https://i.imgur.com/AH7NRhc.png",
     }
 
     def __init__(
@@ -30,8 +29,7 @@ class BaseSkill(DroppableBase):
         reset_after_encounter: bool = False,
         aoe: bool = False,
         weight: int = 100,
-        image: str = None,
-        image_path: str = None,
+        image_url: str = None,
         default_target: SkillTarget = SkillTarget.OPPONENT,
     ):
         super().__init__(
@@ -55,16 +53,10 @@ class BaseSkill(DroppableBase):
         self.reset_after_encounter = reset_after_encounter
         self.aoe = aoe
         self.default_target = default_target
-        self.image = image
-        self.image_path = image_path
+        self.image_url = image_url
 
-        if self.image is None:
-            self.image = self.DEFAULT_IMAGE_NAME[self.skill_effect]
-
-        self.attachment_name = f"{self.type.name}_{self.image}"
-
-        if self.image_path is None:
-            self.image_path = self.DEFAULT_IMAGE_PATH
+        if self.image_url is None:
+            self.image_url = self.DEFAULT_IMAGE[self.skill_effect]
 
 
 class Skill(Droppable):
@@ -147,18 +139,11 @@ class Skill(Droppable):
             level=level,
             rarity=rarity,
             base_value=base_skill.base_value,
-            image=base_skill.image,
-            image_path=base_skill.image_path,
+            image_url=base_skill.image_url,
         )
         self.locked = locked
         self.base_skill = base_skill
         self.id = id
-
-        if self.image is None:
-            self.image = self.DEFAULT_IMAGE_NAME
-
-        if self.image_path is None:
-            self.image_path = self.DEFAULT_IMAGE_PATH
 
     def get_embed(
         self,
@@ -166,7 +151,7 @@ class Skill(Droppable):
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
-        max_width: int = 44,
+        max_width: int = 45,
     ) -> discord.Embed:
         # color = self.EFFECT_COLOR_MAP[self.base_skill.skill_effect]
         color = self.RARITY_COLOR_HEX_MAP[self.rarity]
@@ -203,7 +188,7 @@ class Skill(Droppable):
 
         if show_data:
             max_len_pre = 8
-            max_len_suf = 8
+            max_len_suf = 9
 
             # Rarity
             name = "Rarity"
@@ -291,7 +276,7 @@ class Skill(Droppable):
             info_block += f"```ansi\n[37m{self.information}```"
 
         embed = discord.Embed(title="", description=info_block, color=color)
-        embed.set_thumbnail(url=f"attachment://{self.base_skill.attachment_name}")
+        embed.set_thumbnail(url=self.base_skill.image_url)
         return embed
 
 
@@ -330,7 +315,7 @@ class CharacterSkill:
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
-        max_width: int = 44,
+        max_width: int = 45,
     ) -> discord.Embed:
         # color = self.skill.EFFECT_COLOR_MAP[self.skill.base_skill.skill_effect]
         color = self.skill.RARITY_COLOR_HEX_MAP[self.skill.rarity]
@@ -370,7 +355,7 @@ class CharacterSkill:
 
         if show_data:
             max_len_pre = 8
-            max_len_suf = 8
+            max_len_suf = 9
 
             if show_full_data:
                 # Rarity
@@ -475,7 +460,7 @@ class CharacterSkill:
             info_block += f"```ansi\n[37m{self.skill.base_skill.information}```"
 
         embed = discord.Embed(title="", description=info_block, color=color)
-        embed.set_thumbnail(url=f"attachment://{self.skill.base_skill.attachment_name}")
+        embed.set_thumbnail(url=self.skill.base_skill.image_url)
         return embed
 
     def add_to_embed(
