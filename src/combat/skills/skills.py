@@ -145,7 +145,7 @@ class DeezNuts(BaseSkill):
             base_value=2,
             hits=1,
             droppable=False,
-            image_url="https://i.imgur.com/zr785IX.png",
+            image_url="https://i.imgur.com/nfF8ROY.png",
         )
 
 
@@ -162,7 +162,7 @@ class Bonk(BaseSkill):
             base_value=1,
             hits=2,
             droppable=False,
-            image_url="https://i.imgur.com/FHvWc7b.png",
+            image_url="https://i.imgur.com/svYQ8jJ.png",
         )
 
 
@@ -179,7 +179,7 @@ class MLady(BaseSkill):
             base_value=4,
             hits=1,
             droppable=False,
-            image_url="https://i.imgur.com/FHvWc7b.png",
+            image_url="https://i.imgur.com/JQYWUuW.png",
         )
 
 
@@ -197,5 +197,5 @@ class FedoraTip(BaseSkill):
             hits=1,
             aoe=True,
             droppable=False,
-            image_url="https://i.imgur.com/zr785IX.png",
+            image_url="https://i.imgur.com/NaRYfaS.png",
         )

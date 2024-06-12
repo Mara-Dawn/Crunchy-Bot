@@ -10,7 +10,7 @@ class MindGoblin(Enemy):
             name="Mind Goblin",
             type=EnemyType.MIND_GOBLIN,
             description="Comes with a big sack of nuts.",
-            information="Has tickets to saw con.",
+            information="Has tickets to SawCon.",
             image_url="https://i.imgur.com/IrZjelg.png",
             min_level=1,
             max_level=3,

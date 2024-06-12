@@ -209,10 +209,9 @@ class CombatEmbedManager(Service):
         actor = context.get_current_actor()
         embeds = []
 
-        turn_number = context.get_current_turn_number()
-        title = f"Turn {turn_number}: {actor.name}"
+        title = f"It's your turn {actor.name}!"
 
-        content = f"It is your turn <@{actor.id}>. Please select an action."
+        content = f"<@{actor.id}> Please select an action."
 
         now = datetime.datetime.now().timestamp()
         turn_duration = context.get_turn_timeout(actor.id)
@@ -455,7 +454,6 @@ class CombatEmbedManager(Service):
         full_embed = discord.Embed(title="", description="", color=color)
         full_embed.set_author(name=title, icon_url=actor.image_url)
         full_embed.set_thumbnail(url=skill.base_skill.image_url)
-        # full_embed.set_footer(text=f"Turn {turn_number}")
         skill_data.add_to_embed(full_embed)
 
         yield full_embed
