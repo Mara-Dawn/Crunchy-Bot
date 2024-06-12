@@ -531,11 +531,4 @@ class EquipmentViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-        file_path = f"./{drop.base.image_path}{drop.base.image}"
-        file = discord.File(
-            file_path,
-            drop.base.attachment_name,
-        )
-        await interaction.followup.send(
-            embed=drop.get_embed(), files=[file], ephemeral=True
-        )
+        await interaction.followup.send(embed=drop.get_embed(), ephemeral=True)

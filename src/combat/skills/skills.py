@@ -108,7 +108,7 @@ class GigaBonk(BaseSkill):
             base_value=6,
             stacks=3,
             reset_after_encounter=False,
-            image_url="https://i.imgur.com/pq1aJsn.png",
+            image_url="https://i.imgur.com/JNNbXJa.png",
         )
 
 

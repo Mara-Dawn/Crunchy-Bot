@@ -183,7 +183,7 @@ class Gear(Droppable):
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
-        max_width: int = 44,
+        max_width: int = 45,
     ) -> discord.Embed:
         color = self.RARITY_COLOR_HEX_MAP[self.rarity]
 

@@ -169,7 +169,7 @@ class CharacterAttribute(str, Enum):
     HEALING_BONUS = "Healing Bonus"
     CRIT_RATE = "Crit Rate"
     CRIT_DAMAGE = "Crit Damage"
-    PHYS_DAMAGE_REDUCTION = "Physical Damare Reduction"
+    PHYS_DAMAGE_REDUCTION = "Physical Damage Reduction"
     MAGIC_DAMAGE_REDUCTION = "Magical Damage Reduction"
     MAX_HEALTH = "Maximum Health"
 
