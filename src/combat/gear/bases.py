@@ -200,6 +200,7 @@ class Stick_T0(Tier0):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            image_url="https://i.imgur.com/25Lk0kb.png",
         )
 
 
@@ -217,6 +218,7 @@ class Wand_T0(Tier0):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
+            image_url="https://i.imgur.com/Y6em0vE.png",
         )
 
 
@@ -230,6 +232,7 @@ class HeadGear_T0(Tier0):
             information="Tier 0 head piece.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/a55rCkb.png",
         )
 
 
@@ -243,6 +246,7 @@ class BodyGear_T0(Tier0):
             information="Tier 0 body piece.",
             slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/T5fxzq0.png",
         )
 
 
@@ -256,6 +260,7 @@ class LegGear_T0(Tier0):
             information="Tier 0 leg piece.",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/AAH2XAr.png",
         )
 
 
@@ -269,6 +274,21 @@ class Necklace_T0(Tier0):
             information="Tier 0 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/BESjNWX.png",
+        )
+
+
+class Ring_T0(Tier0):
+
+    def __init__(self):
+        super().__init__(
+            name="Rad Ring",
+            type=GearBaseType.RING_T0,
+            description="It' so freaking cute, you don't even care this was a kids toy extra from a cereal box.",
+            information="Tier 0 accessory",
+            slot=EquipmentSlot.ACCESSORY,
+            modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/ukiMU3R.png",
         )
 
 

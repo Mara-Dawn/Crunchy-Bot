@@ -154,8 +154,6 @@ class EncounterManager(Service):
         encounter = await self.create_encounter(guild.id)
         embed = await self.embed_manager.get_spawn_embed(encounter)
 
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
-
         view = EnemyEngageView(self.controller)
         channel = guild.get_channel(channel_id)
 
