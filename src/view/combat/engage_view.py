@@ -76,7 +76,7 @@ class EnemyEngageView(ViewMenu):
         if self.done and self.timeout is None:
             self.timeout = self.DEFAULT_TIMEOUT / 5
             now = datetime.datetime.now().timestamp()
-            self.timeout_timestamp = int(now + self.DEFAULT_TIMEOUT)
+            self.timeout_timestamp = int(now + self.timeout)
 
         if not self.active or self.done:
             embed.add_field(

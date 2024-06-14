@@ -132,6 +132,24 @@ class FireBall(BaseSkill):
 # Enemy Skills
 
 
+class MilkShot(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Milky Shower",
+            skill_type=SkillType.MILK_SHOWER,
+            description="Would fill your belly faster than Mentos x Coke. Don't munch on it",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/60yGeAA.jpeg",
+        )
+
+
 class DeezNuts(BaseSkill):
 
     def __init__(self):
@@ -232,4 +250,39 @@ class FedoraTip(BaseSkill):
             aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/NaRYfaS.png",
+        )
+
+
+class Puke(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Puke",
+            skill_type=SkillType.PUKE,
+            description="You’re not sure if it’s actually puke. It’s very brown",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=2,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/sj1I0Q1.jpeg",
+        )
+
+
+class TailWhip(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Tail Whip",
+            skill_type=SkillType.TAIL_WHIP,
+            description="But where is the tail? (You don’t want to know)",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=1,
+            base_value=2,
+            hits=2,
+            droppable=False,
+            image_url="https://i.imgur.com/nHvtBi3.jpeg",
         )

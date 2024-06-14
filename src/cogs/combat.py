@@ -115,7 +115,9 @@ class Combat(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def random_encounter_task(self):
-        self.logger.log("sys", "Random Encounter task started.", cog=self.__cog_name__)
+        self.logger.debug(
+            "sys", "Random Encounter task started.", cog=self.__cog_name__
+        )
 
         for guild in self.bot.guilds:
             if guild.id not in self.enemy_timers:

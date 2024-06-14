@@ -4,6 +4,32 @@ from combat.skills.types import SkillType
 from items.types import ItemType
 
 
+class BoobaSlime(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Booba Slime",
+            type=EnemyType.BOOBA_SLIME,
+            description="Even thought it looks munchable, you probably shouldn't",
+            information="",
+            image_url="https://i.imgur.com/f1cMvsr.jpeg",
+            min_level=1,
+            max_level=1,
+            health=3,
+            damage_scaling=6,
+            min_gear_drop_count=1,
+            max_gear_drop_count=1,
+            max_players=5,
+            skill_types=[SkillType.MILK_SHOWER],
+            item_loot_table=[
+                ItemType.YELLOW_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=8,
+            actions_per_turn=1,
+        )
+
+
 class MindGoblin(Enemy):
     def __init__(self):
         super().__init__(
@@ -12,7 +38,7 @@ class MindGoblin(Enemy):
             description="Comes with a big sack of nuts.",
             information="Has tickets to SawCon.",
             image_url="https://i.imgur.com/IrZjelg.png",
-            min_level=1,
+            min_level=2,
             max_level=3,
             health=3,
             damage_scaling=5,
@@ -38,9 +64,9 @@ class Table(Enemy):
             description="A plain, white table with four legs.",
             information="Watch your toes!",
             image_url="https://i.imgur.com/ryWhWTP.png",
-            min_level=1,
+            min_level=2,
             max_level=2,
-            health=3,
+            health=2,
             damage_scaling=5,
             max_players=3,
             skill_types=[SkillType.TOE_STUB, SkillType.LOOKING_GOOD],
@@ -78,4 +104,29 @@ class NiceGuy(Enemy):
             skill_loot_table=[],
             initiative=13,
             actions_per_turn=1,
+        )
+
+
+class CatDog(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Cat-Dog",
+            type=EnemyType.CAT_DOG,
+            description="What is it? How was it born? Why doesn’t it look cute?",
+            information="",
+            image_url="https://i.imgur.com/c8yRpIk.png",
+            min_level=2,
+            max_level=6,
+            health=5,
+            damage_scaling=5,
+            max_players=5,
+            skill_types=[SkillType.PUKE, SkillType.TAIL_WHIP],
+            item_loot_table=[
+                ItemType.SPEED_SEED,
+                ItemType.RARE_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=13,
+            actions_per_turn=2,
         )
