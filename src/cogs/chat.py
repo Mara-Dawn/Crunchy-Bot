@@ -8,6 +8,7 @@ from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
+from discord import app_commands
 from discord.ext import commands, tasks
 
 
@@ -78,6 +79,30 @@ class Chat(commands.Cog):
             return
 
         await self.ai_manager.respond(message)
+
+    @app_commands.command(name="give_karma", description="Give someone a gold star.")
+    @app_commands.describe(user="Recipient of the gold star")
+    @app_commands.guild_only()
+    async def balance(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member,
+    ) -> None:
+        # if not await self.__check_enabled(interaction):
+        #     return
+        await interaction.response.defer()
+
+        # user_id = user.id
+
+        # guild_id = interaction.guild_id
+        response = "uwu"
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            response,
+            args=[user.display_name],
+            ephemeral=False,
+        )
 
 
 async def setup(bot):
