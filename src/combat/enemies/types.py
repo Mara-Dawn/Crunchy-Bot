@@ -7,3 +7,4 @@ class EnemyType(str, Enum):
     TABLE = "Table"
     NICE_GUY = "NiceGuy"
     CAT_DOG = "CatDog"
+    MUSHROOM = "Mushroom"

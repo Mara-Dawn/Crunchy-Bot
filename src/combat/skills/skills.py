@@ -286,3 +286,39 @@ class TailWhip(BaseSkill):
             droppable=False,
             image_url="https://i.imgur.com/nHvtBi3.jpeg",
         )
+
+
+class Hold(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Shaking",
+            skill_type=SkillType.HOLD,
+            description="The mushroom is shaking and beaming with more intensity. It almost seems like he's swelling up.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=0,
+            hits=1,
+            droppable=False,
+            image_url="https://i.imgur.com/4S5sYFg.png",
+        )
+
+
+class Burst(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Happy Time!",
+            skill_type=SkillType.BURST,
+            description="BOOM! The mushroom explodes in a huge burst of happiness and good feelings!",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            initial_cooldown=4,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/dmlFE2t.png",
+        )

@@ -30,6 +30,10 @@ class SkillType(str, Enum):
     PUKE = "Puke"
     TAIL_WHIP = "TailWhip"
 
+    # Happy Mushroom
+    HOLD = "Hold"
+    BURST = "Burst"
+
     @staticmethod
     def is_weapon_skill(skill_type: "SkillType"):
         return skill_type in [

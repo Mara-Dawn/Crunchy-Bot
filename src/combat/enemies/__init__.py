@@ -38,7 +38,7 @@ class MindGoblin(Enemy):
             description="Comes with a big sack of nuts.",
             information="Has tickets to SawCon.",
             image_url="https://i.imgur.com/IrZjelg.png",
-            min_level=2,
+            min_level=1,
             max_level=3,
             health=3,
             damage_scaling=5,
@@ -64,7 +64,7 @@ class Table(Enemy):
             description="A plain, white table with four legs.",
             information="Watch your toes!",
             image_url="https://i.imgur.com/ryWhWTP.png",
-            min_level=2,
+            min_level=1,
             max_level=2,
             health=2,
             damage_scaling=5,
@@ -129,4 +129,31 @@ class CatDog(Enemy):
             skill_loot_table=[],
             initiative=13,
             actions_per_turn=2,
+        )
+
+
+class Mushroom(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Happy Mushroom",
+            type=EnemyType.MUSHROOM,
+            description="He looks like he is about to BURST from happiness.",
+            information="Seriously guys im kinda scared.",
+            image_url="https://i.imgur.com/4S5sYFg.png",
+            min_level=3,
+            max_level=5,
+            health=5.5,
+            damage_scaling=0.1,
+            max_players=5,
+            skill_types=[SkillType.HOLD, SkillType.BURST],
+            item_loot_table=[
+                ItemType.SPEED_SEED,
+                ItemType.RARE_SEED,
+            ],
+            min_gear_drop_count=5,
+            max_gear_drop_count=6,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=17,
+            actions_per_turn=1,
         )

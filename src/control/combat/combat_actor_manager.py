@@ -187,6 +187,8 @@ class CombatActorManager(Service):
                 ]:
                     last_used += 1
 
+        round_count = last_used
+
         skill_data = {}
 
         for skill in skills:
@@ -194,6 +196,16 @@ class CombatActorManager(Service):
             skill_type = skill.base_skill.skill_type
             if skill_type in cooldowns:
                 last_used = cooldowns[skill_type]
+            elif (
+                skill.base_skill.initial_cooldown is not None
+                and skill.base_skill.initial_cooldown > 0
+            ):
+                last_used = (
+                    -skill.base_skill.initial_cooldown
+                    + round_count
+                    + skill.base_skill.cooldown
+                )
+
             skill_data[skill_type] = last_used
         return skill_data
 

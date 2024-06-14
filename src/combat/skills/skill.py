@@ -22,6 +22,7 @@ class BaseSkill(DroppableBase):
         skill_effect: SkillEffect,
         cooldown: int,
         base_value: float,
+        initial_cooldown: int = None,
         min_level: int = 1,
         max_level: int = 99,
         droppable: bool = True,
@@ -49,6 +50,7 @@ class BaseSkill(DroppableBase):
         self.skill_effect = skill_effect
         self.cooldown = cooldown
         self.base_value = base_value
+        self.initial_cooldown = initial_cooldown
         self.hits = hits
         self.stacks = stacks
         self.reset_after_encounter = reset_after_encounter
