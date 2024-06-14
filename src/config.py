@@ -1,0 +1,8 @@
+class Config:
+
+    # Code Block Formatting
+    ENEMY_MAX_WIDTH = 30
+    COMBAT_EMBED_MAX_WIDTH = 40
+    ITEM_MAX_WIDTH = 40
+    SHOP_ITEM_MAX_WIDTH = 40
+    INVENTORY_ITEM_MAX_WIDTH = 50

@@ -14,6 +14,8 @@ class EventType(str, Enum):
     PREDICTION = "prediction"
     GARDEN = "garden"
     NOTIFICATION = "notification"
+    ENCOUNTER = "encounter"
+    COMBAT = "combat"
 
 
 class BeansEventType(str, Enum):
@@ -34,6 +36,7 @@ class BeansEventType(str, Enum):
     PRESTIGE = "prestige"
     BEAN_PLANT = "bean_plant"
     BEAN_HARVEST = "bean_harvest"
+    COMBAT_LOOT = "combat_loot"
 
 
 class JailEventType(str, Enum):
@@ -71,6 +74,25 @@ class GardenEventType(str, Enum):
     REMOVE = "remove"
     HARVEST = "harvest"
     NOTIFICATION = "notification"
+
+
+class EncounterEventType(str, Enum):
+    SPAWN = "spawn"
+    MEMBER_ENGAGE = "member_engage"
+    MEMBER_DEFEAT = "member_defeat"
+    MEMBER_TIMEOUT = "member_timeout"
+    ENEMY_DEFEAT = "enemy_defeat"
+    END = "end"
+    PENALTY50 = "penalty_50"
+    PENALTY75 = "penalty_75"
+
+
+class CombatEventType(str, Enum):
+    MEMBER_TURN = "member_turn"
+    MEMBER_TURN_SKIP = "member_turn_skip"
+    ENEMY_TURN = "enemy_turn"
+    MEMBER_END_TURN = "member_end_turn"
+    ENEMY_END_TURN = "enemy_end_turn"
 
 
 class UIEventType(str, Enum):
@@ -141,3 +163,26 @@ class UIEventType(str, Enum):
     GARDEN_PLOT_REMOVE = "garden_plot_remove"
     GARDEN_REFRESH = "garden_plot_refresh"
     GARDEN_PLOT_BLOCK = "garden_plot_block"
+
+    COMBAT_ENGAGE = "combat_engage"
+    COMBAT_USE_SKILL = "combat_use_skill"
+    COMBAT_TIMEOUT = "combat_timeout"
+
+    GEAR_EQUIP = "gear_equip"
+    GEAR_DISMANTLE = "gear_dismantle"
+    GEAR_OPEN_SECELT = "gear_open_select"
+    GEAR_OPEN_OVERVIEW = "gear_open_overview"
+    GEAR_LOCK = "gear_lock"
+    GEAR_UNLOCK = "gear_unlock"
+
+    SKILL_EQUIP_VIEW = "skill_equip_view"
+    SKILL_MANAGE_VIEW = "skill_manage_view"
+    SKILLS_EQUIP = "skills_equip"
+    SKILL_EQUIP = "skill_equip"
+
+    FORGE_VIEW = "forge_view"
+    FORGE_USE = "forge_use"
+
+    SCRAP_BALANCE_CHANGED = "scrap_balance_changed"
+
+    COMBAT_ENGAGE_UPDATE = "combat_engage_update"

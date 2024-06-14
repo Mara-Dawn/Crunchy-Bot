@@ -924,6 +924,36 @@ class GhostBean(Item):
         )
 
 
+class Scrap(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Scrap",
+            type=ItemType.SCRAP,
+            group=ItemGroup.GEAR,
+            shop_category=ShopCategory.GEAR,
+            description=(
+                "A hand full of old equipment shreds and pieces. "
+                "Can be reforged into new equipment at the bean forge."
+            ),
+            information=(
+                "Obtained when dismantling combat equipment. "
+                "Can be used at the bean forge to get random items. "
+                "use /equipment for more information."
+            ),
+            emoji="⚙️",
+            cost=cost,
+            value=1,
+            view_class="ShopUserSelectView",
+            hide_in_shop=True,
+        )
+
+
 # Debuffs
 class Debuff(Item):
 

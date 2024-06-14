@@ -75,6 +75,8 @@ class ItemType(str, Enum):
     BAKED_SEED = "BakedSeed"
     FLASH_SEED = "FlashSeed"
 
+    SCRAP = "Scrap"
+
 
 class ItemState(str, Enum):
     ENABLED = "enabled"
@@ -99,6 +101,7 @@ class ItemGroup(str, Enum):
     INCOMING_FLAT_BONUS = "incoming_flat_bonus"
     SEED = "seed"
     DEBUFF = "debuff"
+    GEAR = "gear"
 
 
 class ShopCategory(int, Enum):
@@ -110,3 +113,4 @@ class ShopCategory(int, Enum):
     FART = 5
     JAIL = 6
     GARDEN = 7
+    GEAR = 8

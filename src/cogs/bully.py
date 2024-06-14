@@ -130,6 +130,9 @@ class Bully(commands.Cog):
         guild_id = message.guild.id
         attachments = message.attachments
 
+        if channel.type == "public_thread" or channel.type == "private_thread":
+            return
+
         if len(content) <= 0:
             return
 

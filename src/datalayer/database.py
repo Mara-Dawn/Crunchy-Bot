@@ -5,11 +5,37 @@ from typing import Any
 import aiosqlite
 import discord
 from bot_util import BotUtil
+from combat.encounter import Encounter
+from combat.equipment import CharacterEquipment
+from combat.gear import (
+    DefaultAccessory1,
+    DefaultAccessory2,
+    DefaultCap,
+    DefaultPants,
+    DefaultShirt,
+    DefaultStick,
+    DefaultWand,
+    Gear,
+)
+from combat.gear.bases import *  # noqa: F403
+from combat.gear.gear import Droppable
+from combat.gear.types import (
+    Base,
+    EquipmentSlot,
+    GearBaseType,
+    GearModifierType,
+    Rarity,
+)
+from combat.skills.skill import BaseSkill, Skill
+from combat.skills.skills import *  # noqa: F403
+from combat.skills.types import SkillType
 from control.logger import BotLogger
 from discord.ext import commands
 from events.bat_event import BatEvent
 from events.beans_event import BeansEvent, BeansEventType
 from events.bot_event import BotEvent
+from events.combat_event import CombatEvent
+from events.encounter_event import EncounterEvent
 from events.garden_event import GardenEvent
 from events.interaction_event import InteractionEvent
 from events.inventory_event import InventoryEvent
@@ -20,6 +46,8 @@ from events.quote_event import QuoteEvent
 from events.spam_event import SpamEvent
 from events.timeout_event import TimeoutEvent
 from events.types import (
+    CombatEventType,
+    EncounterEventType,
     EventType,
     GardenEventType,
     LootBoxEventType,
@@ -420,6 +448,171 @@ class Database:
         PRIMARY KEY ({GARDEN_EVENT_ID_COL})
     );"""
 
+    GUILD_SEASON_TABLE = "guildseason"
+    GUILD_SEASON_GUILD_ID_COL = "gdsn_guild_id"
+    GUILD_SEASON_GUILD_LEVEL_COL = "gdsn_guild_level"
+    CREATE_GUILD_SEASON_TABLE = f"""
+    CREATE TABLE if not exists {GUILD_SEASON_TABLE} (
+        {GUILD_SEASON_GUILD_ID_COL} INTEGER PRIMARY KEY,
+        {GUILD_SEASON_GUILD_LEVEL_COL} INTEGER
+    );"""
+
+    ENCOUNTER_TABLE = "encounters"
+    ENCOUNTER_ID_COL = "encn_id"
+    ENCOUNTER_GUILD_ID_COL = "encn_guild_id"
+    ENCOUNTER_ENEMY_TYPE_COL = "encn_enemy_type"
+    ENCOUNTER_ENEMY_LEVEL_COL = "encn_enemy_level"
+    ENCOUNTER_ENEMY_HEALTH_COL = "encn_enemy_health"
+    ENCOUNTER_MESSAGE_ID_COL = "encn_message_id"
+    ENCOUNTER_CHANNEL_ID_COL = "encn_channel_id"
+    CREATE_ENCOUNTER_TABLE = f"""
+    CREATE TABLE if not exists {ENCOUNTER_TABLE} (
+        {ENCOUNTER_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
+        {ENCOUNTER_GUILD_ID_COL} INTEGER,
+        {ENCOUNTER_ENEMY_TYPE_COL} TEXT,
+        {ENCOUNTER_ENEMY_LEVEL_COL} INTEGER,
+        {ENCOUNTER_ENEMY_HEALTH_COL} INTEGER,
+        {ENCOUNTER_MESSAGE_ID_COL} INTEGER,
+        {ENCOUNTER_CHANNEL_ID_COL} INTEGER
+    );"""
+
+    ENCOUNTER_THREAD_TABLE = "encounterthreads"
+    ENCOUNTER_THREAD_ID_COL = "enth_id"
+    ENCOUNTER_THREAD_ENCOUNTER_ID_COL = "enth_encounter_id"
+    ENCOUNTER_THREAD_GUILD_ID_COL = "enth_guild_id"
+    ENCOUNTER_THREAD_CHANNEL_ID_COL = "enth_channel_id"
+    CREATE_ENCOUNTER_THREAD_TABLE = f"""
+    CREATE TABLE if not exists {ENCOUNTER_THREAD_TABLE} (
+        {ENCOUNTER_THREAD_ID_COL} INTEGER,
+        {ENCOUNTER_THREAD_ENCOUNTER_ID_COL} INTEGER REFERENCES {ENCOUNTER_TABLE} ({ENCOUNTER_ID_COL}), 
+        {ENCOUNTER_THREAD_GUILD_ID_COL} INTEGER,
+        {ENCOUNTER_THREAD_CHANNEL_ID_COL} INTEGER,
+        PRIMARY KEY ({ENCOUNTER_THREAD_ENCOUNTER_ID_COL})
+    );"""
+
+    ENCOUNTER_EVENT_TABLE = "encounterevents"
+    ENCOUNTER_EVENT_ID_COL = "enev_id"
+    ENCOUNTER_EVENT_ENCOUNTER_ID_COL = "enev_encounter_id"
+    ENCOUNTER_EVENT_MEMBER_ID = "enev_member_id"
+    ENCOUNTER_EVENT_TYPE_COL = "enev_type"
+    CREATE_ENCOUNTER_EVENT_TABLE = f"""
+    CREATE TABLE if not exists {ENCOUNTER_EVENT_TABLE} (
+        {ENCOUNTER_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {ENCOUNTER_EVENT_ENCOUNTER_ID_COL} INTEGER REFERENCES {ENCOUNTER_TABLE} ({ENCOUNTER_ID_COL}), 
+        {ENCOUNTER_EVENT_MEMBER_ID} INTEGER, 
+        {ENCOUNTER_EVENT_TYPE_COL} TEXT, 
+        PRIMARY KEY ({ENCOUNTER_EVENT_ID_COL})
+    );"""
+
+    USER_GEAR_TABLE = "usergear"
+    USER_GEAR_ID_COL = "usgr_id"
+    USER_GEAR_GUILD_ID_COL = "usgr_guild_id"
+    USER_GEAR_MEMBER_ID_COL = "usgr_member_id"
+    USER_GEAR_NAME_COL = "usgr_name"
+    USER_GEAR_BASE_TYPE_COL = "usgr_base_type"
+    USER_GEAR_TYPE_COL = "usgr_type"
+    USER_GEAR_LEVEL_COL = "usgr_level"
+    USER_GEAR_RARITY_COL = "usgr_rarity"
+    USER_GEAR_GENERATOR_VERSION_COL = "usgr_generator_version"
+    USER_GEAR_IS_SCRAPPED_COL = "usgr_is_scrapped"
+    USER_GEAR_IS_LOCKED_COL = "usgr_is_locked"
+    CREATE_USER_GEAR_TABLE = f"""
+    CREATE TABLE if not exists {USER_GEAR_TABLE} (
+        {USER_GEAR_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
+        {USER_GEAR_GUILD_ID_COL} INTEGER,
+        {USER_GEAR_MEMBER_ID_COL} INTEGER,
+        {USER_GEAR_NAME_COL} TEXT,
+        {USER_GEAR_BASE_TYPE_COL} TEXT,
+        {USER_GEAR_TYPE_COL} TEXT,
+        {USER_GEAR_LEVEL_COL} INTEGER,
+        {USER_GEAR_RARITY_COL} TEXT,
+        {USER_GEAR_GENERATOR_VERSION_COL} TEXT,
+        {USER_GEAR_IS_SCRAPPED_COL} INTEGER,
+        {USER_GEAR_IS_LOCKED_COL} INTEGER
+    );"""
+
+    USER_GEAR_MODIFIER_TABLE = "usergearmodifiers"
+    USER_GEAR_MODIFIER_GEAR_ID_COL = "ugmo_gear_id"
+    USER_GEAR_MODIFIER_TYPE_COL = "ugmo_type"
+    USER_GEAR_MODIFIER_VALUE_COL = "ugmo_value"
+    CREATE_USER_GEAR_MODIFIER_TABLE = f"""
+    CREATE TABLE if not exists {USER_GEAR_MODIFIER_TABLE} (
+        {USER_GEAR_MODIFIER_GEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_GEAR_MODIFIER_TYPE_COL} TEXT,
+        {USER_GEAR_MODIFIER_VALUE_COL} REAL,
+        PRIMARY KEY ({USER_GEAR_MODIFIER_GEAR_ID_COL}, {USER_GEAR_MODIFIER_TYPE_COL})
+    );"""
+
+    USER_GEAR_SKILL_TABLE = "usergearskills"
+    USER_GEAR_SKILL_GEAR_ID_COL = "usk_gear_id"
+    USER_GEAR_SKILL_TYPE_COL = "ugsk_type"
+    CREATE_USER_GEAR_SKILL_TABLE = f"""
+    CREATE TABLE if not exists {USER_GEAR_SKILL_TABLE} (
+        {USER_GEAR_SKILL_GEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_GEAR_SKILL_TYPE_COL} TEXT,
+        PRIMARY KEY ({USER_GEAR_SKILL_GEAR_ID_COL}, {USER_GEAR_SKILL_TYPE_COL})
+    );"""
+
+    USER_EQUIPMENT_TABLE = "userequipment"
+    USER_EQUIPMENT_GUILD_ID_COL = "useq_guild_id"
+    USER_EQUIPMENT_MEMBER_ID_COL = "useq_member_id"
+    USER_EQUIPMENT_WEAPON_ID_COL = "useq_weapon_id"
+    USER_EQUIPMENT_HEADGEAR_ID_COL = "useq_headgearr_id"
+    USER_EQUIPMENT_BODYGEAR_ID_COL = "useq_bodygear_id"
+    USER_EQUIPMENT_LEGGEAR_ID_COL = "useq_leggear_id"
+    USER_EQUIPMENT_ACCESSORY_1_ID_COL = "useq_accessory_1_id"
+    USER_EQUIPMENT_ACCESSORY_2_ID_COL = "useq_accessory_2_id"
+    CREATE_USER_EQUIPMENT_TABLE = f"""
+    CREATE TABLE if not exists {USER_EQUIPMENT_TABLE} (
+        {USER_EQUIPMENT_GUILD_ID_COL} INTEGER,
+        {USER_EQUIPMENT_MEMBER_ID_COL} INTEGER,
+        {USER_EQUIPMENT_WEAPON_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_EQUIPMENT_HEADGEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_EQUIPMENT_BODYGEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_EQUIPMENT_LEGGEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_EQUIPMENT_ACCESSORY_1_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_EQUIPMENT_ACCESSORY_2_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        PRIMARY KEY ({USER_EQUIPMENT_GUILD_ID_COL}, {USER_EQUIPMENT_MEMBER_ID_COL})
+    );"""
+
+    USER_EQUIPPED_SKILLS_TABLE = "userequippedskills"
+    USER_EQUIPPED_SKILLS_GUILD_ID_COL = "uses_guild_id"
+    USER_EQUIPPED_SKILLS_MEMBER_ID_COL = "uses_member_id"
+    USER_EQUIPPED_SKILLS_SKILL_ID_COL = "uses_skill_id"
+    USER_EQUIPPED_SKILLS_SKILL_TYPE_COL = "uses_skill_type"
+    USER_EQUIPPED_SKILLS_SLOT_COL = "uses_skill_slot"
+    CREATE_USER_EQUIPPED_SKILLS_TABLE = f"""
+    CREATE TABLE if not exists {USER_EQUIPPED_SKILLS_TABLE} (
+        {USER_EQUIPPED_SKILLS_SKILL_ID_COL} INTEGER,
+        {USER_EQUIPPED_SKILLS_GUILD_ID_COL} INTEGER,
+        {USER_EQUIPPED_SKILLS_MEMBER_ID_COL} INTEGER,
+        {USER_EQUIPPED_SKILLS_SKILL_TYPE_COL} TEXT,
+        {USER_EQUIPPED_SKILLS_SLOT_COL} INTEGER,
+        PRIMARY KEY ({USER_EQUIPPED_SKILLS_SKILL_ID_COL}, {USER_EQUIPPED_SKILLS_SLOT_COL})
+    );"""
+
+    COMBAT_EVENT_TABLE = "combatevents"
+    COMBAT_EVENT_ID_COL = "cbev_id"
+    COMBAT_EVENT_ENCOUNTER_ID_COL = "cbev_encounter_id"
+    COMBAT_EVENT_MEMBER_ID = "cbev_member_id"
+    COMBAT_EVENT_TARGET_ID = "cbev_target_id"
+    COMBAT_EVENT_SKILL_TYPE = "cbev_skill_type"
+    COMBAT_EVENT_SKILL_VALUE = "cbev_skill_value"
+    COMBAT_EVENT_SKILL_ID = "cbev_skill_id"
+    COMBAT_EVENT_TYPE_COL = "cbev_type"
+    CREATE_COMBAT_EVENT_TABLE = f"""
+    CREATE TABLE if not exists {COMBAT_EVENT_TABLE} (
+        {COMBAT_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {COMBAT_EVENT_ENCOUNTER_ID_COL} INTEGER REFERENCES {ENCOUNTER_TABLE} ({ENCOUNTER_ID_COL}), 
+        {COMBAT_EVENT_MEMBER_ID} INTEGER, 
+        {COMBAT_EVENT_TARGET_ID} INTEGER, 
+        {COMBAT_EVENT_SKILL_TYPE} TEXT, 
+        {COMBAT_EVENT_SKILL_VALUE} INTEGER, 
+        {COMBAT_EVENT_SKILL_ID} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}), 
+        {COMBAT_EVENT_TYPE_COL} TEXT, 
+        PRIMARY KEY ({COMBAT_EVENT_ID_COL})
+    );"""
+
     PERMANENT_ITEMS = [
         ItemType.REACTION_SPAM,
         ItemType.LOTTERY_TICKET,
@@ -477,6 +670,16 @@ class Database:
             await db.execute(self.CREATE_PLOT_TABLE)
             await db.execute(self.CREATE_GARDEN_TABLE)
             await db.execute(self.CREATE_GARDEN_EVENT_TABLE)
+            await db.execute(self.CREATE_GUILD_SEASON_TABLE)
+            await db.execute(self.CREATE_ENCOUNTER_TABLE)
+            await db.execute(self.CREATE_ENCOUNTER_EVENT_TABLE)
+            await db.execute(self.CREATE_COMBAT_EVENT_TABLE)
+            await db.execute(self.CREATE_ENCOUNTER_THREAD_TABLE)
+            await db.execute(self.CREATE_USER_GEAR_TABLE)
+            await db.execute(self.CREATE_USER_GEAR_MODIFIER_TABLE)
+            await db.execute(self.CREATE_USER_GEAR_SKILL_TABLE)
+            await db.execute(self.CREATE_USER_EQUIPMENT_TABLE)
+            await db.execute(self.CREATE_USER_EQUIPPED_SKILLS_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -522,7 +725,7 @@ class Database:
         return output
 
     def __list_sanitizer(self, attribute_list: list[Any]) -> str:
-        return "(" + ",".join(["?" for x in range(len(attribute_list))]) + ")"
+        return "(" + ",".join(["?" for _ in range(len(attribute_list))]) + ")"
 
     async def get_setting(self, guild_id: int, module: str, key: str):
         command = f"""
@@ -752,6 +955,52 @@ class Database:
 
         return await self.__query_insert(command, task)
 
+    async def __create_encounter_event(
+        self, event_id: int, event: EncounterEvent
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.ENCOUNTER_EVENT_TABLE} (
+            {self.ENCOUNTER_EVENT_ID_COL},
+            {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL},
+            {self.ENCOUNTER_EVENT_MEMBER_ID},
+            {self.ENCOUNTER_EVENT_TYPE_COL})
+            VALUES (?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.encounter_id,
+            event.member_id,
+            event.encounter_event_type,
+        )
+
+        return await self.__query_insert(command, task)
+
+    async def __create_combat_event(self, event_id: int, event: CombatEvent) -> int:
+        command = f"""
+            INSERT INTO {self.COMBAT_EVENT_TABLE} (
+            {self.COMBAT_EVENT_ID_COL},
+            {self.COMBAT_EVENT_ENCOUNTER_ID_COL},
+            {self.COMBAT_EVENT_MEMBER_ID},
+            {self.COMBAT_EVENT_TARGET_ID},
+            {self.COMBAT_EVENT_SKILL_TYPE},
+            {self.COMBAT_EVENT_SKILL_VALUE},
+            {self.COMBAT_EVENT_SKILL_ID},
+            {self.COMBAT_EVENT_TYPE_COL})
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.encounter_id,
+            event.member_id,
+            event.target_id,
+            event.skill_type,
+            event.skill_value,
+            event.skill_id,
+            event.combat_event_type,
+        )
+
+        return await self.__query_insert(command, task)
+
     async def log_event(self, event: BotEvent) -> int:
         event_id = await self.__create_base_event(event)
 
@@ -782,6 +1031,10 @@ class Database:
                 return await self.__create_prediction_event(event_id, event)
             case EventType.GARDEN:
                 return await self.__create_garden_event(event_id, event)
+            case EventType.ENCOUNTER:
+                return await self.__create_encounter_event(event_id, event)
+            case EventType.COMBAT:
+                return await self.__create_combat_event(event_id, event)
 
     async def log_quote(self, quote: Quote) -> int:
         command = f"""
@@ -805,6 +1058,48 @@ class Database:
             quote.channel_id,
             quote.get_timestamp(),
             quote.message_content,
+        )
+
+        return await self.__query_insert(command, task)
+
+    async def log_encounter(self, encounter: Encounter) -> int:
+        command = f"""
+            INSERT INTO {self.ENCOUNTER_TABLE} (
+            {self.ENCOUNTER_GUILD_ID_COL},
+            {self.ENCOUNTER_ENEMY_TYPE_COL},
+            {self.ENCOUNTER_ENEMY_LEVEL_COL},
+            {self.ENCOUNTER_ENEMY_HEALTH_COL},
+            {self.ENCOUNTER_MESSAGE_ID_COL},
+            {self.ENCOUNTER_CHANNEL_ID_COL})
+            VALUES (?, ?, ?, ?, ?, ?);
+        """
+        task = (
+            encounter.guild_id,
+            encounter.enemy_type.value,
+            encounter.enemy_level,
+            encounter.max_hp,
+            encounter.message_id,
+            encounter.channel_id,
+        )
+
+        return await self.__query_insert(command, task)
+
+    async def log_encounter_thread(
+        self, encounter_id: int, thread_id: int, guild_id: int, channel_id: int
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.ENCOUNTER_THREAD_TABLE} (
+            {self.ENCOUNTER_THREAD_ID_COL},
+            {self.ENCOUNTER_THREAD_ENCOUNTER_ID_COL},
+            {self.ENCOUNTER_THREAD_GUILD_ID_COL},
+            {self.ENCOUNTER_THREAD_CHANNEL_ID_COL})
+            VALUES (?, ?, ?, ?);
+        """
+        task = (
+            thread_id,
+            encounter_id,
+            guild_id,
+            channel_id,
         )
 
         return await self.__query_insert(command, task)
@@ -2464,3 +2759,801 @@ class Database:
             )
 
         return gardens
+
+    async def get_guild_level(self, guild_id: int) -> int:
+        command = f"""
+            INSERT OR IGNORE INTO {self.GUILD_SEASON_TABLE}
+            ({self.GUILD_SEASON_GUILD_ID_COL}, {self.GUILD_SEASON_GUILD_LEVEL_COL}) 
+            VALUES(?, ?);
+        """
+        task = (guild_id, 1)
+
+        await self.__query_insert(command, task)
+
+        command = f""" 
+            SELECT * FROM {self.GUILD_SEASON_TABLE} 
+            WHERE {self.GUILD_SEASON_GUILD_ID_COL} = {int(guild_id)}
+            LIMIT 1;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return 1
+
+        return int(rows[0][self.GUILD_SEASON_GUILD_LEVEL_COL])
+
+    async def set_guild_level(self, guild_id: int, level: int) -> int:
+        command = f""" 
+            UPDATE {self.GUILD_SEASON_TABLE} 
+            SET {self.GUILD_SEASON_GUILD_LEVEL_COL} = ?
+            WHERE {self.GUILD_SEASON_GUILD_ID_COL} = ?
+        """
+        task = (level, guild_id)
+        return await self.__query_insert(command, task)
+
+    async def get_guild_level_progress(self, guild_id: int, guild_level: int) -> int:
+        command = f""" 
+            SELECT COUNT(*) as progress FROM {self.ENCOUNTER_TABLE} 
+            INNER JOIN {self.ENCOUNTER_EVENT_TABLE} ON {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = {self.ENCOUNTER_ID_COL}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.ENCOUNTER_ENEMY_LEVEL_COL} = ?
+            AND {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            AND {self.ENCOUNTER_GUILD_ID_COL} = ?
+            GROUP BY {self.ENCOUNTER_GUILD_ID_COL}
+            ;
+        """
+        task = (guild_level, EncounterEventType.ENEMY_DEFEAT, guild_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return 0
+        
+        return int(rows[0]["progress"])
+
+    async def get_encounter_by_encounter_id(self, encounter_id: int) -> Encounter:
+        command = f""" 
+            SELECT * FROM {self.ENCOUNTER_TABLE} 
+            WHERE {self.ENCOUNTER_ID_COL} = {int(encounter_id)}
+            LIMIT 1;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return None
+
+        return Encounter.from_db_row(rows[0])
+
+    async def get_encounter_by_message_id(
+        self, guild_id: int, message_id: int
+    ) -> Encounter:
+        command = f""" 
+            SELECT * FROM {self.ENCOUNTER_TABLE} 
+            WHERE {self.ENCOUNTER_MESSAGE_ID_COL} = ?
+            AND {self.ENCOUNTER_GUILD_ID_COL} = ?
+            LIMIT 1;
+        """
+        task = (message_id, guild_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return None
+
+        return Encounter.from_db_row(rows[0])
+
+    async def get_active_encounters(self, guild_id: int) -> list[int]:
+        start_timestamp, _ = self.__get_season_interval(Season.CURRENT)
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_TYPE_COL} in (? ,?)
+            AND {self.EVENT_TIMESTAMP_COL} > ?;
+        """
+        task = (
+            guild_id,
+            EncounterEventType.SPAWN.value,
+            EncounterEventType.END.value,
+            start_timestamp,
+        )
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        started_encounters = []
+        ended_encounters = []
+        for row in rows:
+            match EncounterEventType(row[self.ENCOUNTER_EVENT_TYPE_COL]):
+                case EncounterEventType.SPAWN:
+                    started_encounters.append(
+                        row[self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL]
+                    )
+                case EncounterEventType.END:
+                    ended_encounters.append(row[self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL])
+
+        active_encounters = []
+        for encounter_id in started_encounters:
+            if encounter_id not in ended_encounters:
+                active_encounters.append(encounter_id)
+        return active_encounters
+
+    async def get_active_encounter_participants(
+        self, guild_id: int
+    ) -> dict[int, list[int]]:
+        active_encounters = await self.get_active_encounters(guild_id)
+
+        if len(active_encounters) <= 0:
+            return {}
+
+        list_sanitized = self.__list_sanitizer(active_encounters)
+        participants = {}
+
+        for encounter_id in active_encounters:
+            participants[encounter_id] = []
+
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} IN {list_sanitized};
+        """
+
+        task = (guild_id, EncounterEventType.MEMBER_ENGAGE.value, *active_encounters)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return participants
+
+        for row in rows:
+            encounter_id = row[self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL]
+            member_id = row[self.ENCOUNTER_EVENT_MEMBER_ID]
+            participants[encounter_id].append(member_id)
+
+        return participants
+
+    async def get_encounter_participants_by_encounter_id(
+        self, encounter_id: int
+    ) -> list[int]:
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = ?;
+        """
+
+        task = (EncounterEventType.MEMBER_ENGAGE.value, encounter_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        participants = []
+        for row in rows:
+            member_id = row[self.ENCOUNTER_EVENT_MEMBER_ID]
+            participants.append(member_id)
+
+        return participants
+
+    async def get_last_encounter_spawn_event(self, guild_id: int) -> EncounterEvent:
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            ORDER BY {self.EVENT_ID_COL} DESC
+        """
+
+        task = (guild_id, EncounterEventType.SPAWN.value)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return None
+
+        return EncounterEvent.from_db_row(rows[0])
+
+    async def get_encounter_thread(self, encounter_id: int) -> int:
+        command = f""" 
+            SELECT * FROM {self.ENCOUNTER_THREAD_TABLE} 
+            WHERE {self.ENCOUNTER_THREAD_ENCOUNTER_ID_COL} = {int(encounter_id)}
+            LIMIT 1;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return None
+
+        return int(rows[0][self.ENCOUNTER_THREAD_ID_COL])
+
+    async def get_encounter_events_by_encounter_id(
+        self, encounter_id: int
+    ) -> list[EncounterEvent]:
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = {int(encounter_id)}
+            ORDER BY {self.EVENT_ID_COL} DESC;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return []
+
+        return [EncounterEvent.from_db_row(row) for row in rows]
+
+    async def get_combat_events_by_encounter_id(
+        self, encounter_id: int
+    ) -> list[CombatEvent]:
+        command = f"""
+            SELECT * FROM {self.COMBAT_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
+            WHERE {self.COMBAT_EVENT_ENCOUNTER_ID_COL} = {int(encounter_id)}
+            ORDER BY {self.EVENT_ID_COL} DESC;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return []
+
+        return [CombatEvent.from_db_row(row) for row in rows]
+
+    async def log_user_gear_modifiers(self, gear_id: int, gear: Gear):
+        command = f"""
+            INSERT INTO {self.USER_GEAR_MODIFIER_TABLE} (
+            {self.USER_GEAR_MODIFIER_GEAR_ID_COL},
+            {self.USER_GEAR_MODIFIER_TYPE_COL},
+            {self.USER_GEAR_MODIFIER_VALUE_COL})
+            VALUES (?, ?, ?);
+        """
+
+        for modifier, value in gear.modifiers.items():
+            task = (
+                gear_id,
+                modifier.value,
+                value,
+            )
+            await self.__query_insert(command, task)
+
+    async def log_user_gear_skills(self, gear_id: int, gear: Gear):
+        command = f"""
+            INSERT INTO {self.USER_GEAR_SKILL_TABLE} (
+            {self.USER_GEAR_SKILL_GEAR_ID_COL},
+            {self.USER_GEAR_SKILL_TYPE_COL})
+            VALUES (?, ?);
+        """
+
+        for skill_type in gear.skills:
+            task = (
+                gear_id,
+                skill_type.value,
+            )
+            await self.__query_insert(command, task)
+
+    async def log_user_drop(
+        self, guild_id: int, member_id: int, drop: Droppable, generator_version: str
+    ):
+        command = f"""
+            INSERT INTO {self.USER_GEAR_TABLE} (
+            {self.USER_GEAR_GUILD_ID_COL},
+            {self.USER_GEAR_MEMBER_ID_COL},
+            {self.USER_GEAR_BASE_TYPE_COL},
+            {self.USER_GEAR_TYPE_COL},
+            {self.USER_GEAR_LEVEL_COL},
+            {self.USER_GEAR_RARITY_COL},
+            {self.USER_GEAR_GENERATOR_VERSION_COL},
+            {self.USER_GEAR_IS_SCRAPPED_COL},
+            {self.USER_GEAR_IS_LOCKED_COL})
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """
+        task = (
+            guild_id,
+            member_id,
+            drop.base.base_type.value,
+            drop.type.value,
+            drop.level,
+            drop.rarity.value,
+            generator_version,
+            0,
+            0,
+        )
+
+        insert_id = await self.__query_insert(command, task)
+
+        if drop.base.base_type == Base.GEAR:
+            gear: Gear = drop
+            await self.log_user_gear_modifiers(insert_id, gear)
+            await self.log_user_gear_skills(insert_id, gear)
+
+        return insert_id
+
+    async def get_skill_by_id(self, skill_id: int) -> Skill:
+        if skill_id is None:
+            return None
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            WHERE {self.USER_GEAR_ID_COL} = {int(skill_id)}
+            ;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return None
+
+        id = rows[0][self.USER_GEAR_ID_COL]
+        skill_type = SkillType(rows[0][self.USER_GEAR_TYPE_COL])
+        base_class = globals()[skill_type]
+        base_skill: BaseSkill = base_class()  # noqa: F405
+        rarity = Rarity(rows[0][self.USER_GEAR_RARITY_COL])
+        level = rows[0][self.USER_GEAR_LEVEL_COL]
+        locked = int(rows[0][self.USER_GEAR_IS_LOCKED_COL]) == 1
+
+        return Skill(
+            base_skill=base_skill,
+            rarity=rarity,
+            level=level,
+            locked=locked,
+            id=id,
+        )
+
+    async def get_gear_by_id(self, gear_id: int) -> Gear:
+        if gear_id is None:
+            return None
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            LEFT JOIN {self.USER_GEAR_MODIFIER_TABLE} ON {self.USER_GEAR_MODIFIER_GEAR_ID_COL} = {self.USER_GEAR_ID_COL}
+            LEFT JOIN {self.USER_GEAR_SKILL_TABLE} ON {self.USER_GEAR_SKILL_GEAR_ID_COL} = {self.USER_GEAR_ID_COL}
+            WHERE {self.USER_GEAR_ID_COL} = {int(gear_id)}
+            AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
+            ;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return None
+
+        id = rows[0][self.USER_GEAR_ID_COL]
+        name = rows[0][self.USER_GEAR_NAME_COL]
+        gear_base_type = GearBaseType(rows[0][self.USER_GEAR_TYPE_COL])
+        base_class = globals()[gear_base_type]
+        gear_base: GearBase = base_class()  # noqa: F405
+        rarity = Rarity(rows[0][self.USER_GEAR_RARITY_COL])
+        level = rows[0][self.USER_GEAR_LEVEL_COL]
+        locked = int(rows[0][self.USER_GEAR_IS_LOCKED_COL]) == 1
+
+        modifiers = {}
+        skills = []
+
+        for row in rows:
+            skill_name = row[self.USER_GEAR_SKILL_TYPE_COL]
+            if skill_name is not None:
+                skill_type = SkillType(skill_name)
+                skills.append(skill_type)
+
+            modifier_name = row[self.USER_GEAR_MODIFIER_TYPE_COL]
+            if modifier_name is None:
+                continue
+            modifier_type = GearModifierType(modifier_name)
+            if modifier_type not in modifiers:
+                modifiers[modifier_type] = row[self.USER_GEAR_MODIFIER_VALUE_COL]
+
+        return Gear(
+            name=name,
+            base=gear_base,
+            rarity=rarity,
+            level=level,
+            modifiers=modifiers,
+            skills=skills,
+            enchantments=[],
+            locked=locked,
+            id=id,
+        )
+
+    async def delete_gear_by_ids(self, gear_ids: list[int]):
+        if gear_ids is None or len(gear_ids) == 0:
+            return
+
+        list_sanitized = self.__list_sanitizer(gear_ids)
+
+        command = f"""
+            UPDATE {self.USER_GEAR_TABLE} SET
+            {self.USER_GEAR_IS_SCRAPPED_COL} = 1
+            WHERE {self.USER_GEAR_ID_COL} IN {list_sanitized};
+        """
+        task = gear_ids
+        await self.__query_insert(command, task)
+
+    async def update_lock_gear_by_id(self, gear_id: int, lock: bool):
+
+        lock_value = 1 if lock else 0
+
+        if gear_id is None:
+            return
+        command = f"""
+            UPDATE {self.USER_GEAR_TABLE} SET
+            {self.USER_GEAR_IS_LOCKED_COL} = ?
+            WHERE {self.USER_GEAR_ID_COL} = ?;
+        """
+        task = (lock_value, gear_id)
+
+        await self.__query_insert(command, task)
+
+    async def create_user_equipment(self, guild_id: int, user_id: int) -> int:
+        command = f"""
+            INSERT OR IGNORE INTO {self.USER_EQUIPMENT_TABLE}
+            ({self.USER_EQUIPMENT_GUILD_ID_COL}, {self.USER_EQUIPMENT_MEMBER_ID_COL}) 
+            VALUES(?, ?);
+        """
+        task = (guild_id, user_id)
+
+        insert_id = await self.__query_insert(command, task)
+
+        return insert_id
+
+    async def get_user_equipped_skills(
+        self, guild_id: int, member_id: int
+    ) -> dict[int, Skill]:
+        command = f""" 
+            SELECT * FROM {self.USER_EQUIPPED_SKILLS_TABLE} 
+            WHERE {self.USER_EQUIPPED_SKILLS_GUILD_ID_COL} = ?
+            AND {self.USER_EQUIPPED_SKILLS_MEMBER_ID_COL} = ?
+            ;
+        """
+
+        skills = {}
+        for index in range(4):
+            skills[index] = None
+
+        task = (guild_id, member_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return skills
+
+        for row in rows:
+            skill_id = row[self.USER_EQUIPPED_SKILLS_SKILL_ID_COL]
+            slot = row[self.USER_EQUIPPED_SKILLS_SLOT_COL]
+            skill = await self.get_skill_by_id(skill_id)
+            if skill is not None:
+                skills[slot] = skill
+
+        return skills
+
+    async def get_user_equipment_slot(
+        self, guild_id: int, member_id: int, gear_slot: EquipmentSlot
+    ) -> list[Gear]:
+        await self.create_user_equipment(guild_id, member_id)
+
+        command = f""" 
+            SELECT * FROM {self.USER_EQUIPMENT_TABLE} 
+            WHERE {self.USER_EQUIPMENT_GUILD_ID_COL} = ?
+            AND {self.USER_EQUIPMENT_MEMBER_ID_COL} = ?
+            LIMIT 1;
+        """
+
+        task = (guild_id, member_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+        row = rows[0]
+
+        equipped = []
+
+        match gear_slot:
+            case EquipmentSlot.WEAPON:
+                gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_WEAPON_ID_COL])
+                if gear is None:
+                    gear = DefaultStick()
+                equipped.append(gear)
+            case EquipmentSlot.HEAD:
+                gear = await self.get_gear_by_id(
+                    row[self.USER_EQUIPMENT_HEADGEAR_ID_COL]
+                )
+                if gear is None:
+                    gear = DefaultCap()
+                equipped.append(gear)
+            case EquipmentSlot.BODY:
+                gear = await self.get_gear_by_id(
+                    row[self.USER_EQUIPMENT_BODYGEAR_ID_COL]
+                )
+                if gear is None:
+                    gear = DefaultShirt()
+                equipped.append(gear)
+            case EquipmentSlot.LEGS:
+                gear = await self.get_gear_by_id(
+                    row[self.USER_EQUIPMENT_LEGGEAR_ID_COL]
+                )
+                if gear is None:
+                    gear = DefaultPants()
+                equipped.append(gear)
+            case EquipmentSlot.ACCESSORY:
+                gear_1 = await self.get_gear_by_id(
+                    row[self.USER_EQUIPMENT_ACCESSORY_1_ID_COL]
+                )
+                gear_2 = await self.get_gear_by_id(
+                    row[self.USER_EQUIPMENT_ACCESSORY_2_ID_COL]
+                )
+                if gear_1 is not None:
+                    equipped.append(gear_1)
+                else:
+                    equipped.append(DefaultAccessory1())
+
+                if gear_2 is not None:
+                    equipped.append(gear_2)
+                else:
+                    equipped.append(DefaultAccessory2())
+
+        return equipped
+
+    async def get_user_equipment(
+        self, guild_id: int, member_id: int
+    ) -> CharacterEquipment:
+        await self.create_user_equipment(guild_id, member_id)
+
+        command = f""" 
+            SELECT * FROM {self.USER_EQUIPMENT_TABLE} 
+            WHERE {self.USER_EQUIPMENT_GUILD_ID_COL} = ?
+            AND {self.USER_EQUIPMENT_MEMBER_ID_COL} = ?
+            LIMIT 1;
+        """
+
+        task = (guild_id, member_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return None
+        row = rows[0]
+
+        weapon = None
+        weapon_id = row[self.USER_EQUIPMENT_WEAPON_ID_COL]
+        if weapon_id is not None and weapon_id < 0:
+            match weapon_id:
+                case -1:
+                    weapon = DefaultStick()
+                case -2:
+                    weapon = DefaultWand()
+
+        if weapon is None:
+            weapon = await self.get_gear_by_id(weapon_id)
+
+        head_gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_HEADGEAR_ID_COL])
+        body_gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_BODYGEAR_ID_COL])
+        leg_gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_LEGGEAR_ID_COL])
+        accessory_1 = await self.get_gear_by_id(
+            row[self.USER_EQUIPMENT_ACCESSORY_1_ID_COL]
+        )
+        accessory_2 = await self.get_gear_by_id(
+            row[self.USER_EQUIPMENT_ACCESSORY_2_ID_COL]
+        )
+
+        return CharacterEquipment(
+            member_id=member_id,
+            weapon=weapon,
+            head_gear=head_gear,
+            body_gear=body_gear,
+            leg_gear=leg_gear,
+            accessory_1=accessory_1,
+            accessory_2=accessory_2,
+        )
+
+    async def update_user_equipment(
+        self, guild_id: int, member_id: int, gear: Gear, acc_slot_2: bool = False
+    ):
+        await self.create_user_equipment(guild_id, member_id)
+
+        column = ""
+
+        if acc_slot_2:
+            column = self.USER_EQUIPMENT_ACCESSORY_2_ID_COL
+        else:
+            match gear.base.slot:
+                case EquipmentSlot.WEAPON:
+                    column = self.USER_EQUIPMENT_WEAPON_ID_COL
+                case EquipmentSlot.HEAD:
+                    column = self.USER_EQUIPMENT_HEADGEAR_ID_COL
+                case EquipmentSlot.BODY:
+                    column = self.USER_EQUIPMENT_BODYGEAR_ID_COL
+                case EquipmentSlot.LEGS:
+                    column = self.USER_EQUIPMENT_LEGGEAR_ID_COL
+                case EquipmentSlot.ACCESSORY:
+                    column = self.USER_EQUIPMENT_ACCESSORY_1_ID_COL
+
+        command = f"""
+            UPDATE {self.USER_EQUIPMENT_TABLE} SET
+            {column}
+            = ?
+            WHERE {self.USER_EQUIPMENT_GUILD_ID_COL} = ?
+            AND {self.USER_EQUIPMENT_MEMBER_ID_COL} = ?;
+        """
+
+        id = None
+        if gear is not None:
+            id = gear.id
+            await self.update_lock_gear_by_id(id, lock=True)
+
+        task = (id, guild_id, member_id)
+        await self.__query_insert(command, task)
+
+    async def get_scrappable_equipment_by_user(
+        self, guild_id: int, member_id: int, type: Base = Base.GEAR
+    ) -> list[Gear]:
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            WHERE {self.USER_GEAR_GUILD_ID_COL} = ?
+            AND {self.USER_GEAR_MEMBER_ID_COL} = ?
+            AND {self.USER_GEAR_BASE_TYPE_COL} = ?
+            AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
+            AND {self.USER_GEAR_IS_LOCKED_COL} = 0
+            ;
+        """
+        task = (guild_id, member_id, type.value)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+        equipment = []
+        for row in rows:
+            match type:
+                case Base.GEAR:
+                    item = await self.get_gear_by_id(row[self.USER_GEAR_ID_COL])
+                case Base.SKILL:
+                    item = await self.get_skill_by_id(row[self.USER_GEAR_ID_COL])
+            equipment.append(item)
+
+        return equipment
+
+    async def get_user_skill_inventory(
+        self, guild_id: int, member_id: int
+    ) -> list[Skill]:
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            LEFT JOIN {self.USER_EQUIPPED_SKILLS_TABLE} ON {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL} = {self.USER_GEAR_ID_COL}
+            WHERE {self.USER_GEAR_GUILD_ID_COL} = ?
+            AND {self.USER_GEAR_MEMBER_ID_COL} = ?
+            AND {self.USER_GEAR_BASE_TYPE_COL} = ?
+            AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
+            ;
+        """
+        task = (guild_id, member_id, Base.SKILL)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+        skills = []
+        for row in rows:
+            if row[self.USER_EQUIPPED_SKILLS_SKILL_ID_COL] is not None:
+                continue
+            gear_piece = await self.get_skill_by_id(row[self.USER_GEAR_ID_COL])
+            skills.append(gear_piece)
+
+        return skills
+
+    async def get_user_armory(self, guild_id: int, member_id: int) -> list[Gear]:
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            WHERE {self.USER_GEAR_GUILD_ID_COL} = ?
+            AND {self.USER_GEAR_MEMBER_ID_COL} = ?
+            AND {self.USER_GEAR_BASE_TYPE_COL} = ?
+            AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
+            ;
+        """
+        task = (guild_id, member_id, Base.GEAR)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+        armory = []
+        for row in rows:
+            gear_piece = await self.get_gear_by_id(row[self.USER_GEAR_ID_COL])
+            armory.append(gear_piece)
+
+        return armory
+
+    async def get_user_skill_stacks_used(
+        self, guild_id: int, member_id: int
+    ) -> dict[int, int]:
+        command = f"""
+            SELECT * FROM {self.COMBAT_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
+            INNER JOIN {self.USER_GEAR_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_GEAR_ID_COL}
+            LEFT JOIN {self.USER_EQUIPPED_SKILLS_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND {self.COMBAT_EVENT_MEMBER_ID} = ?
+            AND ({self.USER_GEAR_IS_SCRAPPED_COL} = ? OR {self.COMBAT_EVENT_SKILL_ID} = {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL})
+            ORDER BY {self.EVENT_ID_COL} DESC;
+        """
+        task = (guild_id, member_id, 0)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return {}
+
+        active_encounters = await self.get_active_encounter_participants(guild_id)
+
+        current_encounter_id = None
+
+        for encounter_id, members in active_encounters.items():
+            if member_id in members:
+                current_encounter_id = encounter_id
+                break
+
+        stacks_used = {}
+        for row in rows:
+            skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
+            skill_id = row[self.COMBAT_EVENT_SKILL_ID]
+            base_class = globals()[skill_type]
+            base_skill: BaseSkill = base_class()  # noqa: F405
+
+            if base_skill.reset_after_encounter:
+                if current_encounter_id is None:
+                    continue
+
+                encounter_id = row[self.COMBAT_EVENT_ENCOUNTER_ID_COL]
+                if current_encounter_id != encounter_id:
+                    continue
+
+            if skill_id not in stacks_used:
+                stacks_used[skill_id] = 1
+            else:
+                stacks_used[skill_id] += 1
+
+        return stacks_used
+
+    async def get_opponent_skill_stacks_used(
+        self, encounter_id: int
+    ) -> dict[SkillType, int]:
+        command = f"""
+            SELECT * FROM {self.COMBAT_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
+            WHERE {self.COMBAT_EVENT_ENCOUNTER_ID_COL} = {int(encounter_id)}
+            ORDER BY {self.EVENT_ID_COL} DESC;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return {}
+
+        stacks_used = {}
+        for row in rows:
+            event_type = row[self.COMBAT_EVENT_TYPE_COL]
+            if event_type in [
+                CombatEventType.ENEMY_END_TURN,
+                CombatEventType.MEMBER_END_TURN,
+            ]:
+                break
+
+            skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
+
+            if skill_type not in stacks_used:
+                stacks_used[skill_type] = 1
+            else:
+                stacks_used[skill_type] += 1
+
+        return stacks_used
+
+    async def clear_selected_user_skills(
+        self,
+        guild_id: int,
+        member_id: int,
+        skill_id: int = None,
+    ):
+        command = f""" 
+            DELETE FROM {self.USER_EQUIPPED_SKILLS_TABLE} 
+            WHERE {self.USER_EQUIPPED_SKILLS_GUILD_ID_COL} = ?
+            AND {self.USER_EQUIPPED_SKILLS_MEMBER_ID_COL} = ?
+        """
+
+        if skill_id is not None:
+            command += f"""
+                AND {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL} = {int(skill_id)}
+            """
+
+        command += ";"
+
+        task = (guild_id, member_id)
+        return await self.__query_insert(command, task)
+
+    async def set_selected_user_skills(
+        self, guild_id: int, member_id: int, skills: dict[int, Skill]
+    ):
+        await self.clear_selected_user_skills(guild_id, member_id)
+
+        skill_ids = [skill.id for skill in skills.values()]
+        await self.delete_gear_by_ids(skill_ids)
+
+        for slot, skill in skills.items():
+            command = f"""
+                INSERT INTO {self.USER_EQUIPPED_SKILLS_TABLE} (
+                {self.USER_EQUIPPED_SKILLS_GUILD_ID_COL}, 
+                {self.USER_EQUIPPED_SKILLS_MEMBER_ID_COL}, 
+                {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL}, 
+                {self.USER_EQUIPPED_SKILLS_SKILL_TYPE_COL}, 
+                {self.USER_EQUIPPED_SKILLS_SLOT_COL}) 
+                VALUES (?, ?, ?, ?, ?);
+            """
+            task = (guild_id, member_id, skill.id, skill.type, slot)
+            await self.__query_insert(command, task)

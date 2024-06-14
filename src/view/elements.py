@@ -27,6 +27,7 @@ class CategoryFilter(discord.ui.Select):
         ShopCategory.FART: "Fart Related Items",
         ShopCategory.JAIL: "Jail Related Items",
         ShopCategory.GARDEN: "Garden Related Items",
+        ShopCategory.GEAR: "Combat Gear Related Items",
     }
 
     def __init__(self, selected: list[ShopCategory], row: int = 0):

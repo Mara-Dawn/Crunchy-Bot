@@ -1,3 +1,4 @@
+import copy
 import datetime
 from typing import Any
 
@@ -9,11 +10,15 @@ from datalayer.types import Season, UserInteraction
 from discord.ext import commands
 from events.bat_event import BatEvent
 from events.bot_event import BotEvent
+from events.combat_event import CombatEvent
+from events.encounter_event import EncounterEvent
 from events.jail_event import JailEvent
 from events.notification_event import NotificationEvent
 from events.prediction_event import PredictionEvent
 from events.types import (
     BeansEventType,
+    CombatEventType,
+    EncounterEventType,
     EventType,
     JailEventType,
     PredictionEventType,
@@ -46,6 +51,10 @@ class EventManager(Service):
         self.log_name = "Events"
 
     async def listen_for_event(self, event: BotEvent):
+        synchronized = False
+        if event.synchronized:
+            return
+
         match event.type:
             case EventType.JAIL:
                 jail_event: JailEvent = event
@@ -87,11 +96,30 @@ class EventManager(Service):
 
                 if notification is not None:
                     await self.mod_notification(prediction_event.guild_id, notification)
+            case EventType.COMBAT:
+                combat_event: CombatEvent = event
+                if combat_event.combat_event_type in [
+                    CombatEventType.ENEMY_END_TURN,
+                    CombatEventType.MEMBER_END_TURN,
+                ]:
+                    synchronized = True
+            case EventType.ENCOUNTER:
+                encounter_event: EncounterEvent = event
+                if encounter_event.encounter_event_type in [
+                    EncounterEventType.ENEMY_DEFEAT,
+                    EncounterEventType.MEMBER_DEFEAT,
+                ]:
+                    synchronized = True
 
         from_user = event.get_causing_user_id()
         args = event.get_type_specific_args()
         await self.database.log_event(event)
         self.__log_event(event, from_user, *args)
+
+        if synchronized:
+            sync_event = copy.deepcopy(event)
+            sync_event.synchronized = True
+            await self.controller.dispatch_event(sync_event)
 
     def __log_event(self, event: BotEvent, member_id: int, *args):
         event_type = event.type

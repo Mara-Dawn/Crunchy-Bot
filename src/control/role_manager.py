@@ -212,7 +212,7 @@ class RoleManager(Service):
 
         await timeout_role.edit(position=max_pos)
 
-        exclude_channels = self.settings.get_police_exclude_channels(guild.id)
+        exclude_channels = self.settings_manager.get_police_exclude_channels(guild.id)
 
         for channel in guild.channels:
             if channel.id in exclude_channels:

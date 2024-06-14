@@ -1,4 +1,5 @@
 import discord
+from config import Config
 from datalayer.inventory import UserInventory
 from discord.ext import commands
 from items.item import Item
@@ -43,7 +44,7 @@ class InventoryEmbed(discord.Embed):
                     item.add_to_embed(
                         bot,
                         self,
-                        56,
+                        Config.INVENTORY_ITEM_MAX_WIDTH,
                         count=count,
                         name_suffix=suffix,
                         disabled=disabled,
@@ -58,10 +59,16 @@ class InventoryEmbed(discord.Embed):
                     item.add_to_embed(
                         bot,
                         self,
-                        56,
+                        Config.INVENTORY_ITEM_MAX_WIDTH,
                         count=count,
                         name_suffix=suffix,
                         disabled=disabled,
                     )
                 case _:
-                    item.add_to_embed(bot, self, 56, count=count, disabled=disabled)
+                    item.add_to_embed(
+                        bot,
+                        self,
+                        Config.INVENTORY_ITEM_MAX_WIDTH,
+                        count=count,
+                        disabled=disabled,
+                    )

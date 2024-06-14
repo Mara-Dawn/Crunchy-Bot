@@ -37,6 +37,9 @@ class BotLogger:
 
         return log_str
 
+    def print(self, message: str) -> None:
+        self.logger.info(message)
+
     def log(self, guild: int, message: str, cog=False) -> None:
         log_str = self.__build_log_msg(guild, message, cog)
         self.logger.info(log_str)

@@ -69,7 +69,11 @@ class BotUtil:
     @staticmethod
     def dict_append(dictionary: dict, key: Any, value: Any, mode="add") -> None:
         if key not in dictionary:
-            dictionary[key] = value
+            match mode:
+                case "set" | "add" | "max":
+                    dictionary[key] = value
+                case "append":
+                    dictionary[key] = [value]
         else:
             match mode:
                 case "set":
@@ -78,6 +82,8 @@ class BotUtil:
                     dictionary[key] += value
                 case "max":
                     dictionary[key] = max(value, dictionary[key])
+                case "append":
+                    dictionary[key].append(value)
 
 
 class Tenor:
