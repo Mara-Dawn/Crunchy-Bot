@@ -196,6 +196,7 @@ class ToeStub(BaseSkill):
             cooldown=3,
             base_value=3,
             hits=1,
+            aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/MzFpvsV.png",
         )
