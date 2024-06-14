@@ -28,6 +28,7 @@ from events.encounter_event import EncounterEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType, CombatEventType, EncounterEventType, EventType
 from view.combat.combat_turn_view import CombatTurnView
+from view.combat.embed import EnemyOverviewEmbed
 from view.combat.engage_view import EnemyEngageView
 
 
@@ -101,6 +102,7 @@ class EncounterManager(Service):
                         await self.refresh_encounter_thread(
                             encounter_event.encounter_id
                         )
+                        await self.update_guild_status(event.guild_id)
 
             case EventType.COMBAT:
                 combat_event: CombatEvent = event
@@ -733,3 +735,67 @@ class EncounterManager(Service):
         )
         view.set_message(message)
         return
+
+    async def update_guild_status(self, guild_id: int):
+        combat_channels = await self.settings_manager.get_combat_channels(guild_id)
+        guild = self.bot.get_guild(guild_id)
+
+        guild_level = await self.database.get_guild_level(guild.id)
+        progress = await self.database.get_guild_level_progress(guild.id, guild_level)
+        requirement = EnemyOverviewEmbed.LEVEL_REQUIREMENTS[guild_level]
+
+        if progress >= requirement:
+            if (guild_level + 1) not in EnemyOverviewEmbed.BOSS_LEVELS:
+                guild_level += 1
+                await self.database.set_guild_level(guild.id, guild_level)
+            else:
+                pass
+                # TODO: check if boss is defeated
+
+        for channel_id in combat_channels:
+            channel = guild.get_channel(channel_id)
+            if channel is None:
+                continue
+
+            async for message in channel.history(limit=1, oldest_first=True):
+                if message.author != self.bot.user or message.embeds is None:
+                    await self.refresh_combat_messages(guild_id)
+                    return
+
+                embed_title = message.embeds[0].title
+                if embed_title[:16] != "Combat Zone":
+                    await self.refresh_combat_messages(guild_id)
+                    return
+
+                head_embed = EnemyOverviewEmbed(
+                    self.bot.user,
+                    guild_level,
+                    progress,
+                )
+                await message.edit(embed=head_embed)
+                break
+
+    async def refresh_combat_messages(self, guild_id: int):
+        combat_channels = await self.settings_manager.get_combat_channels(guild_id)
+
+        guild = self.bot.get_guild(guild_id)
+
+        for channel_id in combat_channels:
+            channel = guild.get_channel(channel_id)
+            if channel is None:
+                continue
+
+            await channel.purge()
+
+            guild_level = await self.database.get_guild_level(guild.id)
+            progress = await self.database.get_guild_level_progress(
+                guild.id, guild_level
+            )
+
+            head_embed = EnemyOverviewEmbed(
+                self.bot.user,
+                guild_level,
+                progress,
+            )
+
+            await channel.send(content="", embed=head_embed)

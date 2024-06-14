@@ -1,6 +1,7 @@
 import datetime
 import random
 import secrets
+from typing import Literal
 
 import discord
 from bot import CrunchyBot
@@ -21,8 +22,8 @@ from view.combat.equipment_view import EquipmentView
 
 class Combat(commands.Cog):
 
-    ENCOUNTER_MIN_WAIT = 60
-    ENCOUNTER_MAX_WAIT = 90
+    ENCOUNTER_MIN_WAIT = 20
+    ENCOUNTER_MAX_WAIT = 40
 
     def __init__(self, bot: CrunchyBot) -> None:
         self.bot = bot
@@ -52,6 +53,33 @@ class Combat(commands.Cog):
             or interaction.user.guild_permissions.administrator
         )
 
+    async def __check_enabled(
+        self, interaction: discord.Interaction, all_channels: bool = False
+    ):
+        guild_id = interaction.guild_id
+
+        if not await self.settings_manager.get_combat_enabled(guild_id):
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Combat module is currently disabled.",
+            )
+            return False
+
+        if (
+            not all_channels
+            and interaction.channel_id
+            not in await self.settings_manager.get_beans_channels(guild_id)
+        ):
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Combat related commands cannot be used in this channel.",
+            )
+            return False
+
+        return True
+
     async def __reevaluate_next_enemy(self, guild_id: int) -> None:
         next_spawn_delay = random.randint(
             self.ENCOUNTER_MIN_WAIT, self.ENCOUNTER_MAX_WAIT
@@ -68,8 +96,10 @@ class Combat(commands.Cog):
 
     @commands.Cog.listener("on_ready")
     async def on_ready_combat(self):
-        # self.random_encounter_task.start()
-        # await self.testing.test()
+        for guild in self.bot.guilds:
+            await self.encounter_manager.refresh_combat_messages(guild.id)
+
+        self.random_encounter_task.start()
         self.logger.log("init", "Combat loaded.", cog=self.__cog_name__)
 
     @commands.Cog.listener("on_guild_join")
@@ -88,17 +118,20 @@ class Combat(commands.Cog):
         self.logger.log("sys", "Random Encounter task started.", cog=self.__cog_name__)
 
         for guild in self.bot.guilds:
+            if guild.id not in self.enemy_timers:
+                continue
+
             if datetime.datetime.now() < self.enemy_timers[guild.id]:
                 continue
 
             self.logger.log("sys", "Enemy timeout reached.", cog=self.__cog_name__)
             await self.__reevaluate_next_enemy(guild.id)
 
-            bean_channels = await self.settings_manager.get_beans_channels(guild.id)
-            if len(bean_channels) == 0:
+            combat_channels = await self.settings_manager.get_combat_channels(guild.id)
+            if len(combat_channels) == 0:
                 continue
             await self.encounter_manager.spawn_encounter(
-                guild, secrets.choice(bean_channels)
+                guild, secrets.choice(combat_channels)
             )
 
     @random_encounter_task.before_loop
@@ -108,10 +141,25 @@ class Combat(commands.Cog):
         )
 
         for guild in self.bot.guilds:
+            if not await self.settings_manager.get_combat_enabled(guild.id):
+                continue
+
+            if len(await self.settings_manager.get_combat_channels(guild.id)) <= 0:
+                continue
+
             encounter_event = await self.database.get_last_encounter_spawn_event(
                 guild.id
             )
             last_spawn = datetime.datetime.now()
+
+            if encounter_event is None:
+                self.logger.log(
+                    guild.id,
+                    "No previous spawns, next spawn imminent.",
+                    cog=self.__cog_name__,
+                )
+                self.enemy_timers[guild.id] = last_spawn
+                continue
 
             if encounter_event is not None:
                 last_spawn = encounter_event.datetime
@@ -152,16 +200,20 @@ class Combat(commands.Cog):
     @app_commands.guild_only()
     async def spawn_encounter(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        bean_channels = await self.settings_manager.get_beans_channels(
+
+        if not await self.__check_enabled(interaction):
+            return
+
+        combat_channels = await self.settings_manager.get_combat_channels(
             interaction.guild_id
         )
-        if len(bean_channels) == 0:
+        if len(combat_channels) == 0:
             await self.bot.command_response(
-                self.__cog_name__, interaction, "Error: No beans channel set."
+                self.__cog_name__, interaction, "Error: No combat channel set."
             )
 
         await self.encounter_manager.spawn_encounter(
-            interaction.guild, secrets.choice(bean_channels)
+            interaction.guild, secrets.choice(combat_channels)
         )
         await self.bot.command_response(
             self.__cog_name__, interaction, "Encounter successfully spawned."
@@ -174,8 +226,8 @@ class Combat(commands.Cog):
     )
     @app_commands.guild_only()
     async def equipment(self, interaction: discord.Interaction):
-        # if not await self.__check_enabled(interaction):
-        #     return
+        if not await self.__check_enabled(interaction):
+            return
 
         guild_id = interaction.guild_id
         member_id = interaction.user.id
@@ -214,6 +266,98 @@ class Combat(commands.Cog):
         message = await interaction.followup.send("", embeds=embeds, view=view)
         view.set_message(message)
         await view.refresh_ui()
+
+    group = app_commands.Group(
+        name="combat", description="Subcommands for the combat module."
+    )
+
+    @group.command(
+        name="reload_overview",
+        description="Reloads combat overview.",
+    )
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def reload_overview(self, interaction: discord.Interaction):
+        if not await self.__check_enabled(interaction, all_channels=True):
+            return
+
+        await interaction.response.defer()
+        await self.encounter_manager.refresh_combat_messages(interaction.guild_id)
+
+        await self.bot.command_response(
+            self.__cog_name__, interaction, "Successfully reloaded combats."
+        )
+
+    @group.command(
+        name="settings",
+        description="Overview of all combat related settings and their current value.",
+    )
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def get_settings(self, interaction: discord.Interaction):
+        output = await self.settings_manager.get_settings_string(
+            interaction.guild_id, SettingsManager.COMBAT_SUBSETTINGS_KEY
+        )
+        await self.bot.command_response(self.__cog_name__, interaction, output)
+
+    @group.command(
+        name="toggle",
+        description="Enable or disable the entire combat module.",
+    )
+    @app_commands.describe(enabled="Turns the combat module on or off.")
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def set_toggle(
+        self, interaction: discord.Interaction, enabled: Literal["on", "off"]
+    ):
+        await self.settings_manager.set_combat_enabled(
+            interaction.guild_id, enabled == "on"
+        )
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Combat module was turned {enabled}.",
+            args=[enabled],
+        )
+
+    @group.command(
+        name="add_combat_channel",
+        description="Add a channel to spawn encounters in.",
+    )
+    @app_commands.describe(channel="This channel will be added to the combat channels.")
+    @app_commands.check(__has_permission)
+    async def add_combat_channel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ):
+        await self.settings_manager.add_combat_channel(interaction.guild_id, channel.id)
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Added {channel.name} to combat channels.",
+            args=[channel.name],
+        )
+        await self.encounter_manager.refresh_combat_messages(interaction.guild_id)
+
+    @group.command(
+        name="remove_combat_channel",
+        description="Remove a channel to from the combat channels.",
+    )
+    @app_commands.describe(
+        channel="This channel will be removed from the combat channels."
+    )
+    @app_commands.check(__has_permission)
+    async def remove_combat_channel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ):
+        await self.settings_manager.remove_combat_channel(
+            interaction.guild_id, channel.id
+        )
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Removed {channel.name} from combat channels.",
+            args=[channel.name],
+        )
 
 
 async def setup(bot):

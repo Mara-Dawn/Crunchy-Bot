@@ -69,6 +69,10 @@ class SettingsManager(Service):
     PREDICTIONS_MOD_ROLES_KEY = "predictions_roles"
     PREDICTIONS_CHANNELS_KEY = "predictions_channels"
 
+    COMBAT_SUBSETTINGS_KEY = "combat"
+    COMBAT_ENABLED_KEY = "combat_enabled"
+    COMBAT_CHANNELS_KEY = "combat_channels"
+
     def __init__(
         self,
         bot: commands.Bot,
@@ -259,6 +263,19 @@ class SettingsManager(Service):
             "handle_channels_value",
         )
 
+        combat_settings = ModuleSettings(
+            self.COMBAT_SUBSETTINGS_KEY, "Combat"
+        )
+        combat_settings.add_setting(
+            self.COMBAT_ENABLED_KEY, True, "Module Enabled"
+        )
+        combat_settings.add_setting(
+            self.COMBAT_CHANNELS_KEY,
+            [],
+            "Overview Channels for the combat module.",
+            "handle_channels_value",
+        )
+
         self.settings = GuildSettings()
         self.settings.add_module(general_settings)
         self.settings.add_module(police_settings)
@@ -267,6 +284,7 @@ class SettingsManager(Service):
         self.settings.add_module(shop_settings)
         self.settings.add_module(bully_settings)
         self.settings.add_module(prediction_settings)
+        self.settings.add_module(combat_settings)
 
     async def listen_for_event(self, event: BotEvent) -> None:
         pass
@@ -1041,5 +1059,50 @@ class SettingsManager(Service):
             guild,
             self.PREDICTIONS_SUBSETTINGS_KEY,
             self.PREDICTIONS_CHANNELS_KEY,
+            channels,
+        )
+
+    # Combat Settings
+
+    async def get_combat_enabled(self, guild: int) -> bool:
+        return await self.get_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_ENABLED_KEY
+        )
+
+    async def set_combat_enabled(self, guild: int, enabled: bool) -> None:
+        await self.update_setting(
+            guild,
+            self.COMBAT_SUBSETTINGS_KEY,
+            self.COMBAT_ENABLED_KEY,
+            enabled,
+        )
+
+    async def get_combat_channels(self, guild: int) -> list[int]:
+        return [
+            int(x)
+            for x in await self.get_setting(
+                guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_CHANNELS_KEY
+            )
+        ]
+
+    async def add_combat_channel(self, guild: int, channel: int) -> None:
+        channels = await self.get_combat_channels(guild)
+        if channel not in channels:
+            channels.append(channel)
+        await self.update_setting(
+            guild,
+            self.COMBAT_SUBSETTINGS_KEY,
+            self.COMBAT_CHANNELS_KEY,
+            channels,
+        )
+
+    async def remove_combat_channel(self, guild: int, channel: int) -> None:
+        channels = await self.get_combat_channels(guild)
+        if channel in channels:
+            channels.remove(channel)
+        await self.update_setting(
+            guild,
+            self.COMBAT_SUBSETTINGS_KEY,
+            self.COMBAT_CHANNELS_KEY,
             channels,
         )

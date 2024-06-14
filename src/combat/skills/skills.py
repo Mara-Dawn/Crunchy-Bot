@@ -166,6 +166,40 @@ class Bonk(BaseSkill):
         )
 
 
+class ToeStub(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="OUCH!",
+            skill_type=SkillType.TOE_STUB,
+            description="You stub your toe on one of its legs.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=3,
+            base_value=3,
+            hits=1,
+            droppable=False,
+            image_url="",
+        )
+
+
+class LookingGood(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Lookin' Good",
+            skill_type=SkillType.LOOKING_GOOD,
+            description="You angrily look at the table that just hurt you. Huh, it's a pretty nice table. To bad it has to die.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=0,
+            hits=1,
+            droppable=False,
+            image_url="",
+        )
+
+
 class MLady(BaseSkill):
 
     def __init__(self):

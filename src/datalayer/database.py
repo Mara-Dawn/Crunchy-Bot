@@ -725,7 +725,7 @@ class Database:
         return output
 
     def __list_sanitizer(self, attribute_list: list[Any]) -> str:
-        return "(" + ",".join(["?" for x in range(len(attribute_list))]) + ")"
+        return "(" + ",".join(["?" for _ in range(len(attribute_list))]) + ")"
 
     async def get_setting(self, guild_id: int, module: str, key: str):
         command = f"""
@@ -2781,6 +2781,33 @@ class Database:
 
         return int(rows[0][self.GUILD_SEASON_GUILD_LEVEL_COL])
 
+    async def set_guild_level(self, guild_id: int, level: int) -> int:
+        command = f""" 
+            UPDATE {self.GUILD_SEASON_TABLE} 
+            SET {self.GUILD_SEASON_GUILD_LEVEL_COL} = ?
+            WHERE {self.GUILD_SEASON_GUILD_ID_COL} = ?
+        """
+        task = (level, guild_id)
+        return await self.__query_insert(command, task)
+
+    async def get_guild_level_progress(self, guild_id: int, guild_level: int) -> int:
+        command = f""" 
+            SELECT COUNT(*) as progress FROM {self.ENCOUNTER_TABLE} 
+            INNER JOIN {self.ENCOUNTER_EVENT_TABLE} ON {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = {self.ENCOUNTER_ID_COL}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.ENCOUNTER_ENEMY_LEVEL_COL} = ?
+            AND {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            AND {self.ENCOUNTER_GUILD_ID_COL} = ?
+            GROUP BY {self.ENCOUNTER_GUILD_ID_COL}
+            ;
+        """
+        task = (guild_level, EncounterEventType.ENEMY_DEFEAT, guild_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return 0
+        
+        return int(rows[0]["progress"])
+
     async def get_encounter_by_encounter_id(self, encounter_id: int) -> Encounter:
         command = f""" 
             SELECT * FROM {self.ENCOUNTER_TABLE} 
@@ -2907,6 +2934,7 @@ class Database:
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            ORDER BY {self.EVENT_ID_COL} DESC
         """
 
         task = (guild_id, EncounterEventType.SPAWN.value)

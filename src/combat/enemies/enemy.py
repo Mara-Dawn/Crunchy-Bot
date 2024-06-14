@@ -63,8 +63,8 @@ class Enemy:
         image_url: str,
         min_level: int,
         max_level: int,
-        health: int,
-        damage_scaling: int,
+        health: float,
+        damage_scaling: float,
         max_players: int,
         skill_types: list[SkillType],
         item_loot_table: list[ItemType],
@@ -79,6 +79,7 @@ class Enemy:
         initiative: int = 10,
         attribute_overrides: dict[CharacterAttribute, float] = None,
         actions_per_turn: int = 1,
+        min_encounter_scale: int = 1,
     ):
         self.name = name
         self.type = type
@@ -102,6 +103,7 @@ class Enemy:
         self.weighting = weighting
         self.initiative = initiative
         self.actions_per_turn = actions_per_turn
+        self.min_encounter_scale = min_encounter_scale
 
         self.attribute_overrides = attribute_overrides
 

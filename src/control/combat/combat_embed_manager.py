@@ -458,12 +458,17 @@ class CombatEmbedManager(Service):
 
         yield full_embed
 
-        if skill.base_skill.aoe:
-            async for embed in self.display_aoe_skill(turn_data, skill, full_embed):
-                yield embed
+        if not skill.base_skill.base_value <= 0:
+            if skill.base_skill.aoe:
+                async for embed in self.display_aoe_skill(turn_data, skill, full_embed):
+                    yield embed
+            else:
+                async for embed in self.display_regular_skill(
+                    turn_data, skill, full_embed
+                ):
+                    yield embed
         else:
-            async for embed in self.display_regular_skill(turn_data, skill, full_embed):
-                yield embed
+            await asyncio.sleep(2)
 
     def get_turn_skip_embed(
         self, actor: Actor, reason: str, context: EncounterContext

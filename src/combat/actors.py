@@ -386,11 +386,15 @@ class Opponent(Actor):
         raw_attack_count = skill.base_skill.hits
         attack_count = raw_attack_count
 
-        if combatant_count > 1 and not skill.base_skill.aoe:
-            attack_count_scaling = max(1, combatant_count * 0.75)
+        if (
+            combatant_count > self.enemy.min_encounter_scale
+            and not skill.base_skill.aoe
+        ):
+            encounter_scale = combatant_count - (self.enemy.min_encounter_scale - 1)
+            attack_count_scaling = max(1, encounter_scale * 0.75)
             attack_count = int(raw_attack_count * attack_count_scaling)
             encounter_scaling = (
-                combatant_count
+                encounter_scale
                 * Actor.OPPONENT_ENCOUNTER_SCALING_FACTOR
                 * raw_attack_count
                 / attack_count

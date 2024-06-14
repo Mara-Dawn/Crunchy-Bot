@@ -15,6 +15,10 @@ class SkillType(str, Enum):
     DEEZ_NUTS = "DeezNuts"
     BONK = "Bonk"
 
+    # Table
+    TOE_STUB = "ToeStub"
+    LOOKING_GOOD = "LookingGood"
+
     # Nice Guy
     M_LADY = "MLady"
     FEDORA_TIP = "FedoraTip"
