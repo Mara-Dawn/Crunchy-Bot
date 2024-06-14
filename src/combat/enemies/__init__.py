@@ -67,7 +67,7 @@ class Table(Enemy):
             min_level=1,
             max_level=2,
             health=2,
-            damage_scaling=5,
+            damage_scaling=6,
             max_players=3,
             skill_types=[SkillType.TOE_STUB, SkillType.LOOKING_GOOD],
             item_loot_table=[
