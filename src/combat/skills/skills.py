@@ -179,7 +179,7 @@ class ToeStub(BaseSkill):
             base_value=3,
             hits=1,
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/MzFpvsV.png",
         )
 
 
@@ -196,7 +196,7 @@ class LookingGood(BaseSkill):
             base_value=0,
             hits=1,
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/ryWhWTP.png",
         )
 
 

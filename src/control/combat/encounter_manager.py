@@ -557,29 +557,26 @@ class EncounterManager(Service):
         for member, member_loot in loot.items():
 
             await asyncio.sleep(2)
-            beans = member_loot[0]
+            # beans = member_loot[0]
+            beans = 0
             embeds = []
             loot_head_embed = await self.embed_manager.get_loot_embed(member, beans)
             embeds.append(loot_head_embed)
 
             message = await context.thread.send(f"<@{member.id}>", embeds=embeds)
 
-            event = BeansEvent(
-                now,
-                member.guild.id,
-                BeansEventType.COMBAT_LOOT,
-                member.id,
-                beans,
-            )
-            await self.controller.dispatch_event(event)
+            # event = BeansEvent(
+            #     now,
+            #     member.guild.id,
+            #     BeansEventType.COMBAT_LOOT,
+            #     member.id,
+            #     beans,
+            # )
+            # await self.controller.dispatch_event(event)
 
-            already_dropped = []
             for drop in member_loot[1]:
                 embeds.append(drop.get_embed())
-
                 await asyncio.sleep(2.5)
-
-                already_dropped.append(drop)
                 await message.edit(embeds=embeds)
 
             item = member_loot[2]

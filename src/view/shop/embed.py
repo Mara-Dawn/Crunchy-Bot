@@ -1,4 +1,5 @@
 import discord
+from config import Config
 from discord.ext import commands
 from items.item import Item
 from items.types import ItemType
@@ -35,6 +36,8 @@ class ShopEmbed(discord.Embed):
             owned = None
             if user_items is not None and item.type in user_items:
                 owned = user_items[item.type]
-            item.add_to_embed(bot, self, 44, count=owned, show_price=True)
+            item.add_to_embed(
+                bot, self, Config.SHOP_ITEM_MAX_WIDTH, count=owned, show_price=True
+            )
 
         self.set_image(url="attachment://shop.png")

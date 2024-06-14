@@ -2,6 +2,7 @@ import discord
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
 from combat.skills.types import SkillEffect, SkillTarget, SkillType
+from config import Config
 
 
 class BaseSkill(DroppableBase):
@@ -151,8 +152,10 @@ class Skill(Droppable):
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
-        max_width: int = 45,
+        max_width: int = None,
     ) -> discord.Embed:
+        if max_width is None:
+            max_width = Config.COMBAT_EMBED_MAX_WIDTH
         # color = self.EFFECT_COLOR_MAP[self.base_skill.skill_effect]
         color = self.RARITY_COLOR_HEX_MAP[self.rarity]
 
@@ -180,8 +183,7 @@ class Skill(Droppable):
         description = f'"{self.description}"'
 
         if len(description) < max_width:
-            spacing = max_width - len(description)
-            description += " " * spacing
+            description += " " + "\u00a0" * max_width
 
         prefixes = []
         suffixes = []
@@ -315,8 +317,10 @@ class CharacterSkill:
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
-        max_width: int = 45,
+        max_width: int = None,
     ) -> discord.Embed:
+        if max_width is None:
+            max_width = Config.COMBAT_EMBED_MAX_WIDTH
         # color = self.skill.EFFECT_COLOR_MAP[self.skill.base_skill.skill_effect]
         color = self.skill.RARITY_COLOR_HEX_MAP[self.skill.rarity]
 
@@ -329,6 +333,7 @@ class CharacterSkill:
             suffix += " [EQUIPPED]"
         elif self.skill.locked and show_locked_state:
             suffix += " [🔒]"
+        # name = f"<~ {self.skill.base_skill.name} ~>"
         name = f"<- {self.skill.base_skill.name} ->"
 
         info_block = "```ansi\n"
@@ -347,8 +352,7 @@ class CharacterSkill:
         description = f'"{self.skill.base_skill.description}"'
 
         if len(description) < max_width:
-            spacing = max_width - len(description)
-            description += " " * spacing
+            description += " " + "\u00a0" * max_width
 
         prefixes = []
         suffixes = []
@@ -468,8 +472,11 @@ class CharacterSkill:
         embed: discord.Embed,
         show_info: bool = False,
         show_data: bool = False,
-        max_width: int = 45,
+        max_width: int = None,
     ) -> None:
+        if max_width is None:
+            max_width = Config.COMBAT_EMBED_MAX_WIDTH
+
         title = f"> {self.skill.name} "
         description = f'"{self.skill.description}"'
 
@@ -479,8 +486,7 @@ class CharacterSkill:
             cooldown_info = f"\navailable in [35m{cooldown_remaining}[0m turn(s)"
 
         if len(description) < max_width:
-            spacing = max_width - len(description)
-            description += " " * spacing
+            description += " " + "\u00a0" * max_width
 
         prefixes = []
         suffixes = []

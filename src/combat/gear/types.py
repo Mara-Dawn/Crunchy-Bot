@@ -165,13 +165,13 @@ class GearBaseType(str, Enum):
 
 
 class CharacterAttribute(str, Enum):
-    PHYS_DAMAGE_INCREASE = "Physical Damage Increase"
-    MAGIC_DAMAGE_INCREASE = "Magical Damage Increase"
+    PHYS_DAMAGE_INCREASE = "Physical Damage Inc."
+    MAGIC_DAMAGE_INCREASE = "Magical Damage Inc."
     HEALING_BONUS = "Healing Bonus"
     CRIT_RATE = "Crit Rate"
     CRIT_DAMAGE = "Crit Damage"
-    PHYS_DAMAGE_REDUCTION = "Physical Damage Reduction"
-    MAGIC_DAMAGE_REDUCTION = "Magical Damage Reduction"
+    PHYS_DAMAGE_REDUCTION = "Physical Damage Red."
+    MAGIC_DAMAGE_REDUCTION = "Magical Damage Red."
     MAX_HEALTH = "Maximum Health"
 
     @staticmethod

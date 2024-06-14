@@ -7,6 +7,7 @@ from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect, SkillInstance
+from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.combat_skill_manager import CombatSkillManager
@@ -81,8 +82,11 @@ class CombatEmbedManager(Service):
         current_hp: int,
         max_hp: int,
         hide_hp: bool = True,
-        max_width: int = 44,
+        max_width: int = None,
     ):
+        if max_width is None:
+            max_width = Config.COMBAT_EMBED_MAX_WIDTH
+
         health = f"{current_hp}/{max_hp}"
         fraction = current_hp / max_hp
         percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
@@ -111,12 +115,15 @@ class CombatEmbedManager(Service):
         embed: discord.Embed,
         name: str,
         value: str,
-        max_width: int = 45,
+        max_width: int = None,
     ):
+        if max_width is None:
+            max_width = Config.COMBAT_EMBED_MAX_WIDTH
+
         spacing = ""
         content_length = len(value)
         if content_length < max_width:
-            spacing = " " * (max_width - content_length)
+            spacing = " " + "\u00a0" * max_width
 
         embed_content = "```\n" + value + spacing + "```"
         embed.add_field(name=name, value=embed_content, inline=False)
@@ -134,7 +141,7 @@ class CombatEmbedManager(Service):
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
-        self.add_health_bar(embed, current_hp, max_hp, max_width=34)
+        self.add_health_bar(embed, current_hp, max_hp, max_width=Config.ENEMY_MAX_WIDTH)
 
         skill_list = []
         for skill_type in enemy.skill_types:
@@ -142,7 +149,10 @@ class CombatEmbedManager(Service):
             skill_list.append(skill.name)
 
         self.add_text_bar(
-            embed, name="Skills:", value=", ".join(skill_list), max_width=34
+            embed,
+            name="Skills:",
+            value=", ".join(skill_list),
+            max_width=Config.ENEMY_MAX_WIDTH,
         )
 
         if enemy.information != "":
@@ -150,7 +160,7 @@ class CombatEmbedManager(Service):
                 embed,
                 name="Additional Information:",
                 value=enemy.information,
-                max_width=38,
+                max_width=Config.ENEMY_MAX_WIDTH,
             )
 
         embed.set_image(url=enemy.image_url)
@@ -172,7 +182,7 @@ class CombatEmbedManager(Service):
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
-        self.add_health_bar(embed, current_hp, max_hp, max_width=34)
+        self.add_health_bar(embed, current_hp, max_hp, max_width=Config.ENEMY_MAX_WIDTH)
 
         defeated_message = f"You successfully defeated *{enemy.name}*."
         embed.add_field(name="Congratulations!", value=defeated_message, inline=False)
@@ -194,7 +204,7 @@ class CombatEmbedManager(Service):
             context.opponent, context.combat_events
         )
         max_hp = context.opponent.max_hp
-        self.add_health_bar(embed, current_hp, max_hp, max_width=34)
+        self.add_health_bar(embed, current_hp, max_hp, max_width=Config.ENEMY_MAX_WIDTH)
 
         defeated_message = f"You were defeated by *{enemy.name}*."
         embed.add_field(name="Failure!", value=defeated_message, inline=False)
@@ -211,13 +221,21 @@ class CombatEmbedManager(Service):
 
         title = f"It's your turn {actor.name}!"
 
-        content = f"<@{actor.id}> Please select an action."
+        content = "Please select an action. Otherwise your turn will be skipped."
 
         now = datetime.datetime.now().timestamp()
         turn_duration = context.get_turn_timeout(actor.id)
         timeout = int(now + turn_duration)
 
-        content += f"\n\n Otherwise your turn will be skipped <t:{timeout}:R>."
+        content += "Otherwise your turn will be skipped."
+
+        if len(content) < Config.COMBAT_EMBED_MAX_WIDTH:
+            content += " " + "\u00a0" * Config.COMBAT_EMBED_MAX_WIDTH
+
+        content = f"```python\n{content}```"
+
+        content += f"Skipping <t:{timeout}:R>."
+
         head_embed = discord.Embed(
             title=title, description=content, color=discord.Colour.blurple()
         )
@@ -226,7 +244,13 @@ class CombatEmbedManager(Service):
             actor, context.combat_events
         )
         max_hp = int(actor.max_hp)
-        self.add_health_bar(head_embed, current_hp, max_hp, hide_hp=False, max_width=45)
+        self.add_health_bar(
+            head_embed,
+            current_hp,
+            max_hp,
+            hide_hp=False,
+            max_width=Config.COMBAT_EMBED_MAX_WIDTH,
+        )
 
         if actor.image_url is not None:
             head_embed.set_thumbnail(url=actor.image_url)

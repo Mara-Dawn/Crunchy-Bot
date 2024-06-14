@@ -9,6 +9,7 @@ from combat.gear.types import (
     Rarity,
 )
 from combat.skills.types import SkillEffect, SkillType
+from config import Config
 
 
 class Enchantment:
@@ -33,11 +34,11 @@ class Enchantment:
 class GearBase(DroppableBase):
 
     DEFAULT_IMAGES = {
-        EquipmentSlot.WEAPON: "https://i.imgur.com/EI1ZWIS.png",
-        EquipmentSlot.HEAD: "https://i.imgur.com/7Emekkj.png",
-        EquipmentSlot.BODY: "https://i.imgur.com/hG2ADaB.png",
-        EquipmentSlot.LEGS: "https://i.imgur.com/SIEPjbA.png",
-        EquipmentSlot.ACCESSORY: "https://i.imgur.com/Bb8dfKg.png",
+        EquipmentSlot.WEAPON: "https://i.imgur.com/AJoTZdu.png",
+        EquipmentSlot.HEAD: "https://i.imgur.com/AJoTZdu.png",
+        EquipmentSlot.BODY: "https://i.imgur.com/AJoTZdu.png",
+        EquipmentSlot.LEGS: "https://i.imgur.com/AJoTZdu.png",
+        EquipmentSlot.ACCESSORY: "https://i.imgur.com/AJoTZdu.png",
     }
 
     def __init__(
@@ -183,8 +184,11 @@ class Gear(Droppable):
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
-        max_width: int = 45,
+        max_width: int = None,
     ) -> discord.Embed:
+        if max_width is None:
+            max_width = Config.COMBAT_EMBED_MAX_WIDTH
+
         color = self.RARITY_COLOR_HEX_MAP[self.rarity]
 
         name = f"~* {self.name} *~"
@@ -196,6 +200,9 @@ class Gear(Droppable):
             suffix += " [🔒]"
 
         description = f'"{self.description}"'
+
+        if len(description) < max_width:
+            description += " " + "\u00a0" * max_width
 
         name_rarity = self.rarity
         if self.rarity == Rarity.DEFAULT:

@@ -340,7 +340,6 @@ class Stick_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image_url="stick.png",
         )
 
 
@@ -363,7 +362,6 @@ class Wand_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
-            image_url="wand.png",
         )
 
 

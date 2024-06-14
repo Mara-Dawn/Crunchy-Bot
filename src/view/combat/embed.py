@@ -165,8 +165,8 @@ class ForgeEmbed(discord.Embed):
     ):
         description = (
             "Toss your scrap into this gaping hole and it will spit out random items for you.\n\n"
-            f"Current max item level: [35m{guild_level}[0m\n"
-            f"Current max item rarity: [35m{max_rarity.value}[0m"
+            f"Max item level: [35m{guild_level}[0m\n"
+            f"Max item rarity: [35m{max_rarity.value}[0m"
         )
 
         if len(description) < max_width:
@@ -180,8 +180,8 @@ class ForgeEmbed(discord.Embed):
             color=discord.Colour.purple(),
             description=description,
         )
-        self.set_thumbnail(url=member.display_avatar.url)
-        # self.set_image(url="attachment://forge.png")
+        # self.set_thumbnail(url=member.display_avatar.url)
+        self.set_image(url="https://i.imgur.com/Up107tP.png")
 
 
 class EnemyOverviewEmbed(discord.Embed):

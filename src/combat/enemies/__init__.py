@@ -12,11 +12,11 @@ class MindGoblin(Enemy):
             description="Comes with a big sack of nuts.",
             information="Has tickets to SawCon.",
             image_url="https://i.imgur.com/IrZjelg.png",
-            min_level=2,
+            min_level=1,
             max_level=3,
             health=3,
             damage_scaling=5,
-            max_players=3,
+            max_players=4,
             skill_types=[SkillType.DEEZ_NUTS, SkillType.BONK],
             item_loot_table=[
                 ItemType.BOX_SEED,
@@ -25,7 +25,7 @@ class MindGoblin(Enemy):
             ],
             gear_loot_table=[],
             skill_loot_table=[],
-            initiative=11,
+            initiative=9,
             actions_per_turn=1,
         )
 
@@ -37,12 +37,12 @@ class Table(Enemy):
             type=EnemyType.TABLE,
             description="A plain, white table with four legs.",
             information="Watch your toes!",
-            image_url="",
+            image_url="https://i.imgur.com/ryWhWTP.png",
             min_level=1,
             max_level=2,
-            health=4,
+            health=3,
             damage_scaling=5,
-            max_players=4,
+            max_players=3,
             skill_types=[SkillType.TOE_STUB, SkillType.LOOKING_GOOD],
             item_loot_table=[
                 ItemType.SPEED_SEED,

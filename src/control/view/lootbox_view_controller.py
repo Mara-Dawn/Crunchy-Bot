@@ -4,6 +4,7 @@ import secrets
 
 import discord
 from bot_util import BotUtil
+from config import Config
 from datalayer.database import Database
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger
@@ -29,6 +30,7 @@ from control.view.view_controller import ViewController
 class MimicProtectedException(Exception):
     pass
 
+
 class LootBoxViewController(ViewController):
 
     def __init__(
@@ -51,11 +53,15 @@ class LootBoxViewController(ViewController):
                 owner_id = event.payload[1]
                 await self.handle_lootbox_claim(interaction, owner_id, event.view_id)
 
-    async def lootbox_checks(self, interaction: discord.Interaction,   owner_id: int) -> bool:
+    async def lootbox_checks(
+        self, interaction: discord.Interaction, owner_id: int
+    ) -> bool:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        stun_base_duration = (await self.item_manager.get_item(guild_id, ItemType.BAT)).value
+        stun_base_duration = (
+            await self.item_manager.get_item(guild_id, ItemType.BAT)
+        ).value
         stunned_remaining = await self.event_manager.get_stunned_remaining(
             guild_id, interaction.user.id, stun_base_duration
         )
@@ -77,30 +83,42 @@ class LootBoxViewController(ViewController):
             return False
         return True
 
-    async def mimic_detector(self, interaction: discord.Interaction, user_items: list[Item]) -> bool:
+    async def mimic_detector(
+        self, interaction: discord.Interaction, user_items: list[Item]
+    ) -> bool:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
         if ItemType.MIMIC_DETECTOR in [item.type for item in user_items]:
             message = (
-                "**Oh, wait a second!**\nYou feel something tugging on your leg. It's the Foxgirl you found and took care of until now. " 
+                "**Oh, wait a second!**\nYou feel something tugging on your leg. It's the Foxgirl you found and took care of until now. "
                 "She is signaling you **not to open that chest**, looks like its a **mimic**! Whew that was close. Before you get to thank her, "
                 "she runs away and disappears between the trees."
             )
             await interaction.followup.send(content=message, ephemeral=True)
-            event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, ItemType.MIMIC_DETECTOR, -1)
+            event = InventoryEvent(
+                datetime.datetime.now(),
+                guild_id,
+                member_id,
+                ItemType.MIMIC_DETECTOR,
+                -1,
+            )
             await self.controller.dispatch_event(event)
             return True
 
         return False
-    
-    async def balance_mimic_beans(self, interaction: discord.Interaction, beans: int) -> int:
+
+    async def balance_mimic_beans(
+        self, interaction: discord.Interaction, beans: int
+    ) -> int:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
         bean_balance = await self.database.get_member_beans(guild_id, member_id)
-        season_high_score = await self.database.get_member_beans_rankings(guild_id, member_id)
-        
+        season_high_score = await self.database.get_member_beans_rankings(
+            guild_id, member_id
+        )
+
         beans_taken = beans
 
         threshold = int(season_high_score / 10)
@@ -109,18 +127,28 @@ class LootBoxViewController(ViewController):
 
         if bean_balance + beans_taken < 0:
             beans_taken = -bean_balance
-        
+
         return beans_taken
-    
-    async def mimic_protection(self, interaction: discord.Interaction, user_items: list[Item]) -> bool:
+
+    async def mimic_protection(
+        self, interaction: discord.Interaction, user_items: list[Item]
+    ) -> bool:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
         if ItemType.PROTECTION in [item.type for item in user_items]:
-            user_protection = await self.database.get_item_counts_by_user(guild_id, member_id, item_types=[ItemType.PROTECTION])
+            user_protection = await self.database.get_item_counts_by_user(
+                guild_id, member_id, item_types=[ItemType.PROTECTION]
+            )
             user_protection_amount = user_protection[ItemType.PROTECTION]
             amount = min(5, user_protection_amount)
-            event = InventoryEvent(datetime.datetime.now(), guild_id, member_id, ItemType.PROTECTION, -amount)
+            event = InventoryEvent(
+                datetime.datetime.now(),
+                guild_id,
+                member_id,
+                ItemType.PROTECTION,
+                -amount,
+            )
             await self.controller.dispatch_event(event)
             return True
         return False
@@ -130,14 +158,16 @@ class LootBoxViewController(ViewController):
         member_id = interaction.user.id
 
         jail_announcement = f"<@{member_id}> delved too deep looking for treasure and got sucked into a wormhole that teleported them into jail."
-        duration = random.randint(1*60, 3*60)
+        duration = random.randint(1 * 60, 3 * 60)
         member = interaction.user
         success = await self.jail_manager.jail_user(
             guild_id, self.bot.user.id, member, duration
         )
         if not success:
             time_now = datetime.datetime.now()
-            affected_jails = await self.database.get_active_jails_by_member(guild_id, member.id)
+            affected_jails = await self.database.get_active_jails_by_member(
+                guild_id, member.id
+            )
             if len(affected_jails) > 0:
                 event = JailEvent(
                     time_now,
@@ -148,21 +178,23 @@ class LootBoxViewController(ViewController):
                     affected_jails[0].id,
                 )
                 await self.controller.dispatch_event(event)
-                remaining = await self.jail_manager.get_jail_remaining(affected_jails[0])
+                remaining = await self.jail_manager.get_jail_remaining(
+                    affected_jails[0]
+                )
                 jail_announcement = f"Trying to escape jail, <@{member_id}> came across a suspiciously large looking chest. Peering inside they got sucked back into their jail cell.\n`{BotUtil.strfdelta(duration, inputtype="minutes")}` have been added to their jail sentence.\n`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
                 await self.jail_manager.announce(interaction.guild, jail_announcement)
             else:
                 self.logger.error(
-                guild_id,
-                "User already jailed but no active jail was found.",
-                "Shop",
+                    guild_id,
+                    "User already jailed but no active jail was found.",
+                    "Shop",
                 )
         else:
             timestamp_now = int(datetime.datetime.now().timestamp())
             release = timestamp_now + (duration * 60)
             jail_announcement += f"\nThey will be released <t:{release}:R>."
             await self.jail_manager.announce(interaction.guild, jail_announcement)
-    
+
     async def mimic_haunt_user(self, interaction: discord.Interaction):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
@@ -180,19 +212,41 @@ class LootBoxViewController(ViewController):
     async def handle_beans_item(self, item: Item, embed: discord.Embed) -> int:
         beans = random.randint(LootBox.LARGE_MIN_BEANS, LootBox.LARGE_MAX_BEANS)
         item.description = f"A whole {beans} of them."
-        item.add_to_embed(self.bot, embed, 43, count=beans, show_price=False)
+        item.add_to_embed(
+            self.bot, embed, Config.SHOP_ITEM_MAX_WIDTH, count=beans, show_price=False
+        )
         return beans
 
-    async def handle_mimic_item(self,interaction: discord.Interaction, user_items: list[Item], item: Item, embed: discord.Embed) -> int:
+    async def handle_mimic_item(
+        self,
+        interaction: discord.Interaction,
+        user_items: list[Item],
+        item: Item,
+        embed: discord.Embed,
+    ) -> int:
         if await self.mimic_detector(interaction, user_items):
             raise MimicProtectedException
         beans = -random.randint(LootBox.SMALL_MIN_BEANS, LootBox.SMALL_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
-        item.description = f"It munches away at your beans, eating {abs(beans_taken)} of them."
-        item.add_to_embed(self.bot, embed, 43, count=beans_taken, show_price=False)
+        item.description = (
+            f"It munches away at your beans, eating {abs(beans_taken)} of them."
+        )
+        item.add_to_embed(
+            self.bot,
+            embed,
+            Config.SHOP_ITEM_MAX_WIDTH,
+            count=beans_taken,
+            show_price=False,
+        )
         return beans_taken
 
-    async def handle_large_mimic_item(self,interaction: discord.Interaction, user_items: list[Item], item: Item, embed: discord.Embed) -> tuple[int, int]:
+    async def handle_large_mimic_item(
+        self,
+        interaction: discord.Interaction,
+        user_items: list[Item],
+        item: Item,
+        embed: discord.Embed,
+    ) -> tuple[int, int]:
         jailings = 0
         if await self.mimic_detector(interaction, user_items):
             raise MimicProtectedException
@@ -203,10 +257,22 @@ class LootBoxViewController(ViewController):
         else:
             item.description = f"It munches away at your beans, eating {abs(beans_taken)} of them. It swallows your whole body and somehow you end up in JAIL?!?"
             jailings += 1
-        item.add_to_embed(self.bot, embed, 43, count=beans_taken, show_price=False)
+        item.add_to_embed(
+            self.bot,
+            embed,
+            Config.SHOP_ITEM_MAX_WIDTH,
+            count=beans_taken,
+            show_price=False,
+        )
         return jailings, beans_taken
 
-    async def handle_spook_mimic_item(self,interaction: discord.Interaction, user_items: list[Item], item: Item, embed: discord.Embed) -> int:
+    async def handle_spook_mimic_item(
+        self,
+        interaction: discord.Interaction,
+        user_items: list[Item],
+        item: Item,
+        embed: discord.Embed,
+    ) -> int:
         if await self.mimic_detector(interaction, user_items):
             raise MimicProtectedException
         beans = -random.randint(LootBox.SMALL_MIN_BEANS, LootBox.SMALL_MAX_BEANS)
@@ -216,10 +282,18 @@ class LootBoxViewController(ViewController):
             "Better hope it doesnt do anything ... *weird*.\n"
             f"It also munches away at your beans, eating {abs(beans_taken)} of them."
         )
-        item.add_to_embed(self.bot, embed, 43, count=beans_taken, show_price=False)
+        item.add_to_embed(
+            self.bot,
+            embed,
+            Config.SHOP_ITEM_MAX_WIDTH,
+            count=beans_taken,
+            show_price=False,
+        )
         return beans_taken
 
-    async def handle_lootbox_items(self, interaction: discord.Interaction, loot_box: LootBox, embed: discord.Embed):
+    async def handle_lootbox_items(
+        self, interaction: discord.Interaction, loot_box: LootBox, embed: discord.Embed
+    ):
         if len(list(LootBox.MIMICS & loot_box.items.keys())) > 0:
             embed.set_image(url="attachment://mimic.gif")
             attachment = discord.File("./img/mimic.gif", "mimic.gif")
@@ -231,12 +305,13 @@ class LootBoxViewController(ViewController):
 
         guild_id = interaction.guild_id
         member_id = interaction.user.id
-        
-        user_items = await self.item_manager.get_user_items_activated(guild_id, member_id, ItemTrigger.MIMIC)
+
+        user_items = await self.item_manager.get_user_items_activated(
+            guild_id, member_id, ItemTrigger.MIMIC
+        )
 
         items_to_give: list[tuple[int, Item]] = []
         total_beans = 0
-
 
         jailings = 0
         haunts = 0
@@ -254,13 +329,17 @@ class LootBoxViewController(ViewController):
                     case ItemType.CHEST_MIMIC:
                         for _ in range(item_count):
                             try:
-                                total_beans += await self.handle_mimic_item(interaction, user_items, item, embed)
+                                total_beans += await self.handle_mimic_item(
+                                    interaction, user_items, item, embed
+                                )
                             except MimicProtectedException:
                                 return False
                     case ItemType.CHEST_LARGE_MIMIC:
                         for _ in range(item_count):
                             try:
-                                jailing, beans = await self.handle_large_mimic_item(interaction, user_items, item, embed)
+                                jailing, beans = await self.handle_large_mimic_item(
+                                    interaction, user_items, item, embed
+                                )
                                 total_beans += beans
                                 jailings += jailing
                             except MimicProtectedException:
@@ -268,14 +347,21 @@ class LootBoxViewController(ViewController):
                     case ItemType.CHEST_SPOOK_MIMIC:
                         for _ in range(item_count):
                             try:
-                                total_beans +=  await self.handle_spook_mimic_item(interaction, user_items, item, embed)
-                                haunts += 1 
+                                total_beans += await self.handle_spook_mimic_item(
+                                    interaction, user_items, item, embed
+                                )
+                                haunts += 1
                             except MimicProtectedException:
                                 return False
                     case _:
-                        item.add_to_embed(self.bot, embed, 43, count=item_count, show_price=False)
+                        item.add_to_embed(
+                            self.bot,
+                            embed,
+                            Config.SHOP_ITEM_MAX_WIDTH,
+                            count=item_count,
+                            show_price=False,
+                        )
                         items_to_give.append((amount, item))
-
 
         await interaction.edit_original_response(
             embed=embed, view=None, attachments=[attachment]
