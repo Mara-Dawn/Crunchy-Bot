@@ -31,7 +31,7 @@ class Droppable:
     RARITY_COLOR_MAP = {
         Rarity.DEFAULT: "[30m",  # grey
         Rarity.NORMAL: "[38m",  # white
-        Rarity.MAGIC: "[32m",  # green
+        Rarity.MAGIC: "[36m",  # cyan
         Rarity.RARE: "[34m",  # blue
         Rarity.LEGENDARY: "[33m",  # yellow
         Rarity.UNIQUE: "[31m",  # red
@@ -40,7 +40,7 @@ class Droppable:
     RARITY_NAME_COLOR_MAP = {
         Rarity.DEFAULT: "[1;38m",
         Rarity.NORMAL: "[1;38m",
-        Rarity.MAGIC: "[1;32m",
+        Rarity.MAGIC: "[1;36m",
         Rarity.RARE: "[1;34m",
         Rarity.LEGENDARY: "[1;33m",
         Rarity.UNIQUE: "[1;31m",
@@ -55,8 +55,8 @@ class Droppable:
     RARITY_COLOR_HEX_MAP = {
         Rarity.DEFAULT: discord.Color.dark_gray(),
         Rarity.NORMAL: discord.Color(int("ffffff", 16)),
-        # Rarity.MAGIC: discord.Color(int("2aa198", 16)),
-        Rarity.MAGIC: discord.Color(int("859900", 16)),
+        Rarity.MAGIC: discord.Color(int("2aa198", 16)),
+        # Rarity.MAGIC: discord.Color(int("859900", 16)),
         Rarity.RARE: discord.Color(int("268bd2", 16)),
         Rarity.LEGENDARY: discord.Color(int("b58900", 16)),
         Rarity.UNIQUE: discord.Color(int("a43033", 16)),
