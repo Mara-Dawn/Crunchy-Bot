@@ -122,7 +122,7 @@ class CombatEmbedManager(Service):
 
         spacing = ""
         content_length = len(value)
-        if content_length < max_width:
+        if content_length < (max_width + 20):
             spacing = " " + "\u00a0" * max_width
 
         embed_content = "```\n" + value + spacing + "```"
@@ -314,7 +314,7 @@ class CombatEmbedManager(Service):
         actor = turn_data.actor
 
         embed = copy.deepcopy(full_embed)
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(0.5)
 
         content_map = {}
 
@@ -336,7 +336,7 @@ class CombatEmbedManager(Service):
             embed.add_field(name="Target Health", value="", inline=True)
 
         yield embed
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.2)
 
         loading_icons = [
             "🎲",
@@ -369,7 +369,7 @@ class CombatEmbedManager(Service):
 
         yield embed
 
-        await asyncio.sleep(1)
+        # await asyncio.sleep(1)
 
         embed = copy.deepcopy(full_embed)
         for target, _, remaiming_hp in turn_data.damage_data:
@@ -395,7 +395,7 @@ class CombatEmbedManager(Service):
         actor = turn_data.actor
 
         for target, damage_instance, remaiming_hp in turn_data.damage_data:
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(0.5)
 
             to_name = f"<@{target.id}>"
             if target.is_enemy:
@@ -415,7 +415,7 @@ class CombatEmbedManager(Service):
 
             yield embed
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.2)
 
             loading_icons = [
                 "🎲",
@@ -444,7 +444,7 @@ class CombatEmbedManager(Service):
             embed.add_field(name="Target Health", value="", inline=True)
             yield embed
 
-            await asyncio.sleep(1)
+            # await asyncio.sleep(1)
 
             percentage = f"{round(remaiming_hp/target.max_hp * 100, 1)}".rstrip(
                 "0"
@@ -491,27 +491,38 @@ class CombatEmbedManager(Service):
                     turn_data, skill, full_embed
                 ):
                     yield embed
-        else:
-            await asyncio.sleep(2)
 
     def get_turn_skip_embed(
         self, actor: Actor, reason: str, context: EncounterContext
     ) -> discord.Embed:
-        turn_number = context.get_current_turn_number()
-        title = f"Turn {turn_number}: {actor.name}"
-
         actor_name = f"{actor.name}"
 
         content = f"{actor_name}'s turn is skipped."
 
         embed = discord.Embed(
-            title=title, description="", color=discord.Colour.light_grey()
+            title="", description="", color=discord.Colour.light_grey()
         )
+        embed.set_author(name=actor_name, icon_url=actor.image_url)
         self.add_text_bar(embed, "", content)
 
         if actor.image_url is not None:
             embed.set_thumbnail(url=actor.image_url)
         embed.add_field(name="Reason", value=reason)
+        return embed
+
+    async def get_initiation_embed(self):
+        embed = discord.Embed(title="Get Ready to Fight!", color=discord.Colour.green())
+
+        now = datetime.datetime.now().timestamp()
+        timer = int(now + Config.COMBAT_INITIAL_WAIT)
+
+        message = f"Combat will start <t:{timer}:R>."
+        embed.add_field(name=message, value="", inline=False)
+
+        text = "Waiting for players to join."
+        self.add_text_bar(embed, "", text)
+
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
         return embed
 
     async def get_round_embed(self, context: EncounterContext):

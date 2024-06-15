@@ -78,6 +78,8 @@ class GardenEventType(str, Enum):
 
 class EncounterEventType(str, Enum):
     SPAWN = "spawn"
+    INITIATE = "initiate"
+    NEW_ROUND = "new_round"
     MEMBER_ENGAGE = "member_engage"
     MEMBER_DEFEAT = "member_defeat"
     MEMBER_TIMEOUT = "member_timeout"
@@ -165,8 +167,10 @@ class UIEventType(str, Enum):
     GARDEN_PLOT_BLOCK = "garden_plot_block"
 
     COMBAT_ENGAGE = "combat_engage"
+    COMBAT_INITIATE = "combat_initiate"
     COMBAT_USE_SKILL = "combat_use_skill"
     COMBAT_TIMEOUT = "combat_timeout"
+    COMBAT_FULL = "combat_full"
 
     GEAR_EQUIP = "gear_equip"
     GEAR_DISMANTLE = "gear_dismantle"

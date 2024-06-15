@@ -3230,7 +3230,10 @@ class Database:
             case EquipmentSlot.WEAPON:
                 gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_WEAPON_ID_COL])
                 if gear is None:
-                    gear = DefaultStick()
+                    if row[self.USER_EQUIPMENT_WEAPON_ID_COL] == -2:
+                        gear = DefaultWand()
+                    else:
+                        gear = DefaultStick()
                 equipped.append(gear)
             case EquipmentSlot.HEAD:
                 gear = await self.get_gear_by_id(

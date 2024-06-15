@@ -13,7 +13,7 @@ from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.police_list import PoliceList
-from discord import app_commands
+from discord import ChannelType, app_commands
 from discord.ext import commands
 from events.jail_event import JailEvent
 from events.spam_event import SpamEvent
@@ -49,8 +49,8 @@ class Police(commands.Cog):
 
     async def __jail_check(self, guild_id: int, user: discord.Member):
         timeout_count = await self.database.get_timeout_tracker_count(guild_id, user.id)
-        timeout_count_threshold = await self.settings_manager.get_police_timeouts_before_jail(
-            guild_id
+        timeout_count_threshold = (
+            await self.settings_manager.get_police_timeouts_before_jail(guild_id)
         )
 
         if timeout_count >= timeout_count_threshold:
@@ -59,7 +59,9 @@ class Police(commands.Cog):
                 f"Timeout jail threshold reached for {user.name}",
                 cog=self.__cog_name__,
             )
-            duration = await self.settings_manager.get_police_timeout_jail_duration(guild_id)
+            duration = await self.settings_manager.get_police_timeout_jail_duration(
+                guild_id
+            )
             success = await self.jail_manager.jail_user(
                 guild_id, self.bot.user.id, user, duration
             )
@@ -284,6 +286,8 @@ class Police(commands.Cog):
                 user_node.is_in_timeout()
                 or message.channel.id
                 in await self.settings_manager.get_police_exclude_channels(guild_id)
+                or message.channel.type == ChannelType.public_thread
+                or message.channel.type == ChannelType.private_thread
             ):
                 return
 
@@ -384,7 +388,9 @@ class Police(commands.Cog):
     async def set_toggle(
         self, interaction: discord.Interaction, enabled: Literal["on", "off"]
     ):
-        await self.settings_manager.set_police_enabled(interaction.guild_id, enabled == "on")
+        await self.settings_manager.set_police_enabled(
+            interaction.guild_id, enabled == "on"
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -398,7 +404,9 @@ class Police(commands.Cog):
     @app_commands.describe(role="The role that shall be tracked for spam detection.")
     @app_commands.check(__has_permission)
     async def add_role(self, interaction: discord.Interaction, role: discord.Role):
-        await self.settings_manager.add_police_naughty_role(interaction.guild_id, role.id)
+        await self.settings_manager.add_police_naughty_role(
+            interaction.guild_id, role.id
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -410,7 +418,9 @@ class Police(commands.Cog):
     @app_commands.describe(role="Remove spam detection from this role.")
     @app_commands.check(__has_permission)
     async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
-        await self.settings_manager.remove_police_naughty_role(interaction.guild_id, role.id)
+        await self.settings_manager.remove_police_naughty_role(
+            interaction.guild_id, role.id
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -511,7 +521,9 @@ class Police(commands.Cog):
     @app_commands.check(__has_permission)
     async def set_message(self, interaction: discord.Interaction, message: str):
 
-        await self.settings_manager.set_police_timeout_notice(interaction.guild_id, message)
+        await self.settings_manager.set_police_timeout_notice(
+            interaction.guild_id, message
+        )
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
