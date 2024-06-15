@@ -59,20 +59,25 @@ class CombatViewController(ViewController):
 
             encounters = await self.database.get_active_encounter_participants(guild_id)
 
+            already_involved = False
             for _, participants in encounters.items():
                 if member_id in participants:
                     await interaction.followup.send(
                         "You are already involved in a currently active encounter.",
                         ephemeral=True,
                     )
-                    return
+                    already_involved = True
+                    break
+
+            if already_involved:
+                continue
 
             if encounter.id not in encounters:
                 await interaction.followup.send(
                     "This encounter has already concluded.",
                     ephemeral=True,
                 )
-                return
+                continue
 
             enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
             max_encounter_size = enemy.max_players
@@ -82,7 +87,7 @@ class CombatViewController(ViewController):
                     "This encounter is already full.",
                     ephemeral=True,
                 )
-                return
+                continue
 
             event = EncounterEvent(
                 datetime.datetime.now(),
