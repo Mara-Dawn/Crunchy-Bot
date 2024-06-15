@@ -346,7 +346,7 @@ class CombatEmbedManager(Service):
 
         i = 0
         current = i
-        while i <= 5:
+        while i <= 2:
             current = i % len(loading_icons)
             icon = loading_icons[current]
 
@@ -358,7 +358,7 @@ class CombatEmbedManager(Service):
 
             yield embed
 
-            await asyncio.sleep((1 / 10) * (i * 2))
+            await asyncio.sleep((1 / 5) * (i * 2))
             i += 1
 
         embed = copy.deepcopy(full_embed)
@@ -425,7 +425,7 @@ class CombatEmbedManager(Service):
 
             i = 0
             current = i
-            while i <= 5:
+            while i <= 2:
                 current = i % len(loading_icons)
                 icon = loading_icons[current]
 
@@ -435,7 +435,7 @@ class CombatEmbedManager(Service):
                 embed.add_field(name="Target Health", value="", inline=True)
                 yield embed
 
-                await asyncio.sleep((1 / 10) * (i * 2))
+                await asyncio.sleep((1 / 5) * (i * 2))
                 i += 1
 
             embed = copy.deepcopy(full_embed)

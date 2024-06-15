@@ -69,7 +69,11 @@ class Controller:
             tasks.append(asyncio.create_task(service.listen_for_event(event)))
         for view_controller in self.view_controllers:
             tasks.append(asyncio.create_task(view_controller.listen_for_event(event)))
-        await asyncio.gather(*tasks, return_exceptions=True)
+        result = await asyncio.gather(*tasks, return_exceptions=True)
+
+        for res in result:
+            if isinstance(res, Exception):
+                raise res
 
     async def dispatch_ui_event(self, event: UIEvent):
         tasks = []
@@ -79,7 +83,11 @@ class Controller:
             )
         for view in self.views:
             tasks.append(asyncio.create_task(view.listen_for_ui_event(event)))
-        await asyncio.gather(*tasks, return_exceptions=True)
+        result = await asyncio.gather(*tasks, return_exceptions=True)
+
+        for res in result:
+            if isinstance(res, Exception):
+                raise res
 
     def get_service(self, service_class: type[Service]) -> Service:
         for service in self.services:
