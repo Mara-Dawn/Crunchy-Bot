@@ -1,8 +1,9 @@
+import asyncio
 import datetime
 
 import discord
 from combat.actors import Character
-from combat.encounter import EncounterContext
+from combat.encounter import Encounter, EncounterContext
 from combat.skills.skill import CharacterSkill
 from datalayer.database import Database
 from discord.ext import commands
@@ -41,11 +42,65 @@ class CombatViewController(ViewController):
         self.enemy_manager: CombatEnemyManager = self.controller.get_service(
             CombatEnemyManager
         )
+        self.join_queue = asyncio.Queue()
+        self.request_worker = asyncio.create_task(self.join_request_worker())
+
+    async def join_request_worker(self):
+        while True:
+            interaction = await self.join_queue.get()
+
+            guild_id = interaction.guild_id
+            member_id = interaction.user.id
+
+            message = await interaction.original_response()
+            encounter = await self.database.get_encounter_by_message_id(
+                guild_id, message.id
+            )
+
+            encounters = await self.database.get_active_encounter_participants(guild_id)
+
+            for _, participants in encounters.items():
+                if member_id in participants:
+                    await interaction.followup.send(
+                        "You are already involved in a currently active encounter.",
+                        ephemeral=True,
+                    )
+                    return
+
+            if encounter.id not in encounters:
+                await interaction.followup.send(
+                    "This encounter has already concluded.",
+                    ephemeral=True,
+                )
+                return
+
+            enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+            max_encounter_size = enemy.max_players
+
+            if len(encounters[encounter.id]) >= max_encounter_size:
+                await interaction.followup.send(
+                    "This encounter is already full.",
+                    ephemeral=True,
+                )
+                return
+
+            event = EncounterEvent(
+                datetime.datetime.now(),
+                guild_id,
+                encounter.id,
+                member_id,
+                EncounterEventType.MEMBER_ENGAGE,
+            )
+            await self.controller.dispatch_event(event)
+
+            self.join_queue.task_done()
 
     async def listen_for_event(self, event: BotEvent) -> None:
         encounter_id = None
         match event.type:
             case EventType.ENCOUNTER:
+                if not event.synchronized:
+                    return
                 event: EncounterEvent = event
                 encounter_id = event.encounter_id
 
@@ -60,7 +115,7 @@ class CombatViewController(ViewController):
         match event.type:
             case UIEventType.COMBAT_ENGAGE:
                 interaction = event.payload
-                await self.player_engage(interaction)
+                await self.join_queue.put(interaction)
             case UIEventType.COMBAT_USE_SKILL:
                 interaction = event.payload[0]
                 skill_data = event.payload[1]
@@ -73,57 +128,25 @@ class CombatViewController(ViewController):
                 character = event.payload[0]
                 context = event.payload[1]
                 await self.player_timeout(character, context)
+            case UIEventType.COMBAT_INITIATE:
+                encounter = event.payload
+                await self.initiate_encounter(encounter)
+
+    async def initiate_encounter(self, encounter: Encounter):
+        event = EncounterEvent(
+            datetime.datetime.now(),
+            encounter.guild_id,
+            encounter.id,
+            self.bot.user.id,
+            EncounterEventType.INITIATE,
+        )
+        await self.controller.dispatch_event(event)
 
     async def update_encounter_message(self, encounter_id: int, done: bool):
         encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
         embed = await self.embed_manager.get_spawn_embed(encounter, done=done)
         event = UIEvent(UIEventType.COMBAT_ENGAGE_UPDATE, (encounter_id, embed, done))
         await self.controller.dispatch_ui_event(event)
-
-    async def player_engage(self, interaction: discord.Interaction):
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
-
-        message = await interaction.original_response()
-        encounter = await self.database.get_encounter_by_message_id(
-            guild_id, message.id
-        )
-
-        encounters = await self.database.get_active_encounter_participants(guild_id)
-
-        for _, participants in encounters.items():
-            if member_id in participants:
-                await interaction.followup.send(
-                    "You are already involved in a currently active encounter.",
-                    ephemeral=True,
-                )
-                return
-
-        if encounter.id not in encounters:
-            await interaction.followup.send(
-                "This encounter has already concluded.",
-                ephemeral=True,
-            )
-            return
-
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
-        max_encounter_size = enemy.max_players
-
-        if len(encounters[encounter.id]) >= max_encounter_size:
-            await interaction.followup.send(
-                "This encounter is already full.",
-                ephemeral=True,
-            )
-            return
-
-        event = EncounterEvent(
-            datetime.datetime.now(),
-            guild_id,
-            encounter.id,
-            member_id,
-            EncounterEventType.MEMBER_ENGAGE,
-        )
-        await self.controller.dispatch_event(event)
 
     async def player_action(
         self,

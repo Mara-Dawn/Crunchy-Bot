@@ -104,12 +104,7 @@ class EventManager(Service):
                 ]:
                     synchronized = True
             case EventType.ENCOUNTER:
-                encounter_event: EncounterEvent = event
-                if encounter_event.encounter_event_type in [
-                    EncounterEventType.ENEMY_DEFEAT,
-                    EncounterEventType.MEMBER_DEFEAT,
-                ]:
-                    synchronized = True
+                synchronized = True
 
         from_user = event.get_causing_user_id()
         args = event.get_type_specific_args()

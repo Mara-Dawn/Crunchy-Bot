@@ -204,12 +204,8 @@ class Gear(Droppable):
         if len(description) < max_width:
             description += " " + "\u00a0" * max_width
 
-        name_rarity = self.rarity
-        if self.rarity == Rarity.DEFAULT:
-            name_rarity = Rarity.NORMAL
-
         info_block = "```ansi\n"
-        info_block += f"{self.RARITY_COLOR_MAP[name_rarity]}{name}[0m{suffix}"
+        info_block += f"{self.RARITY_NAME_COLOR_MAP[self.rarity]}{name}[0m{suffix}"
         spacing = " " * (
             max_width - len(name) - len(self.base.slot.value) - len(suffix) - 2
         )

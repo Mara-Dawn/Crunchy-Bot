@@ -400,8 +400,8 @@ class CombatGearManager(Service):
             beans_amount = int(
                 enemy.roll_beans_amount(context.opponent.level) * (1 - penalty)
             )
-            loot_amount = int(
-                enemy.roll_loot_amount(context.opponent.level) * (1 - penalty)
+            loot_amount = max(
+                1, int(enemy.roll_loot_amount(context.opponent.level) * (1 - penalty))
             )
             bonus_loot_drop = random.random() < (
                 enemy.bonus_loot_chance * (1 - penalty)

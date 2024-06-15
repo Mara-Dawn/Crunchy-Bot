@@ -64,17 +64,22 @@ class Controller:
                     self.views.remove(view)
 
     async def dispatch_event(self, event: BotEvent):
-
+        tasks = []
         for service in self.services:
-            await service.listen_for_event(event)
+            tasks.append(asyncio.create_task(service.listen_for_event(event)))
         for view_controller in self.view_controllers:
-            await view_controller.listen_for_event(event)
+            tasks.append(asyncio.create_task(view_controller.listen_for_event(event)))
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     async def dispatch_ui_event(self, event: UIEvent):
+        tasks = []
         for view_controller in self.view_controllers:
-            await view_controller.listen_for_ui_event(event)
+            tasks.append(
+                asyncio.create_task(view_controller.listen_for_ui_event(event))
+            )
         for view in self.views:
-            await view.listen_for_ui_event(event)
+            tasks.append(asyncio.create_task(view.listen_for_ui_event(event)))
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     def get_service(self, service_class: type[Service]) -> Service:
         for service in self.services:
