@@ -66,7 +66,7 @@ class EquipmentView(ViewMenu):
         self.guild_level = guild_level
         self.max_rarity = Rarity.NORMAL
         for rarity, level in CombatGearManager.MIN_RARITY_LVL.items():
-            if level < self.guild_level:
+            if level <= self.guild_level:
                 self.max_rarity = rarity
             else:
                 break
