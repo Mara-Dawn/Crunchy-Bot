@@ -208,7 +208,7 @@ class LookingGood(BaseSkill):
         super().__init__(
             name="Lookin' Good",
             skill_type=SkillType.LOOKING_GOOD,
-            description="You angrily look at the table that just hurt you. Huh, it's a pretty nice table. To bad it has to die.",
+            description="You angrily look at the table that just hurt you. Huh, it's a pretty nice table. Too bad it has to die.",
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=0,

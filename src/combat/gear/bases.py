@@ -410,7 +410,7 @@ class LegGear_T1(Tier1):
                 "break and give you some nice protection against in fights."
             ),
             information="Tier 1 leg piece.",
-            slot=EquipmentSlot.BODY,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -548,7 +548,7 @@ class LegGear_T2(Tier2):
             type=GearBaseType.LEGGEAR_T2,
             description="",
             information="Tier 2 leg piece.",
-            slot=EquipmentSlot.BODY,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -665,7 +665,7 @@ class LegGear_T3(Tier3):
             type=GearBaseType.LEGGEAR_T3,
             description="",
             information="Tier 3 leg piece.",
-            slot=EquipmentSlot.BODY,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -782,7 +782,7 @@ class LegGear_T4(Tier4):
             type=GearBaseType.LEGGEAR_T4,
             description="",
             information="Tier 4 leg piece.",
-            slot=EquipmentSlot.BODY,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -899,7 +899,7 @@ class LegGear_T5(Tier5):
             type=GearBaseType.LEGGEAR_T5,
             description="",
             information="Tier 5 leg piece.",
-            slot=EquipmentSlot.BODY,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
         )
 
