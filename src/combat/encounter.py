@@ -6,6 +6,7 @@ from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
 from combat.skills.types import SkillInstance
+from config import Config
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.types import CombatEventType, EncounterEventType
@@ -51,8 +52,6 @@ class Encounter:
 
 class EncounterContext:
 
-    DEFAULT_TIMEOUT = 60 * 5
-    SHORT_TIMEOUT = 60
     TIMEOUT_COUNT_LIMIT = 3
 
     def __init__(
@@ -158,7 +157,12 @@ class EncounterContext:
             return True
 
         last_event = self.combat_events[0]
-        return last_event.id < round_event_id
+        current_actor = self.get_current_initiative()[0]
+
+        if last_event.id < round_event_id:
+            return True
+
+        return last_event.member_id == current_actor.id
 
     def new_turn(self) -> bool:
         if len(self.combat_events) == 0:
@@ -193,9 +197,9 @@ class EncounterContext:
     def get_turn_timeout(self, member_id: int) -> int:
         timeout_count = self.get_timeout_count(member_id)
         if timeout_count == 0:
-            return self.DEFAULT_TIMEOUT
+            return Config.DEFAULT_TIMEOUT
         else:
-            return self.SHORT_TIMEOUT
+            return Config.SHORT_TIMEOUT
 
     def is_concluded(self) -> bool:
         for event in self.encounter_events:

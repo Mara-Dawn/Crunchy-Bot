@@ -1,7 +1,12 @@
 class Config:
 
     # General Combat
-    COMBAT_INITIAL_WAIT = 90
+    # COMBAT_INITIAL_WAIT = 90
+    COMBAT_INITIAL_WAIT = 10
+
+    DEFAULT_TIMEOUT = 60 * 5
+    SHORT_TIMEOUT = 60
+    TIMEOUT_COUNT_LIMIT = 3
 
     ENEMY_HEALTH_SCALING = {
         1: 7.88,
