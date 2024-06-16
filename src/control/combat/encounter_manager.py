@@ -744,10 +744,10 @@ class EncounterManager(Service):
 
         guild_level = await self.database.get_guild_level(guild.id)
         progress = await self.database.get_guild_level_progress(guild.id, guild_level)
-        requirement = EnemyOverviewEmbed.LEVEL_REQUIREMENTS[guild_level]
+        requirement = Config.LEVEL_REQUIREMENTS[guild_level]
 
         if progress >= requirement:
-            if (guild_level + 1) not in EnemyOverviewEmbed.BOSS_LEVELS:
+            if (guild_level) not in Config.BOSS_LEVELS:
                 guild_level += 1
                 await self.database.set_guild_level(guild.id, guild_level)
             else:
