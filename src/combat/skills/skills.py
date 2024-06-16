@@ -87,7 +87,7 @@ class SecondWind(BaseSkill):
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=0,
-            base_value=8,
+            base_value=0.3,
             stacks=1,
             reset_after_encounter=True,
             default_target=SkillTarget.SELF,

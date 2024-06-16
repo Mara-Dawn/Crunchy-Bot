@@ -86,13 +86,6 @@ class Character(Actor):
         )
 
     def get_skill_data(self, skill: Skill) -> CharacterSkill:
-        weapon_min_roll = self.equipment.weapon.modifiers[
-            GearModifierType.WEAPON_DAMAGE_MIN
-        ]
-        weapon_max_roll = self.equipment.weapon.modifiers[
-            GearModifierType.WEAPON_DAMAGE_MAX
-        ]
-
         skill_type = skill.type
         skill_id = skill.id
         stacks_used = 0
@@ -113,12 +106,8 @@ class Character(Actor):
             skill=skill,
             last_used=last_used,
             stacks_used=stacks_used,
-            min_roll=self.get_skill_effect(skill, force_roll=weapon_min_roll)[
-                0
-            ].raw_value,
-            max_roll=self.get_skill_effect(skill, force_roll=weapon_max_roll)[
-                0
-            ].raw_value,
+            min_roll=self.get_skill_effect(skill, force_min=True)[0].raw_value,
+            max_roll=self.get_skill_effect(skill, force_max=True)[0].raw_value,
             penalty=penalty,
         )
 
@@ -126,7 +115,8 @@ class Character(Actor):
         self,
         skill: Skill,
         combatant_count: int = 1,
-        force_roll: int = None,
+        force_min: bool = False,
+        force_max: bool = False,
     ) -> list[SkillInstance]:
         skill_base_value = skill.base_skill.base_value
         weapon_min_roll = self.equipment.weapon.modifiers[
@@ -160,13 +150,21 @@ class Character(Actor):
                     modifier *= Config.SKILL_TYPE_PENALTY
             case SkillEffect.HEALING:
                 encounter_scaling = 1
+                weapon_lvl = self.equipment.weapon.level
+                base_roll = Config.OPPONENT_DAMAGE_BASE[weapon_lvl]
+                weapon_min_roll = base_roll * (1 - Config.OPPONENT_DAMAGE_VARIANCE)
+                weapon_max_roll = base_roll * (1 + Config.OPPONENT_DAMAGE_VARIANCE)
                 modifier += self.equipment.attributes[CharacterAttribute.HEALING_BONUS]
 
         attack_count = skill.base_skill.hits
         skill_instances = []
         for _ in range(attack_count):
-            weapon_roll = force_roll
-            if weapon_roll is None:
+
+            if force_min:
+                weapon_roll = weapon_min_roll
+            elif force_max:
+                weapon_roll = weapon_max_roll
+            else:
                 weapon_roll = random.randint(int(weapon_min_roll), int(weapon_max_roll))
 
             crit_roll = random.random()

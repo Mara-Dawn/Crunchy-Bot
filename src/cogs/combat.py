@@ -5,8 +5,10 @@ from typing import Literal
 
 import discord
 from bot import CrunchyBot
+from combat.enemies.types import EnemyType
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
@@ -37,6 +39,9 @@ class Combat(commands.Cog):
             SettingsManager
         )
         self.testing: CombatGearManager = self.controller.get_service(CombatGearManager)
+        self.enemy_manager: CombatEnemyManager = self.controller.get_service(
+            CombatEnemyManager
+        )
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
         )
@@ -194,17 +199,60 @@ class Combat(commands.Cog):
 
             self.enemy_timers[guild.id] = next_spawn
 
+    async def enemy_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        enemies = [self.enemy_manager.get_enemy(enum) for enum in EnemyType]
+
+        choices = [
+            app_commands.Choice(
+                name=enemy.name,
+                value=enemy.type,
+            )
+            for enemy in enemies
+            if current.lower() in enemy.name.lower()
+        ][:25]
+        return choices
+
     @app_commands.command(
         name="spawn_encounter",
         description="Manually spawn a random minor encounter in a beans channel. (Admin only)",
     )
     @app_commands.check(__has_permission)
+    @app_commands.autocomplete(enemy_type=enemy_autocomplete)
     @app_commands.guild_only()
-    async def spawn_encounter(self, interaction: discord.Interaction):
+    async def spawn_encounter(
+        self,
+        interaction: discord.Interaction,
+        enemy_type: str | None,
+        level: int | None,
+    ):
         await interaction.response.defer()
 
         if not await self.__check_enabled(interaction):
             return
+
+        if enemy_type is not None:
+            if enemy_type not in EnemyType._value2member_map_:
+                await self.bot.command_response(
+                    self.__cog_name__,
+                    interaction,
+                    "Enemy not found.",
+                    args=[enemy_type],
+                )
+                return
+
+            if level is not None:
+                enemy = self.enemy_manager.get_enemy(enemy_type)
+
+                if enemy.min_level > level or enemy.max_level < level:
+                    await self.bot.command_response(
+                        self.__cog_name__,
+                        interaction,
+                        "Enemy cannot have that level.",
+                        args=[enemy_type],
+                    )
+                    return
 
         combat_channels = await self.settings_manager.get_combat_channels(
             interaction.guild_id
@@ -215,10 +263,13 @@ class Combat(commands.Cog):
             )
 
         await self.encounter_manager.spawn_encounter(
-            interaction.guild, secrets.choice(combat_channels)
+            interaction.guild, secrets.choice(combat_channels), enemy_type, level
         )
         await self.bot.command_response(
-            self.__cog_name__, interaction, "Encounter successfully spawned."
+            self.__cog_name__,
+            interaction,
+            "Encounter successfully spawned.",
+            ephemeral=True,
         )
         await self.__reevaluate_next_enemy(interaction.guild.id)
 

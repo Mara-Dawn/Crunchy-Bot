@@ -43,14 +43,18 @@ class PredictionStats:
         color = discord.Colour.purple()
 
         locked = ""
-        embed_description = ""
+
+        embed_description = "Vote for the option you think will win!"
+        embed_description += " " + "\u00a0" * 50
 
         if self.prediction.comment is not None:
             embed_description += f"\n{self.prediction.comment}"
 
         if self.prediction.state == PredictionState.LOCKED:
             locked = " 🔒 "
-            embed_description = "This prediction has been locked in."
+            embed_description += "\nThis prediction has been locked in."
+
+        embed_description = f"```ansi\n{embed_description}```"
 
         if (
             self.prediction.lock_datetime is not None
@@ -61,7 +65,7 @@ class PredictionStats:
         title = f"> {locked}{self.prediction.content}{locked}"
         embed = discord.Embed(title=title, description=embed_description, color=color)
 
-        max_width = 56
+        max_width = 50
         description = ""
         total = sum(self.bets.values())
         outcome_nr = 0
@@ -77,7 +81,7 @@ class PredictionStats:
             if outcome_id == self.winning_outcome_id:
                 winner = "[WINNER] "
 
-            name = f"᲼᲼\n{outcome_prefixes[outcome_nr]} ) {winner}{outcome}"
+            name = f"\n{outcome_prefixes[outcome_nr]} ) {winner}{outcome}"
             outcome_nr += 1  # noqa: SIM113
             description = ""  # f"> **{outcome}**\n"
 

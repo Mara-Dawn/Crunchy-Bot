@@ -105,27 +105,44 @@ class EncounterManager(Service):
                     return
                 await self.refresh_encounter_thread(combat_event.encounter_id)
 
-    async def create_encounter(self, guild_id: int):
+    async def create_encounter(
+        self, guild_id: int, enemy_type: EnemyType = None, level: int = None
+    ):
         max_encounter_level = await self.database.get_guild_level(guild_id)
         min_encounter_level = max(
             1, int(max_encounter_level * Config.ENCOUNTER_MIN_LVL_SCALING)
         )
 
-        encounter_level = random.randint(min_encounter_level, max_encounter_level)
+        if level is not None:
+            encounter_level = min(max_encounter_level, level)
+        else:
+            encounter_level = random.randint(min_encounter_level, max_encounter_level)
 
-        enemies = [self.enemy_manager.get_enemy(enemy_type) for enemy_type in EnemyType]
-        possible_enemies = [
-            enemy
-            for enemy in enemies
-            if encounter_level >= enemy.min_level and encounter_level <= enemy.max_level
-        ]
+        if enemy_type is not None:
+            enemy = self.enemy_manager.get_enemy(enemy_type)
+            if not (
+                encounter_level >= enemy.min_level
+                and encounter_level <= enemy.max_level
+            ):
+                raise TypeError
+        else:
+            enemies = [
+                self.enemy_manager.get_enemy(enemy_type) for enemy_type in EnemyType
+            ]
+            possible_enemies = [
+                enemy
+                for enemy in enemies
+                if encounter_level >= enemy.min_level
+                and encounter_level <= enemy.max_level
+            ]
 
-        spawn_weights = [enemy.weighting for enemy in possible_enemies]
-        spawn_weights = [1.0 / w for w in spawn_weights]
-        sum_weights = sum(spawn_weights)
-        spawn_weights = [w / sum_weights for w in spawn_weights]
+            spawn_weights = [enemy.weighting for enemy in possible_enemies]
+            spawn_weights = [1.0 / w for w in spawn_weights]
+            sum_weights = sum(spawn_weights)
+            spawn_weights = [w / sum_weights for w in spawn_weights]
 
-        enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
+            enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
+
         roll = random.uniform(0.95, 1.05)
         enemy_health = (
             enemy.health
@@ -139,11 +156,19 @@ class EncounterManager(Service):
 
         return Encounter(guild_id, enemy.type, encounter_level, enemy_health)
 
-    async def spawn_encounter(self, guild: discord.Guild, channel_id: int):
+    async def spawn_encounter(
+        self,
+        guild: discord.Guild,
+        channel_id: int,
+        enemy_type: EnemyType = None,
+        level: int = None,
+    ):
         log_message = f"Encounter was spawned in {guild.name}."
         self.logger.log(guild.id, log_message, cog=self.log_name)
 
-        encounter = await self.create_encounter(guild.id)
+        encounter = await self.create_encounter(
+            guild.id, enemy_type=enemy_type, level=level
+        )
         embed = await self.embed_manager.get_spawn_embed(encounter)
 
         view = EnemyEngageView(self.controller)
@@ -514,7 +539,7 @@ class EncounterManager(Service):
             f"{character.name} was inactive for too long, their turn will be skipped."
         )
 
-        if timeout_count >= EncounterContext.TIMEOUT_COUNT_LIMIT:
+        if timeout_count > Config.TIMEOUT_COUNT_LIMIT:
             event = EncounterEvent(
                 datetime.datetime.now(),
                 context.encounter.guild_id,
@@ -523,7 +548,7 @@ class EncounterManager(Service):
                 EncounterEventType.MEMBER_TIMEOUT,
             )
             await self.controller.dispatch_event(event)
-            message += f"\n They reached {EncounterContext.TIMEOUT_COUNT_LIMIT} total timeouts and will from now on be excluded from the fight."
+            message += f"\n They reached {Config.TIMEOUT_COUNT_LIMIT} total timeouts and will from now on be excluded from the fight."
 
         await self.skip_turn(character, context, message, timeout=True)
 
