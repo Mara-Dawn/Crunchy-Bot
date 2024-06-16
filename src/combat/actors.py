@@ -139,6 +139,12 @@ class Character(Actor):
         modifier = 1
         base_dmg_type = self.skill_slots[0].base_skill.skill_effect
 
+        encounter_scaling = 1
+        if combatant_count > 1:
+            encounter_scaling = (
+                1 / combatant_count * Config.CHARACTER_ENCOUNTER_SCALING_FACOTR
+            )
+
         match skill.base_skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
                 modifier += self.equipment.attributes[
@@ -153,13 +159,8 @@ class Character(Actor):
                 if base_dmg_type != skill.base_skill.skill_effect:
                     modifier *= Config.SKILL_TYPE_PENALTY
             case SkillEffect.HEALING:
+                encounter_scaling = 1
                 modifier += self.equipment.attributes[CharacterAttribute.HEALING_BONUS]
-
-        encounter_scaling = 1
-        if combatant_count > 1:
-            encounter_scaling = (
-                1 / combatant_count * Config.CHARACTER_ENCOUNTER_SCALING_FACOTR
-            )
 
         attack_count = skill.base_skill.hits
         skill_instances = []

@@ -339,7 +339,7 @@ class Stick_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
-            skills=[SkillType.MAGIC_ATTACK],
+            skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
         )
 
 
