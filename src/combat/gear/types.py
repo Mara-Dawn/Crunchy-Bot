@@ -86,8 +86,8 @@ class GearModifierType(str, Enum):
             return f"{display_value}"
 
         if modifier_type in float_modifiers:
-            display_value = int(value * 10)
-            return f"{display_value}"
+            # display_value = int(value * 10)
+            return f"{value:.1f}%"
 
     @staticmethod
     def prio():
