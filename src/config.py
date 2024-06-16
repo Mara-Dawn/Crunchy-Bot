@@ -52,3 +52,19 @@ class Config:
     ITEM_MAX_WIDTH = 40
     SHOP_ITEM_MAX_WIDTH = 40
     INVENTORY_ITEM_MAX_WIDTH = 50
+
+    LEVEL_REQUIREMENTS = {
+        1: 10,
+        2: 15,
+        3: 25,
+        4: 20,
+        5: 20,
+        6: 25,
+        7: 25,
+        8: 25,
+        9: 30,
+        10: 30,
+        11: 35,
+        12: 40,
+    }
+    BOSS_LEVELS = [3, 6, 9, 12]
