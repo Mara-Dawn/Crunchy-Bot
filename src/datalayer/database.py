@@ -40,6 +40,7 @@ from events.garden_event import GardenEvent
 from events.interaction_event import InteractionEvent
 from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
+from events.karma_event import KarmaEvent
 from events.lootbox_event import LootBoxEvent
 from events.prediction_event import PredictionEvent
 from events.quote_event import QuoteEvent
@@ -613,6 +614,20 @@ class Database:
         PRIMARY KEY ({COMBAT_EVENT_ID_COL})
     );"""
 
+    KARMA_EVENT_TABLE = "karmaevents"
+    KARMA_EVENT_ID_COL = "kaev_id"
+    KARMA_EVENT_RECIPIENT_ID = "kaev_recipient_id"
+    KARMA_EVENT_GIVER_ID = "kaev_giver_id"
+    KARMA_EVENT_AMOUNT = "kaev_amount"
+    CREATE_KARMA_EVENT_TABLE = f"""
+    CREATE TABLE if not exists {KARMA_EVENT_TABLE} (
+        {KARMA_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {KARMA_EVENT_RECIPIENT_ID} INTEGER, 
+        {KARMA_EVENT_GIVER_ID} INTEGER, 
+        {KARMA_EVENT_AMOUNT} INTEGER, 
+        PRIMARY KEY ({KARMA_EVENT_ID_COL})
+    );"""
+
     PERMANENT_ITEMS = [
         ItemType.REACTION_SPAM,
         ItemType.LOTTERY_TICKET,
@@ -680,6 +695,7 @@ class Database:
             await db.execute(self.CREATE_USER_GEAR_SKILL_TABLE)
             await db.execute(self.CREATE_USER_EQUIPMENT_TABLE)
             await db.execute(self.CREATE_USER_EQUIPPED_SKILLS_TABLE)
+            await db.execute(self.CREATE_KARMA_EVENT_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -1001,6 +1017,24 @@ class Database:
 
         return await self.__query_insert(command, task)
 
+    async def __create_karma_event(self, event_id: int, event: KarmaEvent) -> int:
+        command = f"""
+            INSERT INTO {self.KARMA_EVENT_TABLE} (
+            {self.KARMA_EVENT_ID_COL},
+            {self.KARMA_EVENT_RECIPIENT_ID},
+            {self.KARMA_EVENT_GIVER_ID},
+            {self.KARMA_EVENT_AMOUNT})
+            VALUES (?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.recipient_id,
+            event.giver_id,
+            event.amount,
+        )
+
+        return await self.__query_insert(command, task)
+
     async def log_event(self, event: BotEvent) -> int:
         event_id = await self.__create_base_event(event)
 
@@ -1035,6 +1069,8 @@ class Database:
                 return await self.__create_encounter_event(event_id, event)
             case EventType.COMBAT:
                 return await self.__create_combat_event(event_id, event)
+            case EventType.KARMA:
+                return await self.__create_karma_event(event_id, event)
 
     async def log_quote(self, quote: Quote) -> int:
         command = f"""
@@ -2805,7 +2841,7 @@ class Database:
         rows = await self.__query_select(command, task)
         if not rows:
             return 0
-        
+
         return int(rows[0]["progress"])
 
     async def get_encounter_by_encounter_id(self, encounter_id: int) -> Encounter:
@@ -3557,3 +3593,43 @@ class Database:
             """
             task = (guild_id, member_id, skill.id, skill.type, slot)
             await self.__query_insert(command, task)
+
+    async def get_karma_events_by_giver_id(
+        self,
+        giver_id: int,
+        guild_id: int,
+    ) -> list[KarmaEvent]:
+        command = f"""
+            SELECT * FROM {self.KARMA_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.KARMA_EVENT_TABLE}.{self.KARMA_EVENT_ID_COL}
+            WHERE {self.KARMA_EVENT_GIVER_ID} = ?
+            AND {self.EVENT_GUILD_ID_COL} = ?
+            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC;
+        """
+        task = (giver_id, guild_id)
+
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        return [KarmaEvent.from_db_row(row) for row in rows]
+
+    async def get_karma_events_by_recipient_id(
+        self,
+        recipient_id: int,
+        guild_id: int,
+    ) -> list[KarmaEvent]:
+        command = f"""
+            SELECT * FROM {self.KARMA_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.KARMA_EVENT_TABLE}.{self.KARMA_EVENT_ID_COL}
+            WHERE {self.KARMA_EVENT_RECIPIENT_ID} = ?
+            AND {self.EVENT_GUILD_ID_COL} = ?
+            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC;
+        """
+        task = (recipient_id, guild_id)
+
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        return [KarmaEvent.from_db_row(row) for row in rows]
