@@ -165,7 +165,7 @@ class Skill(Droppable):
         suffix = ""
         if equipped:
             color = discord.Color.purple()
-            suffix += " [EQUIPPED]"
+            suffix += " [EQ]"
         elif self.locked and show_locked_state:
             suffix += " [🔒]"
 
@@ -332,7 +332,7 @@ class CharacterSkill:
         suffix = ""
         if equipped:
             color = discord.Color.purple()
-            suffix += " [EQUIPPED]"
+            suffix += " [EQ]"
         elif self.skill.locked and show_locked_state:
             suffix += " [🔒]"
         # name = f"<~ {self.skill.base_skill.name} ~>"

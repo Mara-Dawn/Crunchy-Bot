@@ -374,7 +374,7 @@ class Dropdown(discord.ui.Select):
             if name is None or name == "":
                 name = item.base.slot.value
             elif item.id in equipped:
-                name += " [EQUIPPED]"
+                name += " [EQ]"
             elif item.locked:
                 name += " [🔒]"
 

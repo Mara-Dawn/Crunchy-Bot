@@ -195,7 +195,7 @@ class Gear(Droppable):
         suffix = ""
         if equipped:
             color = discord.Color.purple()
-            suffix += " [EQUIPPED]"
+            suffix += " [EQ]"
         elif self.locked and show_locked_state:
             suffix += " [🔒]"
 
