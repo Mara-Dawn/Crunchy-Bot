@@ -131,6 +131,9 @@ class Combat(commands.Cog):
             if datetime.datetime.now() < self.enemy_timers[guild.id]:
                 continue
 
+            if not await self.settings_manager.get_combat_enabled(guild.id):
+                continue
+
             self.logger.log("sys", "Enemy timeout reached.", cog=self.__cog_name__)
             await self.__reevaluate_next_enemy(guild.id)
 

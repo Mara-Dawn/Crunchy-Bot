@@ -81,6 +81,32 @@ class Table(Enemy):
         )
 
 
+class ShoppingCart(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Shopping Cart",
+            type=EnemyType.SHOPPING_CART,
+            description="Luckily not pushed by a child.",
+            information="",
+            image_url="https://i.imgur.com/xzy3C3q.jpeg",
+            min_level=2,
+            max_level=5,
+            health=3,
+            damage_scaling=2.5,
+            max_players=3,
+            skill_types=[SkillType.ANKLE_AIM, SkillType.DOWN_HILL],
+            item_loot_table=[
+                ItemType.BOX_SEED,
+            ],
+            # min_gear_drop_count=2,
+            # max_gear_drop_count=3,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=13,
+            actions_per_turn=1,
+        )
+
+
 class NiceGuy(Enemy):
     def __init__(self):
         super().__init__(
@@ -141,7 +167,7 @@ class Mushroom(Enemy):
             information="Seriously guys im kinda scared.",
             image_url="https://i.imgur.com/4S5sYFg.png",
             min_level=3,
-            max_level=7,
+            max_level=6,
             health=6,
             damage_scaling=0.1,
             max_players=5,
@@ -156,4 +182,36 @@ class Mushroom(Enemy):
             skill_loot_table=[],
             initiative=17,
             actions_per_turn=1,
+        )
+
+
+class BroColi(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="BRO-Coli",
+            type=EnemyType.BROCOLI,
+            description="It is just a simple broccoli, enjoying his vacation with charming smile.",
+            information="",
+            image_url="",
+            min_level=2,
+            max_level=8,
+            health=6,
+            damage_scaling=7,
+            max_players=4,
+            skill_types=[
+                SkillType.EXERCISE,
+                SkillType.BRO_ARROW,
+                SkillType.BRO_FART,
+                SkillType.BRO_EXTRA_FART,
+            ],
+            item_loot_table=[
+                ItemType.SPEED_SEED,
+                ItemType.RARE_SEED,
+            ],
+            # min_gear_drop_count=5,
+            # max_gear_drop_count=6,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=15,
+            actions_per_turn=2,
         )

@@ -627,7 +627,7 @@ class Dropdown(discord.ui.Select):
                 name_prefix = ""
                 name_suffix = " [WEAPON] "
             elif skill.id in equipped_ids:
-                name_suffix = " [EQUIPPED]"
+                name_suffix = " [EQ]"
             elif skill.locked:
                 name_suffix = " [🔒]"
 
