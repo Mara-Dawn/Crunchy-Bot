@@ -73,6 +73,10 @@ class SettingsManager(Service):
     COMBAT_ENABLED_KEY = "combat_enabled"
     COMBAT_CHANNELS_KEY = "combat_channels"
 
+    KARMA_SUBSETTINGS_KEY = "karma"
+    KARMA_ENABLED_KEY = "karma_enabled"
+    KARMA_COOLDOWN_KEY = "karma_cooldown"
+
     def __init__(
         self,
         bot: commands.Bot,
@@ -263,17 +267,21 @@ class SettingsManager(Service):
             "handle_channels_value",
         )
 
-        combat_settings = ModuleSettings(
-            self.COMBAT_SUBSETTINGS_KEY, "Combat"
-        )
-        combat_settings.add_setting(
-            self.COMBAT_ENABLED_KEY, True, "Module Enabled"
-        )
+        combat_settings = ModuleSettings(self.COMBAT_SUBSETTINGS_KEY, "Combat")
+        combat_settings.add_setting(self.COMBAT_ENABLED_KEY, True, "Module Enabled")
         combat_settings.add_setting(
             self.COMBAT_CHANNELS_KEY,
             [],
             "Overview Channels for the combat module.",
             "handle_channels_value",
+        )
+
+        karma_settings = ModuleSettings(self.KARMA_SUBSETTINGS_KEY, "Karma")
+        karma_settings.add_setting(self.KARMA_ENABLED_KEY, True, "Module Enabled")
+        karma_settings.add_setting(
+            self.KARMA_COOLDOWN_KEY,
+            60 * 60 * 24 * 7,
+            "Cooldown for giving karma",
         )
 
         self.settings = GuildSettings()
@@ -285,6 +293,7 @@ class SettingsManager(Service):
         self.settings.add_module(bully_settings)
         self.settings.add_module(prediction_settings)
         self.settings.add_module(combat_settings)
+        self.settings.add_module(karma_settings)
 
     async def listen_for_event(self, event: BotEvent) -> None:
         pass
@@ -1105,4 +1114,32 @@ class SettingsManager(Service):
             self.COMBAT_SUBSETTINGS_KEY,
             self.COMBAT_CHANNELS_KEY,
             channels,
+        )
+
+    # Karma Settings
+
+    async def get_karma_enabled(self, guild_id: int) -> bool:
+        return await self.get_setting(
+            guild_id, self.KARMA_SUBSETTINGS_KEY, self.KARMA_ENABLED_KEY
+        )
+
+    async def set_karma_enabled(self, guild_id: int, enabled: bool) -> None:
+        await self.update_setting(
+            guild_id,
+            self.KARMA_SUBSETTINGS_KEY,
+            self.KARMA_ENABLED_KEY,
+            enabled,
+        )
+
+    async def get_karma_cooldown(self, guild_id: int) -> int:
+        return await self.get_setting(
+            guild_id, self.KARMA_SUBSETTINGS_KEY, self.KARMA_COOLDOWN_KEY
+        )
+
+    async def set_karma_cooldown(self, guild_id: int, cooldown: int) -> None:
+        await self.update_setting(
+            guild_id,
+            self.KARMA_SUBSETTINGS_KEY,
+            self.KARMA_COOLDOWN_KEY,
+            cooldown,
         )
