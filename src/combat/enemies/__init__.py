@@ -27,6 +27,7 @@ class BoobaSlime(Enemy):
             skill_loot_table=[],
             initiative=8,
             actions_per_turn=1,
+            author="Klee",
         )
 
 
@@ -104,6 +105,7 @@ class ShoppingCart(Enemy):
             skill_loot_table=[],
             initiative=13,
             actions_per_turn=1,
+            author="Klee",
         )
 
 
@@ -155,6 +157,7 @@ class CatDog(Enemy):
             skill_loot_table=[],
             initiative=13,
             actions_per_turn=2,
+            author="Klee",
         )
 
 
@@ -182,6 +185,7 @@ class Mushroom(Enemy):
             skill_loot_table=[],
             initiative=17,
             actions_per_turn=1,
+            author="Lusa",
         )
 
 
@@ -192,11 +196,11 @@ class BroColi(Enemy):
             type=EnemyType.BROCOLI,
             description="It is just a simple broccoli, enjoying his vacation with charming smile.",
             information="",
-            image_url="",
+            image_url="https://i.imgur.com/k61s4go.png",
             min_level=2,
             max_level=8,
             health=6,
-            damage_scaling=7,
+            damage_scaling=5,
             max_players=4,
             skill_types=[
                 SkillType.EXERCISE,
@@ -214,4 +218,5 @@ class BroColi(Enemy):
             skill_loot_table=[],
             initiative=15,
             actions_per_turn=2,
+            author="Franny",
         )

@@ -1,14 +1,20 @@
 import contextlib
+from enum import Enum
 
 import discord
 from control.controller import Controller
 from control.types import ControllerType
-from datalayer.garden import UserGarden
+from datalayer.garden import Plot, UserGarden
 from datalayer.types import PlotState
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.garden.embed import GardenEmbed
 from view.view_menu import ViewMenu
+
+
+class GardenViewState(Enum):
+    NORMAL = 0
+    WATER = 1
 
 
 class GardenView(ViewMenu):
@@ -26,6 +32,8 @@ class GardenView(ViewMenu):
         self.guild_id = interaction.guild_id
         self.message = None
 
+        self.state = GardenViewState.NORMAL
+
         self.controller_type = ControllerType.GARDEN_VIEW
         self.controller.register_view(self)
         self.refresh_elements()
@@ -42,24 +50,41 @@ class GardenView(ViewMenu):
                 self.controller.detach_view(self)
                 self.stop()
 
-    async def open_plot_view(self, interaction: discord.Interaction, x: int, y: int):
+    async def plot_button_clicked(self, interaction: discord.Interaction, plot: Plot):
         await interaction.response.defer()
-        event = UIEvent(
-            UIEventType.GARDEN_SELECT_PLOT,
-            (interaction, self.garden, x, y, self.message),
-            self.id,
-        )
-        await self.controller.dispatch_ui_event(event)
+
+        match self.state:
+            case GardenViewState.NORMAL:
+                event = UIEvent(
+                    UIEventType.GARDEN_SELECT_PLOT,
+                    (interaction, self.garden, plot.x, plot.y, self.message),
+                    self.id,
+                )
+                await self.controller.dispatch_ui_event(event)
+            case GardenViewState.WATER:
+                event = UIEvent(
+                    UIEventType.GARDEN_PLOT_WATER,
+                    (interaction, plot),
+                    self.id,
+                )
+                await self.controller.dispatch_ui_event(event)
+
+    async def set_state(
+        self, interaction: discord.Interaction, view_state: GardenViewState
+    ):
+        await interaction.response.defer()
+        self.state = view_state
+        await self.refresh_ui()
 
     def refresh_elements(self):
         self.clear_items()
         plot_nr = 1
 
         for plot in self.garden.plots:
-            self.add_item(
-                PlotButton(plot.x, plot.y, f"Plot {plot_nr}", plot.get_status())
-            )
+            self.add_item(PlotButton(plot, f"Plot {plot_nr}", self.state))
             plot_nr += 1
+
+        self.add_item(ModeSelectButton(self.state))
 
     async def refresh_ui(self, garden: UserGarden = None):
         if garden is not None:
@@ -83,30 +108,58 @@ class GardenView(ViewMenu):
         self.controller.detach_view(self)
 
 
-class PlotButton(discord.ui.Button):
+class ModeSelectButton(discord.ui.Button):
 
-    def __init__(self, x: int, y: int, label: str, plot_state: PlotState):
-        self.x = x
-        self.y = y
+    def __init__(self, view_state: GardenViewState):
 
-        match plot_state:
-            case PlotState.EMPTY:
-                color = discord.ButtonStyle.grey
-            case PlotState.SEED_PLANTED | PlotState.GROWING:
-                color = discord.ButtonStyle.red
-            case PlotState.SEED_PLANTED_WET | PlotState.GROWING_WET:
+        match view_state:
+            case GardenViewState.NORMAL:
+                label = "Enter Water Mode"
                 color = discord.ButtonStyle.blurple
-            case PlotState.READY:
-                color = discord.ButtonStyle.green
+                self.click_state = GardenViewState.WATER
+            case GardenViewState.WATER:
+                label = "Done"
+                color = discord.ButtonStyle.grey
+                self.click_state = GardenViewState.NORMAL
 
         super().__init__(
             label=label,
             style=color,
-            row=y,
+            row=4,
         )
 
     async def callback(self, interaction: discord.Interaction):
         view: GardenView = self.view
 
         if await view.interaction_check(interaction):
-            await view.open_plot_view(interaction, self.x, self.y)
+            await view.set_state(interaction, self.click_state)
+
+
+class PlotButton(discord.ui.Button):
+
+    def __init__(self, plot: Plot, label: str, view_state: GardenViewState):
+        self.plot = plot
+        disabled = False
+
+        match plot.get_status():
+            case PlotState.EMPTY:
+                color = discord.ButtonStyle.grey
+                disabled = True
+            case PlotState.SEED_PLANTED | PlotState.GROWING:
+                color = discord.ButtonStyle.red
+            case PlotState.SEED_PLANTED_WET | PlotState.GROWING_WET:
+                color = discord.ButtonStyle.blurple
+            case PlotState.READY:
+                color = discord.ButtonStyle.green
+                disabled = True
+
+        if view_state == GardenViewState.NORMAL:
+            disabled = False
+
+        super().__init__(label=label, style=color, row=plot.y, disabled=disabled)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: GardenView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.plot_button_clicked(interaction, self.plot)

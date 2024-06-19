@@ -234,6 +234,7 @@ class AnkleAim(BaseSkill):
             aoe=False,
             droppable=False,
             image_url="https://i.imgur.com/hPF4gsn.jpeg",
+            author="Klee",
         )
 
 
@@ -253,6 +254,7 @@ class DownHill(BaseSkill):
             initial_cooldown=1,
             droppable=False,
             image_url="https://i.imgur.com/xN1gcXh.jpeg",
+            author="Klee",
         )
 
 
@@ -306,6 +308,7 @@ class Puke(BaseSkill):
             aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/sj1I0Q1.jpeg",
+            author="Klee",
         )
 
 
@@ -323,6 +326,7 @@ class TailWhip(BaseSkill):
             hits=2,
             droppable=False,
             image_url="https://i.imgur.com/nHvtBi3.jpeg",
+            author="Klee",
         )
 
 
@@ -340,6 +344,7 @@ class Hold(BaseSkill):
             hits=1,
             droppable=False,
             image_url="https://i.imgur.com/4S5sYFg.png",
+            author="Lusa",
         )
 
 
@@ -359,6 +364,7 @@ class Burst(BaseSkill):
             aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/dmlFE2t.png",
+            author="Lusa",
         )
 
 
@@ -377,7 +383,8 @@ class Exercise(BaseSkill):
             hits=1,
             aoe=False,
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/0kg7AiZ.png",
+            author="Franny",
         )
 
 
@@ -396,7 +403,8 @@ class BroArrows(BaseSkill):
             hits=1,
             aoe=True,
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/p3G9ZeB.png",
+            author="Franny",
         )
 
 
@@ -410,12 +418,13 @@ class BroBiotics(BaseSkill):
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=1,
-            base_value=1,
+            base_value=2,
             initial_cooldown=1,
             hits=1,
             aoe=True,
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/yJr6wwC.png",
+            author="Franny",
         )
 
 
@@ -429,10 +438,11 @@ class BroBlast(BaseSkill):
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=3,
-            base_value=10,
+            base_value=6,
             initial_cooldown=5,
             hits=1,
             aoe=False,
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/TIpBdai.png",
+            author="Franny",
         )

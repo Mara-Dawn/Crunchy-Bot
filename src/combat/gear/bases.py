@@ -299,6 +299,7 @@ class Tier1(GearBase):
             skills=skills,
             scaling=1.5,
             image_url=image_url,
+            author="Mia",
         )
 
 
@@ -456,6 +457,7 @@ class Tier2(GearBase):
             skills=skills,
             scaling=2,
             image_url=image_url,
+            author="Klee",
         )
 
 
@@ -593,6 +595,7 @@ class Tier3(GearBase):
             skills=skills,
             scaling=2.5,
             image_url=image_url,
+            author="Franny",
         )
 
 
@@ -827,6 +830,7 @@ class Tier5(GearBase):
             skills=skills,
             scaling=3.5,
             image_url=image_url,
+            author="Mia",
         )
 
 
