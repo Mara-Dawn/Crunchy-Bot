@@ -156,9 +156,7 @@ class Chat(commands.Cog):
                 await self.bot.command_response(
                     self.__cog_name__,
                     interaction,
-                    f"""
-                    Too soon, bozo (You can give karma again <t:{karma_cd}:R>)
-                    """,
+                    f"Too soon, bozo (You can give karma again <t:{karma_cd}:R>)",
                     args=[user.display_name],
                     ephemeral=False,
                 )
@@ -250,7 +248,7 @@ class Chat(commands.Cog):
 
     @app_commands.command(
         name="set_karma_cooldown",
-        description="Set the cooldown of the give_karma command in seconds",
+        description="Set the cooldown of the give_karma command",
     )
     @app_commands.describe(
         cooldown="Cooldown in seconds, 1 day = 86400, 1 week = 604800"

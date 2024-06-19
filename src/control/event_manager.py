@@ -396,10 +396,10 @@ class EventManager(Service):
                     season=season,
                 )
             case RankingType.TIMEOUT_TOTAL:
-                guild_timeout_events = await self.database.get_timeout_events_by_guild(
+                guild_karma_events = await self.database.get_timeout_events_by_guild(
                     guild_id, season
                 )
-                for event in guild_timeout_events:
+                for event in guild_karma_events:
                     user_id = event.member_id
                     BotUtil.dict_append(parsing_list, user_id, event.duration)
                 sorted_list = sorted(
@@ -411,10 +411,10 @@ class EventManager(Service):
                 ]
                 ranking_data = converted
             case RankingType.TIMEOUT_COUNT:
-                guild_timeout_events = await self.database.get_timeout_events_by_guild(
+                guild_karma_events = await self.database.get_timeout_events_by_guild(
                     guild_id, season
                 )
-                for event in guild_timeout_events:
+                for event in guild_karma_events:
                     user_id = event.member_id
                     BotUtil.dict_append(parsing_list, user_id, 1)
                 ranking_data = sorted(
@@ -670,6 +670,17 @@ class EventManager(Service):
                 ranking_data = [
                     (k, f"{v} ({gamba_count[k]} total)") for (k, v) in sorted_list
                 ]
+            case RankingType.KARMA:
+                guild_karma_events = await self.database.get_karma_events_by_guild(
+                    guild_id, season
+                )
+                for event in guild_karma_events:
+                    user_id = event.recipient_id
+                    BotUtil.dict_append(parsing_list, user_id, event.amount)
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"⭐{v}") for (k, v) in sorted_list]
 
         return {
             BotUtil.get_name(self.bot, guild_id, user_id, 100): value

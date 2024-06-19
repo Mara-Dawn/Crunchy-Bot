@@ -3633,3 +3633,20 @@ class Database:
             return []
 
         return [KarmaEvent.from_db_row(row) for row in rows]
+
+    async def get_karma_events_by_guild(
+        self, guild_id: int, season: Season = Season.CURRENT
+    ) -> list[KarmaEvent]:
+        start_timestamp, end_timestamp = self.__get_season_interval(season)
+        command = f"""
+            SELECT * FROM {self.KARMA_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.KARMA_EVENT_TABLE}.{self.KARMA_EVENT_ID_COL}
+            WHERE {self.EVENT_TABLE}.{self.EVENT_GUILD_ID_COL} = ?
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?;
+        """
+        task = (guild_id, start_timestamp, end_timestamp)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+        return [KarmaEvent.from_db_row(row) for row in rows]
