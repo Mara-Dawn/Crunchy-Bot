@@ -66,6 +66,12 @@ class Ranking:
             description="Who won the most from their gamba addiciton?",
             emoji="🅱️",
         ),
+        RankingType.KARMA: RankingDefinition(
+            type=RankingType.KARMA,
+            title="Karma Rankings",
+            description="Who has the most gold stars?",
+            emoji="⭐",
+        ),
         RankingType.MIMICS: RankingDefinition(
             type=RankingType.MIMICS,
             title="Mimic Count Rankings",

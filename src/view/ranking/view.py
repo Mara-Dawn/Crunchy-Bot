@@ -75,4 +75,4 @@ class Dropdown(discord.ui.Select):
         view: RankingView = self.view
 
         if await view.interaction_check(interaction):
-            await view.edit_page(interaction, int(self.values[0]))
+            await view.edit_page(interaction, RankingType(int(self.values[0])))

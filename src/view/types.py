@@ -27,6 +27,7 @@ class RankingType(int, Enum):
     AVG_GAMBA_GAIN = 17
     WIN_STREAK = 18
     LOSS_STREAK = 19
+    KARMA = 20
 
 
 class ActionType(str, Enum):

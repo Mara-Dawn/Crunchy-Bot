@@ -16,6 +16,7 @@ class EventType(str, Enum):
     NOTIFICATION = "notification"
     ENCOUNTER = "encounter"
     COMBAT = "combat"
+    KARMA = "karma"
 
 
 class BeansEventType(str, Enum):
