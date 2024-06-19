@@ -14,6 +14,7 @@ class DroppableBase:
         max_level: int,
         weight: int = None,
         droppable: bool = True,
+        author: str = None,
     ):
         self.base_type = base_type
         self.type = type
@@ -24,6 +25,9 @@ class DroppableBase:
         self.droppable = droppable
         if self.weight is None:
             self.weight = 100
+        self.author = author
+        if self.author is None:
+            self.author = "Mara"
 
 
 class Droppable:

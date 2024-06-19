@@ -58,6 +58,7 @@ class GearBase(DroppableBase):
         permanent: bool = False,
         secret: bool = False,
         image_url: str = None,
+        author: str = None,
     ):
         super().__init__(
             base_type=Base.GEAR,
@@ -67,6 +68,7 @@ class GearBase(DroppableBase):
             max_level=max_level,
             weight=weight,
             droppable=droppable,
+            author=author,
         )
         self.name = name
         self.type = type
@@ -326,4 +328,5 @@ class Gear(Droppable):
 
         embed = discord.Embed(title="", description=info_block, color=color)
         embed.set_thumbnail(url=self.image_url)
+        embed.set_footer(text=f"by {self.base.author}")
         return embed

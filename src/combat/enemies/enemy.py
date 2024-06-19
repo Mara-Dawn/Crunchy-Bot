@@ -80,6 +80,7 @@ class Enemy:
         attribute_overrides: dict[CharacterAttribute, float] = None,
         actions_per_turn: int = 1,
         min_encounter_scale: int = 1,
+        author: str = None,
     ):
         self.name = name
         self.type = type
@@ -124,6 +125,10 @@ class Enemy:
 
         if self.bonus_loot_chance is None:
             self.bonus_loot_chance = self.LOOT_BONUS_CHANCE_BY_LVL[self.min_level]
+
+        self.author = author
+        if self.author is None:
+            self.author = "Mara"
 
     def roll_beans_amount(self, level: int):
         if self.min_beans_reward is None:
