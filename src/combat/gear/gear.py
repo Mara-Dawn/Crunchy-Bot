@@ -58,6 +58,7 @@ class GearBase(DroppableBase):
         permanent: bool = False,
         secret: bool = False,
         image_url: str = None,
+        author: str = None,
     ):
         super().__init__(
             base_type=Base.GEAR,
@@ -67,6 +68,7 @@ class GearBase(DroppableBase):
             max_level=max_level,
             weight=weight,
             droppable=droppable,
+            author=author,
         )
         self.name = name
         self.type = type
@@ -195,7 +197,7 @@ class Gear(Droppable):
         suffix = ""
         if equipped:
             color = discord.Color.purple()
-            suffix += " [EQUIPPED]"
+            suffix += " [EQ]"
         elif self.locked and show_locked_state:
             suffix += " [🔒]"
 
@@ -204,12 +206,8 @@ class Gear(Droppable):
         if len(description) < max_width:
             description += " " + "\u00a0" * max_width
 
-        name_rarity = self.rarity
-        if self.rarity == Rarity.DEFAULT:
-            name_rarity = Rarity.NORMAL
-
         info_block = "```ansi\n"
-        info_block += f"{self.RARITY_COLOR_MAP[name_rarity]}{name}[0m{suffix}"
+        info_block += f"{self.RARITY_NAME_COLOR_MAP[self.rarity]}{name}[0m{suffix}"
         spacing = " " * (
             max_width - len(name) - len(self.base.slot.value) - len(suffix) - 2
         )
@@ -330,4 +328,5 @@ class Gear(Droppable):
 
         embed = discord.Embed(title="", description=info_block, color=color)
         embed.set_thumbnail(url=self.image_url)
+        embed.set_footer(text=f"by {self.base.author}")
         return embed

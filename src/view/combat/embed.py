@@ -1,5 +1,6 @@
 import discord
 from combat.gear.types import Rarity
+from config import Config
 
 
 class EquipmentHeadEmbed(discord.Embed):
@@ -186,22 +187,6 @@ class ForgeEmbed(discord.Embed):
 
 class EnemyOverviewEmbed(discord.Embed):
 
-    LEVEL_REQUIREMENTS = {
-        1: 10,
-        2: 15,
-        3: 25,
-        4: 20,
-        5: 20,
-        6: 25,
-        7: 25,
-        8: 25,
-        9: 30,
-        10: 30,
-        11: 35,
-        12: 40,
-    }
-    BOSS_LEVELS = [3, 6, 9, 12]
-
     def __init__(
         self,
         member: discord.Member,
@@ -213,16 +198,16 @@ class EnemyOverviewEmbed(discord.Embed):
             "Random encounters will spawn here, group up and strategize together to overcome them.\n"
             "As you defeat more enemies, your level will rise and unlock more powerful foes with even better rewards.\n\n"
             f"Current Server Level: [35m{guild_level}[0m\n"
-            f"Progress to next level: [35m{progress}[0m/[35m{self.LEVEL_REQUIREMENTS[guild_level]}[0m"
+            f"Progress to next level: [35m{progress}[0m/[35m{Config.LEVEL_REQUIREMENTS[guild_level]}[0m"
             # f" lvl.[35m{guild_level}[0m Enemies\n"
         )
 
-        progress = min(progress, self.LEVEL_REQUIREMENTS[guild_level])
+        progress = min(progress, Config.LEVEL_REQUIREMENTS[guild_level])
 
         if (
-            guild_level + 1
-        ) in self.BOSS_LEVELS and progress == self.LEVEL_REQUIREMENTS[guild_level]:
-            description += "[31mA POWERFUL FOE IS APPROACHING[0m"
+            guild_level
+        ) in Config.BOSS_LEVELS and progress == Config.LEVEL_REQUIREMENTS[guild_level]:
+            description += "\n[31mA POWERFUL FOE IS APPROACHING[0m"
 
         if len(description) < max_width:
             spacing = max_width - len(description)

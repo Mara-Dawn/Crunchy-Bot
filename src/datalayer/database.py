@@ -712,14 +712,14 @@ class Database:
         return start_timestamp, end_timestamp
 
     async def __query_select(self, query: str, task=None):
-        async with aiosqlite.connect(self.db_file) as db:  # noqa: SIM117
+        async with aiosqlite.connect(self.db_file, timeout=30) as db:  # noqa: SIM117
             async with db.execute(query, task) as cursor:
                 rows = await cursor.fetchall()
                 headings = [x[0] for x in cursor.description]
                 return self.__parse_rows(rows, headings)
 
     async def __query_insert(self, query: str, task=None) -> int:
-        async with aiosqlite.connect(self.db_file) as db:
+        async with aiosqlite.connect(self.db_file, timeout=30) as db:
             cursor = await db.execute(query, task)
             insert_id = cursor.lastrowid
             await db.commit()
@@ -3266,7 +3266,10 @@ class Database:
             case EquipmentSlot.WEAPON:
                 gear = await self.get_gear_by_id(row[self.USER_EQUIPMENT_WEAPON_ID_COL])
                 if gear is None:
-                    gear = DefaultStick()
+                    if row[self.USER_EQUIPMENT_WEAPON_ID_COL] == -2:
+                        gear = DefaultWand()
+                    else:
+                        gear = DefaultStick()
                 equipped.append(gear)
             case EquipmentSlot.HEAD:
                 gear = await self.get_gear_by_id(

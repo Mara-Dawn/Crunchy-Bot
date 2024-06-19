@@ -86,8 +86,8 @@ class GearModifierType(str, Enum):
             return f"{display_value}"
 
         if modifier_type in float_modifiers:
-            display_value = int(value * 10)
-            return f"{display_value}"
+            # display_value = int(value * 10)
+            return f"{value:.1f}%"
 
     @staticmethod
     def prio():
@@ -158,7 +158,8 @@ class GearBaseType(str, Enum):
     RING_T0 = "Ring_T0"
     NECKLACE_T1 = "Necklace_T1"
     NECKLACE_T1_2 = "Necklace_T1_2"
-    NECKLACE_T2 = "Necklace_T2"
+    NECKLACE_T2_1 = "Necklace_T2_1"
+    NECKLACE_T2_2 = "Necklace_T2_2"
     NECKLACE_T3 = "Necklace_T3"
     NECKLACE_T4 = "Necklace_T4"
     NECKLACE_T5 = "Necklace_T5"

@@ -153,13 +153,18 @@ class CombatGearManager(Service):
     async def listen_for_event(self, event: BotEvent):
         pass
 
-    async def get_bases_by_lvl(self, item_level: int) -> list[DroppableBase]:
+    async def get_bases_by_lvl(
+        self, item_level: int, exclude_skills: bool = False
+    ) -> list[DroppableBase]:
         matching_bases = []
 
         gear_base_types = [base_type for base_type in GearBaseType]
-        skill_base_types = [base_type for base_type in SkillType]
 
-        base_types = gear_base_types + skill_base_types
+        if not exclude_skills:
+            skill_base_types = [base_type for base_type in SkillType]
+            base_types = gear_base_types + skill_base_types
+        else:
+            base_types = gear_base_types
 
         for base_type in base_types:
             base_class = globals()[base_type]
@@ -174,14 +179,14 @@ class CombatGearManager(Service):
         return matching_bases
 
     async def get_random_base(
-        self, item_level: int, enemy: Enemy = None
+        self, item_level: int, enemy: Enemy = None, exclude_skills: bool = False
     ) -> DroppableBase:
         max_level = item_level
         min_level = max(1, int(item_level * self.ITEM_LEVEL_MIN_DROP))
 
         drop_item_level = random.randint(min_level, max_level)
 
-        bases = await self.get_bases_by_lvl(drop_item_level)
+        bases = await self.get_bases_by_lvl(drop_item_level, exclude_skills)
 
         if len(bases) <= 0:
             return None
@@ -207,7 +212,11 @@ class CombatGearManager(Service):
                 case Base.GEAR:
                     gear_weight += base.weight
 
-        skill_mod = self.SKILL_DROP_CHANCE * (skill_weight + gear_weight) / skill_weight
+        skill_mod = 0
+        if not exclude_skills:
+            skill_mod = (
+                self.SKILL_DROP_CHANCE * (skill_weight + gear_weight) / skill_weight
+            )
         # Forces chance of skill dropping to self.SKILL_DROP_CHANCE while keeping weights
 
         weights = []
@@ -299,8 +308,11 @@ class CombatGearManager(Service):
         guild_id: int,
         item_level: int,
         enemy: Enemy = None,
+        exclude_skills: bool = False,
     ) -> Gear:
-        droppable_base = await self.get_random_base(item_level, enemy)
+        droppable_base = await self.get_random_base(
+            item_level, enemy=enemy, exclude_skills=exclude_skills
+        )
 
         if droppable_base is None:
             return None
@@ -400,8 +412,8 @@ class CombatGearManager(Service):
             beans_amount = int(
                 enemy.roll_beans_amount(context.opponent.level) * (1 - penalty)
             )
-            loot_amount = int(
-                enemy.roll_loot_amount(context.opponent.level) * (1 - penalty)
+            loot_amount = max(
+                1, int(enemy.roll_loot_amount(context.opponent.level) * (1 - penalty))
             )
             bonus_loot_drop = random.random() < (
                 enemy.bonus_loot_chance * (1 - penalty)

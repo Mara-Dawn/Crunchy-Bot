@@ -1,4 +1,5 @@
 import contextlib
+import copy
 
 import discord
 from combat.gear.gear import Gear
@@ -106,7 +107,7 @@ class EquipmentSelectView(
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         await interaction.response.defer()
         self.current_page = (self.current_page + (1 if right else -1)) % self.page_count
-        self.selected = []
+        # self.selected = []
         await self.refresh_ui()
 
     async def select_gear(self, interaction: discord.Interaction):
@@ -295,9 +296,7 @@ class EquipmentSelectView(
         self.display_items = self.filtered_items[start_offset:end_offset]
 
         self.selected = [
-            item
-            for item in self.display_items
-            if item.id in [selected.id for selected in self.selected]
+            gear for gear in self.gear if gear.id in [x.id for x in self.selected]
         ]
 
         self.refresh_elements(disabled)
@@ -364,13 +363,18 @@ class Dropdown(discord.ui.Select):
     ):
 
         options = []
+        available = copy.copy(gear)
 
-        for item in gear:
+        for piece in selected:
+            if piece.id not in [item.id for item in gear]:
+                available.append(piece)
+
+        for item in available:
             name = item.name
             if name is None or name == "":
                 name = item.base.slot.value
             elif item.id in equipped:
-                name += " [EQUIPPED]"
+                name += " [EQ]"
             elif item.locked:
                 name += " [🔒]"
 
@@ -395,7 +399,7 @@ class Dropdown(discord.ui.Select):
             )
             options.append(option)
 
-        max_values = min(SelectGearHeadEmbed.ITEMS_PER_PAGE, len(gear))
+        max_values = len(available)
 
         super().__init__(
             placeholder="Select one or more pieces of equipment.",

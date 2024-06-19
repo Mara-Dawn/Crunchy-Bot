@@ -2,27 +2,6 @@ from combat.gear.gear import GearBase
 from combat.gear.types import EquipmentSlot, GearBaseType, GearModifierType
 from combat.skills.types import SkillType
 
-# Example
-# class HeadGear_T0(GearBase):
-#     def __init__(self):
-#         super().__init__(
-#             name="Cool Cap",
-#             type=GearBaseType.WAND_T0,
-#             description="A stylish hat that might not protect you from harm but looks hella wicked.",
-#             information="Tier 0 head piece that can drop as a level 1 to 2 item.",
-#             slot=GearSlot.HEAD,
-#             min_level=1,
-#             max_level=2,
-#             skills=[],
-#             modifiers=[GearModifierType.ARMOR],
-#             scaling=1,
-#             cost=0,
-#             weight=None,
-#             permanent=False,
-#             secret=False,
-#         )
-
-
 # Base Items
 
 
@@ -320,6 +299,7 @@ class Tier1(GearBase):
             skills=skills,
             scaling=1.5,
             image_url=image_url,
+            author="Mia",
         )
 
 
@@ -339,7 +319,7 @@ class Stick_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
-            skills=[SkillType.MAGIC_ATTACK],
+            skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
         )
 
 
@@ -410,7 +390,7 @@ class LegGear_T1(Tier1):
                 "break and give you some nice protection against in fights."
             ),
             information="Tier 1 leg piece.",
-            slot=EquipmentSlot.BODY,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -477,6 +457,7 @@ class Tier2(GearBase):
             skills=skills,
             scaling=2,
             image_url=image_url,
+            author="Klee",
         )
 
 
@@ -484,16 +465,17 @@ class Stick_T2(Tier2):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Trusty Old Pipe",
             type=GearBaseType.STICK_T2,
-            description="",
+            description="By the looks of it, it was straight before it got used.",
             information="",
             slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
-            skills=[SkillType.MAGIC_ATTACK],
+            skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            image_url="https://i.imgur.com/2YUEVzU.jpg",
         )
 
 
@@ -501,9 +483,9 @@ class Wand_T2(Tier2):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Sharp af Chacram",
             type=GearBaseType.WAND_T2,
-            description="",
+            description="It seems to resonate with you. Cuts what ever you wanna cut on its own.",
             information="",
             slot=EquipmentSlot.WEAPON,
             modifiers=[
@@ -511,6 +493,7 @@ class Wand_T2(Tier2):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
+            image_url="https://i.imgur.com/skJlaSy.jpg",
         )
 
 
@@ -518,12 +501,13 @@ class HeadGear_T2(Tier2):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Evolution of the Fedora.",
             type=GearBaseType.HEADGEAR_T2,
-            description="",
+            description="Not sure if Nice Guy would approve.",
             information="Tier 2 head piece.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/AjKaSDI.jpg",
         )
 
 
@@ -531,12 +515,13 @@ class BodyGear_T2(Tier2):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Chonky Tux",
             type=GearBaseType.BODYGEAR_T2,
-            description="",
+            description="Probably worn by Eli",
             information="Tier 2 body piece.",
             slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/Gz4EdMg.jpg",
         )
 
 
@@ -544,25 +529,41 @@ class LegGear_T2(Tier2):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Small Pants",
             type=GearBaseType.LEGGEAR_T2,
-            description="",
+            description="Probably won't even match the tuxedo, but the stripes make the pants go faster",
             information="Tier 2 leg piece.",
-            slot=EquipmentSlot.BODY,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/DHTmPOz.jpg",
         )
 
 
-class Necklace_T2(Tier2):
+class Necklace_T2_1(Tier2):
 
     def __init__(self):
         super().__init__(
-            name="",
-            type=GearBaseType.NECKLACE_T2,
-            description="",
+            name="Best Gear Ring",
+            type=GearBaseType.NECKLACE_T2_1,
+            description="The gear looks glued onto it",
             information="Tier 2 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/f6vB7tO.jpg",
+        )
+
+
+class Necklace_T2_2(Tier2):
+
+    def __init__(self):
+        super().__init__(
+            name="Broken Poket watch",
+            type=GearBaseType.NECKLACE_T2_2,
+            description="Doesn't work anymore, but the gril is cute",
+            information="Tier 2 accessory",
+            slot=EquipmentSlot.ACCESSORY,
+            modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/wRUMfXz.jpg",
         )
 
 
@@ -594,6 +595,7 @@ class Tier3(GearBase):
             skills=skills,
             scaling=2.5,
             image_url=image_url,
+            author="Franny",
         )
 
 
@@ -665,7 +667,7 @@ class LegGear_T3(Tier3):
             type=GearBaseType.LEGGEAR_T3,
             description="",
             information="Tier 3 leg piece.",
-            slot=EquipmentSlot.BODY,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -782,7 +784,7 @@ class LegGear_T4(Tier4):
             type=GearBaseType.LEGGEAR_T4,
             description="",
             information="Tier 4 leg piece.",
-            slot=EquipmentSlot.BODY,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
         )
 
@@ -828,6 +830,7 @@ class Tier5(GearBase):
             skills=skills,
             scaling=3.5,
             image_url=image_url,
+            author="Mia",
         )
 
 
@@ -899,7 +902,7 @@ class LegGear_T5(Tier5):
             type=GearBaseType.LEGGEAR_T5,
             description="",
             information="Tier 5 leg piece.",
-            slot=EquipmentSlot.BODY,
+            slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
         )
 

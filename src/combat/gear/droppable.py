@@ -14,6 +14,7 @@ class DroppableBase:
         max_level: int,
         weight: int = None,
         droppable: bool = True,
+        author: str = None,
     ):
         self.base_type = base_type
         self.type = type
@@ -24,26 +25,29 @@ class DroppableBase:
         self.droppable = droppable
         if self.weight is None:
             self.weight = 100
+        self.author = author
+        if self.author is None:
+            self.author = "Mara"
 
 
 class Droppable:
 
     RARITY_COLOR_MAP = {
-        Rarity.DEFAULT: "[30m",
-        Rarity.NORMAL: "[38m",  # ffffff
-        Rarity.MAGIC: "[34m",  # 268bd2
-        Rarity.RARE: "[33m",  # b58900
-        Rarity.LEGENDARY: "[31m",  # #a43033
-        Rarity.UNIQUE: "[36m",  # 2aa198
+        Rarity.DEFAULT: "[30m",  # grey
+        Rarity.NORMAL: "[38m",  # white
+        Rarity.MAGIC: "[36m",  # cyan
+        Rarity.RARE: "[34m",  # blue
+        Rarity.LEGENDARY: "[33m",  # yellow
+        Rarity.UNIQUE: "[31m",  # red
     }
 
     RARITY_NAME_COLOR_MAP = {
-        Rarity.DEFAULT: "[38m",
-        Rarity.NORMAL: "[38m",  # ffffff
-        Rarity.MAGIC: "[34m",  # 268bd2
-        Rarity.RARE: "[33m",  # b58900
-        Rarity.LEGENDARY: "[31m",  # #a43033
-        Rarity.UNIQUE: "[36m",  # 2aa198
+        Rarity.DEFAULT: "[1;38m",
+        Rarity.NORMAL: "[1;38m",
+        Rarity.MAGIC: "[1;36m",
+        Rarity.RARE: "[1;34m",
+        Rarity.LEGENDARY: "[1;33m",
+        Rarity.UNIQUE: "[1;31m",
     }
 
     EFFECT_COLOR_MAP = {
@@ -55,10 +59,11 @@ class Droppable:
     RARITY_COLOR_HEX_MAP = {
         Rarity.DEFAULT: discord.Color.dark_gray(),
         Rarity.NORMAL: discord.Color(int("ffffff", 16)),
-        Rarity.MAGIC: discord.Color(int("268bd2", 16)),
-        Rarity.RARE: discord.Color(int("b58900", 16)),
-        Rarity.LEGENDARY: discord.Color(int("a43033", 16)),
-        Rarity.UNIQUE: discord.Color(int("2aa198", 16)),
+        Rarity.MAGIC: discord.Color(int("2aa198", 16)),
+        # Rarity.MAGIC: discord.Color(int("859900", 16)),
+        Rarity.RARE: discord.Color(int("268bd2", 16)),
+        Rarity.LEGENDARY: discord.Color(int("b58900", 16)),
+        Rarity.UNIQUE: discord.Color(int("a43033", 16)),
     }
 
     RARITY_SORT_MAP = {

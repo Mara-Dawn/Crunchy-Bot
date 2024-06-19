@@ -15,7 +15,7 @@ class BoobaSlime(Enemy):
             min_level=1,
             max_level=1,
             health=3,
-            damage_scaling=6,
+            damage_scaling=4,
             min_gear_drop_count=1,
             max_gear_drop_count=1,
             max_players=5,
@@ -27,6 +27,7 @@ class BoobaSlime(Enemy):
             skill_loot_table=[],
             initiative=8,
             actions_per_turn=1,
+            author="Klee",
         )
 
 
@@ -40,8 +41,8 @@ class MindGoblin(Enemy):
             image_url="https://i.imgur.com/IrZjelg.png",
             min_level=1,
             max_level=3,
-            health=3,
-            damage_scaling=5,
+            health=3.5,
+            damage_scaling=3.5,
             max_players=4,
             skill_types=[SkillType.DEEZ_NUTS, SkillType.BONK],
             item_loot_table=[
@@ -65,9 +66,9 @@ class Table(Enemy):
             information="Watch your toes!",
             image_url="https://i.imgur.com/ryWhWTP.png",
             min_level=1,
-            max_level=2,
-            health=2,
-            damage_scaling=6,
+            max_level=4,
+            health=4,
+            damage_scaling=4.5,
             max_players=3,
             skill_types=[SkillType.TOE_STUB, SkillType.LOOKING_GOOD],
             item_loot_table=[
@@ -78,6 +79,33 @@ class Table(Enemy):
             skill_loot_table=[],
             initiative=20,
             actions_per_turn=1,
+        )
+
+
+class ShoppingCart(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Shopping Cart",
+            type=EnemyType.SHOPPING_CART,
+            description="Luckily not pushed by a child.",
+            information="",
+            image_url="https://i.imgur.com/xzy3C3q.jpeg",
+            min_level=2,
+            max_level=5,
+            health=3,
+            damage_scaling=2.5,
+            max_players=3,
+            skill_types=[SkillType.ANKLE_AIM, SkillType.DOWN_HILL],
+            item_loot_table=[
+                ItemType.BOX_SEED,
+            ],
+            # min_gear_drop_count=2,
+            # max_gear_drop_count=3,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=13,
+            actions_per_turn=1,
+            author="Klee",
         )
 
 
@@ -92,7 +120,7 @@ class NiceGuy(Enemy):
             min_level=2,
             max_level=5,
             health=5,
-            damage_scaling=5.5,
+            damage_scaling=5,
             max_players=5,
             skill_types=[SkillType.M_LADY, SkillType.FEDORA_TIP],
             item_loot_table=[
@@ -118,7 +146,7 @@ class CatDog(Enemy):
             min_level=2,
             max_level=6,
             health=5,
-            damage_scaling=5,
+            damage_scaling=4.5,
             max_players=5,
             skill_types=[SkillType.PUKE, SkillType.TAIL_WHIP],
             item_loot_table=[
@@ -129,6 +157,7 @@ class CatDog(Enemy):
             skill_loot_table=[],
             initiative=13,
             actions_per_turn=2,
+            author="Klee",
         )
 
 
@@ -141,8 +170,8 @@ class Mushroom(Enemy):
             information="Seriously guys im kinda scared.",
             image_url="https://i.imgur.com/4S5sYFg.png",
             min_level=3,
-            max_level=5,
-            health=5.5,
+            max_level=6,
+            health=6,
             damage_scaling=0.1,
             max_players=5,
             skill_types=[SkillType.HOLD, SkillType.BURST],
@@ -156,4 +185,38 @@ class Mushroom(Enemy):
             skill_loot_table=[],
             initiative=17,
             actions_per_turn=1,
+            author="Lusa",
+        )
+
+
+class BroColi(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="BRO-Coli",
+            type=EnemyType.BROCOLI,
+            description="It is just a simple broccoli, enjoying his vacation with charming smile.",
+            information="",
+            image_url="https://i.imgur.com/k61s4go.png",
+            min_level=2,
+            max_level=8,
+            health=6,
+            damage_scaling=5,
+            max_players=4,
+            skill_types=[
+                SkillType.EXERCISE,
+                SkillType.BRO_ARROW,
+                SkillType.BRO_FART,
+                SkillType.BRO_EXTRA_FART,
+            ],
+            item_loot_table=[
+                ItemType.SPEED_SEED,
+                ItemType.RARE_SEED,
+            ],
+            # min_gear_drop_count=5,
+            # max_gear_drop_count=6,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=15,
+            actions_per_turn=2,
+            author="Franny",
         )

@@ -520,7 +520,9 @@ class EquipmentViewController(ViewController):
             )
             return
 
-        drop = await self.gear_manager.generate_drop(member_id, guild_id, level)
+        drop = await self.gear_manager.generate_drop(
+            member_id, guild_id, level, exclude_skills=True
+        )
 
         event = InventoryEvent(
             datetime.datetime.now(),

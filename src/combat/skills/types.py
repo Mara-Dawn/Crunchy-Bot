@@ -22,6 +22,10 @@ class SkillType(str, Enum):
     TOE_STUB = "ToeStub"
     LOOKING_GOOD = "LookingGood"
 
+    # Table
+    ANKLE_AIM = "AnkleAim"
+    DOWN_HILL = "DownHill"
+
     # Nice Guy
     M_LADY = "MLady"
     FEDORA_TIP = "FedoraTip"
@@ -33,6 +37,12 @@ class SkillType(str, Enum):
     # Happy Mushroom
     HOLD = "Hold"
     BURST = "Burst"
+
+    # BRO-Coli
+    EXERCISE = "Exercise"
+    BRO_ARROW = "BroArrows"
+    BRO_FART = "BroBiotics"
+    BRO_EXTRA_FART = "BroBlast"
 
     @staticmethod
     def is_weapon_skill(skill_type: "SkillType"):

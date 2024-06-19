@@ -6,6 +6,7 @@ from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
 from combat.skills.types import SkillInstance
+from config import Config
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.types import CombatEventType, EncounterEventType
@@ -51,8 +52,6 @@ class Encounter:
 
 class EncounterContext:
 
-    DEFAULT_TIMEOUT = 60 * 5
-    SHORT_TIMEOUT = 60
     TIMEOUT_COUNT_LIMIT = 3
 
     def __init__(
@@ -72,8 +71,12 @@ class EncounterContext:
         self.thread = thread
 
         self.actors: list[Actor] = []
-        self.actors.extend(combatants)
         self.actors.append(opponent)
+
+        for actor in combatants:
+            if self.is_actor_ready(actor):
+                self.actors.append(actor)
+
         self.actors = sorted(
             self.actors, key=lambda item: item.initiative, reverse=True
         )
@@ -83,7 +86,18 @@ class EncounterContext:
     def get_last_actor(self) -> Actor:
         if len(self.combat_events) <= 0:
             return None
-        last_actor = self.combat_events[0].member_id
+        last_actor = None
+
+        for event in self.combat_events:
+            if event.combat_event_type in [
+                CombatEventType.ENEMY_END_TURN,
+                CombatEventType.MEMBER_END_TURN,
+            ]:
+                last_actor = event.member_id
+                break
+
+        if last_actor is None:
+            return self.opponent
 
         for actor in self.actors:
             if actor.id == last_actor:
@@ -100,6 +114,9 @@ class EncounterContext:
         return len([actor for actor in self.combatants if not actor.timed_out])
 
     def get_current_actor(self) -> Actor:
+        if self.new_round():
+            return self.beginning_actor
+
         initiative_list = self.get_current_initiative()
         if len(initiative_list) <= 0:
             return None
@@ -114,6 +131,38 @@ class EncounterContext:
         result = self.actors.copy()
         result.rotate(-(index + 1))
         return result
+
+    def is_actor_ready(self, actor: Actor) -> bool:
+        for event in self.encounter_events:
+            if event.encounter_event_type == EncounterEventType.NEW_ROUND:
+                return True
+            if (
+                event.member_id == actor.id
+                and event.encounter_event_type == EncounterEventType.MEMBER_ENGAGE
+            ):
+                return False
+        return False
+
+    def new_round(self) -> bool:
+        round_event_id = None
+        for event in self.encounter_events:
+            if event.encounter_event_type == EncounterEventType.NEW_ROUND:
+                round_event_id = event.id
+                break
+
+        if round_event_id is None:
+            return False
+
+        if len(self.combat_events) == 0:
+            return True
+
+        last_event = self.combat_events[0]
+        current_actor = self.get_current_initiative()[0]
+
+        if last_event.id < round_event_id:
+            return True
+
+        return last_event.member_id == current_actor.id
 
     def new_turn(self) -> bool:
         if len(self.combat_events) == 0:
@@ -148,9 +197,9 @@ class EncounterContext:
     def get_turn_timeout(self, member_id: int) -> int:
         timeout_count = self.get_timeout_count(member_id)
         if timeout_count == 0:
-            return self.DEFAULT_TIMEOUT
+            return Config.DEFAULT_TIMEOUT
         else:
-            return self.SHORT_TIMEOUT
+            return Config.SHORT_TIMEOUT
 
     def is_concluded(self) -> bool:
         for event in self.encounter_events:

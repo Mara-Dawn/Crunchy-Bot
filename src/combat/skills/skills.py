@@ -33,7 +33,7 @@ class NormalAttack(BaseSkill):
             information="This is the most basic attack you can use. Comes with physical weapons.",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
-            base_value=1,
+            base_value=1.5,
             hits=1,
             stacks=None,
             reset_after_encounter=False,
@@ -52,7 +52,7 @@ class HeavyAttack(BaseSkill):
             information="Your other basic weapon skill that comes with physical weapons.",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
-            base_value=4,
+            base_value=3,
             droppable=False,
             image_url="https://i.imgur.com/1Cf7nVB.png",
         )
@@ -87,7 +87,7 @@ class SecondWind(BaseSkill):
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=0,
-            base_value=3,
+            base_value=0.3,
             stacks=1,
             reset_after_encounter=True,
             default_target=SkillTarget.SELF,
@@ -208,7 +208,7 @@ class LookingGood(BaseSkill):
         super().__init__(
             name="Lookin' Good",
             skill_type=SkillType.LOOKING_GOOD,
-            description="You angrily look at the table that just hurt you. Huh, it's a pretty nice table. To bad it has to die.",
+            description="You angrily look at the table that just hurt you. Huh, it's a pretty nice table. Too bad it has to die.",
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=0,
@@ -216,6 +216,45 @@ class LookingGood(BaseSkill):
             hits=1,
             droppable=False,
             image_url="https://i.imgur.com/ryWhWTP.png",
+        )
+
+
+class AnkleAim(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Aim for the Ankle",
+            skill_type=SkillType.ANKLE_AIM,
+            description="It knows your weak point. Next time, bring walking boots.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            hits=2,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/hPF4gsn.jpeg",
+            author="Klee",
+        )
+
+
+class DownHill(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Run'em down the Hill",
+            skill_type=SkillType.DOWN_HILL,
+            description="You are lucky if you fall off half way.🌳👈🛒",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            base_value=10,
+            hits=1,
+            aoe=False,
+            initial_cooldown=1,
+            droppable=False,
+            image_url="https://i.imgur.com/xN1gcXh.jpeg",
+            author="Klee",
         )
 
 
@@ -269,6 +308,7 @@ class Puke(BaseSkill):
             aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/sj1I0Q1.jpeg",
+            author="Klee",
         )
 
 
@@ -286,6 +326,7 @@ class TailWhip(BaseSkill):
             hits=2,
             droppable=False,
             image_url="https://i.imgur.com/nHvtBi3.jpeg",
+            author="Klee",
         )
 
 
@@ -303,6 +344,7 @@ class Hold(BaseSkill):
             hits=1,
             droppable=False,
             image_url="https://i.imgur.com/4S5sYFg.png",
+            author="Lusa",
         )
 
 
@@ -322,4 +364,85 @@ class Burst(BaseSkill):
             aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/dmlFE2t.png",
+            author="Lusa",
+        )
+
+
+class Exercise(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="BRO-Workout!",
+            skill_type=SkillType.EXERCISE,
+            description="He loves you - lil damn cutie - he begins to show off his power. Nothing to worry about.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=0,
+            initial_cooldown=0,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/0kg7AiZ.png",
+            author="Franny",
+        )
+
+
+class BroArrows(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="BRO-Arrows!",
+            skill_type=SkillType.BRO_ARROW,
+            description="With Jupiter's arrow but poisoned by broccoli juice, BRO-Coli shows you the highest appreciation",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            base_value=1,
+            initial_cooldown=1,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/p3G9ZeB.png",
+            author="Franny",
+        )
+
+
+class BroBiotics(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="BRO-Biotics!",
+            skill_type=SkillType.BRO_FART,
+            description="Oops, he must have forgotten to eat veggies and ate too much meat. Just needs some smol relaxation.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=1,
+            base_value=2,
+            initial_cooldown=1,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/yJr6wwC.png",
+            author="Franny",
+        )
+
+
+class BroBlast(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Giga Broccoli Smell Attack",
+            skill_type=SkillType.BRO_EXTRA_FART,
+            description="You hate me? You love me? How about getting showered by my broccoli-smell fart.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=3,
+            base_value=6,
+            initial_cooldown=5,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/TIpBdai.png",
+            author="Franny",
         )

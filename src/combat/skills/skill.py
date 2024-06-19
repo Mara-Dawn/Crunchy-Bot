@@ -33,6 +33,7 @@ class BaseSkill(DroppableBase):
         weight: int = 100,
         image_url: str = None,
         default_target: SkillTarget = SkillTarget.OPPONENT,
+        author: str = None,
     ):
         super().__init__(
             base_type=Base.SKILL,
@@ -42,6 +43,7 @@ class BaseSkill(DroppableBase):
             max_level=max_level,
             weight=weight,
             droppable=droppable,
+            author=author,
         )
         self.name = name
         self.skill_type = skill_type
@@ -165,7 +167,7 @@ class Skill(Droppable):
         suffix = ""
         if equipped:
             color = discord.Color.purple()
-            suffix += " [EQUIPPED]"
+            suffix += " [EQ]"
         elif self.locked and show_locked_state:
             suffix += " [🔒]"
 
@@ -281,6 +283,7 @@ class Skill(Droppable):
 
         embed = discord.Embed(title="", description=info_block, color=color)
         embed.set_thumbnail(url=self.base_skill.image_url)
+        embed.set_footer(text=f"by {self.base_skill.author}")
         return embed
 
 
@@ -332,7 +335,7 @@ class CharacterSkill:
         suffix = ""
         if equipped:
             color = discord.Color.purple()
-            suffix += " [EQUIPPED]"
+            suffix += " [EQ]"
         elif self.skill.locked and show_locked_state:
             suffix += " [🔒]"
         # name = f"<~ {self.skill.base_skill.name} ~>"
@@ -467,6 +470,8 @@ class CharacterSkill:
 
         embed = discord.Embed(title="", description=info_block, color=color)
         embed.set_thumbnail(url=self.skill.base_skill.image_url)
+        if show_full_data:
+            embed.set_footer(text=f"by {self.skill.base_skill.author}")
         return embed
 
     def add_to_embed(

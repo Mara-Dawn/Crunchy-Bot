@@ -1,4 +1,5 @@
 from combat.actors import Actor
+from config import Config
 
 if __name__ == "__main__":
 
@@ -15,7 +16,7 @@ if __name__ == "__main__":
             attack_count = max(1, int(encounter_scaling))
             print(attack_count)
             encounter_scaling = (
-                count / attack_count * Actor.OPPONENT_ENCOUNTER_SCALING_FACTOR
+                count / attack_count * Config.OPPONENT_ENCOUNTER_SCALING_FACTOR
             )
             print(encounter_scaling)
             print(attack_count * encounter_scaling)
