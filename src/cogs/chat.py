@@ -1,3 +1,6 @@
+import datetime
+from typing import Literal
+
 import discord
 from bot import CrunchyBot
 from control.ai_manager import AIManager
@@ -8,7 +11,9 @@ from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
+from discord import app_commands
 from discord.ext import commands, tasks
+from events.karma_event import KarmaEvent
 
 
 class Chat(commands.Cog):
@@ -78,6 +83,190 @@ class Chat(commands.Cog):
             return
 
         await self.ai_manager.respond(message)
+
+    async def __check_enabled(
+        self,
+        interaction: discord.Interaction,
+    ):
+        guild_id = interaction.guild_id
+
+        if not await self.settings_manager.get_karma_enabled(guild_id):
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Karma module is currently disabled.",
+            )
+            return False
+
+        return True
+
+    @app_commands.command(name="give_karma", description="Give someone a gold star.")
+    @app_commands.describe(user="Recipient of the gold star")
+    @app_commands.guild_only()
+    async def balance(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member,
+    ) -> None:
+        if not await self.__check_enabled(interaction):
+            return
+        await interaction.response.defer()
+
+        if user is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Missing user",
+                args=[user.display_name],
+                ephemeral=False,
+            )
+            return
+
+        guild_id = interaction.guild_id
+        recipient_id = user.id
+        giver_id = interaction.user.id
+        current_time = datetime.datetime.now()
+
+        karma_events = await self.database.get_karma_events_by_giver_id(
+            giver_id, guild_id
+        )
+
+        if recipient_id == giver_id:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "You can't give yourself karma, silly.",
+                args=[user.display_name],
+                ephemeral=False,
+            )
+            return
+
+        if len(karma_events) > 0:
+            last_karma_event = karma_events[0]
+            time_delta = current_time - last_karma_event.datetime
+            karma_cd = int(
+                int(datetime.datetime.now().timestamp())
+                + await self.settings_manager.get_karma_cooldown(guild_id)
+                - time_delta.total_seconds()
+            )
+            if (
+                time_delta.total_seconds()
+                <= await self.settings_manager.get_karma_cooldown(guild_id)
+            ):
+                await self.bot.command_response(
+                    self.__cog_name__,
+                    interaction,
+                    f"Too soon, bozo (You can give karma again <t:{karma_cd}:R>)",
+                    args=[user.display_name],
+                    ephemeral=False,
+                )
+                return
+
+        event = KarmaEvent(
+            current_time,
+            guild_id,
+            1,
+            recipient_id,
+            giver_id,
+        )
+
+        await self.controller.dispatch_event(event)
+        response = f"<@{giver_id}> gave <@{recipient_id}> a shiny gold star!"
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            response,
+            args=[user.display_name],
+            ephemeral=False,
+        )
+
+    @app_commands.command(name="karma", description="How many gold stars do you have?")
+    @app_commands.describe(user="How many gold stars do they have?")
+    @app_commands.guild_only()
+    async def karma(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member | None = None,
+    ) -> None:
+        if not await self.__check_enabled(interaction):
+            return
+        await interaction.response.defer()
+
+        if user is None:
+            user = interaction.user
+
+        guild_id = interaction.guild_id
+
+        karma_events = await self.database.get_karma_events_by_recipient_id(
+            user.id, guild_id
+        )
+        num = 0
+        for event in karma_events:
+            num += event.amount
+        star_stars = "star" if num == 1 else "stars"
+
+        response = f"<@{user.id}> has accumulated {num} gold {star_stars}!"
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            response,
+            args=[user.display_name],
+            ephemeral=False,
+        )
+
+    @app_commands.command(
+        name="karma_settings",
+        description="Overview of all karma related settings and their current value.",
+    )
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def get_settings(self, interaction: discord.Interaction):
+        output = await self.settings_manager.get_settings_string(
+            interaction.guild_id, SettingsManager.KARMA_SUBSETTINGS_KEY
+        )
+        await self.bot.command_response(self.__cog_name__, interaction, output)
+
+    @app_commands.command(
+        name="karma_toggle",
+        description="Enable or disable the entire karma module.",
+    )
+    @app_commands.describe(enabled="Turns the karma module on or off.")
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def set_toggle(
+        self, interaction: discord.Interaction, enabled: Literal["on", "off"]
+    ):
+        await self.settings_manager.set_karma_enabled(
+            interaction.guild_id, enabled == "on"
+        )
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Karma module was turned {enabled}.",
+            args=[enabled],
+        )
+
+    @app_commands.command(
+        name="set_karma_cooldown",
+        description="Set the cooldown of the give_karma command",
+    )
+    @app_commands.describe(
+        cooldown="Cooldown in seconds, 1 day = 86400, 1 week = 604800"
+    )
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def set_cooldown(
+        self,
+        interaction: discord.Interaction,
+        cooldown: int,
+    ):
+        await self.settings_manager.set_karma_cooldown(interaction.guild_id, cooldown)
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Karma cooldown was set to {cooldown} seconds",
+            args=[cooldown],
+        )
 
 
 async def setup(bot):

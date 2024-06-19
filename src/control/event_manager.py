@@ -11,14 +11,12 @@ from discord.ext import commands
 from events.bat_event import BatEvent
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
-from events.encounter_event import EncounterEvent
 from events.jail_event import JailEvent
 from events.notification_event import NotificationEvent
 from events.prediction_event import PredictionEvent
 from events.types import (
     BeansEventType,
     CombatEventType,
-    EncounterEventType,
     EventType,
     JailEventType,
     PredictionEventType,
@@ -665,6 +663,17 @@ class EventManager(Service):
                 ranking_data = [
                     (k, f"{v} ({gamba_count[k]} total)") for (k, v) in sorted_list
                 ]
+            case RankingType.KARMA:
+                guild_karma_events = await self.database.get_karma_events_by_guild(
+                    guild_id, season
+                )
+                for event in guild_karma_events:
+                    user_id = event.recipient_id
+                    BotUtil.dict_append(parsing_list, user_id, event.amount)
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"⭐{v}") for (k, v) in sorted_list]
 
         return {
             BotUtil.get_name(self.bot, guild_id, user_id, 100): value
