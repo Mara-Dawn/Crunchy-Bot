@@ -673,8 +673,33 @@ class EventManager(Service):
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
+                ranking_data = [(k, f"😇{v}") for (k, v) in sorted_list]
+            case RankingType.GOLD_STARS:
+                guild_positive_karma_events = (
+                    await self.database.get_karma_events_by_guild(
+                        guild_id, season, True
+                    )
+                )
+                for event in guild_positive_karma_events:
+                    user_id = event.recipient_id
+                    BotUtil.dict_append(parsing_list, user_id, event.amount)
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
                 ranking_data = [(k, f"⭐{v}") for (k, v) in sorted_list]
-
+            case RankingType.FUCK_YOUS:
+                guild_negative_karma_events = (
+                    await self.database.get_karma_events_by_guild(
+                        guild_id, season, False
+                    )
+                )
+                for event in guild_negative_karma_events:
+                    user_id = event.recipient_id
+                    BotUtil.dict_append(parsing_list, user_id, abs(event.amount))
+                sorted_list = sorted(
+                    parsing_list.items(), key=lambda item: item[1], reverse=True
+                )
+                ranking_data = [(k, f"🖕{v}") for (k, v) in sorted_list]
         return {
             BotUtil.get_name(self.bot, guild_id, user_id, 100): value
             for user_id, value in ranking_data
