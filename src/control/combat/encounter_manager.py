@@ -735,8 +735,6 @@ class EncounterManager(Service):
             if message is not None:
                 await message.edit(embed=enemy_embed)
 
-        # await asyncio.sleep(2)
-
         if current_actor.is_enemy:
             await self.opponent_turn(context)
             return

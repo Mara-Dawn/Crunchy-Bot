@@ -134,7 +134,8 @@ class GearBaseType(str, Enum):
     HEADGEAR_T0 = "HeadGear_T0"
     HEADGEAR_T1 = "HeadGear_T1"
     HEADGEAR_T2 = "HeadGear_T2"
-    HEADGEAR_T3 = "HeadGear_T3"
+    HEADGEAR_T3_1 = "HeadGear_T3_1"
+    HEADGEAR_T3_2 = "HeadGear_T3_2"
     HEADGEAR_T4 = "HeadGear_T4"
     HEADGEAR_T5 = "HeadGear_T5"
 
@@ -142,7 +143,8 @@ class GearBaseType(str, Enum):
     BODYGEAR_T0 = "BodyGear_T0"
     BODYGEAR_T1 = "BodyGear_T1"
     BODYGEAR_T2 = "BodyGear_T2"
-    BODYGEAR_T3 = "BodyGear_T3"
+    BODYGEAR_T3_1 = "BodyGear_T3_1"
+    BODYGEAR_T3_2 = "BodyGear_T3_2"
     BODYGEAR_T4 = "BodyGear_T4"
     BODYGEAR_T5 = "BodyGear_T5"
 
@@ -160,7 +162,8 @@ class GearBaseType(str, Enum):
     NECKLACE_T1_2 = "Necklace_T1_2"
     NECKLACE_T2_1 = "Necklace_T2_1"
     NECKLACE_T2_2 = "Necklace_T2_2"
-    NECKLACE_T3 = "Necklace_T3"
+    NECKLACE_T3_1 = "Necklace_T3_1"
+    NECKLACE_T3_2 = "Necklace_T3_2"
     NECKLACE_T4 = "Necklace_T4"
     NECKLACE_T5 = "Necklace_T5"
 

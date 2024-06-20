@@ -603,16 +603,17 @@ class Stick_T3(Tier3):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Water Bucket",
             type=GearBaseType.STICK_T3,
-            description="",
-            information="",
+            description="is that a horn or teeth? is that blood or tomato sauce? we dont know, but surely this is a legendary stick dealing massive physical damage.",
+            information="Tier 3 physical weapon.",
             slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
-            skills=[SkillType.MAGIC_ATTACK],
+            skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            image_url="https://i.imgur.com/IQnu2I6.png",
         )
 
 
@@ -620,42 +621,73 @@ class Wand_T3(Tier3):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="WHM SHB relic v2",
             type=GearBaseType.WAND_T3,
-            description="",
-            information="",
+            description="It was once said, the best wand is the wand that can never hold the crytal. Yes it is by pure magic that the crystal stays on this branch.",
+            information="Tier 3 magical weapon.",
             slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
+            image_url="https://i.imgur.com/CEjleY7.png",
         )
 
 
-class HeadGear_T3(Tier3):
+class HeadGear_T3_1(Tier3):
 
     def __init__(self):
         super().__init__(
-            name="",
-            type=GearBaseType.HEADGEAR_T3,
-            description="",
+            name="Headband of Peace and Love",
+            type=GearBaseType.HEADGEAR_T3_1,
+            description="Collection of all rewards striped around your baldy shiny head: the teeth of goblins and even your own rotten teeth coreved in blood or tomato sauce, none knows.",
             information="Tier 3 head piece.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/IVcrasV.png",
         )
 
 
-class BodyGear_T3(Tier3):
+class HeadGear_T3_2(Tier3):
 
     def __init__(self):
         super().__init__(
-            name="",
-            type=GearBaseType.BODYGEAR_T3,
-            description="",
+            name="A Memory of Childhood",
+            type=GearBaseType.HEADGEAR_T3_2,
+            description="Collection of all rewards striped around your baldy shiny head - the BALLS that we all played with when we were small.",
+            information="Tier 3 head piece.",
+            slot=EquipmentSlot.HEAD,
+            modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/YRRjh6k.png",
+        )
+
+
+class BodyGear_T3_1(Tier3):
+
+    def __init__(self):
+        super().__init__(
+            name="Leather Jacket",
+            type=GearBaseType.BODYGEAR_T3_1,
+            description="See these bling bling dindonk dindonks? It is the source of all of my POWER!",
             information="Tier 3 body piece.",
             slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/DIosQoG.png",
+        )
+
+
+class BodyGear_T3_2(Tier3):
+
+    def __init__(self):
+        super().__init__(
+            name="Leather Jacket",
+            type=GearBaseType.BODYGEAR_T3_2,
+            description="See these bling bling dindonk dindonks? It is the source of all of my POWER!",
+            information="Tier 3 body piece.",
+            slot=EquipmentSlot.BODY,
+            modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/rvjshYX.png",
         )
 
 
@@ -663,25 +695,41 @@ class LegGear_T3(Tier3):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Giga Sandals",
             type=GearBaseType.LEGGEAR_T3,
-            description="",
-            information="Tier 3 leg piece.",
+            descrption="The true hero must have travelled a lot. These THICC sandals are the best choice to make you feel comfortable wherever the battle takes place.",
+            information="Tier 3 leg piece. (Comment from Franny: have to add a slip for consensus and actually i have no idea how such sandale works since i dont wear them lol)",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/zezOsp4.png",
         )
 
 
-class Necklace_T3(Tier3):
+class Necklace_T3_1(Tier3):
 
     def __init__(self):
         super().__init__(
-            name="",
-            type=GearBaseType.NECKLACE_T3,
-            description="",
+            name="ASMR of Johnny Walker",
+            type=GearBaseType.NECKLACE_T3_1,
+            description="Found in a chest far away in the desert of the CRUNCHY kingdom, maybe it belongs to a dog?",
             information="Tier 3 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/fkzteQU.png",
+        )
+
+
+class Necklace_T3_2(Tier3):
+
+    def __init__(self):
+        super().__init__(
+            name="ASMR of Johnny Walker",
+            type=GearBaseType.NECKLACE_T3_2,
+            description="Found in a chest far away in the desert of the CRUNCHY kingdom, you are not sure if it is a crystal or just plastic.",
+            information="Tier 3 accessory",
+            slot=EquipmentSlot.ACCESSORY,
+            modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/9ceo3Yj.png",
         )
 
 
