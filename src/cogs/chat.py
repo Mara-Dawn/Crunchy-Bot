@@ -70,7 +70,7 @@ class Chat(commands.Cog):
     ) -> None:
         if not await self.__check_enabled(interaction):
             return
-        await interaction.response.defer()
+        # await interaction.response.defer()
 
         if user is None:
             await self.bot.command_response(
@@ -122,7 +122,7 @@ class Chat(commands.Cog):
                     ephemeral=False,
                 )
                 return
-        karma_amount = 1 if positive else -1
+
         event = KarmaEvent(
             current_time,
             guild_id,
@@ -195,7 +195,7 @@ class Chat(commands.Cog):
             user,
             True,
             "You can't give yourself karma, silly.",
-            "Too soon, bozo (You can give karma again",
+            "Too soon, bozo\nYou can give karma again",
             1,
             f"<@{giver_id}> gave <@{recipient_id}> a shiny gold star!🌟",
         )
@@ -213,7 +213,7 @@ class Chat(commands.Cog):
             user,
             False,
             "You can't fuck yourself, silly.",
-            'Too soon, bozo (You can give a "fuck you" point again',
+            'Too soon, bozo\nYou can say "fuck you" again',
             -1,
             f'<@{giver_id}> says "fuck you <@{recipient_id}>!" 🖕',
         )
@@ -249,7 +249,7 @@ class Chat(commands.Cog):
         star_stars = "star" if positive == 1 or positive == -1 else "stars"
         negative_plural = "" if negative == -1 or negative == 1 else "s"
 
-        response = f'<@{user.id}> has accumulated {positive} gold {star_stars}🌟  and {(abs(negative))} "fuck you"{negative_plural}🖕!'
+        response = f'<@{user.id}> has accumulated {positive} gold {star_stars}🌟 and {(abs(negative))} "fuck you"{negative_plural}🖕!'
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
