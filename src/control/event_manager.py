@@ -682,7 +682,7 @@ class EventManager(Service):
                 )
                 for event in guild_positive_karma_events:
                     user_id = event.recipient_id
-                    BotUtil.dict_append(parsing_list, user_id, abs(event.amount))
+                    BotUtil.dict_append(parsing_list, user_id, event.amount)
                 sorted_list = sorted(
                     parsing_list.items(), key=lambda item: item[1], reverse=True
                 )
