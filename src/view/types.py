@@ -28,6 +28,8 @@ class RankingType(int, Enum):
     WIN_STREAK = 18
     LOSS_STREAK = 19
     KARMA = 20
+    GOLD_STARS = 21
+    FUCK_YOUS = 22
 
 
 class ActionType(str, Enum):
