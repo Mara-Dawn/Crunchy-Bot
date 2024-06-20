@@ -117,7 +117,7 @@ class Chat(commands.Cog):
                 await self.bot.command_response(
                     self.__cog_name__,
                     interaction,
-                    (too_soon + f" <t:{karma_cd}:R>"),
+                    (too_soon + f" <t:{karma_cd}:R>."),
                     args=[user.display_name],
                     ephemeral=False,
                 )
@@ -249,7 +249,7 @@ class Chat(commands.Cog):
         star_stars = "star" if positive == 1 or positive == -1 else "stars"
         negative_plural = "" if negative == -1 or negative == 1 else "s"
 
-        response = f'<@{user.id}> has accumulated {positive} gold {star_stars}🌟 and {(abs(negative))} "fuck you"{negative_plural}🖕!'
+        response = f'<@{user.id}> has accumulated {positive} gold {star_stars}🌟 and {(abs(negative))} "fuck you"{negative_plural}!🖕'
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
