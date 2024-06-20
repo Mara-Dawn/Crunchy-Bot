@@ -69,8 +69,20 @@ class Ranking:
         RankingType.KARMA: RankingDefinition(
             type=RankingType.KARMA,
             title="Karma Rankings",
+            description='Combined gold stars and "fuck you"s',
+            emoji="😇",
+        ),
+        RankingType.GOLD_STARS: RankingDefinition(
+            type=RankingType.GOLD_STARS,
+            title="Gold Stars Rankings",
             description="Who has the most gold stars?",
-            emoji="⭐",
+            emoji="🌟",
+        ),
+        RankingType.FUCK_YOUS: RankingDefinition(
+            type=RankingType.FUCK_YOUS,
+            title='"Fuck you" Rankings',
+            description="Who's been yelled at the most?'",
+            emoji="🖕",
         ),
         RankingType.MIMICS: RankingDefinition(
             type=RankingType.MIMICS,

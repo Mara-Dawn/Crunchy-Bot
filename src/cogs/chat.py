@@ -58,6 +58,88 @@ class Chat(commands.Cog):
                 "sys", f"Cleaned up {count} old ai chat logs.", cog=self.__cog_name__
             )
 
+    async def __karma_giving(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member,
+        positive: bool,
+        yourself: str,
+        too_soon: str,
+        karma_amount: int,
+        karma_message: str,
+    ) -> None:
+        if not await self.__check_enabled(interaction):
+            return
+        # await interaction.response.defer()
+
+        if user is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Missing user",
+                args=[user.display_name],
+                ephemeral=False,
+            )
+            return
+
+        guild_id = interaction.guild_id
+        recipient_id = user.id
+        giver_id = interaction.user.id
+        current_time = datetime.datetime.now()
+
+        if recipient_id == giver_id:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                yourself,
+                args=[user.display_name],
+                ephemeral=False,
+            )
+            return
+
+        karma_events = await self.database.get_karma_events_by_giver_id(
+            giver_id, guild_id, positive
+        )
+
+        if len(karma_events) > 0:
+            last_karma_event = karma_events[0]
+            time_delta = current_time - last_karma_event.datetime
+            karma_cd = int(
+                int(datetime.datetime.now().timestamp())
+                + await self.settings_manager.get_karma_cooldown(guild_id)
+                - time_delta.total_seconds()
+            )
+
+            if (
+                time_delta.total_seconds()
+                <= await self.settings_manager.get_karma_cooldown(guild_id)
+            ):
+                await self.bot.command_response(
+                    self.__cog_name__,
+                    interaction,
+                    (too_soon + f" <t:{karma_cd}:R>."),
+                    args=[user.display_name],
+                    ephemeral=False,
+                )
+                return
+
+        event = KarmaEvent(
+            current_time,
+            guild_id,
+            karma_amount,
+            recipient_id,
+            giver_id,
+        )
+
+        await self.controller.dispatch_event(event)
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            karma_message,
+            args=[user.display_name],
+            ephemeral=False,
+        )
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.id == self.bot.user.id:
@@ -103,81 +185,37 @@ class Chat(commands.Cog):
     @app_commands.command(name="give_karma", description="Give someone a gold star.")
     @app_commands.describe(user="Recipient of the gold star")
     @app_commands.guild_only()
-    async def balance(
-        self,
-        interaction: discord.Interaction,
-        user: discord.Member,
+    async def give_karma(
+        self, interaction: discord.Interaction, user: discord.Member
     ) -> None:
-        if not await self.__check_enabled(interaction):
-            return
-        await interaction.response.defer()
-
-        if user is None:
-            await self.bot.command_response(
-                self.__cog_name__,
-                interaction,
-                "Missing user",
-                args=[user.display_name],
-                ephemeral=False,
-            )
-            return
-
-        guild_id = interaction.guild_id
         recipient_id = user.id
         giver_id = interaction.user.id
-        current_time = datetime.datetime.now()
-
-        karma_events = await self.database.get_karma_events_by_giver_id(
-            giver_id, guild_id
-        )
-
-        if recipient_id == giver_id:
-            await self.bot.command_response(
-                self.__cog_name__,
-                interaction,
-                "You can't give yourself karma, silly.",
-                args=[user.display_name],
-                ephemeral=False,
-            )
-            return
-
-        if len(karma_events) > 0:
-            last_karma_event = karma_events[0]
-            time_delta = current_time - last_karma_event.datetime
-            karma_cd = int(
-                int(datetime.datetime.now().timestamp())
-                + await self.settings_manager.get_karma_cooldown(guild_id)
-                - time_delta.total_seconds()
-            )
-            if (
-                time_delta.total_seconds()
-                <= await self.settings_manager.get_karma_cooldown(guild_id)
-            ):
-                await self.bot.command_response(
-                    self.__cog_name__,
-                    interaction,
-                    f"Too soon, bozo (You can give karma again <t:{karma_cd}:R>)",
-                    args=[user.display_name],
-                    ephemeral=False,
-                )
-                return
-
-        event = KarmaEvent(
-            current_time,
-            guild_id,
-            1,
-            recipient_id,
-            giver_id,
-        )
-
-        await self.controller.dispatch_event(event)
-        response = f"<@{giver_id}> gave <@{recipient_id}> a shiny gold star!"
-        await self.bot.command_response(
-            self.__cog_name__,
+        await self.__karma_giving(
             interaction,
-            response,
-            args=[user.display_name],
-            ephemeral=False,
+            user,
+            True,
+            "You can't give yourself karma, silly.",
+            "Too soon, bozo.\nYou can give karma again",
+            1,
+            f"<@{giver_id}> gave <@{recipient_id}> a shiny gold star! 🌟",
+        )
+
+    @app_commands.command(name="fuck_you", description="Let someone know how you feel.")
+    @app_commands.describe(user="Recipient of the fuck you")
+    @app_commands.guild_only()
+    async def fuck_you(
+        self, interaction: discord.Interaction, user: discord.Member
+    ) -> None:
+        recipient_id = user.id
+        giver_id = interaction.user.id
+        await self.__karma_giving(
+            interaction,
+            user,
+            False,
+            "You can't fuck yourself, silly.",
+            'Too soon, bozo.\nYou can say "fuck you" again',
+            -1,
+            f'<@{giver_id}> says "fuck you <@{recipient_id}>!" 🖕',
         )
 
     @app_commands.command(name="karma", description="How many gold stars do you have?")
@@ -200,12 +238,18 @@ class Chat(commands.Cog):
         karma_events = await self.database.get_karma_events_by_recipient_id(
             user.id, guild_id
         )
-        num = 0
+        positive = 0
+        negative = 0
         for event in karma_events:
-            num += event.amount
-        star_stars = "star" if num == 1 else "stars"
+            if event.amount > 0:
+                positive += event.amount
+            else:
+                negative += event.amount
 
-        response = f"<@{user.id}> has accumulated {num} gold {star_stars}!"
+        star_stars = "star" if positive == 1 or positive == -1 else "stars"
+        negative_plural = "" if negative == -1 or negative == 1 else "s"
+
+        response = f'<@{user.id}> has accumulated {positive} gold {star_stars} 🌟 and {(abs(negative))} "fuck you"{negative_plural}! 🖕'
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
@@ -248,7 +292,7 @@ class Chat(commands.Cog):
 
     @app_commands.command(
         name="set_karma_cooldown",
-        description="Set the cooldown of the give_karma command",
+        description="Set the cooldown of the give_karma and fuck_you commands",
     )
     @app_commands.describe(
         cooldown="Cooldown in seconds, 1 day = 86400, 1 week = 604800"
