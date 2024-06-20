@@ -195,7 +195,7 @@ class Chat(commands.Cog):
             user,
             True,
             "You can't give yourself karma, silly.",
-            "Too soon, bozo\nYou can give karma again",
+            "Too soon, bozo.\nYou can give karma again",
             1,
             f"<@{giver_id}> gave <@{recipient_id}> a shiny gold star! 🌟",
         )
@@ -213,7 +213,7 @@ class Chat(commands.Cog):
             user,
             False,
             "You can't fuck yourself, silly.",
-            'Too soon, bozo\nYou can say "fuck you" again',
+            'Too soon, bozo.\nYou can say "fuck you" again',
             -1,
             f'<@{giver_id}> says "fuck you <@{recipient_id}>!" 🖕',
         )
