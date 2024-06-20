@@ -197,7 +197,7 @@ class Chat(commands.Cog):
             "You can't give yourself karma, silly.",
             "Too soon, bozo\nYou can give karma again",
             1,
-            f"<@{giver_id}> gave <@{recipient_id}> a shiny gold star!🌟",
+            f"<@{giver_id}> gave <@{recipient_id}> a shiny gold star! 🌟",
         )
 
     @app_commands.command(name="fuck_you", description="Let someone know how you feel.")
@@ -249,7 +249,7 @@ class Chat(commands.Cog):
         star_stars = "star" if positive == 1 or positive == -1 else "stars"
         negative_plural = "" if negative == -1 or negative == 1 else "s"
 
-        response = f'<@{user.id}> has accumulated {positive} gold {star_stars}🌟 and {(abs(negative))} "fuck you"{negative_plural}!🖕'
+        response = f'<@{user.id}> has accumulated {positive} gold {star_stars} 🌟 and {(abs(negative))} "fuck you"{negative_plural}! 🖕'
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
