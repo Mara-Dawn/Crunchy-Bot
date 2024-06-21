@@ -102,22 +102,15 @@ class Chat(commands.Cog):
         )
 
         if len(karma_events) > 0:
-            last_karma_event = karma_events[0]
-            time_delta = current_time - last_karma_event.datetime
-            karma_cd = int(
-                int(datetime.datetime.now().timestamp())
-                + await self.settings_manager.get_karma_cooldown(guild_id)
-                - time_delta.total_seconds()
-            )
 
-            if (
-                time_delta.total_seconds()
-                <= await self.settings_manager.get_karma_cooldown(guild_id)
-            ):
+            current_date = datetime.datetime.now().date()
+            last_karma_event_date = karma_events[0].datetime.date()
+
+            if current_date == last_karma_event_date:
                 await self.bot.command_response(
                     self.__cog_name__,
                     interaction,
-                    (too_soon + f" <t:{karma_cd}:R>."),
+                    too_soon + " tomorrow.",
                     args=[user.display_name],
                     ephemeral=False,
                 )
