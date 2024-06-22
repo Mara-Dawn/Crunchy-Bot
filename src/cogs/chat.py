@@ -283,28 +283,6 @@ class Chat(commands.Cog):
             args=[enabled],
         )
 
-    @app_commands.command(
-        name="set_karma_cooldown",
-        description="Set the cooldown of the give_karma and fuck_you commands",
-    )
-    @app_commands.describe(
-        cooldown="Cooldown in seconds, 1 day = 86400, 1 week = 604800"
-    )
-    @app_commands.check(__has_permission)
-    @app_commands.guild_only()
-    async def set_cooldown(
-        self,
-        interaction: discord.Interaction,
-        cooldown: int,
-    ):
-        await self.settings_manager.set_karma_cooldown(interaction.guild_id, cooldown)
-        await self.bot.command_response(
-            self.__cog_name__,
-            interaction,
-            f"Karma cooldown was set to {cooldown} seconds",
-            args=[cooldown],
-        )
-
 
 async def setup(bot):
     await bot.add_cog(Chat(bot))
