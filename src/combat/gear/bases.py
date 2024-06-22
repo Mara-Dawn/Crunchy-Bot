@@ -697,7 +697,7 @@ class LegGear_T3(Tier3):
         super().__init__(
             name="Giga Sandals",
             type=GearBaseType.LEGGEAR_T3,
-            descrption="The true hero must have travelled a lot. These THICC sandals are the best choice to make you feel comfortable wherever the battle takes place.",
+            description="The true hero must have travelled a lot. These THICC sandals are the best choice to make you feel comfortable wherever the battle takes place.",
             information="Tier 3 leg piece. (Comment from Franny: have to add a slip for consensus and actually i have no idea how such sandale works since i dont wear them lol)",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],

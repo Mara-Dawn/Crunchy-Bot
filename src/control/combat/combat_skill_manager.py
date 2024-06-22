@@ -14,10 +14,6 @@ from events.bot_event import BotEvent
 
 class CombatSkillManager(Service):
 
-    CHARACTER_ENCOUNTER_SCALING_FACOTR = 0.9
-    OPPONENT_ENCOUNTER_SCALING_FACTOR = 1.2
-    OPPONENT_LEVEL_SCALING_FACTOR = 0.2
-
     def __init__(
         self,
         bot: commands.Bot,

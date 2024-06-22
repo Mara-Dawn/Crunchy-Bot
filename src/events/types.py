@@ -16,6 +16,7 @@ class EventType(str, Enum):
     NOTIFICATION = "notification"
     ENCOUNTER = "encounter"
     COMBAT = "combat"
+    STATUS_EFFECT = "status_effect"
     KARMA = "karma"
 
 

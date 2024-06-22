@@ -76,6 +76,7 @@ class CombatActorManager(Service):
     ) -> Opponent:
         defeated = False
         encounter_id = None
+        id = -1
         for event in encounter_events:
             if encounter_id is None:
                 encounter_id = event.encounter_id
@@ -88,12 +89,13 @@ class CombatActorManager(Service):
             skill = await self.skill_manager.get_enemy_skill(skill_type)
             skills.append(skill)
 
-        skill_cooldowns = self.get_skill_cooldowns(None, skills, combat_events)
+        skill_cooldowns = self.get_skill_cooldowns(id, skills, combat_events)
         skill_stacks_used = await self.database.get_opponent_skill_stacks_used(
             encounter_id
         )
 
         return Opponent(
+            id=id,
             enemy=enemy,
             level=enemy_level,
             max_hp=max_hp,

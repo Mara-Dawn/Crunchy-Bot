@@ -64,6 +64,10 @@ class SkillTarget(Enum):
     SELF = 1
 
 
+class StatusEffectType(str, Enum):
+    pass
+
+
 class SkillInstance:
 
     def __init__(

@@ -45,6 +45,7 @@ from events.lootbox_event import LootBoxEvent
 from events.prediction_event import PredictionEvent
 from events.quote_event import QuoteEvent
 from events.spam_event import SpamEvent
+from events.status_effect_event import StatusEffectEvent
 from events.timeout_event import TimeoutEvent
 from events.types import (
     CombatEventType,
@@ -628,6 +629,22 @@ class Database:
         PRIMARY KEY ({KARMA_EVENT_ID_COL})
     );"""
 
+    STATUS_EFFECT_EVENT_TABLE = "statuseffectevents"
+    STATUS_EFFECT_EVENT_ID_COL = "seev_id"
+    STATUS_EFFECT_EVENT_SOURCE_ID_COL = "seev_source_id"
+    STATUS_EFFECT_EVENT_ACTOR_ID_COL = "seev_actor_id"
+    STATUS_EFFECT_EVENT_STATUS_TYPE_COL = "seev_status_type"
+    STATUS_EFFECT_EVENT_AMOUNT_COL = "seev_amount"
+    CREATE_STATUS_EFFECT_EVENT_TABLE = f"""
+    CREATE TABLE if not exists {STATUS_EFFECT_EVENT_TABLE} (
+        {STATUS_EFFECT_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {STATUS_EFFECT_EVENT_SOURCE_ID_COL} INTEGER, 
+        {STATUS_EFFECT_EVENT_ACTOR_ID_COL} INTEGER, 
+        {STATUS_EFFECT_EVENT_STATUS_TYPE_COL} TEXT, 
+        {STATUS_EFFECT_EVENT_AMOUNT_COL} INTEGER,
+        PRIMARY KEY ({STATUS_EFFECT_EVENT_ID_COL})
+    );"""
+
     PERMANENT_ITEMS = [
         ItemType.REACTION_SPAM,
         ItemType.LOTTERY_TICKET,
@@ -696,6 +713,7 @@ class Database:
             await db.execute(self.CREATE_USER_EQUIPMENT_TABLE)
             await db.execute(self.CREATE_USER_EQUIPPED_SKILLS_TABLE)
             await db.execute(self.CREATE_KARMA_EVENT_TABLE)
+            await db.execute(self.CREATE_STATUS_EFFECT_EVENT_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -1035,6 +1053,28 @@ class Database:
 
         return await self.__query_insert(command, task)
 
+    async def __create_status_effect_event(
+        self, event_id: int, event: StatusEffectEvent 
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.STATUS_EFFECT_EVENT_TABLE} (
+            {self.STATUS_EFFECT_EVENT_ID_COL},
+            {self.STATUS_EFFECT_EVENT_SOURCE_ID_COL},
+            {self.STATUS_EFFECT_EVENT_ACTOR_ID_COL},
+            {self.STATUS_EFFECT_EVENT_STATUS_TYPE_COL},
+            {self.STATUS_EFFECT_EVENT_AMOUNT_COL})
+            VALUES (?, ?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.source_id,
+            event.actor_id,
+            event.status_type,
+            event.amount,
+        )
+
+        return await self.__query_insert(command, task)
+
     async def log_event(self, event: BotEvent) -> int:
         event_id = await self.__create_base_event(event)
 
@@ -1069,6 +1109,8 @@ class Database:
                 return await self.__create_encounter_event(event_id, event)
             case EventType.COMBAT:
                 return await self.__create_combat_event(event_id, event)
+            case EventType.STATUS_EFFECT:
+                return await self.__create_status_effect_event(event_id, event)
             case EventType.KARMA:
                 return await self.__create_karma_event(event_id, event)
 

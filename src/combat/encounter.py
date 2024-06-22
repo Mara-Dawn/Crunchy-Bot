@@ -96,8 +96,8 @@ class EncounterContext:
                 last_actor = event.member_id
                 break
 
-        if last_actor is None:
-            return self.opponent
+        # if last_actor is None:
+        #     return self.opponent
 
         for actor in self.actors:
             if actor.id == last_actor:
@@ -189,7 +189,10 @@ class EncounterContext:
     def get_timeout_count(self, member_id: int) -> int:
         timeout_count = 0
         for event in self.combat_events:
-            if event.combat_event_type == CombatEventType.MEMBER_TURN_SKIP:
+            if (
+                event.member_id == member_id
+                and event.combat_event_type == CombatEventType.MEMBER_TURN_SKIP
+            ):
                 timeout_count += 1
 
         return timeout_count

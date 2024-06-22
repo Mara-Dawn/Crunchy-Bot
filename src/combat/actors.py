@@ -215,6 +215,7 @@ class Opponent(Actor):
 
     def __init__(
         self,
+        id: int,
         enemy: Enemy,
         level: int,
         max_hp: int,
@@ -237,6 +238,7 @@ class Opponent(Actor):
         )
         self.level = level
         self.enemy = enemy
+        self.id = id
 
         self.average_skill_multi = self.get_potency_per_turn()
 
