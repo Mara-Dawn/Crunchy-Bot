@@ -75,7 +75,6 @@ class SettingsManager(Service):
 
     KARMA_SUBSETTINGS_KEY = "karma"
     KARMA_ENABLED_KEY = "karma_enabled"
-    KARMA_COOLDOWN_KEY = "karma_cooldown"
 
     def __init__(
         self,
@@ -278,11 +277,6 @@ class SettingsManager(Service):
 
         karma_settings = ModuleSettings(self.KARMA_SUBSETTINGS_KEY, "Karma")
         karma_settings.add_setting(self.KARMA_ENABLED_KEY, True, "Module Enabled")
-        karma_settings.add_setting(
-            self.KARMA_COOLDOWN_KEY,
-            60 * 60 * 24 * 7,
-            "Cooldown for giving karma",
-        )
 
         self.settings = GuildSettings()
         self.settings.add_module(general_settings)
@@ -1129,17 +1123,4 @@ class SettingsManager(Service):
             self.KARMA_SUBSETTINGS_KEY,
             self.KARMA_ENABLED_KEY,
             enabled,
-        )
-
-    async def get_karma_cooldown(self, guild_id: int) -> int:
-        return await self.get_setting(
-            guild_id, self.KARMA_SUBSETTINGS_KEY, self.KARMA_COOLDOWN_KEY
-        )
-
-    async def set_karma_cooldown(self, guild_id: int, cooldown: int) -> None:
-        await self.update_setting(
-            guild_id,
-            self.KARMA_SUBSETTINGS_KEY,
-            self.KARMA_COOLDOWN_KEY,
-            cooldown,
         )
