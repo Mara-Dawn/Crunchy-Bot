@@ -414,15 +414,15 @@ class ItemManager(Service):
 
             total_amount = min(total_amount, (item.max_amount - item_count))
 
-        if total_amount != 0:
-            event = InventoryEvent(
-                datetime.datetime.now(),
-                guild_id,
-                member_id,
-                item.type,
-                total_amount,
-            )
-            await self.controller.dispatch_event(event)
+        # if total_amount != 0:
+        #     event = InventoryEvent(
+        #         datetime.datetime.now(),
+        #         guild_id,
+        #         member_id,
+        #         item.type,
+        #         total_amount,
+        #     )
+        #     await self.controller.dispatch_event(event)
 
     async def get_guild_items_activated(
         self, guild_id: int, trigger: ItemTrigger

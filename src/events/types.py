@@ -9,6 +9,7 @@ class EventType(str, Enum):
     SPAM = "spam"
     BEANS = "beans"
     INVENTORY = "inventory"
+    INVENTORYBATCH = "inventory_batch"
     LOOTBOX = "loot_box"
     BAT = "bat"
     PREDICTION = "prediction"

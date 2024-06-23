@@ -559,6 +559,28 @@ class LootBoxItemBundle(Item):
         )
 
 
+class LootBoxItemBigBundle(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 1000
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Random Treasure Chest x10",
+            type=ItemType.LOOTBOX_BIG_BUNDLE,
+            group=ItemGroup.LOOTBOX,
+            shop_category=ShopCategory.LOOTBOX,
+            description="For when 5 at a time just isn't enough.",
+            information="Available in the shop. Use /shop for more Information.",
+            emoji="🧰",
+            cost=cost,
+            value=None,
+            base_amount=10,
+        )
+
+
 class PocketMimic(Item):
 
     def __init__(self, cost: int | None):

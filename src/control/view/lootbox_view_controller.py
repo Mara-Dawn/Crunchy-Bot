@@ -10,6 +10,7 @@ from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger
 from discord.ext import commands
 from events.beans_event import BeansEvent
+from events.inventory_batchevent import InventoryBatchEvent
 from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
 from events.lootbox_event import LootBoxEvent
@@ -370,6 +371,17 @@ class LootBoxViewController(ViewController):
 
         for amount, item in items_to_give:
             await self.item_manager.give_item(guild_id, member_id, item, amount)
+
+        event = InventoryBatchEvent(
+            datetime.datetime.now(),
+            guild_id,
+            member_id,
+            items_to_give
+        )
+        await self.controller.dispatch_event(event)
+
+
+
 
         if total_beans != 0:
             event = BeansEvent(

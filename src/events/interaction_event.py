@@ -2,6 +2,7 @@ import datetime
 from typing import Any
 
 from datalayer.types import UserInteraction
+
 from events.bot_event import BotEvent
 from events.types import EventType
 
