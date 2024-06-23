@@ -66,6 +66,7 @@ class CharacterEquipment:
             CharacterAttribute.CRIT_DAMAGE: 1.5,
             CharacterAttribute.PHYS_DAMAGE_REDUCTION: 0,
             CharacterAttribute.MAGIC_DAMAGE_REDUCTION: 0,
+            CharacterAttribute.STATUS_EFFECT_REDUCTION: 0,
             CharacterAttribute.MAX_HEALTH: 250,
         }
 
@@ -96,6 +97,9 @@ class CharacterEquipment:
             self.gear_modifiers[GearModifierType.DEFENSE] / 100
         )
         self.attributes[CharacterAttribute.MAGIC_DAMAGE_REDUCTION] += (
+            self.gear_modifiers[GearModifierType.DEFENSE] / 100
+        )
+        self.attributes[CharacterAttribute.STATUS_EFFECT_REDUCTION] += (
             self.gear_modifiers[GearModifierType.DEFENSE] / 100
         )
         self.attributes[CharacterAttribute.MAX_HEALTH] += (

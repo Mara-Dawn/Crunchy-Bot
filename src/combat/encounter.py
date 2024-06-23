@@ -5,7 +5,7 @@ import discord
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
-from combat.skills.types import SkillInstance
+from combat.skills.types import SkillInstance, StatusEffectType
 from config import Config
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
@@ -60,6 +60,7 @@ class EncounterContext:
         opponent: Opponent,
         encounter_events: list[EncounterEvent],
         combat_events: list[CombatEvent],
+        status_effects: dict[int, dict[StatusEffectType, int]],
         combatants: list[Character],
         thread: discord.Thread,
     ):
@@ -67,6 +68,7 @@ class EncounterContext:
         self.opponent = opponent
         self.encounter_events = encounter_events
         self.combat_events = combat_events
+        self.status_effects = status_effects
         self.combatants = combatants
         self.thread = thread
 

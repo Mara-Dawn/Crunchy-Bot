@@ -13,23 +13,27 @@ class StatusEffectEvent(BotEvent):
         self,
         timestamp: datetime.datetime,
         guild_id: int,
+        encounter_id: int,
         source_id: int,
         actor_id: int,
         status_type: StatusEffectType,
-        amount: int,
+        stacks: int,
+        value: float,
         id: int = None,
     ):
         super().__init__(timestamp, guild_id, EventType.STATUS_EFFECT, id)
+        self.encounter_id = encounter_id
         self.source_id = source_id
         self.actor_id = actor_id
         self.status_type = status_type
-        self.amount = amount
+        self.stacks = stacks
+        self.value = value
 
     def get_causing_user_id(self) -> int:
         return self.actor_id
 
     def get_type_specific_args(self) -> list[Any]:
-        return [self.status_type, self.amount]
+        return [self.source_id, self.status_type, self.stacks, self.value]
 
     @staticmethod
     def from_db_row(row: dict[str, Any]) -> "StatusEffectEvent":
@@ -42,9 +46,11 @@ class StatusEffectEvent(BotEvent):
                 row[Database.EVENT_TIMESTAMP_COL]
             ),
             guild_id=row[Database.EVENT_GUILD_ID_COL],
+            encounter_id=row[Database.STATUS_EFFECT_EVENT_ENCOUNTER_ID_COL],
             source_id=row[Database.STATUS_EFFECT_EVENT_SOURCE_ID_COL],
             actor_id=row[Database.STATUS_EFFECT_EVENT_ACTOR_ID_COL],
             status_type=row[Database.STATUS_EFFECT_EVENT_STATUS_TYPE_COL],
-            amount=row[Database.STATUS_EFFECT_EVENT_AMOUNT_COL],
+            stacks=row[Database.STATUS_EFFECT_EVENT_STACKS_COL],
+            value=row[Database.STATUS_EFFECT_EVENT_VALUE_COL],
             id=row[Database.EVENT_ID_COL],
         )

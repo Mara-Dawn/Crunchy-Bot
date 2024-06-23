@@ -1,6 +1,7 @@
 import discord
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
+from combat.skills.status_effect import SkillStatusEffect
 from combat.skills.types import SkillEffect, SkillTarget, SkillType
 from config import Config
 
@@ -28,6 +29,7 @@ class BaseSkill(DroppableBase):
         droppable: bool = True,
         hits: int = 1,
         stacks: int = None,
+        status_effects: list[SkillStatusEffect] = None,
         reset_after_encounter: bool = False,
         aoe: bool = False,
         weight: int = 100,
@@ -55,6 +57,7 @@ class BaseSkill(DroppableBase):
         self.initial_cooldown = initial_cooldown
         self.hits = hits
         self.stacks = stacks
+        self.status_effects = status_effects
         self.reset_after_encounter = reset_after_encounter
         self.aoe = aoe
         self.default_target = default_target
@@ -62,6 +65,9 @@ class BaseSkill(DroppableBase):
 
         if self.image_url is None:
             self.image_url = self.DEFAULT_IMAGE[self.skill_effect]
+
+        if self.status_effects is None:
+            self.status_effects = []
 
 
 class Skill(Droppable):

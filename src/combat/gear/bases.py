@@ -297,7 +297,7 @@ class Tier1(GearBase):
             max_level=5,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.5,
+            scaling=1.15,
             image_url=image_url,
             author="Mia",
         )
@@ -455,7 +455,7 @@ class Tier2(GearBase):
             max_level=6,
             modifiers=modifiers,
             skills=skills,
-            scaling=2,
+            scaling=1.3,
             image_url=image_url,
             author="Klee",
         )
@@ -593,7 +593,7 @@ class Tier3(GearBase):
             max_level=10,
             modifiers=modifiers,
             skills=skills,
-            scaling=2.5,
+            scaling=1.45,
             image_url=image_url,
             author="Franny",
         )
@@ -759,7 +759,7 @@ class Tier4(GearBase):
             max_level=12,
             modifiers=modifiers,
             skills=skills,
-            scaling=3,
+            scaling=1.6,
             image_url=image_url,
         )
 
@@ -876,7 +876,7 @@ class Tier5(GearBase):
             max_level=12,
             modifiers=modifiers,
             skills=skills,
-            scaling=3.5,
+            scaling=1.75,
             image_url=image_url,
             author="Mia",
         )

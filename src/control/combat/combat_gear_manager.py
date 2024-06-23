@@ -38,11 +38,11 @@ from events.types import EncounterEventType
 
 class CombatGearManager(Service):
 
-    GENERATOR_VERSION = "0.0.1"
+    GENERATOR_VERSION = "0.0.2"
 
     ITEM_LEVEL_MIN_DROP = 0.6
-
     SKILL_DROP_CHANCE = 0.1
+    GEAR_LEVEL_SCALING = 2
 
     MIN_RARITY_LVL = {
         Rarity.NORMAL: 0,
@@ -289,6 +289,7 @@ class CombatGearManager(Service):
                 + self.MODIFIER_BASE[modifier_type]
                 * (self.MODIFIER_SCALING[modifier_type])
                 * (item_level - 1)
+                * self.GEAR_LEVEL_SCALING
             )
             * slot_scaling
             * base.scaling

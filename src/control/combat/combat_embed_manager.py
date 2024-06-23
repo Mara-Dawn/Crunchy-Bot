@@ -285,7 +285,7 @@ class CombatEmbedManager(Service):
         outcome_title = ""
         damage_info = ""
 
-        total_damage = target.get_damage_after_defense(
+        total_damage = target.get_skill_damage_after_defense(
             skill, damage_instance.scaled_value
         )
 
@@ -495,6 +495,25 @@ class CombatEmbedManager(Service):
                     turn_data, skill, full_embed
                 ):
                     yield embed
+
+    def get_status_effect_embed(
+        self, actor: Actor, effect_data: dict[str, str]
+    ) -> discord.Embed:
+        actor_name = f"{actor.name}"
+
+        color = discord.Color.blurple()
+        if actor.is_enemy:
+            color = discord.Color.red()
+
+        embed = discord.Embed(title="", description="", color=color)
+        embed.set_author(name=actor_name, icon_url=actor.image_url)
+        embed.set_thumbnail(url=actor.image_url)
+
+        for title, description in effect_data.items():
+            # embed.add_field(name=title, value=description)
+            self.add_text_bar(embed, title, description)
+
+        return embed
 
     def get_turn_skip_embed(
         self, actor: Actor, reason: str, context: EncounterContext

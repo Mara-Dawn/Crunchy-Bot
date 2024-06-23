@@ -1,8 +1,16 @@
 from enum import Enum
 
 
+class StatusEffectType(str, Enum):
+    BLEED = "Bleed"
+
+
 class SkillType(str, Enum):
     EMPTY = "EmptySkill"
+
+    # Status Effects
+    # BLEED = StatusEffectType.BLEED.value
+
     NORMAL_ATTACK = "NormalAttack"
     HEAVY_ATTACK = "HeavyAttack"
     MAGIC_ATTACK = "MagicAttack"
@@ -56,6 +64,7 @@ class SkillType(str, Enum):
 class SkillEffect(str, Enum):
     PHYSICAL_DAMAGE = "Physical"
     MAGICAL_DAMAGE = "Magical"
+    STATUS_EFFECT_DAMAGE = "Status"
     HEALING = "Healing"
 
 
@@ -64,8 +73,20 @@ class SkillTarget(Enum):
     SELF = 1
 
 
-class StatusEffectType(str, Enum):
-    pass
+class StatusEffectTrigger(Enum):
+    START_OF_TURN = 0
+    END_OF_TURN = 1
+    START_OF_ROUND = 2
+    END_OF_ROUND = 3
+    ON_DAMAGE_TAKEN = 4
+    ON_HEALTH_GAINED = 5
+    ON_HP_CHANGE = 6
+    ON_ATTACK = 7
+
+
+class StatusEffectApplication(Enum):
+    DEFAULT = 0
+    ATTACK_VALUE = 1
 
 
 class SkillInstance:

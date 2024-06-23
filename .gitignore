@@ -11,6 +11,7 @@ fonts/meh/
 !.vscode/launch.json
 src/test.py
 *.vim
+database.*
 
 
 # Byte-compiled / optimized / DLL files

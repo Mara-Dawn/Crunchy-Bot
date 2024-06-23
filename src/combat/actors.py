@@ -7,6 +7,7 @@ from combat.enemies.enemy import Enemy
 from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import CharacterSkill, Skill
+from combat.skills.status_effect import ActiveStatusEffect
 from combat.skills.types import SkillEffect, SkillInstance, SkillType
 from config import Config
 
@@ -23,6 +24,7 @@ class Actor:
         skills: list[Skill],
         skill_cooldowns: dict[SkillType, int],
         skill_stacks_used: dict[SkillType, int],
+        status_effects: list[ActiveStatusEffect],
         defeated: bool,
         image_url: str,
         timed_out: bool = False,
@@ -35,6 +37,7 @@ class Actor:
         self.skills = skills
         self.skill_cooldowns = skill_cooldowns
         self.skill_stacks_used = skill_stacks_used
+        self.status_effects = status_effects
         self.defeated = defeated
         self.timed_out = timed_out
         self.image_url = image_url
@@ -42,12 +45,24 @@ class Actor:
     def get_skill_data(self, skill: Skill) -> CharacterSkill:
         pass
 
+    def get_encounter_scaling(self, combatant_count: int = 1) -> float:
+        pass
+
     def get_skill_effect(
         self, skill: Skill, combatant_count: int = 1, force_roll: int = None
     ) -> list[SkillInstance]:
         pass
 
-    def get_damage_after_defense(self, skill: Skill, incoming_damage: int) -> float:
+    def get_skill_damage_after_defense(
+        self, skill: Skill, incoming_damage: int
+    ) -> float:
+        return self.get_damage_after_defense(
+            skill.base_skill.skill_effect, incoming_damage
+        )
+
+    def get_damage_after_defense(
+        self, skill_effect: SkillEffect, incoming_damage: int
+    ) -> float:
         pass
 
 
@@ -59,6 +74,7 @@ class Character(Actor):
         skill_slots: dict[int, Skill],
         skill_cooldowns: dict[SkillType, int],
         skill_stacks_used: dict[int, int],
+        status_effects: list[ActiveStatusEffect],
         equipment: CharacterEquipment,
         defeated: bool,
         timed_out: bool = False,
@@ -80,6 +96,7 @@ class Character(Actor):
             skills=[skill for skill in skill_slots.values() if skill is not None],
             skill_cooldowns=skill_cooldowns,
             skill_stacks_used=skill_stacks_used,
+            status_effects=status_effects,
             defeated=defeated,
             timed_out=timed_out,
             image_url=member.display_avatar.url,
@@ -111,6 +128,14 @@ class Character(Actor):
             penalty=penalty,
         )
 
+    def get_encounter_scaling(self, combatant_count: int = 1) -> float:
+        encounter_scaling = 1
+        if combatant_count > 1:
+            encounter_scaling = (
+                1 / combatant_count * Config.CHARACTER_ENCOUNTER_SCALING_FACOTR
+            )
+        return encounter_scaling
+
     def get_skill_effect(
         self,
         skill: Skill,
@@ -129,11 +154,7 @@ class Character(Actor):
         modifier = 1
         base_dmg_type = self.skill_slots[0].base_skill.skill_effect
 
-        encounter_scaling = 1
-        if combatant_count > 1:
-            encounter_scaling = (
-                1 / combatant_count * Config.CHARACTER_ENCOUNTER_SCALING_FACOTR
-            )
+        encounter_scaling = self.get_encounter_scaling(combatant_count)
 
         match skill.base_skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
@@ -188,12 +209,13 @@ class Character(Actor):
 
         return skill_instances
 
-    def get_damage_after_defense(self, skill: Skill, incoming_damage: int) -> float:
-
+    def get_damage_after_defense(
+        self, skill_effect: SkillEffect, incoming_damage: int
+    ) -> float:
         modifier = 1
         flat_reduction = 0
 
-        match skill.base_skill.skill_effect:
+        match skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
                 modifier -= self.equipment.attributes[
                     CharacterAttribute.PHYS_DAMAGE_REDUCTION
@@ -204,6 +226,10 @@ class Character(Actor):
             case SkillEffect.MAGICAL_DAMAGE:
                 modifier -= self.equipment.attributes[
                     CharacterAttribute.MAGIC_DAMAGE_REDUCTION
+                ]
+            case SkillEffect.STATUS_EFFECT_DAMAGE:
+                modifier -= self.equipment.attributes[
+                    CharacterAttribute.STATUS_EFFECT_REDUCTION
                 ]
             case SkillEffect.HEALING:
                 pass
@@ -222,6 +248,7 @@ class Opponent(Actor):
         skills: list[Skill],
         skill_cooldowns: dict[SkillType, int],
         skill_stacks_used: dict[int, int],
+        status_effects: list[ActiveStatusEffect],
         defeated: bool,
     ):
         super().__init__(
@@ -233,6 +260,7 @@ class Opponent(Actor):
             skills=skills,
             skill_cooldowns=skill_cooldowns,
             skill_stacks_used=skill_stacks_used,
+            status_effects=status_effects,
             defeated=defeated,
             image_url=enemy.image_url,
         )
@@ -304,6 +332,16 @@ class Opponent(Actor):
             potency += potency_per_turn
 
         return potency
+
+    def get_encounter_scaling(self, combatant_count: int = 1) -> float:
+        encounter_scaling = 1
+
+        # if combatant_count > self.enemy.min_encounter_scale:
+        #     encounter_scale = combatant_count - (self.enemy.min_encounter_scale - 1)
+        #     encounter_scaling = (
+        #         encounter_scale * Config.OPPONENT_ENCOUNTER_SCALING_FACTOR
+        #     )
+        return encounter_scaling
 
     @lru_cache(maxsize=10)  # noqa: B019
     def get_skill_data(self, skill: Skill) -> CharacterSkill:
@@ -407,12 +445,13 @@ class Opponent(Actor):
 
         return attacks
 
-    def get_damage_after_defense(self, skill: Skill, incoming_damage: int) -> float:
-
+    def get_damage_after_defense(
+        self, skill_effect: SkillEffect, incoming_damage: int
+    ) -> float:
         modifier = 1
         flat_reduction = 0
 
-        match skill.base_skill.skill_effect:
+        match skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
                 modifier -= self.enemy.attributes[
                     CharacterAttribute.PHYS_DAMAGE_REDUCTION
@@ -420,6 +459,10 @@ class Opponent(Actor):
             case SkillEffect.MAGICAL_DAMAGE:
                 modifier -= self.enemy.attributes[
                     CharacterAttribute.MAGIC_DAMAGE_REDUCTION
+                ]
+            case SkillEffect.STATUS_EFFECT_DAMAGE:
+                modifier -= self.enemy.attributes[
+                    CharacterAttribute.STATUS_EFFECT_REDUCTION
                 ]
             case SkillEffect.HEALING:
                 pass

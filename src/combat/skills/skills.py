@@ -1,5 +1,13 @@
 from combat.skills.skill import BaseSkill
-from combat.skills.types import SkillEffect, SkillTarget, SkillType
+from combat.skills.status_effect import SkillStatusEffect
+from combat.skills.status_effects import Bleed
+from combat.skills.types import (
+    SkillEffect,
+    SkillTarget,
+    SkillType,
+    StatusEffectApplication,
+    StatusEffectType,
+)
 
 # Base skills
 
@@ -53,6 +61,13 @@ class HeavyAttack(BaseSkill):
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
             base_value=3,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
             droppable=False,
             image_url="https://i.imgur.com/1Cf7nVB.png",
         )
