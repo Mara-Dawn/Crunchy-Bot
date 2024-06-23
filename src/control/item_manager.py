@@ -11,6 +11,7 @@ from datalayer.types import ItemTrigger, LootboxType, UserInteraction
 from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
+from events.inventory_batchevent import InventoryBatchEvent
 from events.inventory_event import InventoryEvent
 from events.lootbox_event import LootBoxEvent
 from events.notification_event import NotificationEvent
@@ -414,15 +415,52 @@ class ItemManager(Service):
 
             total_amount = min(total_amount, (item.max_amount - item_count))
 
-        # if total_amount != 0:
-        #     event = InventoryEvent(
-        #         datetime.datetime.now(),
-        #         guild_id,
-        #         member_id,
-        #         item.type,
-        #         total_amount,
-        #     )
-        #     await self.controller.dispatch_event(event)
+        if total_amount != 0:
+            event = InventoryEvent(
+                datetime.datetime.now(),
+                guild_id,
+                member_id,
+                item.type,
+                total_amount,
+            )
+            await self.controller.dispatch_event(event)
+
+    async def give_items(
+        self,
+        guild_id: int,
+        member_id: int,
+        items: list[tuple[int, Item]],
+        force: bool = False,
+    ):
+        final_items = []
+        for amount, item in items:
+            total_amount = amount
+
+            if not force:
+                total_amount *= item.base_amount
+
+            if item.max_amount is not None:
+                item_count = 0
+
+                inventory_items = await self.database.get_item_counts_by_user(
+                    guild_id, member_id
+                )
+                if item.type in inventory_items:
+                    item_count = inventory_items[item.type]
+
+                total_amount = min(total_amount, (item.max_amount - item_count))
+            if total_amount != 0:
+                final_items.append((total_amount, item))
+
+        if len(final_items) > 0:
+            event = InventoryBatchEvent(
+                datetime.datetime.now(),
+                guild_id,
+                member_id,
+                final_items,
+            )
+
+            await self.controller.dispatch_event(event)
 
     async def get_guild_items_activated(
         self, guild_id: int, trigger: ItemTrigger
