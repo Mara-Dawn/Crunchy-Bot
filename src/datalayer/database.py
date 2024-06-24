@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import json
 from typing import Any
@@ -28,7 +29,7 @@ from combat.gear.types import (
 )
 from combat.skills.skill import BaseSkill, Skill
 from combat.skills.skills import *  # noqa: F403
-from combat.skills.types import SkillType, StatusEffectType
+from combat.skills.types import SkillType
 from control.logger import BotLogger
 from discord.ext import commands
 from events.bat_event import BatEvent
@@ -73,7 +74,6 @@ from datalayer.types import (
     SeasonDate,
     UserInteraction,
 )
-import contextlib
 
 
 class Database:
@@ -681,8 +681,7 @@ class Database:
         self.db_file = db_file
 
     async def create_tables(self):
-        async with aiosqlite.connect(self.db_file, isolation_level=None) as db:
-            await db.execute('pragma journal_mode=wal')
+        async with aiosqlite.connect(self.db_file) as db:
             await db.execute(self.CREATE_SETTINGS_TABLE)
             await db.execute(self.CREATE_JAIL_TABLE)
             await db.execute(self.CREATE_EVENT_TABLE)
@@ -737,16 +736,14 @@ class Database:
         return start_timestamp, end_timestamp
 
     async def __query_select(self, query: str, task=None):
-        async with aiosqlite.connect(self.db_file, isolation_level=None, timeout=30) as db:
-            await db.execute('pragma journal_mode=wal')
+        async with aiosqlite.connect(self.db_file, timeout=20) as db:  # noqa: SIM117
             async with db.execute(query, task) as cursor:
                 rows = await cursor.fetchall()
                 headings = [x[0] for x in cursor.description]
                 return self.__parse_rows(rows, headings)
 
     async def __query_insert(self, query: str, task=None) -> int:
-        async with aiosqlite.connect(self.db_file, isolation_level=None, timeout=30) as db:
-            await db.execute('pragma journal_mode=wal')
+        async with aiosqlite.connect(self.db_file, timeout=20) as db:
             cursor = await db.execute(query, task)
             insert_id = cursor.lastrowid
             await db.commit()
