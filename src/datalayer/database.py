@@ -38,6 +38,7 @@ from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.garden_event import GardenEvent
 from events.interaction_event import InteractionEvent
+from events.inventory_batchevent import InventoryBatchEvent
 from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
 from events.karma_event import KarmaEvent
@@ -782,6 +783,25 @@ class Database:
 
         return await self.__query_insert(command, task)
 
+    async def __create_batch_base_event(self, event: BotEvent) -> int:
+        command = f"""
+                INSERT INTO {self.EVENT_TABLE} (
+                {self.EVENT_TIMESTAMP_COL}, 
+                {self.EVENT_GUILD_ID_COL}, 
+                {self.EVENT_TYPE_COL}) 
+                VALUES 
+            """
+        timestamp = event.get_timestamp()
+
+        for i in range(event.amount):
+            last = i + 1 == event.amount
+            end = "," if not last else ";"
+            command += (
+                f"({timestamp}, {event.guild_id}, '{event.base_type.value}'){end}"
+            )
+
+        return await self.__query_insert(command)
+
     async def __create_interaction_event(
         self, event_id: int, event: InteractionEvent
     ) -> int:
@@ -893,6 +913,30 @@ class Database:
         )
 
         return await self.__query_insert(command, task)
+
+    async def __create_batch_inventory_event(
+        self, event_id: int, event: InventoryBatchEvent
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.INVENTORY_EVENT_TABLE} (
+            {self.INVENTORY_EVENT_ID_COL},
+            {self.INVENTORY_EVENT_MEMBER_COL},
+            {self.INVENTORY_EVENT_ITEM_TYPE_COL},
+            {self.INVENTORY_EVENT_AMOUNT_COL})
+            VALUES 
+            """
+
+        event_id = event_id - event.amount + 1
+        for index, (amount, item) in enumerate(event.items):
+            last = index + 1 == len(event.items)
+            end = "," if not last else ";"
+            command += (
+                f"({event_id}, {event.member_id}, '{item.value}', {amount}){end}"
+            )
+
+            event_id += 1
+
+        return await self.__query_insert(command)
 
     async def __create_loot_box_event(self, event_id: int, event: LootBoxEvent) -> int:
         command = f"""
@@ -1036,7 +1080,10 @@ class Database:
         return await self.__query_insert(command, task)
 
     async def log_event(self, event: BotEvent) -> int:
-        event_id = await self.__create_base_event(event)
+        if event.type == EventType.INVENTORYBATCH:
+            event_id = await self.__create_batch_base_event(event)
+        else:
+            event_id = await self.__create_base_event(event)
 
         if event_id is None:
             self.logger.error("DB", "Event creation error, id was NoneType")
@@ -1057,6 +1104,8 @@ class Database:
                 return await self.__create_beans_event(event_id, event)
             case EventType.INVENTORY:
                 return await self.__create_inventory_event(event_id, event)
+            case EventType.INVENTORYBATCH:
+                return await self.__create_batch_inventory_event(event_id, event)
             case EventType.LOOTBOX:
                 return await self.__create_loot_box_event(event_id, event)
             case EventType.BAT:

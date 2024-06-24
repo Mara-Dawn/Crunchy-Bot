@@ -368,8 +368,8 @@ class LootBoxViewController(ViewController):
         )
         self.logger.log(interaction.guild_id, log_message, cog="Beans")
 
-        for amount, item in items_to_give:
-            await self.item_manager.give_item(guild_id, member_id, item, amount)
+        if len(items_to_give) > 0:
+            await self.item_manager.give_items(guild_id, member_id, items_to_give)
 
         if total_beans != 0:
             event = BeansEvent(
