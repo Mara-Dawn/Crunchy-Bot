@@ -180,17 +180,20 @@ class CombatStatusEffectManager(Service):
 
     async def get_status_effect_outcome_info(
         self,
+        context: EncounterContext,
+        actor: Actor,
         effect_data: dict[StatusEffectType, Any],
     ) -> dict[str, str]:
         outcome_info = {}
         for effect_type, data in effect_data.items():
             title = ""
             description = ""
+            status_effect = await self.get_status_effect(effect_type)
 
             match effect_type:
                 case StatusEffectType.BLEED:
-                    title = "Bleed"
-                    description = f"You take {data} physical bleeding damage."
+                    title = f"{status_effect.emoji} Bleed"
+                    description = f"{actor.name} suffers {data} bleeding damage."
 
             outcome_info[title] = description
 
@@ -205,7 +208,7 @@ class CombatStatusEffectManager(Service):
         effect_data = await self.get_status_effect_outcomes(
             context, actor, status_effects
         )
-        return await self.get_status_effect_outcome_info(effect_data)
+        return await self.get_status_effect_outcome_info(context, actor, effect_data)
 
     async def actor_trigger(
         self, context: EncounterContext, actor: Actor, trigger: StatusEffectTrigger

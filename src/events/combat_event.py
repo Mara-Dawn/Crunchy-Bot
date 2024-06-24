@@ -59,7 +59,7 @@ class CombatEvent(BotEvent):
         if skill_db_value is not None:
             with contextlib.suppress(Exception):
                 skill_type = SkillType(skill_db_value)
-            if skill_type is not None:
+            if skill_type is None:
                 with contextlib.suppress(Exception):
                     skill_type = StatusEffectType(skill_db_value)
 

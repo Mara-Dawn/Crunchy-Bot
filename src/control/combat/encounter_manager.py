@@ -490,6 +490,8 @@ class EncounterManager(Service):
 
         context = await self.load_encounter_context(context.encounter.id)
 
+        await self.refresh_encounter_thread(context.encounter.id)
+
     async def combatant_turn(
         self,
         context: EncounterContext,
