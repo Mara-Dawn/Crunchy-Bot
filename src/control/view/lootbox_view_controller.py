@@ -140,6 +140,10 @@ class LootBoxViewController(ViewController):
             user_protection = await self.database.get_item_counts_by_user(
                 guild_id, member_id, item_types=[ItemType.PROTECTION]
             )
+
+            if ItemType.PROTECTION not in user_protection:
+                return False
+
             user_protection_amount = user_protection[ItemType.PROTECTION]
             amount = min(5, user_protection_amount)
             event = InventoryEvent(
