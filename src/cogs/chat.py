@@ -304,6 +304,7 @@ class Chat(commands.Cog):
         amount: int,
         batch: bool = True,
     ) -> None:
+        await interaction.response.defer()
         t0 = time.time()
         guild_id = interaction.guild_id
         member_id = interaction.user.id
@@ -341,7 +342,7 @@ class Chat(commands.Cog):
         await self.bot.command_response(
             self.__cog_name__,
             interaction,
-            f"{loops} loops of {amount} {batchresponse}inventory events created",
+            f"{loops} loops of {amount} {batchresponse}inventory events created in {total_time} seconds",
         )
 
 
