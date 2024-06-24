@@ -1,6 +1,8 @@
 import datetime
 from typing import Any
 
+from items.types import ItemType
+
 from events.bot_event import BotEvent
 from events.types import EventType
 
@@ -12,7 +14,7 @@ class InventoryBatchEvent(BotEvent):
         timestamp: datetime.datetime,
         guild_id: int,
         member_id: int,
-        items=list[tuple[int, str]],
+        items: list[tuple[int, ItemType]],
         id: int = None,
     ):
         super().__init__(timestamp, guild_id, EventType.INVENTORYBATCH, id)

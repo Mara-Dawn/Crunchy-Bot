@@ -450,7 +450,7 @@ class ItemManager(Service):
 
                 total_amount = min(total_amount, (item.max_amount - item_count))
             if total_amount != 0:
-                final_items.append((total_amount, item))
+                final_items.append((total_amount, item.type))
 
         if len(final_items) > 0:
             event = InventoryBatchEvent(

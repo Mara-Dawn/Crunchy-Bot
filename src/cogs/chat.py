@@ -1,4 +1,6 @@
 import datetime
+import random
+import time
 from typing import Literal
 
 import discord
@@ -13,7 +15,10 @@ from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from discord import app_commands
 from discord.ext import commands, tasks
+from events.inventory_batchevent import InventoryBatchEvent
+from events.inventory_event import InventoryEvent
 from events.karma_event import KarmaEvent
+from items.types import ItemType
 
 
 class Chat(commands.Cog):
@@ -281,6 +286,62 @@ class Chat(commands.Cog):
             interaction,
             f"Karma module was turned {enabled}.",
             args=[enabled],
+        )
+
+    @app_commands.command(
+        name="spam_inv_events",
+        description="Increase the file size of your database with one simple trick!",
+    )
+    @app_commands.describe(
+        loops="loops", amount="amount", batch="batch events, default True"
+    )
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def spam_inv_events(
+        self,
+        interaction: discord.Interaction,
+        loops: int,
+        amount: int,
+        batch: bool = True,
+    ) -> None:
+        t0 = time.time()
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+        for _loop in range(loops):
+            itemtypes = list(ItemType)[:18]
+            random_items = []
+
+            for _number in range(amount):
+                random_items.append((random.randrange(1, 10), random.choice(itemtypes)))
+
+            if batch:
+                event = InventoryBatchEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    member_id,
+                    random_items,
+                )
+
+                await self.controller.dispatch_event(event)
+            if not batch:
+                for am, item in random_items:
+                    event = InventoryEvent(
+                        datetime.datetime.now(),
+                        guild_id,
+                        member_id,
+                        item,
+                        am,
+                    )
+                    await self.controller.dispatch_event(event)
+        t1 = time.time()
+        total_time = t1 - t0
+        print(total_time)
+
+        batchresponse = "batched " if batch else ""
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"{loops} loops of {amount} {batchresponse}inventory events created",
         )
 
 

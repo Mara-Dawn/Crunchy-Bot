@@ -931,7 +931,7 @@ class Database:
             last = index + 1 == len(event.items)
             end = "," if not last else ";"
             command += (
-                f"({event_id}, {event.member_id}, '{item.type.value}', {amount}){end}"
+                f"({event_id}, {event.member_id}, '{item.value}', {amount}){end}"
             )
 
             event_id += 1
