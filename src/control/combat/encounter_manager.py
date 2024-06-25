@@ -424,12 +424,28 @@ class EncounterManager(Service):
                 current_embeds = previous_embeds + [embed]
                 await turn_message.edit(embeds=current_embeds)
 
-            # await asyncio.sleep(2)
-
             for target, damage_instance, _ in turn.damage_data:
                 total_damage = target.get_skill_damage_after_defense(
                     turn.skill, damage_instance.scaled_value
                 )
+
+                for skill_status_effect in turn.skill.base_skill.status_effects:
+                    application_value = None
+                    match skill_status_effect.application:
+                        case StatusEffectApplication.ATTACK_VALUE:
+                            application_value = damage_instance.scaled_value
+                        case StatusEffectApplication.DEFAULT:
+                            pass
+
+                    await self.status_effect_manager.apply_status(
+                        context,
+                        opponent,
+                        target,
+                        skill_status_effect.status_effect_type,
+                        skill_status_effect.stacks,
+                        application_value,
+                    )
+
                 event = CombatEvent(
                     datetime.datetime.now(),
                     context.encounter.guild_id,
@@ -468,6 +484,14 @@ class EncounterManager(Service):
         actor: Actor,
         trigger: StatusEffectTrigger,
     ):
+        context = await self.load_encounter_context(context.encounter.id)
+
+        # TODO: fix later
+
+        for active_actor in context.get_current_initiative():
+            if active_actor.id == actor.id:
+                actor = active_actor
+
         triggered_status_effects = await self.status_effect_manager.actor_trigger(
             context, actor, trigger
         )
@@ -802,7 +826,7 @@ class EncounterManager(Service):
 
         if context.new_round():
             await self.delete_previous_combat_info(context.thread)
-            await context.thread.send("", embed=enemy_embed)
+            message = await context.thread.send("", embed=enemy_embed)
             await context.thread.send(content="", embed=round_embed)
         else:
             message = await self.get_previous_enemy_info(context.thread)

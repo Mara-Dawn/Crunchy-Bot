@@ -80,7 +80,7 @@ class CombatStatusEffectManager(Service):
                     actor: Opponent = source
                     level = actor.level
                     base_value = (
-                        Config.OPPONENT_DAMAGE_BASE[level] / self.enemy.damage_scaling
+                        Config.OPPONENT_DAMAGE_BASE[level] / actor.enemy.damage_scaling
                     )
                     modifier = actor.enemy.attributes[
                         CharacterAttribute.PHYS_DAMAGE_INCREASE
@@ -145,7 +145,21 @@ class CombatStatusEffectManager(Service):
             effect_type = active_status_effect.status_effect.effect_type
 
             match effect_type:
+                case StatusEffectType.CLEANSE:
+                    for status in status_effects:
+                        if status.status_effect.effect_type == StatusEffectType.BLEED:
+                            await self.consume_status_stack(
+                                context,
+                                status,
+                                status.remaining_stacks,
+                            )
+                            effect_data[effect_type] = "Bleed was cleansed."
+
                 case StatusEffectType.BLEED:
+                    if StatusEffectType.CLEANSE in [
+                        x.status_effect.effect_type for x in status_effects
+                    ]:
+                        continue
                     damage = event.value
 
                     combatant_count = context.get_combat_scale()
@@ -191,6 +205,9 @@ class CombatStatusEffectManager(Service):
             status_effect = await self.get_status_effect(effect_type)
 
             match effect_type:
+                case StatusEffectType.CLEANSE:
+                    title = f"{status_effect.emoji} Cleanse"
+                    description = data
                 case StatusEffectType.BLEED:
                     title = f"{status_effect.emoji} Bleed"
                     description = f"{actor.name} suffers {data} bleeding damage."
@@ -222,6 +239,9 @@ class CombatStatusEffectManager(Service):
                 triggered.append(active_status_effect)
                 await self.consume_status_stack(context, active_status_effect)
 
+        triggered = sorted(
+            triggered, key=lambda item: item.status_effect.priority, reverse=True
+        )
         return triggered
 
     async def trigger_effects(self, trigger: StatusEffectTrigger):

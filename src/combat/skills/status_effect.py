@@ -17,17 +17,21 @@ class StatusEffect:
         name: str,
         description: str,
         trigger: list[StatusEffectTrigger],
+        priority: int = 100,
         damage_type: SkillEffect = None,
         max_stacks: int = MAX_STACKS,
+        display_status: bool = False,
         emoji: str = None,
     ):
         self.effect_type = effect_type
         self.name = name
         self.description = description
+        self.priority = priority
         self.damage_type = damage_type
         self.trigger = trigger
         self.max_stacks = max_stacks
         self.emoji = emoji
+        self.display_status = display_status
 
         if self.damage_type is None:
             self.damage_type = SkillEffect.STATUS_EFFECT_DAMAGE

@@ -129,6 +129,28 @@ class CombatEmbedManager(Service):
         embed_content = "```\n" + value + spacing + "```"
         embed.add_field(name=name, value=embed_content, inline=False)
 
+    def add_active_status_effect_bar(
+        self,
+        embed: discord.Embed,
+        actor: Actor,
+        max_width: int = None,
+    ):
+        if len(actor.status_effects) <= 0:
+            return
+
+        if max_width is None:
+            max_width = Config.COMBAT_EMBED_MAX_WIDTH
+
+        name = "Status Effects"
+        value = ""
+
+        for effect in actor.status_effects:
+            if effect.status_effect.display_status:
+                value += f"{effect.status_effect.emoji}[{effect.remaining_stacks}]"
+
+        embed_content = "```\n" + value + "```"
+        embed.add_field(name=name, value=embed_content, inline=False)
+
     async def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
@@ -143,6 +165,10 @@ class CombatEmbedManager(Service):
         )
         max_hp = context.opponent.max_hp
         self.add_health_bar(embed, current_hp, max_hp, max_width=Config.ENEMY_MAX_WIDTH)
+
+        self.add_active_status_effect_bar(
+            embed, context.opponent, max_width=Config.ENEMY_MAX_WIDTH
+        )
 
         skill_list = []
         for skill_type in enemy.skill_types:
@@ -254,6 +280,10 @@ class CombatEmbedManager(Service):
             max_hp,
             hide_hp=False,
             max_width=Config.COMBAT_EMBED_MAX_WIDTH,
+        )
+
+        self.add_active_status_effect_bar(
+            head_embed, actor, max_width=Config.COMBAT_EMBED_MAX_WIDTH
         )
 
         if actor.image_url is not None:
@@ -561,14 +591,23 @@ class CombatEmbedManager(Service):
             )
             fraction = current_hp / actor.max_hp
             percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
+            name = actor.name[:10]
             display_hp = f"[{percentage}%]" if not actor.is_enemy else ""
+            status_effects = ""
+            for effect in actor.status_effects:
+                if effect.status_effect.display_status:
+                    status_effects += (
+                        f"{effect.status_effect.emoji}[{effect.remaining_stacks}]"
+                    )
             if actor.id == current_actor.id:
                 width = 45
-                text = f"{number}. >> {actor.name} << {display_hp}"
+                text = f"{number}. >> {name} << {status_effects} {display_hp}"
                 spacing = " " * max(0, width - len(text))
                 initiative_display += f"\n{text}{spacing}"
                 continue
-            initiative_display += f"\n{number}. {actor.name} {display_hp}"
+            initiative_display += (
+                f"\n{number}. {actor.name} {status_effects} {display_hp}"
+            )
         initiative_display = f"```python\n{initiative_display}```"
         embed.add_field(name="Turn Order:", value=initiative_display, inline=False)
 

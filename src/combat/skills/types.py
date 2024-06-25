@@ -3,6 +3,7 @@ from enum import Enum
 
 class StatusEffectType(str, Enum):
     BLEED = "Bleed"
+    CLEANSE = "Cleanse"
 
 
 class SkillType(str, Enum):

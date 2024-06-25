@@ -116,7 +116,7 @@ class Enemy:
             CharacterAttribute.CRIT_DAMAGE: 1.5,
             CharacterAttribute.PHYS_DAMAGE_REDUCTION: 0,
             CharacterAttribute.MAGIC_DAMAGE_REDUCTION: 0,
-            CharacterAttribute.STATUS_EFFECT_REDUCTION: 0,
+            CharacterAttribute.MAGIC_DAMAGE_REDUCTION: 0,
             CharacterAttribute.MAX_HEALTH: 50,
         }
 

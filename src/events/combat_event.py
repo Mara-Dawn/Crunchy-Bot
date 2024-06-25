@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 from typing import Any
 
@@ -5,7 +6,6 @@ from combat.skills.types import SkillType, StatusEffectType
 
 from events.bot_event import BotEvent
 from events.types import CombatEventType, EncounterEventType, EventType
-import contextlib
 
 
 class CombatEvent(BotEvent):
