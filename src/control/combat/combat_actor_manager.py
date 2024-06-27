@@ -4,7 +4,7 @@ from combat.enemies.enemy import Enemy
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
 from combat.skills.status_effect import ActiveStatusEffect
-from combat.skills.types import SkillEffect, SkillType
+from combat.skills.types import SkillEffect, SkillType, StatusEffectType
 from config import Config
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
@@ -76,6 +76,7 @@ class CombatActorManager(Service):
         status_effects: dict[int, list[StatusEffectEvent]],
         combat_events: list[CombatEvent],
     ) -> list[ActiveStatusEffect]:
+        active_status_effects: dict[StatusEffectType, list[ActiveStatusEffect]] = {}
         active_status_effects = []
 
         if id not in status_effects:
@@ -93,17 +94,31 @@ class CombatActorManager(Service):
                 continue
 
             stacks[status_id] += combat_event.skill_value
-            if stacks[status_id] <= 0:
-                del stacks[status_id]
 
         for event in actor_status_effects:
-            if event.id not in stacks:
-                continue
             status_effect = await self.factory.get_status_effect(event.status_type)
             active_status_effect = ActiveStatusEffect(
                 status_effect, event, stacks[event.id]
             )
+            # if event.status_type not in active_status_effects:
+            #     active_status_effects = [active_status_effect]
+            # else:
+            #     if status_effect.override and stacks[event.id] > 0:
+            #         continue
+            #
+            #     users_with_active_status = [
+            #         element.event.get_causing_user_id
+            #         for element in active_status_effects[event.status_type]
+            #     ]
+            #     if (
+            #         status_effect.override_by_actor
+            #         and event.get_causing_user_id in users_with_active_status
+            #     ):
+            #         continue
+
             active_status_effects.append(active_status_effect)
+
+        # active_status_effects = [x for v in active_status_effects.values() for x in v]
 
         return active_status_effects
 

@@ -1,4 +1,6 @@
 import datetime
+import random
+from sys import activate_stack_trampoline
 from typing import Any
 
 from combat.actors import Actor, Character, Opponent
@@ -102,6 +104,26 @@ class CombatStatusEffectManager(Service):
 
                 damage = base_value * (1 + modifier)
 
+        status_effect = await self.factory.get_status_effect(type)
+        if status_effect.override or status_effect.override_by_actor:
+            for active_effect in target.status_effects:
+                override = False
+                if active_effect.status_effect.effect_type != type:
+                    continue
+                if status_effect.override and active_effect.remaining_stacks > 0:
+                    override = True
+                if (
+                    status_effect.override_by_actor
+                    and active_effect.event.get_causing_user_id == source.id
+                ):
+                    override = True
+                if override:
+                    await self.consume_status_stack(
+                        context,
+                        active_effect,
+                        active_effect.remaining_stacks,
+                    )
+
         event = StatusEffectEvent(
             datetime.datetime.now(),
             context.encounter.guild_id,
@@ -193,6 +215,11 @@ class CombatStatusEffectManager(Service):
                         effect_data[effect_type] = total_damage
                     else:
                         effect_data[effect_type] += total_damage
+                case StatusEffectType.BLIND:
+                    roll = random.random()
+                    effect_data[effect_type] = (
+                        0 if roll < Config.BLIND_MISS_CHANCE else 1
+                    )
 
         return effect_data
 
@@ -215,6 +242,11 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.BLEED:
                     title = f"{status_effect.emoji} Bleed"
                     description = f"{actor.name} suffers {data} bleeding damage."
+                case StatusEffectType.BLIND:
+                    if data != 0:
+                        continue
+                    title = f"{status_effect.emoji} Blind"
+                    description = f"{actor.name} misses their attack!."
 
             outcome_info[title] = description
 
@@ -231,12 +263,35 @@ class CombatStatusEffectManager(Service):
         )
         return await self.get_status_effect_outcome_info(context, actor, effect_data)
 
+    async def handle_attack_status_effects(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+        status_effects: list[ActiveStatusEffect],
+    ) -> tuple[dict[str, str], float]:
+        effect_data = await self.get_status_effect_outcomes(
+            context, actor, status_effects
+        )
+
+        modifier = 1
+        for _, data in effect_data.items():
+            modifier *= float(data)
+
+        embed_data = await self.get_status_effect_outcome_info(
+            context, actor, effect_data
+        )
+
+        return embed_data, modifier
+
     async def actor_trigger(
         self, context: EncounterContext, actor: Actor, trigger: StatusEffectTrigger
     ) -> list[ActiveStatusEffect]:
         triggered = []
 
         for active_status_effect in actor.status_effects:
+            if active_status_effect.remaining_stacks <= 0:
+                continue
+
             status_effect = active_status_effect.status_effect
 
             if trigger in status_effect.trigger:

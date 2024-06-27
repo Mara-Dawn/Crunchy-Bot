@@ -42,6 +42,17 @@ class NormalAttack(BaseSkill):
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
             base_value=1.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    3,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    2,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
             hits=1,
             stacks=None,
             reset_after_encounter=False,
@@ -60,6 +71,13 @@ class HeavyAttack(BaseSkill):
             information="Your other basic weapon skill that comes with physical weapons.",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    5,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
             base_value=3,
             droppable=False,
             image_url="https://i.imgur.com/1Cf7nVB.png",
@@ -271,7 +289,7 @@ class LookingGood(BaseSkill):
             skill_type=SkillType.LOOKING_GOOD,
             description="You angrily look at the table that just hurt you. Huh, it's a pretty nice table. Too bad it has to die.",
             information="",
-            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            skill_effect=SkillEffect.NOTHING,
             cooldown=0,
             base_value=0,
             hits=1,
@@ -399,7 +417,7 @@ class Hold(BaseSkill):
             skill_type=SkillType.HOLD,
             description="The mushroom is shaking and beaming with more intensity. It almost seems like he's swelling up.",
             information="",
-            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            skill_effect=SkillEffect.NOTHING,
             cooldown=0,
             base_value=0,
             hits=1,
@@ -437,7 +455,7 @@ class Exercise(BaseSkill):
             skill_type=SkillType.EXERCISE,
             description="He loves you - lil damn cutie - he begins to show off his power. Nothing to worry about.",
             information="",
-            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            skill_effect=SkillEffect.NOTHING,
             cooldown=0,
             base_value=0,
             initial_cooldown=0,

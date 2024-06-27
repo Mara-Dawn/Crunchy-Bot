@@ -20,6 +20,8 @@ class StatusEffect:
         priority: int = 100,
         damage_type: SkillEffect = None,
         max_stacks: int = MAX_STACKS,
+        override_by_actor: bool = False,
+        override: bool = False,
         display_status: bool = False,
         emoji: str = None,
     ):
@@ -32,6 +34,8 @@ class StatusEffect:
         self.max_stacks = max_stacks
         self.emoji = emoji
         self.display_status = display_status
+        self.override = override
+        self.override_by_actor = override_by_actor
 
         if self.damage_type is None:
             self.damage_type = SkillEffect.STATUS_EFFECT_DAMAGE

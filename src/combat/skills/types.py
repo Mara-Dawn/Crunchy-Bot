@@ -74,6 +74,7 @@ class SkillEffect(str, Enum):
     MAGICAL_DAMAGE = "Magical"
     STATUS_EFFECT_DAMAGE = "Status"
     NEUTRAL_DAMAGE = "Neutral"
+    NOTHING = "Nothing"
     HEALING = "Healing"
 
 
@@ -121,5 +122,15 @@ class SkillInstance:
         if self.is_crit:
             self.value *= self.critical_modifier
 
-        self.scaled_value = max(1, int(self.value * self.encounter_scaling))
+        self.scaled_value = 0
+        if self.value > 0:
+            self.scaled_value = max(1, int(self.value * self.encounter_scaling))
+        self.value: int = int(self.value)
+
+    def apply_effect_modifier(self, modifier: float):
+        self.value *= modifier
+        self.raw_value = int(self.value)
+        self.scaled_value = 0
+        if self.value > 0:
+            self.scaled_value = max(1, int(self.value * self.encounter_scaling))
         self.value: int = int(self.value)

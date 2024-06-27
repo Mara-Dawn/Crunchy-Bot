@@ -143,7 +143,7 @@ class CombatEmbedManager(Service):
         value = ""
 
         for effect in actor.status_effects:
-            if effect.status_effect.display_status:
+            if effect.status_effect.display_status and effect.remaining_stacks > 0:
                 value += f"{effect.status_effect.emoji}[{effect.remaining_stacks}]"
 
         embed_content = "```\n" + value + "```"
@@ -600,7 +600,7 @@ class CombatEmbedManager(Service):
             display_hp = f"[{percentage}%]" if not actor.is_enemy else ""
             status_effects = ""
             for effect in actor.status_effects:
-                if effect.status_effect.display_status:
+                if effect.status_effect.display_status and effect.remaining_stacks > 0:
                     status_effects += (
                         f"{effect.status_effect.emoji}[{effect.remaining_stacks}]"
                     )

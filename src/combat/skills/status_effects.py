@@ -38,4 +38,5 @@ class Blind(StatusEffect):
             trigger=[StatusEffectTrigger.ON_ATTACK],
             emoji="👁️",
             display_status=True,
+            override=True,
         )

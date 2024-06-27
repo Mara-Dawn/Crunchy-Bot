@@ -13,6 +13,7 @@ from combat.skills.types import (
     SkillInstance,
     StatusEffectApplication,
     StatusEffectTrigger,
+    StatusEffectType,
 )
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
@@ -450,11 +451,15 @@ class EncounterManager(Service):
     ) -> list[tuple[Actor, SkillInstance, float]]:
         damage_data = []
 
+        effect_modifier = await self.handle_attack_status_effects(
+            context, context.opponent, skill.base_skill.skill_effect
+        )
         for target in available_targets:
             instances = await self.skill_manager.get_skill_effect(
                 context.opponent, skill, combatant_count=context.get_combat_scale()
             )
             instance = instances[0]
+            instance.apply_effect_modifier(effect_modifier)
 
             if target.id not in hp_cache:
                 current_hp = await self.actor_manager.get_actor_current_hp(
@@ -505,6 +510,11 @@ class EncounterManager(Service):
                 )
             else:
                 current_hp = hp_cache[target.id]
+
+            effect_modifier = await self.handle_attack_status_effects(
+                context, context.opponent, skill.base_skill.skill_effect
+            )
+            instance.apply_effect_modifier(effect_modifier)
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
@@ -596,6 +606,45 @@ class EncounterManager(Service):
         )
         await self.controller.dispatch_event(event)
 
+    async def handle_attack_status_effects(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+        skill_effect: SkillEffect,
+    ):
+        context = await self.load_encounter_context(context.encounter.id)
+
+        for active_actor in context.get_current_initiative():
+            if active_actor.id == actor.id:
+                actor = active_actor
+
+        triggered_status_effects = await self.status_effect_manager.actor_trigger(
+            context, actor, StatusEffectTrigger.ON_ATTACK
+        )
+
+        if len(triggered_status_effects) <= 0 or skill_effect in [SkillEffect.NOTHING, SkillEffect.HEALING]:
+            return 1
+
+        effect_data, modifier = (
+            await self.status_effect_manager.handle_attack_status_effects(
+                context, actor, triggered_status_effects
+            )
+        )
+
+        if len(effect_data) <= 0:
+            return modifier
+
+        turn_message = await self.get_previous_turn_message(context.thread)
+        previous_embeds = turn_message.embeds
+
+        status_effect_embed = self.embed_manager.get_status_effect_embed(
+            actor, effect_data
+        )
+        current_embeds = previous_embeds + [status_effect_embed]
+        await turn_message.edit(embeds=current_embeds)
+
+        return modifier
+
     async def handle_turn_status_effects(
         self,
         context: EncounterContext,
@@ -656,6 +705,13 @@ class EncounterManager(Service):
         hp_cache = {}
 
         for instance in skill_instances:
+            effect_modifier = await self.handle_attack_status_effects(
+                context,
+                character,
+                skill_data.skill.base_skill.skill_effect,
+            )
+            instance.apply_effect_modifier(effect_modifier)
+
             total_skill_value = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill_data.skill, instance.scaled_value
             )
@@ -684,10 +740,6 @@ class EncounterManager(Service):
         for turn in turn_data:
             turn_message = await self.get_previous_turn_message(context.thread)
             previous_embeds = turn_message.embeds
-
-            await self.handle_turn_status_effects(
-                context, character, StatusEffectTrigger.ON_ATTACK
-            )
 
             async for embed in self.embed_manager.handle_actor_turn_embed(
                 turn, context
