@@ -42,17 +42,6 @@ class NormalAttack(BaseSkill):
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
             base_value=1.5,
-            status_effects=[
-                SkillStatusEffect(
-                    StatusEffectType.BLIND,
-                    3,
-                ),
-                SkillStatusEffect(
-                    StatusEffectType.BLEED,
-                    2,
-                    StatusEffectApplication.ATTACK_VALUE,
-                ),
-            ],
             hits=1,
             stacks=None,
             reset_after_encounter=False,

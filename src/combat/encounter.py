@@ -220,7 +220,9 @@ class TurnData:
         actor: Actor,
         skill: Skill,
         damage_data: list[tuple[Actor, SkillInstance, int]],
+        post_embed: discord.Embed = None,
     ):
         self.actor = actor
         self.skill = skill
         self.damage_data = damage_data
+        self.post_embed = post_embed

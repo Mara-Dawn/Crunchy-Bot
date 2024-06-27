@@ -17,6 +17,7 @@ class StatusEffect:
         name: str,
         description: str,
         trigger: list[StatusEffectTrigger],
+        consumed: list[StatusEffectTrigger],
         priority: int = 100,
         damage_type: SkillEffect = None,
         max_stacks: int = MAX_STACKS,
@@ -31,6 +32,7 @@ class StatusEffect:
         self.priority = priority
         self.damage_type = damage_type
         self.trigger = trigger
+        self.consumed = consumed
         self.max_stacks = max_stacks
         self.emoji = emoji
         self.display_status = display_status

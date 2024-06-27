@@ -98,6 +98,8 @@ class CombatStatusEffectManager(Service):
                     ]
 
                 if application_value is not None:
+                    if application_value <= 0:
+                        return
                     base_value = max(
                         base_value, (application_value * Config.BLEED_SCALING)
                     )
@@ -294,9 +296,11 @@ class CombatStatusEffectManager(Service):
 
             status_effect = active_status_effect.status_effect
 
+            if trigger in status_effect.consumed:
+                await self.consume_status_stack(context, active_status_effect)
+
             if trigger in status_effect.trigger:
                 triggered.append(active_status_effect)
-                await self.consume_status_stack(context, active_status_effect)
 
         triggered = sorted(
             triggered, key=lambda item: item.status_effect.priority, reverse=True

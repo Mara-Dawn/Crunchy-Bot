@@ -10,6 +10,7 @@ class Bleed(StatusEffect):
             name="Bleed",
             description="You slowly bleed out.",
             trigger=[StatusEffectTrigger.END_OF_TURN],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
             emoji="🩸",
             display_status=True,
         )
@@ -23,6 +24,7 @@ class Cleanse(StatusEffect):
             name="Cleanse",
             description="Cleanses Bleeding.",
             trigger=[StatusEffectTrigger.END_OF_TURN],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
             priority=1,
             emoji="🩹",
         )
@@ -36,6 +38,7 @@ class Blind(StatusEffect):
             name="Blind",
             description="You have a chance to miss your attack.",
             trigger=[StatusEffectTrigger.ON_ATTACK],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
             emoji="👁️",
             display_status=True,
             override=True,
