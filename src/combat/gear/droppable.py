@@ -50,12 +50,6 @@ class Droppable:
         Rarity.UNIQUE: "[1;31m",
     }
 
-    EFFECT_COLOR_MAP = {
-        SkillEffect.PHYSICAL_DAMAGE: "[31m",
-        SkillEffect.MAGICAL_DAMAGE: "[36m",
-        SkillEffect.HEALING: "[32m",
-    }
-
     RARITY_COLOR_HEX_MAP = {
         Rarity.DEFAULT: discord.Color.dark_gray(),
         Rarity.NORMAL: discord.Color(int("ffffff", 16)),

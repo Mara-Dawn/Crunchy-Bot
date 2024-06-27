@@ -4,6 +4,7 @@ import discord
 from combat.actors import Character
 from combat.encounter import EncounterContext
 from combat.skills.skill import CharacterSkill
+from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -27,12 +28,26 @@ class CombatTurnView(ViewMenu):
         self.member_id = character.member.id
         self.blocked = False
 
-        for skill in character.skills:
-            skill_data = character.get_skill_data(skill)
-            self.add_item(SkillButton(skill_data))
+        self.skill_manager: CombatSkillManager = self.controller.get_service(
+            CombatSkillManager
+        )
 
         self.controller_type = ControllerType.COMBAT
         self.controller.register_view(self)
+
+    @classmethod
+    async def create(
+        cls: "CombatTurnView",
+        controller: Controller,
+        character: Character,
+        context: EncounterContext,
+    ):
+        view = cls(controller, character, context)
+        for skill in character.skills:
+            skill_data = await view.skill_manager.get_skill_data(character, skill)
+            view.add_item(SkillButton(skill_data))
+
+        return view
 
     async def listen_for_ui_event(self, event: UIEvent):
         if event.view_id != self.id:

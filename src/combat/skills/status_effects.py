@@ -26,3 +26,16 @@ class Cleanse(StatusEffect):
             priority=1,
             emoji="🩹",
         )
+
+
+class Blind(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.BLIND,
+            name="Blind",
+            description="You have a chance to miss your attack.",
+            trigger=[StatusEffectTrigger.ON_ATTACK],
+            emoji="👁️",
+            display_status=True,
+        )

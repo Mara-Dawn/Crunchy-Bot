@@ -7,18 +7,19 @@ from combat.actors import Actor, Character
 from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.enemies.types import EnemyType
-from combat.skills.skill import CharacterSkill
+from combat.skills.skill import CharacterSkill, Skill
 from combat.skills.types import (
     SkillEffect,
+    SkillInstance,
     StatusEffectApplication,
     StatusEffectTrigger,
 )
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
-from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.combat_skill_manager import CombatSkillManager
+from control.combat.object_factory import ObjectFactory
 from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
 from control.item_manager import ItemManager
@@ -62,9 +63,6 @@ class EncounterManager(Service):
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
         )
-        self.enemy_manager: CombatEnemyManager = self.controller.get_service(
-            CombatEnemyManager
-        )
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
@@ -77,6 +75,7 @@ class EncounterManager(Service):
         self.status_effect_manager: CombatStatusEffectManager = (
             self.controller.get_service(CombatStatusEffectManager)
         )
+        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "Encounter"
 
     async def listen_for_event(self, event: BotEvent):
@@ -125,7 +124,7 @@ class EncounterManager(Service):
             encounter_level = random.randint(min_encounter_level, max_encounter_level)
 
         if enemy_type is not None:
-            enemy = self.enemy_manager.get_enemy(enemy_type)
+            enemy = await self.factory.get_enemy(enemy_type)
             if not (
                 encounter_level >= enemy.min_level
                 and encounter_level <= enemy.max_level
@@ -133,7 +132,7 @@ class EncounterManager(Service):
                 raise TypeError
         else:
             enemies = [
-                self.enemy_manager.get_enemy(enemy_type) for enemy_type in EnemyType
+                await self.factory.get_enemy(enemy_type) for enemy_type in EnemyType
             ]
             possible_enemies = [
                 enemy
@@ -206,7 +205,7 @@ class EncounterManager(Service):
         combat_events = await self.database.get_combat_events_by_encounter_id(
             encounter_id
         )
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
         opponent = await self.actor_manager.get_opponent(
             enemy,
             encounter.enemy_level,
@@ -252,7 +251,7 @@ class EncounterManager(Service):
         self, encounter: Encounter, first_member_id: int
     ) -> discord.Thread:
         channel = self.bot.get_channel(encounter.channel_id)
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
         thread = await channel.create_thread(
             name=f"Encounter: {enemy.name}",
             type=discord.ChannelType.public_thread,
@@ -303,7 +302,7 @@ class EncounterManager(Service):
         encounters = await self.database.get_active_encounter_participants(
             encounter.guild_id
         )
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
         max_encounter_size = enemy.max_players
         if len(encounters[encounter.id]) >= max_encounter_size:
             event = UIEvent(UIEventType.COMBAT_FULL, encounter.id)
@@ -323,7 +322,8 @@ class EncounterManager(Service):
         thread_id = await self.database.get_encounter_thread(encounter_id)
         thread = self.bot.get_channel(encounter.channel_id).get_thread(thread_id)
 
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
+
         opponent = await self.actor_manager.get_opponent(
             enemy,
             encounter.enemy_level,
@@ -405,14 +405,132 @@ class EncounterManager(Service):
 
         return embed
 
+    async def calculate_opponent_turn(
+        self,
+        context: EncounterContext,
+    ) -> list[TurnData]:
+        opponent = context.opponent
+
+        available_skills = []
+
+        sorted_skills = sorted(
+            opponent.skills, key=lambda x: x.base_skill.base_value, reverse=True
+        )
+        for skill in sorted_skills:
+            skill_data = await self.skill_manager.get_skill_data(opponent, skill)
+            if not skill_data.on_cooldown():
+                available_skills.append(skill)
+
+        skills_to_use = []
+
+        for skill in available_skills:
+            skills_to_use.append(skill)
+            if len(skills_to_use) >= opponent.enemy.actions_per_turn:
+                break
+
+        available_targets = context.get_active_combatants()
+
+        hp_cache = {}
+        turn_data = []
+        for skill in skills_to_use:
+            turn_data.append(
+                await self.calculate_opponent_turn_data(
+                    context, skill, available_targets, hp_cache
+                )
+            )
+
+        return turn_data
+
+    async def calculate_aoe_skill(
+        self,
+        context: EncounterContext,
+        skill: Skill,
+        available_targets: list[Actor],
+        hp_cache: dict[int, int],
+    ) -> list[tuple[Actor, SkillInstance, float]]:
+        damage_data = []
+
+        for target in available_targets:
+            instances = await self.skill_manager.get_skill_effect(
+                context.opponent, skill, combatant_count=context.get_combat_scale()
+            )
+            instance = instances[0]
+
+            if target.id not in hp_cache:
+                current_hp = await self.actor_manager.get_actor_current_hp(
+                    target, context.combat_events
+                )
+            else:
+                current_hp = hp_cache[target.id]
+
+            total_damage = await self.actor_manager.get_skill_damage_after_defense(
+                target, skill, instance.scaled_value
+            )
+            new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
+            hp_cache[target.id] = new_target_hp
+
+            damage_data.append((target, instance, new_target_hp))
+        return damage_data
+
+    async def calculate_opponent_turn_data(
+        self,
+        context: EncounterContext,
+        skill: Skill,
+        available_targets: list[Actor],
+        hp_cache: dict[int, int],
+    ):
+        damage_data = []
+
+        if skill.base_skill.aoe:
+            damage_data = await self.calculate_aoe_skill(
+                context, skill, available_targets, hp_cache
+            )
+            return TurnData(
+                actor=context.opponent, skill=skill, damage_data=damage_data
+            )
+
+        damage_instances = await self.skill_manager.get_skill_effect(
+            context.opponent, skill, combatant_count=context.get_combat_scale()
+        )
+
+        for instance in damage_instances:
+            if len(available_targets) <= 0:
+                break
+
+            target = random.choice(available_targets)
+
+            if target.id not in hp_cache:
+                current_hp = await self.actor_manager.get_actor_current_hp(
+                    target, context.combat_events
+                )
+            else:
+                current_hp = hp_cache[target.id]
+
+            total_damage = await self.actor_manager.get_skill_damage_after_defense(
+                target, skill, instance.scaled_value
+            )
+
+            new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
+
+            damage_data.append((target, instance, new_target_hp))
+
+            hp_cache[target.id] = new_target_hp
+            available_targets = [
+                actor
+                for actor in available_targets
+                if actor.id not in hp_cache or hp_cache[actor.id] > 0
+            ]
+
+        return TurnData(actor=context.opponent, skill=skill, damage_data=damage_data)
+
     async def opponent_turn(self, context: EncounterContext):
         opponent = context.opponent
 
-        await self.handle_status_effects(
+        await self.handle_turn_status_effects(
             context, opponent, StatusEffectTrigger.START_OF_TURN
         )
 
-        turn_data = await self.actor_manager.calculate_opponent_turn(context)
+        turn_data = await self.calculate_opponent_turn(context)
 
         for turn in turn_data:
             turn_message = await self.get_previous_turn_message(context.thread)
@@ -425,8 +543,8 @@ class EncounterManager(Service):
                 await turn_message.edit(embeds=current_embeds)
 
             for target, damage_instance, _ in turn.damage_data:
-                total_damage = target.get_skill_damage_after_defense(
-                    turn.skill, damage_instance.scaled_value
+                total_damage = await self.actor_manager.get_skill_damage_after_defense(
+                    target, turn.skill, damage_instance.scaled_value
                 )
 
                 for skill_status_effect in turn.skill.base_skill.status_effects:
@@ -461,7 +579,7 @@ class EncounterManager(Service):
 
             await self.refresh_encounter_thread(context.encounter.id)
 
-        await self.handle_status_effects(
+        await self.handle_turn_status_effects(
             context, opponent, StatusEffectTrigger.END_OF_TURN
         )
 
@@ -478,15 +596,13 @@ class EncounterManager(Service):
         )
         await self.controller.dispatch_event(event)
 
-    async def handle_status_effects(
+    async def handle_turn_status_effects(
         self,
         context: EncounterContext,
         actor: Actor,
         trigger: StatusEffectTrigger,
     ):
         context = await self.load_encounter_context(context.encounter.id)
-
-        # TODO: fix later
 
         for active_actor in context.get_current_initiative():
             if active_actor.id == actor.id:
@@ -523,7 +639,7 @@ class EncounterManager(Service):
         skill_data: CharacterSkill,
         target: Actor = None,
     ):
-        await self.handle_status_effects(
+        await self.handle_turn_status_effects(
             context, character, StatusEffectTrigger.START_OF_TURN
         )
 
@@ -532,16 +648,16 @@ class EncounterManager(Service):
                 character, skill_data.skill, context
             )
 
-        skill_instances = character.get_skill_effect(
-            skill_data.skill, combatant_count=context.get_combat_scale()
+        skill_instances = await self.skill_manager.get_skill_effect(
+            character, skill_data.skill, combatant_count=context.get_combat_scale()
         )
 
         skill_value_data = []
         hp_cache = {}
 
         for instance in skill_instances:
-            total_skill_value = target.get_skill_damage_after_defense(
-                skill_data.skill, instance.scaled_value
+            total_skill_value = await self.actor_manager.get_skill_damage_after_defense(
+                target, skill_data.skill, instance.scaled_value
             )
 
             target_id = target.id
@@ -569,6 +685,10 @@ class EncounterManager(Service):
             turn_message = await self.get_previous_turn_message(context.thread)
             previous_embeds = turn_message.embeds
 
+            await self.handle_turn_status_effects(
+                context, character, StatusEffectTrigger.ON_ATTACK
+            )
+
             async for embed in self.embed_manager.handle_actor_turn_embed(
                 turn, context
             ):
@@ -576,8 +696,8 @@ class EncounterManager(Service):
                 await turn_message.edit(embeds=current_embeds)
 
             for target, damage_instance, _ in turn.damage_data:
-                total_damage = target.get_skill_damage_after_defense(
-                    turn.skill, damage_instance.scaled_value
+                total_damage = await self.actor_manager.get_skill_damage_after_defense(
+                    target, turn.skill, damage_instance.scaled_value
                 )
 
                 for skill_status_effect in turn.skill.base_skill.status_effects:
@@ -610,7 +730,7 @@ class EncounterManager(Service):
                 )
                 await self.controller.dispatch_event(event)
 
-        await self.handle_status_effects(
+        await self.handle_turn_status_effects(
             context, character, StatusEffectTrigger.END_OF_TURN
         )
 
@@ -852,7 +972,9 @@ class EncounterManager(Service):
             return
 
         enemy_embeds = await self.embed_manager.get_character_turn_embeds(context)
-        view = CombatTurnView(self.controller, current_actor, context)
+
+        view = await CombatTurnView.create(self.controller, current_actor, context)
+
         message = await context.thread.send(
             f"<@{current_actor.id}>", embeds=enemy_embeds, view=view
         )

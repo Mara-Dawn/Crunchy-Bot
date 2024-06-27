@@ -4,22 +4,29 @@ from enum import Enum
 class StatusEffectType(str, Enum):
     BLEED = "Bleed"
     CLEANSE = "Cleanse"
+    BLIND = "Blind"
 
 
 class SkillType(str, Enum):
     EMPTY = "EmptySkill"
 
-    # Status Effects
-    # BLEED = StatusEffectType.BLEED.value
-
+    # Player Skills
+    # Physical
     NORMAL_ATTACK = "NormalAttack"
     HEAVY_ATTACK = "HeavyAttack"
-    MAGIC_ATTACK = "MagicAttack"
 
     SECOND_WIND = "SecondWind"
     GIGA_BONK = "GigaBonk"
+    SLICE_N_DICE = "SliceAndDice"
+
+    # Neutral
+    POCKET_SAND = "PocketSand"
+
+    # Magical
+    MAGIC_ATTACK = "MagicAttack"
     FIRE_BALL = "FireBall"
 
+    # Enemy Skills
     # Mind Goblin
     DEEZ_NUTS = "DeezNuts"
     BONK = "Bonk"
@@ -66,6 +73,7 @@ class SkillEffect(str, Enum):
     PHYSICAL_DAMAGE = "Physical"
     MAGICAL_DAMAGE = "Magical"
     STATUS_EFFECT_DAMAGE = "Status"
+    NEUTRAL_DAMAGE = "Neutral"
     HEALING = "Healing"
 
 

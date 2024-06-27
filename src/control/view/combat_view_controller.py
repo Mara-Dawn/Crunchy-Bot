@@ -13,8 +13,8 @@ from events.types import EncounterEventType, EventType, UIEventType
 from events.ui_event import UIEvent
 
 from control.combat.combat_embed_manager import CombatEmbedManager
-from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.encounter_manager import EncounterManager
+from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
@@ -39,9 +39,7 @@ class CombatViewController(ViewController):
         self.embed_manager: CombatEmbedManager = controller.get_service(
             CombatEmbedManager
         )
-        self.enemy_manager: CombatEnemyManager = self.controller.get_service(
-            CombatEnemyManager
-        )
+        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.join_queue = asyncio.Queue()
         self.request_worker = asyncio.create_task(self.join_request_worker())
 
@@ -79,7 +77,7 @@ class CombatViewController(ViewController):
                 )
                 continue
 
-            enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+            enemy = await self.factory.get_enemy(encounter.enemy_type)
             max_encounter_size = enemy.max_players
 
             if len(encounters[encounter.id]) >= max_encounter_size:

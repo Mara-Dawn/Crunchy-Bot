@@ -16,6 +16,8 @@ from combat.skills.types import (
     StatusEffectType,
 )
 from config import Config
+from control.combat.combat_actor_manager import CombatActorManager
+from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -40,6 +42,10 @@ class CombatStatusEffectManager(Service):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.log_name = "Combat Skills"
+        self.actor_manager: CombatActorManager = self.controller.get_service(
+            CombatActorManager
+        )
+        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
 
     async def listen_for_event(self, event: BotEvent):
         match event.type:
@@ -50,10 +56,6 @@ class CombatStatusEffectManager(Service):
                 match encounter_event.encounter_event_type:
                     case EncounterEventType.NEW_ROUND:
                         await self.trigger_effects(StatusEffectTrigger.START_OF_ROUND)
-
-    async def get_status_effect(self, status_type: StatusEffectType) -> StatusEffect:
-        status_effect = globals()[status_type]
-        return status_effect()
 
     async def apply_skill_status(
         self,
@@ -163,11 +165,13 @@ class CombatStatusEffectManager(Service):
                     damage = event.value
 
                     combatant_count = context.get_combat_scale()
-                    encounter_scaling = actor.get_encounter_scaling(combatant_count)
+                    encounter_scaling = self.actor_manager.get_encounter_scaling(
+                        actor, combatant_count
+                    )
                     damage = event.value
                     scaled_damage = damage * encounter_scaling
-                    total_damage = actor.get_damage_after_defense(
-                        SkillEffect.STATUS_EFFECT_DAMAGE, damage
+                    total_damage = await self.actor_manager.get_damage_after_defense(
+                        actor, SkillEffect.STATUS_EFFECT_DAMAGE, damage
                     )
 
                     scaled_damage = total_damage * encounter_scaling
@@ -202,7 +206,7 @@ class CombatStatusEffectManager(Service):
         for effect_type, data in effect_data.items():
             title = ""
             description = ""
-            status_effect = await self.get_status_effect(effect_type)
+            status_effect = await self.factory.get_status_effect(effect_type)
 
             match effect_type:
                 case StatusEffectType.CLEANSE:

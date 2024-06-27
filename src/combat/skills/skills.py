@@ -61,13 +61,6 @@ class HeavyAttack(BaseSkill):
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
             base_value=3,
-            status_effects=[
-                SkillStatusEffect(
-                    StatusEffectType.BLEED,
-                    3,
-                    StatusEffectApplication.ATTACK_VALUE,
-                )
-            ],
             droppable=False,
             image_url="https://i.imgur.com/1Cf7nVB.png",
         )
@@ -98,15 +91,45 @@ class SecondWind(BaseSkill):
         super().__init__(
             name="Second Wind",
             skill_type=SkillType.SECOND_WIND,
-            description="Heal yourself for a small amount.",
+            description="Heal yourself for a small amount and heals bleeding.",
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=0,
             base_value=0.3,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                )
+            ],
             stacks=1,
             reset_after_encounter=True,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/AH7NRhc.png",
+        )
+
+
+class SliceAndDice(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Slice and Dice",
+            skill_type=SkillType.SLICE_N_DICE,
+            description="You inflict deep cuts that make the enemy bleed for 3 rounds.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=3,
+            base_value=2.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            stacks=5,
+            reset_after_encounter=False,
+            image_url="https://i.imgur.com/JNNbXJa.png",
         )
 
 
@@ -122,6 +145,29 @@ class GigaBonk(BaseSkill):
             cooldown=5,
             base_value=6,
             stacks=3,
+            reset_after_encounter=False,
+            image_url="https://i.imgur.com/JNNbXJa.png",
+        )
+
+
+class PocketSand(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Pocket Sand",
+            skill_type=SkillType.POCKET_SAND,
+            description="Blinds opponent for two rounds, making them likely to miss their attack.",
+            information="",
+            skill_effect=SkillEffect.NEUTRAL_DAMAGE,
+            cooldown=4,
+            base_value=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    2,
+                )
+            ],
+            stacks=2,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/JNNbXJa.png",
         )
@@ -436,6 +482,13 @@ class BroBiotics(BaseSkill):
             base_value=2,
             initial_cooldown=1,
             hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    4,
+                    StatusEffectApplication.DEFAULT,
+                )
+            ],
             aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/yJr6wwC.png",

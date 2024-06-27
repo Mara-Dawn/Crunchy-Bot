@@ -174,9 +174,7 @@ class CharacterAttribute(str, Enum):
     HEALING_BONUS = "Healing Bonus"
     CRIT_RATE = "Crit Rate"
     CRIT_DAMAGE = "Crit Damage"
-    PHYS_DAMAGE_REDUCTION = "Physical Damage Red."
-    MAGIC_DAMAGE_REDUCTION = "Magical Damage Red."
-    STATUS_EFFECT_REDUCTION = "Status Damage Red."
+    DAMAGE_REDUCTION = "Damage Reduction"
     MAX_HEALTH = "Maximum Health"
 
     @staticmethod
@@ -196,9 +194,7 @@ class CharacterAttribute(str, Enum):
             CharacterAttribute.HEALING_BONUS,
             CharacterAttribute.CRIT_RATE,
             CharacterAttribute.CRIT_DAMAGE,
-            CharacterAttribute.PHYS_DAMAGE_REDUCTION,
-            CharacterAttribute.MAGIC_DAMAGE_REDUCTION,
-            CharacterAttribute.STATUS_EFFECT_REDUCTION,
+            CharacterAttribute.DAMAGE_REDUCTION,
         ]
 
         if attribute_type in integer_modifiers:

@@ -8,9 +8,9 @@ from bot import CrunchyBot
 from combat.enemies.types import EnemyType
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
-from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
+from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
@@ -39,15 +39,13 @@ class Combat(commands.Cog):
             SettingsManager
         )
         self.testing: CombatGearManager = self.controller.get_service(CombatGearManager)
-        self.enemy_manager: CombatEnemyManager = self.controller.get_service(
-            CombatEnemyManager
-        )
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
         )
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
+        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.enemy_timers = {}
 
     @staticmethod
@@ -205,7 +203,7 @@ class Combat(commands.Cog):
     async def enemy_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        enemies = [self.enemy_manager.get_enemy(enum) for enum in EnemyType]
+        enemies = [await self.factory.get_enemy(enum) for enum in EnemyType]
 
         choices = [
             app_commands.Choice(
@@ -246,7 +244,7 @@ class Combat(commands.Cog):
                 return
 
             if level is not None:
-                enemy = self.enemy_manager.get_enemy(enemy_type)
+                enemy = await self.factory.get_enemy(enemy_type)
 
                 if enemy.min_level > level or enemy.max_level < level:
                     await self.bot.command_response(

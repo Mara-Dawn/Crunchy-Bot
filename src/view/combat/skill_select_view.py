@@ -7,6 +7,7 @@ from combat.gear.types import EquipmentSlot, Rarity
 from combat.skills.skill import CharacterSkill, Skill
 from combat.skills.skills import EmptySkill
 from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -64,16 +65,14 @@ class SkillSelectView(
         self.selected = []
         self.selected_slots = {}
 
+        self.skill_manager: CombatSkillManager = self.controller.get_service(
+            CombatSkillManager
+        )
+
         if state == SkillViewState.EQUIP:
             self.selected_slots = {k: v for k, v in self.equipped_skill_slots.items()}
 
         self.equipped_skill_slot_data = {}
-
-        for slot, skill in self.equipped_skill_slots.items():
-            if skill is None:
-                self.equipped_skill_slot_data[slot] = None
-                continue
-            self.equipped_skill_slot_data[slot] = character.get_skill_data(skill)
 
         self.filter = EquipmentSlot.SKILL
         self.filtered_items = []
@@ -88,10 +87,37 @@ class SkillSelectView(
 
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
-        self.refresh_elements()
         self.embed_manager: CombatEmbedManager = controller.get_service(
             CombatEmbedManager
         )
+
+        self.skill_manager: CombatSkillManager = self.controller.get_service(
+            CombatSkillManager
+        )
+
+    @classmethod
+    async def create(
+        cls: "SkillSelectView",
+        controller: Controller,
+        interaction: discord.Interaction,
+        character: Character,
+        skill_inventory: list[Skill],
+        scrap_balance: int,
+        state: SkillViewState,
+    ):
+        view = cls(
+            controller, interaction, character, skill_inventory, scrap_balance, state
+        )
+        for slot, skill in view.equipped_skill_slots.items():
+            if skill is None:
+                view.equipped_skill_slot_data[slot] = None
+                continue
+            view.equipped_skill_slot_data[slot] = (
+                await view.skill_manager.get_skill_data(character, skill)
+            )
+
+        await view.refresh_elements()
+        return view
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -239,7 +265,7 @@ class SkillSelectView(
         self.state = SkillViewState.SELECT_MODE
         await self.refresh_ui()
 
-    def refresh_elements(self, disabled: bool = False):
+    async def refresh_elements(self, disabled: bool = False):
         page_display = f"Page {self.current_page + 1}/{self.page_count}"
 
         if not self.loaded:
@@ -271,8 +297,10 @@ class SkillSelectView(
                     for slot, equipped_skill_data in self.selected_slots.items():
                         selected_skill_data = None
                         if equipped_skill_data is not None:
-                            selected_skill_data = self.character.get_skill_data(
-                                equipped_skill_data
+                            selected_skill_data = (
+                                await self.skill_manager.get_skill_data(
+                                    self.character, equipped_skill_data
+                                )
                             )
                         self.add_item(
                             Dropdown(
@@ -302,7 +330,9 @@ class SkillSelectView(
                 if len(self.display_skill_data) > 0:
                     selected_skill_data = []
                     for equipped_skill_data in self.selected:
-                        skill_data = self.character.get_skill_data(equipped_skill_data)
+                        skill_data = await self.skill_manager.get_skill_data(
+                            self.character, equipped_skill_data
+                        )
                         selected_skill_data.append(skill_data)
                     self.add_item(
                         Dropdown(
@@ -332,7 +362,9 @@ class SkillSelectView(
                 if len(self.display_skill_data) > 0:
                     selected_skill_data = []
                     for equipped_skill_data in self.selected:
-                        skill_data = self.character.get_skill_data(equipped_skill_data)
+                        skill_data = await self.skill_manager.get_skill_data(
+                            self.character, equipped_skill_data
+                        )
                         selected_skill_data.append(skill_data)
                     self.add_item(
                         Dropdown(
@@ -393,7 +425,7 @@ class SkillSelectView(
             disabled = True
 
         if no_embeds:
-            self.refresh_elements(disabled)
+            await self.refresh_elements(disabled)
             await self.message.edit(view=self)
             return
 
@@ -421,7 +453,7 @@ class SkillSelectView(
             if skill.id in [skill.id for skill in self.equipped_skills]:
                 equipped = True
 
-            skill_data = self.character.get_skill_data(skill)
+            skill_data = await self.skill_manager.get_skill_data(self.character, skill)
             self.display_skill_data.append(skill_data)
 
             embeds.append(
@@ -430,7 +462,7 @@ class SkillSelectView(
                 )
             )
 
-        self.refresh_elements(disabled)
+        await self.refresh_elements(disabled)
 
         if len(self.display_items) <= 0:
             empty_embed = discord.Embed(

@@ -9,8 +9,8 @@ from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect, SkillInstance
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
-from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.combat_skill_manager import CombatSkillManager
+from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -30,15 +30,13 @@ class CombatEmbedManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
-        self.enemy_manager: CombatEnemyManager = self.controller.get_service(
-            CombatEnemyManager
-        )
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
         )
+        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "Combat Embeds"
 
     async def listen_for_event(self, event: BotEvent):
@@ -47,7 +45,7 @@ class CombatEmbedManager(Service):
     async def get_spawn_embed(
         self, encounter: Encounter, done: bool = False, show_info: bool = False
     ) -> discord.Embed:
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
         title = "A random Enemy appeared!"
 
         embed = discord.Embed(title=title, color=discord.Colour.purple())
@@ -172,7 +170,7 @@ class CombatEmbedManager(Service):
 
         skill_list = []
         for skill_type in enemy.skill_types:
-            skill = await self.skill_manager.get_enemy_skill(skill_type)
+            skill = await self.factory.get_enemy_skill(skill_type)
             skill_list.append(skill.name)
 
         self.add_text_bar(
@@ -293,7 +291,11 @@ class CombatEmbedManager(Service):
         embeds.append(head_embed)
 
         for skill in actor.skills:
-            embeds.append(actor.get_skill_data(skill).get_embed(show_data=True))
+            embeds.append(
+                (await self.skill_manager.get_skill_data(actor, skill)).get_embed(
+                    show_data=True
+                )
+            )
 
         return embeds
 
@@ -315,8 +317,8 @@ class CombatEmbedManager(Service):
         outcome_title = ""
         damage_info = ""
 
-        total_damage = target.get_skill_damage_after_defense(
-            skill, damage_instance.scaled_value
+        total_damage = await self.actor_manager.get_skill_damage_after_defense(
+            target, skill, damage_instance.scaled_value
         )
 
         display_dmg = damage_instance.value
@@ -324,6 +326,9 @@ class CombatEmbedManager(Service):
             display_dmg = total_damage
 
         match skill.base_skill.skill_effect:
+            case SkillEffect.NEUTRAL_DAMAGE:
+                outcome_title = "Damage"
+                damage_info = f"**{display_dmg}**"
             case SkillEffect.PHYSICAL_DAMAGE:
                 outcome_title = "Attack Damage"
                 damage_info = f"**{display_dmg}** [phys]"
@@ -505,7 +510,7 @@ class CombatEmbedManager(Service):
 
         full_embed = None
 
-        skill_data = actor.get_skill_data(turn_data.skill)
+        skill_data = await self.skill_manager.get_skill_data(actor, turn_data.skill)
 
         skill = skill_data.skill
 

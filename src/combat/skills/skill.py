@@ -10,6 +10,7 @@ class BaseSkill(DroppableBase):
 
     DEFAULT_IMAGE = {
         SkillEffect.PHYSICAL_DAMAGE: "https://i.imgur.com/FHvWc7b.png",
+        SkillEffect.NEUTRAL_DAMAGE: "https://i.imgur.com/FHvWc7b.png",
         SkillEffect.MAGICAL_DAMAGE: "https://i.imgur.com/zr785IX.png",
         SkillEffect.HEALING: "https://i.imgur.com/AH7NRhc.png",
     }
@@ -78,13 +79,8 @@ class Skill(Droppable):
         SkillType.FIRE_BALL,
     ]
 
-    EFFECT_COLOR_MAP = {
-        SkillEffect.PHYSICAL_DAMAGE: discord.Color(int("F5A9B8", 16)),
-        SkillEffect.MAGICAL_DAMAGE: discord.Color(int("5BCEFA", 16)),
-        SkillEffect.HEALING: discord.Color.green(),
-    }
-
     EFFECT_LABEL_MAP = {
+        SkillEffect.NEUTRAL_DAMAGE: "Damage",
         SkillEffect.PHYSICAL_DAMAGE: "Damage",
         SkillEffect.MAGICAL_DAMAGE: "Damage",
         SkillEffect.HEALING: "Healing",
@@ -102,7 +98,9 @@ class Skill(Droppable):
     EFFECT_SORT_MAP = {
         SkillEffect.PHYSICAL_DAMAGE: 0,
         SkillEffect.MAGICAL_DAMAGE: 1,
-        SkillEffect.HEALING: 2,
+        SkillEffect.NEUTRAL_DAMAGE: 2,
+        SkillEffect.STATUS_EFFECT_DAMAGE: 3,
+        SkillEffect.HEALING: 4,
     }
 
     RARITY_STACKS_SCALING = {
