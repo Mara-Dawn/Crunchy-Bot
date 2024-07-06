@@ -36,9 +36,11 @@ class BaseSkill(DroppableBase):
         weight: int = 100,
         image_url: str = None,
         default_target: SkillTarget = SkillTarget.OPPONENT,
+        modifiable: bool = True,
         author: str = None,
     ):
         super().__init__(
+            name=name,
             base_type=Base.SKILL,
             slot=EquipmentSlot.SKILL,
             type=skill_type,
@@ -61,6 +63,7 @@ class BaseSkill(DroppableBase):
         self.status_effects = status_effects
         self.reset_after_encounter = reset_after_encounter
         self.aoe = aoe
+        self.modifiable = modifiable
         self.default_target = default_target
         self.image_url = image_url
 

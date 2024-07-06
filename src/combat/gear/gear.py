@@ -61,6 +61,7 @@ class GearBase(DroppableBase):
         author: str = None,
     ):
         super().__init__(
+            name=name,
             base_type=Base.GEAR,
             type=type,
             slot=slot,

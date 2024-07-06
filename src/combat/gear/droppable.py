@@ -1,12 +1,13 @@
 import discord
 from combat.gear.types import Base, EquipmentSlot, GearBaseType, Rarity
-from combat.skills.types import SkillEffect, SkillType
+from combat.skills.types import SkillType
 
 
 class DroppableBase:
 
     def __init__(
         self,
+        name: str,
         base_type: Base,
         slot: EquipmentSlot,
         type: GearBaseType | SkillType,  # noqa: F821
@@ -16,6 +17,7 @@ class DroppableBase:
         droppable: bool = True,
         author: str = None,
     ):
+        self.name = name
         self.base_type = base_type
         self.type = type
         self.slot = slot

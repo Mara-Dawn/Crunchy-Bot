@@ -1,6 +1,5 @@
 from combat.skills.skill import BaseSkill
 from combat.skills.status_effect import SkillStatusEffect
-from combat.skills.status_effects import Bleed
 from combat.skills.types import (
     SkillEffect,
     SkillTarget,
@@ -60,13 +59,6 @@ class HeavyAttack(BaseSkill):
             information="Your other basic weapon skill that comes with physical weapons.",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
-            status_effects=[
-                SkillStatusEffect(
-                    StatusEffectType.BLEED,
-                    5,
-                    StatusEffectApplication.ATTACK_VALUE,
-                )
-            ],
             base_value=3,
             droppable=False,
             image_url="https://i.imgur.com/1Cf7nVB.png",
@@ -164,7 +156,7 @@ class PocketSand(BaseSkill):
             name="Pocket Sand",
             skill_type=SkillType.POCKET_SAND,
             description="Blinds opponent for two rounds, making them likely to miss their attack.",
-            information="",
+            information="Some attacks are unaffected.",
             skill_effect=SkillEffect.NEUTRAL_DAMAGE,
             cooldown=4,
             base_value=1,
@@ -190,7 +182,7 @@ class FireBall(BaseSkill):
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=10,
-            base_value=10,
+            base_value=7.5,
             stacks=1,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/tzbLY8h.png",
@@ -431,6 +423,7 @@ class Burst(BaseSkill):
             hits=1,
             aoe=True,
             droppable=False,
+            modifiable=False,
             image_url="https://i.imgur.com/dmlFE2t.png",
             author="Lusa",
         )
@@ -489,13 +482,6 @@ class BroBiotics(BaseSkill):
             base_value=2,
             initial_cooldown=1,
             hits=1,
-            status_effects=[
-                SkillStatusEffect(
-                    StatusEffectType.BLEED,
-                    4,
-                    StatusEffectApplication.DEFAULT,
-                )
-            ],
             aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/yJr6wwC.png",

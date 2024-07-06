@@ -1,6 +1,8 @@
 from combat.enemies import *  # noqa: F403
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
+from combat.gear.bases import *  # noqa: F403
+from combat.gear.droppable import DroppableBase
 from combat.gear.types import Rarity
 from combat.skills.skill import Skill
 from combat.skills.skills import *  # noqa: F403
@@ -40,6 +42,11 @@ class ObjectFactory(Service):
     async def get_enemy(self, enemy_type: EnemyType) -> Enemy:
         enemy = globals()[enemy_type]
         instance = enemy()
+        return instance
+
+    async def get_base(self, base_type) -> DroppableBase:
+        base_class = globals()[base_type]
+        instance = base_class()
         return instance
 
     async def get_weapon_skill(

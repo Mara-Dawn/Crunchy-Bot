@@ -452,7 +452,7 @@ class EncounterManager(Service):
         damage_data = []
 
         effect_modifier, post_embed = await self.handle_attack_status_effects(
-            context, context.opponent, skill.base_skill.skill_effect
+            context, context.opponent, skill
         )
         for target in available_targets:
             instances = await self.skill_manager.get_skill_effect(
@@ -515,8 +515,10 @@ class EncounterManager(Service):
             else:
                 current_hp = hp_cache[target.id]
 
-            effect_modifier, instance_post_embed = await self.handle_attack_status_effects(
-                context, context.opponent, skill.base_skill.skill_effect
+            effect_modifier, instance_post_embed = (
+                await self.handle_attack_status_effects(
+                    context, context.opponent, skill
+                )
             )
             instance.apply_effect_modifier(effect_modifier)
             if instance_post_embed is not None:
@@ -537,7 +539,12 @@ class EncounterManager(Service):
                 if actor.id not in hp_cache or hp_cache[actor.id] > 0
             ]
 
-        return TurnData(actor=context.opponent, skill=skill, damage_data=damage_data, post_embed=post_embed)
+        return TurnData(
+            actor=context.opponent,
+            skill=skill,
+            damage_data=damage_data,
+            post_embed=post_embed,
+        )
 
     async def opponent_turn(self, context: EncounterContext):
         opponent = context.opponent
@@ -620,9 +627,10 @@ class EncounterManager(Service):
         self,
         context: EncounterContext,
         actor: Actor,
-        skill_effect: SkillEffect,
+        skill: Skill,
     ):
         context = await self.load_encounter_context(context.encounter.id)
+        skill_effect = skill.base_skill.skill_effect
 
         for active_actor in context.get_current_initiative():
             if active_actor.id == actor.id:
@@ -640,7 +648,7 @@ class EncounterManager(Service):
 
         effect_data, modifier = (
             await self.status_effect_manager.handle_attack_status_effects(
-                context, actor, triggered_status_effects
+                context, actor, skill, triggered_status_effects
             )
         )
 
@@ -678,8 +686,7 @@ class EncounterManager(Service):
 
         turn_message = await self.get_previous_turn_message(context.thread)
         previous_embeds = turn_message.embeds
-        
-        
+
         if len(effect_data) > 0:
             status_effect_embed = self.embed_manager.get_status_effect_embed(
                 actor, effect_data
@@ -718,7 +725,7 @@ class EncounterManager(Service):
             effect_modifier, post_embed = await self.handle_attack_status_effects(
                 context,
                 character,
-                skill_data.skill.base_skill.skill_effect,
+                skill_data.skill,
             )
             instance.apply_effect_modifier(effect_modifier)
 

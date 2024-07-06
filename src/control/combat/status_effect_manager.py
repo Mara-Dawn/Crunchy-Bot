@@ -6,6 +6,7 @@ from typing import Any
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
 from combat.gear.types import CharacterAttribute
+from combat.skills.skill import Skill
 from combat.skills.status_effect import (
     ActiveStatusEffect,
     SkillStatusEffect,
@@ -269,8 +270,12 @@ class CombatStatusEffectManager(Service):
         self,
         context: EncounterContext,
         actor: Actor,
+        skill: Skill,
         status_effects: list[ActiveStatusEffect],
     ) -> tuple[dict[str, str], float]:
+        if not skill.base_skill.modifiable:
+            return None, 1
+
         effect_data = await self.get_status_effect_outcomes(
             context, actor, status_effects
         )

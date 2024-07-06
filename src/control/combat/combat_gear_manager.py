@@ -320,9 +320,25 @@ class CombatGearManager(Service):
 
         rarity = await self.get_random_rarity(item_level)
 
-        match droppable_base.base_type:
+        return await self.generate_specific_drop(
+            member_id=member_id,
+            guild_id=guild_id,
+            item_level=item_level,
+            base=droppable_base,
+            rarity=rarity,
+        )
+
+    async def generate_specific_drop(
+        self,
+        member_id: int,
+        guild_id: int,
+        item_level: int,
+        base: DroppableBase,
+        rarity: Rarity,
+    ) -> Gear:
+        match base.base_type:
             case Base.SKILL:
-                skill_base: BaseSkill = droppable_base
+                skill_base: BaseSkill = base
                 skill = Skill(
                     base_skill=skill_base,
                     rarity=rarity,
@@ -340,7 +356,7 @@ class CombatGearManager(Service):
                 return skill
 
             case Base.GEAR:
-                gear_base: GearBase = droppable_base
+                gear_base: GearBase = base
                 modifiers = await self.get_random_modifiers(
                     gear_base, item_level, rarity
                 )

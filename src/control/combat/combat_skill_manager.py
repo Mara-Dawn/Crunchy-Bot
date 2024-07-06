@@ -61,11 +61,12 @@ class CombatSkillManager(Service):
         if skill_type in character.skill_cooldowns:
             last_used = character.skill_cooldowns[skill.base_skill.skill_type]
 
-        penalty = (
-            character.skill_slots[0].base_skill.skill_effect
-            != skill.base_skill.skill_effect
-            and skill.base_skill.skill_effect != SkillEffect.HEALING
-        )
+        penalty = character.skill_slots[
+            0
+        ].base_skill.skill_effect != skill.base_skill.skill_effect and skill.base_skill.skill_effect not in [
+            SkillEffect.HEALING,
+            SkillEffect.NEUTRAL_DAMAGE,
+        ]
 
         return CharacterSkill(
             skill=skill,

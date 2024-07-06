@@ -179,6 +179,9 @@ class CombatActorManager(Service):
         if combat_events is None:
             combat_events = []
 
+        if status_effects is None:
+            status_effects = {}
+
         defeated = False
         timed_out = False
         for event in encounter_events:
