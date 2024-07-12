@@ -43,3 +43,18 @@ class Blind(StatusEffect):
             display_status=True,
             override=True,
         )
+
+
+class Rage(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.RAGE,
+            name="Rage",
+            description="Your attacks cause bleeding",
+            trigger=[StatusEffectTrigger.POST_ATTACK],
+            consumed=[StatusEffectTrigger.POST_ATTACK],
+            emoji="😡",
+            display_status=True,
+            override=True,
+        )

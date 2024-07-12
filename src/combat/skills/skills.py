@@ -132,6 +132,31 @@ class SliceAndDice(BaseSkill):
         )
 
 
+class BloodRage(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Blood Rage",
+            skill_type=SkillType.BLOOD_RAGE,
+            description="You fall into a heated rage! Your next 4 attacks cause bleeding.",
+            information="",
+            skill_effect=SkillEffect.NEUTRAL_DAMAGE,
+            cooldown=3,
+            base_value=0,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.RAGE,
+                    4,
+                    self_target=True,
+                )
+            ],
+            stacks=3,
+            weight=30,
+            reset_after_encounter=False,
+            image_url="https://i.imgur.com/JNNbXJa.png",
+        )
+
+
 class GigaBonk(BaseSkill):
 
     def __init__(self):
@@ -184,6 +209,25 @@ class FireBall(BaseSkill):
             cooldown=10,
             base_value=7.5,
             stacks=1,
+            weight=30,
+            reset_after_encounter=False,
+            image_url="https://i.imgur.com/tzbLY8h.png",
+        )
+
+
+class MagicMissile(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Magic Missile",
+            skill_type=SkillType.MAGIC_MISSILE,
+            description="Shoots three magical projectiles at the enemy.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=4,
+            base_value=1.5,
+            stacks=3,
+            hits=3,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/tzbLY8h.png",
         )

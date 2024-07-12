@@ -50,10 +50,12 @@ class SkillStatusEffect:
         status_effect_type: StatusEffectType,
         stacks: int,
         application: StatusEffectApplication = StatusEffectApplication.DEFAULT,
+        self_target: bool = False,
     ):
         self.status_effect_type = status_effect_type
         self.stacks = stacks
         self.application = application
+        self.self_target = self_target
 
 
 class ActiveStatusEffect:

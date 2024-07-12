@@ -5,6 +5,7 @@ class StatusEffectType(str, Enum):
     BLEED = "Bleed"
     CLEANSE = "Cleanse"
     BLIND = "Blind"
+    RAGE = "Rage"
 
 
 class SkillType(str, Enum):
@@ -21,10 +22,12 @@ class SkillType(str, Enum):
 
     # Neutral
     POCKET_SAND = "PocketSand"
+    BLOOD_RAGE = "BloodRage"
 
     # Magical
     MAGIC_ATTACK = "MagicAttack"
     FIRE_BALL = "FireBall"
+    MAGIC_MISSILE = "MagicMissile"
 
     # Enemy Skills
     # Mind Goblin
@@ -92,6 +95,7 @@ class StatusEffectTrigger(Enum):
     ON_HEALTH_GAINED = 5
     ON_HP_CHANGE = 6
     ON_ATTACK = 7
+    POST_ATTACK = 8
 
 
 class StatusEffectApplication(Enum):

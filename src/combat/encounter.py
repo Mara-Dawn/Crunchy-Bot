@@ -85,6 +85,12 @@ class EncounterContext:
         self.beginning_actor = self.actors[0]
         self.actors: deque[Actor] = deque(self.actors)
 
+    def get_actor(self, actor_id: int) -> Actor:
+        for actor in self.actors:
+            if actor.id == actor_id:
+                return actor
+        return None
+
     def get_last_actor(self) -> Actor:
         if len(self.combat_events) <= 0:
             return None

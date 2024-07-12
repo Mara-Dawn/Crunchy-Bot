@@ -13,7 +13,6 @@ from combat.skills.types import (
     SkillInstance,
     StatusEffectApplication,
     StatusEffectTrigger,
-    StatusEffectType,
 )
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
@@ -573,6 +572,13 @@ class EncounterManager(Service):
                 total_damage = await self.actor_manager.get_skill_damage_after_defense(
                     target, turn.skill, damage_instance.scaled_value
                 )
+                await self.handle_post_attack_status_effects(
+                    context,
+                    opponent,
+                    target,
+                    turn.skill,
+                    damage_instance,
+                )
 
                 for skill_status_effect in turn.skill.base_skill.status_effects:
                     application_value = None
@@ -582,10 +588,14 @@ class EncounterManager(Service):
                         case StatusEffectApplication.DEFAULT:
                             pass
 
+                    status_effect_target = target
+                    if skill_status_effect.self_target:
+                        status_effect_target = opponent
+
                     await self.status_effect_manager.apply_status(
                         context,
                         opponent,
-                        target,
+                        status_effect_target,
                         skill_status_effect.status_effect_type,
                         skill_status_effect.stacks,
                         application_value,
@@ -622,6 +632,25 @@ class EncounterManager(Service):
             CombatEventType.ENEMY_END_TURN,
         )
         await self.controller.dispatch_event(event)
+
+    async def handle_post_attack_status_effects(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+        target: Actor,
+        skill: Skill,
+        damage_instance: SkillInstance,
+    ):
+        context = await self.load_encounter_context(context.encounter.id)
+        current_actor = context.get_actor(actor.id)
+        current_target = context.get_actor(target.id)
+        triggered_status_effects = await self.status_effect_manager.actor_trigger(
+            context, current_actor, StatusEffectTrigger.POST_ATTACK
+        )
+
+        await self.status_effect_manager.handle_post_attack_status_effects(
+            context, current_actor, current_target, skill, damage_instance, triggered_status_effects
+        )
 
     async def handle_attack_status_effects(
         self,
@@ -748,8 +777,10 @@ class EncounterManager(Service):
                 total_skill_value *= -1
 
             new_target_hp = min(
-                max(0, current_hp + total_skill_value), character.max_hp
+                max(0, current_hp + total_skill_value), target.max_hp
             )
+            hp_cache[target_id] = new_target_hp
+
             skill_value_data.append((target, instance, new_target_hp))
 
         # turn_data = [TurnData(character, skill_data.skill, skill_value_data)]
@@ -771,6 +802,14 @@ class EncounterManager(Service):
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.scaled_value
             )
+            
+            await self.handle_post_attack_status_effects(
+                context,
+                character,
+                target,
+                skill_data.skill,
+                damage_instance,
+            )
 
             for skill_status_effect in turn.skill.base_skill.status_effects:
                 application_value = None
@@ -780,10 +819,14 @@ class EncounterManager(Service):
                     case StatusEffectApplication.DEFAULT:
                         pass
 
+                status_effect_target = target
+                if skill_status_effect.self_target:
+                    status_effect_target = character
+
                 await self.status_effect_manager.apply_status(
                     context,
                     character,
-                    target,
+                    status_effect_target,
                     skill_status_effect.status_effect_type,
                     skill_status_effect.stacks,
                     application_value,

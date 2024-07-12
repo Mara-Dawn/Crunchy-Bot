@@ -953,9 +953,7 @@ class Database:
         for index, (amount, item) in enumerate(event.items):
             last = index + 1 == len(event.items)
             end = "," if not last else ";"
-            command += (
-                f"({event_id}, {event.member_id}, '{item.value}', {amount}){end}"
-            )
+            command += f"({event_id}, {event.member_id}, '{item.value}', {amount}){end}"
 
             event_id += 1
 
@@ -3580,14 +3578,13 @@ class Database:
         command = f"""
             SELECT * FROM {self.COMBAT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
-            INNER JOIN {self.USER_GEAR_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_GEAR_ID_COL}
+            LEFT JOIN {self.USER_GEAR_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_GEAR_ID_COL}
             LEFT JOIN {self.USER_EQUIPPED_SKILLS_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND {self.COMBAT_EVENT_MEMBER_ID} = ?
-            AND ({self.USER_GEAR_IS_SCRAPPED_COL} = ? OR {self.COMBAT_EVENT_SKILL_ID} = {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL})
             ORDER BY {self.EVENT_ID_COL} DESC;
         """
-        task = (guild_id, member_id, 0)
+        task = (guild_id, member_id)
         rows = await self.__query_select(command, task)
         if not rows:
             return {}
@@ -3602,8 +3599,24 @@ class Database:
                 break
 
         stacks_used = {}
+        previous_skill = None
         for row in rows:
+            if row[self.COMBAT_EVENT_TYPE_COL] in [
+                CombatEventType.ENEMY_END_TURN,
+                CombatEventType.MEMBER_END_TURN,
+            ]:
+                previous_skill = None
+                continue
+
+            if row[self.COMBAT_EVENT_SKILL_TYPE] is None or row[self.COMBAT_EVENT_SKILL_TYPE] not in SkillType:
+                continue
+
             skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
+
+            if previous_skill is not None and previous_skill == skill_type:
+                continue
+            previous_skill = skill_type
+
             skill_id = row[self.COMBAT_EVENT_SKILL_ID]
             base_class = globals()[skill_type]
             base_skill: BaseSkill = base_class()  # noqa: F405
@@ -3777,7 +3790,7 @@ class Database:
     async def get_status_effects_by_encounter(
         self,
         encounter_id: int,
-        ) -> dict[int, list[StatusEffectEvent]]:
+    ) -> dict[int, list[StatusEffectEvent]]:
         command = f"""
             SELECT * FROM {self.STATUS_EFFECT_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} 

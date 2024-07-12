@@ -15,6 +15,7 @@ from combat.skills.status_effect import (
 from combat.skills.status_effects import *  # noqa: F403
 from combat.skills.types import (
     SkillEffect,
+    SkillInstance,
     StatusEffectTrigger,
     StatusEffectType,
 )
@@ -289,6 +290,29 @@ class CombatStatusEffectManager(Service):
         )
 
         return embed_data, modifier
+
+    async def handle_post_attack_status_effects(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+        target: Actor,
+        skill: Skill,
+        damage_instance: SkillInstance,
+        status_effects: list[ActiveStatusEffect],
+    ):
+        for triggered_status_effect in status_effects:
+            effect_type = triggered_status_effect.status_effect.effect_type
+
+            match effect_type:
+                case StatusEffectType.RAGE:
+                    await self.apply_status(
+                        context,
+                        actor,
+                        target,
+                        StatusEffectType.BLEED,
+                        3,
+                        damage_instance.value,
+                    )
 
     async def actor_trigger(
         self, context: EncounterContext, actor: Actor, trigger: StatusEffectTrigger

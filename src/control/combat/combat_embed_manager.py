@@ -596,7 +596,7 @@ class CombatEmbedManager(Service):
             )
             fraction = current_hp / actor.max_hp
             percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
-            name = actor.name[:10]
+            name = actor.name[:13]
             display_hp = f"[{percentage}%]" if not actor.is_enemy else ""
             status_effects = ""
             for effect in actor.status_effects:
