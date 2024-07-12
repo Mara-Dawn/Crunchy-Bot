@@ -548,9 +548,13 @@ class EncounterManager(Service):
     async def opponent_turn(self, context: EncounterContext):
         opponent = context.opponent
 
-        await self.handle_turn_status_effects(
+        context = await self.handle_turn_status_effects(
             context, opponent, StatusEffectTrigger.START_OF_TURN
         )
+
+        if context.is_concluded():
+            await self.refresh_encounter_thread(context.encounter.id)
+            return
 
         turn_data = await self.calculate_opponent_turn(context)
 
@@ -649,7 +653,12 @@ class EncounterManager(Service):
         )
 
         await self.status_effect_manager.handle_post_attack_status_effects(
-            context, current_actor, current_target, skill, damage_instance, triggered_status_effects
+            context,
+            current_actor,
+            current_target,
+            skill,
+            damage_instance,
+            triggered_status_effects,
         )
 
     async def handle_attack_status_effects(
@@ -707,7 +716,7 @@ class EncounterManager(Service):
         )
 
         if len(triggered_status_effects) <= 0:
-            return
+            return context
 
         effect_data = await self.status_effect_manager.handle_status_effects(
             context, actor, triggered_status_effects
@@ -725,7 +734,10 @@ class EncounterManager(Service):
 
         context = await self.load_encounter_context(context.encounter.id)
 
-        await self.refresh_encounter_thread(context.encounter.id)
+        if not context.new_turn():
+            await self.refresh_encounter_thread(context.encounter.id)
+
+        return context
 
     async def combatant_turn(
         self,
@@ -734,9 +746,13 @@ class EncounterManager(Service):
         skill_data: CharacterSkill,
         target: Actor = None,
     ):
-        await self.handle_turn_status_effects(
+        context = await self.handle_turn_status_effects(
             context, character, StatusEffectTrigger.START_OF_TURN
         )
+
+        if context.is_concluded():
+            await self.refresh_encounter_thread(context.encounter.id)
+            return
 
         if target is None:
             target = await self.skill_manager.get_character_default_target(
@@ -776,9 +792,7 @@ class EncounterManager(Service):
             if skill_data.skill.base_skill.skill_effect != SkillEffect.HEALING:
                 total_skill_value *= -1
 
-            new_target_hp = min(
-                max(0, current_hp + total_skill_value), target.max_hp
-            )
+            new_target_hp = min(max(0, current_hp + total_skill_value), target.max_hp)
             hp_cache[target_id] = new_target_hp
 
             skill_value_data.append((target, instance, new_target_hp))
@@ -802,7 +816,7 @@ class EncounterManager(Service):
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.scaled_value
             )
-            
+
             await self.handle_post_attack_status_effects(
                 context,
                 character,

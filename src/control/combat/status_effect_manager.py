@@ -224,6 +224,23 @@ class CombatStatusEffectManager(Service):
                     effect_data[effect_type] = (
                         0 if roll < Config.BLIND_MISS_CHANCE else 1
                     )
+                case StatusEffectType.RAGE_QUIT:
+                    current_hp = await self.actor_manager.get_actor_current_hp(
+                        actor, context.combat_events
+                    )
+                    remaining_health = current_hp / context.encounter.max_hp
+                    if remaining_health <= Config.RAGE_QUIT_THRESHOLD:
+                        event = EncounterEvent(
+                            datetime.datetime.now(),
+                            context.encounter.guild_id,
+                            context.encounter.id,
+                            self.bot.user.id,
+                            EncounterEventType.END,
+                        )
+                        await self.controller.dispatch_event(event)
+                        effect_data[effect_type] = (
+                            active_status_effect.status_effect.description
+                        )
 
         return effect_data
 
@@ -251,6 +268,9 @@ class CombatStatusEffectManager(Service):
                         continue
                     title = f"{status_effect.emoji} Blind"
                     description = f"{actor.name} misses their attack!."
+                case StatusEffectType.RAGE_QUIT:
+                    title = f"{status_effect.emoji} Rage Quit"
+                    description = data
 
             outcome_info[title] = description
 

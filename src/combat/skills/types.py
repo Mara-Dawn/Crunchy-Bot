@@ -6,6 +6,7 @@ class StatusEffectType(str, Enum):
     CLEANSE = "Cleanse"
     BLIND = "Blind"
     RAGE = "Rage"
+    RAGE_QUIT = "RageQuit"
 
 
 class SkillType(str, Enum):
@@ -62,6 +63,11 @@ class SkillType(str, Enum):
     BRO_ARROW = "BroArrows"
     BRO_FART = "BroBiotics"
     BRO_EXTRA_FART = "BroBlast"
+
+    # DF Tank
+    STANCE_OFF = "StanceOff"
+    YPYT = "YPYT"
+    DEAD_TANK = "DeadTank"
 
     @staticmethod
     def is_weapon_skill(skill_type: "SkillType"):

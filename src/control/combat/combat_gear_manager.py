@@ -328,6 +328,9 @@ class CombatGearManager(Service):
             rarity=rarity,
         )
 
+    async def has_uniques(self, base: DroppableBase):
+        return False
+
     async def generate_specific_drop(
         self,
         member_id: int,
@@ -336,6 +339,10 @@ class CombatGearManager(Service):
         base: DroppableBase,
         rarity: Rarity,
     ) -> Gear:
+
+        if not await self.has_uniques(base):
+            rarity = Rarity.RARE
+
         match base.base_type:
             case Base.SKILL:
                 skill_base: BaseSkill = base

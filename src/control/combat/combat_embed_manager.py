@@ -146,6 +146,9 @@ class CombatEmbedManager(Service):
             if effect.status_effect.display_status and effect.remaining_stacks > 0:
                 value += f"{effect.status_effect.emoji}{effect.remaining_stacks}"
 
+        if value == "":
+            return
+
         embed_content = "```\n" + value + "```"
         embed.add_field(name=name, value=embed_content, inline=False)
 

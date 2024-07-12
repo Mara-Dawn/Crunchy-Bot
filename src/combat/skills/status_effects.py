@@ -45,6 +45,21 @@ class Blind(StatusEffect):
         )
 
 
+class RageQuit(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.RAGE_QUIT,
+            name="Rage Quit",
+            description="'Ive had enough! You guys suck!' he proclaims and promptly leaves the instance.",
+            trigger=[StatusEffectTrigger.START_OF_TURN],
+            consumed=[],
+            emoji="😡",
+            display_status=False,
+            override=True,
+        )
+
+
 class Rage(StatusEffect):
 
     def __init__(self):

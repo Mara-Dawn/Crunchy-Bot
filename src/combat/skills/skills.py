@@ -335,6 +335,13 @@ class AnkleAim(BaseSkill):
             cooldown=0,
             base_value=1,
             hits=2,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    2,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
             aoe=False,
             droppable=False,
             image_url="https://i.imgur.com/hPF4gsn.jpeg",
@@ -550,4 +557,66 @@ class BroBlast(BaseSkill):
             droppable=False,
             image_url="https://i.imgur.com/TIpBdai.png",
             author="Franny",
+        )
+
+
+class StanceOff(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Stance Off",
+            skill_type=SkillType.STANCE_OFF,
+            description="With this one simple trick he can wipe the entire party!",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            base_value=3,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(StatusEffectType.RAGE_QUIT, 1, self_target=True)
+            ],
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/iQgErzQ.png",
+            author="Lusa",
+        )
+
+
+class YPYT(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="YPYT",
+            skill_type=SkillType.YPYT,
+            description="The audacity! Did you really think you could run ahead and pull on your own?",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=2,
+            initial_cooldown=1,
+            hits=2,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/or3sdhr.png",
+            author="Lusa",
+        )
+
+
+class DeadTank(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Asmon Swap",
+            skill_type=SkillType.DEAD_TANK,
+            description="Oops teehee, looks like someone forgot to mitigate. (Or didnt know what that means in the first place)",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=3,
+            base_value=8,
+            initial_cooldown=1,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/m5Hm98i.png",
+            author="Lusa",
         )

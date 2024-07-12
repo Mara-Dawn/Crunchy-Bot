@@ -54,6 +54,7 @@ class Config:
     # Status Effects
     BLEED_SCALING = 0.25
     BLIND_MISS_CHANCE = 0.5
+    RAGE_QUIT_THRESHOLD = 0.1
 
     # Code Block Formatting
     ENEMY_MAX_WIDTH = 30

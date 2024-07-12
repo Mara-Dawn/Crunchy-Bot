@@ -197,7 +197,7 @@ class BroColi(Enemy):
             description="It is just a simple broccoli, enjoying his vacation with charming smile.",
             information="",
             image_url="https://i.imgur.com/k61s4go.png",
-            min_level=2,
+            min_level=3,
             max_level=8,
             health=6,
             damage_scaling=5,
@@ -219,4 +219,36 @@ class BroColi(Enemy):
             initiative=15,
             actions_per_turn=2,
             author="Franny",
+        )
+
+
+class DFTank(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="DF Tank",
+            type=EnemyType.DF_TANK,
+            description="Looks like we arent getting out of this dungeon anytime soon. Contrary to what the tooltips might say, he mainly deals emotional damage.",
+            information="If you don't manage to finish him off when hes on low health he will ragequit!",
+            image_url="https://i.imgur.com/uw91SSy.png",
+            min_level=2,
+            max_level=6,
+            health=6,
+            damage_scaling=5,
+            max_players=3,
+            skill_types=[
+                SkillType.STANCE_OFF,
+                SkillType.YPYT,
+                SkillType.DEAD_TANK,
+            ],
+            item_loot_table=[
+                ItemType.SPEED_SEED,
+                ItemType.RARE_SEED,
+            ],
+            min_gear_drop_count=4,
+            max_gear_drop_count=5,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=15,
+            actions_per_turn=1,
+            author="Lusa",
         )
