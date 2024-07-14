@@ -80,6 +80,8 @@ class Enemy:
         attribute_overrides: dict[CharacterAttribute, float] = None,
         actions_per_turn: int = 1,
         min_encounter_scale: int = 1,
+        is_boss: bool = False,
+        controller: str = "BasicEnemyController",
         author: str = None,
     ):
         self.name = name
@@ -105,6 +107,8 @@ class Enemy:
         self.initiative = initiative
         self.actions_per_turn = actions_per_turn
         self.min_encounter_scale = min_encounter_scale
+        self.controller = controller
+        self.is_boss = is_boss
 
         self.attribute_overrides = attribute_overrides
 

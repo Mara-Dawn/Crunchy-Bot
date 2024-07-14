@@ -13,6 +13,7 @@ from events.types import EncounterEventType, EventType, UIEventType
 from events.ui_event import UIEvent
 
 from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.context_loader import ContextLoader
 from control.combat.encounter_manager import EncounterManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
@@ -39,6 +40,7 @@ class CombatViewController(ViewController):
         self.embed_manager: CombatEmbedManager = controller.get_service(
             CombatEmbedManager
         )
+        self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.join_queue = asyncio.Queue()
         self.request_worker = asyncio.create_task(self.join_request_worker())
@@ -165,7 +167,7 @@ class CombatViewController(ViewController):
         message = await interaction.original_response()
         await message.delete()
 
-        current_context = await self.encounter_manager.load_encounter_context(
+        current_context = await self.context_loader.load_encounter_context(
             context.encounter.id
         )
 
@@ -180,7 +182,7 @@ class CombatViewController(ViewController):
         character: Character,
         context: EncounterContext,
     ):
-        current_context = await self.encounter_manager.load_encounter_context(
+        current_context = await self.context_loader.load_encounter_context(
             context.encounter.id
         )
 

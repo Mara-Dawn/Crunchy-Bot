@@ -11,3 +11,4 @@ class EnemyType(str, Enum):
     MUSHROOM = "Mushroom"
     BROCOLI = "BroColi"
     DF_TANK = "DFTank"
+    DADDY = "Daddy"

@@ -14,6 +14,8 @@ class ControllerType(str, Enum):
     COMBAT = "CombatViewController"
     EQUIPMENT = "EquipmentViewController"
 
+    BASIC_ENEMY = "BasicEnemyController"
+
 
 class AIVersion(str, Enum):
     GPT3_5 = "gpt-3.5-turbo"
@@ -36,6 +38,7 @@ class ControllerModuleMap(str, Enum):
             ControllerType.GARDEN_VIEW: "garden_view_controller",
             ControllerType.COMBAT: "combat_view_controller",
             ControllerType.EQUIPMENT: "equipment_view_controller",
+            ControllerType.BASIC_ENEMY: "basic_enemy",
         }
 
         return map[controller_type]

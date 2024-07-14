@@ -252,3 +252,40 @@ class DFTank(Enemy):
             actions_per_turn=1,
             author="Lusa",
         )
+
+
+# Bosses
+
+
+class Daddy(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Daddy",
+            type=EnemyType.DF_TANK,
+            description="",
+            information="",
+            image_url="https://i.imgur.com/uw91SSy.png",
+            min_level=3,
+            max_level=3,
+            health=15,
+            damage_scaling=15,
+            max_players=9,
+            min_encounter_scale=6,
+            skill_types=[
+                SkillType.STANCE_OFF,
+                SkillType.YPYT,
+                SkillType.DEAD_TANK,
+            ],
+            item_loot_table=[
+                ItemType.SPEED_SEED,
+                ItemType.RARE_SEED,
+            ],
+            min_gear_drop_count=7,
+            max_gear_drop_count=9,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=20,
+            actions_per_turn=1,
+            is_boss=True,
+            author="Lusa",
+        )

@@ -1,6 +1,5 @@
 import datetime
 import random
-from sys import activate_stack_trampoline
 from typing import Any
 
 from combat.actors import Actor, Character, Opponent
@@ -10,7 +9,6 @@ from combat.skills.skill import Skill
 from combat.skills.status_effect import (
     ActiveStatusEffect,
     SkillStatusEffect,
-    StatusEffect,
 )
 from combat.skills.status_effects import *  # noqa: F403
 from combat.skills.types import (
@@ -21,6 +19,7 @@ from combat.skills.types import (
 )
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
+from control.combat.context_loader import ContextLoader
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
@@ -49,6 +48,7 @@ class CombatStatusEffectManager(Service):
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
+        self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
 
     async def listen_for_event(self, event: BotEvent):
@@ -292,13 +292,33 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         actor: Actor,
         skill: Skill,
-        status_effects: list[ActiveStatusEffect],
-    ) -> tuple[dict[str, str], float]:
+    ):
+        context = await self.context_loader.load_encounter_context(context.encounter.id)
+        skill_effect = skill.base_skill.skill_effect
+
+        for active_actor in context.get_current_initiative():
+            if active_actor.id == actor.id:
+                actor = active_actor
+
+        triggered_status_effects = await self.actor_trigger(
+            context, actor, StatusEffectTrigger.ON_ATTACK
+        )
+
+        if len(triggered_status_effects) <= 0 or skill_effect in [
+            SkillEffect.NOTHING,
+            SkillEffect.HEALING,
+        ]:
+            return 1, None
+
+        effect_data, modifier = await self.handle_attack_status_effects(
+            context, actor, skill, triggered_status_effects
+        )
+
         if not skill.base_skill.modifiable:
-            return None, 1
+            return 1, None
 
         effect_data = await self.get_status_effect_outcomes(
-            context, actor, status_effects
+            context, actor, triggered_status_effects
         )
 
         modifier = 1
@@ -309,7 +329,14 @@ class CombatStatusEffectManager(Service):
             context, actor, effect_data
         )
 
-        return embed_data, modifier
+        if len(embed_data) <= 0:
+            return modifier, None
+
+        status_effect_embed = self.embed_manager.get_status_effect_embed(
+            actor, embed_data
+        )
+
+        return modifier, status_effect_embed
 
     async def handle_post_attack_status_effects(
         self,
@@ -318,17 +345,23 @@ class CombatStatusEffectManager(Service):
         target: Actor,
         skill: Skill,
         damage_instance: SkillInstance,
-        status_effects: list[ActiveStatusEffect],
     ):
-        for triggered_status_effect in status_effects:
+        context = await self.context_loader.load_encounter_context(context.encounter.id)
+        current_actor = context.get_actor(actor.id)
+        current_target = context.get_actor(target.id)
+        triggered_status_effects = await self.actor_trigger(
+            context, current_actor, StatusEffectTrigger.POST_ATTACK
+        )
+
+        for triggered_status_effect in triggered_status_effects:
             effect_type = triggered_status_effect.status_effect.effect_type
 
             match effect_type:
                 case StatusEffectType.RAGE:
                     await self.apply_status(
                         context,
-                        actor,
-                        target,
+                        current_actor,
+                        current_target,
                         StatusEffectType.BLEED,
                         3,
                         damage_instance.value,
