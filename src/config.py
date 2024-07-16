@@ -1,8 +1,8 @@
 class Config:
 
     # General Combat
-    # COMBAT_INITIAL_WAIT = 90
-    COMBAT_INITIAL_WAIT = 10
+    COMBAT_INITIAL_WAIT = 90
+    # COMBAT_INITIAL_WAIT = 10
 
     DEFAULT_TIMEOUT = 60 * 5
     SHORT_TIMEOUT = 60
@@ -65,10 +65,10 @@ class Config:
 
     # Guild Level Requirements
     LEVEL_REQUIREMENTS = {
-        1: 10,
-        2: 15,
-        3: 25,
-        4: 20,
+        1: 15,
+        2: 25,
+        3: 35,
+        4: 99999,
         5: 20,
         6: 25,
         7: 25,

@@ -77,6 +77,7 @@ class ItemType(str, Enum):
     FLASH_SEED = "FlashSeed"
 
     SCRAP = "Scrap"
+    DADDY_KEY = "DaddyKey"
 
 
 class ItemState(str, Enum):

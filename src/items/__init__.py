@@ -976,6 +976,36 @@ class Scrap(Item):
             hide_in_shop=True,
         )
 
+class DaddyKey(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Suspicious Key",
+            type=ItemType.DADDY_KEY,
+            group=ItemGroup.GEAR,
+            shop_category=ShopCategory.GEAR,
+            description=(
+                "This key looks rather normal, but you feel a strong commanding magic radiating from it. "
+                "When used from your inventory, it will open a path to the lvl.3 Boss.\n"
+                "You will need at least 6 players to face this challenge.\n"
+                "Come prepared, this key only grants you a single attempt."
+            ),
+            information=(
+                "Boss Key to spawn the lvl.3 boss encounter.\n"
+                "6-9 players\n"
+                "Unlocks the 4th level."
+            ),
+            emoji="🔑",
+            cost=cost,
+            useable=True,
+            value=1,
+            hide_in_shop=True,
+        )
 
 # Debuffs
 class Debuff(Item):

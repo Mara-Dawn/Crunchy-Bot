@@ -3,6 +3,7 @@ import datetime
 import secrets
 
 import discord
+from combat.enemies.types import EnemyType
 from datalayer.database import Database
 from datalayer.inventory import UserInventory
 from discord.ext import commands
@@ -16,9 +17,11 @@ from items.item import Item
 from items.types import ItemState, ItemType
 from view.types import ActionType
 
+from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
+from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
 
 
@@ -82,6 +85,12 @@ class InventoryViewController(ViewController):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.item_manager: ItemManager = controller.get_service(ItemManager)
+        self.encounter_manager: EncounterManager = self.controller.get_service(
+            EncounterManager
+        )
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
 
         self.request_queue = asyncio.Queue()
         self.request_worker = asyncio.create_task(self.inventory_worker())
@@ -147,6 +156,12 @@ class InventoryViewController(ViewController):
                     view_id=event.view_id,
                 )
                 await self.request_queue.put(request)
+
+            case UIEventType.SHOP_RESPONSE_CONFIRM_SUBMIT:
+                interaction = event.payload[0]
+                shop_data = event.payload[1]
+                item = shop_data.item
+                await self.submit_confirm_view(interaction, item)
 
             case UIEventType.SHOP_RESPONSE_USER_SUBMIT:
                 if event.view_id is not None:
@@ -254,6 +269,42 @@ class InventoryViewController(ViewController):
 
                 await interaction.followup.send(
                     f"{target.display_name} was possessed by a random ghost.",
+                    ephemeral=True,
+                )
+                message = await interaction.original_response()
+                await message.delete()
+
+    async def submit_confirm_view(
+        self,
+        interaction: discord.Interaction,
+        item: Item,
+    ):
+        guild_id = interaction.guild_id
+        user_id = interaction.user.id
+
+        match item.type:
+            case ItemType.DADDY_KEY:
+                combat_channels = await self.settings_manager.get_combat_channels(
+                    interaction.guild_id
+                )
+                await self.encounter_manager.spawn_encounter(
+                    interaction.guild,
+                    secrets.choice(combat_channels),
+                    EnemyType.DADDY_P1,
+                    3,
+                )
+
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    user_id,
+                    item.type,
+                    -1,
+                )
+                await self.controller.dispatch_event(event)
+
+                await interaction.followup.send(
+                    "Encounter successfully spawned.",
                     ephemeral=True,
                 )
                 message = await interaction.original_response()

@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import importlib
 import random
-from typing import AsyncGenerator
 
 import discord
 from combat.actors import Actor, Character
@@ -89,7 +88,9 @@ class EncounterManager(Service):
                     return
                 encounter_event: EncounterEvent = event
                 match encounter_event.encounter_event_type:
-                    case EncounterEventType.NEW_ROUND:
+                    case (
+                        EncounterEventType.NEW_ROUND | EncounterEventType.MEMBER_DEFEAT
+                    ):
                         await self.refresh_encounter_thread(
                             encounter_event.encounter_id
                         )
@@ -318,8 +319,6 @@ class EncounterManager(Service):
             if len(participants) == enemy.min_encounter_scale:
                 initiate_combat = True
 
-        initiate_combat = True
-
         if new_thread and not initiate_combat:
             wait_embed = await self.embed_manager.get_waiting_for_party_embed(
                 enemy.min_encounter_scale
@@ -461,7 +460,9 @@ class EncounterManager(Service):
             status_effect_embed = self.embed_manager.get_status_effect_embed(
                 actor, effect_data
             )
-            await self.context_loader.append_embed_to_round(context, status_effect_embed)
+            await self.context_loader.append_embed_to_round(
+                context, status_effect_embed
+            )
 
         context = await self.context_loader.load_encounter_context(context.encounter.id)
 
@@ -532,7 +533,9 @@ class EncounterManager(Service):
 
         # turn_data = [TurnData(character, skill_data.skill, skill_value_data)]
         turn = TurnData(character, skill_data.skill, skill_value_data, post_embed)
-        await self.context_loader.append_embed_generator_to_round(context, self.embed_manager.handle_actor_turn_embed(turn, context))
+        await self.context_loader.append_embed_generator_to_round(
+            context, self.embed_manager.handle_actor_turn_embed(turn, context)
+        )
 
         if turn.post_embed is not None:
             await self.context_loader.append_embed_to_round(context, turn.post_embed)
@@ -711,7 +714,6 @@ class EncounterManager(Service):
 
             if health <= 0:
                 update_context = True
-                encounter_event_type = EncounterEventType.MEMBER_DEFEAT
                 if actor.is_enemy:
                     controller_type = actor.enemy.controller
                     controller_class = getattr(
@@ -726,6 +728,7 @@ class EncounterManager(Service):
                     await enemy_controller.on_defeat(context, actor)
                     continue
 
+                encounter_event_type = EncounterEventType.MEMBER_DEFEAT
                 embed = self.embed_manager.get_actor_defeated_embed(actor)
                 await context.thread.send("", embed=embed)
 

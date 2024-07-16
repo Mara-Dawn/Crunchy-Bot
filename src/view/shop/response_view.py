@@ -213,7 +213,7 @@ class CancelButton(discord.ui.Button):
 
 class ConfirmButton(discord.ui.Button):
 
-    def __init__(self, label: str = "Confirm and Buy"):
+    def __init__(self, label: str = "Confirm"):
         super().__init__(label=label, style=discord.ButtonStyle.green, row=2)
 
     async def callback(self, interaction: discord.Interaction):

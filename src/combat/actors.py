@@ -1,4 +1,3 @@
-import random
 from collections import Counter
 from functools import lru_cache
 
@@ -6,9 +5,9 @@ import discord
 from combat.enemies.enemy import Enemy
 from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
-from combat.skills.skill import CharacterSkill, Skill
+from combat.skills.skill import Skill
 from combat.skills.status_effect import ActiveStatusEffect
-from combat.skills.types import SkillEffect, SkillInstance, SkillType
+from combat.skills.types import SkillType
 from config import Config
 
 
@@ -62,7 +61,6 @@ class Character(Actor):
         self.member = member
         self.equipment = equipment
         max_hp = self.equipment.attributes[CharacterAttribute.MAX_HEALTH]
-        max_hp = 100000
         initiative = (
             Config.CHARACTER_BASE_INITIATIVE
             + self.equipment.gear_modifiers[GearModifierType.DEXTERITY]
