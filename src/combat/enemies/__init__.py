@@ -268,10 +268,10 @@ class Daddy_P1(Enemy):
             image_url="https://i.imgur.com/zGrKHqj.png",
             min_level=3,
             max_level=3,
-            health=0.1,
+            health=10,
             damage_scaling=10,
             max_players=9,
-            # min_encounter_scale=6,
+            min_encounter_scale=6,
             skill_types=[
                 SkillType.WHIP,
                 SkillType.HAIR_PULL,
