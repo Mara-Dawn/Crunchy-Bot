@@ -5,6 +5,7 @@ class StatusEffectType(str, Enum):
     BLEED = "Bleed"
     CLEANSE = "Cleanse"
     BLIND = "Blind"
+    FLUSTERED = "Flustered"
     RAGE = "Rage"
     RAGE_QUIT = "RageQuit"
 
@@ -24,6 +25,7 @@ class SkillType(str, Enum):
     # Neutral
     POCKET_SAND = "PocketSand"
     BLOOD_RAGE = "BloodRage"
+    PHYSICAL_MISSILE = "PhysicalMissile"
 
     # Magical
     MAGIC_ATTACK = "MagicAttack"
@@ -68,6 +70,14 @@ class SkillType(str, Enum):
     STANCE_OFF = "StanceOff"
     YPYT = "YPYT"
     DEAD_TANK = "DeadTank"
+
+    # Daddy
+    HAIR_PULL = "HairPull"
+    BELT = "Belt"
+    TIE_YOU_UP = "TieYouUp"
+    BUTT_SLAP = "ButtSlap"
+    WHIP = "Whip"
+    ON_YOUR_KNEES = "OnYourKnees"
 
     @staticmethod
     def is_weapon_skill(skill_type: "SkillType"):

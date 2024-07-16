@@ -945,6 +945,7 @@ class GhostBean(Item):
             hide_in_shop=True,
         )
 
+# Combat Items
 
 class Scrap(Item):
 

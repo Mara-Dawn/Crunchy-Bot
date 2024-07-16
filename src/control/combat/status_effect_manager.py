@@ -19,6 +19,7 @@ from combat.skills.types import (
 )
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
+from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.context_loader import ContextLoader
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
@@ -47,6 +48,9 @@ class CombatStatusEffectManager(Service):
         self.log_name = "Combat Skills"
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
+        )
+        self.embed_manager: CombatEmbedManager = self.controller.get_service(
+            CombatEmbedManager
         )
         self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
@@ -102,9 +106,7 @@ class CombatStatusEffectManager(Service):
                 if application_value is not None:
                     if application_value <= 0:
                         return
-                    base_value = max(
-                        base_value, (application_value * Config.BLEED_SCALING)
-                    )
+                    base_value = application_value * Config.BLEED_SCALING
 
                 damage = base_value * (1 + modifier)
 
@@ -224,6 +226,8 @@ class CombatStatusEffectManager(Service):
                     effect_data[effect_type] = (
                         0 if roll < Config.BLIND_MISS_CHANCE else 1
                     )
+                case StatusEffectType.FLUSTERED:
+                    effect_data[effect_type] = 0
                 case StatusEffectType.RAGE_QUIT:
                     current_hp = await self.actor_manager.get_actor_current_hp(
                         actor, context.combat_events
@@ -267,7 +271,10 @@ class CombatStatusEffectManager(Service):
                     if data != 0:
                         continue
                     title = f"{status_effect.emoji} Blind"
-                    description = f"{actor.name} misses their attack!."
+                    description = f"{actor.name} misses their attack!"
+                case StatusEffectType.FLUSTERED:
+                    title = f"{status_effect.emoji} Flustered"
+                    description = f"{actor.name} cannot harm their opponent!"
                 case StatusEffectType.RAGE_QUIT:
                     title = f"{status_effect.emoji} Rage Quit"
                     description = data
@@ -309,10 +316,6 @@ class CombatStatusEffectManager(Service):
             SkillEffect.HEALING,
         ]:
             return 1, None
-
-        effect_data, modifier = await self.handle_attack_status_effects(
-            context, actor, skill, triggered_status_effects
-        )
 
         if not skill.base_skill.modifiable:
             return 1, None

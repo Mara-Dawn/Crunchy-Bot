@@ -1,6 +1,9 @@
+from collections.abc import AsyncGenerator
+
 import discord
 from combat.encounter import EncounterContext
 from control.combat.combat_actor_manager import CombatActorManager
+from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
@@ -23,6 +26,9 @@ class ContextLoader(Service):
         self.controller = controller
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
+        )
+        self.embed_manager: CombatEmbedManager = self.controller.get_service(
+            CombatEmbedManager
         )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "ContextLoader"
@@ -84,6 +90,36 @@ class ContextLoader(Service):
         async for message in thread.history(limit=100):
             if len(message.embeds) >= 1 and message.author.id == self.bot.user.id:
                 embed = message.embeds[0]
-                if embed.title == "New Round":
+                if embed.title == "New Round" or embed.title == "Round Continued..":
                     return message
         return None
+
+    async def append_embed_generator_to_round(
+        self, context: EncounterContext, generator: AsyncGenerator
+    ):
+        thread = context.thread
+        message = await self.get_previous_turn_message(thread)
+
+        if len(message.embeds) >= 10:
+            round_embed = await self.embed_manager.get_round_embed(context, cont=True)
+            message = await context.thread.send(content="", embed=round_embed)
+
+        previous_embeds = message.embeds
+
+        async for embed in generator:
+            current_embeds = previous_embeds + [embed]
+            await message.edit(embeds=current_embeds)
+
+    async def append_embed_to_round(
+        self, context: EncounterContext, embed: discord.Embed
+    ):
+        thread = context.thread
+        message = await self.get_previous_turn_message(thread)
+
+        if len(message.embeds) >= 10:
+            round_embed = await self.embed_manager.get_round_embed(context, cont=True)
+            message = await context.thread.send(content="", embed=round_embed)
+
+        previous_embeds = message.embeds
+        current_embeds = previous_embeds + [embed]
+        await message.edit(embeds=current_embeds)

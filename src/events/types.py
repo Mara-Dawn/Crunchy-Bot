@@ -87,6 +87,7 @@ class EncounterEventType(str, Enum):
     MEMBER_DEFEAT = "member_defeat"
     MEMBER_TIMEOUT = "member_timeout"
     ENEMY_DEFEAT = "enemy_defeat"
+    ENEMY_PHASE_CHANGE = "enemy_phase_change"
     END = "end"
     PENALTY50 = "penalty_50"
     PENALTY75 = "penalty_75"
@@ -172,6 +173,7 @@ class UIEventType(str, Enum):
     GARDEN_PLOT_BLOCK = "garden_plot_block"
 
     COMBAT_ENGAGE = "combat_engage"
+    COMBAT_LEAVE = "combat_leave"
     COMBAT_INITIATE = "combat_initiate"
     COMBAT_USE_SKILL = "combat_use_skill"
     COMBAT_TIMEOUT = "combat_timeout"

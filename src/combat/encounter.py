@@ -92,20 +92,33 @@ class EncounterContext:
         return None
 
     def get_last_actor(self) -> Actor:
-        if len(self.combat_events) <= 0:
+        phase_event_id = None
+
+        for event in self.encounter_events:
+            if event.encounter_event_type in [
+                EncounterEventType.ENEMY_PHASE_CHANGE,
+            ]:
+                phase_event_id = event.id
+                break
+
+        relevant_combat_events = self.combat_events
+        if phase_event_id is not None:
+            relevant_combat_events = [
+                event for event in self.combat_events if event.id > phase_event_id
+            ]
+
+        if len(relevant_combat_events) <= 0:
             return None
+
         last_actor = None
 
-        for event in self.combat_events:
+        for event in relevant_combat_events:
             if event.combat_event_type in [
                 CombatEventType.ENEMY_END_TURN,
                 CombatEventType.MEMBER_END_TURN,
             ]:
                 last_actor = event.member_id
                 break
-
-        # if last_actor is None:
-        #     return self.opponent
 
         for actor in self.actors:
             if actor.id == last_actor:
@@ -154,7 +167,10 @@ class EncounterContext:
     def new_round(self) -> bool:
         round_event_id = None
         for event in self.encounter_events:
-            if event.encounter_event_type == EncounterEventType.NEW_ROUND:
+            if event.encounter_event_type in [
+                EncounterEventType.NEW_ROUND,
+                EncounterEventType.ENEMY_PHASE_CHANGE,
+            ]:
                 round_event_id = event.id
                 break
 

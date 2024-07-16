@@ -37,6 +37,7 @@ class BaseSkill(DroppableBase):
         image_url: str = None,
         default_target: SkillTarget = SkillTarget.OPPONENT,
         modifiable: bool = True,
+        max_targets: int = None,
         author: str = None,
     ):
         super().__init__(
@@ -66,6 +67,7 @@ class BaseSkill(DroppableBase):
         self.modifiable = modifiable
         self.default_target = default_target
         self.image_url = image_url
+        self.max_targets = max_targets
 
         if self.image_url is None:
             self.image_url = self.DEFAULT_IMAGE[self.skill_effect]

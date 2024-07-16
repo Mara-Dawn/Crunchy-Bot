@@ -340,7 +340,7 @@ class CombatGearManager(Service):
         rarity: Rarity,
     ) -> Gear:
 
-        if not await self.has_uniques(base):
+        if rarity == Rarity.UNIQUE and not await self.has_uniques(base):
             rarity = Rarity.RARE
 
         match base.base_type:

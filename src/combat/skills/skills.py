@@ -128,7 +128,8 @@ class SliceAndDice(BaseSkill):
             ],
             stacks=5,
             reset_after_encounter=False,
-            image_url="https://i.imgur.com/JNNbXJa.png",
+            image_url="https://i.imgur.com/58ldGRq.png",
+            author="Lusa",
         )
 
 
@@ -136,9 +137,9 @@ class BloodRage(BaseSkill):
 
     def __init__(self):
         super().__init__(
-            name="Blood Rage",
+            name="Karen Rage",
             skill_type=SkillType.BLOOD_RAGE,
-            description="You fall into a heated rage! Your next 4 attacks cause bleeding.",
+            description="Your coupons expired last month and your opponent has the audacity to follow policy laws! UNACCEPTABLE!! Your next 4 attacks cause bleeding.",
             information="",
             skill_effect=SkillEffect.NEUTRAL_DAMAGE,
             cooldown=3,
@@ -153,7 +154,8 @@ class BloodRage(BaseSkill):
             stacks=3,
             weight=30,
             reset_after_encounter=False,
-            image_url="https://i.imgur.com/JNNbXJa.png",
+            image_url="https://i.imgur.com/gQeNSR7.png",
+            author="Lusa",
         )
 
 
@@ -171,6 +173,25 @@ class GigaBonk(BaseSkill):
             stacks=3,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/JNNbXJa.png",
+        )
+
+
+class PhysicalMissile(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Physical Missile",
+            skill_type=SkillType.PHYSICAL_MISSILE,
+            description="Shoots three physical projectiles at the enemy.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=4,
+            base_value=1.5,
+            stacks=3,
+            hits=3,
+            reset_after_encounter=False,
+            image_url="https://i.imgur.com/RLl8thA.png",
+            author="Lusa",
         )
 
 
@@ -193,7 +214,8 @@ class PocketSand(BaseSkill):
             ],
             stacks=2,
             reset_after_encounter=False,
-            image_url="https://i.imgur.com/JNNbXJa.png",
+            image_url="https://i.imgur.com/JNvyMTt.png",
+            author="Lusa",
         )
 
 
@@ -229,7 +251,8 @@ class MagicMissile(BaseSkill):
             stacks=3,
             hits=3,
             reset_after_encounter=False,
-            image_url="https://i.imgur.com/tzbLY8h.png",
+            image_url="https://i.imgur.com/NnNfa5U.png",
+            author="Lusa",
         )
 
 
@@ -512,6 +535,13 @@ class BroArrows(BaseSkill):
             cooldown=2,
             base_value=1,
             initial_cooldown=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    2,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
             hits=1,
             aoe=True,
             droppable=False,
@@ -618,5 +648,166 @@ class DeadTank(BaseSkill):
             aoe=False,
             droppable=False,
             image_url="https://i.imgur.com/m5Hm98i.png",
+            author="Lusa",
+        )
+
+
+class HairPull(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="I'm in Charge.",
+            skill_type=SkillType.HAIR_PULL,
+            description=(
+                "He grabs your hair and pulls you closer. 'Do not resist. I will reward you.'"
+                " you hear him say in his deep, masculine voice. You are too flustered"
+                " to do anything that would harm him on your next turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.NEUTRAL_DAMAGE,
+            cooldown=1,
+            base_value=1,
+            initial_cooldown=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FLUSTERED,
+                    1,
+                )
+            ],
+            hits=1,
+            max_targets=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/UyVqfip.png",
+            author="Lusa",
+        )
+
+
+class Whip(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Stay in line.",
+            skill_type=SkillType.WHIP,
+            description=(
+                "He deems you in need of punishment and lashes out with his big, long whip."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=0.5,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/tYCz3eB.png",
+            author="Lusa",
+        )
+
+
+class Belt(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Now you've done it.",
+            skill_type=SkillType.BELT,
+            description=(
+                "Daddy had enough of you. With a single smooth movement he removes his belt, "
+                "leaving his crotch dangerously exposed. Then he starts swinging."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            initial_cooldown=3,
+            cooldown=3,
+            base_value=1.5,
+            hits=5,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/jDVxvn7.png",
+            author="Lusa",
+        )
+
+
+class TieYouUp(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Know your place.",
+            skill_type=SkillType.TIE_YOU_UP,
+            description=(
+                "Oh no, Daddy caught you! He ties up your hands and "
+                "forces you down to the floor. For 3 turns your attacks have a 50% "
+                "chance to miss."
+            ),
+            information="",
+            skill_effect=SkillEffect.NEUTRAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=1,
+            base_value=1,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    3,
+                )
+            ],
+            max_targets=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/pOkokRc.png",
+            author="Lusa",
+        )
+
+
+class ButtSlap(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Behave.",
+            skill_type=SkillType.BUTT_SLAP,
+            description=(
+                "Daddys hand slams into your butt cheek with the force of a wild bear, leaving "
+                "a surprisingly detailed red imprint behind.\nThe sound of the impact can be heard from "
+                "miles away, followed by noises you didnt even know you were capabler of."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            base_value=2,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/RUiAaQ8.png",
+            author="Lusa",
+        )
+
+
+class OnYourKnees(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="On your knees.",
+            skill_type=SkillType.ON_YOUR_KNEES,
+            description=(
+                "You are unable to resist Daddys command. As you look up to his face, "
+                "he continues: 'Close your eyes and open wide.' \n"
+                "You are not quite sure what happened next, but you feel like you could use "
+                "a shower after he finished."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=4,
+            base_value=2,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            hits=1,
+            max_targets=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/7NIpn6i.png",
             author="Lusa",
         )

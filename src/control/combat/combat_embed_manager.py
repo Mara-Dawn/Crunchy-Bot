@@ -46,29 +46,39 @@ class CombatEmbedManager(Service):
         self, encounter: Encounter, done: bool = False, show_info: bool = False
     ) -> discord.Embed:
         enemy = await self.factory.get_enemy(encounter.enemy_type)
-        title = "A random Enemy appeared!"
 
-        embed = discord.Embed(title=title, color=discord.Colour.purple())
+        if enemy.is_boss:
+            title = "A Boss Challenge Has Appeared!"
+            enemy_name = f"> ~* {enemy.name} *~"
+            color = discord.Colour.red()
+        else:
+            title = "A random Enemy appeared!"
+            enemy_name = f"> ~* {enemy.name} - Lvl. {encounter.enemy_level} *~"
+            color = discord.Colour.purple()
 
-        enemy_name = f"> ~* {enemy.name} - Lvl. {encounter.enemy_level} *~"
+        embed = discord.Embed(title=title, color=color)
+
         content = f'```python\n"{enemy.description}"```'
         embed.add_field(name=enemy_name, value=content, inline=False)
 
-        if show_info:
-            enemy_info = f"```ansi\n[37m{enemy.information}```"
+        if show_info or enemy.is_boss:
+            enemy_info = f"```ansi\n[33m{enemy.information}```"
             embed.add_field(name="", value=enemy_info, inline=False)
-            return embed
 
+        min_encounter_size = enemy.min_encounter_scale
         max_encounter_size = enemy.max_players
         participants = await self.database.get_encounter_participants_by_encounter_id(
             encounter.id
         )
         if not done:
-            participant_info = (
-                f"Active Combatants: {len(participants)}/{max_encounter_size}"
-            )
+            if min_encounter_size > 1 and len(participants) < min_encounter_size:
+                participant_info = f"\nCombatants Needed to Start: {len(participants)}/{min_encounter_size}"
+            else:
+                participant_info = (
+                    f"\nActive Combatants: {len(participants)}/{max_encounter_size}"
+                )
         else:
-            participant_info = "This encounter has concluded."
+            participant_info = "This Encounter Has Concluded."
         embed.add_field(name=participant_info, value="", inline=False)
         embed.set_image(url=enemy.image_url)
         embed.set_footer(text=f"by {enemy.author}")
@@ -156,6 +166,9 @@ class CombatEmbedManager(Service):
         enemy = context.opponent.enemy
 
         title = f"> ~* {enemy.name} - Lvl. {context.opponent.level} *~"
+        if enemy.is_boss:
+            title = f"> ~* {enemy.name} *~"
+
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
@@ -202,6 +215,9 @@ class CombatEmbedManager(Service):
         enemy = context.opponent.enemy
 
         title = f"> ~* {enemy.name} - Lvl. {context.opponent.level} *~"
+        if enemy.is_boss:
+            title = f"> ~* {enemy.name} *~"
+
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.green()
@@ -225,6 +241,9 @@ class CombatEmbedManager(Service):
         enemy = context.opponent.enemy
 
         title = f"> ~* {enemy.name} - Lvl. {context.opponent.level} *~"
+        if enemy.is_boss:
+            title = f"> ~* {enemy.name} *~"
+
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
@@ -524,6 +543,15 @@ class CombatEmbedManager(Service):
 
         yield full_embed
 
+        if (
+            actor.is_enemy
+            # and actor.enemy.is_boss
+            and skill.type
+            not in self.actor_manager.get_used_skills(actor.id, context.combat_events)
+        ):
+            wait = max(len(skill.description) * 0.06, 3)
+            await asyncio.sleep(wait)
+
         if not skill.base_skill.base_value <= 0:
             if skill.base_skill.aoe:
                 async for embed in self.display_aoe_skill(turn_data, skill, full_embed):
@@ -571,6 +599,17 @@ class CombatEmbedManager(Service):
         embed.add_field(name="Reason", value=reason)
         return embed
 
+    async def get_waiting_for_party_embed(self, party_size: int):
+        embed = discord.Embed(
+            title="Waiting for players to arrive.", color=discord.Colour.green()
+        )
+
+        message = f"Combat will start as soon as {party_size} players join."
+        self.add_text_bar(embed, "", message)
+
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        return embed
+
     async def get_initiation_embed(self):
         embed = discord.Embed(title="Get Ready to Fight!", color=discord.Colour.green())
 
@@ -586,8 +625,11 @@ class CombatEmbedManager(Service):
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         return embed
 
-    async def get_round_embed(self, context: EncounterContext):
-        embed = discord.Embed(title="New Round", color=discord.Colour.green())
+    async def get_round_embed(self, context: EncounterContext, cont: bool = False):
+        title = "New Round"
+        if cont:
+            title = "Round Continued.."
+        embed = discord.Embed(title=title, color=discord.Colour.green())
         initiative_list = context.actors
         current_actor = context.get_current_actor()
         initiative_display = ""

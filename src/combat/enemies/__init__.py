@@ -257,35 +257,70 @@ class DFTank(Enemy):
 # Bosses
 
 
-class Daddy(Enemy):
+class Daddy_P1(Enemy):
     def __init__(self):
         super().__init__(
             name="Daddy",
-            type=EnemyType.DF_TANK,
-            description="",
-            information="",
-            image_url="https://i.imgur.com/uw91SSy.png",
+            type=EnemyType.DADDY_P1,
+            controller="DaddyController",
+            description="Meet Daddy, whose commanding presence and smirk promise both discipline and the world's best bedtime stories.",
+            information="Defeat this boss to unlock access to level 4 and above.",
+            image_url="https://i.imgur.com/zGrKHqj.png",
             min_level=3,
             max_level=3,
-            health=15,
-            damage_scaling=15,
+            health=0.1,
+            damage_scaling=10,
+            max_players=9,
+            # min_encounter_scale=6,
+            skill_types=[
+                SkillType.WHIP,
+                SkillType.HAIR_PULL,
+                SkillType.BELT,
+                SkillType.BUTT_SLAP,
+            ],
+            item_loot_table=[],
+            min_gear_drop_count=7,
+            max_gear_drop_count=8,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=30,
+            actions_per_turn=2,
+            is_boss=True,
+            phases=[EnemyType.DADDY_P2],
+            author="Lusa, Mara",
+        )
+
+
+class Daddy_P2(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Daddy",
+            type=EnemyType.DADDY_P2,
+            controller="DaddyController",
+            description="Bruised but unyielding, Daddy's fierce gaze and electrifying smirk promise a relentless, heart-pounding continuation of your tantalizing game.",
+            information="Defeat this boss to unlock access to level 4 and above.",
+            image_url="https://i.imgur.com/UqbImuS.png",
+            min_level=3,
+            max_level=3,
+            health=10,
+            damage_scaling=10,
             max_players=9,
             min_encounter_scale=6,
             skill_types=[
-                SkillType.STANCE_OFF,
-                SkillType.YPYT,
-                SkillType.DEAD_TANK,
+                SkillType.WHIP,
+                SkillType.HAIR_PULL,
+                SkillType.BELT,
+                SkillType.BUTT_SLAP,
+                SkillType.TIE_YOU_UP,
+                SkillType.ON_YOUR_KNEES,
             ],
-            item_loot_table=[
-                ItemType.SPEED_SEED,
-                ItemType.RARE_SEED,
-            ],
+            item_loot_table=[],
             min_gear_drop_count=7,
             max_gear_drop_count=9,
             gear_loot_table=[],
             skill_loot_table=[],
-            initiative=20,
-            actions_per_turn=1,
+            initiative=35,
+            actions_per_turn=3,
             is_boss=True,
-            author="Lusa",
+            author="Lusa, Mara",
         )

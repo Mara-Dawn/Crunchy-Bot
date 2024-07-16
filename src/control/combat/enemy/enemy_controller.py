@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import discord
-from combat.actors import Actor
+from combat.actors import Actor, Opponent
 from combat.encounter import EncounterContext
 from combat.enemies import *  # noqa: F403
 from combat.skills.skill import Skill
@@ -62,6 +62,14 @@ class EnemyController(Service, ABC):
 
     @abstractmethod
     async def handle_turn(self, context: EncounterContext):
+        pass
+
+    @abstractmethod
+    async def intro(self, encounter_id: int):
+        pass
+
+    @abstractmethod
+    async def on_defeat(self, context: EncounterContext, opponent: Opponent):
         pass
 
     async def calculate_aoe_skill(

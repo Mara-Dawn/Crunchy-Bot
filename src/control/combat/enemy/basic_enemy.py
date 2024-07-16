@@ -1,7 +1,7 @@
 import datetime
 import random
 
-from combat.actors import Actor
+from combat.actors import Actor, Opponent
 from combat.encounter import EncounterContext, TurnData
 from combat.skills.skill import Skill
 from combat.skills.types import (
@@ -10,8 +10,10 @@ from combat.skills.types import (
 from control.combat.enemy.enemy_controller import EnemyController
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
+from events.encounter_event import EncounterEvent
 from events.types import (
     CombatEventType,
+    EncounterEventType,
 )
 
 
@@ -20,25 +22,36 @@ class BasicEnemyController(EnemyController):
     async def listen_for_event(self, event: BotEvent):
         pass
 
+    async def on_defeat(self, context: EncounterContext, opponent: Opponent):
+        encounter_event_type = EncounterEventType.ENEMY_DEFEAT
+        embed = self.embed_manager.get_actor_defeated_embed(opponent)
+        await context.thread.send("", embed=embed)
+
+        event = EncounterEvent(
+            datetime.datetime.now(),
+            context.encounter.guild_id,
+            context.encounter.id,
+            opponent.id,
+            encounter_event_type,
+        )
+        await self.controller.dispatch_event(event)
+
+    async def intro(self, encounter_id: int):
+        pass
+
     async def handle_turn(self, context: EncounterContext):
         turn_data = await self.calculate_opponent_turn(context)
         opponent = context.opponent
 
         for turn in turn_data:
-            turn_message = await self.context_loader.get_previous_turn_message(
-                context.thread
+            await self.context_loader.append_embed_generator_to_round(
+                context, self.embed_manager.handle_actor_turn_embed(turn, context)
             )
-            previous_embeds = turn_message.embeds
-
-            async for embed in self.embed_manager.handle_actor_turn_embed(
-                turn, context
-            ):
-                current_embeds = previous_embeds + [embed]
-                await turn_message.edit(embeds=current_embeds)
 
             if turn.post_embed is not None:
-                current_embeds = current_embeds + [turn.post_embed]
-                await turn_message.edit(embeds=current_embeds)
+                await self.context_loader.append_embed_to_round(
+                    context, turn.post_embed
+                )
 
             for target, damage_instance, _ in turn.damage_data:
                 total_damage = await self.actor_manager.get_skill_damage_after_defense(

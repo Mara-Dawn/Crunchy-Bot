@@ -30,6 +30,21 @@ class Cleanse(StatusEffect):
         )
 
 
+class Flustered(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.FLUSTERED,
+            name="Flustered",
+            description="You cannot harm your opponent.",
+            trigger=[StatusEffectTrigger.ON_ATTACK],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="😳",
+            display_status=True,
+            override=True,
+        )
+
+
 class Blind(StatusEffect):
 
     def __init__(self):

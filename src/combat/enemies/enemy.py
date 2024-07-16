@@ -81,6 +81,7 @@ class Enemy:
         actions_per_turn: int = 1,
         min_encounter_scale: int = 1,
         is_boss: bool = False,
+        phases: list[EnemyType] = None,
         controller: str = "BasicEnemyController",
         author: str = None,
     ):
@@ -109,6 +110,7 @@ class Enemy:
         self.min_encounter_scale = min_encounter_scale
         self.controller = controller
         self.is_boss = is_boss
+        self.phases = phases
 
         self.attribute_overrides = attribute_overrides
 

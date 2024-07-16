@@ -2,6 +2,7 @@ import contextlib
 import datetime
 
 import discord
+from combat.enemies.enemy import Enemy
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -13,17 +14,24 @@ class EnemyEngageView(ViewMenu):
 
     DEFAULT_TIMEOUT = 60 * 60
 
-    def __init__(self, controller: Controller):
-        super().__init__(timeout=self.DEFAULT_TIMEOUT)
+    def __init__(self, controller: Controller, enemy: Enemy):
+        timeout = self.DEFAULT_TIMEOUT
+        if enemy.is_boss:
+            timeout = None
+        super().__init__(timeout=timeout)
         self.controller = controller
 
+        self.enemy = enemy
         self.controller_type = ControllerType.COMBAT
         self.controller.register_view(self)
         self.encounter_id = None
         self.done = False
         self.active = False
-        now = datetime.datetime.now().timestamp()
-        self.timeout_timestamp = int(now + self.DEFAULT_TIMEOUT)
+        self.timeout_timestamp = None
+
+        if timeout is not None:
+            now = datetime.datetime.now().timestamp()
+            self.timeout_timestamp = int(now + timeout)
 
         self.refresh_elements()
 
@@ -43,6 +51,16 @@ class EnemyEngageView(ViewMenu):
 
         event = UIEvent(
             UIEventType.COMBAT_ENGAGE,
+            interaction,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def leave(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        event = UIEvent(
+            UIEventType.COMBAT_LEAVE,
             interaction,
             self.id,
         )
@@ -78,7 +96,7 @@ class EnemyEngageView(ViewMenu):
             now = datetime.datetime.now().timestamp()
             self.timeout_timestamp = int(now + self.timeout)
 
-        if not self.active or self.done:
+        if (not self.active or self.done) and self.timeout_timestamp is not None:
             embed.add_field(
                 name=f"Will disappear <t:{self.timeout_timestamp}:R>", value=""
             )
@@ -95,6 +113,17 @@ class EnemyEngageView(ViewMenu):
         with contextlib.suppress(discord.NotFound):
             await self.message.delete()
         self.controller.detach_view(self)
+
+
+class LeaveButton(discord.ui.Button):
+
+    def __init__(self):
+        super().__init__(label="Leave", style=discord.ButtonStyle.red)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EnemyEngageView = self.view
+
+        await view.leave(interaction)
 
 
 class EngageButton(discord.ui.Button):

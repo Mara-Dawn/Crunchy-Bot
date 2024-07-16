@@ -217,8 +217,12 @@ class CombatSkillManager(Service):
         skill_base_value = skill.base_skill.base_value
         skill_scaling = skill_base_value / opponent.average_skill_multi
 
+        effective_level = opponent.level
+        if opponent.enemy.is_boss:
+            effective_level += 1
+
         base_damage = (
-            Config.OPPONENT_DAMAGE_BASE[opponent.level] / opponent.enemy.damage_scaling
+            Config.OPPONENT_DAMAGE_BASE[effective_level] / opponent.enemy.damage_scaling
         )
 
         weapon_min_roll = int(base_damage * (1 - Config.OPPONENT_DAMAGE_VARIANCE))
@@ -241,7 +245,7 @@ class CombatSkillManager(Service):
             case SkillEffect.HEALING:
                 modifier += opponent.enemy.attributes[CharacterAttribute.HEALING_BONUS]
 
-        encounter_scaling = 1
+        encounter_scaling = opponent.enemy.min_encounter_scale
         raw_attack_count = skill.base_skill.hits
         attack_count = raw_attack_count
 
@@ -252,12 +256,12 @@ class CombatSkillManager(Service):
             encounter_scale = combatant_count - (opponent.enemy.min_encounter_scale - 1)
             attack_count_scaling = max(1, encounter_scale * 0.75)
             attack_count = int(raw_attack_count * attack_count_scaling)
-            encounter_scaling = (
+            encounter_scaling += (
                 encounter_scale
                 * Config.OPPONENT_ENCOUNTER_SCALING_FACTOR
                 * raw_attack_count
                 / attack_count
-            )
+            ) - 1
 
         attacks = []
         for _ in range(attack_count):

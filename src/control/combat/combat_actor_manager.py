@@ -60,6 +60,8 @@ class CombatActorManager(Service):
                     health -= event.skill_value
                 case SkillEffect.MAGICAL_DAMAGE:
                     health -= event.skill_value
+                case SkillEffect.NEUTRAL_DAMAGE:
+                    health -= event.skill_value
                 case SkillEffect.STATUS_EFFECT_DAMAGE:
                     health -= event.skill_value
                 case SkillEffect.HEALING:
@@ -134,12 +136,19 @@ class CombatActorManager(Service):
         defeated = False
         encounter_id = None
         id = -1
+        phase = 1
         for event in encounter_events:
             if encounter_id is None:
                 encounter_id = event.encounter_id
+            if event.encounter_event_type == EncounterEventType.ENEMY_PHASE_CHANGE:
+                phase += 1
             if event.encounter_event_type == EncounterEventType.ENEMY_DEFEAT:
                 defeated = True
-                break
+
+        if phase > 1:
+            enemy_type = enemy.phases[phase - 2]
+            enemy = await self.factory.get_enemy(enemy_type)
+            id -= phase + 10
 
         skills = []
         for skill_type in enemy.skill_types:
@@ -241,6 +250,19 @@ class CombatActorManager(Service):
 
     def get_undefeated_actors(self, actors: list[Actor]):
         return [actor for actor in actors if not actor.defeated]
+
+    def get_used_skills(
+        self, actor_id: int, combat_events: list[CombatEvent]
+    ) -> list[SkillType]:
+        used_skills = []
+        for event in combat_events:
+            if (
+                event.member_id == actor_id or (actor_id < 0 and event.member_id < 0)
+            ) and event.skill_type is not None:
+                skill_type = event.skill_type
+                if skill_type not in used_skills:
+                    used_skills.append(skill_type)
+        return used_skills
 
     def get_skill_cooldowns(
         self, actor_id: int, skills: list[Skill], combat_events: list[CombatEvent]
