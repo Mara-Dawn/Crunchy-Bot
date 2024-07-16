@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import json
 from typing import Any
@@ -46,6 +47,7 @@ from events.lootbox_event import LootBoxEvent
 from events.prediction_event import PredictionEvent
 from events.quote_event import QuoteEvent
 from events.spam_event import SpamEvent
+from events.status_effect_event import StatusEffectEvent
 from events.timeout_event import TimeoutEvent
 from events.types import (
     CombatEventType,
@@ -629,6 +631,26 @@ class Database:
         PRIMARY KEY ({KARMA_EVENT_ID_COL})
     );"""
 
+    STATUS_EFFECT_EVENT_TABLE = "statuseffectevents"
+    STATUS_EFFECT_EVENT_ID_COL = "seev_id"
+    STATUS_EFFECT_EVENT_ENCOUNTER_ID_COL = "seev_encounter_id"
+    STATUS_EFFECT_EVENT_SOURCE_ID_COL = "seev_source_id"
+    STATUS_EFFECT_EVENT_ACTOR_ID_COL = "seev_actor_id"
+    STATUS_EFFECT_EVENT_STATUS_TYPE_COL = "seev_status_type"
+    STATUS_EFFECT_EVENT_STACKS_COL = "seev_stacks"
+    STATUS_EFFECT_EVENT_VALUE_COL = "seev_value"
+    CREATE_STATUS_EFFECT_EVENT_TABLE = f"""
+    CREATE TABLE if not exists {STATUS_EFFECT_EVENT_TABLE} (
+        {STATUS_EFFECT_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {STATUS_EFFECT_EVENT_ENCOUNTER_ID_COL} INTEGER, 
+        {STATUS_EFFECT_EVENT_SOURCE_ID_COL} INTEGER, 
+        {STATUS_EFFECT_EVENT_ACTOR_ID_COL} INTEGER, 
+        {STATUS_EFFECT_EVENT_STATUS_TYPE_COL} TEXT, 
+        {STATUS_EFFECT_EVENT_STACKS_COL} INTEGER,
+        {STATUS_EFFECT_EVENT_VALUE_COL} REAL,
+        PRIMARY KEY ({STATUS_EFFECT_EVENT_ID_COL})
+    );"""
+
     PERMANENT_ITEMS = [
         ItemType.REACTION_SPAM,
         ItemType.LOTTERY_TICKET,
@@ -697,6 +719,7 @@ class Database:
             await db.execute(self.CREATE_USER_EQUIPMENT_TABLE)
             await db.execute(self.CREATE_USER_EQUIPPED_SKILLS_TABLE)
             await db.execute(self.CREATE_KARMA_EVENT_TABLE)
+            await db.execute(self.CREATE_STATUS_EFFECT_EVENT_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -713,14 +736,14 @@ class Database:
         return start_timestamp, end_timestamp
 
     async def __query_select(self, query: str, task=None):
-        async with aiosqlite.connect(self.db_file, timeout=30) as db:  # noqa: SIM117
+        async with aiosqlite.connect(self.db_file, timeout=20) as db:  # noqa: SIM117
             async with db.execute(query, task) as cursor:
                 rows = await cursor.fetchall()
                 headings = [x[0] for x in cursor.description]
                 return self.__parse_rows(rows, headings)
 
     async def __query_insert(self, query: str, task=None) -> int:
-        async with aiosqlite.connect(self.db_file, timeout=30) as db:
+        async with aiosqlite.connect(self.db_file, timeout=20) as db:
             cursor = await db.execute(query, task)
             insert_id = cursor.lastrowid
             await db.commit()
@@ -930,9 +953,7 @@ class Database:
         for index, (amount, item) in enumerate(event.items):
             last = index + 1 == len(event.items)
             end = "," if not last else ";"
-            command += (
-                f"({event_id}, {event.member_id}, '{item.value}', {amount}){end}"
-            )
+            command += f"({event_id}, {event.member_id}, '{item.value}', {amount}){end}"
 
             event_id += 1
 
@@ -1079,6 +1100,32 @@ class Database:
 
         return await self.__query_insert(command, task)
 
+    async def __create_status_effect_event(
+        self, event_id: int, event: StatusEffectEvent
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.STATUS_EFFECT_EVENT_TABLE} (
+            {self.STATUS_EFFECT_EVENT_ID_COL},
+            {self.STATUS_EFFECT_EVENT_ENCOUNTER_ID_COL},
+            {self.STATUS_EFFECT_EVENT_SOURCE_ID_COL},
+            {self.STATUS_EFFECT_EVENT_ACTOR_ID_COL},
+            {self.STATUS_EFFECT_EVENT_STATUS_TYPE_COL},
+            {self.STATUS_EFFECT_EVENT_STACKS_COL},
+            {self.STATUS_EFFECT_EVENT_VALUE_COL})
+            VALUES (?, ?, ?, ?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.encounter_id,
+            event.source_id,
+            event.actor_id,
+            event.status_type,
+            event.stacks,
+            event.value,
+        )
+
+        return await self.__query_insert(command, task)
+
     async def log_event(self, event: BotEvent) -> int:
         if event.type == EventType.INVENTORYBATCH:
             event_id = await self.__create_batch_base_event(event)
@@ -1118,6 +1165,8 @@ class Database:
                 return await self.__create_encounter_event(event_id, event)
             case EventType.COMBAT:
                 return await self.__create_combat_event(event_id, event)
+            case EventType.STATUS_EFFECT:
+                return await self.__create_status_effect_event(event_id, event)
             case EventType.KARMA:
                 return await self.__create_karma_event(event_id, event)
 
@@ -3529,14 +3578,13 @@ class Database:
         command = f"""
             SELECT * FROM {self.COMBAT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
-            INNER JOIN {self.USER_GEAR_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_GEAR_ID_COL}
+            LEFT JOIN {self.USER_GEAR_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_GEAR_ID_COL}
             LEFT JOIN {self.USER_EQUIPPED_SKILLS_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND {self.COMBAT_EVENT_MEMBER_ID} = ?
-            AND ({self.USER_GEAR_IS_SCRAPPED_COL} = ? OR {self.COMBAT_EVENT_SKILL_ID} = {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL})
             ORDER BY {self.EVENT_ID_COL} DESC;
         """
-        task = (guild_id, member_id, 0)
+        task = (guild_id, member_id)
         rows = await self.__query_select(command, task)
         if not rows:
             return {}
@@ -3551,8 +3599,24 @@ class Database:
                 break
 
         stacks_used = {}
+        previous_skill = None
         for row in rows:
+            if row[self.COMBAT_EVENT_TYPE_COL] in [
+                CombatEventType.ENEMY_END_TURN,
+                CombatEventType.MEMBER_END_TURN,
+            ]:
+                previous_skill = None
+                continue
+
+            if row[self.COMBAT_EVENT_SKILL_TYPE] is None or row[self.COMBAT_EVENT_SKILL_TYPE] not in SkillType:
+                continue
+
             skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
+
+            if previous_skill is not None and previous_skill == skill_type:
+                continue
+            previous_skill = skill_type
+
             skill_id = row[self.COMBAT_EVENT_SKILL_ID]
             base_class = globals()[skill_type]
             base_skill: BaseSkill = base_class()  # noqa: F405
@@ -3594,12 +3658,13 @@ class Database:
             ]:
                 break
 
-            skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
+            with contextlib.suppress(Exception):
+                skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
 
-            if skill_type not in stacks_used:
-                stacks_used[skill_type] = 1
-            else:
-                stacks_used[skill_type] += 1
+                if skill_type not in stacks_used:
+                    stacks_used[skill_type] = 1
+                else:
+                    stacks_used[skill_type] += 1
 
         return stacks_used
 
@@ -3721,3 +3786,31 @@ class Database:
         if not rows:
             return []
         return [KarmaEvent.from_db_row(row) for row in rows]
+
+    async def get_status_effects_by_encounter(
+        self,
+        encounter_id: int,
+    ) -> dict[int, list[StatusEffectEvent]]:
+        command = f"""
+            SELECT * FROM {self.STATUS_EFFECT_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} 
+            ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.STATUS_EFFECT_EVENT_TABLE}.{self.STATUS_EFFECT_EVENT_ID_COL}
+            WHERE {self.STATUS_EFFECT_EVENT_ENCOUNTER_ID_COL} = {int(encounter_id)}
+            ;
+        """
+
+        rows = await self.__query_select(command)
+
+        if not rows or len(rows) < 1:
+            return {}
+
+        transformed = {}
+        for row in rows:
+            user_id = row[self.STATUS_EFFECT_EVENT_ACTOR_ID_COL]
+            event = StatusEffectEvent.from_db_row(row)
+            if user_id not in transformed:
+                transformed[user_id] = [event]
+            else:
+                transformed[user_id].append(event)
+
+        return transformed

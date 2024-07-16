@@ -22,6 +22,7 @@ from items import *  # noqa: F403
 from items.item import Item
 from items.types import ItemState, ItemType
 from view.lootbox.view import LootBoxView
+from view.shop.confirm_view import ShopConfirmView
 from view.shop.user_select_view import ShopUserSelectView
 
 from control.controller import Controller
@@ -513,6 +514,19 @@ class ItemManager(Service):
                 embed = item.get_embed(self.bot, show_price=False)
 
                 view = ShopUserSelectView(self.controller, interaction, item, None)
+                await view.init()
+
+                message = await interaction.followup.send(
+                    "", embed=embed, view=view, ephemeral=True
+                )
+                view.set_message(message)
+                await view.refresh_ui()
+                return
+            case ItemType.DADDY_KEY:
+                item = await self.get_item(guild.id, item_type)
+                embed = item.get_embed(self.bot, show_price=False)
+
+                view = ShopConfirmView(self.controller, interaction, item, None)
                 await view.init()
 
                 message = await interaction.followup.send(

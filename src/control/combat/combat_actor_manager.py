@@ -1,12 +1,12 @@
-import random
-
 import discord
 from combat.actors import Actor, Character, Opponent
-from combat.encounter import EncounterContext, TurnData
 from combat.enemies.enemy import Enemy
+from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
-from combat.skills.types import SkillEffect, SkillInstance, SkillType
-from control.combat.combat_skill_manager import CombatSkillManager
+from combat.skills.status_effect import ActiveStatusEffect
+from combat.skills.types import SkillEffect, SkillType, StatusEffectType
+from config import Config
+from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -15,6 +15,7 @@ from discord.ext import commands
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
+from events.status_effect_event import StatusEffectEvent
 from events.types import CombatEventType, EncounterEventType
 
 
@@ -29,18 +30,11 @@ class CombatActorManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
-        self.skill_manager: CombatSkillManager = self.controller.get_service(
-            CombatSkillManager
-        )
+        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "Combat Skills"
 
     async def listen_for_event(self, event: BotEvent):
         pass
-
-    def get_skill(self, skill_type: SkillType) -> Skill:
-        skill = globals()[skill_type]
-        instance = skill()
-        return instance
 
     async def get_actor_current_hp(
         self, actor: Actor, combat_events: list[CombatEvent]
@@ -52,19 +46,65 @@ class CombatActorManager(Service):
                 continue
             if event.skill_type is None:
                 continue
-            base_skill = await self.skill_manager.get_base_skill(event.skill_type)
-            match base_skill.skill_effect:
+            if event.combat_event_type == CombatEventType.STATUS_EFFECT:
+                continue
+            if event.combat_event_type == CombatEventType.STATUS_EFFECT_OUTCOME:
+                status_effect = await self.factory.get_status_effect(event.skill_type)
+                skill_effect = status_effect.damage_type
+            else:
+                base_skill = await self.factory.get_base_skill(event.skill_type)
+                skill_effect = base_skill.skill_effect
+
+            match skill_effect:
                 case SkillEffect.PHYSICAL_DAMAGE:
                     health -= event.skill_value
                 case SkillEffect.MAGICAL_DAMAGE:
                     health -= event.skill_value
+                case SkillEffect.NEUTRAL_DAMAGE:
+                    health -= event.skill_value
+                case SkillEffect.STATUS_EFFECT_DAMAGE:
+                    health -= event.skill_value
                 case SkillEffect.HEALING:
                     health += event.skill_value
-                    health = min(health, actor.max_hp)
+            health = min(health, actor.max_hp)
 
             if health <= 0:
                 return 0
         return int(health)
+
+    async def get_active_status_effects(
+        self,
+        id: int,
+        status_effects: dict[int, list[StatusEffectEvent]],
+        combat_events: list[CombatEvent],
+    ) -> list[ActiveStatusEffect]:
+        active_status_effects: dict[StatusEffectType, list[ActiveStatusEffect]] = {}
+        active_status_effects = []
+
+        if id not in status_effects:
+            return active_status_effects
+
+        actor_status_effects = status_effects[id]
+        stacks = {event.id: event.stacks for event in actor_status_effects}
+
+        for combat_event in combat_events:
+            if combat_event.combat_event_type != CombatEventType.STATUS_EFFECT:
+                continue
+
+            status_id = combat_event.skill_id
+            if status_id not in stacks:
+                continue
+
+            stacks[status_id] += combat_event.skill_value
+
+        for event in actor_status_effects:
+            status_effect = await self.factory.get_status_effect(event.status_type)
+            active_status_effect = ActiveStatusEffect(
+                status_effect, event, stacks[event.id]
+            )
+            active_status_effects.append(active_status_effect)
+
+        return active_status_effects
 
     async def get_opponent(
         self,
@@ -73,33 +113,47 @@ class CombatActorManager(Service):
         max_hp: int,
         encounter_events: list[EncounterEvent],
         combat_events: list[CombatEvent],
+        status_effects: dict[int, list[StatusEffectEvent]],
     ) -> Opponent:
         defeated = False
         encounter_id = None
+        id = -1
+        phase = 1
         for event in encounter_events:
             if encounter_id is None:
                 encounter_id = event.encounter_id
+            if event.encounter_event_type == EncounterEventType.ENEMY_PHASE_CHANGE:
+                phase += 1
             if event.encounter_event_type == EncounterEventType.ENEMY_DEFEAT:
                 defeated = True
-                break
+
+        if phase > 1:
+            enemy_type = enemy.phases[phase - 2]
+            enemy = await self.factory.get_enemy(enemy_type)
+            id -= phase + 10
 
         skills = []
         for skill_type in enemy.skill_types:
-            skill = await self.skill_manager.get_enemy_skill(skill_type)
+            skill = await self.factory.get_enemy_skill(skill_type)
             skills.append(skill)
 
-        skill_cooldowns = self.get_skill_cooldowns(None, skills, combat_events)
+        skill_cooldowns = self.get_skill_cooldowns(id, skills, combat_events)
         skill_stacks_used = await self.database.get_opponent_skill_stacks_used(
             encounter_id
         )
+        active_status_effects = await self.get_active_status_effects(
+            id, status_effects, combat_events
+        )
 
         return Opponent(
+            id=id,
             enemy=enemy,
             level=enemy_level,
             max_hp=max_hp,
             skills=skills,
             skill_cooldowns=skill_cooldowns,
             skill_stacks_used=skill_stacks_used,
+            status_effects=active_status_effects,
             defeated=defeated,
         )
 
@@ -108,12 +162,16 @@ class CombatActorManager(Service):
         member: discord.Member,
         encounter_events: list[EncounterEvent] = None,
         combat_events: list[CombatEvent] = None,
+        status_effects: dict[int, StatusEffectEvent] = None,
     ) -> Character:
         if encounter_events is None:
             encounter_events = []
 
         if combat_events is None:
             combat_events = []
+
+        if status_effects is None:
+            status_effects = {}
 
         defeated = False
         timed_out = False
@@ -136,7 +194,7 @@ class CombatActorManager(Service):
         skill_slots = {}
 
         for slot, skill_type in enumerate(weapon_skills):
-            skill = await self.skill_manager.get_weapon_skill(
+            skill = await self.factory.get_weapon_skill(
                 skill_type, equipment.weapon.rarity, equipment.weapon.level
             )
             skill_slots[slot] = skill
@@ -156,11 +214,16 @@ class CombatActorManager(Service):
             member.guild.id, member.id
         )
 
+        active_status_effects = await self.get_active_status_effects(
+            member.id, status_effects, combat_events
+        )
+
         character = Character(
             member=member,
             skill_slots=skill_slots,
             skill_cooldowns=skill_cooldowns,
             skill_stacks_used=skill_stacks_used,
+            status_effects=active_status_effects,
             equipment=equipment,
             defeated=defeated,
             timed_out=timed_out,
@@ -169,6 +232,19 @@ class CombatActorManager(Service):
 
     def get_undefeated_actors(self, actors: list[Actor]):
         return [actor for actor in actors if not actor.defeated]
+
+    def get_used_skills(
+        self, actor_id: int, combat_events: list[CombatEvent]
+    ) -> list[SkillType]:
+        used_skills = []
+        for event in combat_events:
+            if (
+                event.member_id == actor_id or (actor_id < 0 and event.member_id < 0)
+            ) and event.skill_type is not None:
+                skill_type = event.skill_type
+                if skill_type not in used_skills:
+                    used_skills.append(skill_type)
+        return used_skills
 
     def get_skill_cooldowns(
         self, actor_id: int, skills: list[Skill], combat_events: list[CombatEvent]
@@ -209,116 +285,91 @@ class CombatActorManager(Service):
             skill_data[skill_type] = last_used
         return skill_data
 
-    async def calculate_aoe_skill(
-        self,
-        context: EncounterContext,
-        skill: Skill,
-        available_targets: list[Actor],
-        hp_cache: dict[int, int],
-    ) -> list[tuple[Actor, SkillInstance, float]]:
-        damage_data = []
+    def get_encounter_scaling(self, actor: Actor, combatant_count: int = 1) -> float:
+        encounter_scaling = 1
+        if actor.is_enemy:
+            return encounter_scaling
 
-        for target in available_targets:
-            instances = context.opponent.get_skill_effect(
-                skill, combatant_count=context.get_combat_scale()
+        if combatant_count > 1:
+            encounter_scaling = (
+                1 / combatant_count * Config.CHARACTER_ENCOUNTER_SCALING_FACOTR
             )
-            instance = instances[0]
+        return encounter_scaling
 
-            if target.id not in hp_cache:
-                current_hp = await self.get_actor_current_hp(
-                    target, context.combat_events
-                )
-            else:
-                current_hp = hp_cache[target.id]
-
-            total_damage = target.get_damage_after_defense(skill, instance.scaled_value)
-            new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
-            hp_cache[target.id] = new_target_hp
-
-            damage_data.append((target, instance, new_target_hp))
-        return damage_data
-
-    async def calculate_opponent_turn_data(
-        self,
-        context: EncounterContext,
-        skill: Skill,
-        available_targets: list[Actor],
-        hp_cache: dict[int, int],
-    ):
-        damage_data = []
-
-        if skill.base_skill.aoe:
-            damage_data = await self.calculate_aoe_skill(
-                context, skill, available_targets, hp_cache
-            )
-            return TurnData(
-                actor=context.opponent, skill=skill, damage_data=damage_data
-            )
-
-        damage_instances = context.opponent.get_skill_effect(
-            skill, combatant_count=context.get_combat_scale()
+    async def get_skill_damage_after_defense(
+        self, actor: Actor, skill: Skill, incoming_damage: int
+    ) -> float:
+        return await self.get_damage_after_defense(
+            actor, skill.base_skill.skill_effect, incoming_damage
         )
 
-        for instance in damage_instances:
-            if len(available_targets) <= 0:
-                break
-
-            target = random.choice(available_targets)
-
-            if target.id not in hp_cache:
-                current_hp = await self.get_actor_current_hp(
-                    target, context.combat_events
-                )
-            else:
-                current_hp = hp_cache[target.id]
-
-            total_damage = target.get_damage_after_defense(skill, instance.scaled_value)
-
-            new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
-
-            damage_data.append((target, instance, new_target_hp))
-
-            hp_cache[target.id] = new_target_hp
-            available_targets = [
-                actor
-                for actor in available_targets
-                if actor.id not in hp_cache or hp_cache[actor.id] > 0
-            ]
-
-        return TurnData(actor=context.opponent, skill=skill, damage_data=damage_data)
-
-    async def calculate_opponent_turn(
-        self,
-        context: EncounterContext,
-    ) -> list[TurnData]:
-        opponent = context.opponent
-
-        available_skills = []
-
-        sorted_skills = sorted(
-            opponent.skills, key=lambda x: x.base_skill.base_value, reverse=True
-        )
-        for skill in sorted_skills:
-            skill_data = opponent.get_skill_data(skill)
-            if not skill_data.on_cooldown():
-                available_skills.append(skill)
-
-        skills_to_use = []
-
-        for skill in available_skills:
-            skills_to_use.append(skill)
-            if len(skills_to_use) >= opponent.enemy.actions_per_turn:
-                break
-
-        available_targets = context.get_active_combatants()
-
-        hp_cache = {}
-        turn_data = []
-        for skill in skills_to_use:
-            turn_data.append(
-                await self.calculate_opponent_turn_data(
-                    context, skill, available_targets, hp_cache
-                )
+    async def get_damage_after_defense(
+        self, actor: Actor, skill_effect: SkillEffect, incoming_damage: int
+    ) -> float:
+        if actor.is_enemy:
+            return await self.get_opponent_damage_after_defense(
+                actor, skill_effect, incoming_damage
+            )
+        else:
+            return await self.get_character_damage_after_defense(
+                actor, skill_effect, incoming_damage
             )
 
-        return turn_data
+    async def get_character_damage_after_defense(
+        self, character: Character, skill_effect: SkillEffect, incoming_damage: int
+    ) -> float:
+        modifier = 1
+        flat_reduction = 0
+
+        match skill_effect:
+            case SkillEffect.PHYSICAL_DAMAGE:
+                modifier -= character.equipment.attributes[
+                    CharacterAttribute.DAMAGE_REDUCTION
+                ]
+                flat_reduction = int(
+                    character.equipment.gear_modifiers[GearModifierType.ARMOR] / 4
+                )
+            case SkillEffect.NEUTRAL_DAMAGE:
+                modifier -= character.equipment.attributes[
+                    CharacterAttribute.DAMAGE_REDUCTION
+                ]
+            case SkillEffect.MAGICAL_DAMAGE:
+                modifier -= character.equipment.attributes[
+                    CharacterAttribute.DAMAGE_REDUCTION
+                ]
+            case SkillEffect.STATUS_EFFECT_DAMAGE:
+                modifier -= character.equipment.attributes[
+                    CharacterAttribute.DAMAGE_REDUCTION
+                ]
+            case SkillEffect.HEALING:
+                pass
+
+        return int(max(0, ((incoming_damage * modifier) - flat_reduction)))
+
+    async def get_opponent_damage_after_defense(
+        self, opponent: Opponent, skill_effect: SkillEffect, incoming_damage: int
+    ) -> float:
+        modifier = 1
+        flat_reduction = 0
+
+        match skill_effect:
+            case SkillEffect.PHYSICAL_DAMAGE:
+                modifier -= opponent.enemy.attributes[
+                    CharacterAttribute.DAMAGE_REDUCTION
+                ]
+            case SkillEffect.NEUTRAL_DAMAGE:
+                modifier -= opponent.enemy.attributes[
+                    CharacterAttribute.DAMAGE_REDUCTION
+                ]
+            case SkillEffect.MAGICAL_DAMAGE:
+                modifier -= opponent.enemy.attributes[
+                    CharacterAttribute.DAMAGE_REDUCTION
+                ]
+            case SkillEffect.STATUS_EFFECT_DAMAGE:
+                modifier -= opponent.enemy.attributes[
+                    CharacterAttribute.DAMAGE_REDUCTION
+                ]
+            case SkillEffect.HEALING:
+                pass
+
+        return int(max(0, ((incoming_damage - flat_reduction) * modifier)))

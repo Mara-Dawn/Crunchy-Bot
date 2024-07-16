@@ -38,11 +38,11 @@ from events.types import EncounterEventType
 
 class CombatGearManager(Service):
 
-    GENERATOR_VERSION = "0.0.1"
+    GENERATOR_VERSION = "0.0.2"
 
     ITEM_LEVEL_MIN_DROP = 0.6
-
     SKILL_DROP_CHANCE = 0.1
+    GEAR_LEVEL_SCALING = 2
 
     MIN_RARITY_LVL = {
         Rarity.NORMAL: 0,
@@ -289,6 +289,7 @@ class CombatGearManager(Service):
                 + self.MODIFIER_BASE[modifier_type]
                 * (self.MODIFIER_SCALING[modifier_type])
                 * (item_level - 1)
+                * self.GEAR_LEVEL_SCALING
             )
             * slot_scaling
             * base.scaling
@@ -319,9 +320,32 @@ class CombatGearManager(Service):
 
         rarity = await self.get_random_rarity(item_level)
 
-        match droppable_base.base_type:
+        return await self.generate_specific_drop(
+            member_id=member_id,
+            guild_id=guild_id,
+            item_level=item_level,
+            base=droppable_base,
+            rarity=rarity,
+        )
+
+    async def has_uniques(self, base: DroppableBase):
+        return False
+
+    async def generate_specific_drop(
+        self,
+        member_id: int,
+        guild_id: int,
+        item_level: int,
+        base: DroppableBase,
+        rarity: Rarity,
+    ) -> Gear:
+
+        if rarity == Rarity.UNIQUE and not await self.has_uniques(base):
+            rarity = Rarity.RARE
+
+        match base.base_type:
             case Base.SKILL:
-                skill_base: BaseSkill = droppable_base
+                skill_base: BaseSkill = base
                 skill = Skill(
                     base_skill=skill_base,
                     rarity=rarity,
@@ -339,7 +363,7 @@ class CombatGearManager(Service):
                 return skill
 
             case Base.GEAR:
-                gear_base: GearBase = droppable_base
+                gear_base: GearBase = base
                 modifiers = await self.get_random_modifiers(
                     gear_base, item_level, rarity
                 )

@@ -9,8 +9,8 @@ from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect, SkillInstance
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
-from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.combat_skill_manager import CombatSkillManager
+from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -30,15 +30,13 @@ class CombatEmbedManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
-        self.enemy_manager: CombatEnemyManager = self.controller.get_service(
-            CombatEnemyManager
-        )
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
         )
+        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "Combat Embeds"
 
     async def listen_for_event(self, event: BotEvent):
@@ -47,30 +45,40 @@ class CombatEmbedManager(Service):
     async def get_spawn_embed(
         self, encounter: Encounter, done: bool = False, show_info: bool = False
     ) -> discord.Embed:
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
-        title = "A random Enemy appeared!"
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
 
-        embed = discord.Embed(title=title, color=discord.Colour.purple())
+        if enemy.is_boss:
+            title = "A Boss Challenge Has Appeared!"
+            enemy_name = f"> ~* {enemy.name} *~"
+            color = discord.Colour.red()
+        else:
+            title = "A random Enemy appeared!"
+            enemy_name = f"> ~* {enemy.name} - Lvl. {encounter.enemy_level} *~"
+            color = discord.Colour.purple()
 
-        enemy_name = f"> ~* {enemy.name} - Lvl. {encounter.enemy_level} *~"
+        embed = discord.Embed(title=title, color=color)
+
         content = f'```python\n"{enemy.description}"```'
         embed.add_field(name=enemy_name, value=content, inline=False)
 
-        if show_info:
-            enemy_info = f"```ansi\n[37m{enemy.information}```"
+        if show_info or enemy.is_boss:
+            enemy_info = f"```ansi\n[33m{enemy.information}```"
             embed.add_field(name="", value=enemy_info, inline=False)
-            return embed
 
+        min_encounter_size = enemy.min_encounter_scale
         max_encounter_size = enemy.max_players
         participants = await self.database.get_encounter_participants_by_encounter_id(
             encounter.id
         )
         if not done:
-            participant_info = (
-                f"Active Combatants: {len(participants)}/{max_encounter_size}"
-            )
+            if min_encounter_size > 1 and len(participants) < min_encounter_size:
+                participant_info = f"\nCombatants Needed to Start: {len(participants)}/{min_encounter_size}"
+            else:
+                participant_info = (
+                    f"\nActive Combatants: {len(participants)}/{max_encounter_size}"
+                )
         else:
-            participant_info = "This encounter has concluded."
+            participant_info = "This Encounter Has Concluded."
         embed.add_field(name=participant_info, value="", inline=False)
         embed.set_image(url=enemy.image_url)
         embed.set_footer(text=f"by {enemy.author}")
@@ -129,10 +137,38 @@ class CombatEmbedManager(Service):
         embed_content = "```\n" + value + spacing + "```"
         embed.add_field(name=name, value=embed_content, inline=False)
 
+    def add_active_status_effect_bar(
+        self,
+        embed: discord.Embed,
+        actor: Actor,
+        max_width: int = None,
+    ):
+        if len(actor.status_effects) <= 0:
+            return
+
+        if max_width is None:
+            max_width = Config.COMBAT_EMBED_MAX_WIDTH
+
+        name = "Status Effects"
+        value = ""
+
+        for effect in actor.status_effects:
+            if effect.status_effect.display_status and effect.remaining_stacks > 0:
+                value += f"{effect.status_effect.emoji}{effect.remaining_stacks}"
+
+        if value == "":
+            return
+
+        embed_content = "```\n" + value + "```"
+        embed.add_field(name=name, value=embed_content, inline=False)
+
     async def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
         title = f"> ~* {enemy.name} - Lvl. {context.opponent.level} *~"
+        if enemy.is_boss:
+            title = f"> ~* {enemy.name} *~"
+
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
@@ -144,9 +180,13 @@ class CombatEmbedManager(Service):
         max_hp = context.opponent.max_hp
         self.add_health_bar(embed, current_hp, max_hp, max_width=Config.ENEMY_MAX_WIDTH)
 
+        self.add_active_status_effect_bar(
+            embed, context.opponent, max_width=Config.ENEMY_MAX_WIDTH
+        )
+
         skill_list = []
         for skill_type in enemy.skill_types:
-            skill = await self.skill_manager.get_enemy_skill(skill_type)
+            skill = await self.factory.get_enemy_skill(skill_type)
             skill_list.append(skill.name)
 
         self.add_text_bar(
@@ -175,6 +215,9 @@ class CombatEmbedManager(Service):
         enemy = context.opponent.enemy
 
         title = f"> ~* {enemy.name} - Lvl. {context.opponent.level} *~"
+        if enemy.is_boss:
+            title = f"> ~* {enemy.name} *~"
+
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.green()
@@ -198,6 +241,9 @@ class CombatEmbedManager(Service):
         enemy = context.opponent.enemy
 
         title = f"> ~* {enemy.name} - Lvl. {context.opponent.level} *~"
+        if enemy.is_boss:
+            title = f"> ~* {enemy.name} *~"
+
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.red()
@@ -256,6 +302,10 @@ class CombatEmbedManager(Service):
             max_width=Config.COMBAT_EMBED_MAX_WIDTH,
         )
 
+        self.add_active_status_effect_bar(
+            head_embed, actor, max_width=Config.COMBAT_EMBED_MAX_WIDTH
+        )
+
         if actor.image_url is not None:
             head_embed.set_thumbnail(url=actor.image_url)
 
@@ -263,7 +313,11 @@ class CombatEmbedManager(Service):
         embeds.append(head_embed)
 
         for skill in actor.skills:
-            embeds.append(actor.get_skill_data(skill).get_embed(show_data=True))
+            embeds.append(
+                (await self.skill_manager.get_skill_data(actor, skill)).get_embed(
+                    show_data=True
+                )
+            )
 
         return embeds
 
@@ -285,8 +339,8 @@ class CombatEmbedManager(Service):
         outcome_title = ""
         damage_info = ""
 
-        total_damage = target.get_damage_after_defense(
-            skill, damage_instance.scaled_value
+        total_damage = await self.actor_manager.get_skill_damage_after_defense(
+            target, skill, damage_instance.scaled_value
         )
 
         display_dmg = damage_instance.value
@@ -294,6 +348,9 @@ class CombatEmbedManager(Service):
             display_dmg = total_damage
 
         match skill.base_skill.skill_effect:
+            case SkillEffect.NEUTRAL_DAMAGE:
+                outcome_title = "Damage"
+                damage_info = f"**{display_dmg}**"
             case SkillEffect.PHYSICAL_DAMAGE:
                 outcome_title = "Attack Damage"
                 damage_info = f"**{display_dmg}** [phys]"
@@ -475,7 +532,7 @@ class CombatEmbedManager(Service):
 
         full_embed = None
 
-        skill_data = actor.get_skill_data(turn_data.skill)
+        skill_data = await self.skill_manager.get_skill_data(actor, turn_data.skill)
 
         skill = skill_data.skill
 
@@ -486,6 +543,15 @@ class CombatEmbedManager(Service):
 
         yield full_embed
 
+        if (
+            actor.is_enemy
+            # and actor.enemy.is_boss
+            and skill.type
+            not in self.actor_manager.get_used_skills(actor.id, context.combat_events)
+        ):
+            wait = max(len(skill.description) * 0.06, 3)
+            await asyncio.sleep(wait)
+
         if not skill.base_skill.base_value <= 0:
             if skill.base_skill.aoe:
                 async for embed in self.display_aoe_skill(turn_data, skill, full_embed):
@@ -495,6 +561,25 @@ class CombatEmbedManager(Service):
                     turn_data, skill, full_embed
                 ):
                     yield embed
+
+    def get_status_effect_embed(
+        self, actor: Actor, effect_data: dict[str, str]
+    ) -> discord.Embed:
+        actor_name = f"{actor.name}"
+
+        color = discord.Color.blurple()
+        if actor.is_enemy:
+            color = discord.Color.red()
+
+        embed = discord.Embed(title="", description="", color=color)
+        embed.set_author(name=actor_name, icon_url=actor.image_url)
+        embed.set_thumbnail(url=actor.image_url)
+
+        for title, description in effect_data.items():
+            # embed.add_field(name=title, value=description)
+            self.add_text_bar(embed, title, description)
+
+        return embed
 
     def get_turn_skip_embed(
         self, actor: Actor, reason: str, context: EncounterContext
@@ -514,6 +599,17 @@ class CombatEmbedManager(Service):
         embed.add_field(name="Reason", value=reason)
         return embed
 
+    async def get_waiting_for_party_embed(self, party_size: int):
+        embed = discord.Embed(
+            title="Waiting for players to arrive.", color=discord.Colour.green()
+        )
+
+        message = f"Combat will start as soon as {party_size} players join."
+        self.add_text_bar(embed, "", message)
+
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        return embed
+
     async def get_initiation_embed(self):
         embed = discord.Embed(title="Get Ready to Fight!", color=discord.Colour.green())
 
@@ -529,8 +625,11 @@ class CombatEmbedManager(Service):
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         return embed
 
-    async def get_round_embed(self, context: EncounterContext):
-        embed = discord.Embed(title="New Round", color=discord.Colour.green())
+    async def get_round_embed(self, context: EncounterContext, cont: bool = False):
+        title = "New Round"
+        if cont:
+            title = "Round Continued.."
+        embed = discord.Embed(title=title, color=discord.Colour.green())
         initiative_list = context.actors
         current_actor = context.get_current_actor()
         initiative_display = ""
@@ -542,14 +641,23 @@ class CombatEmbedManager(Service):
             )
             fraction = current_hp / actor.max_hp
             percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
+            name = actor.name[:13]
             display_hp = f"[{percentage}%]" if not actor.is_enemy else ""
+            status_effects = ""
+            for effect in actor.status_effects:
+                if effect.status_effect.display_status and effect.remaining_stacks > 0:
+                    status_effects += (
+                        f"{effect.status_effect.emoji}{effect.remaining_stacks}"
+                    )
             if actor.id == current_actor.id:
                 width = 45
-                text = f"{number}. >> {actor.name} << {display_hp}"
+                text = f"{number}. >> {name} << {status_effects} {display_hp}"
                 spacing = " " * max(0, width - len(text))
                 initiative_display += f"\n{text}{spacing}"
                 continue
-            initiative_display += f"\n{number}. {actor.name} {display_hp}"
+            initiative_display += (
+                f"\n{number}. {actor.name} {status_effects} {display_hp}"
+            )
         initiative_display = f"```python\n{initiative_display}```"
         embed.add_field(name="Turn Order:", value=initiative_display, inline=False)
 

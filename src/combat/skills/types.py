@@ -1,16 +1,38 @@
 from enum import Enum
 
 
+class StatusEffectType(str, Enum):
+    BLEED = "Bleed"
+    CLEANSE = "Cleanse"
+    BLIND = "Blind"
+    FLUSTERED = "Flustered"
+    RAGE = "Rage"
+    RAGE_QUIT = "RageQuit"
+
+
 class SkillType(str, Enum):
     EMPTY = "EmptySkill"
+
+    # Player Skills
+    # Physical
     NORMAL_ATTACK = "NormalAttack"
     HEAVY_ATTACK = "HeavyAttack"
-    MAGIC_ATTACK = "MagicAttack"
 
     SECOND_WIND = "SecondWind"
     GIGA_BONK = "GigaBonk"
-    FIRE_BALL = "FireBall"
+    SLICE_N_DICE = "SliceAndDice"
 
+    # Neutral
+    POCKET_SAND = "PocketSand"
+    BLOOD_RAGE = "BloodRage"
+    PHYSICAL_MISSILE = "PhysicalMissile"
+
+    # Magical
+    MAGIC_ATTACK = "MagicAttack"
+    FIRE_BALL = "FireBall"
+    MAGIC_MISSILE = "MagicMissile"
+
+    # Enemy Skills
     # Mind Goblin
     DEEZ_NUTS = "DeezNuts"
     BONK = "Bonk"
@@ -44,6 +66,19 @@ class SkillType(str, Enum):
     BRO_FART = "BroBiotics"
     BRO_EXTRA_FART = "BroBlast"
 
+    # DF Tank
+    STANCE_OFF = "StanceOff"
+    YPYT = "YPYT"
+    DEAD_TANK = "DeadTank"
+
+    # Daddy
+    HAIR_PULL = "HairPull"
+    BELT = "Belt"
+    TIE_YOU_UP = "TieYouUp"
+    BUTT_SLAP = "ButtSlap"
+    WHIP = "Whip"
+    ON_YOUR_KNEES = "OnYourKnees"
+
     @staticmethod
     def is_weapon_skill(skill_type: "SkillType"):
         return skill_type in [
@@ -56,12 +91,32 @@ class SkillType(str, Enum):
 class SkillEffect(str, Enum):
     PHYSICAL_DAMAGE = "Physical"
     MAGICAL_DAMAGE = "Magical"
+    STATUS_EFFECT_DAMAGE = "Status"
+    NEUTRAL_DAMAGE = "Neutral"
+    NOTHING = "Nothing"
     HEALING = "Healing"
 
 
 class SkillTarget(Enum):
     OPPONENT = 0
     SELF = 1
+
+
+class StatusEffectTrigger(Enum):
+    START_OF_TURN = 0
+    END_OF_TURN = 1
+    START_OF_ROUND = 2
+    END_OF_ROUND = 3
+    ON_DAMAGE_TAKEN = 4
+    ON_HEALTH_GAINED = 5
+    ON_HP_CHANGE = 6
+    ON_ATTACK = 7
+    POST_ATTACK = 8
+
+
+class StatusEffectApplication(Enum):
+    DEFAULT = 0
+    ATTACK_VALUE = 1
 
 
 class SkillInstance:
@@ -87,5 +142,15 @@ class SkillInstance:
         if self.is_crit:
             self.value *= self.critical_modifier
 
-        self.scaled_value = max(1, int(self.value * self.encounter_scaling))
+        self.scaled_value = 0
+        if self.value > 0:
+            self.scaled_value = max(1, int(self.value * self.encounter_scaling))
+        self.value: int = int(self.value)
+
+    def apply_effect_modifier(self, modifier: float):
+        self.value *= modifier
+        self.raw_value = int(self.value)
+        self.scaled_value = 0
+        if self.value > 0:
+            self.scaled_value = max(1, int(self.value * self.encounter_scaling))
         self.value: int = int(self.value)

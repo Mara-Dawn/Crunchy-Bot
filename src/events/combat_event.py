@@ -1,7 +1,8 @@
+import contextlib
 import datetime
 from typing import Any
 
-from combat.skills.types import SkillType
+from combat.skills.types import SkillType, StatusEffectType
 
 from events.bot_event import BotEvent
 from events.types import CombatEventType, EncounterEventType, EventType
@@ -52,6 +53,16 @@ class CombatEvent(BotEvent):
         if row is None:
             return None
 
+        skill_type = None
+
+        skill_db_value = row[Database.COMBAT_EVENT_SKILL_TYPE]
+        if skill_db_value is not None:
+            with contextlib.suppress(Exception):
+                skill_type = SkillType(skill_db_value)
+            if skill_type is None:
+                with contextlib.suppress(Exception):
+                    skill_type = StatusEffectType(skill_db_value)
+
         return CombatEvent(
             timestamp=datetime.datetime.fromtimestamp(
                 row[Database.EVENT_TIMESTAMP_COL]
@@ -60,11 +71,7 @@ class CombatEvent(BotEvent):
             encounter_id=row[Database.COMBAT_EVENT_ENCOUNTER_ID_COL],
             member_id=row[Database.COMBAT_EVENT_MEMBER_ID],
             target_id=row[Database.COMBAT_EVENT_TARGET_ID],
-            skill_type=(
-                SkillType(row[Database.COMBAT_EVENT_SKILL_TYPE])
-                if row[Database.COMBAT_EVENT_SKILL_TYPE] is not None
-                else None
-            ),
+            skill_type=skill_type,
             skill_value=row[Database.COMBAT_EVENT_SKILL_VALUE],
             skill_id=row[Database.COMBAT_EVENT_SKILL_ID],
             combat_event_type=CombatEventType(row[Database.COMBAT_EVENT_TYPE_COL]),

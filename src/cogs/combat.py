@@ -6,11 +6,13 @@ from typing import Literal
 import discord
 from bot import CrunchyBot
 from combat.enemies.types import EnemyType
+from combat.gear.types import GearBaseType, Rarity
+from combat.skills.types import SkillType
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
-from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
+from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
@@ -38,9 +40,8 @@ class Combat(commands.Cog):
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
         )
-        self.testing: CombatGearManager = self.controller.get_service(CombatGearManager)
-        self.enemy_manager: CombatEnemyManager = self.controller.get_service(
-            CombatEnemyManager
+        self.gear_manager: CombatGearManager = self.controller.get_service(
+            CombatGearManager
         )
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
@@ -48,6 +49,7 @@ class Combat(commands.Cog):
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
+        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.enemy_timers = {}
 
     @staticmethod
@@ -205,7 +207,7 @@ class Combat(commands.Cog):
     async def enemy_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        enemies = [self.enemy_manager.get_enemy(enum) for enum in EnemyType]
+        enemies = [await self.factory.get_enemy(enum) for enum in EnemyType]
 
         choices = [
             app_commands.Choice(
@@ -214,6 +216,26 @@ class Combat(commands.Cog):
             )
             for enemy in enemies
             if current.lower() in enemy.name.lower()
+        ][:25]
+        return choices
+
+    async def base_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        gear_base_types = [base_type for base_type in GearBaseType]
+        skill_base_types = [base_type for base_type in SkillType]
+        base_types = gear_base_types + skill_base_types
+        bases = [await self.factory.get_base(enum) for enum in base_types]
+
+        bases = [base for base in bases if base.droppable and base.name != ""]
+
+        choices = [
+            app_commands.Choice(
+                name=base.name,
+                value=base.type,
+            )
+            for base in bases
+            if current.lower() in base.name.lower()
         ][:25]
         return choices
 
@@ -246,7 +268,7 @@ class Combat(commands.Cog):
                 return
 
             if level is not None:
-                enemy = self.enemy_manager.get_enemy(enemy_type)
+                enemy = await self.factory.get_enemy(enemy_type)
 
                 if enemy.min_level > level or enemy.max_level < level:
                     await self.bot.command_response(
@@ -326,6 +348,47 @@ class Combat(commands.Cog):
     group = app_commands.Group(
         name="combat", description="Subcommands for the combat module."
     )
+
+    @group.command(
+        name="give_loot",
+        description="Give specific loot.",
+    )
+    @app_commands.autocomplete(base=base_autocomplete)
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def give_loot(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member,
+        level: app_commands.Range[int, 1],
+        base: str,
+        rarity: Rarity,
+    ):
+        if not await self.__check_enabled(interaction, all_channels=True):
+            return
+        await interaction.response.defer()
+
+        member_id = user.id
+        guild_id = interaction.guild_id
+
+        droppable_base = await self.factory.get_base(base)
+
+        gear = await self.gear_manager.generate_specific_drop(
+            member_id=member_id,
+            guild_id=guild_id,
+            item_level=level,
+            base=droppable_base,
+            rarity=rarity,
+        )
+
+        embed = gear.get_embed()
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Loot was given out to {user.display_name}",
+            embeds=[embed],
+        )
 
     @group.command(
         name="reload_overview",

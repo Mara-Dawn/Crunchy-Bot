@@ -7,6 +7,7 @@ from combat.gear.types import (
     Rarity,
 )
 from control.combat.combat_gear_manager import CombatGearManager
+from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -62,6 +63,9 @@ class EquipmentView(ViewMenu):
         self.state = state
         self.scrap_balance = scrap_balance
         self.loaded = False
+        self.skill_manager: CombatSkillManager = self.controller.get_service(
+            CombatSkillManager
+        )
 
         self.guild_level = guild_level
         self.max_rarity = Rarity.NORMAL
@@ -173,9 +177,9 @@ class EquipmentView(ViewMenu):
                 embed = SkillsHeadEmbed(self.member)
                 embeds.append(embed)
                 for skill in self.character.skills:
-                    skill_embed = self.character.get_skill_data(skill).get_embed(
-                        show_data=True, show_full_data=True
-                    )
+                    skill_embed = (
+                        await self.skill_manager.get_skill_data(self.character, skill)
+                    ).get_embed(show_data=True, show_full_data=True)
                     embeds.append(skill_embed)
             case EquipmentViewState.FORGE:
                 embed = ForgeEmbed(

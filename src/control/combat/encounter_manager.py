@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import importlib
 import random
 
 import discord
@@ -8,27 +9,32 @@ from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.enemies.types import EnemyType
 from combat.skills.skill import CharacterSkill
-from combat.skills.types import SkillEffect
+from combat.skills.types import (
+    SkillEffect,
+    StatusEffectApplication,
+    StatusEffectTrigger,
+)
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
-from control.combat.combat_enemy_manager import CombatEnemyManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.combat_skill_manager import CombatSkillManager
+from control.combat.context_loader import ContextLoader
+from control.combat.object_factory import ObjectFactory
+from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
+from control.types import ControllerModuleMap
 from datalayer.database import Database
 from discord.ext import commands
-from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.inventory_event import InventoryEvent
 from events.types import (
-    BeansEventType,
     CombatEventType,
     EncounterEventType,
     EventType,
@@ -59,9 +65,6 @@ class EncounterManager(Service):
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
         )
-        self.enemy_manager: CombatEnemyManager = self.controller.get_service(
-            CombatEnemyManager
-        )
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
@@ -71,6 +74,11 @@ class EncounterManager(Service):
         self.gear_manager: CombatGearManager = self.controller.get_service(
             CombatGearManager
         )
+        self.status_effect_manager: CombatStatusEffectManager = (
+            self.controller.get_service(CombatStatusEffectManager)
+        )
+        self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
+        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "Encounter"
 
     async def listen_for_event(self, event: BotEvent):
@@ -80,13 +88,21 @@ class EncounterManager(Service):
                     return
                 encounter_event: EncounterEvent = event
                 match encounter_event.encounter_event_type:
-                    case EncounterEventType.INITIATE | EncounterEventType.NEW_ROUND:
+                    case (
+                        EncounterEventType.NEW_ROUND | EncounterEventType.MEMBER_DEFEAT
+                    ):
                         await self.refresh_encounter_thread(
                             encounter_event.encounter_id
                         )
+                    case EncounterEventType.INITIATE:
+                        await self.initiate_encounter(encounter_event.encounter_id)
                     case EncounterEventType.MEMBER_ENGAGE:
                         await self.add_member_to_encounter(
                             encounter_event.encounter_id, encounter_event.member_id
+                        )
+                    case EncounterEventType.ENEMY_PHASE_CHANGE:
+                        await self.refresh_encounter_thread(
+                            encounter_event.encounter_id
                         )
                     case EncounterEventType.ENEMY_DEFEAT:
                         await self.refresh_encounter_thread(
@@ -101,6 +117,7 @@ class EncounterManager(Service):
                 if combat_event.combat_event_type not in [
                     CombatEventType.ENEMY_END_TURN,
                     CombatEventType.MEMBER_END_TURN,
+                    CombatEventType.ENEMY_TURN,
                 ]:
                     return
                 await self.refresh_encounter_thread(combat_event.encounter_id)
@@ -119,7 +136,7 @@ class EncounterManager(Service):
             encounter_level = random.randint(min_encounter_level, max_encounter_level)
 
         if enemy_type is not None:
-            enemy = self.enemy_manager.get_enemy(enemy_type)
+            enemy = await self.factory.get_enemy(enemy_type)
             if not (
                 encounter_level >= enemy.min_level
                 and encounter_level <= enemy.max_level
@@ -127,13 +144,14 @@ class EncounterManager(Service):
                 raise TypeError
         else:
             enemies = [
-                self.enemy_manager.get_enemy(enemy_type) for enemy_type in EnemyType
+                await self.factory.get_enemy(enemy_type) for enemy_type in EnemyType
             ]
             possible_enemies = [
                 enemy
                 for enemy in enemies
                 if encounter_level >= enemy.min_level
                 and encounter_level <= enemy.max_level
+                and not enemy.is_boss
             ]
 
             spawn_weights = [enemy.weighting for enemy in possible_enemies]
@@ -143,10 +161,14 @@ class EncounterManager(Service):
 
             enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
 
+        effective_encounter_level = encounter_level
+        if enemy.is_boss:
+            effective_encounter_level += 1
+
         roll = random.uniform(0.95, 1.05)
         enemy_health = (
             enemy.health
-            * Config.ENEMY_HEALTH_SCALING[encounter_level]
+            * Config.ENEMY_HEALTH_SCALING[effective_encounter_level]
             * Config.AVERAGE_PLAYER_POTENCY
         )
         enemy_health *= pow(
@@ -171,7 +193,8 @@ class EncounterManager(Service):
         )
         embed = await self.embed_manager.get_spawn_embed(encounter)
 
-        view = EnemyEngageView(self.controller)
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
+        view = EnemyEngageView(self.controller, enemy)
         channel = guild.get_channel(channel_id)
 
         message = await channel.send("", embed=embed, view=view)
@@ -200,13 +223,17 @@ class EncounterManager(Service):
         combat_events = await self.database.get_combat_events_by_encounter_id(
             encounter_id
         )
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
+        status_effects = await self.database.get_status_effects_by_encounter(
+            encounter_id
+        )
         opponent = await self.actor_manager.get_opponent(
             enemy,
             encounter.enemy_level,
             encounter.max_hp,
             encounter_events,
             combat_events,
+            status_effects,
         )
 
         max_enemy_hp = encounter.max_hp
@@ -246,7 +273,7 @@ class EncounterManager(Service):
         self, encounter: Encounter, first_member_id: int
     ) -> discord.Thread:
         channel = self.bot.get_channel(encounter.channel_id)
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
         thread = await channel.create_thread(
             name=f"Encounter: {enemy.name}",
             type=discord.ChannelType.public_thread,
@@ -264,11 +291,13 @@ class EncounterManager(Service):
 
         encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
         thread = None
+        initiate_combat = False
         new_thread = False
         additional_message = ""
 
         if thread_id is None:
             thread = await self.create_encounter_thread(encounter, member_id)
+            initiate_combat = True
             new_thread = True
         else:
             thread = self.bot.get_channel(encounter.channel_id).get_thread(thread_id)
@@ -279,6 +308,30 @@ class EncounterManager(Service):
         if thread is None:
             return
 
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
+        if enemy.min_encounter_scale > 1:
+            initiate_combat = False
+            participants = (
+                await self.database.get_encounter_participants_by_encounter_id(
+                    encounter.id
+                )
+            )
+            if len(participants) == enemy.min_encounter_scale:
+                initiate_combat = True
+
+        if new_thread and not initiate_combat:
+            wait_embed = await self.embed_manager.get_waiting_for_party_embed(
+                enemy.min_encounter_scale
+            )
+            message = await thread.send(content="", embed=wait_embed)
+
+        if initiate_combat:
+            round_embed = await self.embed_manager.get_initiation_embed()
+            # will trigger the combat start on expiration
+            view = GracePeriodView(self.controller, encounter)
+            message = await thread.send(content="", embed=round_embed, view=view)
+            view.set_message(message)
+
         user = self.bot.get_guild(encounter.guild_id).get_member(member_id)
         await thread.add_user(user)
 
@@ -288,63 +341,14 @@ class EncounterManager(Service):
         embed.set_thumbnail(url=user.display_avatar.url)
         await thread.send("", embed=embed)
 
-        if new_thread:
-            round_embed = await self.embed_manager.get_initiation_embed()
-            view = GracePeriodView(self.controller, encounter)
-            message = await thread.send(content="", embed=round_embed, view=view)
-            view.set_message(message)
-
         encounters = await self.database.get_active_encounter_participants(
             encounter.guild_id
         )
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
         max_encounter_size = enemy.max_players
         if len(encounters[encounter.id]) >= max_encounter_size:
             event = UIEvent(UIEventType.COMBAT_FULL, encounter.id)
             await self.controller.dispatch_ui_event(event)
-
-    async def load_encounter_context(self, encounter_id) -> EncounterContext:
-        encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
-        encounter_events = await self.database.get_encounter_events_by_encounter_id(
-            encounter_id
-        )
-        combat_events = await self.database.get_combat_events_by_encounter_id(
-            encounter_id
-        )
-        thread_id = await self.database.get_encounter_thread(encounter_id)
-        thread = self.bot.get_channel(encounter.channel_id).get_thread(thread_id)
-
-        enemy = self.enemy_manager.get_enemy(encounter.enemy_type)
-        opponent = await self.actor_manager.get_opponent(
-            enemy,
-            encounter.enemy_level,
-            encounter.max_hp,
-            encounter_events,
-            combat_events,
-        )
-
-        combatant_ids = await self.database.get_encounter_participants_by_encounter_id(
-            encounter_id
-        )
-        guild = self.bot.get_guild(encounter.guild_id)
-        members = [guild.get_member(id) for id in combatant_ids]
-
-        combatants = []
-
-        for member in members:
-            combatant = await self.actor_manager.get_character(
-                member, encounter_events, combat_events
-            )
-            combatants.append(combatant)
-
-        return EncounterContext(
-            encounter=encounter,
-            opponent=opponent,
-            encounter_events=encounter_events,
-            combat_events=combat_events,
-            combatants=combatants,
-            thread=thread,
-        )
 
     async def skip_turn(
         self,
@@ -353,12 +357,8 @@ class EncounterManager(Service):
         reason: str,
         timeout: bool = False,
     ):
-
-        turn_message = await self.get_previous_turn_message(context.thread)
         embed = self.embed_manager.get_turn_skip_embed(actor, reason, context)
-        previous_embeds = turn_message.embeds
-        current_embeds = previous_embeds + [embed]
-        await turn_message.edit(embeds=current_embeds)
+        await self.context_loader.append_embed_to_round(context, embed)
 
         combat_event_type = CombatEventType.MEMBER_END_TURN
         if actor.is_enemy:
@@ -396,38 +396,29 @@ class EncounterManager(Service):
     async def opponent_turn(self, context: EncounterContext):
         opponent = context.opponent
 
-        turn_data = await self.actor_manager.calculate_opponent_turn(context)
+        context = await self.handle_turn_status_effects(
+            context, opponent, StatusEffectTrigger.START_OF_TURN
+        )
 
-        for turn in turn_data:
-            turn_message = await self.get_previous_turn_message(context.thread)
-            previous_embeds = turn_message.embeds
-
-            async for embed in self.embed_manager.handle_actor_turn_embed(
-                turn, context
-            ):
-                current_embeds = previous_embeds + [embed]
-                await turn_message.edit(embeds=current_embeds)
-
-            # await asyncio.sleep(2)
-
-            for target, damage_instance, _ in turn.damage_data:
-                total_damage = target.get_damage_after_defense(
-                    turn.skill, damage_instance.scaled_value
-                )
-                event = CombatEvent(
-                    datetime.datetime.now(),
-                    context.encounter.guild_id,
-                    context.encounter.id,
-                    opponent.id,
-                    target.id,
-                    turn.skill.base_skill.skill_type,
-                    total_damage,
-                    None,
-                    CombatEventType.ENEMY_TURN,
-                )
-                await self.controller.dispatch_event(event)
-
+        if context.is_concluded():
             await self.refresh_encounter_thread(context.encounter.id)
+            return
+
+        controller_type = opponent.enemy.controller
+        controller_class = getattr(
+            importlib.import_module(
+                "control.combat.enemy."
+                + ControllerModuleMap.get_module(controller_type)
+            ),
+            controller_type,
+        )
+        enemy_controller = self.controller.get_service(controller_class)
+
+        await enemy_controller.handle_turn(context)
+
+        await self.handle_turn_status_effects(
+            context, opponent, StatusEffectTrigger.END_OF_TURN
+        )
 
         event = CombatEvent(
             datetime.datetime.now(),
@@ -442,6 +433,44 @@ class EncounterManager(Service):
         )
         await self.controller.dispatch_event(event)
 
+    async def handle_turn_status_effects(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+        trigger: StatusEffectTrigger,
+    ):
+        context = await self.context_loader.load_encounter_context(context.encounter.id)
+
+        for active_actor in context.get_current_initiative():
+            if active_actor.id == actor.id:
+                actor = active_actor
+
+        triggered_status_effects = await self.status_effect_manager.actor_trigger(
+            context, actor, trigger
+        )
+
+        if len(triggered_status_effects) <= 0:
+            return context
+
+        effect_data = await self.status_effect_manager.handle_status_effects(
+            context, actor, triggered_status_effects
+        )
+
+        if len(effect_data) > 0:
+            status_effect_embed = self.embed_manager.get_status_effect_embed(
+                actor, effect_data
+            )
+            await self.context_loader.append_embed_to_round(
+                context, status_effect_embed
+            )
+
+        context = await self.context_loader.load_encounter_context(context.encounter.id)
+
+        if not context.new_turn():
+            await self.refresh_encounter_thread(context.encounter.id)
+
+        return context
+
     async def combatant_turn(
         self,
         context: EncounterContext,
@@ -449,21 +478,38 @@ class EncounterManager(Service):
         skill_data: CharacterSkill,
         target: Actor = None,
     ):
+        context = await self.handle_turn_status_effects(
+            context, character, StatusEffectTrigger.START_OF_TURN
+        )
+
+        if context.is_concluded():
+            await self.refresh_encounter_thread(context.encounter.id)
+            return
+
         if target is None:
             target = await self.skill_manager.get_character_default_target(
                 character, skill_data.skill, context
             )
 
-        skill_instances = character.get_skill_effect(
-            skill_data.skill, combatant_count=context.get_combat_scale()
+        skill_instances = await self.skill_manager.get_skill_effect(
+            character, skill_data.skill, combatant_count=context.get_combat_scale()
         )
 
         skill_value_data = []
         hp_cache = {}
 
         for instance in skill_instances:
-            total_skill_value = target.get_damage_after_defense(
-                skill_data.skill, instance.scaled_value
+            effect_modifier, post_embed = (
+                await self.status_effect_manager.handle_attack_status_effects(
+                    context,
+                    character,
+                    skill_data.skill,
+                )
+            )
+            instance.apply_effect_modifier(effect_modifier)
+
+            total_skill_value = await self.actor_manager.get_skill_damage_after_defense(
+                target, skill_data.skill, instance.scaled_value
             )
 
             target_id = target.id
@@ -480,41 +526,70 @@ class EncounterManager(Service):
             if skill_data.skill.base_skill.skill_effect != SkillEffect.HEALING:
                 total_skill_value *= -1
 
-            new_target_hp = min(
-                max(0, current_hp + total_skill_value), character.max_hp
-            )
+            new_target_hp = min(max(0, current_hp + total_skill_value), target.max_hp)
+            hp_cache[target_id] = new_target_hp
+
             skill_value_data.append((target, instance, new_target_hp))
 
-        turn_data = [TurnData(character, skill_data.skill, skill_value_data)]
+        # turn_data = [TurnData(character, skill_data.skill, skill_value_data)]
+        turn = TurnData(character, skill_data.skill, skill_value_data, post_embed)
+        await self.context_loader.append_embed_generator_to_round(
+            context, self.embed_manager.handle_actor_turn_embed(turn, context)
+        )
 
-        for turn in turn_data:
-            turn_message = await self.get_previous_turn_message(context.thread)
-            previous_embeds = turn_message.embeds
+        if turn.post_embed is not None:
+            await self.context_loader.append_embed_to_round(context, turn.post_embed)
 
-            async for embed in self.embed_manager.handle_actor_turn_embed(
-                turn, context
-            ):
-                current_embeds = previous_embeds + [embed]
-                await turn_message.edit(embeds=current_embeds)
+        for target, damage_instance, _ in turn.damage_data:
+            total_damage = await self.actor_manager.get_skill_damage_after_defense(
+                target, turn.skill, damage_instance.scaled_value
+            )
 
-            for target, damage_instance, _ in turn.damage_data:
-                total_damage = target.get_damage_after_defense(
-                    turn.skill, damage_instance.scaled_value
+            await self.status_effect_manager.handle_post_attack_status_effects(
+                context,
+                character,
+                target,
+                skill_data.skill,
+                damage_instance,
+            )
+
+            for skill_status_effect in turn.skill.base_skill.status_effects:
+                application_value = None
+                match skill_status_effect.application:
+                    case StatusEffectApplication.ATTACK_VALUE:
+                        application_value = damage_instance.value
+                    case StatusEffectApplication.DEFAULT:
+                        pass
+
+                status_effect_target = target
+                if skill_status_effect.self_target:
+                    status_effect_target = character
+
+                await self.status_effect_manager.apply_status(
+                    context,
+                    character,
+                    status_effect_target,
+                    skill_status_effect.status_effect_type,
+                    skill_status_effect.stacks,
+                    application_value,
                 )
-                event = CombatEvent(
-                    datetime.datetime.now(),
-                    context.encounter.guild_id,
-                    context.encounter.id,
-                    character.id,
-                    target.id,
-                    skill_data.skill.base_skill.skill_type,
-                    total_damage,
-                    skill_data.skill.id,
-                    CombatEventType.MEMBER_TURN,
-                )
-                await self.controller.dispatch_event(event)
 
-            # await asyncio.sleep(2)
+            event = CombatEvent(
+                datetime.datetime.now(),
+                context.encounter.guild_id,
+                context.encounter.id,
+                character.id,
+                target.id,
+                skill_data.skill.base_skill.skill_type,
+                total_damage,
+                skill_data.skill.id,
+                CombatEventType.MEMBER_TURN,
+            )
+            await self.controller.dispatch_event(event)
+
+        await self.handle_turn_status_effects(
+            context, character, StatusEffectTrigger.END_OF_TURN
+        )
 
         event = CombatEvent(
             datetime.datetime.now(),
@@ -638,10 +713,22 @@ class EncounterManager(Service):
             )
 
             if health <= 0:
-                encounter_event_type = EncounterEventType.MEMBER_DEFEAT
+                update_context = True
                 if actor.is_enemy:
-                    encounter_event_type = EncounterEventType.ENEMY_DEFEAT
+                    controller_type = actor.enemy.controller
+                    controller_class = getattr(
+                        importlib.import_module(
+                            "control.combat.enemy."
+                            + ControllerModuleMap.get_module(controller_type)
+                        ),
+                        controller_type,
+                    )
+                    enemy_controller = self.controller.get_service(controller_class)
 
+                    await enemy_controller.on_defeat(context, actor)
+                    continue
+
+                encounter_event_type = EncounterEventType.MEMBER_DEFEAT
                 embed = self.embed_manager.get_actor_defeated_embed(actor)
                 await context.thread.send("", embed=embed)
 
@@ -654,8 +741,6 @@ class EncounterManager(Service):
                 )
                 await self.controller.dispatch_event(event)
 
-                update_context = True
-
         return update_context
 
     async def delete_previous_combat_info(self, thread: discord.Thread):
@@ -666,14 +751,6 @@ class EncounterManager(Service):
                     await message.delete()
                     break
 
-    async def get_previous_turn_message(self, thread: discord.Thread):
-        async for message in thread.history(limit=100):
-            if len(message.embeds) >= 1 and message.author.id == self.bot.user.id:
-                embed = message.embeds[0]
-                if embed.title == "New Round":
-                    return message
-        return None
-
     async def get_previous_enemy_info(self, thread: discord.Thread):
         async for message in thread.history(limit=100):
             if len(message.embeds) == 1 and message.author.id == self.bot.user.id:
@@ -682,8 +759,23 @@ class EncounterManager(Service):
                     return message
         return None
 
+    async def initiate_encounter(self, encounter_id: int):
+        encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
+        controller_type = enemy.controller
+        controller_class = getattr(
+            importlib.import_module(
+                "control.combat.enemy."
+                + ControllerModuleMap.get_module(controller_type)
+            ),
+            controller_type,
+        )
+        enemy_controller = self.controller.get_service(controller_class)
+        await enemy_controller.intro(encounter_id)
+        await self.refresh_encounter_thread(encounter_id)
+
     async def refresh_encounter_thread(self, encounter_id: int):
-        context = await self.load_encounter_context(encounter_id)
+        context = await self.context_loader.load_encounter_context(encounter_id)
 
         if await self.context_needs_update_check(context):
             return
@@ -714,28 +806,30 @@ class EncounterManager(Service):
             await self.controller.dispatch_event(event)
             return
 
-        enemy_embed = await self.embed_manager.get_combat_embed(context)
-        round_embed = await self.embed_manager.get_round_embed(context)
-
-        round_message = await self.get_previous_turn_message(context.thread)
+        round_message = await self.context_loader.get_previous_turn_message(
+            context.thread
+        )
         if round_message is not None:
             round_embeds = round_message.embeds
+            cont = round_embeds[0].title == "Round Continued.."
+            round_embed = await self.embed_manager.get_round_embed(context, cont=cont)
             round_embeds[0] = round_embed
             await round_message.edit(embeds=round_embeds, attachments=[])
 
         if not context.new_turn():
             return
 
+        enemy_embed = await self.embed_manager.get_combat_embed(context)
+
         if context.new_round():
             await self.delete_previous_combat_info(context.thread)
-            await context.thread.send("", embed=enemy_embed)
+            message = await context.thread.send("", embed=enemy_embed)
+            round_embed = await self.embed_manager.get_round_embed(context)
             await context.thread.send(content="", embed=round_embed)
         else:
             message = await self.get_previous_enemy_info(context.thread)
             if message is not None:
                 await message.edit(embed=enemy_embed)
-
-        # await asyncio.sleep(2)
 
         if current_actor.is_enemy:
             await self.opponent_turn(context)
@@ -756,7 +850,9 @@ class EncounterManager(Service):
             return
 
         enemy_embeds = await self.embed_manager.get_character_turn_embeds(context)
-        view = CombatTurnView(self.controller, current_actor, context)
+
+        view = await CombatTurnView.create(self.controller, current_actor, context)
+
         message = await context.thread.send(
             f"<@{current_actor.id}>", embeds=enemy_embeds, view=view
         )

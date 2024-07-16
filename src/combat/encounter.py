@@ -5,7 +5,7 @@ import discord
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
-from combat.skills.types import SkillInstance
+from combat.skills.types import SkillInstance, StatusEffectType
 from config import Config
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
@@ -60,6 +60,7 @@ class EncounterContext:
         opponent: Opponent,
         encounter_events: list[EncounterEvent],
         combat_events: list[CombatEvent],
+        status_effects: dict[int, dict[StatusEffectType, int]],
         combatants: list[Character],
         thread: discord.Thread,
     ):
@@ -67,6 +68,7 @@ class EncounterContext:
         self.opponent = opponent
         self.encounter_events = encounter_events
         self.combat_events = combat_events
+        self.status_effects = status_effects
         self.combatants = combatants
         self.thread = thread
 
@@ -83,21 +85,40 @@ class EncounterContext:
         self.beginning_actor = self.actors[0]
         self.actors: deque[Actor] = deque(self.actors)
 
+    def get_actor(self, actor_id: int) -> Actor:
+        for actor in self.actors:
+            if actor.id == actor_id:
+                return actor
+        return None
+
     def get_last_actor(self) -> Actor:
-        if len(self.combat_events) <= 0:
+        phase_event_id = None
+
+        for event in self.encounter_events:
+            if event.encounter_event_type in [
+                EncounterEventType.ENEMY_PHASE_CHANGE,
+            ]:
+                phase_event_id = event.id
+                break
+
+        relevant_combat_events = self.combat_events
+        if phase_event_id is not None:
+            relevant_combat_events = [
+                event for event in self.combat_events if event.id > phase_event_id
+            ]
+
+        if len(relevant_combat_events) <= 0:
             return None
+
         last_actor = None
 
-        for event in self.combat_events:
+        for event in relevant_combat_events:
             if event.combat_event_type in [
                 CombatEventType.ENEMY_END_TURN,
                 CombatEventType.MEMBER_END_TURN,
             ]:
                 last_actor = event.member_id
                 break
-
-        if last_actor is None:
-            return self.opponent
 
         for actor in self.actors:
             if actor.id == last_actor:
@@ -146,7 +167,10 @@ class EncounterContext:
     def new_round(self) -> bool:
         round_event_id = None
         for event in self.encounter_events:
-            if event.encounter_event_type == EncounterEventType.NEW_ROUND:
+            if event.encounter_event_type in [
+                EncounterEventType.NEW_ROUND,
+                EncounterEventType.ENEMY_PHASE_CHANGE,
+            ]:
                 round_event_id = event.id
                 break
 
@@ -189,7 +213,10 @@ class EncounterContext:
     def get_timeout_count(self, member_id: int) -> int:
         timeout_count = 0
         for event in self.combat_events:
-            if event.combat_event_type == CombatEventType.MEMBER_TURN_SKIP:
+            if (
+                event.member_id == member_id
+                and event.combat_event_type == CombatEventType.MEMBER_TURN_SKIP
+            ):
                 timeout_count += 1
 
         return timeout_count
@@ -215,7 +242,9 @@ class TurnData:
         actor: Actor,
         skill: Skill,
         damage_data: list[tuple[Actor, SkillInstance, int]],
+        post_embed: discord.Embed = None,
     ):
         self.actor = actor
         self.skill = skill
         self.damage_data = damage_data
+        self.post_embed = post_embed

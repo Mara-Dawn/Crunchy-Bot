@@ -1,8 +1,8 @@
 class Config:
 
     # General Combat
-    # COMBAT_INITIAL_WAIT = 90
-    COMBAT_INITIAL_WAIT = 10
+    COMBAT_INITIAL_WAIT = 90
+    # COMBAT_INITIAL_WAIT = 10
 
     DEFAULT_TIMEOUT = 60 * 5
     SHORT_TIMEOUT = 60
@@ -11,32 +11,32 @@ class Config:
     ENEMY_HEALTH_SCALING = {
         1: 7.88,
         2: 11.66,
-        3: 34.48,
-        4: 72.59,
-        5: 142.57,
-        6: 204.11,
-        7: 341.81,
-        8: 461.41,
-        9: 589.27,
-        10: 764.64,
-        11: 1114.75,
-        12: 1486.36,
+        3: 35.02,
+        4: 71.34,
+        5: 131.13,
+        6: 195.01,
+        7: 305.15,
+        8: 413.28,
+        9: 535.76,
+        10: 688.03,
+        11: 940.70,
+        12: 1198.12,
         # 12: 1751.51,
     }
 
     OPPONENT_DAMAGE_BASE = {
         1: 250,
         2: 274.05,
-        3: 331.78,
-        4: 393.60,
-        5: 471.88,
-        6: 563.82,
-        7: 618.98,
-        8: 671.76,
-        9: 734.08,
-        10: 792.80,
-        11: 845.32,
-        12: 1012.75,
+        3: 325.79,
+        4: 395.58,
+        5: 458.11,
+        6: 529.87,
+        7: 586.03,
+        8: 642.17,
+        9: 703.50,
+        10: 764.18,
+        11: 822.77,
+        12: 940.77,
         # 12: 1076.95,
     }
 
@@ -51,6 +51,11 @@ class Config:
     ENEMY_HEALTH_LVL_FALLOFF = 0.95
     AVERAGE_PLAYER_POTENCY = 2
 
+    # Status Effects
+    BLEED_SCALING = 0.25
+    BLIND_MISS_CHANCE = 0.5
+    RAGE_QUIT_THRESHOLD = 0.1
+
     # Code Block Formatting
     ENEMY_MAX_WIDTH = 30
     COMBAT_EMBED_MAX_WIDTH = 40
@@ -58,11 +63,12 @@ class Config:
     SHOP_ITEM_MAX_WIDTH = 40
     INVENTORY_ITEM_MAX_WIDTH = 50
 
+    # Guild Level Requirements
     LEVEL_REQUIREMENTS = {
-        1: 10,
-        2: 15,
-        3: 25,
-        4: 20,
+        1: 15,
+        2: 25,
+        3: 35,
+        4: 99999,
         5: 20,
         6: 25,
         7: 25,

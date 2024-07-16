@@ -46,13 +46,20 @@ class CrunchyBot(commands.Bot):
         module: str,
         interaction: discord.Interaction,
         message: str,
+        embeds: list[discord.Embed] | None = None,
         args: list[Any] = None,
         ephemeral: bool = True,
     ) -> None:
         if args is None:
             args = []
         return await self.response(
-            module, interaction, message, interaction.command.name, args, ephemeral
+            module,
+            interaction,
+            message,
+            interaction.command.name,
+            embeds,
+            args,
+            ephemeral,
         )
 
     async def response(
@@ -61,11 +68,14 @@ class CrunchyBot(commands.Bot):
         interaction: discord.Interaction,
         message: str,
         command: str,
+        embeds: list[discord.Embed] | None = None,
         args: list[Any] = None,
         ephemeral: bool = True,
     ) -> None:
         if args is None:
             args = []
+        if embeds is None:
+            embeds = []
         log_message = f"{interaction.user.name} used command `{command}`."
 
         if len(args) > 0:
@@ -76,13 +86,22 @@ class CrunchyBot(commands.Bot):
         try:
             if not interaction.response.is_done():
                 await interaction.response.send_message(
-                    message, ephemeral=ephemeral, allowed_mentions=allowed_mentions
+                    message,
+                    ephemeral=ephemeral,
+                    embeds=embeds,
+                    allowed_mentions=allowed_mentions,
                 )
             else:
                 await interaction.followup.send(
-                    message, ephemeral=ephemeral, allowed_mentions=allowed_mentions
+                    message,
+                    ephemeral=ephemeral,
+                    embeds=embeds,
+                    allowed_mentions=allowed_mentions,
                 )
         except discord.errors.InteractionResponded:
             await interaction.followup.send(
-                message, ephemeral=ephemeral, allowed_mentions=allowed_mentions
+                message,
+                ephemeral=ephemeral,
+                embeds=embeds,
+                allowed_mentions=allowed_mentions,
             )

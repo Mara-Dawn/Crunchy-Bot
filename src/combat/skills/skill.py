@@ -1,6 +1,7 @@
 import discord
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
+from combat.skills.status_effect import SkillStatusEffect
 from combat.skills.types import SkillEffect, SkillTarget, SkillType
 from config import Config
 
@@ -9,6 +10,7 @@ class BaseSkill(DroppableBase):
 
     DEFAULT_IMAGE = {
         SkillEffect.PHYSICAL_DAMAGE: "https://i.imgur.com/FHvWc7b.png",
+        SkillEffect.NEUTRAL_DAMAGE: "https://i.imgur.com/FHvWc7b.png",
         SkillEffect.MAGICAL_DAMAGE: "https://i.imgur.com/zr785IX.png",
         SkillEffect.HEALING: "https://i.imgur.com/AH7NRhc.png",
     }
@@ -28,14 +30,18 @@ class BaseSkill(DroppableBase):
         droppable: bool = True,
         hits: int = 1,
         stacks: int = None,
+        status_effects: list[SkillStatusEffect] = None,
         reset_after_encounter: bool = False,
         aoe: bool = False,
         weight: int = 100,
         image_url: str = None,
         default_target: SkillTarget = SkillTarget.OPPONENT,
+        modifiable: bool = True,
+        max_targets: int = None,
         author: str = None,
     ):
         super().__init__(
+            name=name,
             base_type=Base.SKILL,
             slot=EquipmentSlot.SKILL,
             type=skill_type,
@@ -55,13 +61,19 @@ class BaseSkill(DroppableBase):
         self.initial_cooldown = initial_cooldown
         self.hits = hits
         self.stacks = stacks
+        self.status_effects = status_effects
         self.reset_after_encounter = reset_after_encounter
         self.aoe = aoe
+        self.modifiable = modifiable
         self.default_target = default_target
         self.image_url = image_url
+        self.max_targets = max_targets
 
         if self.image_url is None:
             self.image_url = self.DEFAULT_IMAGE[self.skill_effect]
+
+        if self.status_effects is None:
+            self.status_effects = []
 
 
 class Skill(Droppable):
@@ -72,13 +84,8 @@ class Skill(Droppable):
         SkillType.FIRE_BALL,
     ]
 
-    EFFECT_COLOR_MAP = {
-        SkillEffect.PHYSICAL_DAMAGE: discord.Color(int("F5A9B8", 16)),
-        SkillEffect.MAGICAL_DAMAGE: discord.Color(int("5BCEFA", 16)),
-        SkillEffect.HEALING: discord.Color.green(),
-    }
-
     EFFECT_LABEL_MAP = {
+        SkillEffect.NEUTRAL_DAMAGE: "Damage",
         SkillEffect.PHYSICAL_DAMAGE: "Damage",
         SkillEffect.MAGICAL_DAMAGE: "Damage",
         SkillEffect.HEALING: "Healing",
@@ -96,7 +103,9 @@ class Skill(Droppable):
     EFFECT_SORT_MAP = {
         SkillEffect.PHYSICAL_DAMAGE: 0,
         SkillEffect.MAGICAL_DAMAGE: 1,
-        SkillEffect.HEALING: 2,
+        SkillEffect.NEUTRAL_DAMAGE: 2,
+        SkillEffect.STATUS_EFFECT_DAMAGE: 3,
+        SkillEffect.HEALING: 4,
     }
 
     RARITY_STACKS_SCALING = {

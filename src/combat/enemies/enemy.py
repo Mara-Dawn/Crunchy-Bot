@@ -80,6 +80,9 @@ class Enemy:
         attribute_overrides: dict[CharacterAttribute, float] = None,
         actions_per_turn: int = 1,
         min_encounter_scale: int = 1,
+        is_boss: bool = False,
+        phases: list[EnemyType] = None,
+        controller: str = "BasicEnemyController",
         author: str = None,
     ):
         self.name = name
@@ -105,6 +108,9 @@ class Enemy:
         self.initiative = initiative
         self.actions_per_turn = actions_per_turn
         self.min_encounter_scale = min_encounter_scale
+        self.controller = controller
+        self.is_boss = is_boss
+        self.phases = phases
 
         self.attribute_overrides = attribute_overrides
 
@@ -114,8 +120,7 @@ class Enemy:
             CharacterAttribute.HEALING_BONUS: 0,
             CharacterAttribute.CRIT_RATE: 0.1,
             CharacterAttribute.CRIT_DAMAGE: 1.5,
-            CharacterAttribute.PHYS_DAMAGE_REDUCTION: 0,
-            CharacterAttribute.MAGIC_DAMAGE_REDUCTION: 0,
+            CharacterAttribute.DAMAGE_REDUCTION: 0,
             CharacterAttribute.MAX_HEALTH: 50,
         }
 
