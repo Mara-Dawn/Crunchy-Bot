@@ -81,7 +81,8 @@ class CombatEmbedManager(Service):
             participant_info = "This Encounter Has Concluded."
         embed.add_field(name=participant_info, value="", inline=False)
         embed.set_image(url=enemy.image_url)
-        embed.set_footer(text=f"by {enemy.author}")
+        if enemy.author is not None:
+            embed.set_footer(text=f"by {enemy.author}")
 
         return embed
 
@@ -205,7 +206,8 @@ class CombatEmbedManager(Service):
             )
 
         embed.set_image(url=enemy.image_url)
-        embed.set_footer(text=f"by {enemy.author}")
+        if enemy.author is not None:
+            embed.set_footer(text=f"by {enemy.author}")
 
         return embed
 
@@ -233,7 +235,8 @@ class CombatEmbedManager(Service):
         embed.add_field(name="Congratulations!", value=defeated_message, inline=False)
 
         embed.set_image(url=enemy.image_url)
-        embed.set_footer(text=f"by {enemy.author}")
+        if enemy.author is not None:
+            embed.set_footer(text=f"by {enemy.author}")
 
         return embed
 
@@ -259,7 +262,8 @@ class CombatEmbedManager(Service):
         embed.add_field(name="Failure!", value=defeated_message, inline=False)
 
         embed.set_image(url=enemy.image_url)
-        embed.set_footer(text=f"by {enemy.author}")
+        if enemy.author is not None:
+            embed.set_footer(text=f"by {enemy.author}")
 
         return embed
 
