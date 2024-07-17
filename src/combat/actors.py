@@ -26,7 +26,8 @@ class Actor:
         status_effects: list[ActiveStatusEffect],
         defeated: bool,
         image_url: str,
-        timed_out: bool = False,
+        leaving: bool = False,
+        is_out: bool = False,
     ):
         self.id = id
         self.name = name
@@ -38,7 +39,8 @@ class Actor:
         self.skill_stacks_used = skill_stacks_used
         self.status_effects = status_effects
         self.defeated = defeated
-        self.timed_out = timed_out
+        self.leaving = leaving
+        self.is_out = is_out
         self.image_url = image_url
 
     def get_encounter_scaling(self, combatant_count: int = 1) -> float:
@@ -56,7 +58,8 @@ class Character(Actor):
         status_effects: list[ActiveStatusEffect],
         equipment: CharacterEquipment,
         defeated: bool,
-        timed_out: bool = False,
+        leaving: bool = False,
+        is_out: bool = False,
     ):
         self.member = member
         self.equipment = equipment
@@ -77,7 +80,8 @@ class Character(Actor):
             skill_stacks_used=skill_stacks_used,
             status_effects=status_effects,
             defeated=defeated,
-            timed_out=timed_out,
+            leaving=leaving,
+            is_out=is_out,
             image_url=member.display_avatar.url,
         )
 

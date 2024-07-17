@@ -8,8 +8,9 @@ from combat.skills.skill import CharacterSkill
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
+from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
-from events.types import EncounterEventType, EventType, UIEventType
+from events.types import CombatEventType, EncounterEventType, EventType, UIEventType
 from events.ui_event import UIEvent
 
 from control.combat.combat_embed_manager import CombatEmbedManager
@@ -43,7 +44,9 @@ class CombatViewController(ViewController):
         self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.join_queue = asyncio.Queue()
-        self.request_worker = asyncio.create_task(self.join_request_worker())
+        self.leave_queue = asyncio.Queue()
+        self.join_worker = asyncio.create_task(self.join_request_worker())
+        self.leave_worker = asyncio.create_task(self.leave_request_worker())
 
     async def join_request_worker(self):
         while True:
@@ -57,7 +60,10 @@ class CombatViewController(ViewController):
                 guild_id, message.id
             )
 
-            encounters = await self.database.get_active_encounter_participants(guild_id)
+            encounters = await self.database.get_encounter_participants(guild_id)
+            encounters_filtered = (
+                await self.database.get_inactive_encounter_participants(guild_id)
+            )
 
             already_involved = False
             for _, participants in encounters.items():
@@ -82,7 +88,11 @@ class CombatViewController(ViewController):
             enemy = await self.factory.get_enemy(encounter.enemy_type)
             max_encounter_size = enemy.max_players
 
-            if len(encounters[encounter.id]) >= max_encounter_size:
+            active_participants = len(encounters[encounter.id])
+            if encounter.id in encounters_filtered:
+                active_participants -= len(encounters_filtered[encounter.id])
+
+            if active_participants >= max_encounter_size:
                 await interaction.followup.send(
                     "This encounter is already full.",
                     ephemeral=True,
@@ -100,6 +110,56 @@ class CombatViewController(ViewController):
 
             self.join_queue.task_done()
 
+    async def leave_request_worker(self):
+        while True:
+            interaction = await self.leave_queue.get()
+
+            guild_id = interaction.guild_id
+            member_id = interaction.user.id
+            encounters = await self.database.get_encounter_participants(guild_id)
+
+            is_involved = False
+            encounter = None
+            for encounter_id, participants in encounters.items():
+                if member_id in participants:
+                    encounter = await self.database.get_encounter_by_encounter_id(
+                        encounter_id
+                    )
+                    is_involved = True
+                    break
+
+            if not is_involved or encounter is None:
+                await interaction.followup.send(
+                    "You are not involved in any encounter.",
+                    ephemeral=True,
+                )
+                continue
+
+            context = await self.context_loader.load_encounter_context(encounter.id)
+
+            if member_id == context.get_current_actor().id:
+                await interaction.followup.send(
+                    "Please finish your turn before you leave.",
+                    ephemeral=True,
+                )
+                continue
+
+            event = EncounterEvent(
+                datetime.datetime.now(),
+                guild_id,
+                encounter.id,
+                member_id,
+                EncounterEventType.MEMBER_LEAVING,
+            )
+            await self.controller.dispatch_event(event)
+
+            character = context.get_actor(member_id)
+
+            embed = self.embed_manager.get_member_out_embed(character, "")
+            await context.thread.send("", embed=embed)
+
+            self.leave_queue.task_done()
+
     async def listen_for_event(self, event: BotEvent) -> None:
         encounter_id = None
         match event.type:
@@ -111,6 +171,7 @@ class CombatViewController(ViewController):
 
         if encounter_id is not None and event.encounter_event_type in [
             EncounterEventType.MEMBER_ENGAGE,
+            EncounterEventType.MEMBER_OUT,
             EncounterEventType.END,
         ]:
             done = event.encounter_event_type == EncounterEventType.END
@@ -121,6 +182,9 @@ class CombatViewController(ViewController):
             case UIEventType.COMBAT_ENGAGE:
                 interaction = event.payload
                 await self.join_queue.put(interaction)
+            case UIEventType.COMBAT_LEAVE:
+                interaction = event.payload
+                await self.leave_queue.put(interaction)
             case UIEventType.COMBAT_USE_SKILL:
                 interaction = event.payload[0]
                 skill_data = event.payload[1]

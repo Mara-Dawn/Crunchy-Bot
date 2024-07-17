@@ -128,11 +128,11 @@ class EncounterContext:
         return [
             actor
             for actor in self.combatants
-            if not actor.defeated and not actor.timed_out
+            if not actor.defeated and not actor.is_out
         ]
 
     def get_combat_scale(self) -> int:
-        return len([actor for actor in self.combatants if not actor.timed_out])
+        return len([actor for actor in self.combatants if not actor.is_out])
 
     def get_current_actor(self) -> Actor:
         if self.new_round():

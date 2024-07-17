@@ -3006,7 +3006,41 @@ class Database:
                 active_encounters.append(encounter_id)
         return active_encounters
 
-    async def get_active_encounter_participants(
+    async def get_inactive_encounter_participants(
+        self, guild_id: int
+    ) -> dict[int, list[int]]:
+        active_encounters = await self.get_active_encounters(guild_id)
+
+        if len(active_encounters) <= 0:
+            return {}
+
+        list_sanitized = self.__list_sanitizer(active_encounters)
+        participants = {}
+
+        for encounter_id in active_encounters:
+            participants[encounter_id] = []
+
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} IN {list_sanitized};
+        """
+
+        task = (guild_id, EncounterEventType.MEMBER_OUT.value, *active_encounters)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return participants
+
+        for row in rows:
+            encounter_id = row[self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL]
+            member_id = row[self.ENCOUNTER_EVENT_MEMBER_ID]
+            participants[encounter_id].append(member_id)
+
+        return participants
+
+    async def get_encounter_participants(
         self, guild_id: int
     ) -> dict[int, list[int]]:
         active_encounters = await self.get_active_encounters(guild_id)
@@ -3037,6 +3071,28 @@ class Database:
             encounter_id = row[self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL]
             member_id = row[self.ENCOUNTER_EVENT_MEMBER_ID]
             participants[encounter_id].append(member_id)
+
+        return participants
+
+    async def get_encounter_out_participants_by_encounter_id(
+        self, encounter_id: int
+    ) -> list[int]:
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = ?;
+        """
+
+        task = (EncounterEventType.MEMBER_OUT.value, encounter_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        participants = []
+        for row in rows:
+            member_id = row[self.ENCOUNTER_EVENT_MEMBER_ID]
+            participants.append(member_id)
 
         return participants
 
@@ -3589,7 +3645,7 @@ class Database:
         if not rows:
             return {}
 
-        active_encounters = await self.get_active_encounter_participants(guild_id)
+        active_encounters = await self.get_encounter_participants(guild_id)
 
         current_encounter_id = None
 
@@ -3608,7 +3664,10 @@ class Database:
                 previous_skill = None
                 continue
 
-            if row[self.COMBAT_EVENT_SKILL_TYPE] is None or row[self.COMBAT_EVENT_SKILL_TYPE] not in SkillType:
+            if (
+                row[self.COMBAT_EVENT_SKILL_TYPE] is None
+                or row[self.COMBAT_EVENT_SKILL_TYPE] not in SkillType
+            ):
                 continue
 
             skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])

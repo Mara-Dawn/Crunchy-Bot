@@ -117,7 +117,7 @@ class CombatSkillManager(Service):
         match skill_type:
             case SkillType.AROUND_THE_WORLD:
                 joke = await self.ai_manager.raw_prompt(
-                    "Make a creative yo mama so fat joke. Maximum length is 30 words."
+                    "Tell a creative yo mama joke. Maximum length is 30 words."
                 )
                 return joke.replace('"', "'")
         return None

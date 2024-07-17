@@ -420,7 +420,7 @@ class AroundTheWorld(BaseSkill):
 
     def __init__(self):
         super().__init__(
-            name="Yo mama so fat",
+            name="Yo Mama Joke",
             skill_type=SkillType.AROUND_THE_WORLD,
             description="",
             information="",

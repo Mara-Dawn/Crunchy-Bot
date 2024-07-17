@@ -45,6 +45,7 @@ from view.combat.combat_turn_view import CombatTurnView
 from view.combat.embed import EnemyOverviewEmbed
 from view.combat.engage_view import EnemyEngageView
 from view.combat.grace_period import GracePeriodView
+from view.combat.leave_view import EncounterLeaveView
 
 
 class EncounterManager(Service):
@@ -332,7 +333,7 @@ class EncounterManager(Service):
         embed.set_thumbnail(url=user.display_avatar.url)
         await thread.send("", embed=embed)
 
-        encounters = await self.database.get_active_encounter_participants(
+        encounters = await self.database.get_encounter_participants(
             encounter.guild_id
         )
         enemy = await self.factory.get_enemy(encounter.enemy_type)
@@ -347,9 +348,11 @@ class EncounterManager(Service):
         context: EncounterContext,
         reason: str,
         timeout: bool = False,
+        silent: bool = False,
     ):
-        embed = self.embed_manager.get_turn_skip_embed(actor, reason, context)
-        await self.context_loader.append_embed_to_round(context, embed)
+        if not silent:
+            embed = self.embed_manager.get_turn_skip_embed(actor, reason, context)
+            await self.context_loader.append_embed_to_round(context, embed)
 
         combat_event_type = CombatEventType.MEMBER_END_TURN
         if actor.is_enemy:
@@ -381,8 +384,6 @@ class EncounterManager(Service):
             combat_event_type,
         )
         await self.controller.dispatch_event(event)
-
-        return embed
 
     async def opponent_turn(self, context: EncounterContext):
         opponent = context.opponent
@@ -612,7 +613,7 @@ class EncounterManager(Service):
                 context.encounter.guild_id,
                 context.encounter.id,
                 character.id,
-                EncounterEventType.MEMBER_TIMEOUT,
+                EncounterEventType.MEMBER_OUT,
             )
             await self.controller.dispatch_event(event)
             message += f" They reached {Config.TIMEOUT_COUNT_LIMIT} total timeouts and will be excluded from the fight."
@@ -733,6 +734,17 @@ class EncounterManager(Service):
                 )
                 await self.controller.dispatch_event(event)
 
+            if context.new_round() and actor.leaving:
+                event = EncounterEvent(
+                    datetime.datetime.now(),
+                    context.encounter.guild_id,
+                    context.encounter.id,
+                    actor.id,
+                    EncounterEventType.MEMBER_OUT,
+                )
+                await self.controller.dispatch_event(event)
+                update_context = True
+
         return update_context
 
     async def delete_previous_combat_info(self, thread: discord.Thread):
@@ -815,7 +827,9 @@ class EncounterManager(Service):
 
         if context.new_round():
             await self.delete_previous_combat_info(context.thread)
-            message = await context.thread.send("", embed=enemy_embed)
+            leave_view = EncounterLeaveView(self.controller)
+            message = await context.thread.send("", embed=enemy_embed, view=leave_view)
+            leave_view.set_message(message)
             round_embed = await self.embed_manager.get_round_embed(context)
             await context.thread.send(content="", embed=round_embed)
         else:
@@ -833,11 +847,18 @@ class EncounterManager(Service):
             )
             return
 
-        if current_actor.timed_out:
+        if current_actor.leaving:
+            await self.skip_turn(
+                current_actor, context, f"{current_actor.name} has left the encounter and will be removed in the next round."
+            )
+            return
+
+        if current_actor.is_out:
             await self.skip_turn(
                 current_actor,
                 context,
-                f"{current_actor.name} was inactive for too long.",
+                "",
+                silent=True
             )
             return
 
