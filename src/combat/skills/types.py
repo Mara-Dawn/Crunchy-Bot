@@ -37,12 +37,19 @@ class SkillType(str, Enum):
     DEEZ_NUTS = "DeezNuts"
     BONK = "Bonk"
 
+    # Garlic Dog
+    GARLIC_BREATH = "GarlicBreath"
+
     # Mind Goblin
     MILK_SHOWER = "MilkShot"
 
     # Table
     TOE_STUB = "ToeStub"
     LOOKING_GOOD = "LookingGood"
+
+    # Goose
+    BIG_HONK = "BigHonk"
+    ASS_BITE = "AssBite"
 
     # Table
     ANKLE_AIM = "AnkleAim"
@@ -51,6 +58,10 @@ class SkillType(str, Enum):
     # Nice Guy
     M_LADY = "MLady"
     FEDORA_TIP = "FedoraTip"
+
+    # Your Mom
+    AROUND_THE_WORLD = "AroundTheWorld"
+    SIT = "Sit"
 
     # Nice Guy
     PUKE = "Puke"

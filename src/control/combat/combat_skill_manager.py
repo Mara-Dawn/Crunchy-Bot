@@ -3,10 +3,11 @@ import random
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
 from combat.gear.types import CharacterAttribute, GearModifierType
-from combat.skills.skill import CharacterSkill, Skill
+from combat.skills.skill import CharacterSkill, Skill, SkillType
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillEffect, SkillInstance, SkillTarget
 from config import Config
+from control.ai_manager import AIManager
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -26,6 +27,7 @@ class CombatSkillManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
+        self.ai_manager: AIManager = self.controller.get_service(AIManager)
         self.log_name = "Combat Skills"
 
     async def listen_for_event(self, event: BotEvent):
@@ -57,7 +59,6 @@ class CombatSkillManager(Service):
 
         if skill_id in character.skill_stacks_used:
             stacks_used = character.skill_stacks_used[skill_id]
-
         if skill_type in character.skill_cooldowns:
             last_used = character.skill_cooldowns[skill.base_skill.skill_type]
 
@@ -96,6 +97,10 @@ class CombatSkillManager(Service):
         if skill_id in opponent.skill_stacks_used:
             stacks_used = opponent.skill_stacks_used[skill_id]
 
+        custom_description = await self.custom_skill_description(skill.type)
+        if custom_description is not None:
+            skill.description = custom_description
+
         return CharacterSkill(
             skill=skill,
             last_used=opponent.skill_cooldowns[skill.base_skill.skill_type],
@@ -107,6 +112,15 @@ class CombatSkillManager(Service):
                 await self.get_skill_effect(opponent, skill, force_max=weapon_max_roll)
             )[0].raw_value,
         )
+
+    async def custom_skill_description(self, skill_type: SkillType) -> str | None:
+        match skill_type:
+            case SkillType.AROUND_THE_WORLD:
+                joke = await self.ai_manager.raw_prompt(
+                    "Make a creative yo mama so fat joke. Maximum length is 30 words."
+                )
+                return joke.replace('"', "'")
+        return None
 
     async def get_skill_effect(
         self,
