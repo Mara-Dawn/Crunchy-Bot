@@ -280,6 +280,30 @@ class MilkShot(BaseSkill):
         )
 
 
+class GarlicBreath(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Garlic Breath",
+            skill_type=SkillType.GARLIC_BREATH,
+            description="His breath smells so bad that your eye sight becomes blurry.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            hits=2,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                )
+            ],
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/41JkjRY.png",
+        )
+
+
 class DeezNuts(BaseSkill):
 
     def __init__(self):

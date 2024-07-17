@@ -32,6 +32,31 @@ class BoobaSlime(Enemy):
         )
 
 
+class GarlicDog(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Garlic Dog",
+            type=EnemyType.GARLIC_DOG,
+            description="He has garlic on top of its head.",
+            information="Good Boi",
+            image_url="https://i.imgur.com/lTysGqh.png",
+            min_level=1,
+            max_level=2,
+            health=4,
+            damage_scaling=8,
+            max_players=4,
+            skill_types=[SkillType.GARLIC_BREATH],
+            item_loot_table=[
+                # ItemType.YELLOW_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=18,
+            actions_per_turn=1,
+            author="Lusa",
+        )
+
+
 class MindGoblin(Enemy):
     def __init__(self):
         super().__init__(
@@ -106,6 +131,7 @@ class Goose(Enemy):
             skill_loot_table=[],
             initiative=16,
             actions_per_turn=1,
+            author="Lusa",
         )
 
 
@@ -167,7 +193,7 @@ class YourMom(Enemy):
         super().__init__(
             name="Your Mom",
             type=EnemyType.YOUR_MOM,
-            description="",
+            description="The Earth turns dark. Your mom appeared.",
             information="",
             image_url="https://i.imgur.com/71ztyhZ.png",
             min_level=2,
@@ -185,6 +211,7 @@ class YourMom(Enemy):
             skill_loot_table=[],
             initiative=10,
             actions_per_turn=1,
+            author="Lusa",
         )
 
 

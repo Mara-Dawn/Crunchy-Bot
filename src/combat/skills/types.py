@@ -37,6 +37,9 @@ class SkillType(str, Enum):
     DEEZ_NUTS = "DeezNuts"
     BONK = "Bonk"
 
+    # Garlic Dog
+    GARLIC_BREATH = "GarlicBreath"
+
     # Mind Goblin
     MILK_SHOWER = "MilkShot"
 

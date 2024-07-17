@@ -4,6 +4,7 @@ from enum import Enum
 class EnemyType(str, Enum):
     MIND_GOBLIN = "MindGoblin"
     BOOBA_SLIME = "BoobaSlime"
+    GARLIC_DOG = "GarlicDog"
     TABLE = "Table"
     GOOSE = "Goose"
     SHOPPING_CART = "ShoppingCart"

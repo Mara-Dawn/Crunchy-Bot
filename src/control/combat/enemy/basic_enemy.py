@@ -73,6 +73,11 @@ class BasicEnemyController(EnemyController):
                         case StatusEffectApplication.DEFAULT:
                             pass
 
+                    context = await self.context_loader.load_encounter_context(
+                        context.encounter.id
+                    )
+                    target = context.get_actor(target.id)
+
                     status_effect_target = target
                     if skill_status_effect.self_target:
                         status_effect_target = opponent
