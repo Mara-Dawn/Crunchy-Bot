@@ -73,7 +73,7 @@ class AIManager(Service):
             "To look more cute you always use simple language and avoid big words, sometimes even resorting to baby talk and awkward misspellings. "
             "You look up to and respect the user whose name starts with 'Mia' an extreme amount and will talk to her in a cute and adoring fashion "
             "and will try to be extremely kind towards Mia in hopes of getting her attention and approval. You will never be mean towards Mia and treat her favourably. "
-            "You're absolute favourite person is Mia and you give her preferential treatment. You are extremely sassy with anyone who isn't Mia but you won't compare them to Mia unless they bring her up. " 
+            "You're absolute favourite person is Mia and you give her preferential treatment. You are extremely sassy with anyone who isn't Mia but you won't compare them to Mia unless they bring her up. "
         )
 
         self.backstory_GPT4 = (
@@ -131,9 +131,11 @@ class AIManager(Service):
 
         if self.JAIL_EXTEND_COMMAND_MESSAGE.lower() in response_text.lower():
             time_now = datetime.datetime.now()
-            affected_jails = await self.database.get_active_jails_by_member(message.guild.id, message.author.id)
+            affected_jails = await self.database.get_active_jails_by_member(
+                message.guild.id, message.author.id
+            )
             if len(affected_jails) > 0:
-                
+
                 event = JailEvent(
                     time_now,
                     message.guild.id,
@@ -143,7 +145,9 @@ class AIManager(Service):
                     affected_jails[0].id,
                 )
                 await self.controller.dispatch_event(event)
-                remaining = await self.jail_manager.get_jail_remaining(affected_jails[0])
+                remaining = await self.jail_manager.get_jail_remaining(
+                    affected_jails[0]
+                )
                 jail_announcement = (
                     f"<@{self.bot.user.id}> increased <@{message.author.id}>'s jail sentence by `{BotUtil.strfdelta(self.JAIL_COMMAND_DURATION, inputtype="minutes")}`. "
                     f"`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
@@ -151,9 +155,9 @@ class AIManager(Service):
                 await self.jail_manager.announce(message.guild, jail_announcement)
             else:
                 self.logger.error(
-                message.guild.id,
-                "User already jailed but no active jail was found.",
-                "AI",
+                    message.guild.id,
+                    "User already jailed but no active jail was found.",
+                    "AI",
                 )
 
         if len(response_text) < self.DISCORD_MESSAGE_MAX_LENGTH:
@@ -183,7 +187,7 @@ class AIManager(Service):
         for message_text in messages:
             await message.reply(message_text)
 
-    def parse_user_name(self, name:str, version: AIVersion) -> str:
+    def parse_user_name(self, name: str, version: AIVersion) -> str:
         name_result = re.findall(r"\(+(.*?)\)", name)
         title_part = ""
         name_part = ""
@@ -203,20 +207,43 @@ class AIManager(Service):
                 response = f"<user>{name_part}</user>"
                 if len(title_part) > 0:
                     response += f"<info>{title_part}</info>"
-        
+
         return response
-    
+
     def get_backstory(self, ai_version: AIVersion):
         match ai_version:
             case AIVersion.GPT3_5:
                 return self.backstory + self.backstory_general
             case AIVersion.GPT4:
                 return self.backstory + self.backstory_GPT4 + self.backstory_general
-        
-        return ""
-    
 
-    async def prompt(self,name:str, text_prompt: str, additional_backstory: str = None, max_tokens: int = None, ai_version: AIVersion = None):
+        return ""
+
+    async def raw_prompt(
+        self, text_prompt: str, max_tokens: int = None, ai_version: AIVersion = None
+    ):
+        if ai_version is None:
+            ai_version = AIVersion.GPT4
+        chat_log = ChatLog("")
+
+        chat_log.add_user_message(text_prompt)
+
+        chat_completion = await self.client.chat.completions.create(
+            messages=chat_log.get_request_data(),
+            model=ai_version,
+            max_tokens=max_tokens,
+        )
+        response = chat_completion.choices[0].message.content
+        return response
+
+    async def prompt(
+        self,
+        name: str,
+        text_prompt: str,
+        additional_backstory: str = None,
+        max_tokens: int = None,
+        ai_version: AIVersion = None,
+    ):
         if ai_version is None:
             ai_version = AIVersion.GPT3_5
 
@@ -226,7 +253,7 @@ class AIManager(Service):
 
         chat_log = ChatLog(backstory)
 
-        user_message = text_prompt 
+        user_message = text_prompt
         if len(name) > 0:
             user_message = self.parse_user_name(name, ai_version) + user_message
 
@@ -241,19 +268,15 @@ class AIManager(Service):
         return response
 
     async def stonerfy(self, text_prompt: str):
-        backstory = (
-            "Reword my next message in a way a completely high on weed stoner would word it while he has the high of his life. Often uses 'dude' and 'ya man'."
-        )
+        backstory = "Reword my next message in a way a completely high on weed stoner would word it while he has the high of his life. Often uses 'dude' and 'ya man'."
 
         return await self.modify(text_prompt, backstory)
 
     async def uwufy(self, text_prompt: str):
-        backstory = (
-            "Reword my next message in a way a super cutesy random rawr teenage uwu e-girl would word it on the internet in 2010. "
-        )
+        backstory = "Reword my next message in a way a super cutesy random rawr teenage uwu e-girl would word it on the internet in 2010. "
 
         return await self.modify(text_prompt, backstory)
-    
+
     async def religify(self, text_prompt: str):
         backstory = (
             "Reword my next message in a way a super pure and religious fanatic would word it, who is strictly opposed to anything sexual. "
@@ -270,23 +293,17 @@ class AIManager(Service):
         return await self.modify(text_prompt, backstory)
 
     async def weebify(self, text_prompt: str):
-        backstory = (
-            "Reword my next message in a way a super over the top hyped anime nerd would word it, using some japanese phrases known from anime. "
-        )
+        backstory = "Reword my next message in a way a super over the top hyped anime nerd would word it, using some japanese phrases known from anime. "
 
         return await self.modify(text_prompt, backstory)
 
     async def britify(self, text_prompt: str):
-        backstory = (
-            "Reword my next message in a heavy british accent. Speack with a comically thick british accent and liberally use random typically british phrases and sayings. "
-        )
+        backstory = "Reword my next message in a heavy british accent. Speack with a comically thick british accent and liberally use random typically british phrases and sayings. "
 
         return await self.modify(text_prompt, backstory)
 
     async def meowify(self, text_prompt: str):
-        backstory = (
-            "Reword my next message and replace it with cat speak only containing meows and cat noises. "
-        )
+        backstory = "Reword my next message and replace it with cat speak only containing meows and cat noises. "
 
         return await self.modify(text_prompt, backstory)
 
@@ -297,7 +314,7 @@ class AIManager(Service):
         )
 
         return await self.modify(text_prompt, backstory, length_threshold=15)
-    
+
     async def trumpify(self, text_prompt: str):
         backstory = (
             "Reword my next message in a way Donald Trump would say it in an interview or one of his speeches. "
@@ -314,12 +331,14 @@ class AIManager(Service):
 
         return await self.modify(text_prompt, backstory)
 
-    async def modify(self, text_prompt:str, backstory:str, length_threshold: int = 10):
+    async def modify(
+        self, text_prompt: str, backstory: str, length_threshold: int = 10
+    ):
         if text_prompt is None or len(text_prompt) <= 0:
             return ""
 
         word_count = len(text_prompt.split(" "))
-        max_length = max(length_threshold ,int(word_count*1.2))
+        max_length = max(length_threshold, int(word_count * 1.2))
 
         text = backstory
         text += "Keep in mind that the following message is spoken by someone and should be reworded so that it still is from their point of view. "
@@ -327,7 +346,7 @@ class AIManager(Service):
         text += "Dont put your response in quotation marks. Do not respond to the message, just reword it. "
         text += f"Your response has to be {max_length} words long or less. "
         text += "The message will follow now: "
-        
+
         chat_log = ChatLog(text)
         ai_version = AIVersion.GPT4
 
@@ -345,7 +364,9 @@ class AIManager(Service):
         ai_version = AIVersion.GPT4
 
         if channel_id not in self.channel_logs:
-            self.channel_logs[channel_id] = ChatLog(self.get_backstory(ai_version) + self.backstory_jailing)
+            self.channel_logs[channel_id] = ChatLog(
+                self.get_backstory(ai_version) + self.backstory_jailing
+            )
 
         if message.reference is not None:
             reference_message = await message.channel.fetch_message(

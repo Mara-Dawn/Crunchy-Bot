@@ -349,6 +349,86 @@ class LookingGood(BaseSkill):
         )
 
 
+class BigHonk(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Big Honk",
+            skill_type=SkillType.BIG_HONK,
+            description="Its glass shattering screeches destroy your eardrums. making you bleed for two turns",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    2,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/ryWhWTP.png",
+        )
+
+
+class AssBite(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Ass Bite",
+            skill_type=SkillType.ASS_BITE,
+            description="The furious beast buries its beak into your butt cheek.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/AyJniv9.png",
+        )
+
+
+class AroundTheWorld(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Yo mama so fat",
+            skill_type=SkillType.AROUND_THE_WORLD,
+            description="",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/RmeyRjX.png",
+        )
+
+
+class Sit(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Crashing Down",
+            skill_type=SkillType.SIT,
+            description="Your mom is exhausted from all the jokes and needs to sit down. On you.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=3,
+            initial_cooldown=2,
+            base_value=3,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/4d9ac5X.png",
+        )
+
+
 class AnkleAim(BaseSkill):
 
     def __init__(self):

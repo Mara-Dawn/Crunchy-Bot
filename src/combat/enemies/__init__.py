@@ -84,6 +84,31 @@ class Table(Enemy):
         )
 
 
+class Goose(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Park Goose",
+            type=EnemyType.GOOSE,
+            description="A motherfucking goose saw you.",
+            information="",
+            image_url="https://i.imgur.com/YgIkwmT.png",
+            min_level=1,
+            max_level=5,
+            health=6,
+            damage_scaling=8,
+            max_players=4,
+            skill_types=[SkillType.BIG_HONK, SkillType.ASS_BITE],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=16,
+            actions_per_turn=1,
+        )
+
+
 class ShoppingCart(Enemy):
     def __init__(self):
         super().__init__(
@@ -133,6 +158,32 @@ class NiceGuy(Enemy):
             gear_loot_table=[],
             skill_loot_table=[],
             initiative=13,
+            actions_per_turn=1,
+        )
+
+
+class YourMom(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Your Mom",
+            type=EnemyType.YOUR_MOM,
+            description="",
+            information="",
+            image_url="https://i.imgur.com/71ztyhZ.png",
+            min_level=2,
+            max_level=5,
+            health=10,
+            damage_scaling=10,
+            max_players=10,
+            skill_types=[SkillType.AROUND_THE_WORLD, SkillType.SIT],
+            item_loot_table=[
+                # ItemType.BOX_SEED,
+                # ItemType.CAT_SEED,
+                # ItemType.YELLOW_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=10,
             actions_per_turn=1,
         )
 
