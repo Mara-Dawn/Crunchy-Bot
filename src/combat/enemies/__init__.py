@@ -20,9 +20,9 @@ class BoobaSlime(Enemy):
             max_gear_drop_count=1,
             max_players=5,
             skill_types=[SkillType.MILK_SHOWER],
-            # item_loot_table=[
-            #     ItemType.YELLOW_SEED,
-            # ],
+            item_loot_table=[
+                # ItemType.YELLOW_SEED,
+            ],
             gear_loot_table=[],
             skill_loot_table=[],
             initiative=8,
@@ -45,11 +45,11 @@ class MindGoblin(Enemy):
             damage_scaling=3.5,
             max_players=4,
             skill_types=[SkillType.DEEZ_NUTS, SkillType.BONK],
-            # item_loot_table=[
-            #     ItemType.BOX_SEED,
-            #     ItemType.CAT_SEED,
-            #     ItemType.YELLOW_SEED,
-            # ],
+            item_loot_table=[
+                # ItemType.BOX_SEED,
+                # ItemType.CAT_SEED,
+                # ItemType.YELLOW_SEED,
+            ],
             gear_loot_table=[],
             skill_loot_table=[],
             initiative=9,
@@ -71,10 +71,10 @@ class Table(Enemy):
             damage_scaling=4.5,
             max_players=3,
             skill_types=[SkillType.TOE_STUB, SkillType.LOOKING_GOOD],
-            # item_loot_table=[
-            #     ItemType.SPEED_SEED,
-            #     ItemType.RARE_SEED,
-            # ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
             gear_loot_table=[],
             skill_loot_table=[],
             initiative=20,
@@ -96,9 +96,9 @@ class ShoppingCart(Enemy):
             damage_scaling=2.5,
             max_players=3,
             skill_types=[SkillType.ANKLE_AIM, SkillType.DOWN_HILL],
-            # item_loot_table=[
-            #     ItemType.BOX_SEED,
-            # ],
+            item_loot_table=[
+                ItemType.BOX_SEED,
+            ],
             # min_gear_drop_count=2,
             # max_gear_drop_count=3,
             gear_loot_table=[],
@@ -123,11 +123,11 @@ class NiceGuy(Enemy):
             damage_scaling=5,
             max_players=5,
             skill_types=[SkillType.M_LADY, SkillType.FEDORA_TIP],
-            # item_loot_table=[
-            #     ItemType.BOX_SEED,
-            #     ItemType.CAT_SEED,
-            #     ItemType.YELLOW_SEED,
-            # ],
+            item_loot_table=[
+                # ItemType.BOX_SEED,
+                # ItemType.CAT_SEED,
+                # ItemType.YELLOW_SEED,
+            ],
             gear_loot_table=[],
             skill_loot_table=[],
             initiative=13,
@@ -149,10 +149,10 @@ class CatDog(Enemy):
             damage_scaling=4.5,
             max_players=5,
             skill_types=[SkillType.PUKE, SkillType.TAIL_WHIP],
-            # item_loot_table=[
-            #     ItemType.SPEED_SEED,
-            #     ItemType.RARE_SEED,
-            # ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
             gear_loot_table=[],
             skill_loot_table=[],
             initiative=13,
@@ -175,10 +175,10 @@ class Mushroom(Enemy):
             damage_scaling=0.1,
             max_players=5,
             skill_types=[SkillType.HOLD, SkillType.BURST],
-            # item_loot_table=[
-            #     ItemType.SPEED_SEED,
-            #     ItemType.RARE_SEED,
-            # ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
             min_gear_drop_count=5,
             max_gear_drop_count=6,
             gear_loot_table=[],
@@ -208,10 +208,10 @@ class BroColi(Enemy):
                 SkillType.BRO_FART,
                 SkillType.BRO_EXTRA_FART,
             ],
-            # item_loot_table=[
-            #     ItemType.SPEED_SEED,
-            #     ItemType.RARE_SEED,
-            # ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
             # min_gear_drop_count=5,
             # max_gear_drop_count=6,
             gear_loot_table=[],
@@ -240,10 +240,10 @@ class DFTank(Enemy):
                 SkillType.YPYT,
                 SkillType.DEAD_TANK,
             ],
-            # item_loot_table=[
-            #     ItemType.SPEED_SEED,
-            #     ItemType.RARE_SEED,
-            # ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
             min_gear_drop_count=4,
             max_gear_drop_count=5,
             gear_loot_table=[],
@@ -271,7 +271,7 @@ class Daddy_P1(Enemy):
             health=10,
             damage_scaling=10,
             max_players=9,
-            min_encounter_scale=6,
+            # min_encounter_scale=6,
             skill_types=[
                 SkillType.WHIP,
                 SkillType.HAIR_PULL,
