@@ -137,7 +137,7 @@ class EquipmentViewController(ViewController):
     async def encounter_check(self, interaction: discord.Interaction):
         guild_id = interaction.guild.id
         member_id = interaction.user.id
-        encounters = await self.database.get_active_encounter_participants(guild_id)
+        encounters = await self.database.get_encounter_participants(guild_id)
 
         for _, participants in encounters.items():
             if member_id in participants:

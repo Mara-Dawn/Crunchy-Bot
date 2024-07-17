@@ -26,8 +26,11 @@ from view.combat.equipment_view import EquipmentView
 
 class Combat(commands.Cog):
 
-    ENCOUNTER_MIN_WAIT = 20
-    ENCOUNTER_MAX_WAIT = 40
+    ENCOUNTER_MIN_WAIT = 45
+    ENCOUNTER_MAX_WAIT = 75
+
+    LOW_LVL_ENCOUNTER_MIN_WAIT = 20
+    LOW_LVL_ENCOUNTER_MAX_WAIT = 40
 
     def __init__(self, bot: CrunchyBot) -> None:
         self.bot = bot
@@ -51,6 +54,7 @@ class Combat(commands.Cog):
         )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.enemy_timers = {}
+        self.enemy_timers_low_lvl = {}
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -101,12 +105,26 @@ class Combat(commands.Cog):
         )
         self.enemy_timers[guild_id] = next_spawn
 
+    async def __reevaluate_next_low_lvl_enemy(self, guild_id: int) -> None:
+        next_spawn_delay = random.randint(
+            self.LOW_LVL_ENCOUNTER_MIN_WAIT, self.LOW_LVL_ENCOUNTER_MAX_WAIT
+        )
+        self.logger.log(
+            guild_id,
+            f"New random low lvl enemy interval: {next_spawn_delay} minutes.",
+            cog=self.__cog_name__,
+        )
+        next_spawn = datetime.datetime.now() + datetime.timedelta(
+            minutes=next_spawn_delay
+        )
+        self.enemy_timers_low_lvl[guild_id] = next_spawn
+
     @commands.Cog.listener("on_ready")
     async def on_ready_combat(self):
         for guild in self.bot.guilds:
             await self.encounter_manager.refresh_combat_messages(guild.id)
-
         self.random_encounter_task.start()
+        self.random_low_lvl_encounter_task.start()
         self.logger.log("init", "Combat loaded.", cog=self.__cog_name__)
 
     @commands.Cog.listener("on_guild_join")
@@ -115,10 +133,12 @@ class Combat(commands.Cog):
             guild.id, "Adding enemy timer for new guild.", cog=self.__cog_name__
         )
         await self.__reevaluate_next_enemy(guild.id)
+        await self.__reevaluate_next_low_lvl_enemy(guild.id)
 
     @commands.Cog.listener("on_guild_remove")
     async def on_guild_remove_combat(self, guild):
         del self.enemy_timers[guild.id]
+        del self.enemy_timers_low_lvl[guild.id]
 
     @tasks.loop(minutes=1)
     async def random_encounter_task(self):
@@ -142,8 +162,46 @@ class Combat(commands.Cog):
             combat_channels = await self.settings_manager.get_combat_channels(guild.id)
             if len(combat_channels) == 0:
                 continue
+
+            encounter_level = await self.database.get_guild_level(guild.id)
+
             await self.encounter_manager.spawn_encounter(
-                guild, secrets.choice(combat_channels)
+                guild, secrets.choice(combat_channels), level=encounter_level
+            )
+
+    @tasks.loop(minutes=1)
+    async def random_low_lvl_encounter_task(self):
+        self.logger.debug(
+            "sys", "Random low lvl Encounter task started.", cog=self.__cog_name__
+        )
+
+        for guild in self.bot.guilds:
+            if guild.id not in self.enemy_timers_low_lvl:
+                continue
+
+            max_encounter_level = await self.database.get_guild_level(guild.id) - 1
+            if max_encounter_level <= 0:
+                continue
+
+            if datetime.datetime.now() < self.enemy_timers_low_lvl[guild.id]:
+                continue
+
+            if not await self.settings_manager.get_combat_enabled(guild.id):
+                continue
+
+            self.logger.log(
+                "sys", "Low Lvl Enemy timeout reached.", cog=self.__cog_name__
+            )
+            await self.__reevaluate_next_low_lvl_enemy(guild.id)
+
+            combat_channels = await self.settings_manager.get_combat_channels(guild.id)
+            if len(combat_channels) == 0:
+                continue
+
+            encounter_level = random.randint(1, max_encounter_level)
+
+            await self.encounter_manager.spawn_encounter(
+                guild, secrets.choice(combat_channels), level=encounter_level
             )
 
     @random_encounter_task.before_loop
@@ -159,8 +217,9 @@ class Combat(commands.Cog):
             if len(await self.settings_manager.get_combat_channels(guild.id)) <= 0:
                 continue
 
+            max_encounter_level = await self.database.get_guild_level(guild.id)
             encounter_event = await self.database.get_last_encounter_spawn_event(
-                guild.id
+                guild.id, min_lvl=max_encounter_level
             )
             last_spawn = datetime.datetime.now()
 
@@ -203,6 +262,71 @@ class Combat(commands.Cog):
             )
 
             self.enemy_timers[guild.id] = next_spawn
+
+    @random_low_lvl_encounter_task.before_loop
+    async def random_low_lvl_encounter_task_before(self):
+        self.logger.log(
+            "sys",
+            "Random low lvl Encounter before loop started.",
+            cog=self.__cog_name__,
+        )
+
+        for guild in self.bot.guilds:
+            if not await self.settings_manager.get_combat_enabled(guild.id):
+                continue
+
+            if len(await self.settings_manager.get_combat_channels(guild.id)) <= 0:
+                continue
+
+            max_encounter_level = await self.database.get_guild_level(guild.id) - 1
+
+            if max_encounter_level <= 0:
+                continue
+
+            encounter_event = await self.database.get_last_encounter_spawn_event(
+                guild.id, max_lvl=max_encounter_level
+            )
+            last_spawn = datetime.datetime.now()
+
+            if encounter_event is None:
+                self.logger.log(
+                    guild.id,
+                    "No previous low lvl spawns, next spawn imminent.",
+                    cog=self.__cog_name__,
+                )
+                self.enemy_timers_low_lvl[guild.id] = last_spawn
+                continue
+
+            if encounter_event is not None:
+                last_spawn = encounter_event.datetime
+
+            diff = datetime.datetime.now() - last_spawn
+            diff_minutes = int(diff.total_seconds() / 60)
+            self.logger.log(
+                guild.id,
+                f"Last lwo lvl spawn was {diff_minutes} minutes ago.",
+                cog=self.__cog_name__,
+            )
+
+            min_wait = self.LOW_LVL_ENCOUNTER_MIN_WAIT
+            if diff_minutes < self.LOW_LVL_ENCOUNTER_MAX_WAIT:
+                min_wait = max(self.LOW_LVL_ENCOUNTER_MIN_WAIT, diff_minutes)
+
+            next_drop_delay = random.randint(min_wait, self.LOW_LVL_ENCOUNTER_MAX_WAIT)
+            self.logger.log(
+                guild.id,
+                f"Random low lvl spawn delay: {next_drop_delay} minutes.",
+                cog=self.__cog_name__,
+            )
+            next_spawn = last_spawn + datetime.timedelta(minutes=next_drop_delay)
+            diff = next_spawn - datetime.datetime.now()
+            self.logger.log(
+                guild.id,
+                f"Next low lvl spawn in {int(diff.total_seconds()/60)} minutes.",
+                cog=self.__cog_name__,
+            )
+
+            self.enemy_timers_low_lvl[guild.id] = next_spawn
 
     async def enemy_autocomplete(
         self, interaction: discord.Interaction, current: str
@@ -296,7 +420,9 @@ class Combat(commands.Cog):
             "Encounter successfully spawned.",
             ephemeral=True,
         )
+
         await self.__reevaluate_next_enemy(interaction.guild.id)
+        await self.__reevaluate_next_low_lvl_enemy(interaction.guild.id)
 
     @app_commands.command(
         name="equipment",

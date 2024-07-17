@@ -429,7 +429,7 @@ class CombatGearManager(Service):
 
             guild_id = combatant.member.guild.id
 
-            if combatant.timed_out:
+            if combatant.is_out:
                 continue
 
             penalty = await self.get_combatant_penalty(

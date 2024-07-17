@@ -70,12 +70,16 @@ class CombatEmbedManager(Service):
         participants = await self.database.get_encounter_participants_by_encounter_id(
             encounter.id
         )
+        out_participants = await self.database.get_encounter_out_participants_by_encounter_id(
+            encounter.id
+        )
+        active_participants = len(participants) - len(out_participants)
         if not done:
-            if min_encounter_size > 1 and len(participants) < min_encounter_size:
-                participant_info = f"\nCombatants Needed to Start: {len(participants)}/{min_encounter_size}"
+            if min_encounter_size > 1 and active_participants < min_encounter_size:
+                participant_info = f"\nCombatants Needed to Start: {active_participants}/{min_encounter_size}"
             else:
                 participant_info = (
-                    f"\nActive Combatants: {len(participants)}/{max_encounter_size}"
+                    f"\nActive Combatants: {active_participants}/{max_encounter_size}"
                 )
         else:
             participant_info = "This Encounter Has Concluded."
@@ -572,6 +576,23 @@ class CombatEmbedManager(Service):
 
         return embed
 
+    def get_member_out_embed(self, actor: Actor, reason: str) -> discord.Embed:
+        actor_name = f"{actor.name}"
+
+        content = f"{actor_name} left the encounter. They will be removed at the start of the next round."
+
+        embed = discord.Embed(
+            title="", description="", color=discord.Colour.light_grey()
+        )
+        embed.set_author(name=actor_name, icon_url=actor.image_url)
+        self.add_text_bar(embed, "", content)
+
+        if actor.image_url is not None:
+            embed.set_thumbnail(url=actor.image_url)
+        if reason is not None and len(reason) > 0:
+            embed.add_field(name="Reason", value=reason)
+        return embed
+
     def get_turn_skip_embed(
         self, actor: Actor, reason: str, context: EncounterContext
     ) -> discord.Embed:
@@ -626,6 +647,8 @@ class CombatEmbedManager(Service):
         initiative_display = ""
 
         for idx, actor in enumerate(initiative_list):
+            if actor.is_out:
+                continue
             number = idx + 1
             current_hp = await self.actor_manager.get_actor_current_hp(
                 actor, context.combat_events

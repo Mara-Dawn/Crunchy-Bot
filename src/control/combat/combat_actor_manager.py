@@ -174,7 +174,8 @@ class CombatActorManager(Service):
             status_effects = {}
 
         defeated = False
-        timed_out = False
+        leaving = False
+        is_out = False
         for event in encounter_events:
             if (
                 event.encounter_event_type == EncounterEventType.MEMBER_DEFEAT
@@ -182,10 +183,18 @@ class CombatActorManager(Service):
             ):
                 defeated = True
             if (
-                event.encounter_event_type == EncounterEventType.MEMBER_TIMEOUT
+                event.encounter_event_type == EncounterEventType.MEMBER_LEAVING
                 and event.member_id == member.id
             ):
-                timed_out = True
+                leaving = True
+            if (
+                event.encounter_event_type == EncounterEventType.MEMBER_OUT
+                and event.member_id == member.id
+            ):
+                is_out = True
+
+        if is_out:
+            leaving = False
 
         equipment = await self.database.get_user_equipment(member.guild.id, member.id)
 
@@ -226,7 +235,8 @@ class CombatActorManager(Service):
             status_effects=active_status_effects,
             equipment=equipment,
             defeated=defeated,
-            timed_out=timed_out,
+            leaving=leaving,
+            is_out=is_out,
         )
         return character
 
