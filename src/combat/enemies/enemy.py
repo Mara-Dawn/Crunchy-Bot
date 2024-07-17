@@ -125,7 +125,7 @@ class Enemy:
         }
 
         if attribute_overrides is not None:
-            for attribute_type, value in attribute_overrides:
+            for attribute_type, value in attribute_overrides.items():
                 self.attributes[attribute_type] = value
 
         if self.bonus_loot_chance is None:

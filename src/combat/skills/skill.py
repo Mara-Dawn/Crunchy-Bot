@@ -226,6 +226,14 @@ class Skill(Droppable):
             base_value_text_colored = f"{spacing}{name}: [35m{self.scaling:.1f}[0m"
             prefixes.append((base_value_text_colored, len(base_value_text)))
 
+            # Hits
+            if self.base_skill.hits > 1:
+                name = "Hits"
+                spacing = " " * (max_len_pre - len(name))
+                type_text = f"{spacing}{name}: {self.base_skill.hits}"
+                type_text_colored = f"{spacing}{name}: [35m{self.base_skill.hits}[0m"
+                prefixes.append((type_text_colored, len(type_text)))
+
             # Type
             name = "Type"
             spacing = " " * (max_len_pre - len(name))
@@ -403,6 +411,16 @@ class CharacterSkill:
             )
             damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m{penalty_colored}"
             prefixes.append((damage_text_colored, len(damage_text)))
+
+            # Hits
+            if self.skill.base_skill.hits > 1:
+                name = "Hits"
+                spacing = " " * (max_len_pre - len(name))
+                type_text = f"{spacing}{name}: {self.skill.base_skill.hits}"
+                type_text_colored = (
+                    f"{spacing}{name}: [35m{self.skill.base_skill.hits}[0m"
+                )
+                prefixes.append((type_text_colored, len(type_text)))
 
             # Type
             name = "Type"
