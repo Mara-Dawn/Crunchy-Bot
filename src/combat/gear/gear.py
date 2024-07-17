@@ -329,5 +329,6 @@ class Gear(Droppable):
 
         embed = discord.Embed(title="", description=info_block, color=color)
         embed.set_thumbnail(url=self.image_url)
-        embed.set_footer(text=f"by {self.base.author}")
+        if self.base.author is not None:
+            embed.set_footer(text=f"by {self.base.author}")
         return embed

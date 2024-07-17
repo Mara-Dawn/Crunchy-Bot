@@ -277,8 +277,6 @@ class CombatEmbedManager(Service):
         turn_duration = context.get_turn_timeout(actor.id)
         timeout = int(now + turn_duration)
 
-        content += "Otherwise your turn will be skipped."
-
         if len(content) < Config.COMBAT_EMBED_MAX_WIDTH:
             content += " " + "\u00a0" * Config.COMBAT_EMBED_MAX_WIDTH
 
@@ -423,14 +421,6 @@ class CombatEmbedManager(Service):
             i += 1
 
         embed = copy.deepcopy(full_embed)
-        for to_name, outcome_title, damage_info in content_map.values():
-            embed.add_field(name="Target", value=to_name, inline=True)
-            embed.add_field(name=outcome_title, value=damage_info, inline=True)
-            embed.add_field(name="Target Health", value="", inline=True)
-
-        yield embed
-
-        # await asyncio.sleep(1)
 
         embed = copy.deepcopy(full_embed)
         for target, _, remaiming_hp in turn_data.damage_data:
@@ -455,6 +445,8 @@ class CombatEmbedManager(Service):
     ):
         actor = turn_data.actor
 
+        fast_mode = len(turn_data.damage_data) > 3
+
         for target, damage_instance, remaiming_hp in turn_data.damage_data:
             await asyncio.sleep(0.5)
 
@@ -476,36 +468,31 @@ class CombatEmbedManager(Service):
 
             yield embed
 
-            await asyncio.sleep(0.2)
+            if not fast_mode:
+                await asyncio.sleep(0.2)
 
-            loading_icons = [
-                "🎲",
-                "🎲🎲",
-                "🎲🎲🎲",
-            ]
+                loading_icons = [
+                    "🎲",
+                    "🎲🎲",
+                    "🎲🎲🎲",
+                ]
 
-            i = 0
-            current = i
-            while i <= 2:
-                current = i % len(loading_icons)
-                icon = loading_icons[current]
+                i = 0
+                current = i
+                while i <= 2:
+                    current = i % len(loading_icons)
+                    icon = loading_icons[current]
 
-                embed = copy.deepcopy(full_embed)
-                embed.add_field(name="Target", value=to_name, inline=True)
-                embed.add_field(name=outcome_title, value=icon, inline=True)
-                embed.add_field(name="Target Health", value="", inline=True)
-                yield embed
+                    embed = copy.deepcopy(full_embed)
+                    embed.add_field(name="Target", value=to_name, inline=True)
+                    embed.add_field(name=outcome_title, value=icon, inline=True)
+                    embed.add_field(name="Target Health", value="", inline=True)
+                    yield embed
 
-                await asyncio.sleep((1 / 5) * (i * 2))
-                i += 1
-
-            embed = copy.deepcopy(full_embed)
-            embed.add_field(name="Target", value=to_name, inline=True)
-            embed.add_field(name=outcome_title, value=damage_info, inline=True)
-            embed.add_field(name="Target Health", value="", inline=True)
-            yield embed
-
-            # await asyncio.sleep(1)
+                    await asyncio.sleep((1 / 5) * (i * 2))
+                    i += 1
+            else:
+                await asyncio.sleep(0.5)
 
             percentage = f"{round(remaiming_hp/target.max_hp * 100, 1)}".rstrip(
                 "0"
