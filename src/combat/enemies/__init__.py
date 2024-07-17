@@ -1,5 +1,6 @@
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
+from combat.gear.types import CharacterAttribute
 from combat.skills.types import SkillType
 from items.types import ItemType
 
@@ -75,6 +76,7 @@ class Table(Enemy):
                 # ItemType.SPEED_SEED,
                 # ItemType.RARE_SEED,
             ],
+            attribute_overrides={CharacterAttribute.CRIT_RATE: 0.03},
             gear_loot_table=[],
             skill_loot_table=[],
             initiative=20,
