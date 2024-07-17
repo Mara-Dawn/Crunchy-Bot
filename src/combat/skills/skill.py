@@ -292,7 +292,8 @@ class Skill(Droppable):
 
         embed = discord.Embed(title="", description=info_block, color=color)
         embed.set_thumbnail(url=self.base_skill.image_url)
-        embed.set_footer(text=f"by {self.base_skill.author}")
+        if self.base_skill.author is not None:
+            embed.set_footer(text=f"by {self.base_skill.author}")
         return embed
 
 
@@ -479,7 +480,7 @@ class CharacterSkill:
 
         embed = discord.Embed(title="", description=info_block, color=color)
         embed.set_thumbnail(url=self.skill.base_skill.image_url)
-        if show_full_data:
+        if show_full_data and self.skill.base_skill.author is not None:
             embed.set_footer(text=f"by {self.skill.base_skill.author}")
         return embed
 

@@ -88,9 +88,7 @@ class EncounterManager(Service):
                     return
                 encounter_event: EncounterEvent = event
                 match encounter_event.encounter_event_type:
-                    case (
-                        EncounterEventType.NEW_ROUND | EncounterEventType.MEMBER_DEFEAT
-                    ):
+                    case EncounterEventType.NEW_ROUND:
                         await self.refresh_encounter_thread(
                             encounter_event.encounter_id
                         )
@@ -100,14 +98,7 @@ class EncounterManager(Service):
                         await self.add_member_to_encounter(
                             encounter_event.encounter_id, encounter_event.member_id
                         )
-                    case EncounterEventType.ENEMY_PHASE_CHANGE:
-                        await self.refresh_encounter_thread(
-                            encounter_event.encounter_id
-                        )
                     case EncounterEventType.ENEMY_DEFEAT:
-                        await self.refresh_encounter_thread(
-                            encounter_event.encounter_id
-                        )
                         await self.update_guild_status(event.guild_id)
 
             case EventType.COMBAT:
@@ -613,8 +604,9 @@ class EncounterManager(Service):
         message = (
             f"{character.name} was inactive for too long, their turn will be skipped."
         )
+        timeout_count += 1
 
-        if timeout_count > Config.TIMEOUT_COUNT_LIMIT:
+        if timeout_count >= Config.TIMEOUT_COUNT_LIMIT:
             event = EncounterEvent(
                 datetime.datetime.now(),
                 context.encounter.guild_id,
@@ -623,7 +615,7 @@ class EncounterManager(Service):
                 EncounterEventType.MEMBER_TIMEOUT,
             )
             await self.controller.dispatch_event(event)
-            message += f"\n They reached {Config.TIMEOUT_COUNT_LIMIT} total timeouts and will from now on be excluded from the fight."
+            message += f" They reached {Config.TIMEOUT_COUNT_LIMIT} total timeouts and will be excluded from the fight."
 
         await self.skip_turn(character, context, message, timeout=True)
 
@@ -778,7 +770,7 @@ class EncounterManager(Service):
         context = await self.context_loader.load_encounter_context(encounter_id)
 
         if await self.context_needs_update_check(context):
-            return
+            context = await self.context_loader.load_encounter_context(encounter_id)
 
         if context.is_concluded():
             return
