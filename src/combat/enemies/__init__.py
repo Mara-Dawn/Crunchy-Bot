@@ -97,7 +97,7 @@ class ShoppingCart(Enemy):
             max_players=3,
             skill_types=[SkillType.ANKLE_AIM, SkillType.DOWN_HILL],
             item_loot_table=[
-                ItemType.BOX_SEED,
+                # ItemType.BOX_SEED,
             ],
             # min_gear_drop_count=2,
             # max_gear_drop_count=3,
