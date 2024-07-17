@@ -3118,16 +3118,34 @@ class Database:
 
         return participants
 
-    async def get_last_encounter_spawn_event(self, guild_id: int) -> EncounterEvent:
+    async def get_last_encounter_spawn_event(self, guild_id: int, min_lvl: int = None, max_lvl: int = None) -> EncounterEvent:
         command = f"""
             SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            INNER JOIN {self.ENCOUNTER_TABLE} ON {self.ENCOUNTER_TABLE}.{self.ENCOUNTER_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+        """
+
+        task = [guild_id, EncounterEventType.SPAWN.value]
+
+        if min_lvl is not None:
+            command += f"""
+                AND  {self.ENCOUNTER_ENEMY_LEVEL_COL} >= ?
+            """
+            task.append(min_lvl)
+
+        if max_lvl is not None:
+            command += f"""
+                AND  {self.ENCOUNTER_ENEMY_LEVEL_COL} <= ?
+            """
+            task.append(max_lvl)
+
+        command += f"""
             ORDER BY {self.EVENT_ID_COL} DESC
         """
 
-        task = (guild_id, EncounterEventType.SPAWN.value)
+        task = tuple(task)
         rows = await self.__query_select(command, task)
         if not rows:
             return None
