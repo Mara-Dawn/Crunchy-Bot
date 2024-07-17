@@ -252,7 +252,7 @@ class Combat(commands.Cog):
         enemy_type: str | None,
         level: int | None,
     ):
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
 
         if not await self.__check_enabled(interaction):
             return
