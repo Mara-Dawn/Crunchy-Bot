@@ -394,7 +394,7 @@ class BigHonk(BaseSkill):
             ],
             aoe=True,
             droppable=False,
-            image_url="https://i.imgur.com/ryWhWTP.png",
+            image_url="https://i.imgur.com/xUdZUmt.png",
         )
 
 
