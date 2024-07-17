@@ -291,7 +291,7 @@ class GarlicBreath(BaseSkill):
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=0,
             base_value=1,
-            hits=2,
+            hits=1,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.BLIND,
