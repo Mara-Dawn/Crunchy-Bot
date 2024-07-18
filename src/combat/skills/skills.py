@@ -489,7 +489,7 @@ class DownHill(BaseSkill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
-            base_value=10,
+            base_value=7,
             hits=1,
             aoe=False,
             initial_cooldown=1,
