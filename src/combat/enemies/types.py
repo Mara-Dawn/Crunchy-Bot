@@ -10,6 +10,7 @@ class EnemyType(str, Enum):
     SHOPPING_CART = "ShoppingCart"
     NICE_GUY = "NiceGuy"
     YOUR_MOM = "YourMom"
+    PIMPLE = "Pimple"
     CAT_DOG = "CatDog"
     MUSHROOM = "Mushroom"
     BROCOLI = "BroColi"

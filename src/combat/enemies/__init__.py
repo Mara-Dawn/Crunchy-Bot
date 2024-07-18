@@ -120,7 +120,7 @@ class Goose(Enemy):
             min_level=1,
             max_level=5,
             health=6,
-            damage_scaling=8,
+            damage_scaling=6.5,
             max_players=4,
             skill_types=[SkillType.BIG_HONK, SkillType.ASS_BITE],
             item_loot_table=[
@@ -146,7 +146,7 @@ class ShoppingCart(Enemy):
             min_level=2,
             max_level=5,
             health=3,
-            damage_scaling=2.5,
+            damage_scaling=3,
             max_players=3,
             skill_types=[SkillType.ANKLE_AIM, SkillType.DOWN_HILL],
             item_loot_table=[
@@ -173,7 +173,7 @@ class NiceGuy(Enemy):
             min_level=2,
             max_level=5,
             health=5,
-            damage_scaling=5,
+            damage_scaling=4.5,
             max_players=5,
             skill_types=[SkillType.M_LADY, SkillType.FEDORA_TIP],
             item_loot_table=[
@@ -199,7 +199,7 @@ class YourMom(Enemy):
             min_level=2,
             max_level=5,
             health=10,
-            damage_scaling=10,
+            damage_scaling=8,
             max_players=10,
             skill_types=[SkillType.AROUND_THE_WORLD, SkillType.SIT],
             item_loot_table=[
@@ -299,6 +299,33 @@ class BroColi(Enemy):
             initiative=15,
             actions_per_turn=2,
             author="Franny",
+        )
+
+
+class Pimple(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Pimple",
+            type=EnemyType.PIMPLE,
+            description="You wake up, take a look in the mirror and see it. A massive, blistering pimple right on your nose.",
+            information="Comes with an irresistable urge to pop it.",
+            image_url="https://i.imgur.com/IVDyooR.png",
+            min_level=3,
+            max_level=6,
+            health=6,
+            damage_scaling=5,
+            max_players=5,
+            skill_types=[SkillType.IT_HURTS, SkillType.POP],
+            item_loot_table=[
+                # ItemType.BOX_SEED,
+                # ItemType.CAT_SEED,
+                # ItemType.YELLOW_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=10,
+            actions_per_turn=1,
+            author="Lusa",
         )
 
 

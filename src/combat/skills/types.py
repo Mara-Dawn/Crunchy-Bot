@@ -67,6 +67,10 @@ class SkillType(str, Enum):
     PUKE = "Puke"
     TAIL_WHIP = "TailWhip"
 
+    # Pimple
+    IT_HURTS = "ItHurts"
+    POP = "Pop"
+
     # Happy Mushroom
     HOLD = "Hold"
     BURST = "Burst"

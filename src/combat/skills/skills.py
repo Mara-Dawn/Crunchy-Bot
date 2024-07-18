@@ -571,6 +571,44 @@ class TailWhip(BaseSkill):
         )
 
 
+class ItHurts(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="It Hurts!",
+            skill_type=SkillType.IT_HURTS,
+            description="You feel it festering and convulsing, almost as if it had a mind of its own.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=2,
+            hits=2,
+            droppable=False,
+            image_url="https://i.imgur.com/7zlTlbv.png",
+            author="Lusa",
+        )
+
+
+class Pop(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Pop!",
+            skill_type=SkillType.POP,
+            description="The pressure suddenly releases, exploding into a huge mess of boiling puss.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=2,
+            base_value=7,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/4z9Wo4G.png",
+            author="Lusa",
+        )
+
+
 class Hold(BaseSkill):
 
     def __init__(self):
