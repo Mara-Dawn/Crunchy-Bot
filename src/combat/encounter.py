@@ -124,7 +124,7 @@ class EncounterContext:
             if actor.id == last_actor:
                 return actor
 
-    def get_active_combatants(self) -> Actor:
+    def get_active_combatants(self) -> list[Actor]:
         return [
             actor
             for actor in self.combatants

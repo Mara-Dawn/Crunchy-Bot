@@ -8,9 +8,10 @@ from combat.actors import Actor, Character
 from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.enemies.types import EnemyType
-from combat.skills.skill import CharacterSkill
+from combat.skills.skill import CharacterSkill, Skill
 from combat.skills.types import (
     SkillEffect,
+    SkillInstance,
     StatusEffectApplication,
     StatusEffectTrigger,
 )
@@ -333,9 +334,7 @@ class EncounterManager(Service):
         embed.set_thumbnail(url=user.display_avatar.url)
         await thread.send("", embed=embed)
 
-        encounters = await self.database.get_encounter_participants(
-            encounter.guild_id
-        )
+        encounters = await self.database.get_encounter_participants(encounter.guild_id)
         enemy = await self.factory.get_enemy(encounter.enemy_type)
         max_encounter_size = enemy.max_players
         if len(encounters[encounter.id]) >= max_encounter_size:
@@ -463,6 +462,92 @@ class EncounterManager(Service):
 
         return context
 
+    async def calculate_character_aoe_skill(
+        self,
+        context: EncounterContext,
+        skill: Skill,
+        source: Character,
+        available_targets: list[Actor],
+    ) -> tuple[list[tuple[Actor, SkillInstance, float], discord.Embed]]:
+        damage_data = []
+
+        effect_modifier, post_embed = (
+            await self.status_effect_manager.handle_attack_status_effects(
+                context, source, skill
+            )
+        )
+        for target in available_targets:
+            instances = await self.skill_manager.get_skill_effect(
+                source, skill, combatant_count=context.get_combat_scale()
+            )
+            instance = instances[0]
+            instance.apply_effect_modifier(effect_modifier)
+
+            current_hp = await self.actor_manager.get_actor_current_hp(
+                target, context.combat_events
+            )
+
+            total_damage = await self.actor_manager.get_skill_damage_after_defense(
+                target, skill, instance.scaled_value
+            )
+
+            if skill.base_skill.skill_effect == SkillEffect.HEALING:
+                total_damage *= -1
+
+            new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
+
+            damage_data.append((target, instance, new_target_hp))
+        return damage_data, post_embed
+
+    async def calculate_character_skill(
+        self,
+        context: EncounterContext,
+        skill: Skill,
+        source: Character,
+        target: Actor,
+    ) -> tuple[list[tuple[Actor, SkillInstance, float], discord.Embed]]:
+        skill_instances = await self.skill_manager.get_skill_effect(
+            source, skill, combatant_count=context.get_combat_scale()
+        )
+
+        skill_value_data = []
+        hp_cache = {}
+
+        for instance in skill_instances:
+            effect_modifier, post_embed = (
+                await self.status_effect_manager.handle_attack_status_effects(
+                    context,
+                    source,
+                    skill,
+                )
+            )
+            instance.apply_effect_modifier(effect_modifier)
+
+            total_skill_value = await self.actor_manager.get_skill_damage_after_defense(
+                target, skill, instance.scaled_value
+            )
+
+            target_id = target.id
+            if target_id is None:
+                target_id = -1
+
+            if target_id not in hp_cache:
+                hp_cache[target_id] = await self.actor_manager.get_actor_current_hp(
+                    target, context.combat_events
+                )
+
+            current_hp = hp_cache[target_id]
+
+            if skill.base_skill.skill_effect != SkillEffect.HEALING:
+                total_skill_value *= -1
+
+            new_target_hp = min(max(0, current_hp + total_skill_value), target.max_hp)
+            hp_cache[target_id] = new_target_hp
+
+            skill_value_data.append((target, instance, new_target_hp))
+
+        return skill_value_data, post_embed
+
     async def combatant_turn(
         self,
         context: EncounterContext,
@@ -483,48 +568,23 @@ class EncounterManager(Service):
                 character, skill_data.skill, context
             )
 
-        skill_instances = await self.skill_manager.get_skill_effect(
-            character, skill_data.skill, combatant_count=context.get_combat_scale()
+        if skill_data.skill.base_skill.aoe:
+            # assumes party targeted
+            damage_data, post_embed = await self.calculate_character_aoe_skill(
+                context, skill_data.skill, character, context.get_active_combatants()
+            )
+        else:
+            damage_data, post_embed = await self.calculate_character_skill(
+                context, skill_data.skill, character, target
+            )
+
+        turn = TurnData(
+            actor=character,
+            skill=skill_data.skill,
+            damage_data=damage_data,
+            post_embed=post_embed,
         )
 
-        skill_value_data = []
-        hp_cache = {}
-
-        for instance in skill_instances:
-            effect_modifier, post_embed = (
-                await self.status_effect_manager.handle_attack_status_effects(
-                    context,
-                    character,
-                    skill_data.skill,
-                )
-            )
-            instance.apply_effect_modifier(effect_modifier)
-
-            total_skill_value = await self.actor_manager.get_skill_damage_after_defense(
-                target, skill_data.skill, instance.scaled_value
-            )
-
-            target_id = target.id
-            if target_id is None:
-                target_id = -1
-
-            if target_id not in hp_cache:
-                hp_cache[target_id] = await self.actor_manager.get_actor_current_hp(
-                    target, context.combat_events
-                )
-
-            current_hp = hp_cache[target_id]
-
-            if skill_data.skill.base_skill.skill_effect != SkillEffect.HEALING:
-                total_skill_value *= -1
-
-            new_target_hp = min(max(0, current_hp + total_skill_value), target.max_hp)
-            hp_cache[target_id] = new_target_hp
-
-            skill_value_data.append((target, instance, new_target_hp))
-
-        # turn_data = [TurnData(character, skill_data.skill, skill_value_data)]
-        turn = TurnData(character, skill_data.skill, skill_value_data, post_embed)
         await self.context_loader.append_embed_generator_to_round(
             context, self.embed_manager.handle_actor_turn_embed(turn, context)
         )
@@ -849,17 +909,14 @@ class EncounterManager(Service):
 
         if current_actor.leaving:
             await self.skip_turn(
-                current_actor, context, f"{current_actor.name} has left the encounter and will be removed in the next round."
+                current_actor,
+                context,
+                f"{current_actor.name} has left the encounter and will be removed in the next round.",
             )
             return
 
         if current_actor.is_out:
-            await self.skip_turn(
-                current_actor,
-                context,
-                "",
-                silent=True
-            )
+            await self.skip_turn(current_actor, context, "", silent=True)
             return
 
         enemy_embeds = await self.embed_manager.get_character_turn_embeds(context)

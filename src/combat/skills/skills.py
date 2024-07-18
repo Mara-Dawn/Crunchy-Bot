@@ -108,6 +108,32 @@ class SecondWind(BaseSkill):
         )
 
 
+class FamilyPizza(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="The Last Family Pizza",
+            skill_type=SkillType.FAMILY_PIZZA,
+            description="Share this blessed meal with your entire party, restoring a moderate amount of health for everyone.",
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=5,
+            min_level=3,
+            base_value=0.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                )
+            ],
+            stacks=2,
+            aoe=True,
+            reset_after_encounter=False,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/2QbwSA4.png",
+        )
+
+
 class SliceAndDice(BaseSkill):
 
     def __init__(self):
@@ -118,6 +144,7 @@ class SliceAndDice(BaseSkill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=3,
+            min_level=2,
             base_value=2.5,
             status_effects=[
                 SkillStatusEffect(
