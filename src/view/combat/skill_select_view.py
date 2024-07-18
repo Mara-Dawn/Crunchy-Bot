@@ -667,7 +667,7 @@ class Dropdown(discord.ui.Select):
             description = []
 
             if skill.id is not None:
-                description.append(f"ILVL: {skill.level}")
+                # description.append(f"ILVL: {skill.level}")
                 description.append(
                     f"USE: {data.stacks_left()}/{skill.base_skill.stacks}"
                 )

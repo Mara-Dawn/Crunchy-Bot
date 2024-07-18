@@ -19,6 +19,7 @@ class SkillType(str, Enum):
     HEAVY_ATTACK = "HeavyAttack"
 
     SECOND_WIND = "SecondWind"
+    FAMILY_PIZZA = "FamilyPizza"
     GIGA_BONK = "GigaBonk"
     SLICE_N_DICE = "SliceAndDice"
 
@@ -67,6 +68,10 @@ class SkillType(str, Enum):
     PUKE = "Puke"
     TAIL_WHIP = "TailWhip"
 
+    # Pimple
+    IT_HURTS = "ItHurts"
+    POP = "Pop"
+
     # Happy Mushroom
     HOLD = "Hold"
     BURST = "Burst"
@@ -111,6 +116,7 @@ class SkillEffect(str, Enum):
 class SkillTarget(Enum):
     OPPONENT = 0
     SELF = 1
+    PARTY = 2
 
 
 class StatusEffectTrigger(Enum):

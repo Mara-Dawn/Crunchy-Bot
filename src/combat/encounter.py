@@ -124,15 +124,21 @@ class EncounterContext:
             if actor.id == last_actor:
                 return actor
 
-    def get_active_combatants(self) -> Actor:
+    def get_active_combatants(self) -> list[Actor]:
         return [
             actor
             for actor in self.combatants
-            if not actor.defeated and not actor.is_out
+            if not actor.defeated and not actor.is_out and self.is_actor_ready(actor)
         ]
 
     def get_combat_scale(self) -> int:
-        return len([actor for actor in self.combatants if not actor.is_out])
+        return len(
+            [
+                actor
+                for actor in self.combatants
+                if not actor.is_out and self.is_actor_ready(actor)
+            ]
+        )
 
     def get_current_actor(self) -> Actor:
         if self.new_round():
@@ -154,15 +160,23 @@ class EncounterContext:
         return result
 
     def is_actor_ready(self, actor: Actor) -> bool:
+        ready = None
+        encounter_start = True
         for event in self.encounter_events:
             if event.encounter_event_type == EncounterEventType.NEW_ROUND:
-                return True
+                encounter_start = False
+                if ready is None:
+                    ready = True
             if (
                 event.member_id == actor.id
                 and event.encounter_event_type == EncounterEventType.MEMBER_ENGAGE
-            ):
-                return False
-        return False
+            ) and ready is None:
+                ready = False
+
+        if ready is None:
+            ready = False
+
+        return encounter_start or ready
 
     def new_round(self) -> bool:
         round_event_id = None

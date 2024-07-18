@@ -108,6 +108,32 @@ class SecondWind(BaseSkill):
         )
 
 
+class FamilyPizza(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="The Last Family Pizza",
+            skill_type=SkillType.FAMILY_PIZZA,
+            description="Share this blessed meal with your entire party, restoring a moderate amount of health for everyone.",
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=5,
+            min_level=3,
+            base_value=0.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                )
+            ],
+            stacks=2,
+            aoe=True,
+            reset_after_encounter=False,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/2QbwSA4.png",
+        )
+
+
 class SliceAndDice(BaseSkill):
 
     def __init__(self):
@@ -118,6 +144,7 @@ class SliceAndDice(BaseSkill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=3,
+            min_level=2,
             base_value=2.5,
             status_effects=[
                 SkillStatusEffect(
@@ -568,6 +595,44 @@ class TailWhip(BaseSkill):
             droppable=False,
             image_url="https://i.imgur.com/nHvtBi3.jpeg",
             author="Klee",
+        )
+
+
+class ItHurts(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="It Hurts!",
+            skill_type=SkillType.IT_HURTS,
+            description="You feel it festering and convulsing, almost as if it had a mind of its own.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=2,
+            hits=2,
+            droppable=False,
+            image_url="https://i.imgur.com/7zlTlbv.png",
+            author="Lusa",
+        )
+
+
+class Pop(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Pop!",
+            skill_type=SkillType.POP,
+            description="The pressure suddenly releases, exploding into a huge mess of boiling puss.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=2,
+            base_value=7,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/4z9Wo4G.png",
+            author="Lusa",
         )
 
 
