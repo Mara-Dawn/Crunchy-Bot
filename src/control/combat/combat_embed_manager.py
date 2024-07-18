@@ -70,8 +70,10 @@ class CombatEmbedManager(Service):
         participants = await self.database.get_encounter_participants_by_encounter_id(
             encounter.id
         )
-        out_participants = await self.database.get_encounter_out_participants_by_encounter_id(
-            encounter.id
+        out_participants = (
+            await self.database.get_encounter_out_participants_by_encounter_id(
+                encounter.id
+            )
         )
         active_participants = len(participants) - len(out_participants)
         if not done:
@@ -547,7 +549,14 @@ class CombatEmbedManager(Service):
             wait = max(len(skill.description) * 0.06, 3)
             await asyncio.sleep(wait)
 
-        if not skill.base_skill.base_value <= 0:
+        if (
+            not skill.base_skill.base_value <= 0
+            and skill.base_skill.skill_effect
+            not in [
+                SkillEffect.NOTHING,
+                SkillEffect.BUFF,
+            ]
+        ):
             if skill.base_skill.aoe:
                 async for embed in self.display_aoe_skill(turn_data, skill, full_embed):
                     yield embed

@@ -14,6 +14,7 @@ from combat.skills.types import (
     SkillInstance,
     StatusEffectApplication,
     StatusEffectTrigger,
+    StatusEffectType,
 )
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
@@ -424,6 +425,36 @@ class EncounterManager(Service):
         )
         await self.controller.dispatch_event(event)
 
+    async def handle_round_status_effects(
+        self,
+        context: EncounterContext,
+        trigger: StatusEffectTrigger,
+    ):
+        context = await self.context_loader.load_encounter_context(context.encounter.id)
+
+        for active_actor in context.get_current_initiative():
+
+            triggered_status_effects = await self.status_effect_manager.actor_trigger(
+                context, active_actor, trigger
+            )
+
+            if len(triggered_status_effects) <= 0:
+                continue
+
+            effect_data = await self.status_effect_manager.handle_status_effects(
+                context, active_actor, triggered_status_effects
+            )
+
+            if len(effect_data) > 0:
+                status_effect_embed = self.embed_manager.get_status_effect_embed(
+                    active_actor, effect_data
+                )
+                await self.context_loader.append_embed_to_round(
+                    context, status_effect_embed
+                )
+
+            # context = await self.context_loader.load_encounter_context(context.encounter.id)
+
     async def handle_turn_status_effects(
         self,
         context: EncounterContext,
@@ -609,7 +640,10 @@ class EncounterManager(Service):
                 application_value = None
                 match skill_status_effect.application:
                     case StatusEffectApplication.ATTACK_VALUE:
-                        application_value = damage_instance.value
+                        if skill_data.skill.base_skill.skill_effect == SkillEffect.BUFF:
+                            application_value = damage_instance.skill_base
+                        else:
+                            application_value = damage_instance.value
                     case StatusEffectApplication.DEFAULT:
                         pass
 
@@ -860,6 +894,9 @@ class EncounterManager(Service):
         current_actor = context.get_current_actor()
 
         if current_actor.id == context.beginning_actor.id and not context.new_round():
+            await self.handle_round_status_effects(
+                context, StatusEffectTrigger.END_OF_ROUND
+            )
             event = EncounterEvent(
                 datetime.datetime.now(),
                 context.encounter.guild_id,

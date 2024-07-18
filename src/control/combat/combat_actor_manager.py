@@ -56,6 +56,8 @@ class CombatActorManager(Service):
                 skill_effect = base_skill.skill_effect
 
             match skill_effect:
+                case SkillEffect.BUFF | SkillEffect.NOTHING:
+                    pass
                 case SkillEffect.PHYSICAL_DAMAGE:
                     health -= event.skill_value
                 case SkillEffect.MAGICAL_DAMAGE:
@@ -353,6 +355,9 @@ class CombatActorManager(Service):
                 ]
             case SkillEffect.HEALING:
                 pass
+            case SkillEffect.NOTHING | SkillEffect.BUFF:
+                modifier = 0
+                flat_reduction = 0
 
         return int(max(0, ((incoming_damage * modifier) - flat_reduction)))
 
@@ -381,5 +386,8 @@ class CombatActorManager(Service):
                 ]
             case SkillEffect.HEALING:
                 pass
+            case SkillEffect.NOTHING | SkillEffect.BUFF:
+                modifier = 0
+                flat_reduction = 0
 
         return int(max(0, ((incoming_damage - flat_reduction) * modifier)))

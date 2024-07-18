@@ -109,8 +109,17 @@ class CombatStatusEffectManager(Service):
                     base_value = application_value * Config.BLEED_SCALING
 
                 damage = base_value * (1 + modifier)
+            case StatusEffectType.INSPIRED:
+                damage = application_value
 
         status_effect = await self.factory.get_status_effect(type)
+
+        if (
+            StatusEffectTrigger.END_OF_TURN in status_effect.consumed
+            and source.id == target.id
+        ):
+            stacks += 1
+
         if status_effect.override or status_effect.override_by_actor:
             for active_effect in target.status_effects:
                 override = False
@@ -228,6 +237,11 @@ class CombatStatusEffectManager(Service):
                     )
                 case StatusEffectType.FLUSTERED:
                     effect_data[effect_type] = 0
+                case StatusEffectType.INSPIRED:
+                    # effect_data[effect_type] = Config.INSPIRED_CRIT_INC
+                    effect_data[effect_type] = 1 + (
+                        active_status_effect.event.value / 100
+                    )
                 case StatusEffectType.RAGE_QUIT:
                     current_hp = await self.actor_manager.get_actor_current_hp(
                         actor, context.combat_events
@@ -279,7 +293,8 @@ class CombatStatusEffectManager(Service):
                     title = f"{status_effect.emoji} Rage Quit"
                     description = data
 
-            outcome_info[title] = description
+            if title != "":
+                outcome_info[title] = description
 
         return outcome_info
 
@@ -325,6 +340,7 @@ class CombatStatusEffectManager(Service):
         )
 
         modifier = 1
+
         for _, data in effect_data.items():
             modifier *= float(data)
 

@@ -186,6 +186,8 @@ class CombatSkillManager(Service):
                 modifier += character.equipment.attributes[
                     CharacterAttribute.HEALING_BONUS
                 ]
+            case SkillEffect.NOTHING | SkillEffect.BUFF:
+                modifier = 0
 
         attack_count = skill.base_skill.hits
         skill_instances = []
@@ -258,6 +260,8 @@ class CombatSkillManager(Service):
                 ]
             case SkillEffect.HEALING:
                 modifier += opponent.enemy.attributes[CharacterAttribute.HEALING_BONUS]
+            case SkillEffect.NOTHING | SkillEffect.BUFF:
+                modifier = 0
 
         encounter_scaling = opponent.enemy.min_encounter_scale
         raw_attack_count = skill.base_skill.hits
