@@ -145,7 +145,7 @@ class ShoppingCart(Enemy):
             image_url="https://i.imgur.com/xzy3C3q.jpeg",
             min_level=2,
             max_level=5,
-            health=3,
+            health=4,
             damage_scaling=3,
             max_players=3,
             skill_types=[SkillType.ANKLE_AIM, SkillType.DOWN_HILL],
