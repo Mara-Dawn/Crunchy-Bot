@@ -88,3 +88,18 @@ class Rage(StatusEffect):
             display_status=True,
             override=True,
         )
+
+
+class Inspired(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.INSPIRED,
+            name="Inspired",
+            description="Increased Crit Chance",
+            trigger=[StatusEffectTrigger.ON_ATTACK],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="🍑",
+            display_status=True,
+            override=True,
+        )

@@ -134,6 +134,36 @@ class FamilyPizza(BaseSkill):
         )
 
 
+class FineAss(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Fine Ass",
+            skill_type=SkillType.FINE_ASS,
+            description=(
+                "You worked hard for that fine piece of meat and you're not afraid to show it! "
+                "As you draw blank you bless your group with increased damage on the next two turns."
+            ),
+            information="Idk stuns your opponent or something, i just wanted to draw ass - Lusa",
+            skill_effect=SkillEffect.BUFF,
+            cooldown=5,
+            min_level=3,
+            base_value=15,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.INSPIRED,
+                    2,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            stacks=2,
+            aoe=True,
+            reset_after_encounter=False,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/wWYtgye.png",
+        )
+
+
 class SliceAndDice(BaseSkill):
 
     def __init__(self):
@@ -170,7 +200,7 @@ class BloodRage(BaseSkill):
             information="",
             skill_effect=SkillEffect.NEUTRAL_DAMAGE,
             cooldown=3,
-            base_value=0,
+            base_value=1,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.RAGE,
@@ -325,7 +355,7 @@ class GarlicBreath(BaseSkill):
                     1,
                 )
             ],
-            aoe=False,
+            aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/41JkjRY.png",
         )

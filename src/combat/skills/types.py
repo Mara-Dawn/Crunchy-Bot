@@ -6,6 +6,7 @@ class StatusEffectType(str, Enum):
     CLEANSE = "Cleanse"
     BLIND = "Blind"
     FLUSTERED = "Flustered"
+    INSPIRED = "Inspired"
     RAGE = "Rage"
     RAGE_QUIT = "RageQuit"
 
@@ -27,6 +28,7 @@ class SkillType(str, Enum):
     POCKET_SAND = "PocketSand"
     BLOOD_RAGE = "BloodRage"
     PHYSICAL_MISSILE = "PhysicalMissile"
+    FINE_ASS = "FineAss"
 
     # Magical
     MAGIC_ATTACK = "MagicAttack"
@@ -110,6 +112,7 @@ class SkillEffect(str, Enum):
     STATUS_EFFECT_DAMAGE = "Status"
     NEUTRAL_DAMAGE = "Neutral"
     NOTHING = "Nothing"
+    BUFF = "Buff"
     HEALING = "Healing"
 
 

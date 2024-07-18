@@ -78,16 +78,12 @@ class BaseSkill(DroppableBase):
 
 class Skill(Droppable):
 
-    BASE_LOOT_SKILLS = [
-        SkillType.SECOND_WIND,
-        SkillType.GIGA_BONK,
-        SkillType.FIRE_BALL,
-    ]
-
     EFFECT_LABEL_MAP = {
         SkillEffect.NEUTRAL_DAMAGE: "Damage",
         SkillEffect.PHYSICAL_DAMAGE: "Damage",
         SkillEffect.MAGICAL_DAMAGE: "Damage",
+        SkillEffect.NOTHING: "",
+        SkillEffect.BUFF: "Effect",
         SkillEffect.HEALING: "Healing",
     }
 
@@ -106,6 +102,8 @@ class Skill(Droppable):
         SkillEffect.NEUTRAL_DAMAGE: 2,
         SkillEffect.STATUS_EFFECT_DAMAGE: 3,
         SkillEffect.HEALING: 4,
+        SkillEffect.BUFF: 5,
+        SkillEffect.NOTHING: 6,
     }
 
     RARITY_STACKS_SCALING = {
@@ -220,11 +218,14 @@ class Skill(Droppable):
             # suffixes.append((level_line_colored, len(level_line)))
 
             # Base Value
-            name = "Power"
-            spacing = " " * (max_len_pre - len(name))
-            base_value_text = f"{spacing}{name}: {self.scaling:.1f}"
-            base_value_text_colored = f"{spacing}{name}: [35m{self.scaling:.1f}[0m"
-            prefixes.append((base_value_text_colored, len(base_value_text)))
+            if self.scaling > 0:
+                name = "Power"
+                spacing = " " * (max_len_pre - len(name))
+                base_value_text = f"{spacing}{name}: {self.scaling:.1f}"
+                base_value_text_colored = (
+                    f"{spacing}{name}: [35m{self.scaling:.1f}[0m"
+                )
+                prefixes.append((base_value_text_colored, len(base_value_text)))
 
             # Hits
             if self.base_skill.hits > 1:
@@ -406,10 +407,15 @@ class CharacterSkill:
             if self.penalty:
                 penalty = " [!]"
                 penalty_colored = f"[30m{penalty}[0m "
-            damage_text = (
-                f"{spacing}{caption}: {self.min_roll} - {self.max_roll}{penalty}"
-            )
-            damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m{penalty_colored}"
+            match self.skill.base_skill.skill_effect:
+                case SkillEffect.BUFF:
+                    damage_text = (
+                        f"{spacing}{caption}: {self.skill.base_skill.base_value}%"
+                    )
+                    damage_text_colored = f"{spacing}{caption}: [35m{self.skill.base_skill.base_value}%[0m"
+                case _:
+                    damage_text = f"{spacing}{caption}: {self.min_roll} - {self.max_roll}{penalty}"
+                    damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m{penalty_colored}"
             prefixes.append((damage_text_colored, len(damage_text)))
 
             # Hits
