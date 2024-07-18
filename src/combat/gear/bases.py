@@ -320,6 +320,7 @@ class Stick_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            image_url="https://i.imgur.com/nUnH9G0.png",
         )
 
 
@@ -342,6 +343,7 @@ class Wand_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
+            image_url="https://i.imgur.com/rAGti7v.png",
         )
 
 
@@ -359,6 +361,7 @@ class HeadGear_T1(Tier1):
             information="Tier 1 head piece.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/LGEy5Km.png",
         )
 
 
@@ -376,6 +379,7 @@ class BodyGear_T1(Tier1):
             information="Tier 1 body piece.",
             slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/oAWzovW.png",
         )
 
 
@@ -392,6 +396,7 @@ class LegGear_T1(Tier1):
             information="Tier 1 leg piece.",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/F10kbxJ.png",
         )
 
 
@@ -409,6 +414,7 @@ class Necklace_T1(Tier1):
             information="Tier 1 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/XyoEXnO.png",
         )
 
 
@@ -426,6 +432,7 @@ class Necklace_T1_2(Tier1):
             information="Tier 1 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/HfhMNNW.png",
         )
 
 
