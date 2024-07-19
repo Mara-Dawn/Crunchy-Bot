@@ -290,7 +290,7 @@ class FireBall(BaseSkill):
             cooldown=10,
             base_value=7.5,
             stacks=1,
-            weight=30,
+            weight=50,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/tzbLY8h.png",
         )
