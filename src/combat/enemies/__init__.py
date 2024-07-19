@@ -209,6 +209,8 @@ class YourMom(Enemy):
             ],
             gear_loot_table=[],
             skill_loot_table=[],
+            min_gear_drop_count=4,
+            max_gear_drop_count=5,
             initiative=10,
             actions_per_turn=1,
             author="Lusa",
@@ -377,7 +379,7 @@ class Daddy_P1(Enemy):
             max_level=3,
             health=10,
             damage_scaling=10,
-            max_players=9,
+            max_players=6,
             # min_encounter_scale=6,
             skill_types=[
                 SkillType.WHIP,
@@ -411,7 +413,7 @@ class Daddy_P2(Enemy):
             max_level=3,
             health=10,
             damage_scaling=10,
-            max_players=9,
+            max_players=6,
             min_encounter_scale=6,
             skill_types=[
                 SkillType.WHIP,
