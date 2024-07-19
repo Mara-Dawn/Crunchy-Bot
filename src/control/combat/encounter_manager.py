@@ -191,7 +191,10 @@ class EncounterManager(Service):
         view = EnemyEngageView(self.controller, enemy)
         channel = guild.get_channel(channel_id)
 
-        message = await channel.send("", embed=embed, view=view)
+        message = await self.context_loader.send_message(
+            channel, content="", embed=embed, view=view
+        )
+
         encounter.message_id = message.id
         encounter.channel_id = message.channel.id
 
@@ -317,13 +320,17 @@ class EncounterManager(Service):
             wait_embed = await self.embed_manager.get_waiting_for_party_embed(
                 enemy.min_encounter_scale
             )
-            message = await thread.send(content="", embed=wait_embed)
+            message = await self.context_loader.send_message(
+                thread, content="", embed=wait_embed
+            )
 
         if initiate_combat:
             round_embed = await self.embed_manager.get_initiation_embed()
             # will trigger the combat start on expiration
             view = GracePeriodView(self.controller, encounter)
-            message = await thread.send(content="", embed=round_embed, view=view)
+            message = await self.context_loader.send_message(
+                thread, content="", embed=round_embed, view=view
+            )
             view.set_message(message)
 
         user = self.bot.get_guild(encounter.guild_id).get_member(member_id)
@@ -333,7 +340,9 @@ class EncounterManager(Service):
             user, additional_message=additional_message
         )
         embed.set_thumbnail(url=user.display_avatar.url)
-        await thread.send("", embed=embed)
+        await self.context_loader.send_message(
+            thread, content="", embed=embed
+        )
 
         encounters = await self.database.get_encounter_participants(encounter.guild_id)
         enemy = await self.factory.get_enemy(encounter.enemy_type)
@@ -721,7 +730,9 @@ class EncounterManager(Service):
         else:
             embed = await self.embed_manager.get_combat_failed_embed(context)
 
-        await context.thread.send("", embed=embed)
+        await self.context_loader.send_message(
+            context.thread, content="", embed=embed
+        )
 
         event = EncounterEvent(
             datetime.datetime.now(),
@@ -749,7 +760,9 @@ class EncounterManager(Service):
             loot_head_embed = await self.embed_manager.get_loot_embed(member, beans)
             embeds.append(loot_head_embed)
 
-            message = await context.thread.send(f"<@{member.id}>", embeds=embeds)
+            message = await self.context_loader.send_message(
+                context.thread, content=f"<@{member.id}>", embeds=embeds
+            )
 
             # event = BeansEvent(
             #     now,
@@ -763,7 +776,7 @@ class EncounterManager(Service):
             for drop in member_loot[1]:
                 embeds.append(drop.get_embed())
                 await asyncio.sleep(1)
-                await message.edit(embeds=embeds)
+                await self.context_loader.edit_message(message, embeds=embeds)
 
             item = member_loot[2]
             if item is not None:
@@ -771,7 +784,7 @@ class EncounterManager(Service):
 
                 await asyncio.sleep(1)
 
-                await message.edit(embeds=embeds)
+                await self.context_loader.edit_message(message, embeds=embeds)
 
                 event = InventoryEvent(
                     now,
@@ -817,7 +830,7 @@ class EncounterManager(Service):
 
                 encounter_event_type = EncounterEventType.MEMBER_DEFEAT
                 embed = self.embed_manager.get_actor_defeated_embed(actor)
-                await context.thread.send("", embed=embed)
+                await self.context_loader.send_message(context.thread, content="", embed=embed)
 
                 event = EncounterEvent(
                     datetime.datetime.now(),
@@ -872,6 +885,7 @@ class EncounterManager(Service):
         await enemy_controller.intro(encounter_id)
         await self.refresh_encounter_thread(encounter_id)
 
+
     async def refresh_encounter_thread(self, encounter_id: int):
         context = await self.context_loader.load_encounter_context(encounter_id)
 
@@ -915,7 +929,7 @@ class EncounterManager(Service):
             cont = round_embeds[0].title == "Round Continued.."
             round_embed = await self.embed_manager.get_round_embed(context, cont=cont)
             round_embeds[0] = round_embed
-            await round_message.edit(embeds=round_embeds, attachments=[])
+            await self.context_loader.edit_message(round_message, embeds=round_embeds, attachments=[])
 
         if not context.new_turn():
             return
@@ -925,14 +939,18 @@ class EncounterManager(Service):
         if context.new_round():
             await self.delete_previous_combat_info(context.thread)
             leave_view = EncounterLeaveView(self.controller)
-            message = await context.thread.send("", embed=enemy_embed, view=leave_view)
+            message = await self.context_loader.send_message(
+                context.thread, content="", embed=enemy_embed, view=leave_view
+            )
             leave_view.set_message(message)
             round_embed = await self.embed_manager.get_round_embed(context)
-            await context.thread.send(content="", embed=round_embed)
+            await self.context_loader.send_message(
+                context.thread, content="", embed=round_embed
+            )
         else:
             message = await self.get_previous_enemy_info(context.thread)
             if message is not None:
-                await message.edit(embed=enemy_embed)
+                await self.context_loader.edit_message(message, embed=enemy_embed)
 
         if current_actor.is_enemy:
             await self.opponent_turn(context)
@@ -960,8 +978,8 @@ class EncounterManager(Service):
 
         view = await CombatTurnView.create(self.controller, current_actor, context)
 
-        message = await context.thread.send(
-            f"<@{current_actor.id}>", embeds=enemy_embeds, view=view
+        message = await self.context_loader.send_message(
+            context.thread, content=f"<@{current_actor.id}>", embeds=enemy_embeds, view=view
         )
         view.set_message(message)
         return
@@ -1006,7 +1024,7 @@ class EncounterManager(Service):
                     guild_level,
                     progress,
                 )
-                await message.edit(embed=head_embed)
+                await self.context_loader.edit_message(message, embed=head_embed)
                 break
 
     async def refresh_combat_messages(self, guild_id: int):
@@ -1032,4 +1050,4 @@ class EncounterManager(Service):
                 progress,
             )
 
-            await channel.send(content="", embed=head_embed)
+            await self.context_loader.send_message(channel, content="", embed=head_embed)

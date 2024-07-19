@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncGenerator
 
 import discord
@@ -14,6 +15,8 @@ from events.bot_event import BotEvent
 
 
 class ContextLoader(Service):
+
+    RETRY_LIMIT = 5
 
     def __init__(
         self,
@@ -102,13 +105,15 @@ class ContextLoader(Service):
 
         if len(message.embeds) >= 10:
             round_embed = await self.embed_manager.get_round_embed(context, cont=True)
-            message = await context.thread.send(content="", embed=round_embed)
+            message = await self.send_message(
+                context.thread, content="", embed=round_embed
+            )
 
         previous_embeds = message.embeds
 
         async for embed in generator:
             current_embeds = previous_embeds + [embed]
-            await message.edit(embeds=current_embeds)
+            await self.edit_message(message, embeds=current_embeds)
 
     async def append_embed_to_round(
         self, context: EncounterContext, embed: discord.Embed
@@ -118,8 +123,46 @@ class ContextLoader(Service):
 
         if len(message.embeds) >= 10:
             round_embed = await self.embed_manager.get_round_embed(context, cont=True)
-            message = await context.thread.send(content="", embed=round_embed)
+            message = await self.send_message(
+                context.thread, content="", embed=round_embed
+            )
 
         previous_embeds = message.embeds
         current_embeds = previous_embeds + [embed]
-        await message.edit(embeds=current_embeds)
+        await self.edit_message(message, embeds=current_embeds)
+
+    async def edit_message(self, message: discord.Message, **kwargs):
+        retries = 0
+        success = False
+        new_message = None
+        while not success and retries <= self.RETRY_LIMIT:
+            try:
+                new_message = await message.edit(**kwargs)
+                success = True
+            except (discord.HTTPException, discord.DiscordServerError) as e:
+                self.logger.log(message.guild.id, e.text, self.log_name)
+                retries += 1
+                await asyncio.sleep(5)
+
+        if not success:
+            self.logger.error(message.guild.id, "edit message timeout", self.log_name)
+
+        return new_message
+
+    async def send_message(self, channel: discord.channel.TextChannel, **kwargs):
+        retries = 0
+        success = False
+        message = None
+        while not success and retries <= self.RETRY_LIMIT:
+            try:
+                message = await channel.send(**kwargs)
+                success = True
+            except (discord.HTTPException, discord.DiscordServerError) as e:
+                self.logger.log(channel.guild.id, e.text, self.log_name)
+                retries += 1
+                await asyncio.sleep(5)
+
+        if not success:
+            self.logger.error(channel.guild.id, "send message timeout", self.log_name)
+
+        return message

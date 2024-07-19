@@ -133,6 +133,9 @@ class Enemy:
 
         self.author = author
 
+        if self.author is None:
+            self.author = "Mara"
+
     def roll_beans_amount(self, level: int):
         if self.min_beans_reward is None:
             self.min_beans_reward = 95 * level
