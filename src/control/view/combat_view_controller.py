@@ -160,6 +160,13 @@ class CombatViewController(ViewController):
                 )
                 continue
 
+            if actor.is_out:
+                await interaction.followup.send(
+                    "You already left this encounter.",
+                    ephemeral=True,
+                )
+                continue
+
             event = EncounterEvent(
                 datetime.datetime.now(),
                 guild_id,

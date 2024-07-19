@@ -163,6 +163,6 @@ class ContextLoader(Service):
                 await asyncio.sleep(5)
 
         if not success:
-            self.logger.error(channel.guild.id, "send message timeout", self.log_name)
+            self.logger.error(message.guild.id, "send message timeout", self.log_name)
 
         return message
