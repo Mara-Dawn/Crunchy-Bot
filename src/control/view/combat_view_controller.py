@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from enum import member
 
 import discord
 from combat.actors import Character
@@ -135,11 +136,26 @@ class CombatViewController(ViewController):
                 )
                 continue
 
+            if not is_involved or encounter is None:
+                await interaction.followup.send(
+                    "You are not involved in any encounter.",
+                    ephemeral=True,
+                )
+                continue
+
             context = await self.context_loader.load_encounter_context(encounter.id)
 
             if member_id == context.get_current_actor().id:
                 await interaction.followup.send(
                     "Please finish your turn before you leave.",
+                    ephemeral=True,
+                )
+                continue
+
+            actor = context.get_actor(member_id)
+            if actor.defeated:
+                await interaction.followup.send(
+                    "You are defeated and cannot leave.",
                     ephemeral=True,
                 )
                 continue
