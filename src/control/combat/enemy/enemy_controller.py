@@ -81,12 +81,12 @@ class EnemyController(Service, ABC):
     ) -> tuple[list[tuple[Actor, SkillInstance, float], discord.Embed]]:
         damage_data = []
 
-        effect_modifier, post_embed = (
-            await self.status_effect_manager.handle_attack_status_effects(
-                context, context.opponent, skill
-            )
-        )
         for target in available_targets:
+            effect_modifier, post_embed = (
+                await self.status_effect_manager.handle_attack_status_effects(
+                    context, context.opponent, skill
+                )
+            )
             instances = await self.skill_manager.get_skill_effect(
                 context.opponent, skill, combatant_count=context.get_combat_scale()
             )
