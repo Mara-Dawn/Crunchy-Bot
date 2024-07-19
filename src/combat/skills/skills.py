@@ -131,6 +131,7 @@ class FamilyPizza(BaseSkill):
             reset_after_encounter=False,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/2QbwSA4.png",
+            author="Lusa",
         )
 
 
@@ -161,6 +162,7 @@ class FineAss(BaseSkill):
             reset_after_encounter=False,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/wWYtgye.png",
+            author="Lusa",
         )
 
 
@@ -483,7 +485,7 @@ class AroundTheWorld(BaseSkill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
-            base_value=1,
+            base_value=2,
             hits=1,
             aoe=True,
             droppable=False,
@@ -502,7 +504,7 @@ class Sit(BaseSkill):
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=2,
             initial_cooldown=2,
-            base_value=4,
+            base_value=5,
             hits=1,
             aoe=True,
             droppable=False,
@@ -636,7 +638,7 @@ class ItHurts(BaseSkill):
             skill_type=SkillType.IT_HURTS,
             description="You feel it festering and convulsing, almost as if it had a mind of its own.",
             information="",
-            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=0,
             base_value=2,
             hits=2,

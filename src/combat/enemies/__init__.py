@@ -315,7 +315,7 @@ class Pimple(Enemy):
             min_level=3,
             max_level=6,
             health=6,
-            damage_scaling=5,
+            damage_scaling=4,
             max_players=5,
             skill_types=[SkillType.IT_HURTS, SkillType.POP],
             item_loot_table=[
@@ -326,7 +326,7 @@ class Pimple(Enemy):
             gear_loot_table=[],
             skill_loot_table=[],
             initiative=10,
-            actions_per_turn=1,
+            actions_per_turn=2,
             author="Lusa",
         )
 

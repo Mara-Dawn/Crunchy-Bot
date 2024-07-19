@@ -163,7 +163,7 @@ class EncounterManager(Service):
         enemy_health = (
             enemy.health
             * Config.ENEMY_HEALTH_SCALING[effective_encounter_level]
-            * Config.AVERAGE_PLAYER_POTENCY
+            * Config.AVERAGE_PLAYER_POTENCY[encounter_level]
         )
         enemy_health *= pow(
             Config.ENEMY_HEALTH_LVL_FALLOFF, (encounter_level - enemy.min_level)

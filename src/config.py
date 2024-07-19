@@ -40,6 +40,22 @@ class Config:
         # 12: 1076.95,
     }
 
+    AVERAGE_PLAYER_POTENCY = {
+        1: 2,
+        2: 2.3,
+        3: 2.6,
+        4: 3,
+        5: 3,
+        6: 3,
+        7: 3,
+        8: 3,
+        9: 3,
+        10: 3,
+        11: 3,
+        12: 3,
+        # 12: 1076.95,
+    }
+
     CHARACTER_BASE_INITIATIVE = 10
     CHARACTER_ENCOUNTER_SCALING_FACOTR = 1
     OPPONENT_ENCOUNTER_SCALING_FACTOR = 0.95
@@ -49,7 +65,6 @@ class Config:
 
     ENCOUNTER_MIN_LVL_SCALING = 0.65
     ENEMY_HEALTH_LVL_FALLOFF = 0.95
-    AVERAGE_PLAYER_POTENCY = 2.6
 
     # Status Effects
     BLEED_SCALING = 0.25
