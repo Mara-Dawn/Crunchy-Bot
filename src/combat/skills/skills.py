@@ -199,7 +199,7 @@ class BloodRage(BaseSkill):
             description="Your coupons expired last month and your opponent has the audacity to follow policy laws! UNACCEPTABLE!! Your next 4 attacks cause bleeding.",
             information="",
             skill_effect=SkillEffect.NEUTRAL_DAMAGE,
-            cooldown=3,
+            cooldown=6,
             base_value=1,
             status_effects=[
                 SkillStatusEffect(
@@ -210,7 +210,7 @@ class BloodRage(BaseSkill):
             ],
             stacks=3,
             min_level=3,
-            weight=30,
+            weight=50,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/gQeNSR7.png",
             author="Lusa",

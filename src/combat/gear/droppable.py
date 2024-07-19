@@ -29,6 +29,9 @@ class DroppableBase:
             self.weight = 100
         self.author = author
 
+        if self.author is None:
+            self.author = "Mara"
+
 
 class Droppable:
 
