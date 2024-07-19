@@ -160,7 +160,17 @@ class CombatViewController(ViewController):
                 )
                 continue
 
-            if actor.is_out:
+            already_left = False
+
+            for event in context.encounter_events:
+                if (
+                    event.member_id == member_id
+                    and event.encounter_event_type == EncounterEventType.MEMBER_LEAVING
+                ):
+                    already_left = True
+                    break
+
+            if already_left:
                 await interaction.followup.send(
                     "You already left this encounter.",
                     ephemeral=True,
