@@ -92,16 +92,10 @@ class CombatStatusEffectManager(Service):
                     base_value = (
                         Config.OPPONENT_DAMAGE_BASE[level] / actor.enemy.damage_scaling
                     )
-                    modifier = actor.enemy.attributes[
-                        CharacterAttribute.PHYS_DAMAGE_INCREASE
-                    ]
                 else:
                     actor: Character = source
                     level = actor.equipment.weapon.level
                     base_value = Config.ENEMY_HEALTH_SCALING[level]
-                    modifier = actor.equipment.attributes[
-                        CharacterAttribute.PHYS_DAMAGE_INCREASE
-                    ]
 
                 if application_value is not None:
                     if application_value <= 0:
