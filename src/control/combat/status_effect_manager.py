@@ -102,7 +102,7 @@ class CombatStatusEffectManager(Service):
                         return
                     base_value = application_value * Config.BLEED_SCALING
 
-                damage = base_value * (1 + modifier)
+                damage = base_value
             case StatusEffectType.INSPIRED:
                 damage = application_value
 
