@@ -4,7 +4,6 @@ from typing import Any
 
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
-from combat.gear.types import CharacterAttribute
 from combat.skills.skill import Skill
 from combat.skills.status_effect import (
     ActiveStatusEffect,
@@ -111,6 +110,7 @@ class CombatStatusEffectManager(Service):
         if (
             StatusEffectTrigger.END_OF_TURN in status_effect.consumed
             and source.id == target.id
+            and status_effect.delay_to_next_turn
         ):
             stacks += 1
 

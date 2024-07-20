@@ -180,6 +180,8 @@ class UIEventType(str, Enum):
     COMBAT_TIMEOUT = "combat_timeout"
     COMBAT_FULL = "combat_full"
 
+    CLAIM_SPECIAL_DROP = "claim_special_drop"
+
     GEAR_EQUIP = "gear_equip"
     GEAR_DISMANTLE = "gear_dismantle"
     GEAR_OPEN_SECELT = "gear_open_select"

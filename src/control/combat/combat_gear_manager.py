@@ -289,6 +289,7 @@ class CombatGearManager(Service):
                 + self.MODIFIER_BASE[modifier_type]
                 * (self.MODIFIER_SCALING[modifier_type])
                 * (item_level - 1)
+                # TODO: remove the -1
                 * self.GEAR_LEVEL_SCALING
             )
             * slot_scaling

@@ -945,7 +945,9 @@ class GhostBean(Item):
             hide_in_shop=True,
         )
 
+
 # Combat Items
+
 
 class Scrap(Item):
 
@@ -976,6 +978,7 @@ class Scrap(Item):
             hide_in_shop=True,
         )
 
+
 class DaddyKey(Item):
 
     def __init__(self, cost: int | None):
@@ -991,8 +994,8 @@ class DaddyKey(Item):
             shop_category=ShopCategory.GEAR,
             description=(
                 "This key looks rather normal, but you feel a strong commanding magic radiating from it. "
-                "When used from your inventory, it will open a path to the lvl.3 Boss.\n"
-                "You will need at least 6 players to face this challenge.\n"
+                "When used from your inventory, it will open a path to the lvl. 3 Boss.\n"
+                "You will need 6 players to face this challenge.\n"
                 "Come prepared, this key only grants you a single attempt."
             ),
             information=(
@@ -1005,7 +1008,9 @@ class DaddyKey(Item):
             useable=True,
             value=1,
             hide_in_shop=True,
+            image_url="https://i.imgur.com/QqrB4OS.png",
         )
+
 
 # Debuffs
 class Debuff(Item):

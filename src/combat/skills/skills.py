@@ -291,7 +291,7 @@ class FireBall(BaseSkill):
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=10,
             base_value=7.5,
-            stacks=1,
+            stacks=2,
             weight=50,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/tzbLY8h.png",

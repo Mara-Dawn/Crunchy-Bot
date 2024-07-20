@@ -17,6 +17,7 @@ from control.service import Service
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
+from items.item import Item
 
 
 class CombatEmbedManager(Service):
@@ -631,11 +632,11 @@ class CombatEmbedManager(Service):
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         return embed
 
-    async def get_initiation_embed(self):
+    async def get_initiation_embed(self, wait_time: float):
         embed = discord.Embed(title="Get Ready to Fight!", color=discord.Colour.green())
 
         now = datetime.datetime.now().timestamp()
-        timer = int(now + Config.COMBAT_INITIAL_WAIT)
+        timer = int(now + wait_time)
 
         message = f"Combat will start <t:{timer}:R>."
         embed.add_field(name=message, value="", inline=False)
@@ -711,3 +712,31 @@ class CombatEmbedManager(Service):
         if additional_message is not None and additional_message != "":
             message += f"\n{additional_message}"
         return self.get_notification_embed(title, message)
+
+    def get_special_item_embed(self, item: Item, delay_claim: int = None):
+        title = "Special Item"
+        embed = discord.Embed(title=title, description="", color=discord.Colour.gold())
+        message = (
+            "A boss key dropped! Only one of you may claim this item. "
+            "The one who takes up the responsibility may spawn the boss encounter at any time. "
+        )
+
+        self.add_text_bar(embed, "", message)
+
+        item.add_to_embed(
+            self.bot,
+            embed,
+            Config.SHOP_ITEM_MAX_WIDTH,
+            count=1,
+            show_price=False,
+        )
+
+        if item.image_url is not None:
+            embed.set_image(url=item.image_url)
+
+        if delay_claim is not None:
+            now = datetime.datetime.now().timestamp()
+            timer = int(now + delay_claim)
+            embed.add_field(name="", value=f"Able to claim <t:{timer}:R>.")
+
+        return embed

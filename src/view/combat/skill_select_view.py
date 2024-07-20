@@ -148,7 +148,7 @@ class SkillSelectView(
             key=lambda x: (
                 (x.id in [skill.id for skill in self.equipped_skills]),
                 # x.locked,
-                x.level,
+                # x.level,
                 Skill.RARITY_SORT_MAP[x.rarity],
                 Skill.EFFECT_SORT_MAP[x.base_skill.skill_effect],
             ),
