@@ -131,7 +131,10 @@ class CombatActorManager(Service):
 
         if phase > 1:
             enemy_type = enemy.phases[phase - 2]
-            enemy = await self.factory.get_enemy(enemy_type)
+            max_hp = int(max_hp * enemy.health)
+            new_enemy = await self.factory.get_enemy(enemy_type)
+            max_hp = int(max_hp * new_enemy.health / enemy.health)
+            enemy = new_enemy
             id -= phase + 10
 
         skills = []

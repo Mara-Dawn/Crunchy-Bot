@@ -119,7 +119,7 @@ class FamilyPizza(BaseSkill):
             skill_effect=SkillEffect.HEALING,
             cooldown=5,
             min_level=3,
-            base_value=0.5,
+            base_value=0.35,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.CLEANSE,
