@@ -41,7 +41,7 @@ class CombatGearManager(Service):
     GENERATOR_VERSION = "0.0.2"
 
     ITEM_LEVEL_MIN_DROP = 0.6
-    SKILL_DROP_CHANCE = 0.1
+    SKILL_DROP_CHANCE = 0.2
     GEAR_LEVEL_SCALING = 2
 
     MIN_RARITY_LVL = {

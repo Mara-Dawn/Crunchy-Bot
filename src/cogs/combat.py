@@ -540,7 +540,7 @@ class Combat(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def get_settings(self, interaction: discord.Interaction):
-        #
+
         # for enemy_type in EnemyType:
         #     enemy = await self.factory.get_enemy(enemy_type)
         #     opponent = await self.actor_manager.get_opponent(
@@ -552,13 +552,9 @@ class Combat(commands.Cog):
         #         {},
         #     )
         #     test_a = opponent.get_potency_per_turn()
-        #     test_b = opponent.get_potency_per_turn_adv()
-        #     test_c = opponent.get_new_potency_per_turn()
         #
         #     log_message = f"\n {enemy.name}:\n"
         #     log_message += f"  old: {test_a}\n"
-        #     log_message += f"  adv: {test_b}\n"
-        #     log_message += f"  new: {test_c}\n"
         #     self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
 
         output = await self.settings_manager.get_settings_string(

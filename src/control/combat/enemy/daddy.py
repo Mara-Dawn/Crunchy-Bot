@@ -285,11 +285,14 @@ class DaddyController(EnemyController):
         )
         post_embed = None
 
+        targets = []
+
         for instance in damage_instances:
             if len(available_targets) <= 0:
                 break
 
             target = random.choice(available_targets)
+            targets.append(target.id)
 
             if target.id not in hp_cache:
                 current_hp = await self.actor_manager.get_actor_current_hp(
@@ -319,7 +322,8 @@ class DaddyController(EnemyController):
             available_targets = [
                 actor
                 for actor in available_targets
-                if actor.id not in hp_cache or hp_cache[actor.id] > 0
+                if (actor.id not in hp_cache or hp_cache[actor.id] > 0)
+                and targets.count(actor.id) < 2
             ]
 
         return TurnData(
