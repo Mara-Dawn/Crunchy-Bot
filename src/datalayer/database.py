@@ -3751,6 +3751,9 @@ class Database:
     async def get_opponent_skill_stacks_used(
         self, encounter_id: int
     ) -> dict[SkillType, int]:
+        if encounter_id is None:
+            return {}
+
         command = f"""
             SELECT * FROM {self.COMBAT_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
