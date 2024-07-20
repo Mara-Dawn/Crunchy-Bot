@@ -45,6 +45,8 @@ class Config:
         2: 2.3,
         3: 2.6,
         4: 3,
+        # 3: 0.01,
+        # 4: 0.01,
         5: 3,
         6: 3,
         7: 3,
@@ -83,6 +85,7 @@ class Config:
         1: 15,
         2: 25,
         3: 35,
+        # 3: 1,
         4: 99999,
         5: 20,
         6: 25,
@@ -94,3 +97,5 @@ class Config:
         12: 40,
     }
     BOSS_LEVELS = [3, 6, 9, 12]
+    BOSS_RETRY_REQUIREMENT = 1
+    BOSS_KEY_CLAIM_DELAY = 180

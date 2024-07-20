@@ -21,6 +21,12 @@ from events.types import (
 
 
 class DaddyController(EnemyController):
+    BOSS_LEVEL = {
+        EnemyType.DADDY_P2: 3,
+        # 6: None,
+        # 9: None,
+        # 12: None,
+    }
 
     async def listen_for_event(self, event: BotEvent):
         pass
@@ -175,6 +181,12 @@ class DaddyController(EnemyController):
             encounter_event_type = EncounterEventType.ENEMY_DEFEAT
             embed = self.embed_manager.get_actor_defeated_embed(opponent)
             await context.thread.send("", embed=embed)
+            guild_level = await self.database.get_guild_level(context.thread.guild.id)
+            if guild_level == self.BOSS_LEVEL[opponent.enemy.type]:
+                guild_level += 1
+                await self.database.set_guild_level(
+                    context.thread.guild.id, guild_level
+                )
         else:
             await self.phase_change(context)
             encounter_event_type = EncounterEventType.ENEMY_PHASE_CHANGE
@@ -345,10 +357,18 @@ class DaddyController(EnemyController):
         hp_cache = {}
         turn_data = []
         for skill in skills_to_use:
+
             turn_data.append(
                 await self.calculate_opponent_turn_data(
                     context, skill, available_targets, hp_cache
                 )
             )
+            available_targets = [
+                actor
+                for actor in available_targets
+                if actor.id not in hp_cache or hp_cache[actor.id] > 0
+            ]
+            if len(available_targets) <= 0:
+                break
 
         return turn_data

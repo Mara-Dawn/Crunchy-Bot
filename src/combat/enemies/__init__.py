@@ -380,7 +380,7 @@ class Daddy_P1(Enemy):
             health=10,
             damage_scaling=10,
             max_players=6,
-            # min_encounter_scale=6,
+            min_encounter_scale=6,
             skill_types=[
                 SkillType.WHIP,
                 SkillType.HAIR_PULL,

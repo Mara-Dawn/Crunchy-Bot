@@ -24,6 +24,7 @@ class StatusEffect:
         override_by_actor: bool = False,
         override: bool = False,
         display_status: bool = False,
+        delay_to_next_turn: bool = False,
         emoji: str = None,
     ):
         self.effect_type = effect_type
@@ -38,6 +39,7 @@ class StatusEffect:
         self.display_status = display_status
         self.override = override
         self.override_by_actor = override_by_actor
+        self.delay_to_next_turn = delay_to_next_turn
 
         if self.damage_type is None:
             self.damage_type = SkillEffect.STATUS_EFFECT_DAMAGE

@@ -30,6 +30,7 @@ class Item:
         useable: bool = False,
         permanent: bool = False,
         secret: bool = False,
+        image_url: str = None,
     ):
         self.name = name
         self.type = type
@@ -53,6 +54,7 @@ class Item:
         self.useable = useable
         self.permanent = permanent
         self.secret = secret
+        self.image_url = image_url
 
     def activated(self, action: ItemTrigger):
         if self.trigger is None:

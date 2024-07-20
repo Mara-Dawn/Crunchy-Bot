@@ -7,6 +7,7 @@ import aiosqlite
 import discord
 from bot_util import BotUtil
 from combat.encounter import Encounter
+from combat.enemies.types import EnemyType
 from combat.equipment import CharacterEquipment
 from combat.gear import (
     DefaultAccessory1,
@@ -2924,7 +2925,12 @@ class Database:
         task = (level, guild_id)
         return await self.__query_insert(command, task)
 
-    async def get_guild_level_progress(self, guild_id: int, guild_level: int) -> int:
+    async def get_guild_level_progress(
+        self, guild_id: int, guild_level: int, start_id: int = None
+    ) -> int:
+        if start_id is None:
+            start_id = 0
+
         command = f""" 
             SELECT COUNT(*) as progress FROM {self.ENCOUNTER_TABLE} 
             INNER JOIN {self.ENCOUNTER_EVENT_TABLE} ON {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = {self.ENCOUNTER_ID_COL}
@@ -2932,15 +2938,37 @@ class Database:
             WHERE {self.ENCOUNTER_ENEMY_LEVEL_COL} = ?
             AND {self.ENCOUNTER_EVENT_TYPE_COL} = ?
             AND {self.ENCOUNTER_GUILD_ID_COL} = ?
+            AND {self.EVENT_ID_COL} > ?
             GROUP BY {self.ENCOUNTER_GUILD_ID_COL}
             ;
         """
-        task = (guild_level, EncounterEventType.ENEMY_DEFEAT, guild_id)
+        task = (guild_level, EncounterEventType.ENEMY_DEFEAT, guild_id, start_id)
         rows = await self.__query_select(command, task)
         if not rows:
             return 0
 
         return int(rows[0]["progress"])
+
+    async def get_guild_last_boss_attempt(
+        self, guild_id: int, enemy_type: EnemyType
+    ) -> EncounterEvent:
+        command = f""" 
+            SELECT * FROM {self.ENCOUNTER_TABLE} 
+            INNER JOIN {self.ENCOUNTER_EVENT_TABLE} ON {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = {self.ENCOUNTER_ID_COL}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            WHERE {self.ENCOUNTER_ENEMY_TYPE_COL} = ?
+            AND {self.ENCOUNTER_EVENT_TYPE_COL} = ?
+            AND {self.ENCOUNTER_GUILD_ID_COL} = ?
+            ORDER BY {self.EVENT_ID_COL} DESC
+            LIMIT 1
+            ;
+        """
+        task = (enemy_type.value, EncounterEventType.END, guild_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return None
+
+        return EncounterEvent.from_db_row(rows[0])
 
     async def get_encounter_by_encounter_id(self, encounter_id: int) -> Encounter:
         command = f""" 
@@ -3040,9 +3068,7 @@ class Database:
 
         return participants
 
-    async def get_encounter_participants(
-        self, guild_id: int
-    ) -> dict[int, list[int]]:
+    async def get_encounter_participants(self, guild_id: int) -> dict[int, list[int]]:
         active_encounters = await self.get_active_encounters(guild_id)
 
         if len(active_encounters) <= 0:
@@ -3118,7 +3144,9 @@ class Database:
 
         return participants
 
-    async def get_last_encounter_spawn_event(self, guild_id: int, min_lvl: int = None, max_lvl: int = None) -> EncounterEvent:
+    async def get_last_encounter_spawn_event(
+        self, guild_id: int, min_lvl: int = None, max_lvl: int = None
+    ) -> EncounterEvent:
         command = f"""
             SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
@@ -3566,7 +3594,7 @@ class Database:
         id = None
         if gear is not None:
             id = gear.id
-            await self.update_lock_gear_by_id(id, lock=True)
+            # await self.update_lock_gear_by_id(id, lock=True)
 
         task = (id, guild_id, member_id)
         await self.__query_insert(command, task)
@@ -3588,13 +3616,20 @@ class Database:
         rows = await self.__query_select(command, task)
         if not rows:
             return []
+
+        equipped_gear = await self.get_user_equipment(guild_id, member_id)
+        equipped_ids = [gear.id for gear in equipped_gear.gear]
+
         equipment = []
         for row in rows:
+            id = row[self.USER_GEAR_ID_COL]
+            if id in equipped_ids:
+                continue
             match type:
                 case Base.GEAR:
-                    item = await self.get_gear_by_id(row[self.USER_GEAR_ID_COL])
+                    item = await self.get_gear_by_id(id)
                 case Base.SKILL:
-                    item = await self.get_skill_by_id(row[self.USER_GEAR_ID_COL])
+                    item = await self.get_skill_by_id(id)
             equipment.append(item)
 
         return equipment

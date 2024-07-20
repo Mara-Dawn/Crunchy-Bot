@@ -1,18 +1,18 @@
 import asyncio
 import datetime
-from enum import member
 
 import discord
 from combat.actors import Character
 from combat.encounter import Encounter, EncounterContext
 from combat.skills.skill import CharacterSkill
+from config import Config
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
-from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
-from events.types import CombatEventType, EncounterEventType, EventType, UIEventType
+from events.types import EncounterEventType, EventType, UIEventType
 from events.ui_event import UIEvent
+from items.item import Item
 
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.context_loader import ContextLoader
@@ -20,6 +20,7 @@ from control.combat.encounter_manager import EncounterManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.event_manager import EventManager
+from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
 
@@ -36,6 +37,7 @@ class CombatViewController(ViewController):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.event_manager: EventManager = controller.get_service(EventManager)
+        self.item_manager: ItemManager = controller.get_service(ItemManager)
         self.encounter_manager: EncounterManager = controller.get_service(
             EncounterManager
         )
@@ -233,6 +235,13 @@ class CombatViewController(ViewController):
             case UIEventType.COMBAT_INITIATE:
                 encounter = event.payload
                 await self.initiate_encounter(encounter)
+            case UIEventType.CLAIM_SPECIAL_DROP:
+                interaction = event.payload[0]
+                encounter_id = event.payload[1]
+                item = event.payload[2]
+                await self.handle_special_drop_claim(
+                    interaction, encounter_id, item, event.view_id
+                )
 
     async def initiate_encounter(self, encounter: Encounter):
         event = EncounterEvent(
@@ -284,3 +293,51 @@ class CombatViewController(ViewController):
         )
 
         await self.encounter_manager.combatant_timeout(current_context, character)
+
+    async def handle_special_drop_claim(
+        self,
+        interaction: discord.Interaction,
+        encounter_id: int,
+        item: Item,
+        view_id: int,
+    ):
+        event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
+        await self.controller.dispatch_ui_event(event)
+
+        context = await self.context_loader.load_encounter_context(encounter_id)
+
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        actor = context.get_actor(member_id)
+
+        if actor is None or actor.is_out:
+            await interaction.followup.send(
+                "You are not part of this encounter.",
+                ephemeral=True,
+            )
+            event = UIEvent(UIEventType.RESUME_INTERACTIONS, None, view_id)
+            await self.controller.dispatch_ui_event(event)
+            return
+
+        title = "Special Item"
+        description = f"This item was claimed by: \n <@{member_id}>"
+        embed = discord.Embed(
+            title=title, description=description, color=discord.Colour.purple()
+        )
+
+        item.add_to_embed(
+            self.bot,
+            embed,
+            Config.SHOP_ITEM_MAX_WIDTH,
+            count=1,
+            show_price=False,
+        )
+
+        if item.image_url is not None:
+            embed.set_image(url=item.image_url)
+
+        await self.item_manager.give_item(guild_id, member_id, item)
+        await interaction.edit_original_response(embed=embed, view=None)
+
+        self.controller.detach_view_by_id(view_id)

@@ -206,5 +206,12 @@ class BasicEnemyController(EnemyController):
                     context, skill, available_targets, hp_cache
                 )
             )
+            available_targets = [
+                actor
+                for actor in available_targets
+                if actor.id not in hp_cache or hp_cache[actor.id] > 0
+            ]
+            if len(available_targets) <= 0:
+                break
 
         return turn_data
