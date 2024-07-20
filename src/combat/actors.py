@@ -125,14 +125,15 @@ class Opponent(Actor):
             self.skills, key=lambda x: x.base_skill.base_value, reverse=True
         )
 
-        max_depth = 1
+        max_depth = self.enemy.health * 2
         cooldowns: dict[SkillType, int] = {}
         initial_state: dict[SkillType, int] = {}
 
         for skill in sorted_skills:
             cooldowns[skill.base_skill.type] = skill.base_skill.cooldown
             initial_state[skill.base_skill.type] = 0
-            max_depth *= skill.base_skill.cooldown + 1
+            if skill.base_skill.initial_cooldown is not None:
+                initial_state[skill.base_skill.type] = skill.base_skill.initial_cooldown
 
         state_list: list[dict[SkillType, int]] = []
         skill_count = Counter()
@@ -143,7 +144,7 @@ class Opponent(Actor):
             state: dict[SkillType, int],
             depth_check: int,
         ) -> list[dict[SkillType, int]]:
-            if state in state_list or depth_check <= 0:
+            if depth_check <= 0:
                 return
 
             state_list.append(state)
