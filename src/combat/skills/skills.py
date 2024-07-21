@@ -267,6 +267,7 @@ class PocketSand(BaseSkill):
             skill_effect=SkillEffect.NEUTRAL_DAMAGE,
             cooldown=4,
             base_value=1,
+            min_level=2,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.BLIND,
