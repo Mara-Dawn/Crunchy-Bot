@@ -84,12 +84,12 @@ class LootBoxViewController(ViewController):
         return True
 
     async def mimic_detector(
-        self, interaction: discord.Interaction, user_items: list[Item]
+        self, interaction: discord.Interaction, user_items: list[Item], chest_size: int,
     ) -> bool:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        if ItemType.MIMIC_DETECTOR in [item.type for item in user_items]:
+        if ItemType.MIMIC_DETECTOR in [item.type for item in user_items] and chest_size == 1:
             message = (
                 "**Oh, wait a second!**\nYou feel something tugging on your leg. It's the Foxgirl you found and took care of until now. "
                 "She is signaling you **not to open that chest**, looks like its a **mimic**! Whew that was close. Before you get to thank her, "
@@ -223,8 +223,9 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
+        chest_size: int
     ) -> int:
-        if await self.mimic_detector(interaction, user_items):
+        if await self.mimic_detector(interaction, user_items, chest_size):
             raise MimicProtectedException
         beans = -random.randint(LootBox.SMALL_MIN_BEANS, LootBox.SMALL_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -246,9 +247,10 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
+        chest_size: int,
     ) -> tuple[int, int]:
         jailings = 0
-        if await self.mimic_detector(interaction, user_items):
+        if await self.mimic_detector(interaction, user_items, chest_size):
             raise MimicProtectedException
         beans = -random.randint(LootBox.LARGE_MIN_BEANS, LootBox.LARGE_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -272,8 +274,9 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
+        chest_size: int,
     ) -> int:
-        if await self.mimic_detector(interaction, user_items):
+        if await self.mimic_detector(interaction, user_items, chest_size):
             raise MimicProtectedException
         beans = -random.randint(LootBox.SMALL_MIN_BEANS, LootBox.SMALL_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -330,7 +333,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 total_beans += await self.handle_mimic_item(
-                                    interaction, user_items, item, embed
+                                    interaction, user_items, item, embed, len(loot_box.items)
                                 )
                             except MimicProtectedException:
                                 return False
@@ -338,7 +341,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 jailing, beans = await self.handle_large_mimic_item(
-                                    interaction, user_items, item, embed
+                                    interaction, user_items, item, embed, len(loot_box.items)
                                 )
                                 total_beans += beans
                                 jailings += jailing
@@ -348,7 +351,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 total_beans += await self.handle_spook_mimic_item(
-                                    interaction, user_items, item, embed
+                                    interaction, user_items, item, embed, len(loot_box.items)
                                 )
                                 haunts += 1
                             except MimicProtectedException:
