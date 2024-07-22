@@ -3551,8 +3551,11 @@ class Database:
             row[self.USER_EQUIPMENT_ACCESSORY_2_ID_COL]
         )
 
+        level = await self.get_guild_level(guild_id)
+
         return CharacterEquipment(
             member_id=member_id,
+            level=level,
             weapon=weapon,
             head_gear=head_gear,
             body_gear=body_gear,

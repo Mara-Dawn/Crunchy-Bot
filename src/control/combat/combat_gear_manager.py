@@ -38,37 +38,37 @@ from events.types import EncounterEventType
 
 class CombatGearManager(Service):
 
-    GENERATOR_VERSION = "0.0.2"
+    GENERATOR_VERSION = "0.0.3"
 
     ITEM_LEVEL_MIN_DROP = 0.6
-    SKILL_DROP_CHANCE = 0.2
-    GEAR_LEVEL_SCALING = 2
+    SKILL_DROP_CHANCE = 0.15
+    GEAR_LEVEL_SCALING = 1
 
     MIN_RARITY_LVL = {
-        Rarity.NORMAL: 0,
-        Rarity.MAGIC: 1,
+        Rarity.COMMON: 0,
+        Rarity.UNCOMMON: 1,
         Rarity.RARE: 2,
         Rarity.LEGENDARY: 5,
         Rarity.UNIQUE: 3,
     }
     RARITY_WEIGHTS = {
-        Rarity.NORMAL: 100,
-        Rarity.MAGIC: 50,
+        Rarity.COMMON: 100,
+        Rarity.UNCOMMON: 50,
         Rarity.RARE: 10,
         Rarity.LEGENDARY: 1,
         Rarity.UNIQUE: 5,
     }
     RARITY_SCALING = {
-        Rarity.NORMAL: -15,
-        Rarity.MAGIC: 1,
+        Rarity.COMMON: -15,
+        Rarity.UNCOMMON: 1,
         Rarity.RARE: 6,
         Rarity.LEGENDARY: 1,
         Rarity.UNIQUE: 1.5,
     }
 
     MODIFIER_COUNT = {
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 2,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 2,
         Rarity.RARE: 3,
         Rarity.LEGENDARY: 4,
         Rarity.UNIQUE: 0,
@@ -89,14 +89,14 @@ class CombatGearManager(Service):
     ]
 
     MODIFIER_BASE = {
-        GearModifierType.WEAPON_DAMAGE_MIN: 7,
-        GearModifierType.WEAPON_DAMAGE_MAX: 10,
+        GearModifierType.WEAPON_DAMAGE_MIN: 9,
+        GearModifierType.WEAPON_DAMAGE_MAX: 11,
         GearModifierType.ARMOR: 5,
         GearModifierType.ATTACK: 2,
         GearModifierType.MAGIC: 2,
         GearModifierType.HEALING: 2,
-        GearModifierType.CRIT_DAMAGE: 4,
-        GearModifierType.CRIT_RATE: 2,
+        GearModifierType.CRIT_DAMAGE: 5,
+        GearModifierType.CRIT_RATE: 3,
         GearModifierType.DEFENSE: 1,
         GearModifierType.CONSTITUTION: 3,
         GearModifierType.DEXTERITY: 1,
@@ -105,27 +105,27 @@ class CombatGearManager(Service):
         GearModifierType.WEAPON_DAMAGE_MIN: 0.5,
         GearModifierType.WEAPON_DAMAGE_MAX: 0.5,
         GearModifierType.ARMOR: 0.3,
-        GearModifierType.ATTACK: 0.6,
-        GearModifierType.MAGIC: 0.55,
-        GearModifierType.HEALING: 0.6,
-        GearModifierType.CRIT_DAMAGE: 0.15,
-        GearModifierType.CRIT_RATE: 0.03,
+        GearModifierType.ATTACK: 1.5,
+        GearModifierType.MAGIC: 1.4,
+        GearModifierType.HEALING: 0.2,
+        GearModifierType.CRIT_DAMAGE: 0.4,
+        GearModifierType.CRIT_RATE: 0.15,
         GearModifierType.DEFENSE: 0.15,
         GearModifierType.CONSTITUTION: 0.3,
         GearModifierType.DEXTERITY: 0.3,
     }
     MODIFIER_RANGE = {
-        GearModifierType.WEAPON_DAMAGE_MIN: 0.05,
-        GearModifierType.WEAPON_DAMAGE_MAX: 0.05,
-        GearModifierType.ARMOR: 0.05,
-        GearModifierType.ATTACK: 0.05,
-        GearModifierType.MAGIC: 0.05,
-        GearModifierType.HEALING: 0.05,
-        GearModifierType.CRIT_DAMAGE: 0.05,
-        GearModifierType.CRIT_RATE: 0.05,
-        GearModifierType.DEFENSE: 0.05,
-        GearModifierType.CONSTITUTION: 0.05,
-        GearModifierType.DEXTERITY: 0.05,
+        GearModifierType.WEAPON_DAMAGE_MIN: 0.07,
+        GearModifierType.WEAPON_DAMAGE_MAX: 0.07,
+        GearModifierType.ARMOR: 0.08,
+        GearModifierType.ATTACK: 0.08,
+        GearModifierType.MAGIC: 0.08,
+        GearModifierType.HEALING: 0.08,
+        GearModifierType.CRIT_DAMAGE: 0.35,
+        GearModifierType.CRIT_RATE: 0.08,
+        GearModifierType.DEFENSE: 0.08,
+        GearModifierType.CONSTITUTION: 0.08,
+        GearModifierType.DEXTERITY: 0.08,
     }
     INT_MODIFIERS = [
         GearModifierType.WEAPON_DAMAGE_MIN,
@@ -485,8 +485,8 @@ class CombatGearManager(Service):
         rarity_weight = 1
 
         rarity_weight = {
-            Rarity.NORMAL: 1,
-            Rarity.MAGIC: 3,
+            Rarity.COMMON: 1,
+            Rarity.UNCOMMON: 3,
             Rarity.RARE: 5,
             Rarity.LEGENDARY: 10,
             Rarity.UNIQUE: 8,

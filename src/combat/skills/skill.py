@@ -89,8 +89,8 @@ class Skill(Droppable):
 
     RARITY_SORT_MAP = {
         Rarity.DEFAULT: 0,
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 2,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 2,
         Rarity.RARE: 3,
         Rarity.LEGENDARY: 4,
         Rarity.UNIQUE: 5,
@@ -108,8 +108,8 @@ class Skill(Droppable):
 
     RARITY_STACKS_SCALING = {
         Rarity.DEFAULT: 1,
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 1.2,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 1.2,
         Rarity.RARE: 1.5,
         Rarity.LEGENDARY: 2,
         Rarity.UNIQUE: 1,
@@ -117,8 +117,8 @@ class Skill(Droppable):
 
     RARITY_DAMAGE_SCALING = {
         Rarity.DEFAULT: 1,
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 1.1,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 1.1,
         Rarity.RARE: 1.2,
         Rarity.LEGENDARY: 1.3,
         Rarity.UNIQUE: 1,

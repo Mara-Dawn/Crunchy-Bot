@@ -157,7 +157,7 @@ class Tier0(GearBase):
             information=information,
             slot=slot,
             min_level=1,
-            max_level=4,
+            max_level=3,
             modifiers=modifiers,
             skills=skills,
             scaling=1,
@@ -294,10 +294,10 @@ class Tier1(GearBase):
             information=information,
             slot=slot,
             min_level=2,
-            max_level=5,
+            max_level=4,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.15,
+            scaling=1.1,
             image_url=image_url,
             author="Mia",
         )
@@ -462,7 +462,7 @@ class Tier2(GearBase):
             max_level=6,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.3,
+            scaling=1.2,
             image_url=image_url,
             author="Klee",
         )
@@ -600,7 +600,7 @@ class Tier3(GearBase):
             max_level=10,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.45,
+            scaling=1.3,
             image_url=image_url,
             author="Franny",
         )
@@ -762,11 +762,11 @@ class Tier4(GearBase):
             description=description,
             information=information,
             slot=slot,
-            min_level=6,
+            min_level=4,
             max_level=12,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.6,
+            scaling=1.4,
             image_url=image_url,
         )
 
@@ -883,7 +883,7 @@ class Tier5(GearBase):
             max_level=12,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.75,
+            scaling=1.5,
             image_url=image_url,
             author="Mia",
         )

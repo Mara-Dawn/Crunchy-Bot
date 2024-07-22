@@ -12,8 +12,8 @@ class EquipmentSlot(str, Enum):
 
 class Rarity(str, Enum):
     DEFAULT = "Default"
-    NORMAL = "Normal"
-    MAGIC = "Magic"
+    COMMON = "Common"
+    UNCOMMON = "Uncommon"
     RARE = "Rare"
     LEGENDARY = "Legendary"
     UNIQUE = "Unique"

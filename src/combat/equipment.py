@@ -9,6 +9,7 @@ from combat.gear import (
 )
 from combat.gear.gear import Gear
 from combat.gear.types import CharacterAttribute, GearModifierType
+from config import Config
 
 
 class CharacterEquipment:
@@ -16,6 +17,7 @@ class CharacterEquipment:
     def __init__(
         self,
         member_id: int,
+        level: int,
         weapon: Gear = None,
         head_gear: Gear = None,
         body_gear: Gear = None,
@@ -96,7 +98,7 @@ class CharacterEquipment:
         )
         self.attributes[CharacterAttribute.MAX_HEALTH] += (
             5 * self.gear_modifiers[GearModifierType.CONSTITUTION]
-        )
+        ) + Config.CHARACTER_LVL_HP_INCREASE * (level - 1)
         self.attributes[CharacterAttribute.HEALING_BONUS] += (
             self.gear_modifiers[GearModifierType.HEALING] / 100
         )
