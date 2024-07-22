@@ -320,6 +320,7 @@ class LootBoxViewController(ViewController):
         haunts = 0
 
         if loot_box.items is not None and len(loot_box.items) > 0:
+            lootbox_size = len(loot_box.items)
             for item_type, amount in loot_box.items.items():
                 item = await self.item_manager.get_item(guild_id, item_type)
                 item_count = item.base_amount * amount
@@ -333,7 +334,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 total_beans += await self.handle_mimic_item(
-                                    interaction, user_items, item, embed, len(loot_box.items)
+                                    interaction, user_items, item, embed, lootbox_size
                                 )
                             except MimicProtectedException:
                                 return False
@@ -341,7 +342,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 jailing, beans = await self.handle_large_mimic_item(
-                                    interaction, user_items, item, embed, len(loot_box.items)
+                                    interaction, user_items, item, embed, lootbox_size
                                 )
                                 total_beans += beans
                                 jailings += jailing
@@ -351,7 +352,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 total_beans += await self.handle_spook_mimic_item(
-                                    interaction, user_items, item, embed, len(loot_box.items)
+                                    interaction, user_items, item, embed, lootbox_size
                                 )
                                 haunts += 1
                             except MimicProtectedException:
