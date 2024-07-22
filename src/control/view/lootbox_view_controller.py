@@ -84,12 +84,12 @@ class LootBoxViewController(ViewController):
         return True
 
     async def mimic_detector(
-        self, interaction: discord.Interaction, user_items: list[Item], chest_size: int,
+        self, interaction: discord.Interaction, user_items: list[Item], lootbox_size: int,
     ) -> bool:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        if ItemType.MIMIC_DETECTOR in [item.type for item in user_items] and chest_size == 1:
+        if ItemType.MIMIC_DETECTOR in [item.type for item in user_items] and lootbox_size == 1:
             message = (
                 "**Oh, wait a second!**\nYou feel something tugging on your leg. It's the Foxgirl you found and took care of until now. "
                 "She is signaling you **not to open that chest**, looks like its a **mimic**! Whew that was close. Before you get to thank her, "
@@ -223,9 +223,9 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
-        chest_size: int
+        lootbox_size: int
     ) -> int:
-        if await self.mimic_detector(interaction, user_items, chest_size):
+        if await self.mimic_detector(interaction, user_items, lootbox_size):
             raise MimicProtectedException
         beans = -random.randint(LootBox.SMALL_MIN_BEANS, LootBox.SMALL_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -247,10 +247,10 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
-        chest_size: int,
+        lootbox_size: int,
     ) -> tuple[int, int]:
         jailings = 0
-        if await self.mimic_detector(interaction, user_items, chest_size):
+        if await self.mimic_detector(interaction, user_items, lootbox_size):
             raise MimicProtectedException
         beans = -random.randint(LootBox.LARGE_MIN_BEANS, LootBox.LARGE_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -274,9 +274,9 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
-        chest_size: int,
+        lootbox_size: int,
     ) -> int:
-        if await self.mimic_detector(interaction, user_items, chest_size):
+        if await self.mimic_detector(interaction, user_items, lootbox_size):
             raise MimicProtectedException
         beans = -random.randint(LootBox.SMALL_MIN_BEANS, LootBox.SMALL_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
