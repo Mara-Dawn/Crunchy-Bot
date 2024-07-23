@@ -1,3 +1,4 @@
+import datetime
 import random
 
 from combat.actors import Character
@@ -55,14 +56,14 @@ class CombatGearManager(Service):
         Rarity.COMMON: 100,
         Rarity.UNCOMMON: 50,
         Rarity.RARE: 10,
-        Rarity.LEGENDARY: 1,
+        Rarity.LEGENDARY: 3,
         Rarity.UNIQUE: 5,
     }
     RARITY_SCALING = {
         Rarity.COMMON: -15,
-        Rarity.UNCOMMON: 1,
-        Rarity.RARE: 6,
-        Rarity.LEGENDARY: 1,
+        Rarity.UNCOMMON: -1,
+        Rarity.RARE: 7,
+        Rarity.LEGENDARY: 2,
         Rarity.UNIQUE: 1.5,
     }
 
@@ -154,7 +155,10 @@ class CombatGearManager(Service):
         pass
 
     async def get_bases_by_lvl(
-        self, item_level: int, exclude_skills: bool = False
+        self,
+        item_level: int,
+        exclude_skills: bool = False,
+        gear_slot: EquipmentSlot = None,
     ) -> list[DroppableBase]:
         matching_bases = []
 
@@ -173,20 +177,36 @@ class CombatGearManager(Service):
             if not base.droppable:
                 continue
 
+            if gear_slot is not None and base.slot != gear_slot:
+                continue
+
             if item_level >= base.min_level and item_level <= base.max_level:
                 matching_bases.append(base)
 
         return matching_bases
 
     async def get_random_base(
-        self, item_level: int, enemy: Enemy = None, exclude_skills: bool = False
+        self,
+        item_level: int,
+        enemy: Enemy = None,
+        exclude_skills: bool = False,
+        gear_slot: EquipmentSlot = None,
+        random_seed=None,
     ) -> DroppableBase:
         max_level = item_level
         min_level = max(1, int(item_level * self.ITEM_LEVEL_MIN_DROP))
 
+        if random_seed is not None:
+            random.seed(random_seed)
+
         drop_item_level = random.randint(min_level, max_level)
 
-        bases = await self.get_bases_by_lvl(drop_item_level, exclude_skills)
+        if random_seed is not None:
+            random.seed(None)
+
+        bases = await self.get_bases_by_lvl(
+            drop_item_level, exclude_skills=exclude_skills, gear_slot=gear_slot
+        )
 
         if len(bases) <= 0:
             return None
@@ -231,9 +251,18 @@ class CombatGearManager(Service):
 
         sum_weights = sum(weights)
         chances = [v / sum_weights for v in weights]
-        return random.choices(bases, weights=chances)[0]
 
-    async def get_random_rarity(self, item_level) -> Rarity:
+        if random_seed is not None:
+            random.seed(random_seed)
+
+        result = random.choices(bases, weights=chances)[0]
+
+        if random_seed is not None:
+            random.seed(None)
+
+        return result
+
+    async def get_random_rarity(self, item_level, random_seed=None) -> Rarity:
         weights = {}
 
         for rarity, weight in self.RARITY_WEIGHTS.items():
@@ -249,23 +278,45 @@ class CombatGearManager(Service):
         chances = [v / sum_weights for _, v in weights.items()]
         rarities = [k for k in weights]
 
-        return random.choices(rarities, weights=chances)[0]
+        if random_seed is not None:
+            random.seed(random_seed)
+
+        result = random.choices(rarities, weights=chances)[0]
+
+        if random_seed is not None:
+            random.seed(None)
+
+        return result
 
     async def get_random_modifiers(
-        self, base: GearBase, item_level: int, rarity: Rarity
+        self, base: GearBase, item_level: int, rarity: Rarity, random_seed=None
     ) -> dict[GearModifierType, float]:
         modifiers = {}
         allowed_modifiers = base.get_allowed_modifiers()
         modifier_count = self.MODIFIER_COUNT[rarity]
 
+        if random_seed is not None:
+            random.seed(random_seed)
+
         modifier_types = random.sample(allowed_modifiers, k=modifier_count)
+
+        if random_seed is not None:
+            random.seed(None)
+
         modifier_types.extend(base.modifiers)
 
         for modifier_type in modifier_types:
             min_roll, max_roll = await self.get_modifier_boundaries(
                 base, item_level, modifier_type
             )
+
+            if random_seed is not None:
+                random.seed(random_seed)
+
             value = random.uniform(min_roll, max_roll)
+
+            if random_seed is not None:
+                random.seed(None)
 
             if modifier_type in self.INT_MODIFIERS:
                 value = int(value)
@@ -304,6 +355,64 @@ class CombatGearManager(Service):
 
         return min_roll, max_roll
 
+    async def get_member_daily_items(
+        self,
+        member_id: int,
+        guild_id: int,
+    ) -> list[Gear]:
+        seed_base = datetime.datetime.now().date().strftime("%Y%m%d") + str(member_id)
+        daily_items = []
+
+        def my_hash(text: str):
+            hash = 0
+            for ch in text:
+                hash = (hash * 281 ^ ord(ch) * 997) & 0xFFFFFFFF
+            return hash
+
+        level = await self.database.get_guild_level(guild_id)
+
+        already_bought = await self.database.get_already_bought_daily_gear(
+            member_id, guild_id
+        )
+
+        seed = seed_base + "a"
+        item = await self.generate_drop(
+            member_id=None,
+            guild_id=guild_id,
+            item_level=level,
+            exclude_skills=True,
+            random_seed=seed,
+        )
+        item.id = my_hash(seed)
+        if item.id not in already_bought:
+            daily_items.append(item)
+
+        seed = seed_base + "b"
+        item = await self.generate_drop(
+            member_id=None,
+            guild_id=guild_id,
+            item_level=level,
+            exclude_skills=True,
+            random_seed=seed,
+        )
+        item.id = my_hash(seed)
+        if item.id not in already_bought:
+            daily_items.append(item)
+
+        seed = seed_base + "c"
+        item = await self.generate_drop(
+            member_id=None,
+            guild_id=guild_id,
+            item_level=level,
+            gear_slot=EquipmentSlot.SKILL,
+            random_seed=seed,
+        )
+        item.id = my_hash(seed)
+        if item.id not in already_bought:
+            daily_items.append(item)
+
+        return daily_items
+
     async def generate_drop(
         self,
         member_id: int,
@@ -311,15 +420,22 @@ class CombatGearManager(Service):
         item_level: int,
         enemy: Enemy = None,
         exclude_skills: bool = False,
+        gear_slot: EquipmentSlot = None,
+        random_seed=None,
     ) -> Gear:
+
         droppable_base = await self.get_random_base(
-            item_level, enemy=enemy, exclude_skills=exclude_skills
+            item_level,
+            enemy=enemy,
+            exclude_skills=exclude_skills,
+            gear_slot=gear_slot,
+            random_seed=random_seed,
         )
 
         if droppable_base is None:
             return None
 
-        rarity = await self.get_random_rarity(item_level)
+        rarity = await self.get_random_rarity(item_level, random_seed=random_seed)
 
         return await self.generate_specific_drop(
             member_id=member_id,
@@ -327,6 +443,7 @@ class CombatGearManager(Service):
             item_level=item_level,
             base=droppable_base,
             rarity=rarity,
+            random_seed=random_seed,
         )
 
     async def has_uniques(self, base: DroppableBase):
@@ -339,6 +456,7 @@ class CombatGearManager(Service):
         item_level: int,
         base: DroppableBase,
         rarity: Rarity,
+        random_seed=None,
     ) -> Gear:
 
         if rarity == Rarity.UNIQUE and not await self.has_uniques(base):
@@ -366,7 +484,10 @@ class CombatGearManager(Service):
             case Base.GEAR:
                 gear_base: GearBase = base
                 modifiers = await self.get_random_modifiers(
-                    gear_base, item_level, rarity
+                    gear_base,
+                    item_level,
+                    rarity,
+                    random_seed=random_seed,
                 )
 
                 skills = []
@@ -480,20 +601,20 @@ class CombatGearManager(Service):
             DefaultWand(),
         ]
 
-    async def get_gear_score(self, gear: Gear) -> float:
+    async def get_gear_scrap_value(self, gear: Gear) -> float:
         item_level_weight = 1
         rarity_weight = 1
 
         rarity_weight = {
             Rarity.COMMON: 1,
             Rarity.UNCOMMON: 3,
-            Rarity.RARE: 5,
-            Rarity.LEGENDARY: 10,
-            Rarity.UNIQUE: 8,
+            Rarity.RARE: 4,
+            Rarity.LEGENDARY: 8,
+            Rarity.UNIQUE: 6,
         }
-
         gear_score = gear.level * item_level_weight
         gear_score *= rarity_weight[gear.rarity]
+        gear_score *= self.SLOT_SCALING[gear.slot]
 
         return gear_score
 

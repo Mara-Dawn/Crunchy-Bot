@@ -95,3 +95,7 @@ class Config:
     BOSS_LEVELS = [3, 6, 9, 12]
     BOSS_RETRY_REQUIREMENT = 1
     BOSS_KEY_CLAIM_DELAY = 180
+
+    # Scrap
+    SCRAP_FORGE_MULTI = 1.5
+    SCRAP_SHOP_MULTI = 5

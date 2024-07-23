@@ -1,5 +1,6 @@
 import contextlib
 import datetime
+from enum import member
 import json
 from typing import Any
 
@@ -38,6 +39,7 @@ from events.beans_event import BeansEvent, BeansEventType
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
+from events.equipment_event import EquipmentEvent
 from events.garden_event import GardenEvent
 from events.interaction_event import InteractionEvent
 from events.inventory_batchevent import InventoryBatchEvent
@@ -53,6 +55,7 @@ from events.timeout_event import TimeoutEvent
 from events.types import (
     CombatEventType,
     EncounterEventType,
+    EquipmentEventType,
     EventType,
     GardenEventType,
     LootBoxEventType,
@@ -652,6 +655,20 @@ class Database:
         PRIMARY KEY ({STATUS_EFFECT_EVENT_ID_COL})
     );"""
 
+    EQUIPMENT_EVENT_TABLE = "equipmentevents"
+    EQUIPMENT_EVENT_ID_COL = "eqev_id"
+    EQUIPMENT_EVENT_MEMBER_ID = "eqev_member_id"
+    EQUIPMENT_EVENT_EQUIPMENT_EVENT_TYPE = "eqev_type"
+    EQUIPMENT_EVENT_ITEM_ID = "eqev_item_id"
+    CREATE_EQUIPMENT_EVENT_TABLE = f"""
+    CREATE TABLE if not exists {EQUIPMENT_EVENT_TABLE} (
+        {EQUIPMENT_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {EQUIPMENT_EVENT_MEMBER_ID} INTEGER, 
+        {EQUIPMENT_EVENT_EQUIPMENT_EVENT_TYPE} TEST, 
+        {EQUIPMENT_EVENT_ITEM_ID} INTEGER, 
+        PRIMARY KEY ({EQUIPMENT_EVENT_ID_COL})
+    );"""
+
     PERMANENT_ITEMS = [
         ItemType.REACTION_SPAM,
         ItemType.LOTTERY_TICKET,
@@ -721,6 +738,7 @@ class Database:
             await db.execute(self.CREATE_USER_EQUIPPED_SKILLS_TABLE)
             await db.execute(self.CREATE_KARMA_EVENT_TABLE)
             await db.execute(self.CREATE_STATUS_EFFECT_EVENT_TABLE)
+            await db.execute(self.CREATE_EQUIPMENT_EVENT_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -1127,6 +1145,26 @@ class Database:
 
         return await self.__query_insert(command, task)
 
+    async def __create_equipment_event(
+        self, event_id: int, event: EquipmentEvent
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.EQUIPMENT_EVENT_TABLE} (
+            {self.EQUIPMENT_EVENT_ID_COL},
+            {self.EQUIPMENT_EVENT_MEMBER_ID},
+            {self.EQUIPMENT_EVENT_EQUIPMENT_EVENT_TYPE},
+            {self.EQUIPMENT_EVENT_ITEM_ID})
+            VALUES (?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.member_id,
+            event.equipment_event_type.value,
+            event.item_id,
+        )
+
+        return await self.__query_insert(command, task)
+
     async def log_event(self, event: BotEvent) -> int:
         if event.type == EventType.INVENTORYBATCH:
             event_id = await self.__create_batch_base_event(event)
@@ -1170,6 +1208,8 @@ class Database:
                 return await self.__create_status_effect_event(event_id, event)
             case EventType.KARMA:
                 return await self.__create_karma_event(event_id, event)
+            case EventType.EQUIPMENT:
+                return await self.__create_equipment_event(event_id, event)
 
     async def log_quote(self, quote: Quote) -> int:
         command = f"""
@@ -3932,3 +3972,30 @@ class Database:
                 transformed[user_id].append(event)
 
         return transformed
+
+    async def get_already_bought_daily_gear(
+        self,
+        member_id: int,
+        guild_id: int,
+    ) -> list[int]:
+        command = f"""
+            SELECT * FROM {self.EQUIPMENT_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} 
+            ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.EQUIPMENT_EVENT_TABLE}.{self.EQUIPMENT_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND {self.EQUIPMENT_EVENT_MEMBER_ID} = ?
+            AND {self.EQUIPMENT_EVENT_EQUIPMENT_EVENT_TYPE} = ?
+            ;
+        """
+
+        task = (guild_id, member_id, EquipmentEventType.SHOP_BUY.value)
+        rows = await self.__query_select(command, task)
+
+        if not rows or len(rows) < 1:
+            return {}
+
+        item_ids = []
+        for row in rows:
+            item_ids.append(int(row[self.EQUIPMENT_EVENT_ITEM_ID]))
+
+        return item_ids

@@ -187,6 +187,7 @@ class Gear(Droppable):
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
+        scrap_value: int = None,
         max_width: int = None,
     ) -> discord.Embed:
         if max_width is None:
@@ -323,6 +324,15 @@ class Gear(Droppable):
             info_block += "```"
 
         info_block += f"```python\n{description}```"
+
+        if scrap_value is not None:
+            stock_label = "Stock: 1"
+            scrap_label = f"Cost: ⚙️{scrap_value}"
+            spacing_width = max_width - len(scrap_label) - len(stock_label)
+            spacing = " " * spacing_width
+
+            scrap_text = f"{stock_label}{spacing}{scrap_label}"
+            info_block += f"```python\n{scrap_text}```"
 
         if show_info and len(self.information) > 0:
             info_block += f"```ansi\n[37m{self.information}```"

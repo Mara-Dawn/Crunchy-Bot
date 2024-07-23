@@ -183,6 +183,15 @@ class EquipmentSelectView(
         )
         await self.controller.dispatch_ui_event(event)
 
+    async def open_shop(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        event = UIEvent(
+            UIEventType.FORGE_OPEN_SHOP,
+            interaction,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     def refresh_elements(self, disabled: bool = False):
         page_display = f"Page {self.current_page + 1}/{self.page_count}"
 
