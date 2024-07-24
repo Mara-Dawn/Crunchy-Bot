@@ -363,6 +363,35 @@ class DFTank(Enemy):
         )
 
 
+class Cuddles(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Cuddles",
+            type=EnemyType.CUDDLES,
+            description="You abandoned it and now it is haunting you forever. It will never forgive and it will never forget. It feasts on your fear.",
+            information="",
+            image_url="https://i.imgur.com/YvZD72W.png",
+            min_level=4,
+            max_level=7,
+            health=7,
+            damage_scaling=8,
+            max_players=4,
+            skill_types=[
+                SkillType.FEAR,
+                SkillType.FEASTING,
+            ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=15,
+            actions_per_turn=1,
+            author="Lusa",
+        )
+
+
 # Bosses
 
 

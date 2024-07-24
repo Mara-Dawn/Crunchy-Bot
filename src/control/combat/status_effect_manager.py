@@ -13,6 +13,7 @@ from combat.skills.status_effects import *  # noqa: F403
 from combat.skills.types import (
     SkillEffect,
     SkillInstance,
+    SkillType,
     StatusEffectTrigger,
     StatusEffectType,
 )
@@ -114,7 +115,11 @@ class CombatStatusEffectManager(Service):
         ):
             stacks += 1
 
-        if status_effect.override or status_effect.override_by_actor:
+        if (
+            status_effect.override
+            or status_effect.override_by_actor
+            or status_effect.stack
+        ):
             for active_effect in target.status_effects:
                 override = False
                 if active_effect.status_effect.effect_type != type:
@@ -126,6 +131,9 @@ class CombatStatusEffectManager(Service):
                     and active_effect.event.get_causing_user_id == source.id
                 ):
                     override = True
+                if status_effect.stack and active_effect.remaining_stacks > 0:
+                    override = True
+                    stacks += active_effect.remaining_stacks
                 if override:
                     await self.consume_status_stack(
                         context,
@@ -170,6 +178,7 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         actor: Actor,
         status_effects: list[ActiveStatusEffect],
+        skill: Skill = None,
     ) -> dict[StatusEffectType, Any]:
         effect_data: dict[StatusEffectType, Any] = {}
 
@@ -232,10 +241,19 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.FLUSTERED:
                     effect_data[effect_type] = 0
                 case StatusEffectType.INSPIRED:
-                    # effect_data[effect_type] = Config.INSPIRED_CRIT_INC
                     effect_data[effect_type] = 1 + (
                         active_status_effect.event.value / 100
                     )
+                case StatusEffectType.FEAR:
+                    if skill is not None and skill.type == SkillType.FEASTING:
+                        effect_data[effect_type] = 1 + (
+                            active_status_effect.remaining_stacks * 0.2
+                        )
+                        await self.consume_status_stack(
+                            context,
+                            active_status_effect,
+                            active_status_effect.remaining_stacks,
+                        )
                 case StatusEffectType.RAGE_QUIT:
                     current_hp = await self.actor_manager.get_actor_current_hp(
                         actor, context.combat_events
@@ -283,6 +301,9 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.FLUSTERED:
                     title = f"{status_effect.emoji} Flustered"
                     description = f"{actor.name} cannot harm their opponent!"
+                case StatusEffectType.FEAR:
+                    title = f"{status_effect.emoji} Fear"
+                    description = f"{actor.name}'s fear increases their damage taken."
                 case StatusEffectType.RAGE_QUIT:
                     title = f"{status_effect.emoji} Rage Quit"
                     description = data
@@ -330,7 +351,55 @@ class CombatStatusEffectManager(Service):
             return 1, None
 
         effect_data = await self.get_status_effect_outcomes(
-            context, actor, triggered_status_effects
+            context, actor, triggered_status_effects, skill=skill
+        )
+
+        modifier = 1
+
+        for _, data in effect_data.items():
+            modifier *= float(data)
+
+        embed_data = await self.get_status_effect_outcome_info(
+            context, actor, effect_data
+        )
+
+        if len(embed_data) <= 0:
+            return modifier, None
+
+        status_effect_embed = self.embed_manager.get_status_effect_embed(
+            actor, embed_data
+        )
+
+        return modifier, status_effect_embed
+
+    async def handle_on_damage_taken_status_effects(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+        skill: Skill,
+    ):
+        context = await self.context_loader.load_encounter_context(context.encounter.id)
+        skill_effect = skill.base_skill.skill_effect
+
+        for active_actor in context.get_current_initiative():
+            if active_actor.id == actor.id:
+                actor = active_actor
+
+        triggered_status_effects = await self.actor_trigger(
+            context, actor, StatusEffectTrigger.ON_DAMAGE_TAKEN
+        )
+
+        if len(triggered_status_effects) <= 0 or skill_effect in [
+            SkillEffect.NOTHING,
+            SkillEffect.HEALING,
+        ]:
+            return 1, None
+
+        if not skill.base_skill.modifiable:
+            return 1, None
+
+        effect_data = await self.get_status_effect_outcomes(
+            context, actor, triggered_status_effects, skill=skill
         )
 
         modifier = 1

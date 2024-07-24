@@ -131,6 +131,14 @@ class ContextLoader(Service):
         current_embeds = previous_embeds + [embed]
         await self.edit_message(message, embeds=current_embeds)
 
+    async def append_embeds_to_round(
+        self, context: EncounterContext, embeds: list[discord.Embed]
+    ):
+        message = None
+        for embed in embeds:
+            message = await self.append_embed_to_round(context, embed)
+        return message
+
     async def edit_message(self, message: discord.Message, **kwargs):
         retries = 0
         success = False

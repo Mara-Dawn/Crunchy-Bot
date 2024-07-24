@@ -8,6 +8,7 @@ class StatusEffectType(str, Enum):
     FLUSTERED = "Flustered"
     INSPIRED = "Inspired"
     RAGE = "Rage"
+    FEAR = "Fear"
     RAGE_QUIT = "RageQuit"
 
 
@@ -86,8 +87,12 @@ class SkillType(str, Enum):
 
     # DF Tank
     STANCE_OFF = "StanceOff"
-    YPYT = "YPYT"
     DEAD_TANK = "DeadTank"
+    YPYT = "YPYT"
+
+    # Cuddles
+    FEAR = "FearSkill"
+    FEASTING = "Feasting"
 
     # Daddy
     HAIR_PULL = "HairPull"

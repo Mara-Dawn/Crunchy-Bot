@@ -1016,3 +1016,48 @@ class OnYourKnees(BaseSkill):
             image_url="https://i.imgur.com/7NIpn6i.png",
             author="Lusa",
         )
+
+
+class FearSkill(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Fear",
+            skill_type=SkillType.FEAR,
+            description="Your despair increases as you look at it.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FEAR,
+                    1,
+                )
+            ],
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/73CgqTW.png",
+            author="Lusa",
+        )
+
+
+class Feasting(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Feasting",
+            skill_type=SkillType.FEASTING,
+            description="It opens its jaws and consumes your fear.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=2,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/oikAU23.png",
+            author="Lusa",
+        )

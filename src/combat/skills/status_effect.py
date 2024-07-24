@@ -23,6 +23,7 @@ class StatusEffect:
         max_stacks: int = MAX_STACKS,
         override_by_actor: bool = False,
         override: bool = False,
+        stack: bool = False,
         display_status: bool = False,
         delay_to_next_turn: bool = False,
         emoji: str = None,
@@ -39,6 +40,7 @@ class StatusEffect:
         self.display_status = display_status
         self.override = override
         self.override_by_actor = override_by_actor
+        self.stack = stack
         self.delay_to_next_turn = delay_to_next_turn
 
         if self.damage_type is None:

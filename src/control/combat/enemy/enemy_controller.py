@@ -80,6 +80,7 @@ class EnemyController(Service, ABC):
         hp_cache: dict[int, int],
     ) -> tuple[list[tuple[Actor, SkillInstance, float], discord.Embed]]:
         damage_data = []
+        post_embeds = []
 
         for target in available_targets:
             effect_modifier, post_embed = (
@@ -87,6 +88,9 @@ class EnemyController(Service, ABC):
                     context, context.opponent, skill
                 )
             )
+            if post_embed is not None:
+                post_embeds.append(post_embed)
+
             instances = await self.skill_manager.get_skill_effect(
                 context.opponent, skill, combatant_count=context.get_combat_scale()
             )
@@ -100,6 +104,17 @@ class EnemyController(Service, ABC):
             else:
                 current_hp = hp_cache[target.id]
 
+            on_damage_effect_modifier, post_embed = (
+                await self.status_effect_manager.handle_on_damage_taken_status_effects(
+                    context,
+                    target,
+                    skill,
+                )
+            )
+            if post_embed is not None:
+                post_embeds.append(post_embed)
+            instance.apply_effect_modifier(on_damage_effect_modifier)
+
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
             )
@@ -107,4 +122,4 @@ class EnemyController(Service, ABC):
             hp_cache[target.id] = new_target_hp
 
             damage_data.append((target, instance, new_target_hp))
-        return damage_data, post_embed
+        return damage_data, post_embeds

@@ -48,9 +48,9 @@ class BasicEnemyController(EnemyController):
                 context, self.embed_manager.handle_actor_turn_embed(turn, context)
             )
 
-            if turn.post_embed is not None:
-                await self.context_loader.append_embed_to_round(
-                    context, turn.post_embed
+            if turn.post_embeds is not None:
+                await self.context_loader.append_embeds_to_round(
+                    context, turn.post_embeds
                 )
 
             for target, damage_instance, _ in turn.damage_data:
@@ -114,20 +114,20 @@ class BasicEnemyController(EnemyController):
         damage_data = []
 
         if skill.base_skill.aoe:
-            damage_data, post_embed = await self.calculate_aoe_skill(
+            damage_data, post_embeds = await self.calculate_aoe_skill(
                 context, skill, available_targets, hp_cache
             )
             return TurnData(
                 actor=context.opponent,
                 skill=skill,
                 damage_data=damage_data,
-                post_embed=post_embed,
+                post_embeds=post_embeds,
             )
 
         damage_instances = await self.skill_manager.get_skill_effect(
             context.opponent, skill, combatant_count=context.get_combat_scale()
         )
-        post_embed = None
+        post_embeds = []
 
         for instance in damage_instances:
             if len(available_targets) <= 0:
@@ -149,7 +149,18 @@ class BasicEnemyController(EnemyController):
             )
             instance.apply_effect_modifier(effect_modifier)
             if instance_post_embed is not None:
-                post_embed = instance_post_embed
+                post_embeds.append(instance_post_embed)
+
+            on_damage_effect_modifier, post_embed = (
+                await self.status_effect_manager.handle_on_damage_taken_status_effects(
+                    context,
+                    target,
+                    skill,
+                )
+            )
+            if post_embed is not None:
+                post_embeds.append(post_embed)
+            instance.apply_effect_modifier(on_damage_effect_modifier)
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
@@ -170,7 +181,7 @@ class BasicEnemyController(EnemyController):
             actor=context.opponent,
             skill=skill,
             damage_data=damage_data,
-            post_embed=post_embed,
+            post_embeds=post_embeds,
         )
 
     async def calculate_opponent_turn(

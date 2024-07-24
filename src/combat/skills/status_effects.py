@@ -90,6 +90,21 @@ class Rage(StatusEffect):
         )
 
 
+class Fear(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.FEAR,
+            name="Fear",
+            description="You are scared.",
+            trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
+            consumed=[],
+            emoji="😨",
+            display_status=True,
+            stack=True,
+        )
+
+
 class Inspired(StatusEffect):
 
     def __init__(self):
