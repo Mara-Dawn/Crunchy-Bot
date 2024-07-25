@@ -109,6 +109,11 @@ class SkillType(str, Enum):
     THUNDER_CRACK = "ThunderCrack"
     USED_NEEDLES = "UsedNeedles"
 
+    # Mommy
+    TIME_TO_SLICE = "TimeToSlice"
+    STEP_ON_YOU = "StepOnYou"
+    CHOKE = "Choke"
+
     # Daddy
     HAIR_PULL = "HairPull"
     BELT = "Belt"

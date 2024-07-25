@@ -480,6 +480,35 @@ class Crackachu(Enemy):
         )
 
 
+class Mommy(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Mommy",
+            type=EnemyType.MOMMY,
+            description="She is big. She is hot. She is undead. She wants to step on you.",
+            information="Looks surprisingly similar to Lady Dimitrescu.",
+            image_url="https://i.imgur.com/1orHFL2.png",
+            min_level=5,
+            max_level=9,
+            health=7,
+            damage_scaling=4.5,
+            max_players=4,
+            skill_types=[
+                SkillType.TIME_TO_SLICE,
+                SkillType.STEP_ON_YOU,
+                SkillType.CHOKE,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            min_gear_drop_count=6,
+            max_gear_drop_count=7,
+            skill_loot_table=[],
+            initiative=20,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
 # Bosses
 
 

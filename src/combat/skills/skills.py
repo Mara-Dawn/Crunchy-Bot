@@ -1208,3 +1208,90 @@ class UsedNeedles(BaseSkill):
             image_url="https://i.imgur.com/MMdiHRv.png",
             author="Lusa",
         )
+
+
+class TimeToSlice(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Time to Slice",
+            skill_type=SkillType.TIME_TO_SLICE,
+            description="Playtime is over, honey. Time to die.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=1,
+            initial_cooldown=2,
+            base_value=2,
+            hits=3,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/1sw80nK.png",
+            author="Lusa",
+        )
+
+
+class StepOnYou(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Steps on You",
+            skill_type=SkillType.STEP_ON_YOU,
+            description=(
+                "She commands you to lay down infront of her and you oblige, unable to resist. "
+                "Then she raises her heel and stomps down on your head. You are under Mommy's spell and "
+                "unable to hurt her on your next turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=0,
+            base_value=5,
+            hits=1,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FLUSTERED,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/NkkAnTD.png",
+            author="Lusa",
+        )
+
+
+class Choke(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Nightmare Chokehold",
+            skill_type=SkillType.CHOKE,
+            description=(
+                "She grabs your throat and chokes you until you almost pass out. "
+                "You hear a crazy giggle as she watches you struggle for air. "
+                "Your mind will be foggy for one turn, randomly modifying your next action."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            initial_cooldown=1,
+            base_value=1,
+            hits=1,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.HIGH,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/XJhXZ7N.png",
+            author="Lusa",
+        )
