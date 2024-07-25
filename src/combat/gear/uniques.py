@@ -1,4 +1,3 @@
-from discord.ext.commands import cooldown
 from combat.gear.bases import LegGear_T0, Necklace_T0
 from combat.gear.types import GearBaseType, GearModifierType
 from combat.skills.skills import BloodRage
@@ -53,7 +52,7 @@ class DeezNutsAccessory(Necklace_T0, Unique):
         Unique.__init__(
             self,
             unique_modifiers={
-                GearModifierType.ARMOR: 5,
+                GearModifierType.ARMOR: 3,
                 GearModifierType.DEFENSE: 6,
                 GearModifierType.HEALING: 4,
             },

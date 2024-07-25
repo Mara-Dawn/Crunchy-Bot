@@ -57,13 +57,19 @@ class BasicEnemyController(EnemyController):
                 total_damage = await self.actor_manager.get_skill_damage_after_defense(
                     target, turn.skill, damage_instance.scaled_value
                 )
-                await self.status_effect_manager.handle_post_attack_status_effects(
-                    context,
-                    opponent,
-                    target,
-                    turn.skill,
-                    damage_instance,
+                embed_data = (
+                    await self.status_effect_manager.handle_post_attack_status_effects(
+                        context,
+                        opponent,
+                        target,
+                        turn.skill,
+                        damage_instance,
+                    )
                 )
+                if embed_data is not None:
+                    await self.context_loader.append_embeds_to_round(
+                        context, opponent, embed_data
+                    )
 
                 for skill_status_effect in turn.skill.base_skill.status_effects:
                     application_value = None

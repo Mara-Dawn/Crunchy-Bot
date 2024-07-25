@@ -189,13 +189,23 @@ class CombatStatusEffectManager(Service):
             match effect_type:
                 case StatusEffectType.CLEANSE:
                     for status in status_effects:
+                        message = ""
                         if status.status_effect.effect_type == StatusEffectType.BLEED:
                             await self.consume_status_stack(
                                 context,
                                 status,
                                 status.remaining_stacks,
                             )
-                            effect_data[effect_type] = "Bleed was cleansed."
+                            message += "Bleed was cleansed."
+                        if status.status_effect.effect_type == StatusEffectType.POISON:
+                            await self.consume_status_stack(
+                                context,
+                                status,
+                                status.remaining_stacks,
+                            )
+                            message += "Poison was cleansed."
+
+                        effect_data[effect_type] = message
 
                 case StatusEffectType.BLEED:
                     if StatusEffectType.CLEANSE in [
@@ -295,6 +305,9 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.BLEED:
                     title = f"{status_effect.emoji} Bleed"
                     description = f"{actor.name} suffers {data} bleeding damage."
+                case StatusEffectType.POISON:
+                    title = f"{status_effect.emoji} Poison"
+                    description = f"{actor.name} suffers {data} poison damage."
                 case StatusEffectType.BLIND:
                     if data != 0:
                         continue
@@ -428,6 +441,7 @@ class CombatStatusEffectManager(Service):
         context = await self.context_loader.load_encounter_context(context.encounter.id)
         current_actor = context.get_actor(actor.id)
         current_target = context.get_actor(target.id)
+        effect_data: dict[StatusEffectType, Any] = {}
         triggered_status_effects = await self.actor_trigger(
             context, current_actor, StatusEffectTrigger.POST_ATTACK
         )
@@ -443,8 +457,42 @@ class CombatStatusEffectManager(Service):
                         current_target,
                         StatusEffectType.BLEED,
                         3,
-                        damage_instance.value,
+                        damage_instance.scaled_value,
                     )
+                case StatusEffectType.POISON:
+                    if StatusEffectType.CLEANSE in [
+                        x.status_effect.effect_type for x in triggered_status_effects
+                    ]:
+                        continue
+                    damage = damage_instance.value * Config.POISON_SCALING
+
+                    total_damage = await self.actor_manager.get_damage_after_defense(
+                        current_actor, SkillEffect.STATUS_EFFECT_DAMAGE, damage
+                    )
+
+                    event = CombatEvent(
+                        datetime.datetime.now(),
+                        context.encounter.guild_id,
+                        context.encounter.id,
+                        current_actor.id,
+                        current_actor.id,
+                        StatusEffectType.POISON,
+                        total_damage,
+                        None,
+                        CombatEventType.STATUS_EFFECT_OUTCOME,
+                    )
+                    await self.controller.dispatch_event(event)
+
+                    effect_data[effect_type] = total_damage
+
+        embed_data = await self.get_status_effect_outcome_info(
+            context, actor, effect_data
+        )
+
+        if len(embed_data) <= 0:
+            return None
+
+        return embed_data
 
     async def actor_trigger(
         self, context: EncounterContext, actor: Actor, trigger: StatusEffectTrigger

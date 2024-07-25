@@ -509,6 +509,33 @@ class Mommy(Enemy):
         )
 
 
+class Hoe(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Hoe",
+            type=EnemyType.HOE,
+            description="Your mom from a different timeline.",
+            information="",
+            image_url="https://i.imgur.com/mxVJh0i.png",
+            min_level=5,
+            max_level=9,
+            health=7,
+            damage_scaling=7,
+            max_players=5,
+            skill_types=[
+                SkillType.HOE_SHANK,
+                SkillType.HOE_KNEES,
+                SkillType.HOE_SPREAD,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=20,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
 # Bosses
 
 

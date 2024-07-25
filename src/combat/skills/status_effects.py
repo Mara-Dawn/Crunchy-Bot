@@ -134,3 +134,18 @@ class High(StatusEffect):
             display_status=True,
             stack=True,
         )
+
+
+class Poison(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.POISON,
+            name="Poisoned",
+            description="You inflict some of your outgoing damage back on yourself.",
+            trigger=[StatusEffectTrigger.POST_ATTACK],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="🤢",
+            display_status=True,
+            stack=True,
+        )

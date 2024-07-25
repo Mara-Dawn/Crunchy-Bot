@@ -11,6 +11,7 @@ class StatusEffectType(str, Enum):
     FEAR = "Fear"
     RAGE_QUIT = "RageQuit"
     HIGH = "High"
+    POISON = "Poison"
 
 
 class SkillType(str, Enum):
@@ -113,6 +114,11 @@ class SkillType(str, Enum):
     TIME_TO_SLICE = "TimeToSlice"
     STEP_ON_YOU = "StepOnYou"
     CHOKE = "Choke"
+
+    # Hoe
+    HOE_KNEES = "HoeKnees"
+    HOE_SHANK = "HoeShank"
+    HOE_SPREAD = "HoeSpread"
 
     # Daddy
     HAIR_PULL = "HairPull"

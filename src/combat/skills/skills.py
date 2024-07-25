@@ -1295,3 +1295,79 @@ class Choke(BaseSkill):
             image_url="https://i.imgur.com/XJhXZ7N.png",
             author="Lusa",
         )
+
+
+class HoeKnees(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Hoe-Knees",
+            skill_type=SkillType.HOE_KNEES,
+            description=("These knees are surprisingly pointy."),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/rUjLLHK.png",
+            author="Lusa",
+        )
+
+
+class HoeShank(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Hoe-Shank",
+            skill_type=SkillType.HOE_SHANK,
+            description=(
+                "The hoe pulls out a scary looking hunting knive and goes to town on your guts."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=1,
+            base_value=2,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            hits=2,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/Mb4fIEV.png",
+            author="Lusa",
+        )
+
+
+class HoeSpread(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Hoe-Spread",
+            skill_type=SkillType.HOE_SPREAD,
+            description=(
+                "Her ultimate move, she spreads her legs and releases the stench of decades of "
+                "abuse and neglect on you. You are poisoned for two turns, inflicting a portion of your dealt "
+                "damage back on yourself."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            base_value=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.POISON,
+                    2,
+                )
+            ],
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/JLv30Mg.png",
+            author="Lusa",
+        )
