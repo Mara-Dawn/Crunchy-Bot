@@ -214,6 +214,7 @@ class BloodRage(BaseSkill):
             min_level=3,
             weight=50,
             reset_after_encounter=False,
+            uniques=[SkillType.WAR_RAGE],
             image_url="https://i.imgur.com/gQeNSR7.png",
             author="Lusa",
         )

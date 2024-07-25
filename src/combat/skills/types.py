@@ -28,6 +28,7 @@ class SkillType(str, Enum):
     # Neutral
     POCKET_SAND = "PocketSand"
     BLOOD_RAGE = "BloodRage"
+    WAR_RAGE = "WarGodRage"
     PHYSICAL_MISSILE = "PhysicalMissile"
     FINE_ASS = "FineAss"
 

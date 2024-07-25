@@ -38,6 +38,7 @@ class BaseSkill(DroppableBase):
         default_target: SkillTarget = SkillTarget.OPPONENT,
         modifiable: bool = True,
         max_targets: int = None,
+        uniques: list[SkillType] = None,
         author: str = None,
     ):
         super().__init__(
@@ -49,6 +50,7 @@ class BaseSkill(DroppableBase):
             max_level=max_level,
             weight=weight,
             droppable=droppable,
+            uniques=uniques,
             author=author,
         )
         self.name = name

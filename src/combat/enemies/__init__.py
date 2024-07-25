@@ -430,7 +430,7 @@ class HomelessWoman(Enemy):
             description="Got some spare change? *cough* *cough*",
             information="",
             image_url="https://i.imgur.com/iSskEb5.png",
-            min_level=2,
+            min_level=4,
             max_level=8,
             health=4,
             damage_scaling=4,

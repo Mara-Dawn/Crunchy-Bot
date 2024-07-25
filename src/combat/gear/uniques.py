@@ -1,5 +1,14 @@
+from discord.ext.commands import cooldown
 from combat.gear.bases import LegGear_T0, Necklace_T0
 from combat.gear.types import GearBaseType, GearModifierType
+from combat.skills.skills import BloodRage
+from combat.skills.status_effect import SkillStatusEffect
+from combat.skills.types import (
+    SkillEffect,
+    SkillType,
+    StatusEffectApplication,
+    StatusEffectType,
+)
 
 
 class Unique:
@@ -65,4 +74,46 @@ class UselessAmulet(Necklace_T0, Unique):
             unique_modifiers={
                 GearModifierType.DEXTERITY: 0,
             },
+        )
+
+
+# Skills
+
+
+class WarGodRage(BloodRage, Unique):
+
+    def __init__(self):
+        BloodRage.__init__(self)
+        self.name = "Warrior Rage"
+        self.skill_type = SkillType.WAR_RAGE
+        self.description = (
+            "You are absolutely infuriated. Completely flabbergasted by the sheer AUDACITY! "
+            "Who do they think they are!? Your anger transforms you from a mere Karen into an "
+            "ancient and fearsome god of war. Causes bleeding and blindness on hit. Your next 6 attacks cause bleeding. "
+        )
+        self.image_url = "https://i.imgur.com/LcHx044.png"
+        self.cooldown = 6
+        self.base_value = 3
+        self.skill_effect = SkillEffect.PHYSICAL_DAMAGE
+        self.status_effects = [
+            SkillStatusEffect(
+                StatusEffectType.RAGE,
+                6,
+                self_target=True,
+            ),
+            SkillStatusEffect(
+                StatusEffectType.BLEED,
+                6,
+                StatusEffectApplication.ATTACK_VALUE,
+            ),
+            SkillStatusEffect(
+                StatusEffectType.BLIND,
+                1,
+            ),
+        ]
+        self.stacks = 6
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={},
         )
