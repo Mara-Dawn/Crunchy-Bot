@@ -183,6 +183,9 @@ class CombatGearManager(Service):
             if not base.droppable:
                 continue
 
+            if issubclass(base.__class__, Unique):
+                continue
+
             if gear_slot is not None and base.slot != gear_slot:
                 continue
 

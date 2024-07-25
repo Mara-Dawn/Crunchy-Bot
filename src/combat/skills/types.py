@@ -10,6 +10,7 @@ class StatusEffectType(str, Enum):
     RAGE = "Rage"
     FEAR = "Fear"
     RAGE_QUIT = "RageQuit"
+    HIGH = "High"
 
 
 class SkillType(str, Enum):
@@ -103,6 +104,10 @@ class SkillType(str, Enum):
     # Homeless Woman
     HOMELESS_PLEADING = "HomelessPleading"
     HOMELESS_BEGGING = "HomelessBegging"
+
+    # Crackachu
+    THUNDER_CRACK = "ThunderCrack"
+    USED_NEEDLES = "UsedNeedles"
 
     # Daddy
     HAIR_PULL = "HairPull"

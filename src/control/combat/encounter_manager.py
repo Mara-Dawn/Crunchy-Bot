@@ -524,16 +524,14 @@ class EncounterManager(Service):
         available_targets: list[Actor],
     ) -> tuple[list[tuple[Actor, SkillInstance, float], discord.Embed]]:
         damage_data = []
-        post_embeds = []
-
-        effect_modifier, post_embed = (
+        embed_data = {}
+        effect_modifier, post_embed_data = (
             await self.status_effect_manager.handle_attack_status_effects(
                 context, source, skill
             )
         )
-        if post_embed is not None:
-            post_embeds.append(post_embed)
-
+        if post_embed_data is not None:
+            embed_data = embed_data | post_embed_data
 
         for target in available_targets:
             instances = await self.skill_manager.get_skill_effect(
@@ -546,15 +544,17 @@ class EncounterManager(Service):
                 target, context.combat_events
             )
 
-            on_damage_effect_modifier, post_embed = (
+            on_damage_effect_modifier, post_embed_data = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
                     target,
                     skill,
                 )
             )
-            if post_embed is not None:
-                post_embeds.append(post_embed)
+
+            if post_embed_data is not None:
+                embed_data = embed_data | post_embed_data
+
             instance.apply_effect_modifier(on_damage_effect_modifier)
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
@@ -567,7 +567,7 @@ class EncounterManager(Service):
             new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
 
             damage_data.append((target, instance, new_target_hp))
-        return damage_data, post_embed
+        return damage_data, embed_data
 
     async def calculate_character_skill(
         self,
@@ -582,29 +582,32 @@ class EncounterManager(Service):
 
         skill_value_data = []
         hp_cache = {}
-        post_embeds = []
+        embed_data = {}
 
         for instance in skill_instances:
-            effect_modifier, post_embed = (
+            effect_modifier, post_embed_data = (
                 await self.status_effect_manager.handle_attack_status_effects(
                     context,
                     source,
                     skill,
                 )
             )
-            if post_embed is not None:
-                post_embeds.append(post_embed)
+            if post_embed_data is not None:
+                embed_data = embed_data | post_embed_data
+
             instance.apply_effect_modifier(effect_modifier)
 
-            effect_modifier, post_embed = (
+            effect_modifier, post_embed_data = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
                     target,
                     skill,
                 )
             )
-            if post_embed is not None:
-                post_embeds.append(post_embed)
+
+            if post_embed_data is not None:
+                embed_data = embed_data | post_embed_data
+
             instance.apply_effect_modifier(effect_modifier)
 
             total_skill_value = await self.actor_manager.get_skill_damage_after_defense(
@@ -630,7 +633,7 @@ class EncounterManager(Service):
 
             skill_value_data.append((target, instance, new_target_hp))
 
-        return skill_value_data, post_embeds
+        return skill_value_data, embed_data
 
     async def combatant_turn(
         self,
@@ -654,14 +657,11 @@ class EncounterManager(Service):
 
         if skill_data.skill.base_skill.aoe:
             # assumes party targeted
-            damage_data, post_embed = await self.calculate_character_aoe_skill(
+            damage_data, post_embed_data = await self.calculate_character_aoe_skill(
                 context, skill_data.skill, character, context.get_active_combatants()
             )
-            post_embeds = None
-            if post_embed is not None:
-                post_embeds = [post_embed]
         else:
-            damage_data, post_embeds = await self.calculate_character_skill(
+            damage_data, post_embed_data = await self.calculate_character_skill(
                 context, skill_data.skill, character, target
             )
 
@@ -669,15 +669,15 @@ class EncounterManager(Service):
             actor=character,
             skill=skill_data.skill,
             damage_data=damage_data,
-            post_embeds=post_embeds,
+            post_embed_data=post_embed_data,
         )
 
         await self.context_loader.append_embed_generator_to_round(
             context, self.embed_manager.handle_actor_turn_embed(turn, context)
         )
 
-        if turn.post_embeds is not None:
-            await self.context_loader.append_embeds_to_round(context, turn.post_embeds)
+        if turn.post_embed_data is not None:
+            await self.context_loader.append_embeds_to_round(context, character, turn.post_embed_data)
 
         for target, damage_instance, _ in turn.damage_data:
             total_damage = await self.actor_manager.get_skill_damage_after_defense(

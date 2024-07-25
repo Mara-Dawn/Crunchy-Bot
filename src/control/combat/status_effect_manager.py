@@ -254,6 +254,8 @@ class CombatStatusEffectManager(Service):
                             active_status_effect,
                             active_status_effect.remaining_stacks,
                         )
+                case StatusEffectType.HIGH:
+                    effect_data[effect_type] = random.random() * 2
                 case StatusEffectType.RAGE_QUIT:
                     current_hp = await self.actor_manager.get_actor_current_hp(
                         actor, context.combat_events
@@ -304,6 +306,9 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.FEAR:
                     title = f"{status_effect.emoji} Fear"
                     description = f"{actor.name}'s fear increases their damage taken."
+                case StatusEffectType.HIGH:
+                    title = f"{status_effect.emoji} High"
+                    description = f"{actor.name} is blazed out of their mind causing unexpected skill outcomes."
                 case StatusEffectType.RAGE_QUIT:
                     title = f"{status_effect.emoji} Rage Quit"
                     description = data
@@ -366,11 +371,7 @@ class CombatStatusEffectManager(Service):
         if len(embed_data) <= 0:
             return modifier, None
 
-        status_effect_embed = self.embed_manager.get_status_effect_embed(
-            actor, embed_data
-        )
-
-        return modifier, status_effect_embed
+        return modifier, embed_data
 
     async def handle_on_damage_taken_status_effects(
         self,
@@ -414,11 +415,7 @@ class CombatStatusEffectManager(Service):
         if len(embed_data) <= 0:
             return modifier, None
 
-        status_effect_embed = self.embed_manager.get_status_effect_embed(
-            actor, embed_data
-        )
-
-        return modifier, status_effect_embed
+        return modifier, embed_data
 
     async def handle_post_attack_status_effects(
         self,

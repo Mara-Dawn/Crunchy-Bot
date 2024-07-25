@@ -2,6 +2,7 @@ import asyncio
 from collections.abc import AsyncGenerator
 
 import discord
+from combat.actors import Actor
 from combat.encounter import EncounterContext
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
@@ -132,11 +133,15 @@ class ContextLoader(Service):
         await self.edit_message(message, embeds=current_embeds)
 
     async def append_embeds_to_round(
-        self, context: EncounterContext, embeds: list[discord.Embed]
+        self, context: EncounterContext, actor: Actor, embed_data: dict[str, str]
     ):
         message = None
-        for embed in embeds:
-            message = await self.append_embed_to_round(context, embed)
+        if len(embed_data) <= 0:
+            return message
+        status_effect_embed = self.embed_manager.get_status_effect_embed(
+            actor, embed_data
+        )
+        message = await self.append_embed_to_round(context, status_effect_embed)
         return message
 
     async def edit_message(self, message: discord.Message, **kwargs):

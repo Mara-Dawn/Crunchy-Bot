@@ -18,6 +18,7 @@ class EnemyType(str, Enum):
     CUDDLES = "Cuddles"
     ELI = "Eli"
     HOMELESS_WOMAN = "HomelessWoman"
+    CRACKACHU = "Crackachu"
 
     DADDY_P1 = "Daddy_P1"
     DADDY_P2 = "Daddy_P2"

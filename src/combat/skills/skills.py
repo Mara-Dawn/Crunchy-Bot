@@ -1070,7 +1070,7 @@ class FatAss(BaseSkill):
         super().__init__(
             name="Fat Ass",
             skill_type=SkillType.FAT_ASS,
-            description="Eli doesn't care. He sits down on you with his fat ass and crushes you. Oh and youre blind.",
+            description="Eli doesn't care. He got a big dumpy and uses it to crush you. Oh and youre blind.",
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=3,
@@ -1162,5 +1162,49 @@ class HomelessBegging(BaseSkill):
             aoe=False,
             droppable=False,
             image_url="https://i.imgur.com/u6tWk2c.png",
+            author="Lusa",
+        )
+
+
+class ThunderCrack(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Thunder Crack",
+            skill_type=SkillType.THUNDER_CRACK,
+            description="Bolts of lightning hit you like a truck. Or like a nice bong rip. You are unsure.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/VjfI6u2.png",
+            author="Lusa",
+        )
+
+
+class UsedNeedles(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Used Needles",
+            skill_type=SkillType.USED_NEEDLES,
+            description="You scared it and it throws a bunch of used needles at your face. You start feeling a bit dizzy as they hit you.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=1,
+            base_value=1,
+            hits=4,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.HIGH,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/MMdiHRv.png",
             author="Lusa",
         )

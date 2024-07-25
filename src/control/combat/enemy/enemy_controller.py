@@ -78,18 +78,18 @@ class EnemyController(Service, ABC):
         skill: Skill,
         available_targets: list[Actor],
         hp_cache: dict[int, int],
-    ) -> tuple[list[tuple[Actor, SkillInstance, float], discord.Embed]]:
+    ) -> tuple[list[tuple[Actor, SkillInstance, float], dict[str, str]]]:
         damage_data = []
-        post_embeds = []
+        post_embed_data = {}
 
         for target in available_targets:
-            effect_modifier, post_embed = (
+            effect_modifier, attack_embed_data = (
                 await self.status_effect_manager.handle_attack_status_effects(
                     context, context.opponent, skill
                 )
             )
-            if post_embed is not None:
-                post_embeds.append(post_embed)
+            if attack_embed_data is not None:
+                post_embed_data = post_embed_data | attack_embed_data
 
             instances = await self.skill_manager.get_skill_effect(
                 context.opponent, skill, combatant_count=context.get_combat_scale()
@@ -104,15 +104,16 @@ class EnemyController(Service, ABC):
             else:
                 current_hp = hp_cache[target.id]
 
-            on_damage_effect_modifier, post_embed = (
+            on_damage_effect_modifier, attack_embed_data = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
                     target,
                     skill,
                 )
             )
-            if post_embed is not None:
-                post_embeds.append(post_embed)
+            if attack_embed_data is not None:
+                post_embed_data = post_embed_data | attack_embed_data
+
             instance.apply_effect_modifier(on_damage_effect_modifier)
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
@@ -122,4 +123,4 @@ class EnemyController(Service, ABC):
             hp_cache[target.id] = new_target_hp
 
             damage_data.append((target, instance, new_target_hp))
-        return damage_data, post_embeds
+        return damage_data, post_embed_data

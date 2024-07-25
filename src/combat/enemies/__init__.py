@@ -454,6 +454,32 @@ class HomelessWoman(Enemy):
         )
 
 
+class Crackachu(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Crackachu",
+            type=EnemyType.CRACKACHU,
+            description="A messed up creature that needs its beans. NOW!",
+            information="",
+            image_url="https://i.imgur.com/MNVKt2D.png",
+            min_level=5,
+            max_level=8,
+            health=5,
+            damage_scaling=5,
+            max_players=4,
+            skill_types=[
+                SkillType.THUNDER_CRACK,
+                SkillType.USED_NEEDLES,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=25,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
 # Bosses
 
 

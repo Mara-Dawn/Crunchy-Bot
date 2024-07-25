@@ -119,3 +119,18 @@ class Inspired(StatusEffect):
             delay_to_next_turn=True,
             override=True,
         )
+
+
+class High(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.HIGH,
+            name="High",
+            description="Your attacks randomly deal more or less damage.",
+            trigger=[StatusEffectTrigger.ON_ATTACK],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="🤯",
+            display_status=True,
+            stack=True,
+        )
