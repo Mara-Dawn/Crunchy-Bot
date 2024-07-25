@@ -94,6 +94,11 @@ class SkillType(str, Enum):
     FEAR = "FearSkill"
     FEASTING = "Feasting"
 
+    # Eli
+    FAT_ASS = "FatAss"
+    OH_LAWD_HE_COMIN = "OhLawdHeComin"
+    CAT_SCREECH = "CatScreech"
+
     # Daddy
     HAIR_PULL = "HairPull"
     BELT = "Belt"

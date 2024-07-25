@@ -1,6 +1,5 @@
 import contextlib
 import datetime
-from enum import member
 import json
 from typing import Any
 
@@ -29,6 +28,7 @@ from combat.gear.types import (
     GearModifierType,
     Rarity,
 )
+from combat.gear.uniques import *  # noqa: F403
 from combat.skills.skill import BaseSkill, Skill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillType

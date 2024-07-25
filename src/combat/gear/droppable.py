@@ -15,6 +15,7 @@ class DroppableBase:
         max_level: int,
         weight: int = None,
         droppable: bool = True,
+        uniques: list[GearBaseType | SkillType] = None,
         author: str = None,
     ):
         self.name = name
@@ -27,8 +28,12 @@ class DroppableBase:
         self.droppable = droppable
         if self.weight is None:
             self.weight = 100
-        self.author = author
 
+        self.uniques = uniques
+        if self.uniques is None:
+            self.uniques = []
+
+        self.author = author
         if self.author is None:
             self.author = "Mara"
 

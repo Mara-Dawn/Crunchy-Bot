@@ -1061,3 +1061,67 @@ class Feasting(BaseSkill):
             image_url="https://i.imgur.com/oikAU23.png",
             author="Lusa",
         )
+
+
+class FatAss(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Fat Ass",
+            skill_type=SkillType.FAT_ASS,
+            description="Eli doesn't care. He sits down on you with his fat ass and crushes you. Oh and youre blind.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=3,
+            initial_cooldown=1,
+            base_value=7,
+            hits=1,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    3,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/XJZAq46.png",
+            author="Lusa",
+        )
+
+
+class CatScreech(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Screech",
+            skill_type=SkillType.CAT_SCREECH,
+            description="Eli lets you know he is not satisfied. He never is.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            base_value=2,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/z3A1C59.png",
+            author="Lusa",
+        )
+
+
+class OhLawdHeComin(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Oh Lawd He Comin",
+            skill_type=SkillType.OH_LAWD_HE_COMIN,
+            description="You feel the earth shake as Eli starts to set his immense mass in motion.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/AHKl27r.png",
+            author="Lusa",
+        )

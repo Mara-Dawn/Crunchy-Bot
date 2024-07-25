@@ -4,6 +4,7 @@ from combat.enemies.types import EnemyType
 from combat.gear.bases import *  # noqa: F403
 from combat.gear.droppable import DroppableBase
 from combat.gear.types import Rarity
+from combat.gear.uniques import *  # noqa: F403
 from combat.skills.skill import Skill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.status_effect import (

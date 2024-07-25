@@ -58,6 +58,7 @@ class GearBase(DroppableBase):
         permanent: bool = False,
         secret: bool = False,
         image_url: str = None,
+        uniques: list[GearBaseType] = None,
         author: str = None,
     ):
         super().__init__(
@@ -69,6 +70,7 @@ class GearBase(DroppableBase):
             max_level=max_level,
             weight=weight,
             droppable=droppable,
+            uniques=uniques,
             author=author,
         )
         self.name = name

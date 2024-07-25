@@ -156,6 +156,8 @@ class GearBaseType(str, Enum):
     LEGGEAR_T4 = "LegGear_T4"
     LEGGEAR_T5 = "LegGear_T5"
 
+    HOT_PANTS = "HotPants"
+
     NECKLACE_T0 = "Necklace_T0"
     RING_T0 = "Ring_T0"
     NECKLACE_T1 = "Necklace_T1"
@@ -166,6 +168,8 @@ class GearBaseType(str, Enum):
     NECKLACE_T3_2 = "Necklace_T3_2"
     NECKLACE_T4 = "Necklace_T4"
     NECKLACE_T5 = "Necklace_T5"
+
+    DEEZ_NUTS = "DeezNutsAccessory"
 
 
 class CharacterAttribute(str, Enum):

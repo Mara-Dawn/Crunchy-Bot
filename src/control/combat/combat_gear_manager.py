@@ -22,10 +22,14 @@ from combat.gear.types import (
     GearModifierType,
     Rarity,
 )
+from combat.gear.uniques import *  # noqa: F403
+from combat.gear.uniques import Unique
 from combat.skills.skill import BaseSkill, Skill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillType
+from config import Config
 from control.combat.combat_skill_manager import CombatSkillManager
+from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
@@ -44,6 +48,7 @@ class CombatGearManager(Service):
     ITEM_LEVEL_MIN_DROP = 0.6
     SKILL_DROP_CHANCE = 0.15
     GEAR_LEVEL_SCALING = 1
+    MOB_LOOT_BONUS_SCALING = 1
 
     MIN_RARITY_LVL = {
         Rarity.COMMON: 0,
@@ -150,6 +155,7 @@ class CombatGearManager(Service):
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
         )
+        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
 
     async def listen_for_event(self, event: BotEvent):
         pass
@@ -242,6 +248,13 @@ class CombatGearManager(Service):
         weights = []
         for base in bases:
             weight = base.weight
+
+            if enemy is not None and (
+                base.type in enemy.skill_loot_table
+                or base.type in enemy.gear_loot_table
+            ):
+                weight *= self.MOB_LOOT_BONUS_SCALING
+
             match base.base_type:
                 case Base.SKILL:
                     weight *= skill_mod
@@ -288,10 +301,40 @@ class CombatGearManager(Service):
 
         return result
 
+    async def get_random_unique_modifiers(
+        self, base: GearBase, item_level: int, random_seed=None
+    ) -> dict[GearModifierType, float]:
+        modifiers = {}
+        unique: Unique = base
+        for modifier_type, scaling in unique.unique_modifiers.items():
+            min_roll, max_roll = await self.get_modifier_boundaries(
+                base, item_level, modifier_type
+            )
+
+            if random_seed is not None:
+                random.seed(random_seed)
+
+            value = random.uniform(min_roll, max_roll)
+            value *= scaling
+
+            if random_seed is not None:
+                random.seed(None)
+
+            if modifier_type in self.INT_MODIFIERS:
+                value = int(value)
+
+            modifiers[modifier_type] = value
+
+        return modifiers
+
     async def get_random_modifiers(
         self, base: GearBase, item_level: int, rarity: Rarity, random_seed=None
     ) -> dict[GearModifierType, float]:
         modifiers = {}
+
+        if rarity == Rarity.UNIQUE:
+            return await self.get_random_unique_modifiers(base, item_level, random_seed)
+
         allowed_modifiers = base.get_allowed_modifiers()
         modifier_count = self.MODIFIER_COUNT[rarity]
 
@@ -446,9 +489,6 @@ class CombatGearManager(Service):
             random_seed=random_seed,
         )
 
-    async def has_uniques(self, base: DroppableBase):
-        return False
-
     async def generate_specific_drop(
         self,
         member_id: int,
@@ -459,8 +499,21 @@ class CombatGearManager(Service):
         random_seed=None,
     ) -> Gear:
 
-        if rarity == Rarity.UNIQUE and not await self.has_uniques(base):
-            rarity = Rarity.RARE
+        if rarity == Rarity.UNIQUE:
+            if len(base.uniques) <= 0:
+                rarity = Rarity.RARE
+            else:
+                if random_seed is not None:
+                    random.seed(random_seed)
+
+                unique_base_type = random.choices(base.uniques)[0]
+                base = await self.factory.get_base(unique_base_type)
+
+                if random_seed is not None:
+                    random.seed(None)
+
+        if issubclass(base.__class__, Unique):
+            rarity = Rarity.UNIQUE
 
         match base.base_type:
             case Base.SKILL:

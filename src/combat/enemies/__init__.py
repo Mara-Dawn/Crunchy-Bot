@@ -1,6 +1,6 @@
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
-from combat.gear.types import CharacterAttribute
+from combat.gear.types import CharacterAttribute, GearBaseType
 from combat.skills.types import SkillType
 from items.types import ItemType
 
@@ -76,7 +76,7 @@ class MindGoblin(Enemy):
                 # ItemType.CAT_SEED,
                 # ItemType.YELLOW_SEED,
             ],
-            gear_loot_table=[],
+            gear_loot_table=[GearBaseType.DEEZ_NUTS],
             skill_loot_table=[],
             initiative=9,
             actions_per_turn=1,
@@ -388,6 +388,36 @@ class Cuddles(Enemy):
             skill_loot_table=[],
             initiative=15,
             actions_per_turn=1,
+            author="Lusa",
+        )
+
+
+class Eli(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Eli",
+            type=EnemyType.ELI,
+            description="You're in awe of his size. Give him food or face destructuin! (He will destroy you either way)",
+            information="MRROWWWWW",
+            image_url="https://i.imgur.com/AHKl27r.png",
+            min_level=2,
+            max_level=8,
+            health=9,
+            damage_scaling=8,
+            max_players=5,
+            skill_types=[
+                SkillType.FAT_ASS,
+                SkillType.OH_LAWD_HE_COMIN,
+                SkillType.CAT_SCREECH,
+            ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=10,
+            actions_per_turn=2,
             author="Lusa",
         )
 

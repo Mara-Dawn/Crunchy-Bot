@@ -148,6 +148,7 @@ class Tier0(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -160,6 +161,7 @@ class Tier0(GearBase):
             max_level=3,
             modifiers=modifiers,
             skills=skills,
+            uniques=uniques,
             scaling=1,
             image_url=image_url,
         )
@@ -239,6 +241,7 @@ class LegGear_T0(Tier0):
             information="Tier 0 leg piece.",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[GearBaseType.HOT_PANTS],
             image_url="https://i.imgur.com/AAH2XAr.png",
         )
 
@@ -253,6 +256,7 @@ class Necklace_T0(Tier0):
             information="Tier 0 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            uniques=[GearBaseType.DEEZ_NUTS],
             image_url="https://i.imgur.com/BESjNWX.png",
         )
 
@@ -285,6 +289,7 @@ class Tier1(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -297,6 +302,7 @@ class Tier1(GearBase):
             max_level=4,
             modifiers=modifiers,
             skills=skills,
+            uniques=uniques,
             scaling=1.1,
             image_url=image_url,
             author="Mia",
@@ -396,6 +402,7 @@ class LegGear_T1(Tier1):
             information="Tier 1 leg piece.",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[GearBaseType.HOT_PANTS],
             image_url="https://i.imgur.com/F10kbxJ.png",
         )
 
@@ -414,6 +421,7 @@ class Necklace_T1(Tier1):
             information="Tier 1 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            uniques=[GearBaseType.DEEZ_NUTS],
             image_url="https://i.imgur.com/XyoEXnO.png",
         )
 
@@ -450,6 +458,7 @@ class Tier2(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -462,6 +471,7 @@ class Tier2(GearBase):
             max_level=6,
             modifiers=modifiers,
             skills=skills,
+            uniques=uniques,
             scaling=1.2,
             image_url=image_url,
             author="Klee",
@@ -556,6 +566,7 @@ class Necklace_T2_1(Tier2):
             information="Tier 2 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            uniques=[GearBaseType.DEEZ_NUTS],
             image_url="https://i.imgur.com/f6vB7tO.jpg",
         )
 
@@ -588,6 +599,7 @@ class Tier3(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -599,6 +611,7 @@ class Tier3(GearBase):
             min_level=4,
             max_level=10,
             modifiers=modifiers,
+            uniques=uniques,
             skills=skills,
             scaling=1.3,
             image_url=image_url,
@@ -754,6 +767,7 @@ class Tier4(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -766,6 +780,7 @@ class Tier4(GearBase):
             max_level=12,
             modifiers=modifiers,
             skills=skills,
+            uniques=uniques,
             scaling=1.4,
             image_url=image_url,
         )
@@ -871,6 +886,7 @@ class Tier5(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -883,6 +899,7 @@ class Tier5(GearBase):
             max_level=12,
             modifiers=modifiers,
             skills=skills,
+            uniques=uniques,
             scaling=1.5,
             image_url=image_url,
             author="Mia",
