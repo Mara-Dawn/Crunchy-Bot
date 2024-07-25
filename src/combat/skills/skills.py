@@ -1125,3 +1125,41 @@ class OhLawdHeComin(BaseSkill):
             image_url="https://i.imgur.com/AHKl27r.png",
             author="Lusa",
         )
+
+
+class HomelessPleading(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Pleading",
+            skill_type=SkillType.HOMELESS_PLEADING,
+            description="She looks at you with her deeply sad eyes filled with pain and suffering.",
+            information="",
+            skill_effect=SkillEffect.NOTHING,
+            cooldown=0,
+            base_value=0,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/n9opGtQ.png",
+            author="Lusa",
+        )
+
+
+class HomelessBegging(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Begging",
+            skill_type=SkillType.HOMELESS_BEGGING,
+            description="She opens her hands towards you and asks for a couple of beans.",
+            information="",
+            skill_effect=SkillEffect.NOTHING,
+            cooldown=1,
+            base_value=1,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/u6tWk2c.png",
+            author="Lusa",
+        )

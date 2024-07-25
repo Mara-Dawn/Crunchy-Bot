@@ -99,6 +99,10 @@ class SkillType(str, Enum):
     OH_LAWD_HE_COMIN = "OhLawdHeComin"
     CAT_SCREECH = "CatScreech"
 
+    # Homeless Woman
+    HOMELESS_PLEADING = "HomelessPleading"
+    HOMELESS_BEGGING = "HomelessBegging"
+
     # Daddy
     HAIR_PULL = "HairPull"
     BELT = "Belt"

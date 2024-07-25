@@ -170,6 +170,7 @@ class GearBaseType(str, Enum):
     NECKLACE_T5 = "Necklace_T5"
 
     DEEZ_NUTS = "DeezNutsAccessory"
+    USELESS_AMULET = "UselessAmulet"
 
 
 class CharacterAttribute(str, Enum):

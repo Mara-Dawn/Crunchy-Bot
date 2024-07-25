@@ -397,10 +397,10 @@ class Eli(Enemy):
         super().__init__(
             name="Eli",
             type=EnemyType.ELI,
-            description="You're in awe of his size. Give him food or face destructuin! (He will destroy you either way)",
+            description="You're in awe of his size. Give him food or face destruction! (He will destroy you either way)",
             information="MRROWWWWW",
             image_url="https://i.imgur.com/AHKl27r.png",
-            min_level=2,
+            min_level=4,
             max_level=8,
             health=9,
             damage_scaling=8,
@@ -418,6 +418,38 @@ class Eli(Enemy):
             skill_loot_table=[],
             initiative=10,
             actions_per_turn=2,
+            author="Lusa",
+        )
+
+
+class HomelessWoman(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Homeless Woman",
+            type=EnemyType.HOMELESS_WOMAN,
+            description="Got some spare change? *cough* *cough*",
+            information="",
+            image_url="https://i.imgur.com/iSskEb5.png",
+            min_level=2,
+            max_level=8,
+            health=4,
+            damage_scaling=4,
+            max_players=4,
+            skill_types=[
+                SkillType.HOMELESS_BEGGING,
+                SkillType.HOMELESS_PLEADING,
+            ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
+            gear_loot_table=[GearBaseType.USELESS_AMULET],
+            skill_loot_table=[],
+            min_gear_drop_count=1,
+            max_gear_drop_count=1,
+            initiative=3,
+            actions_per_turn=1,
+            random_loot=False,
             author="Lusa",
         )
 

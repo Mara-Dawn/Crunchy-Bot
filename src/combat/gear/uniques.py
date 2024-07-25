@@ -49,3 +49,20 @@ class DeezNutsAccessory(Necklace_T0, Unique):
                 GearModifierType.HEALING: 4,
             },
         )
+
+
+class UselessAmulet(Necklace_T0, Unique):
+
+    def __init__(self):
+        Necklace_T0.__init__(self)
+        self.name = "Rusty Amulet"
+        self.type = GearBaseType.USELESS_AMULET
+        self.description = "This amulet was once someones priced possession but now it collects dust in your backpack."
+        self.image_url = "https://i.imgur.com/ddpZGON.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.DEXTERITY: 0,
+            },
+        )

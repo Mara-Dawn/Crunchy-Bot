@@ -223,6 +223,9 @@ class CombatGearManager(Service):
 
             table_base_types = gear_base_types + skill_base_types
 
+            if not enemy.random_loot:
+                bases = []
+
             for base_type in table_base_types:
                 base_class = globals()[base_type]
                 base: DroppableBase = base_class()
@@ -239,7 +242,7 @@ class CombatGearManager(Service):
                     gear_weight += base.weight
 
         skill_mod = 0
-        if not exclude_skills:
+        if not exclude_skills and skill_weight > 0:
             skill_mod = (
                 self.SKILL_DROP_CHANCE * (skill_weight + gear_weight) / skill_weight
             )
