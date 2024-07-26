@@ -287,6 +287,7 @@ class FineAss(BaseSkill):
             stacks=2,
             aoe=True,
             reset_after_encounter=False,
+            uniques=[SkillType.NOT_SO_FINE_ASS],
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/wWYtgye.png",
             author="Lusa",

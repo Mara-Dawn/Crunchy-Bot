@@ -42,6 +42,7 @@ class SkillType(str, Enum):
     WAR_RAGE = "WarGodRage"
     PHYSICAL_MISSILE = "PhysicalMissile"
     FINE_ASS = "FineAss"
+    NOT_SO_FINE_ASS = "NotSoFineAss"
 
     # Magical
     MAGIC_ATTACK = "MagicAttack"

@@ -1,6 +1,6 @@
 from combat.gear.bases import LegGear_T0, Necklace_T0, Stick_T2
 from combat.gear.types import GearBaseType, GearModifierType
-from combat.skills.skills import BloodRage, SecondWind
+from combat.skills.skills import BloodRage, FineAss, SecondWind
 from combat.skills.status_effect import SkillStatusEffect
 from combat.skills.types import (
     SkillEffect,
@@ -160,6 +160,32 @@ class SmellingSalt(SecondWind, Unique):
         self.default_target = SkillTarget.RANDOM_DEFEATED_PARTY_MEMBER
         self.reset_after_encounter = False
         self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={},
+        )
+
+
+class NotSoFineAss(FineAss, Unique):
+
+    def __init__(self):
+        FineAss.__init__(self)
+        self.name = "Not So Fine Ass"
+        self.skill_type = SkillType.NOT_SO_FINE_ASS
+        self.description = (
+            "You try to inspire your party with your mighty fine booty, but what is this? You accidentally "
+            "let out a massive fart instead. "
+            "How embarassing! Luckily people are laughing about it, boosting everyones damage for 4 turns."
+        )
+        self.image_url = "https://i.imgur.com/K2pTHqP.png"
+        self.base_value = 20
+        self.status_effects = [
+            SkillStatusEffect(
+                StatusEffectType.INSPIRED,
+                4,
+                StatusEffectApplication.ATTACK_VALUE,
+            )
+        ]
         Unique.__init__(
             self,
             unique_modifiers={},
