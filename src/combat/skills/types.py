@@ -25,11 +25,14 @@ class SkillType(str, Enum):
     NORMAL_ATTACK = "NormalAttack"
     HEAVY_ATTACK = "HeavyAttack"
 
+    TAPE_ATTACK = "TapeAttack"
+
     SECOND_WIND = "SecondWind"
     SECOND_HEART = "SecondHeart"
     SMELLING_SALT = "SmellingSalt"
     FAMILY_PIZZA = "FamilyPizza"
     HOLY_GANG_SIGNS = "HolyGangSigns"
+    LOOKSMAXXING = "LooksMaxxing"
     GIGA_BONK = "GigaBonk"
     SLICE_N_DICE = "SliceAndDice"
 
@@ -44,6 +47,7 @@ class SkillType(str, Enum):
     MAGIC_ATTACK = "MagicAttack"
     FIRE_BALL = "FireBall"
     MAGIC_MISSILE = "MagicMissile"
+    PARTY_DRUGS = "PartyDrugs"
 
     # Enemy Skills
     # Mind Goblin
@@ -148,6 +152,7 @@ class SkillType(str, Enum):
         return skill_type in [
             SkillType.NORMAL_ATTACK,
             SkillType.HEAVY_ATTACK,
+            SkillType.TAPE_ATTACK,
             SkillType.MAGIC_ATTACK,
         ]
 

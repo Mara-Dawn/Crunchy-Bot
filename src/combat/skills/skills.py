@@ -65,6 +65,29 @@ class HeavyAttack(BaseSkill):
         )
 
 
+class TapeAttack(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Tape Attack",
+            skill_type=SkillType.TAPE_ATTACK,
+            description="You throw out your tape and quickly retract it, inflicting deep, bleeding wounds on your enemies.",
+            information="Weapon skill unique to the Tape Measure item. Causes 4 stacks of bleeding with each hit.",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    4,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/cw1aPuB.jpeg",
+        )
+
+
 class MagicAttack(BaseSkill):
 
     def __init__(self):
@@ -163,6 +186,41 @@ class FamilyPizza(BaseSkill):
             reset_after_encounter=False,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/2QbwSA4.png",
+            author="Lusa",
+        )
+
+
+class LooksMaxxing(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Looksmaxxing",
+            skill_type=SkillType.LOOKSMAXXING,
+            description=(
+                "Shh, can't talk. Im mewing. "
+                "Your efforts grant you 5 turns of moderate health gain over time."
+            ),
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=5,
+            min_level=4,
+            base_value=0.15,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.HEAL_OVER_TIME,
+                    5,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                ),
+            ],
+            stacks=5,
+            aoe=False,
+            reset_after_encounter=False,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/kyYqGkl.png",
             author="Lusa",
         )
 
@@ -368,6 +426,33 @@ class FireBall(BaseSkill):
             image_url="https://i.imgur.com/tzbLY8h.png",
         )
 
+class PartyDrugs(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Party Drugs",
+            skill_type=SkillType.PARTY_DRUGS,
+            description=( 
+                "This stuff will make you taste colours and see things you cant even imagine when sober! " 
+                "You take a hit and immediately fire a purple-green beam of magical vomit at your enemy. "
+                "You are high for the next 3 turns."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=6,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.HIGH,
+                    3,
+                    self_target=True
+                )
+            ],
+            min_level=4,
+            base_value=6,
+            stacks=3,
+            reset_after_encounter=False,
+            image_url="https://i.imgur.com/M4P2k4J.png",
+        )
 
 class MagicMissile(BaseSkill):
 

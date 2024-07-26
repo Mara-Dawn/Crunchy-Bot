@@ -46,7 +46,7 @@ class CombatGearManager(Service):
     GENERATOR_VERSION = "0.0.3"
 
     ITEM_LEVEL_MIN_DROP = 0.6
-    SKILL_DROP_CHANCE = 0.15
+    SKILL_DROP_CHANCE = 0.1
     GEAR_LEVEL_SCALING = 1
     MOB_LOOT_BONUS_SCALING = 1
 
@@ -202,19 +202,9 @@ class CombatGearManager(Service):
         gear_slot: EquipmentSlot = None,
         random_seed=None,
     ) -> DroppableBase:
-        max_level = item_level
-        min_level = max(1, int(item_level * self.ITEM_LEVEL_MIN_DROP))
-
-        if random_seed is not None:
-            random.seed(random_seed)
-
-        drop_item_level = random.randint(min_level, max_level)
-
-        if random_seed is not None:
-            random.seed(None)
 
         bases = await self.get_bases_by_lvl(
-            drop_item_level, exclude_skills=exclude_skills, gear_slot=gear_slot
+            item_level, exclude_skills=exclude_skills, gear_slot=gear_slot
         )
 
         if len(bases) <= 0:

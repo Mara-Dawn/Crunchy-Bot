@@ -135,7 +135,7 @@ class CombatStatusEffectManager(Service):
         if (
             StatusEffectTrigger.END_OF_TURN in status_effect.consumed
             and source.id == target.id
-            and status_effect.delay_to_next_turn
+            # and status_effect.delay_to_next_turn
         ):
             stacks += 1
 

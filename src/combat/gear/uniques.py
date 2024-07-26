@@ -1,4 +1,4 @@
-from combat.gear.bases import LegGear_T0, Necklace_T0
+from combat.gear.bases import LegGear_T0, Necklace_T0, Stick_T2
 from combat.gear.types import GearBaseType, GearModifierType
 from combat.skills.skills import BloodRage, SecondWind
 from combat.skills.status_effect import SkillStatusEffect
@@ -72,6 +72,32 @@ class UselessAmulet(Necklace_T0, Unique):
             self,
             unique_modifiers={
                 GearModifierType.DEXTERITY: 0,
+            },
+        )
+
+
+class TapeMeasure(Stick_T2, Unique):
+
+    def __init__(self):
+        Stick_T2.__init__(self)
+        self.name = "Tape Measure"
+        self.type = GearBaseType.TAPE_MEASURE
+        self.description = (
+            "By throwing and pulling back this increidibly sharp measuring tape, "
+            "you can hurt your opponents and make them bleed! Just be careful to not "
+            "cut yourself."
+        )
+        self.image_url = "https://i.imgur.com/cw1aPuB.jpeg"
+        self.author = "Klee"
+        self.skills = [SkillType.TAPE_ATTACK]
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.WEAPON_DAMAGE_MIN: 1,
+                GearModifierType.WEAPON_DAMAGE_MAX: 1,
+                GearModifierType.ATTACK: 1,
+                GearModifierType.CRIT_RATE: 0.5,
+                GearModifierType.CRIT_DAMAGE: 1,
             },
         )
 

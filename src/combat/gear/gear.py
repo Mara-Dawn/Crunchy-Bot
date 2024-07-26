@@ -246,6 +246,7 @@ class Gear(Droppable):
                     elif skill_type in [
                         SkillType.NORMAL_ATTACK,
                         SkillType.HEAVY_ATTACK,
+                        SkillType.TAPE_ATTACK,
                     ]:
                         effect = SkillEffect.PHYSICAL_DAMAGE
                     if effect not in damage_types:

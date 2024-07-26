@@ -492,6 +492,7 @@ class Stick_T2(Tier2):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            uniques=[GearBaseType.TAPE_MEASURE],
             image_url="https://i.imgur.com/2YUEVzU.jpg",
         )
 
@@ -776,7 +777,7 @@ class Tier4(GearBase):
             description=description,
             information=information,
             slot=slot,
-            min_level=4,
+            min_level=6,
             max_level=12,
             modifiers=modifiers,
             skills=skills,

@@ -116,7 +116,6 @@ class Inspired(StatusEffect):
             consumed=[StatusEffectTrigger.END_OF_TURN],
             emoji="🍑",
             display_status=True,
-            delay_to_next_turn=True,
             override=True,
         )
 
