@@ -125,6 +125,11 @@ class SkillType(str, Enum):
     DEVOUR = "Devour"
     LOOT_SPIT = "LootSpit"
 
+    # School Bully
+    WEDGIE = "Wedgie"
+    KNEE_KICK = "KneeKick"
+    HA_HA = "HaHa"
+
     # Daddy
     HAIR_PULL = "HairPull"
     BELT = "Belt"

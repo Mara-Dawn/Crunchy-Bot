@@ -32,8 +32,7 @@ class HotPants(LegGear_T0, Unique):
         Unique.__init__(
             self,
             unique_modifiers={
-                GearModifierType.ARMOR: 1,
-                GearModifierType.CONSTITUTION: -1.5,
+                GearModifierType.CONSTITUTION: -2,
                 GearModifierType.MAGIC: 4,
                 GearModifierType.ATTACK: 4,
             },

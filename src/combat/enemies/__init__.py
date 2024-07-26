@@ -564,6 +564,33 @@ class Mimic(Enemy):
         )
 
 
+class SchoolBully(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="School Bully",
+            type=EnemyType.SCHOOL_BULLY,
+            description="Loot at this little douche bag. Dont you just wanna punch his face? (Hes talking about you.)",
+            information="",
+            image_url="https://i.imgur.com/DWqm3oz.png",
+            min_level=6,
+            max_level=9,
+            health=6,
+            damage_scaling=6,
+            max_players=5,
+            skill_types=[
+                SkillType.WEDGIE,
+                SkillType.KNEE_KICK,
+                SkillType.HA_HA,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=16,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
 # Bosses
 
 

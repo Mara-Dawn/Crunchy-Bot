@@ -1419,3 +1419,76 @@ class LootSpit(BaseSkill):
             image_url="https://i.imgur.com/azlOtJ1.png",
             author="Lusa",
         )
+
+
+class Wedgie(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Wedgie",
+            skill_type=SkillType.WEDGIE,
+            description=(
+                "He sneaks up on you, grabs you by the underwear and pulls as hard as he can! "
+                "You feel your crotch getting warm and wet. Did you pee your pants? Oh nevermind, its just blood."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=0,
+            base_value=7,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    6,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/DjSROSI.png",
+            author="Lusa",
+        )
+
+
+class KneeKick(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Knee Kick",
+            skill_type=SkillType.KNEE_KICK,
+            description=(
+                "OW! Your kneecaps! This is gonna hurt for a while. You start to cry."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            initial_cooldown=1,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/TMVdgZt.png",
+            author="Lusa",
+        )
+
+
+class HaHa(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Ha Ha!",
+            skill_type=SkillType.HA_HA,
+            description=(
+                "He points at you and laughs. Look at how pathetic you are. What a looser!"
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=2,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/nQFkAQn.png",
+            author="Lusa",
+        )
