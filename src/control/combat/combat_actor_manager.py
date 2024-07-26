@@ -68,10 +68,8 @@ class CombatActorManager(Service):
                     health -= event.skill_value
                 case SkillEffect.HEALING:
                     health += event.skill_value
-            health = min(health, actor.max_hp)
+            health = max(0, min(health, actor.max_hp))
 
-            if health <= 0:
-                return 0
         return int(health)
 
     async def get_active_status_effects(
@@ -178,14 +176,21 @@ class CombatActorManager(Service):
             status_effects = {}
 
         defeated = False
+        revived = False
         leaving = False
         is_out = False
         for event in encounter_events:
             if (
                 event.encounter_event_type == EncounterEventType.MEMBER_DEFEAT
                 and event.member_id == member.id
+                and not revived
             ):
                 defeated = True
+            if (
+                event.encounter_event_type == EncounterEventType.MEMBER_REVIVE
+                and event.member_id == member.id
+            ):
+                revived = True
             if (
                 event.encounter_event_type == EncounterEventType.MEMBER_LEAVING
                 and event.member_id == member.id

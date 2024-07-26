@@ -1,3 +1,4 @@
+import datetime
 import random
 
 from combat.actors import Actor, Character, Opponent
@@ -14,6 +15,9 @@ from control.service import Service
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
+from events.combat_event import CombatEvent
+from events.encounter_event import EncounterEvent
+from events.types import EncounterEventType
 
 
 class CombatSkillManager(Service):
@@ -35,13 +39,23 @@ class CombatSkillManager(Service):
 
     async def get_character_default_target(
         self, source: Actor, skill: Skill, context: EncounterContext
-    ) -> Actor:
+    ) -> Actor | None:
 
         match skill.base_skill.default_target:
             case SkillTarget.OPPONENT:
                 return context.opponent
             case SkillTarget.SELF:
                 return source
+            case SkillTarget.RANDOM_PARTY_MEMBER:
+                active_combatants = context.get_active_combatants()
+                if len(active_combatants) <= 0:
+                    return None
+                return random.choice(active_combatants)
+            case SkillTarget.RANDOM_DEFEATED_PARTY_MEMBER:
+                defeated_combatants = context.get_defeated_combatants()
+                if len(defeated_combatants) <= 0:
+                    return None
+                return random.choice(defeated_combatants)
 
     async def get_skill_data(self, actor: Actor, skill: Skill) -> CharacterSkill:
         if actor.is_enemy:
@@ -138,6 +152,26 @@ class CombatSkillManager(Service):
             return await self.get_character_skill_effect(
                 actor, skill, combatant_count, force_min, force_max
             )
+
+    async def trigger_special_skill_effects(
+        self,
+        event: CombatEvent,
+    ) -> list[SkillInstance]:
+
+        skill_type = event.skill_type
+        if skill_type is None:
+            return
+
+        match skill_type:
+            case SkillType.SMELLING_SALT:
+                event = EncounterEvent(
+                    datetime.datetime.now(),
+                    event.guild_id,
+                    event.encounter_id,
+                    event.target_id,
+                    EncounterEventType.MEMBER_REVIVE,
+                )
+                await self.controller.dispatch_event(event)
 
     async def get_character_skill_effect(
         self,

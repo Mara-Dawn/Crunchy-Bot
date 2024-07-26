@@ -102,6 +102,7 @@ class SecondWind(BaseSkill):
                 )
             ],
             stacks=1,
+            uniques=[SkillType.SMELLING_SALT],
             reset_after_encounter=True,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/AH7NRhc.png",

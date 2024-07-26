@@ -1,9 +1,10 @@
 from combat.gear.bases import LegGear_T0, Necklace_T0
 from combat.gear.types import GearBaseType, GearModifierType
-from combat.skills.skills import BloodRage
+from combat.skills.skills import BloodRage, SecondWind
 from combat.skills.status_effect import SkillStatusEffect
 from combat.skills.types import (
     SkillEffect,
+    SkillTarget,
     SkillType,
     StatusEffectApplication,
     StatusEffectType,
@@ -110,6 +111,28 @@ class WarGodRage(BloodRage, Unique):
             ),
         ]
         self.stacks = 6
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={},
+        )
+
+
+class SmellingSalt(SecondWind, Unique):
+
+    def __init__(self):
+        SecondWind.__init__(self)
+        self.name = "Smelling Salt"
+        self.skill_type = SkillType.SMELLING_SALT
+        self.description = (
+            "This stuff is crazy, it smells so incredibly disgusting that it would even "
+            "bring back your grandmas grandma from the grave. Using it revives a random defeated party member."
+        )
+        self.image_url = "https://i.imgur.com/nER6d1X.png"
+        self.skill_effect = SkillEffect.HEALING
+        self.stacks = 1
+        self.default_target = SkillTarget.RANDOM_DEFEATED_PARTY_MEMBER
+        self.reset_after_encounter = False
         self.author = "Lusa"
         Unique.__init__(
             self,

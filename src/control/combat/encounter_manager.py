@@ -124,10 +124,19 @@ class EncounterManager(Service):
                 combat_event: CombatEvent = event
                 if not event.synchronized:
                     return
+                if combat_event.combat_event_type in [
+                    CombatEventType.MEMBER_TURN,
+                    CombatEventType.ENEMY_TURN,
+                ]:
+                    await self.skill_manager.trigger_special_skill_effects(event)
+                    context = await self.context_loader.load_encounter_context(
+                        combat_event.encounter_id
+                    )
+                    if await self.context_needs_update_check(context):
+                        return
                 if combat_event.combat_event_type not in [
                     CombatEventType.ENEMY_END_TURN,
                     CombatEventType.MEMBER_END_TURN,
-                    CombatEventType.ENEMY_TURN,
                 ]:
                     return
                 await self.refresh_encounter_thread(combat_event.encounter_id)
@@ -211,8 +220,12 @@ class EncounterManager(Service):
         )
 
         if encounter.enemy_type == EnemyType.MIMIC:
-            mock_enemy = await self.get_random_enemy(encounter.enemy_level, exclude=[EnemyType.MIMIC])
-            mock_encounter = Encounter(guild.id, mock_enemy.type, encounter.enemy_level, encounter.max_hp)
+            mock_enemy = await self.get_random_enemy(
+                encounter.enemy_level, exclude=[EnemyType.MIMIC]
+            )
+            mock_encounter = Encounter(
+                guild.id, mock_enemy.type, encounter.enemy_level, encounter.max_hp
+            )
             embed = await self.embed_manager.get_spawn_embed(mock_encounter)
         else:
             embed = await self.embed_manager.get_spawn_embed(encounter)
@@ -670,22 +683,33 @@ class EncounterManager(Service):
                 character, skill_data.skill, context
             )
 
-        if skill_data.skill.base_skill.aoe:
-            # assumes party targeted
-            damage_data, post_embed_data = await self.calculate_character_aoe_skill(
-                context, skill_data.skill, character, context.get_active_combatants()
+        if target is not None:
+            if skill_data.skill.base_skill.aoe:
+                # assumes party targeted
+                damage_data, post_embed_data = await self.calculate_character_aoe_skill(
+                    context,
+                    skill_data.skill,
+                    character,
+                    context.get_active_combatants(),
+                )
+            else:
+                damage_data, post_embed_data = await self.calculate_character_skill(
+                    context, skill_data.skill, character, target
+                )
+
+            turn = TurnData(
+                actor=character,
+                skill=skill_data.skill,
+                damage_data=damage_data,
+                post_embed_data=post_embed_data,
             )
         else:
-            damage_data, post_embed_data = await self.calculate_character_skill(
-                context, skill_data.skill, character, target
+            turn = TurnData(
+                actor=character,
+                skill=skill_data.skill,
+                damage_data=[],
+                post_embed_data={"No Target": "The Skill had no effect."},
             )
-
-        turn = TurnData(
-            actor=character,
-            skill=skill_data.skill,
-            damage_data=damage_data,
-            post_embed_data=post_embed_data,
-        )
 
         await self.context_loader.append_embed_generator_to_round(
             context, self.embed_manager.handle_actor_turn_embed(turn, context)
@@ -912,12 +936,12 @@ class EncounterManager(Service):
         return progress == requirement
 
     async def context_needs_update_check(self, context: EncounterContext) -> bool:
-        already_defeated = []
+        already_defeated = [actor.id for actor in context.get_defeated_combatants()]
         update_context = False
 
         for event in context.encounter_events:
             match event.encounter_event_type:
-                case EncounterEventType.MEMBER_DEFEAT | EncounterEventType.ENEMY_DEFEAT:
+                case EncounterEventType.ENEMY_DEFEAT:
                     already_defeated.append(event.member_id)
 
         for actor in context.actors:

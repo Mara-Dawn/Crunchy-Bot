@@ -97,6 +97,8 @@ class EventManager(Service):
             case EventType.COMBAT:
                 combat_event: CombatEvent = event
                 if combat_event.combat_event_type in [
+                    CombatEventType.MEMBER_TURN,
+                    CombatEventType.ENEMY_TURN,
                     CombatEventType.ENEMY_END_TURN,
                     CombatEventType.MEMBER_END_TURN,
                 ]:

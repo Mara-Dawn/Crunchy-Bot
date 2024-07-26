@@ -131,6 +131,13 @@ class EncounterContext:
             if not actor.defeated and not actor.is_out and self.is_actor_ready(actor)
         ]
 
+    def get_defeated_combatants(self) -> list[Actor]:
+        return [
+            actor
+            for actor in self.combatants
+            if actor.defeated and not actor.is_out and self.is_actor_ready(actor)
+        ]
+
     def get_combat_scale(self) -> int:
         return len(
             [
