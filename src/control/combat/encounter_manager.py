@@ -7,6 +7,7 @@ import discord
 from combat.actors import Actor, Character
 from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.enemies import *  # noqa: F403
+from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
 from combat.skills.skill import CharacterSkill, Skill
 from combat.skills.types import (
@@ -131,6 +132,30 @@ class EncounterManager(Service):
                     return
                 await self.refresh_encounter_thread(combat_event.encounter_id)
 
+    async def get_random_enemy(
+        self, encounter_level: int, exclude: list[EnemyType] = None
+    ) -> Enemy:
+        if exclude is None:
+            exclude = []
+
+        enemies = [await self.factory.get_enemy(enemy_type) for enemy_type in EnemyType]
+        possible_enemies = [
+            enemy
+            for enemy in enemies
+            if encounter_level >= enemy.min_level
+            and encounter_level <= enemy.max_level
+            and not enemy.is_boss
+            and enemy.type not in exclude
+        ]
+
+        spawn_weights = [enemy.weighting for enemy in possible_enemies]
+        spawn_weights = [1.0 / w for w in spawn_weights]
+        sum_weights = sum(spawn_weights)
+        spawn_weights = [w / sum_weights for w in spawn_weights]
+
+        enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
+        return enemy
+
     async def create_encounter(
         self, guild_id: int, enemy_type: EnemyType = None, level: int = None
     ):
@@ -152,23 +177,7 @@ class EncounterManager(Service):
             ):
                 raise TypeError
         else:
-            enemies = [
-                await self.factory.get_enemy(enemy_type) for enemy_type in EnemyType
-            ]
-            possible_enemies = [
-                enemy
-                for enemy in enemies
-                if encounter_level >= enemy.min_level
-                and encounter_level <= enemy.max_level
-                and not enemy.is_boss
-            ]
-
-            spawn_weights = [enemy.weighting for enemy in possible_enemies]
-            spawn_weights = [1.0 / w for w in spawn_weights]
-            sum_weights = sum(spawn_weights)
-            spawn_weights = [w / sum_weights for w in spawn_weights]
-
-            enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
+            enemy = await self.get_random_enemy(encounter_level)
 
         effective_encounter_level = encounter_level
         if enemy.is_boss:
@@ -200,7 +209,13 @@ class EncounterManager(Service):
         encounter = await self.create_encounter(
             guild.id, enemy_type=enemy_type, level=level
         )
-        embed = await self.embed_manager.get_spawn_embed(encounter)
+
+        if encounter.enemy_type == EnemyType.MIMIC:
+            mock_enemy = await self.get_random_enemy(encounter.enemy_level, exclude=[EnemyType.MIMIC])
+            mock_encounter = Encounter(guild.id, mock_enemy.type, encounter.enemy_level, encounter.max_hp)
+            embed = await self.embed_manager.get_spawn_embed(mock_encounter)
+        else:
+            embed = await self.embed_manager.get_spawn_embed(encounter)
 
         enemy = await self.factory.get_enemy(encounter.enemy_type)
         view = EnemyEngageView(self.controller, enemy)
@@ -677,22 +692,28 @@ class EncounterManager(Service):
         )
 
         if turn.post_embed_data is not None:
-            await self.context_loader.append_embeds_to_round(context, character, turn.post_embed_data)
+            await self.context_loader.append_embeds_to_round(
+                context, character, turn.post_embed_data
+            )
 
         for target, damage_instance, _ in turn.damage_data:
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.scaled_value
             )
 
-            embed_data = await self.status_effect_manager.handle_post_attack_status_effects(
-                context,
-                character,
-                target,
-                skill_data.skill,
-                damage_instance,
+            embed_data = (
+                await self.status_effect_manager.handle_post_attack_status_effects(
+                    context,
+                    character,
+                    target,
+                    skill_data.skill,
+                    damage_instance,
+                )
             )
             if embed_data is not None:
-                await self.context_loader.append_embeds_to_round(context, character, embed_data)
+                await self.context_loader.append_embeds_to_round(
+                    context, character, embed_data
+                )
 
             for skill_status_effect in turn.skill.base_skill.status_effects:
                 application_value = None

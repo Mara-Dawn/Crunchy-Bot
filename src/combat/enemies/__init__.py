@@ -536,6 +536,34 @@ class Hoe(Enemy):
         )
 
 
+class Mimic(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Mimic",
+            type=EnemyType.MIMIC,
+            description="Sike, you got got! Better bring out the big guns or you'll get eaten alive.",
+            information="",
+            image_url="https://i.imgur.com/1Pip7BT.png",
+            min_level=4,
+            max_level=9,
+            health=10,
+            damage_scaling=5,
+            max_players=1,
+            skill_types=[
+                SkillType.DEVOUR,
+                SkillType.LOOT_SPIT,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            min_gear_drop_count=6,
+            max_gear_drop_count=7,
+            initiative=20,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
 # Bosses
 
 

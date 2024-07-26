@@ -83,6 +83,30 @@ class CombatStatusEffectManager(Service):
         stacks: int,
         application_value: float = None,
     ):
+
+        if type == StatusEffectType.RANDOM:
+            random_positive_effect = [
+                StatusEffectType.HIGH,
+                StatusEffectType.RAGE,
+                StatusEffectType.INSPIRED,
+            ]
+            random_negative_effect = [
+                StatusEffectType.BLEED,
+                StatusEffectType.BLIND,
+                StatusEffectType.POISON,
+                StatusEffectType.FLUSTERED,
+            ]
+
+            chance_for_nothing = 0.3
+            if random.random() < chance_for_nothing:
+                return
+
+            chance_for_positive = 0.25
+            if random.random() < chance_for_positive:
+                type = random.choice(random_positive_effect)
+            else:
+                type = random.choice(random_negative_effect)
+
         damage = 0
         match type:
             case StatusEffectType.BLEED:

@@ -5,6 +5,7 @@ import datetime
 import discord
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext, TurnData
+from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect, SkillInstance
 from config import Config

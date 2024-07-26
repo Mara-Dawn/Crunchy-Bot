@@ -149,3 +149,17 @@ class Poison(StatusEffect):
             display_status=True,
             stack=True,
         )
+
+
+class Random(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.RANDOM,
+            name="Random",
+            description="You gain a random status effect.",
+            trigger=[StatusEffectTrigger.ON_ATTACK],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="",
+            display_status=False,
+        )

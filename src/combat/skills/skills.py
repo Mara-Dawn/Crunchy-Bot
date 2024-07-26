@@ -1371,3 +1371,51 @@ class HoeSpread(BaseSkill):
             image_url="https://i.imgur.com/JLv30Mg.png",
             author="Lusa",
         )
+
+
+class Devour(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Devour",
+            skill_type=SkillType.DEVOUR,
+            description=("The mimic opens its jaws and chomps down on you."),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=5,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/ZCaSqPK.png",
+            author="Lusa",
+        )
+
+
+class LootSpit(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Loot Spit",
+            skill_type=SkillType.LOOT_SPIT,
+            description=(
+                "It belches out a load of random items and weapons from its belly which are now heading your way. "
+                "Some of them might inflict random status effects."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=1,
+            base_value=2,
+            hits=4,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.RANDOM,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/azlOtJ1.png",
+            author="Lusa",
+        )

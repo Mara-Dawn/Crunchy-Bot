@@ -66,6 +66,7 @@ class Config:
 
     # Status Effects
     BLEED_SCALING = 0.25
+    POISON_SCALING = 0.15
     BLIND_MISS_CHANCE = 0.5
     RAGE_QUIT_THRESHOLD = 0.1
 

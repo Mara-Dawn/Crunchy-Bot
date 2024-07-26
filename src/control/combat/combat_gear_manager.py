@@ -69,7 +69,7 @@ class CombatGearManager(Service):
         Rarity.UNCOMMON: -1,
         Rarity.RARE: 7,
         Rarity.LEGENDARY: 2,
-        Rarity.UNIQUE: 1.5,
+        Rarity.UNIQUE: 0.5,
     }
 
     MODIFIER_COUNT = {
