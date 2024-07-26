@@ -1,5 +1,5 @@
 from combat.skills.status_effect import StatusEffect
-from combat.skills.types import StatusEffectTrigger, StatusEffectType
+from combat.skills.types import SkillEffect, StatusEffectTrigger, StatusEffectType
 
 
 class Bleed(StatusEffect):
@@ -162,4 +162,19 @@ class Random(StatusEffect):
             consumed=[StatusEffectTrigger.END_OF_TURN],
             emoji="",
             display_status=False,
+        )
+
+
+class DeathProtection(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.DEATH_PROTECTION,
+            name="Death Protection",
+            description="Instead of dying you stay at 1 HP.",
+            trigger=[StatusEffectTrigger.ON_DEATH],
+            consumed=[StatusEffectTrigger.ON_DEATH],
+            emoji="💞",
+            damage_type=SkillEffect.HEALING,
+            display_status=True,
         )

@@ -13,6 +13,7 @@ class StatusEffectType(str, Enum):
     HIGH = "High"
     POISON = "Poison"
     RANDOM = "Random"
+    DEATH_PROTECTION = "DeathProtection"
 
 
 class SkillType(str, Enum):
@@ -24,6 +25,7 @@ class SkillType(str, Enum):
     HEAVY_ATTACK = "HeavyAttack"
 
     SECOND_WIND = "SecondWind"
+    SECOND_HEART = "SecondHeart"
     SMELLING_SALT = "SmellingSalt"
     FAMILY_PIZZA = "FamilyPizza"
     GIGA_BONK = "GigaBonk"
@@ -172,8 +174,7 @@ class StatusEffectTrigger(Enum):
     START_OF_ROUND = 2
     END_OF_ROUND = 3
     ON_DAMAGE_TAKEN = 4
-    ON_HEALTH_GAINED = 5
-    ON_HP_CHANGE = 6
+    ON_DEATH = 5
     ON_ATTACK = 7
     POST_ATTACK = 8
 

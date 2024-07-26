@@ -968,6 +968,18 @@ class EncounterManager(Service):
                     await enemy_controller.on_defeat(context, actor)
                     continue
 
+                embed_data, prevent_death = (
+                    await self.status_effect_manager.handle_on_death_status_effects(
+                        context, actor
+                    )
+                )
+                if embed_data is not None:
+                    await self.context_loader.append_embeds_to_round(
+                        context, actor, embed_data
+                    )
+                if prevent_death:
+                    continue
+
                 encounter_event_type = EncounterEventType.MEMBER_DEFEAT
                 embed = self.embed_manager.get_actor_defeated_embed(actor)
                 await self.context_loader.send_message(

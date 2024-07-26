@@ -109,6 +109,37 @@ class SecondWind(BaseSkill):
         )
 
 
+class SecondHeart(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Second Heart",
+            skill_type=SkillType.SECOND_HEART,
+            description=(
+                "You gain a second heart, healing yourself for a moderate amount at the same time. "
+                "The second heart will protect you from the next killing blow, leaving you at 1hp instead."
+            ),
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=5,
+            min_level=4,
+            base_value=0.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.DEATH_PROTECTION,
+                    1,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                ),
+            ],
+            stacks=2,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/LQvjQbL.png",
+        )
+
+
 class FamilyPizza(BaseSkill):
 
     def __init__(self):

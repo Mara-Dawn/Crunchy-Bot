@@ -290,6 +290,20 @@ class CombatStatusEffectManager(Service):
                         )
                 case StatusEffectType.HIGH:
                     effect_data[effect_type] = random.random() * 2
+                case StatusEffectType.DEATH_PROTECTION:
+                    effect_data[effect_type] = True
+                    event = CombatEvent(
+                        datetime.datetime.now(),
+                        context.encounter.guild_id,
+                        context.encounter.id,
+                        event.source_id,
+                        event.actor_id,
+                        event.status_type,
+                        1,
+                        event.id,
+                        CombatEventType.STATUS_EFFECT_OUTCOME,
+                    )
+                    await self.controller.dispatch_event(event)
                 case StatusEffectType.RAGE_QUIT:
                     current_hp = await self.actor_manager.get_actor_current_hp(
                         actor, context.combat_events
@@ -324,8 +338,9 @@ class CombatStatusEffectManager(Service):
 
             match effect_type:
                 case StatusEffectType.CLEANSE:
-                    title = f"{status_effect.emoji} Cleanse"
-                    description = data
+                    if data != "":
+                        title = f"{status_effect.emoji} Cleanse"
+                        description = data
                 case StatusEffectType.BLEED:
                     title = f"{status_effect.emoji} Bleed"
                     description = f"{actor.name} suffers {data} bleeding damage."
@@ -349,6 +364,10 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.RAGE_QUIT:
                     title = f"{status_effect.emoji} Rage Quit"
                     description = data
+                case StatusEffectType.DEATH_PROTECTION:
+                    if data:
+                        title = f"{status_effect.emoji} {status_effect.name}"
+                        description = f"{actor.name} was spared from dying, surviving with 1 health."
 
             if title != "":
                 outcome_info[title] = description
@@ -453,6 +472,43 @@ class CombatStatusEffectManager(Service):
             return modifier, None
 
         return modifier, embed_data
+
+    async def handle_on_death_status_effects(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+    ):
+        context = await self.context_loader.load_encounter_context(context.encounter.id)
+        prevent_death = False
+
+        for active_actor in context.get_current_initiative():
+            if active_actor.id == actor.id:
+                actor = active_actor
+
+        triggered_status_effects = await self.actor_trigger(
+            context, actor, StatusEffectTrigger.ON_DEATH
+        )
+
+        if len(triggered_status_effects) <= 0:
+            return None, prevent_death
+
+        effect_data = await self.get_status_effect_outcomes(
+            context, actor, triggered_status_effects
+        )
+
+        for _, data in effect_data.items():
+            if data is not None:
+                prevent_death = data
+                break
+
+        embed_data = await self.get_status_effect_outcome_info(
+            context, actor, effect_data
+        )
+
+        if len(embed_data) <= 0:
+            return None, prevent_death
+
+        return embed_data, prevent_death
 
     async def handle_post_attack_status_effects(
         self,
