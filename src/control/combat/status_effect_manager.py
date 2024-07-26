@@ -127,7 +127,7 @@ class CombatStatusEffectManager(Service):
                     base_value = application_value * Config.BLEED_SCALING
 
                 damage = base_value
-            case StatusEffectType.INSPIRED:
+            case StatusEffectType.INSPIRED | StatusEffectType.HEAL_OVER_TIME:
                 damage = application_value
 
         status_effect = await self.factory.get_status_effect(type)
@@ -212,6 +212,7 @@ class CombatStatusEffectManager(Service):
 
             match effect_type:
                 case StatusEffectType.CLEANSE:
+                    effect_data[effect_type] = []
                     for status in status_effects:
                         message = ""
                         if status.status_effect.effect_type == StatusEffectType.BLEED:
@@ -220,17 +221,20 @@ class CombatStatusEffectManager(Service):
                                 status,
                                 status.remaining_stacks,
                             )
-                            message += "Bleed was cleansed."
+                            message = "Bleed was cleansed."
                         if status.status_effect.effect_type == StatusEffectType.POISON:
                             await self.consume_status_stack(
                                 context,
                                 status,
                                 status.remaining_stacks,
                             )
-                            message += "Poison was cleansed."
-
-                        effect_data[effect_type] = message
-
+                            message = "Poison was cleansed."
+                        if message != "" and message not in effect_data[effect_type]:
+                            effect_data[effect_type].append(message)
+                    if len(effect_data[effect_type]) > 0:
+                        effect_data[effect_type] = "\n".join(effect_data[effect_type])
+                    else:
+                        effect_data[effect_type] = ""
                 case StatusEffectType.BLEED:
                     if StatusEffectType.CLEANSE in [
                         x.status_effect.effect_type for x in status_effects
@@ -267,6 +271,25 @@ class CombatStatusEffectManager(Service):
                         effect_data[effect_type] = total_damage
                     else:
                         effect_data[effect_type] += total_damage
+                case StatusEffectType.HEAL_OVER_TIME:
+                    healing = int(event.value)
+                    event = CombatEvent(
+                        datetime.datetime.now(),
+                        context.encounter.guild_id,
+                        context.encounter.id,
+                        event.source_id,
+                        event.actor_id,
+                        event.status_type,
+                        healing,
+                        event.id,
+                        CombatEventType.STATUS_EFFECT_OUTCOME,
+                    )
+                    await self.controller.dispatch_event(event)
+
+                    if effect_type not in effect_data:
+                        effect_data[effect_type] = healing
+                    else:
+                        effect_data[effect_type] += healing
                 case StatusEffectType.BLIND:
                     roll = random.random()
                     effect_data[effect_type] = (
@@ -344,6 +367,9 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.BLEED:
                     title = f"{status_effect.emoji} Bleed"
                     description = f"{actor.name} suffers {data} bleeding damage."
+                case StatusEffectType.HEAL_OVER_TIME:
+                    title = f"{status_effect.emoji} Heal"
+                    description = f"{actor.name} heals for {data} hp."
                 case StatusEffectType.POISON:
                     title = f"{status_effect.emoji} Poison"
                     description = f"{actor.name} suffers {data} poison damage."

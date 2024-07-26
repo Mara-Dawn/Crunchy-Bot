@@ -14,6 +14,7 @@ class StatusEffectType(str, Enum):
     POISON = "Poison"
     RANDOM = "Random"
     DEATH_PROTECTION = "DeathProtection"
+    HEAL_OVER_TIME = "HealOverTime"
 
 
 class SkillType(str, Enum):
@@ -28,6 +29,7 @@ class SkillType(str, Enum):
     SECOND_HEART = "SecondHeart"
     SMELLING_SALT = "SmellingSalt"
     FAMILY_PIZZA = "FamilyPizza"
+    HOLY_GANG_SIGNS = "HolyGangSigns"
     GIGA_BONK = "GigaBonk"
     SLICE_N_DICE = "SliceAndDice"
 

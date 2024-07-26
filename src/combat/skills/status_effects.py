@@ -178,3 +178,18 @@ class DeathProtection(StatusEffect):
             damage_type=SkillEffect.HEALING,
             display_status=True,
         )
+
+
+class HealOverTime(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.HEAL_OVER_TIME,
+            name="Heal",
+            description="You gain health.",
+            trigger=[StatusEffectTrigger.START_OF_TURN],
+            consumed=[StatusEffectTrigger.START_OF_TURN],
+            emoji="💚",
+            damage_type=SkillEffect.HEALING,
+            display_status=True,
+        )

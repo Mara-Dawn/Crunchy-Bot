@@ -117,7 +117,7 @@ class SecondHeart(BaseSkill):
             skill_type=SkillType.SECOND_HEART,
             description=(
                 "You gain a second heart, healing yourself for a moderate amount at the same time. "
-                "The second heart will protect you from the next killing blow, leaving you at 1hp instead."
+                "The second heart will protect you from the next killing blow, leaving you at 1 hp instead."
             ),
             information="",
             skill_effect=SkillEffect.HEALING,
@@ -163,6 +163,43 @@ class FamilyPizza(BaseSkill):
             reset_after_encounter=False,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/2QbwSA4.png",
+            author="Lusa",
+        )
+
+
+class HolyGangSigns(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Holy Gang Signs",
+            skill_type=SkillType.HOLY_GANG_SIGNS,
+            description=(
+                "You show off the dope new gang signs you learned at church school. "
+                "Your buddies are not impressed, but at least you lighten the mood. Everyone gains a minor "
+                "heal over time effect for 5 rounds."
+            ),
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=5,
+            min_level=5,
+            base_value=0.08,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.HEAL_OVER_TIME,
+                    5,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                ),
+            ],
+            stacks=2,
+            aoe=True,
+            weight=40,
+            reset_after_encounter=False,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/KoclK4q.png",
             author="Lusa",
         )
 
