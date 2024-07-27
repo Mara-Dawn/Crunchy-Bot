@@ -49,6 +49,7 @@ class SkillType(str, Enum):
     FIRE_BALL = "FireBall"
     MAGIC_MISSILE = "MagicMissile"
     PARTY_DRUGS = "PartyDrugs"
+    SPECTRAL_HAND = "SpectralHand"
 
     # Enemy Skills
     # Mind Goblin

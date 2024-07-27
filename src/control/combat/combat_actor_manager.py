@@ -306,7 +306,7 @@ class CombatActorManager(Service):
 
     def get_encounter_scaling(self, actor: Actor, combatant_count: int = 1) -> float:
         encounter_scaling = 1
-        if actor.is_enemy:
+        if not actor.is_enemy:
             return encounter_scaling
 
         if combatant_count > 1:

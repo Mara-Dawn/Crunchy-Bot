@@ -84,6 +84,13 @@ class CombatStatusEffectManager(Service):
         application_value: float = None,
     ):
 
+        context = await self.context_loader.load_encounter_context(context.encounter.id)
+        for active_actor in context.get_current_initiative():
+            if active_actor.id == source.id:
+                source = active_actor
+            if active_actor.id == target.id:
+                target = active_actor
+
         if type == StatusEffectType.RANDOM:
             random_positive_effect = [
                 StatusEffectType.HIGH,
@@ -247,12 +254,11 @@ class CombatStatusEffectManager(Service):
                         actor, combatant_count
                     )
                     damage = event.value
-                    scaled_damage = damage * encounter_scaling
                     total_damage = await self.actor_manager.get_damage_after_defense(
                         actor, SkillEffect.STATUS_EFFECT_DAMAGE, damage
                     )
 
-                    scaled_damage = total_damage * encounter_scaling
+                    scaled_damage = max(1, int(total_damage * encounter_scaling))
 
                     event = CombatEvent(
                         datetime.datetime.now(),
@@ -557,24 +563,25 @@ class CombatStatusEffectManager(Service):
 
             match effect_type:
                 case StatusEffectType.RAGE:
+                    damage = damage_instance.value
+                    if actor.is_enemy:
+                        damage = damage_instance.scaled_value
+
                     await self.apply_status(
                         context,
                         current_actor,
                         current_target,
                         StatusEffectType.BLEED,
                         3,
-                        damage_instance.scaled_value,
+                        damage,
                     )
                 case StatusEffectType.POISON:
                     if StatusEffectType.CLEANSE in [
                         x.status_effect.effect_type for x in triggered_status_effects
                     ]:
                         continue
-                    damage = damage_instance.value * Config.POISON_SCALING
 
-                    total_damage = await self.actor_manager.get_damage_after_defense(
-                        current_actor, SkillEffect.STATUS_EFFECT_DAMAGE, damage
-                    )
+                    damage = max(1, int(damage_instance.value * Config.POISON_SCALING))
 
                     event = CombatEvent(
                         datetime.datetime.now(),
@@ -583,13 +590,17 @@ class CombatStatusEffectManager(Service):
                         current_actor.id,
                         current_actor.id,
                         StatusEffectType.POISON,
-                        total_damage,
+                        damage,
                         None,
                         CombatEventType.STATUS_EFFECT_OUTCOME,
                     )
                     await self.controller.dispatch_event(event)
 
-                    effect_data[effect_type] = total_damage
+                    if actor.is_enemy:
+                        damage_base = damage_instance.scaled_value
+                        damage = int(damage_base * Config.POISON_SCALING)
+
+                    effect_data[effect_type] = damage
 
         embed_data = await self.get_status_effect_outcome_info(
             context, actor, effect_data

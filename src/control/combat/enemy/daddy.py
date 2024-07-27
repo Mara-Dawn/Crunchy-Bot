@@ -211,7 +211,7 @@ class DaddyController(EnemyController):
 
             if turn.post_embed_data is not None:
                 await self.context_loader.append_embeds_to_round(
-                    context, turn.post_embed_data
+                    context, opponent, turn.post_embed_data
                 )
 
             for target, damage_instance, _ in turn.damage_data:
@@ -229,7 +229,7 @@ class DaddyController(EnemyController):
                 )
                 if embed_data is not None:
                     await self.context_loader.append_embeds_to_round(
-                        context, embed_data
+                        context, opponent, embed_data
                     )
 
                 for skill_status_effect in turn.skill.base_skill.status_effects:

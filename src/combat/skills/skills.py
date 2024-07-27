@@ -474,6 +474,34 @@ class MagicMissile(BaseSkill):
             author="Lusa",
         )
 
+class SpectralHand(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Spectral Claw",
+            skill_type=SkillType.SPECTRAL_HAND,
+            description=(
+                "You summon a spectral claw that mimics your own movements, allowing you "
+                "to strike multiple times in quick succession. The magic is a bit unstable and "
+                "will inflict random status effects on the enemy."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=5,
+            base_value=1,
+            hits=5,
+            stacks=5,
+            min_level=5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.RANDOM,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            image_url="https://i.imgur.com/s1tXlJB.png",
+            author="Lusa",
+        )
 
 # Enemy Skills
 

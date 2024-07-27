@@ -746,7 +746,12 @@ class EncounterManager(Service):
                         if skill_data.skill.base_skill.skill_effect == SkillEffect.BUFF:
                             application_value = damage_instance.skill_base
                         else:
-                            application_value = damage_instance.value
+                            status_effect_damage = (
+                                await self.actor_manager.get_skill_damage_after_defense(
+                                    target, turn.skill, damage_instance.value
+                                )
+                            )
+                            application_value = status_effect_damage
                     case StatusEffectApplication.DEFAULT:
                         pass
 

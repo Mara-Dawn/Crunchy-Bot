@@ -75,7 +75,7 @@ class BasicEnemyController(EnemyController):
                     application_value = None
                     match skill_status_effect.application:
                         case StatusEffectApplication.ATTACK_VALUE:
-                            application_value = damage_instance.scaled_value
+                            application_value = total_damage
                         case StatusEffectApplication.DEFAULT:
                             pass
 
