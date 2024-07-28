@@ -1177,39 +1177,41 @@ class Database:
 
         match event.type:
             case EventType.INTERACTION:
-                return await self.__create_interaction_event(event_id, event)
+                 await self.__create_interaction_event(event_id, event)
             case EventType.JAIL:
-                return await self.__create_jail_event(event_id, event)
+                 await self.__create_jail_event(event_id, event)
             case EventType.TIMEOUT:
-                return await self.__create_timeout_event(event_id, event)
+                 await self.__create_timeout_event(event_id, event)
             case EventType.QUOTE:
-                return await self.__create_quote_event(event_id, event)
+                 await self.__create_quote_event(event_id, event)
             case EventType.SPAM:
-                return await self.__create_spam_event(event_id, event)
+                 await self.__create_spam_event(event_id, event)
             case EventType.BEANS:
-                return await self.__create_beans_event(event_id, event)
+                 await self.__create_beans_event(event_id, event)
             case EventType.INVENTORY:
-                return await self.__create_inventory_event(event_id, event)
+                 await self.__create_inventory_event(event_id, event)
             case EventType.INVENTORYBATCH:
-                return await self.__create_batch_inventory_event(event_id, event)
+                 await self.__create_batch_inventory_event(event_id, event)
             case EventType.LOOTBOX:
-                return await self.__create_loot_box_event(event_id, event)
+                 await self.__create_loot_box_event(event_id, event)
             case EventType.BAT:
-                return await self.__create_bat_event(event_id, event)
+                 await self.__create_bat_event(event_id, event)
             case EventType.PREDICTION:
-                return await self.__create_prediction_event(event_id, event)
+                 await self.__create_prediction_event(event_id, event)
             case EventType.GARDEN:
-                return await self.__create_garden_event(event_id, event)
+                 await self.__create_garden_event(event_id, event)
             case EventType.ENCOUNTER:
-                return await self.__create_encounter_event(event_id, event)
+                 await self.__create_encounter_event(event_id, event)
             case EventType.COMBAT:
-                return await self.__create_combat_event(event_id, event)
+                 await self.__create_combat_event(event_id, event)
             case EventType.STATUS_EFFECT:
-                return await self.__create_status_effect_event(event_id, event)
+                 await self.__create_status_effect_event(event_id, event)
             case EventType.KARMA:
-                return await self.__create_karma_event(event_id, event)
+                 await self.__create_karma_event(event_id, event)
             case EventType.EQUIPMENT:
-                return await self.__create_equipment_event(event_id, event)
+                await self.__create_equipment_event(event_id, event)
+
+        return event_id
 
     async def log_quote(self, quote: Quote) -> int:
         command = f"""

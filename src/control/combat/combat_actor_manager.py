@@ -346,7 +346,7 @@ class CombatActorManager(Service):
                     CharacterAttribute.DAMAGE_REDUCTION
                 ]
                 flat_reduction = int(
-                    character.equipment.gear_modifiers[GearModifierType.ARMOR] / 4
+                    character.equipment.gear_modifiers[GearModifierType.ARMOR] / 6
                 )
             case SkillEffect.NEUTRAL_DAMAGE:
                 modifier -= character.equipment.attributes[

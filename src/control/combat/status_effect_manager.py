@@ -108,7 +108,7 @@ class CombatStatusEffectManager(Service):
             if random.random() < chance_for_nothing:
                 return
 
-            chance_for_positive = 0.25
+            chance_for_positive = 0.15
             if random.random() < chance_for_positive:
                 type = random.choice(random_positive_effect)
             else:
