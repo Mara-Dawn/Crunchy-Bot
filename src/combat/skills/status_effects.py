@@ -60,6 +60,21 @@ class Blind(StatusEffect):
         )
 
 
+class Evasive(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.EVASIVE,
+            name="Evasive",
+            description="You have a chance to evade attacks.",
+            trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
+            consumed=[],
+            emoji="➰",
+            display_status=False,
+            override=True,
+        )
+
+
 class RageQuit(StatusEffect):
 
     def __init__(self):

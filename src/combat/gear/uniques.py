@@ -1,4 +1,12 @@
-from combat.gear.bases import LegGear_T0, Necklace_T0, Stick_T2
+from combat.gear.bases import (
+    HeadGear_T2,
+    LegGear_T0,
+    LegGear_T2,
+    Necklace_T0,
+    Necklace_T2_1,
+    Necklace_T2_2,
+    Stick_T2,
+)
 from combat.gear.types import GearBaseType, GearModifierType
 from combat.skills.skills import BloodRage, FineAss, SecondWind
 from combat.skills.status_effect import SkillStatusEffect
@@ -96,6 +104,97 @@ class TapeMeasure(Stick_T2, Unique):
                 GearModifierType.WEAPON_DAMAGE_MIN: 1,
                 GearModifierType.WEAPON_DAMAGE_MAX: 1,
                 GearModifierType.ATTACK: 1,
+                GearModifierType.CRIT_RATE: 0.5,
+                GearModifierType.CRIT_DAMAGE: 1,
+            },
+        )
+
+
+class CatHead(HeadGear_T2, Unique):
+
+    def __init__(self):
+        HeadGear_T2.__init__(self)
+        self.name = "Cat Ears & Nose"
+        self.type = GearBaseType.CAT_HEAD
+        self.description = (
+            "Embrace your feline nature with these cute cat accessories. "
+            "Don't worry about how they stay attached, you'll figure it out."
+        )
+        self.image_url = "https://i.imgur.com/DSEAUoX.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 0.5,
+                GearModifierType.EVASION: 1,
+                GearModifierType.MAGIC: 2,
+                GearModifierType.ATTACK: 2,
+                GearModifierType.CRIT_RATE: 0.5,
+                GearModifierType.CRIT_DAMAGE: 1,
+            },
+        )
+
+
+class CatLegs(LegGear_T2, Unique):
+
+    def __init__(self):
+        LegGear_T2.__init__(self)
+        self.name = "Cat Stockings"
+        self.type = GearBaseType.CAT_LEGS
+        self.description = "Throw off your enemies by leaving little cute cat footprints behind. They'll never find you!"
+        self.image_url = "https://i.imgur.com/1KNBMTf.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 0.5,
+                GearModifierType.EVASION: 1,
+                GearModifierType.MAGIC: 2,
+                GearModifierType.ATTACK: 2,
+                GearModifierType.CRIT_RATE: 0.5,
+                GearModifierType.CRIT_DAMAGE: 1,
+            },
+        )
+
+
+class CatTail(Necklace_T2_1, Unique):
+
+    def __init__(self):
+        Necklace_T2_1.__init__(self)
+        self.name = "Cat Tail"
+        self.type = GearBaseType.CAT_TAIL
+        self.description = "Improve your balance with this useful tail accessory."
+        self.image_url = "https://i.imgur.com/DhhRDT2.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.DEXTERITY: 3,
+                GearModifierType.EVASION: 1,
+                GearModifierType.MAGIC: 2,
+                GearModifierType.ATTACK: 2,
+                GearModifierType.CRIT_RATE: 0.5,
+                GearModifierType.CRIT_DAMAGE: 1,
+            },
+        )
+
+
+class CatHands(Necklace_T2_2, Unique):
+
+    def __init__(self):
+        Necklace_T2_2.__init__(self)
+        self.name = "Cat Gloves"
+        self.type = GearBaseType.CAT_HANDS
+        self.description = "These gloves will keep you warm while still letting you scratch your nails against the couch cushions."
+        self.image_url = "https://i.imgur.com/LIkiSeW.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.DEXTERITY: 3,
+                GearModifierType.EVASION: 1,
+                GearModifierType.MAGIC: 2,
+                GearModifierType.ATTACK: 2,
                 GearModifierType.CRIT_RATE: 0.5,
                 GearModifierType.CRIT_DAMAGE: 1,
             },

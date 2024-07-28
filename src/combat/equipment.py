@@ -122,6 +122,8 @@ class CharacterEquipment:
         info_block = "```ansi\n"
         max_len = GearModifierType.max_name_len()
         for modifier_type, value in self.gear_modifiers.items():
+            if GearModifierType.is_unique_modifier(modifier_type) and value == 0:
+                continue
             name = modifier_type.value
             display_value = GearModifierType.display_value(modifier_type, value)
             spacing = " " * (max_len - len(name))

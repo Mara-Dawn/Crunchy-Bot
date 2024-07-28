@@ -104,6 +104,7 @@ class CombatGearManager(Service):
         GearModifierType.CRIT_DAMAGE: 5,
         GearModifierType.CRIT_RATE: 3,
         GearModifierType.DEFENSE: 1,
+        GearModifierType.EVASION: 2,
         GearModifierType.CONSTITUTION: 3,
         GearModifierType.DEXTERITY: 1,
     }
@@ -117,6 +118,7 @@ class CombatGearManager(Service):
         GearModifierType.CRIT_DAMAGE: 0.4,
         GearModifierType.CRIT_RATE: 0.15,
         GearModifierType.DEFENSE: 0.15,
+        GearModifierType.EVASION: 0.15,
         GearModifierType.CONSTITUTION: 0.3,
         GearModifierType.DEXTERITY: 0.3,
     }
@@ -130,6 +132,7 @@ class CombatGearManager(Service):
         GearModifierType.CRIT_DAMAGE: 0.35,
         GearModifierType.CRIT_RATE: 0.08,
         GearModifierType.DEFENSE: 0.08,
+        GearModifierType.EVASION: 0.08,
         GearModifierType.CONSTITUTION: 0.08,
         GearModifierType.DEXTERITY: 0.08,
     }
@@ -386,11 +389,13 @@ class CombatGearManager(Service):
             * base.scaling
         )
 
+        unique_range = 1.5 * self.MODIFIER_RANGE[modifier_type]
+
         min_roll = max(
             self.MODIFIER_BASE[modifier_type] * slot_scaling,
-            base_value * (1 - self.MODIFIER_RANGE[modifier_type]),
+            base_value * (1 - unique_range),
         )
-        max_roll = base_value * (1 + self.MODIFIER_RANGE[modifier_type])
+        max_roll = base_value * (1 + unique_range)
 
         return min_roll, max_roll
 

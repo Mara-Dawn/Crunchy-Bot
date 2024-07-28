@@ -34,6 +34,7 @@ class GearModifierType(str, Enum):
     CRIT_RATE = "Crit Rate"
     CRIT_DAMAGE = "Crit Damage"
     DEFENSE = "Defense"
+    EVASION = "Evasion"
     DEXTERITY = "Dexterity"
     CONSTITUTION = "Constitution"
 
@@ -45,6 +46,11 @@ class GearModifierType(str, Enum):
         return max_len
 
     @staticmethod
+    def is_unique_modifier(modifier_type: "GearModifierType"):
+        unique_modifiers = [GearModifierType.EVASION]
+        return modifier_type in unique_modifiers
+
+    @staticmethod
     def short_label(modifier_type: "GearModifierType"):
         label_map = {
             GearModifierType.WEAPON_DAMAGE_MIN: "MIN DMG",
@@ -53,6 +59,7 @@ class GearModifierType(str, Enum):
             GearModifierType.DEXTERITY: "DEX",
             GearModifierType.CONSTITUTION: "CON",
             GearModifierType.DEFENSE: "DEF",
+            GearModifierType.EVASION: "EVA",
             GearModifierType.ATTACK: "ATK",
             GearModifierType.MAGIC: "MGC",
             GearModifierType.HEALING: "HLG",
@@ -74,6 +81,7 @@ class GearModifierType(str, Enum):
 
         float_modifiers = [
             GearModifierType.DEFENSE,
+            GearModifierType.EVASION,
             GearModifierType.ATTACK,
             GearModifierType.MAGIC,
             GearModifierType.HEALING,
@@ -98,6 +106,7 @@ class GearModifierType(str, Enum):
             GearModifierType.DEXTERITY,
             GearModifierType.CONSTITUTION,
             GearModifierType.DEFENSE,
+            GearModifierType.EVASION,
             GearModifierType.ATTACK,
             GearModifierType.MAGIC,
             GearModifierType.HEALING,
@@ -173,6 +182,11 @@ class GearBaseType(str, Enum):
 
     DEEZ_NUTS = "DeezNutsAccessory"
     USELESS_AMULET = "UselessAmulet"
+
+    CAT_HEAD = "CatHead"
+    CAT_LEGS = "CatLegs"
+    CAT_TAIL = "CatTail"
+    CAT_HANDS = "CatHands"
 
 
 class CharacterAttribute(str, Enum):

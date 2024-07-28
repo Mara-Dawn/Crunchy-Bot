@@ -1,3 +1,5 @@
+import datetime
+
 import discord
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.enemy import Enemy
@@ -16,7 +18,7 @@ from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.status_effect_event import StatusEffectEvent
-from events.types import CombatEventType, EncounterEventType
+from events.types import CombatEventType, EncounterEventType, EventType
 
 
 class CombatActorManager(Service):
@@ -34,7 +36,18 @@ class CombatActorManager(Service):
         self.log_name = "Combat Skills"
 
     async def listen_for_event(self, event: BotEvent):
-        pass
+        match event.type:
+            case EventType.ENCOUNTER:
+                if not event.synchronized:
+                    return
+                encounter_event: EncounterEvent = event
+                match encounter_event.encounter_event_type:
+                    case EncounterEventType.MEMBER_ENGAGE:
+                        await self.initialize_actor(
+                            encounter_event.member_id,
+                            encounter_event.guild_id,
+                            encounter_event.encounter_id,
+                        )
 
     async def get_actor_current_hp(
         self, actor: Actor, combat_events: list[CombatEvent]
@@ -71,6 +84,27 @@ class CombatActorManager(Service):
             health = max(0, min(health, actor.max_hp))
 
         return int(health)
+
+    async def initialize_actor(
+        self,
+        member_id: int,
+        guild_id: int,
+        encounter_id: int,
+    ):
+        equipment = await self.database.get_user_equipment(guild_id, member_id)
+
+        if equipment.gear_modifiers[GearModifierType.EVASION] > 0:
+            event = StatusEffectEvent(
+                datetime.datetime.now(),
+                guild_id,
+                encounter_id,
+                member_id,
+                member_id,
+                StatusEffectType.EVASIVE,
+                1,
+                equipment.gear_modifiers[GearModifierType.EVASION],
+            )
+            await self.controller.dispatch_event(event)
 
     async def get_active_status_effects(
         self,

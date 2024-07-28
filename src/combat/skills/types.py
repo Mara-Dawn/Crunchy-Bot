@@ -5,6 +5,7 @@ class StatusEffectType(str, Enum):
     BLEED = "Bleed"
     CLEANSE = "Cleanse"
     BLIND = "Blind"
+    EVASIVE = "Evasive"
     FLUSTERED = "Flustered"
     INSPIRED = "Inspired"
     RAGE = "Rage"

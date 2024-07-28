@@ -117,6 +117,7 @@ class EncounterManager(Service):
                         await self.add_member_to_encounter(
                             encounter_event.encounter_id, encounter_event.member_id
                         )
+
                     case EncounterEventType.END:
                         await self.update_guild_status(event.guild_id)
 

@@ -301,6 +301,10 @@ class CombatStatusEffectManager(Service):
                     effect_data[effect_type] = (
                         0 if roll < Config.BLIND_MISS_CHANCE else 1
                     )
+                case StatusEffectType.EVASIVE:
+                    chance_to_evade = active_status_effect.event.value / 100
+                    roll = random.random()
+                    effect_data[effect_type] = 0 if roll < chance_to_evade else 1
                 case StatusEffectType.FLUSTERED:
                     effect_data[effect_type] = 0
                 case StatusEffectType.INSPIRED:
@@ -384,6 +388,11 @@ class CombatStatusEffectManager(Service):
                         continue
                     title = f"{status_effect.emoji} Blind"
                     description = f"{actor.name} misses their attack!"
+                case StatusEffectType.EVASIVE:
+                    if data != 0:
+                        continue
+                    title = f"{status_effect.emoji} Miss"
+                    description = f"{actor.name} dodged the attack!"
                 case StatusEffectType.FLUSTERED:
                     title = f"{status_effect.emoji} Flustered"
                     description = f"{actor.name} cannot harm their opponent!"

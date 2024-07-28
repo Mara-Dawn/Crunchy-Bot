@@ -524,6 +524,7 @@ class HeadGear_T2(Tier2):
             description="Not sure if Nice Guy would approve.",
             information="Tier 2 head piece.",
             slot=EquipmentSlot.HEAD,
+            uniques=[GearBaseType.CAT_HEAD],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/AjKaSDI.jpg",
         )
@@ -552,6 +553,7 @@ class LegGear_T2(Tier2):
             description="Probably won't even match the tuxedo, but the stripes make the pants go faster",
             information="Tier 2 leg piece.",
             slot=EquipmentSlot.LEGS,
+            uniques=[GearBaseType.CAT_LEGS],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/DHTmPOz.jpg",
         )
@@ -567,7 +569,10 @@ class Necklace_T2_1(Tier2):
             information="Tier 2 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
-            uniques=[GearBaseType.DEEZ_NUTS],
+            uniques=[
+                GearBaseType.CAT_TAIL,
+                GearBaseType.CAT_HANDS,
+            ],
             image_url="https://i.imgur.com/f6vB7tO.jpg",
         )
 
@@ -581,6 +586,10 @@ class Necklace_T2_2(Tier2):
             description="Doesn't work anymore, but the gril is cute",
             information="Tier 2 accessory",
             slot=EquipmentSlot.ACCESSORY,
+            uniques=[
+                GearBaseType.CAT_TAIL,
+                GearBaseType.CAT_HANDS,
+            ],
             modifiers=[GearModifierType.DEXTERITY],
             image_url="https://i.imgur.com/wRUMfXz.jpg",
         )
