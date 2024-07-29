@@ -5,7 +5,6 @@ import datetime
 import discord
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext, TurnData
-from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect, SkillInstance
 from config import Config
@@ -621,7 +620,8 @@ class CombatEmbedManager(Service):
 
         if actor.image_url is not None:
             embed.set_thumbnail(url=actor.image_url)
-        embed.add_field(name="Reason", value=reason)
+        if reason is not None and len(reason) > 0:
+            embed.add_field(name="Reason", value=reason)
         return embed
 
     async def get_waiting_for_party_embed(self, party_size: int):

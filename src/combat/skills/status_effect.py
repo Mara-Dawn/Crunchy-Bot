@@ -25,7 +25,7 @@ class StatusEffect:
         override: bool = False,
         stack: bool = False,
         display_status: bool = False,
-        delay_to_next_turn: bool = False,
+        apply_on_miss: bool = False,
         emoji: str = None,
     ):
         self.effect_type = effect_type
@@ -41,7 +41,7 @@ class StatusEffect:
         self.override = override
         self.override_by_actor = override_by_actor
         self.stack = stack
-        self.delay_to_next_turn = delay_to_next_turn
+        self.apply_on_miss = apply_on_miss
 
         if self.damage_type is None:
             self.damage_type = SkillEffect.STATUS_EFFECT_DAMAGE
@@ -54,11 +54,13 @@ class SkillStatusEffect:
         status_effect_type: StatusEffectType,
         stacks: int,
         application: StatusEffectApplication = StatusEffectApplication.DEFAULT,
+        application_value: float = None,
         self_target: bool = False,
     ):
         self.status_effect_type = status_effect_type
         self.stacks = stacks
         self.application = application
+        self.application_value = application_value
         self.self_target = self_target
 
 

@@ -28,6 +28,7 @@ class Actor:
         image_url: str,
         leaving: bool = False,
         is_out: bool = False,
+        force_skip: bool = True,
     ):
         self.id = id
         self.name = name
@@ -41,6 +42,7 @@ class Actor:
         self.defeated = defeated
         self.leaving = leaving
         self.is_out = is_out
+        self.force_skip = force_skip
         self.image_url = image_url
 
     def get_encounter_scaling(self, combatant_count: int = 1) -> float:
@@ -60,6 +62,7 @@ class Character(Actor):
         defeated: bool,
         leaving: bool = False,
         is_out: bool = False,
+        force_skip: bool = True,
     ):
         self.member = member
         self.equipment = equipment
@@ -82,6 +85,7 @@ class Character(Actor):
             defeated=defeated,
             leaving=leaving,
             is_out=is_out,
+            force_skip=force_skip,
             image_url=member.display_avatar.url,
         )
 
@@ -99,6 +103,7 @@ class Opponent(Actor):
         skill_stacks_used: dict[int, int],
         status_effects: list[ActiveStatusEffect],
         defeated: bool,
+        force_skip: bool = True,
     ):
         super().__init__(
             id=None,
@@ -111,6 +116,7 @@ class Opponent(Actor):
             skill_stacks_used=skill_stacks_used,
             status_effects=status_effects,
             defeated=defeated,
+            force_skip=force_skip,
             image_url=enemy.image_url,
         )
         self.level = level

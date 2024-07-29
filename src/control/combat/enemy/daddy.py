@@ -237,8 +237,11 @@ class DaddyController(EnemyController):
                     match skill_status_effect.application:
                         case StatusEffectApplication.ATTACK_VALUE:
                             application_value = damage_instance.scaled_value
+                        case StatusEffectApplication.MANUAL_VALUE:
+                            application_value = skill_status_effect.application_value
                         case StatusEffectApplication.DEFAULT:
-                            pass
+                            if total_damage <= 0:
+                                application_value = total_damage
 
                     status_effect_target = target
                     if skill_status_effect.self_target:

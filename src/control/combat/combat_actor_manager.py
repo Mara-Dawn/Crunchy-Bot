@@ -153,13 +153,23 @@ class CombatActorManager(Service):
         encounter_id = None
         id = -1
         phase = 1
+
+        defeated = False
+        new_round = False
+        force_skip = False
         for event in encounter_events:
             if encounter_id is None:
                 encounter_id = event.encounter_id
-            if event.encounter_event_type == EncounterEventType.ENEMY_PHASE_CHANGE:
-                phase += 1
-            if event.encounter_event_type == EncounterEventType.ENEMY_DEFEAT:
-                defeated = True
+            match event.encounter_event_type:
+                case EncounterEventType.ENEMY_PHASE_CHANGE:
+                    phase += 1
+                case EncounterEventType.ENEMY_DEFEAT:
+                    defeated = True
+                case EncounterEventType.NEW_ROUND:
+                    new_round = True
+                case EncounterEventType.FORCE_SKIP:
+                    if event.member_id < 0 and not new_round:
+                        force_skip = True
 
         if phase > 1:
             enemy_type = enemy.phases[phase - 2]
@@ -191,6 +201,7 @@ class CombatActorManager(Service):
             skill_stacks_used=skill_stacks_used,
             status_effects=active_status_effects,
             defeated=defeated,
+            force_skip=force_skip,
         )
 
     async def get_character(
@@ -213,31 +224,32 @@ class CombatActorManager(Service):
         revived = False
         leaving = False
         is_out = False
+        new_round = False
+        force_skip = False
         for event in encounter_events:
-            if (
-                event.encounter_event_type == EncounterEventType.MEMBER_DEFEAT
-                and event.member_id == member.id
-                and not revived
-            ):
-                defeated = True
-            if (
-                event.encounter_event_type == EncounterEventType.MEMBER_REVIVE
-                and event.member_id == member.id
-            ):
-                revived = True
-            if (
-                event.encounter_event_type == EncounterEventType.MEMBER_LEAVING
-                and event.member_id == member.id
-            ):
-                leaving = True
-            if (
-                event.encounter_event_type == EncounterEventType.MEMBER_OUT
-                and event.member_id == member.id
-            ):
-                is_out = True
+            match event.encounter_event_type:
+                case EncounterEventType.NEW_ROUND:
+                    new_round = True
+            if event.member_id == member.id:
+                match event.encounter_event_type:
+                    case EncounterEventType.MEMBER_DEFEAT:
+                        if not revived:
+                            defeated = True
+                    case EncounterEventType.MEMBER_REVIVE:
+                        revived = True
+                    case EncounterEventType.MEMBER_LEAVING:
+                        leaving = True
+                    case EncounterEventType.MEMBER_OUT:
+                        is_out = True
+                    case EncounterEventType.FORCE_SKIP:
+                        if not new_round:
+                            force_skip = True
 
         if is_out:
             leaving = False
+
+        if is_out or leaving or defeated:
+            force_skip = False
 
         equipment = await self.database.get_user_equipment(member.guild.id, member.id)
 
@@ -280,6 +292,7 @@ class CombatActorManager(Service):
             defeated=defeated,
             leaving=leaving,
             is_out=is_out,
+            force_skip=force_skip,
         )
         return character
 

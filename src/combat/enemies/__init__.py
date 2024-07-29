@@ -601,8 +601,7 @@ class Bonterry(Enemy):
             ),
             information="",
             image_url="https://i.imgur.com/MDnqn2A.png",
-            # min_level=5,
-            min_level=4,
+            min_level=5,
             max_level=9,
             health=4,
             damage_scaling=3,
@@ -630,11 +629,10 @@ class BonterryKing(Enemy):
             ),
             information="",
             image_url="https://i.imgur.com/F8Cxo0R.png",
-            # min_level=5,
-            min_level=4,
+            min_level=5,
             max_level=9,
             health=10,
-            damage_scaling=7,
+            damage_scaling=7.5,
             max_players=5,
             skill_types=[
                 SkillType.CHEFS_KNIVE,
@@ -648,7 +646,39 @@ class BonterryKing(Enemy):
             max_gear_drop_count=6,
             initiative=25,
             weighting=10,
-            actions_per_turn=2,
+            actions_per_turn=1,
+            author="Lusa",
+        )
+
+
+class Fairy(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Fairy",
+            type=EnemyType.FAIRY,
+            description=(
+                "A fairy appears in front of you! She looks very nice, maybe she will grant you a wish."
+            ),
+            information="",
+            image_url="https://i.imgur.com/OVhMx6V.png",
+            min_level=6,
+            max_level=9,
+            health=7,
+            damage_scaling=7,
+            max_players=4,
+            skill_types=[
+                SkillType.SPARKLES,
+                SkillType.GET_FROGGED,
+                SkillType.WHISPERING,
+                SkillType.FOLLOW_ME,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            min_gear_drop_count=5,
+            max_gear_drop_count=6,
+            initiative=25,
+            actions_per_turn=1,
             author="Lusa",
         )
 

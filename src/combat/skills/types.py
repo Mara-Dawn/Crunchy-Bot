@@ -17,6 +17,9 @@ class StatusEffectType(str, Enum):
     DEATH_PROTECTION = "DeathProtection"
     HEAL_OVER_TIME = "HealOverTime"
 
+    FROGGED = "Frogged"
+    STUN = "Stun"
+
 
 class SkillType(str, Enum):
     EMPTY = "EmptySkill"
@@ -149,6 +152,12 @@ class SkillType(str, Enum):
     KARMA = "Karma"
     GLOOM = "Gloom"
 
+    # Fairy
+    SPARKLES = "Sparkles"
+    GET_FROGGED = "GetFrogged"
+    WHISPERING = "Whispering"
+    FOLLOW_ME = "FollowMe"
+
     # Daddy
     HAIR_PULL = "HairPull"
     BELT = "Belt"
@@ -199,6 +208,7 @@ class StatusEffectTrigger(Enum):
 class StatusEffectApplication(Enum):
     DEFAULT = 0
     ATTACK_VALUE = 1
+    MANUAL_VALUE = 2
 
 
 class SkillInstance:

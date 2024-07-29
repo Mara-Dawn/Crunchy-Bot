@@ -117,7 +117,6 @@ class EncounterManager(Service):
                         await self.add_member_to_encounter(
                             encounter_event.encounter_id, encounter_event.member_id
                         )
-
                     case EncounterEventType.END:
                         await self.update_guild_status(event.guild_id)
 
@@ -159,7 +158,7 @@ class EncounterManager(Service):
         ]
 
         spawn_weights = [enemy.weighting for enemy in possible_enemies]
-        spawn_weights = [1.0 / w for w in spawn_weights]
+        # spawn_weights = [1.0 / w for w in spawn_weights]
         sum_weights = sum(spawn_weights)
         spawn_weights = [w / sum_weights for w in spawn_weights]
 
@@ -398,11 +397,13 @@ class EncounterManager(Service):
         self,
         actor: Actor,
         context: EncounterContext,
-        reason: str,
+        reason: str = None,
         timeout: bool = False,
         silent: bool = False,
     ):
         if not silent:
+            if reason is None:
+                reason = ""
             embed = self.embed_manager.get_turn_skip_embed(actor, reason, context)
             await self.context_loader.append_embed_to_round(context, embed)
 
@@ -424,6 +425,10 @@ class EncounterManager(Service):
             )
             await self.controller.dispatch_event(event)
 
+        await self.handle_turn_status_effects(
+            context, actor, StatusEffectTrigger.END_OF_TURN
+        )
+
         event = CombatEvent(
             datetime.datetime.now(),
             context.encounter.guild_id,
@@ -439,10 +444,6 @@ class EncounterManager(Service):
 
     async def opponent_turn(self, context: EncounterContext):
         opponent = context.opponent
-
-        context = await self.handle_turn_status_effects(
-            context, opponent, StatusEffectTrigger.START_OF_TURN
-        )
 
         if context.is_concluded():
             await self.refresh_encounter_thread(context.encounter.id)
@@ -505,8 +506,6 @@ class EncounterManager(Service):
                     context, status_effect_embed
                 )
 
-            # context = await self.context_loader.load_encounter_context(context.encounter.id)
-
     async def handle_turn_status_effects(
         self,
         context: EncounterContext,
@@ -518,6 +517,9 @@ class EncounterManager(Service):
         for active_actor in context.get_current_initiative():
             if active_actor.id == actor.id:
                 actor = active_actor
+
+        if actor.defeated or actor.leaving or actor.is_out:
+            return context
 
         triggered_status_effects = await self.status_effect_manager.actor_trigger(
             context, actor, trigger
@@ -539,9 +541,6 @@ class EncounterManager(Service):
             )
 
         context = await self.context_loader.load_encounter_context(context.encounter.id)
-
-        # if not context.new_turn():
-        #     await self.refresh_encounter_thread(context.encounter.id)
 
         return context
 
@@ -671,10 +670,6 @@ class EncounterManager(Service):
         skill_data: CharacterSkill,
         target: Actor = None,
     ):
-        context = await self.handle_turn_status_effects(
-            context, character, StatusEffectTrigger.START_OF_TURN
-        )
-
         if context.is_concluded():
             await self.refresh_encounter_thread(context.encounter.id)
             return
@@ -740,6 +735,11 @@ class EncounterManager(Service):
                     context, character, embed_data
                 )
 
+            status_effect_damage = (
+                await self.actor_manager.get_skill_damage_after_defense(
+                    target, turn.skill, damage_instance.value
+                )
+            )
             for skill_status_effect in turn.skill.base_skill.status_effects:
                 application_value = None
                 match skill_status_effect.application:
@@ -747,14 +747,12 @@ class EncounterManager(Service):
                         if skill_data.skill.base_skill.skill_effect == SkillEffect.BUFF:
                             application_value = damage_instance.skill_base
                         else:
-                            status_effect_damage = (
-                                await self.actor_manager.get_skill_damage_after_defense(
-                                    target, turn.skill, damage_instance.value
-                                )
-                            )
                             application_value = status_effect_damage
+                    case StatusEffectApplication.MANUAL_VALUE:
+                        application_value = skill_status_effect.application_value
                     case StatusEffectApplication.DEFAULT:
-                        pass
+                        if status_effect_damage <= 0:
+                            application_value = status_effect_damage
 
                 status_effect_target = target
                 if skill_status_effect.self_target:
@@ -1115,6 +1113,15 @@ class EncounterManager(Service):
             message = await self.get_previous_enemy_info(context.thread)
             if message is not None:
                 await self.context_loader.edit_message(message, embed=enemy_embed)
+
+        context = await self.handle_turn_status_effects(
+            context, current_actor, StatusEffectTrigger.START_OF_TURN
+        )
+        current_actor = context.get_current_actor()
+
+        if current_actor.force_skip:
+            await self.skip_turn(current_actor, context)
+            return
 
         if current_actor.is_enemy:
             await self.opponent_turn(context)

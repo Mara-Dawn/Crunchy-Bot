@@ -76,8 +76,11 @@ class BasicEnemyController(EnemyController):
                     match skill_status_effect.application:
                         case StatusEffectApplication.ATTACK_VALUE:
                             application_value = total_damage
+                        case StatusEffectApplication.MANUAL_VALUE:
+                            application_value = skill_status_effect.application_value
                         case StatusEffectApplication.DEFAULT:
-                            pass
+                            if total_damage <= 0:
+                                application_value = total_damage
 
                     context = await self.context_loader.load_encounter_context(
                         context.encounter.id

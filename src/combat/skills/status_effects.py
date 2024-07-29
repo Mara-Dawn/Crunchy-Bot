@@ -27,6 +27,7 @@ class Cleanse(StatusEffect):
             consumed=[StatusEffectTrigger.END_OF_TURN],
             priority=1,
             emoji="🩹",
+            apply_on_miss=True,
         )
 
 
@@ -72,6 +73,7 @@ class Evasive(StatusEffect):
             emoji="➰",
             display_status=False,
             override=True,
+            apply_on_miss=True,
         )
 
 
@@ -87,6 +89,7 @@ class RageQuit(StatusEffect):
             emoji="😡",
             display_status=False,
             override=True,
+            apply_on_miss=True,
         )
 
 
@@ -102,6 +105,7 @@ class Rage(StatusEffect):
             emoji="😡",
             display_status=True,
             override=True,
+            apply_on_miss=True,
         )
 
 
@@ -132,6 +136,7 @@ class Inspired(StatusEffect):
             emoji="🍑",
             display_status=True,
             override=True,
+            apply_on_miss=True,
         )
 
 
@@ -191,6 +196,7 @@ class DeathProtection(StatusEffect):
             emoji="💞",
             damage_type=SkillEffect.HEALING,
             display_status=True,
+            apply_on_miss=True,
         )
 
 
@@ -206,4 +212,34 @@ class HealOverTime(StatusEffect):
             emoji="💚",
             damage_type=SkillEffect.HEALING,
             display_status=True,
+        )
+
+
+class Frogged(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.FROGGED,
+            name="Frogged",
+            description="You were transformed into a frog.",
+            trigger=[StatusEffectTrigger.START_OF_TURN],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="🐸",
+            display_status=True,
+            override=True,
+        )
+
+
+class Stun(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.STUN,
+            name="Stun",
+            description="You are stunned.",
+            trigger=[StatusEffectTrigger.START_OF_TURN],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="💤",
+            display_status=True,
+            override=True,
         )

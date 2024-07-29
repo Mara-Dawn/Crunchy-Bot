@@ -1752,3 +1752,126 @@ class Gloom(BaseSkill):
             image_url="https://i.imgur.com/g2azYst.png",
             author="Lusa",
         )
+
+
+class Sparkles(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Sparkles",
+            skill_type=SkillType.SPARKLES,
+            description=(
+                "The fairy swooshes around your heads and fills the air with bright sparkes. "
+                "The brightness hurts your eyes!"
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=20,
+            base_value=1,
+            hits=1,
+            aoe=True,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.EVASIVE,
+                    1,
+                    StatusEffectApplication.MANUAL_VALUE,
+                    application_value=25,
+                    self_target=True,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/OVhMx6V.png",
+            author="Lusa",
+        )
+
+
+class GetFrogged(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Get Frogged",
+            skill_type=SkillType.GET_FROGGED,
+            description=(
+                "The fairy turns you into a frog as she giggles quietly and bounces around in the air. "
+                "Your actions have a 50% chance to fail for the next two turns."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=1,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FROGGED,
+                    2,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/OaGk8cF.png",
+            author="Lusa",
+        )
+
+
+class Whispering(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Whispering",
+            skill_type=SkillType.WHISPERING,
+            description=(
+                "With a soft giggle, the fairy whispers something incredibly cringe into your ear. "
+                "It is bad enough to stun you for two turns."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=3,
+            initial_cooldown=2,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.STUN,
+                    2,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/Ji8Ww7d.png",
+            author="Lusa",
+        )
+
+
+class FollowMe(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Follow Me!",
+            skill_type=SkillType.FOLLOW_ME,
+            description=(
+                "The Fairies magical voice is leading you deeper and deeper into the woods. "
+                "Unable to resist, you walk into a monster nest."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=1,
+            cooldown=0,
+            base_value=2,
+            hits=1,
+            aoe=True,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/odiIUnp.png",
+            author="Lusa",
+        )

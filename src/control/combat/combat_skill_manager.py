@@ -1,8 +1,6 @@
 import datetime
 import random
 
-from discord import guild
-
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
 from combat.enemies.types import EnemyType

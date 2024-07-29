@@ -83,8 +83,16 @@ class CombatStatusEffectManager(Service):
         stacks: int,
         application_value: float = None,
     ):
-
         context = await self.context_loader.load_encounter_context(context.encounter.id)
+        status_effect = await self.factory.get_status_effect(type)
+
+        if (
+            application_value is not None
+            and application_value == 0
+            and not status_effect.apply_on_miss
+        ):
+            return
+
         for active_actor in context.get_current_initiative():
             if active_actor.id == source.id:
                 source = active_actor
@@ -134,10 +142,12 @@ class CombatStatusEffectManager(Service):
                     base_value = application_value * Config.BLEED_SCALING
 
                 damage = base_value
-            case StatusEffectType.INSPIRED | StatusEffectType.HEAL_OVER_TIME:
+            case (
+                StatusEffectType.INSPIRED
+                | StatusEffectType.HEAL_OVER_TIME
+                | StatusEffectType.EVASIVE
+            ):
                 damage = application_value
-
-        status_effect = await self.factory.get_status_effect(type)
 
         if (
             StatusEffectTrigger.END_OF_TURN in status_effect.consumed
@@ -307,6 +317,30 @@ class CombatStatusEffectManager(Service):
                     effect_data[effect_type] = 0 if roll < chance_to_evade else 1
                 case StatusEffectType.FLUSTERED:
                     effect_data[effect_type] = 0
+                case StatusEffectType.STUN:
+                    effect_data[effect_type] = 1
+                    event = EncounterEvent(
+                        datetime.datetime.now(),
+                        context.encounter.guild_id,
+                        context.encounter.id,
+                        actor.id,
+                        EncounterEventType.FORCE_SKIP,
+                    )
+                    await self.controller.dispatch_event(event)
+                case StatusEffectType.FROGGED:
+                    roll = random.random()
+                    effect_data[effect_type] = (
+                        0 if roll < Config.FROGGED_FAIL_CHANCE else 1
+                    )
+                    if effect_data[effect_type] == 0:
+                        event = EncounterEvent(
+                            datetime.datetime.now(),
+                            context.encounter.guild_id,
+                            context.encounter.id,
+                            actor.id,
+                            EncounterEventType.FORCE_SKIP,
+                        )
+                        await self.controller.dispatch_event(event)
                 case StatusEffectType.INSPIRED:
                     effect_data[effect_type] = 1 + (
                         active_status_effect.event.value / 100
@@ -405,6 +439,14 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.RAGE_QUIT:
                     title = f"{status_effect.emoji} Rage Quit"
                     description = data
+                case StatusEffectType.FROGGED:
+                    if data != 0:
+                        continue
+                    title = f"{status_effect.emoji} Frogged"
+                    description = "You are a frog and fail your action."
+                case StatusEffectType.STUN:
+                    title = f"{status_effect.emoji} Stunned"
+                    description = "You are stunned."
                 case StatusEffectType.DEATH_PROTECTION:
                     if data:
                         title = f"{status_effect.emoji} {status_effect.name}"
@@ -494,7 +536,7 @@ class CombatStatusEffectManager(Service):
             context, actor, StatusEffectTrigger.ON_DAMAGE_TAKEN
         )
 
-        if len(triggered_status_effects):
+        if len(triggered_status_effects) <= 0:
             return 1, None
 
         if not skill.base_skill.modifiable:
