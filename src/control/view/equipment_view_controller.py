@@ -697,7 +697,10 @@ class EquipmentViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        scrap_value = EquipmentView.SCRAP_ILVL_MAP[level]
+        scaling = 1
+        if slot is not None:
+            scaling = CombatGearManager.SLOT_SCALING[slot] * Config.SCRAP_FORGE_MULTI
+        scrap_value = int(EquipmentView.SCRAP_ILVL_MAP[level] * scaling)
 
         user_items = await self.database.get_item_counts_by_user(
             guild_id, member_id, item_types=[ItemType.SCRAP]
