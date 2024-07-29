@@ -1,8 +1,7 @@
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
-from combat.gear.types import CharacterAttribute
+from combat.gear.types import CharacterAttribute, GearBaseType
 from combat.skills.types import SkillType
-from items.types import ItemType
 
 
 class BoobaSlime(Enemy):
@@ -76,7 +75,7 @@ class MindGoblin(Enemy):
                 # ItemType.CAT_SEED,
                 # ItemType.YELLOW_SEED,
             ],
-            gear_loot_table=[],
+            gear_loot_table=[GearBaseType.DEEZ_NUTS],
             skill_loot_table=[],
             initiative=9,
             actions_per_turn=1,
@@ -358,6 +357,327 @@ class DFTank(Enemy):
             gear_loot_table=[],
             skill_loot_table=[],
             initiative=15,
+            actions_per_turn=1,
+            author="Lusa",
+        )
+
+
+class Cuddles(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Cuddles",
+            type=EnemyType.CUDDLES,
+            description="You abandoned it and now it is haunting you forever. It will never forgive and it will never forget. It feasts on your fear.",
+            information="",
+            image_url="https://i.imgur.com/YvZD72W.png",
+            min_level=4,
+            max_level=7,
+            health=7,
+            damage_scaling=8,
+            max_players=4,
+            skill_types=[
+                SkillType.FEAR,
+                SkillType.FEASTING,
+            ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=15,
+            actions_per_turn=1,
+            author="Lusa",
+        )
+
+
+class Eli(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Eli",
+            type=EnemyType.ELI,
+            description="You're in awe of his size. Give him food or face destruction! (He will destroy you either way)",
+            information="MRROWWWWW",
+            image_url="https://i.imgur.com/AHKl27r.png",
+            min_level=4,
+            max_level=8,
+            health=9,
+            damage_scaling=8,
+            max_players=5,
+            skill_types=[
+                SkillType.FAT_ASS,
+                SkillType.OH_LAWD_HE_COMIN,
+                SkillType.CAT_SCREECH,
+            ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=10,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
+class HomelessWoman(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Homeless Woman",
+            type=EnemyType.HOMELESS_WOMAN,
+            description="Got some spare change? *cough* *cough*",
+            information="",
+            image_url="https://i.imgur.com/iSskEb5.png",
+            min_level=4,
+            max_level=8,
+            health=4,
+            damage_scaling=4,
+            max_players=4,
+            skill_types=[
+                SkillType.HOMELESS_BEGGING,
+                SkillType.HOMELESS_PLEADING,
+            ],
+            item_loot_table=[
+                # ItemType.SPEED_SEED,
+                # ItemType.RARE_SEED,
+            ],
+            gear_loot_table=[GearBaseType.USELESS_AMULET],
+            skill_loot_table=[],
+            min_gear_drop_count=1,
+            max_gear_drop_count=1,
+            initiative=3,
+            actions_per_turn=1,
+            random_loot=False,
+            author="Lusa",
+        )
+
+
+class Crackachu(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Crackachu",
+            type=EnemyType.CRACKACHU,
+            description="A messed up creature that needs its beans. NOW!",
+            information="",
+            image_url="https://i.imgur.com/MNVKt2D.png",
+            min_level=5,
+            max_level=8,
+            health=5,
+            damage_scaling=5,
+            max_players=4,
+            skill_types=[
+                SkillType.THUNDER_CRACK,
+                SkillType.USED_NEEDLES,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=25,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
+class Mommy(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Mommy",
+            type=EnemyType.MOMMY,
+            description="She is big. She is hot. She is undead. She wants to step on you.",
+            information="Looks surprisingly similar to Lady Dimitrescu.",
+            image_url="https://i.imgur.com/1orHFL2.png",
+            min_level=5,
+            max_level=9,
+            health=7,
+            damage_scaling=4.5,
+            max_players=4,
+            skill_types=[
+                SkillType.TIME_TO_SLICE,
+                SkillType.STEP_ON_YOU,
+                SkillType.CHOKE,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            min_gear_drop_count=6,
+            max_gear_drop_count=7,
+            skill_loot_table=[],
+            initiative=20,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
+class Hoe(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Hoe",
+            type=EnemyType.HOE,
+            description="Your mom from a different timeline.",
+            information="",
+            image_url="https://i.imgur.com/mxVJh0i.png",
+            min_level=5,
+            max_level=9,
+            health=7,
+            damage_scaling=7,
+            max_players=5,
+            skill_types=[
+                SkillType.HOE_SHANK,
+                SkillType.HOE_KNEES,
+                SkillType.HOE_SPREAD,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=20,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
+class Mimic(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Mimic",
+            type=EnemyType.MIMIC,
+            description="Sike, you got got! Better bring out the big guns or you'll get eaten alive.",
+            information="",
+            image_url="https://i.imgur.com/1Pip7BT.png",
+            min_level=4,
+            max_level=9,
+            health=10,
+            damage_scaling=5,
+            max_players=1,
+            skill_types=[
+                SkillType.DEVOUR,
+                SkillType.LOOT_SPIT,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            min_gear_drop_count=6,
+            max_gear_drop_count=7,
+            initiative=20,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
+class SchoolBully(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="School Bully",
+            type=EnemyType.SCHOOL_BULLY,
+            description="Loot at this little douche bag. Dont you just wanna punch his face? (Hes talking about you.)",
+            information="",
+            image_url="https://i.imgur.com/DWqm3oz.png",
+            min_level=6,
+            max_level=9,
+            health=6,
+            damage_scaling=6,
+            max_players=5,
+            skill_types=[
+                SkillType.WEDGIE,
+                SkillType.KNEE_KICK,
+                SkillType.HA_HA,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=16,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
+class Bonterry(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Bonterry",
+            type=EnemyType.BONTERRY,
+            description=(
+                "It was said that it once was a human, who tricked the Devil into not taking their soul. "
+                "After death, they became a mindless monster with nowhere to go, following a flame from the underworld."
+            ),
+            information="",
+            image_url="https://i.imgur.com/MDnqn2A.png",
+            min_level=5,
+            max_level=9,
+            health=4,
+            damage_scaling=3,
+            max_players=4,
+            skill_types=[
+                SkillType.CHEFS_KNIVE,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=5,
+            actions_per_turn=1,
+            author="Lusa",
+        )
+
+
+class BonterryKing(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Bonterry King",
+            type=EnemyType.BONTERRY_KING,
+            description=(
+                "The king is seeking revenge for his fallen friends. "
+                "He is the largest of his specimen."
+            ),
+            information="",
+            image_url="https://i.imgur.com/F8Cxo0R.png",
+            min_level=5,
+            max_level=9,
+            health=10,
+            damage_scaling=7.5,
+            max_players=5,
+            skill_types=[
+                SkillType.CHEFS_KNIVE,
+                SkillType.KARMA,
+                SkillType.GLOOM,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            min_gear_drop_count=5,
+            max_gear_drop_count=6,
+            initiative=25,
+            weighting=10,
+            actions_per_turn=1,
+            author="Lusa",
+        )
+
+
+class Fairy(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Fairy",
+            type=EnemyType.FAIRY,
+            description=(
+                "A fairy appears in front of you! She looks very nice, maybe she will grant you a wish."
+            ),
+            information="",
+            image_url="https://i.imgur.com/OVhMx6V.png",
+            min_level=6,
+            max_level=9,
+            health=7,
+            damage_scaling=7,
+            max_players=4,
+            skill_types=[
+                SkillType.SPARKLES,
+                SkillType.GET_FROGGED,
+                SkillType.WHISPERING,
+                SkillType.FOLLOW_ME,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            min_gear_drop_count=5,
+            max_gear_drop_count=6,
+            initiative=25,
             actions_per_turn=1,
             author="Lusa",
         )

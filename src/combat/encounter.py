@@ -131,6 +131,13 @@ class EncounterContext:
             if not actor.defeated and not actor.is_out and self.is_actor_ready(actor)
         ]
 
+    def get_defeated_combatants(self) -> list[Actor]:
+        return [
+            actor
+            for actor in self.combatants
+            if actor.defeated and not actor.is_out and self.is_actor_ready(actor)
+        ]
+
     def get_combat_scale(self) -> int:
         return len(
             [
@@ -256,9 +263,11 @@ class TurnData:
         actor: Actor,
         skill: Skill,
         damage_data: list[tuple[Actor, SkillInstance, int]],
-        post_embed: discord.Embed = None,
+        post_embed_data: dict[str, str] = None,
+        description_override: str = None,
     ):
         self.actor = actor
         self.skill = skill
         self.damage_data = damage_data
-        self.post_embed = post_embed
+        self.post_embed_data = post_embed_data
+        self.description_override = description_override

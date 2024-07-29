@@ -65,6 +65,29 @@ class HeavyAttack(BaseSkill):
         )
 
 
+class TapeAttack(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Tape Attack",
+            skill_type=SkillType.TAPE_ATTACK,
+            description="You throw out your tape and quickly retract it, inflicting deep, bleeding wounds on your enemies.",
+            information="Weapon skill unique to the Tape Measure item. Causes 4 stacks of bleeding with each hit.",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    4,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/cw1aPuB.jpeg",
+        )
+
+
 class MagicAttack(BaseSkill):
 
     def __init__(self):
@@ -102,9 +125,41 @@ class SecondWind(BaseSkill):
                 )
             ],
             stacks=1,
+            uniques=[SkillType.SMELLING_SALT],
             reset_after_encounter=True,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/AH7NRhc.png",
+        )
+
+
+class SecondHeart(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Second Heart",
+            skill_type=SkillType.SECOND_HEART,
+            description=(
+                "You gain a second heart, healing yourself for a moderate amount at the same time. "
+                "The second heart will protect you from the next killing blow, leaving you at 1 hp instead."
+            ),
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=5,
+            min_level=4,
+            base_value=0.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.DEATH_PROTECTION,
+                    1,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                ),
+            ],
+            stacks=2,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/LQvjQbL.png",
         )
 
 
@@ -135,6 +190,78 @@ class FamilyPizza(BaseSkill):
         )
 
 
+class LooksMaxxing(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Looksmaxxing",
+            skill_type=SkillType.LOOKSMAXXING,
+            description=(
+                "Shh, can't talk. Im mewing. "
+                "Your efforts grant you 5 turns of moderate health gain over time."
+            ),
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=5,
+            min_level=4,
+            base_value=0.15,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.HEAL_OVER_TIME,
+                    5,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                ),
+            ],
+            stacks=5,
+            aoe=False,
+            reset_after_encounter=False,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/kyYqGkl.png",
+            author="Lusa",
+        )
+
+
+class HolyGangSigns(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Holy Gang Signs",
+            skill_type=SkillType.HOLY_GANG_SIGNS,
+            description=(
+                "You show off the dope new gang signs you learned at church school. "
+                "Your buddies are not impressed, but at least you lighten the mood. Everyone gains a minor "
+                "heal over time effect for 5 rounds."
+            ),
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=5,
+            min_level=5,
+            base_value=0.08,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.HEAL_OVER_TIME,
+                    5,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                ),
+            ],
+            stacks=2,
+            aoe=True,
+            weight=40,
+            reset_after_encounter=False,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/KoclK4q.png",
+            author="Lusa",
+        )
+
+
 class FineAss(BaseSkill):
 
     def __init__(self):
@@ -160,6 +287,7 @@ class FineAss(BaseSkill):
             stacks=2,
             aoe=True,
             reset_after_encounter=False,
+            uniques=[SkillType.NOT_SO_FINE_ASS],
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/wWYtgye.png",
             author="Lusa",
@@ -214,6 +342,7 @@ class BloodRage(BaseSkill):
             min_level=3,
             weight=50,
             reset_after_encounter=False,
+            uniques=[SkillType.WAR_RAGE],
             image_url="https://i.imgur.com/gQeNSR7.png",
             author="Lusa",
         )
@@ -299,6 +428,31 @@ class FireBall(BaseSkill):
         )
 
 
+class PartyDrugs(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Party Drugs",
+            skill_type=SkillType.PARTY_DRUGS,
+            description=(
+                "This stuff will make you taste colours and see things you cant even imagine when sober! "
+                "You take a hit and immediately fire a purple-green beam of magical vomit at your enemy. "
+                "You are high for the next 3 turns."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=6,
+            status_effects=[
+                SkillStatusEffect(StatusEffectType.HIGH, 3, self_target=True)
+            ],
+            min_level=4,
+            base_value=6,
+            stacks=3,
+            reset_after_encounter=False,
+            image_url="https://i.imgur.com/M4P2k4J.png",
+        )
+
+
 class MagicMissile(BaseSkill):
 
     def __init__(self):
@@ -315,6 +469,36 @@ class MagicMissile(BaseSkill):
             hits=3,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/NnNfa5U.png",
+            author="Lusa",
+        )
+
+
+class SpectralHand(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Spectral Claw",
+            skill_type=SkillType.SPECTRAL_HAND,
+            description=(
+                "You summon a spectral claw that mimics your own movements, allowing you "
+                "to strike multiple times in quick succession. The magic is a bit unstable and "
+                "will inflict random status effects on the enemy."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=5,
+            base_value=1,
+            hits=5,
+            stacks=5,
+            min_level=5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.RANDOM,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            image_url="https://i.imgur.com/s1tXlJB.png",
             author="Lusa",
         )
 
@@ -1014,5 +1198,680 @@ class OnYourKnees(BaseSkill):
             aoe=False,
             droppable=False,
             image_url="https://i.imgur.com/7NIpn6i.png",
+            author="Lusa",
+        )
+
+
+class FearSkill(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Fear",
+            skill_type=SkillType.FEAR,
+            description="Your despair increases as you look at it.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FEAR,
+                    1,
+                )
+            ],
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/73CgqTW.png",
+            author="Lusa",
+        )
+
+
+class Feasting(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Feasting",
+            skill_type=SkillType.FEASTING,
+            description="It opens its jaws and consumes your fear.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=2,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/oikAU23.png",
+            author="Lusa",
+        )
+
+
+class FatAss(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Fat Ass",
+            skill_type=SkillType.FAT_ASS,
+            description="Eli doesn't care. He got a big dumpy and uses it to crush you. Oh and youre blind.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=3,
+            initial_cooldown=1,
+            base_value=7,
+            hits=1,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    3,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/XJZAq46.png",
+            author="Lusa",
+        )
+
+
+class CatScreech(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Screech",
+            skill_type=SkillType.CAT_SCREECH,
+            description="Eli lets you know he is not satisfied. He never is.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            base_value=2,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/z3A1C59.png",
+            author="Lusa",
+        )
+
+
+class OhLawdHeComin(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Oh Lawd He Comin",
+            skill_type=SkillType.OH_LAWD_HE_COMIN,
+            description="You feel the earth shake as Eli starts to set his immense mass in motion.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/AHKl27r.png",
+            author="Lusa",
+        )
+
+
+class HomelessPleading(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Pleading",
+            skill_type=SkillType.HOMELESS_PLEADING,
+            description="She looks at you with her deeply sad eyes filled with pain and suffering.",
+            information="",
+            skill_effect=SkillEffect.NOTHING,
+            cooldown=0,
+            base_value=0,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/n9opGtQ.png",
+            author="Lusa",
+        )
+
+
+class HomelessBegging(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Begging",
+            skill_type=SkillType.HOMELESS_BEGGING,
+            description="She opens her hands towards you and asks for a couple of beans.",
+            information="",
+            skill_effect=SkillEffect.NOTHING,
+            cooldown=1,
+            base_value=1,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/u6tWk2c.png",
+            author="Lusa",
+        )
+
+
+class ThunderCrack(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Thunder Crack",
+            skill_type=SkillType.THUNDER_CRACK,
+            description="Bolts of lightning hit you like a truck. Or like a nice bong rip. You are unsure.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/VjfI6u2.png",
+            author="Lusa",
+        )
+
+
+class UsedNeedles(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Used Needles",
+            skill_type=SkillType.USED_NEEDLES,
+            description="You scared it and it throws a bunch of used needles at your face. You start feeling a bit dizzy as they hit you.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=1,
+            base_value=1,
+            hits=4,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.HIGH,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/MMdiHRv.png",
+            author="Lusa",
+        )
+
+
+class TimeToSlice(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Time to Slice",
+            skill_type=SkillType.TIME_TO_SLICE,
+            description="Playtime is over, honey. Time to die.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=1,
+            initial_cooldown=2,
+            base_value=2,
+            hits=3,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/1sw80nK.png",
+            author="Lusa",
+        )
+
+
+class StepOnYou(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Steps on You",
+            skill_type=SkillType.STEP_ON_YOU,
+            description=(
+                "She commands you to lay down infront of her and you oblige, unable to resist. "
+                "Then she raises her heel and stomps down on your head. You are under Mommy's spell and "
+                "unable to hurt her on your next turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=0,
+            base_value=5,
+            hits=1,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FLUSTERED,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/NkkAnTD.png",
+            author="Lusa",
+        )
+
+
+class Choke(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Nightmare Chokehold",
+            skill_type=SkillType.CHOKE,
+            description=(
+                "She grabs your throat and chokes you until you almost pass out. "
+                "You hear a crazy giggle as she watches you struggle for air. "
+                "Your mind will be foggy for one turn, randomly modifying your next action."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            initial_cooldown=1,
+            base_value=1,
+            hits=1,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.HIGH,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/XJhXZ7N.png",
+            author="Lusa",
+        )
+
+
+class HoeKnees(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Hoe-Knees",
+            skill_type=SkillType.HOE_KNEES,
+            description=("These knees are surprisingly pointy."),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/rUjLLHK.png",
+            author="Lusa",
+        )
+
+
+class HoeShank(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Hoe-Shank",
+            skill_type=SkillType.HOE_SHANK,
+            description=(
+                "The hoe pulls out a scary looking hunting knive and goes to town on your guts."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=1,
+            base_value=2,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            hits=2,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/Mb4fIEV.png",
+            author="Lusa",
+        )
+
+
+class HoeSpread(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Hoe-Spread",
+            skill_type=SkillType.HOE_SPREAD,
+            description=(
+                "Her ultimate move, she spreads her legs and releases the stench of decades of "
+                "abuse and neglect on you. You are poisoned for two turns, inflicting a portion of your dealt "
+                "damage back on yourself."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            base_value=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.POISON,
+                    2,
+                )
+            ],
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/JLv30Mg.png",
+            author="Lusa",
+        )
+
+
+class Devour(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Devour",
+            skill_type=SkillType.DEVOUR,
+            description=("The mimic opens its jaws and chomps down on you."),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=5,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/ZCaSqPK.png",
+            author="Lusa",
+        )
+
+
+class LootSpit(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Loot Spit",
+            skill_type=SkillType.LOOT_SPIT,
+            description=(
+                "It belches out a load of random items and weapons from its belly which are now heading your way. "
+                "Some of them might inflict random status effects."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=1,
+            base_value=2,
+            hits=4,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.RANDOM,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/azlOtJ1.png",
+            author="Lusa",
+        )
+
+
+class Wedgie(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Wedgie",
+            skill_type=SkillType.WEDGIE,
+            description=(
+                "He sneaks up on you, grabs you by the underwear and pulls as hard as he can! "
+                "You feel your crotch getting warm and wet. Did you pee your pants? Oh nevermind, its just blood."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=0,
+            base_value=7,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    6,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/DjSROSI.png",
+            author="Lusa",
+        )
+
+
+class KneeKick(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Knee Kick",
+            skill_type=SkillType.KNEE_KICK,
+            description=(
+                "OW! Your kneecaps! This is gonna hurt for a while. You start to cry."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            initial_cooldown=1,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/TMVdgZt.png",
+            author="Lusa",
+        )
+
+
+class HaHa(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Ha Ha!",
+            skill_type=SkillType.HA_HA,
+            description=(
+                "He points at you and laughs. Look at how pathetic you are. What a looser!"
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=2,
+            hits=1,
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/nQFkAQn.png",
+            author="Lusa",
+        )
+
+
+class ChefsKnive(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Chef's Knive",
+            skill_type=SkillType.CHEFS_KNIVE,
+            description=(
+                "The Bonterry stabs you with its knive. "
+                "Its what it does best and it hurts a lot."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1.5,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/9VoHmE5.png",
+            author="Lusa",
+        )
+
+
+class Karma(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Karma",
+            skill_type=SkillType.KARMA,
+            description=(
+                "the souls of @ fallen bonterries drives bonterry kings grudge. "
+                "He stabs you with no remorse."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=3,
+            initial_cooldown=1,
+            base_value=1,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/kNETgLS.png",
+            author="Lusa",
+        )
+
+
+class Gloom(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Gloom",
+            skill_type=SkillType.GLOOM,
+            description=(
+                "Bonterry king wants you to suffer and despair, just like his friends did."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            base_value=3,
+            hits=1,
+            aoe=True,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/g2azYst.png",
+            author="Lusa",
+        )
+
+
+class Sparkles(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Sparkles",
+            skill_type=SkillType.SPARKLES,
+            description=(
+                "The fairy swooshes around your heads and fills the air with bright sparkes. "
+                "The brightness hurts your eyes!"
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=20,
+            base_value=1,
+            hits=1,
+            aoe=True,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.EVASIVE,
+                    1,
+                    StatusEffectApplication.MANUAL_VALUE,
+                    application_value=25,
+                    self_target=True,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/OVhMx6V.png",
+            author="Lusa",
+        )
+
+
+class GetFrogged(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Get Frogged",
+            skill_type=SkillType.GET_FROGGED,
+            description=(
+                "The fairy turns you into a frog as she giggles quietly and bounces around in the air. "
+                "Your actions have a 50% chance to fail for the next two turns."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            initial_cooldown=1,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FROGGED,
+                    2,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/OaGk8cF.png",
+            author="Lusa",
+        )
+
+
+class Whispering(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Whispering",
+            skill_type=SkillType.WHISPERING,
+            description=(
+                "With a soft giggle, the fairy whispers something incredibly cringe into your ear. "
+                "It is bad enough to stun you for two turns."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=3,
+            initial_cooldown=2,
+            base_value=3,
+            hits=1,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.STUN,
+                    2,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/Ji8Ww7d.png",
+            author="Lusa",
+        )
+
+
+class FollowMe(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Follow Me!",
+            skill_type=SkillType.FOLLOW_ME,
+            description=(
+                "The Fairies magical voice is leading you deeper and deeper into the woods. "
+                "Unable to resist, you walk into a monster nest."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=1,
+            cooldown=0,
+            base_value=2,
+            hits=1,
+            aoe=True,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/odiIUnp.png",
             author="Lusa",
         )

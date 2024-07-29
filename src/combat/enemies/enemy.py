@@ -84,6 +84,7 @@ class Enemy:
         phases: list[EnemyType] = None,
         controller: str = "BasicEnemyController",
         author: str = None,
+        random_loot: bool = True,
     ):
         self.name = name
         self.type = type
@@ -111,6 +112,7 @@ class Enemy:
         self.controller = controller
         self.is_boss = is_boss
         self.phases = phases
+        self.random_loot = random_loot
 
         self.attribute_overrides = attribute_overrides
 

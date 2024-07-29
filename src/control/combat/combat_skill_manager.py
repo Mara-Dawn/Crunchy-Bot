@@ -1,7 +1,9 @@
+import datetime
 import random
 
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
+from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import CharacterSkill, Skill, SkillType
 from combat.skills.skills import *  # noqa: F403
@@ -14,6 +16,9 @@ from control.service import Service
 from datalayer.database import Database
 from discord.ext import commands
 from events.bot_event import BotEvent
+from events.combat_event import CombatEvent
+from events.encounter_event import EncounterEvent
+from events.types import EncounterEventType
 
 
 class CombatSkillManager(Service):
@@ -35,13 +40,23 @@ class CombatSkillManager(Service):
 
     async def get_character_default_target(
         self, source: Actor, skill: Skill, context: EncounterContext
-    ) -> Actor:
+    ) -> Actor | None:
 
         match skill.base_skill.default_target:
             case SkillTarget.OPPONENT:
                 return context.opponent
             case SkillTarget.SELF:
                 return source
+            case SkillTarget.RANDOM_PARTY_MEMBER:
+                active_combatants = context.get_active_combatants()
+                if len(active_combatants) <= 0:
+                    return None
+                return random.choice(active_combatants)
+            case SkillTarget.RANDOM_DEFEATED_PARTY_MEMBER:
+                defeated_combatants = context.get_defeated_combatants()
+                if len(defeated_combatants) <= 0:
+                    return None
+                return random.choice(defeated_combatants)
 
     async def get_skill_data(self, actor: Actor, skill: Skill) -> CharacterSkill:
         if actor.is_enemy:
@@ -138,6 +153,55 @@ class CombatSkillManager(Service):
             return await self.get_character_skill_effect(
                 actor, skill, combatant_count, force_min, force_max
             )
+
+    async def get_special_skill_modifier(
+        self,
+        context: EncounterContext,
+        skill: Skill,
+    ) -> tuple[float, str]:
+        skill_type = skill.type
+        guild_id = context.encounter.guild_id
+
+        modifier = 1
+        description = None
+
+        match skill_type:
+            case SkillType.KARMA:
+                enemy_data = await self.database.get_encounter_events(
+                    guild_id,
+                    [EnemyType.BONTERRY, EnemyType.BONTERRY_KING],
+                    [EncounterEventType.ENEMY_DEFEAT],
+                )
+                kill_count = 0
+                for _, enemy_type in enemy_data:
+                    if enemy_type == EnemyType.BONTERRY:
+                        kill_count += 1
+                    if enemy_type == EnemyType.BONTERRY_KING:
+                        break
+                modifier = kill_count
+                description = skill.description.replace("@", str(kill_count))
+
+        return modifier, description
+
+    async def trigger_special_skill_effects(
+        self,
+        event: CombatEvent,
+    ) -> list[SkillInstance]:
+
+        skill_type = event.skill_type
+        if skill_type is None:
+            return
+
+        match skill_type:
+            case SkillType.SMELLING_SALT:
+                event = EncounterEvent(
+                    datetime.datetime.now(),
+                    event.guild_id,
+                    event.encounter_id,
+                    event.target_id,
+                    EncounterEventType.MEMBER_REVIVE,
+                )
+                await self.controller.dispatch_event(event)
 
     async def get_character_skill_effect(
         self,

@@ -209,30 +209,39 @@ class DaddyController(EnemyController):
                 context, self.embed_manager.handle_actor_turn_embed(turn, context)
             )
 
-            if turn.post_embed is not None:
-                await self.context_loader.append_embed_to_round(
-                    context, turn.post_embed
+            if turn.post_embed_data is not None:
+                await self.context_loader.append_embeds_to_round(
+                    context, opponent, turn.post_embed_data
                 )
 
             for target, damage_instance, _ in turn.damage_data:
                 total_damage = await self.actor_manager.get_skill_damage_after_defense(
                     target, turn.skill, damage_instance.scaled_value
                 )
-                await self.status_effect_manager.handle_post_attack_status_effects(
-                    context,
-                    opponent,
-                    target,
-                    turn.skill,
-                    damage_instance,
+                embed_data = (
+                    await self.status_effect_manager.handle_post_attack_status_effects(
+                        context,
+                        opponent,
+                        target,
+                        turn.skill,
+                        damage_instance,
+                    )
                 )
+                if embed_data is not None:
+                    await self.context_loader.append_embeds_to_round(
+                        context, opponent, embed_data
+                    )
 
                 for skill_status_effect in turn.skill.base_skill.status_effects:
                     application_value = None
                     match skill_status_effect.application:
                         case StatusEffectApplication.ATTACK_VALUE:
                             application_value = damage_instance.scaled_value
+                        case StatusEffectApplication.MANUAL_VALUE:
+                            application_value = skill_status_effect.application_value
                         case StatusEffectApplication.DEFAULT:
-                            pass
+                            if total_damage <= 0:
+                                application_value = total_damage
 
                     status_effect_target = target
                     if skill_status_effect.self_target:
@@ -270,20 +279,20 @@ class DaddyController(EnemyController):
         damage_data = []
 
         if skill.base_skill.aoe:
-            damage_data, post_embed = await self.calculate_aoe_skill(
+            damage_data, post_embed_data = await self.calculate_aoe_skill(
                 context, skill, available_targets, hp_cache
             )
             return TurnData(
                 actor=context.opponent,
                 skill=skill,
                 damage_data=damage_data,
-                post_embed=post_embed,
+                post_embed_data=post_embed_data,
             )
 
         damage_instances = await self.skill_manager.get_skill_effect(
             context.opponent, skill, combatant_count=context.get_combat_scale()
         )
-        post_embed = None
+        post_embed_data = {}
 
         targets = []
 
@@ -301,14 +310,26 @@ class DaddyController(EnemyController):
             else:
                 current_hp = hp_cache[target.id]
 
-            effect_modifier, instance_post_embed = (
+            effect_modifier, instance_post_embed_data = (
                 await self.status_effect_manager.handle_attack_status_effects(
                     context, context.opponent, skill
                 )
             )
             instance.apply_effect_modifier(effect_modifier)
-            if instance_post_embed is not None:
-                post_embed = instance_post_embed
+            if instance_post_embed_data is not None:
+                post_embed_data = post_embed_data | instance_post_embed_data
+
+            on_damage_effect_modifier, dmg_taken_embed_data = (
+                await self.status_effect_manager.handle_on_damage_taken_status_effects(
+                    context,
+                    target,
+                    skill,
+                )
+            )
+            if dmg_taken_embed_data is not None:
+                post_embed_data = post_embed_data | dmg_taken_embed_data
+
+            instance.apply_effect_modifier(on_damage_effect_modifier)
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
@@ -330,7 +351,7 @@ class DaddyController(EnemyController):
             actor=context.opponent,
             skill=skill,
             damage_data=damage_data,
-            post_embed=post_embed,
+            post_embed_data=post_embed_data,
         )
 
     async def calculate_opponent_turn(

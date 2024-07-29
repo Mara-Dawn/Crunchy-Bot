@@ -15,6 +15,7 @@ class DroppableBase:
         max_level: int,
         weight: int = None,
         droppable: bool = True,
+        uniques: list[GearBaseType | SkillType] = None,
         author: str = None,
     ):
         self.name = name
@@ -27,8 +28,12 @@ class DroppableBase:
         self.droppable = droppable
         if self.weight is None:
             self.weight = 100
-        self.author = author
 
+        self.uniques = uniques
+        if self.uniques is None:
+            self.uniques = []
+
+        self.author = author
         if self.author is None:
             self.author = "Mara"
 
@@ -37,8 +42,8 @@ class Droppable:
 
     RARITY_COLOR_MAP = {
         Rarity.DEFAULT: "[30m",  # grey
-        Rarity.NORMAL: "[38m",  # white
-        Rarity.MAGIC: "[36m",  # cyan
+        Rarity.COMMON: "[38m",  # white
+        Rarity.UNCOMMON: "[36m",  # cyan
         Rarity.RARE: "[34m",  # blue
         Rarity.LEGENDARY: "[33m",  # yellow
         Rarity.UNIQUE: "[31m",  # red
@@ -46,8 +51,8 @@ class Droppable:
 
     RARITY_NAME_COLOR_MAP = {
         Rarity.DEFAULT: "[1;38m",
-        Rarity.NORMAL: "[1;38m",
-        Rarity.MAGIC: "[1;36m",
+        Rarity.COMMON: "[1;38m",
+        Rarity.UNCOMMON: "[1;36m",
         Rarity.RARE: "[1;34m",
         Rarity.LEGENDARY: "[1;33m",
         Rarity.UNIQUE: "[1;31m",
@@ -55,8 +60,8 @@ class Droppable:
 
     RARITY_COLOR_HEX_MAP = {
         Rarity.DEFAULT: discord.Color.dark_gray(),
-        Rarity.NORMAL: discord.Color(int("ffffff", 16)),
-        Rarity.MAGIC: discord.Color(int("2aa198", 16)),
+        Rarity.COMMON: discord.Color(int("ffffff", 16)),
+        Rarity.UNCOMMON: discord.Color(int("2aa198", 16)),
         # Rarity.MAGIC: discord.Color(int("859900", 16)),
         Rarity.RARE: discord.Color(int("268bd2", 16)),
         Rarity.LEGENDARY: discord.Color(int("b58900", 16)),
@@ -65,8 +70,8 @@ class Droppable:
 
     RARITY_SORT_MAP = {
         Rarity.DEFAULT: 0,
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 2,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 2,
         Rarity.RARE: 3,
         Rarity.LEGENDARY: 4,
         Rarity.UNIQUE: 5,

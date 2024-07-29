@@ -58,6 +58,7 @@ class GearBase(DroppableBase):
         permanent: bool = False,
         secret: bool = False,
         image_url: str = None,
+        uniques: list[GearBaseType] = None,
         author: str = None,
     ):
         super().__init__(
@@ -69,6 +70,7 @@ class GearBase(DroppableBase):
             max_level=max_level,
             weight=weight,
             droppable=droppable,
+            uniques=uniques,
             author=author,
         )
         self.name = name
@@ -187,6 +189,7 @@ class Gear(Droppable):
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
+        scrap_value: int = None,
         max_width: int = None,
     ) -> discord.Embed:
         if max_width is None:
@@ -243,6 +246,7 @@ class Gear(Droppable):
                     elif skill_type in [
                         SkillType.NORMAL_ATTACK,
                         SkillType.HEAVY_ATTACK,
+                        SkillType.TAPE_ATTACK,
                     ]:
                         effect = SkillEffect.PHYSICAL_DAMAGE
                     if effect not in damage_types:
@@ -323,6 +327,15 @@ class Gear(Droppable):
             info_block += "```"
 
         info_block += f"```python\n{description}```"
+
+        if scrap_value is not None:
+            stock_label = "Stock: 1"
+            scrap_label = f"Cost: ⚙️{scrap_value}"
+            spacing_width = max_width - len(scrap_label) - len(stock_label)
+            spacing = " " * spacing_width
+
+            scrap_text = f"{stock_label}{spacing}{scrap_label}"
+            info_block += f"```python\n{scrap_text}```"
 
         if show_info and len(self.information) > 0:
             info_block += f"```ansi\n[37m{self.information}```"

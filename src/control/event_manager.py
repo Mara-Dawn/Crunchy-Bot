@@ -95,23 +95,21 @@ class EventManager(Service):
                 if notification is not None:
                     await self.mod_notification(prediction_event.guild_id, notification)
             case EventType.COMBAT:
-                combat_event: CombatEvent = event
-                if combat_event.combat_event_type in [
-                    CombatEventType.ENEMY_END_TURN,
-                    CombatEventType.MEMBER_END_TURN,
-                ]:
-                    synchronized = True
+                synchronized = True
             case EventType.ENCOUNTER:
+                synchronized = True
+            case EventType.STATUS_EFFECT:
                 synchronized = True
 
         from_user = event.get_causing_user_id()
         args = event.get_type_specific_args()
-        await self.database.log_event(event)
+        event_id = await self.database.log_event(event)
         self.__log_event(event, from_user, *args)
 
         if synchronized:
             sync_event = copy.deepcopy(event)
             sync_event.synchronized = True
+            sync_event.id = event_id
             await self.controller.dispatch_event(sync_event)
 
     def __log_event(self, event: BotEvent, member_id: int, *args):

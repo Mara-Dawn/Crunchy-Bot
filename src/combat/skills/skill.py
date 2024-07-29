@@ -38,6 +38,7 @@ class BaseSkill(DroppableBase):
         default_target: SkillTarget = SkillTarget.OPPONENT,
         modifiable: bool = True,
         max_targets: int = None,
+        uniques: list[SkillType] = None,
         author: str = None,
     ):
         super().__init__(
@@ -49,6 +50,7 @@ class BaseSkill(DroppableBase):
             max_level=max_level,
             weight=weight,
             droppable=droppable,
+            uniques=uniques,
             author=author,
         )
         self.name = name
@@ -89,8 +91,8 @@ class Skill(Droppable):
 
     RARITY_SORT_MAP = {
         Rarity.DEFAULT: 0,
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 2,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 2,
         Rarity.RARE: 3,
         Rarity.LEGENDARY: 4,
         Rarity.UNIQUE: 5,
@@ -108,8 +110,8 @@ class Skill(Droppable):
 
     RARITY_STACKS_SCALING = {
         Rarity.DEFAULT: 1,
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 1.2,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 1.2,
         Rarity.RARE: 1.5,
         Rarity.LEGENDARY: 2,
         Rarity.UNIQUE: 1,
@@ -117,8 +119,8 @@ class Skill(Droppable):
 
     RARITY_DAMAGE_SCALING = {
         Rarity.DEFAULT: 1,
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 1.1,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 1.1,
         Rarity.RARE: 1.2,
         Rarity.LEGENDARY: 1.3,
         Rarity.UNIQUE: 1,
@@ -163,6 +165,7 @@ class Skill(Droppable):
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
+        scrap_value: int = None,
         max_width: int = None,
     ) -> discord.Embed:
         if max_width is None:
@@ -295,6 +298,15 @@ class Skill(Droppable):
             info_block += "```"
 
         info_block += f"```python\n{description}```"
+
+        if scrap_value is not None:
+            stock_label = "Stock: 1"
+            scrap_label = f"Cost: ⚙️{scrap_value}"
+            spacing_width = max_width - len(scrap_label) - len(stock_label)
+            spacing = " " * spacing_width
+
+            scrap_text = f"{stock_label}{spacing}{scrap_label}"
+            info_block += f"```python\n{scrap_text}```"
 
         if show_info:
             info_block += f"```ansi\n[37m{self.information}```"
@@ -514,12 +526,15 @@ class CharacterSkill:
         show_info: bool = False,
         show_data: bool = False,
         max_width: int = None,
+        description_override: str = None,
     ) -> None:
         if max_width is None:
             max_width = Config.COMBAT_EMBED_MAX_WIDTH
 
         title = f"> {self.skill.name} "
         description = f'"{self.skill.description}"'
+        if description_override is not None:
+            description = f'"{description_override}"'
 
         cooldown_info = ""
         if self.skill.base_skill.cooldown > 0 and self.on_cooldown():

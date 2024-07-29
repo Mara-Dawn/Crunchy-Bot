@@ -162,6 +162,15 @@ class SkillSelectView(
         # self.selected_slots = {}
         await self.refresh_ui()
 
+    async def open_shop(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        event = UIEvent(
+            UIEventType.FORGE_OPEN_SHOP,
+            interaction,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     async def equip_selected_skill(self, interaction: discord.Interaction, slot: int):
         await interaction.response.defer()
 

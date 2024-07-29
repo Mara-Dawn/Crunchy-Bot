@@ -148,6 +148,7 @@ class Tier0(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -157,9 +158,10 @@ class Tier0(GearBase):
             information=information,
             slot=slot,
             min_level=1,
-            max_level=4,
+            max_level=3,
             modifiers=modifiers,
             skills=skills,
+            uniques=uniques,
             scaling=1,
             image_url=image_url,
         )
@@ -239,6 +241,7 @@ class LegGear_T0(Tier0):
             information="Tier 0 leg piece.",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[GearBaseType.HOT_PANTS],
             image_url="https://i.imgur.com/AAH2XAr.png",
         )
 
@@ -253,6 +256,7 @@ class Necklace_T0(Tier0):
             information="Tier 0 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            uniques=[GearBaseType.DEEZ_NUTS],
             image_url="https://i.imgur.com/BESjNWX.png",
         )
 
@@ -285,6 +289,7 @@ class Tier1(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -294,10 +299,11 @@ class Tier1(GearBase):
             information=information,
             slot=slot,
             min_level=2,
-            max_level=5,
+            max_level=4,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.15,
+            uniques=uniques,
+            scaling=1.1,
             image_url=image_url,
             author="Mia",
         )
@@ -396,6 +402,7 @@ class LegGear_T1(Tier1):
             information="Tier 1 leg piece.",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[GearBaseType.HOT_PANTS],
             image_url="https://i.imgur.com/F10kbxJ.png",
         )
 
@@ -414,6 +421,7 @@ class Necklace_T1(Tier1):
             information="Tier 1 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            uniques=[GearBaseType.DEEZ_NUTS],
             image_url="https://i.imgur.com/XyoEXnO.png",
         )
 
@@ -450,6 +458,7 @@ class Tier2(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -462,7 +471,8 @@ class Tier2(GearBase):
             max_level=6,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.3,
+            uniques=uniques,
+            scaling=1.2,
             image_url=image_url,
             author="Klee",
         )
@@ -482,6 +492,7 @@ class Stick_T2(Tier2):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            uniques=[GearBaseType.TAPE_MEASURE],
             image_url="https://i.imgur.com/2YUEVzU.jpg",
         )
 
@@ -513,6 +524,7 @@ class HeadGear_T2(Tier2):
             description="Not sure if Nice Guy would approve.",
             information="Tier 2 head piece.",
             slot=EquipmentSlot.HEAD,
+            uniques=[GearBaseType.CAT_HEAD],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/AjKaSDI.jpg",
         )
@@ -541,6 +553,7 @@ class LegGear_T2(Tier2):
             description="Probably won't even match the tuxedo, but the stripes make the pants go faster",
             information="Tier 2 leg piece.",
             slot=EquipmentSlot.LEGS,
+            uniques=[GearBaseType.CAT_LEGS],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/DHTmPOz.jpg",
         )
@@ -556,6 +569,10 @@ class Necklace_T2_1(Tier2):
             information="Tier 2 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            uniques=[
+                GearBaseType.CAT_TAIL,
+                GearBaseType.CAT_HANDS,
+            ],
             image_url="https://i.imgur.com/f6vB7tO.jpg",
         )
 
@@ -569,6 +586,10 @@ class Necklace_T2_2(Tier2):
             description="Doesn't work anymore, but the gril is cute",
             information="Tier 2 accessory",
             slot=EquipmentSlot.ACCESSORY,
+            uniques=[
+                GearBaseType.CAT_TAIL,
+                GearBaseType.CAT_HANDS,
+            ],
             modifiers=[GearModifierType.DEXTERITY],
             image_url="https://i.imgur.com/wRUMfXz.jpg",
         )
@@ -588,6 +609,7 @@ class Tier3(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -599,8 +621,9 @@ class Tier3(GearBase):
             min_level=4,
             max_level=10,
             modifiers=modifiers,
+            uniques=uniques,
             skills=skills,
-            scaling=1.45,
+            scaling=1.3,
             image_url=image_url,
             author="Franny",
         )
@@ -679,6 +702,7 @@ class BodyGear_T3_1(Tier3):
             description="See these bling bling dindonk dindonks? It is the source of all of my POWER!",
             information="Tier 3 body piece.",
             slot=EquipmentSlot.BODY,
+            uniques=[GearBaseType.FEMALE_ARMOR],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/DIosQoG.png",
         )
@@ -693,6 +717,7 @@ class BodyGear_T3_2(Tier3):
             description="See these bling bling dindonk dindonks? It is the source of all of my POWER!",
             information="Tier 3 body piece.",
             slot=EquipmentSlot.BODY,
+            uniques=[GearBaseType.FEMALE_ARMOR],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/rvjshYX.png",
         )
@@ -754,6 +779,7 @@ class Tier4(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -766,7 +792,8 @@ class Tier4(GearBase):
             max_level=12,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.6,
+            uniques=uniques,
+            scaling=1.4,
             image_url=image_url,
         )
 
@@ -871,6 +898,7 @@ class Tier5(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -883,7 +911,8 @@ class Tier5(GearBase):
             max_level=12,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.75,
+            uniques=uniques,
+            scaling=1.5,
             image_url=image_url,
             author="Mia",
         )

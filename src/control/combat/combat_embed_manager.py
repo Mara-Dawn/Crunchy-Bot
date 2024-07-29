@@ -537,7 +537,9 @@ class CombatEmbedManager(Service):
         full_embed = discord.Embed(title="", description="", color=color)
         full_embed.set_author(name=title, icon_url=actor.image_url)
         full_embed.set_thumbnail(url=skill.base_skill.image_url)
-        skill_data.add_to_embed(full_embed)
+        skill_data.add_to_embed(
+            full_embed, description_override=turn_data.description_override
+        )
 
         yield full_embed
 
@@ -618,7 +620,8 @@ class CombatEmbedManager(Service):
 
         if actor.image_url is not None:
             embed.set_thumbnail(url=actor.image_url)
-        embed.add_field(name="Reason", value=reason)
+        if reason is not None and len(reason) > 0:
+            embed.add_field(name="Reason", value=reason)
         return embed
 
     async def get_waiting_for_party_embed(self, party_size: int):

@@ -8,6 +8,7 @@ class EventType(str, Enum):
     QUOTE = "quote"
     SPAM = "spam"
     BEANS = "beans"
+    EQUIPMENT = "equipment"
     INVENTORY = "inventory"
     INVENTORYBATCH = "inventory_batch"
     LOOTBOX = "loot_box"
@@ -85,6 +86,8 @@ class EncounterEventType(str, Enum):
     NEW_ROUND = "new_round"
     MEMBER_ENGAGE = "member_engage"
     MEMBER_DEFEAT = "member_defeat"
+    MEMBER_REVIVE = "member_revive"
+    FORCE_SKIP = "force_skip"
     MEMBER_LEAVING = "member_leaving"
     MEMBER_OUT = "member_timeout"
     ENEMY_DEFEAT = "enemy_defeat"
@@ -102,6 +105,10 @@ class CombatEventType(str, Enum):
     ENEMY_TURN = "enemy_turn"
     MEMBER_END_TURN = "member_end_turn"
     ENEMY_END_TURN = "enemy_end_turn"
+
+
+class EquipmentEventType(str, Enum):
+    SHOP_BUY = "shop_buy"
 
 
 class UIEventType(str, Enum):
@@ -196,6 +203,9 @@ class UIEventType(str, Enum):
 
     FORGE_VIEW = "forge_view"
     FORGE_USE = "forge_use"
+    FORGE_OPEN_SHOP = "forge_open_select"
+    FORGE_OPEN_OVERVIEW = "forge_open_overview"
+    FORGE_SHOP_BUY = "forge_shop_buy"
 
     SCRAP_BALANCE_CHANGED = "scrap_balance_changed"
 

@@ -28,6 +28,7 @@ from combat.gear.types import (
     GearModifierType,
     Rarity,
 )
+from combat.gear.uniques import *  # noqa: F403
 from combat.skills.skill import BaseSkill, Skill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillType
@@ -38,6 +39,7 @@ from events.beans_event import BeansEvent, BeansEventType
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
+from events.equipment_event import EquipmentEvent
 from events.garden_event import GardenEvent
 from events.interaction_event import InteractionEvent
 from events.inventory_batchevent import InventoryBatchEvent
@@ -53,6 +55,7 @@ from events.timeout_event import TimeoutEvent
 from events.types import (
     CombatEventType,
     EncounterEventType,
+    EquipmentEventType,
     EventType,
     GardenEventType,
     LootBoxEventType,
@@ -652,6 +655,20 @@ class Database:
         PRIMARY KEY ({STATUS_EFFECT_EVENT_ID_COL})
     );"""
 
+    EQUIPMENT_EVENT_TABLE = "equipmentevents"
+    EQUIPMENT_EVENT_ID_COL = "eqev_id"
+    EQUIPMENT_EVENT_MEMBER_ID = "eqev_member_id"
+    EQUIPMENT_EVENT_EQUIPMENT_EVENT_TYPE = "eqev_type"
+    EQUIPMENT_EVENT_ITEM_ID = "eqev_item_id"
+    CREATE_EQUIPMENT_EVENT_TABLE = f"""
+    CREATE TABLE if not exists {EQUIPMENT_EVENT_TABLE} (
+        {EQUIPMENT_EVENT_ID_COL} INTEGER REFERENCES {EVENT_TABLE} ({EVENT_ID_COL}),
+        {EQUIPMENT_EVENT_MEMBER_ID} INTEGER, 
+        {EQUIPMENT_EVENT_EQUIPMENT_EVENT_TYPE} TEST, 
+        {EQUIPMENT_EVENT_ITEM_ID} INTEGER, 
+        PRIMARY KEY ({EQUIPMENT_EVENT_ID_COL})
+    );"""
+
     PERMANENT_ITEMS = [
         ItemType.REACTION_SPAM,
         ItemType.LOTTERY_TICKET,
@@ -721,6 +738,7 @@ class Database:
             await db.execute(self.CREATE_USER_EQUIPPED_SKILLS_TABLE)
             await db.execute(self.CREATE_KARMA_EVENT_TABLE)
             await db.execute(self.CREATE_STATUS_EFFECT_EVENT_TABLE)
+            await db.execute(self.CREATE_EQUIPMENT_EVENT_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -1127,6 +1145,26 @@ class Database:
 
         return await self.__query_insert(command, task)
 
+    async def __create_equipment_event(
+        self, event_id: int, event: EquipmentEvent
+    ) -> int:
+        command = f"""
+            INSERT INTO {self.EQUIPMENT_EVENT_TABLE} (
+            {self.EQUIPMENT_EVENT_ID_COL},
+            {self.EQUIPMENT_EVENT_MEMBER_ID},
+            {self.EQUIPMENT_EVENT_EQUIPMENT_EVENT_TYPE},
+            {self.EQUIPMENT_EVENT_ITEM_ID})
+            VALUES (?, ?, ?, ?);
+        """
+        task = (
+            event_id,
+            event.member_id,
+            event.equipment_event_type.value,
+            event.item_id,
+        )
+
+        return await self.__query_insert(command, task)
+
     async def log_event(self, event: BotEvent) -> int:
         if event.type == EventType.INVENTORYBATCH:
             event_id = await self.__create_batch_base_event(event)
@@ -1139,37 +1177,41 @@ class Database:
 
         match event.type:
             case EventType.INTERACTION:
-                return await self.__create_interaction_event(event_id, event)
+                 await self.__create_interaction_event(event_id, event)
             case EventType.JAIL:
-                return await self.__create_jail_event(event_id, event)
+                 await self.__create_jail_event(event_id, event)
             case EventType.TIMEOUT:
-                return await self.__create_timeout_event(event_id, event)
+                 await self.__create_timeout_event(event_id, event)
             case EventType.QUOTE:
-                return await self.__create_quote_event(event_id, event)
+                 await self.__create_quote_event(event_id, event)
             case EventType.SPAM:
-                return await self.__create_spam_event(event_id, event)
+                 await self.__create_spam_event(event_id, event)
             case EventType.BEANS:
-                return await self.__create_beans_event(event_id, event)
+                 await self.__create_beans_event(event_id, event)
             case EventType.INVENTORY:
-                return await self.__create_inventory_event(event_id, event)
+                 await self.__create_inventory_event(event_id, event)
             case EventType.INVENTORYBATCH:
-                return await self.__create_batch_inventory_event(event_id, event)
+                 await self.__create_batch_inventory_event(event_id, event)
             case EventType.LOOTBOX:
-                return await self.__create_loot_box_event(event_id, event)
+                 await self.__create_loot_box_event(event_id, event)
             case EventType.BAT:
-                return await self.__create_bat_event(event_id, event)
+                 await self.__create_bat_event(event_id, event)
             case EventType.PREDICTION:
-                return await self.__create_prediction_event(event_id, event)
+                 await self.__create_prediction_event(event_id, event)
             case EventType.GARDEN:
-                return await self.__create_garden_event(event_id, event)
+                 await self.__create_garden_event(event_id, event)
             case EventType.ENCOUNTER:
-                return await self.__create_encounter_event(event_id, event)
+                 await self.__create_encounter_event(event_id, event)
             case EventType.COMBAT:
-                return await self.__create_combat_event(event_id, event)
+                 await self.__create_combat_event(event_id, event)
             case EventType.STATUS_EFFECT:
-                return await self.__create_status_effect_event(event_id, event)
+                 await self.__create_status_effect_event(event_id, event)
             case EventType.KARMA:
-                return await self.__create_karma_event(event_id, event)
+                 await self.__create_karma_event(event_id, event)
+            case EventType.EQUIPMENT:
+                await self.__create_equipment_event(event_id, event)
+
+        return event_id
 
     async def log_quote(self, quote: Quote) -> int:
         command = f"""
@@ -3207,6 +3249,29 @@ class Database:
 
         return [EncounterEvent.from_db_row(row) for row in rows]
 
+    async def get_encounter_events(
+        self, guild_id: int, enemy_types: list[EnemyType], event_types: list[EncounterEventType]
+    ) -> list[tuple[EncounterEvent, EnemyType]]:
+        enemy_list_sanitized = self.__list_sanitizer(enemy_types)
+        event_type_list_sanitized = self.__list_sanitizer(event_types)
+
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            INNER JOIN {self.ENCOUNTER_TABLE} ON {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = {self.ENCOUNTER_ID_COL}
+            WHERE {self.ENCOUNTER_ENEMY_TYPE_COL} in {enemy_list_sanitized}
+            AND {self.ENCOUNTER_EVENT_TYPE_COL} in {event_type_list_sanitized}
+            AND {self.ENCOUNTER_GUILD_ID_COL} = ?
+            ORDER BY {self.EVENT_ID_COL} DESC;
+        """
+
+        task = (*enemy_types, *event_types, guild_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        return [(EncounterEvent.from_db_row(row), EnemyType(row[self.ENCOUNTER_ENEMY_TYPE_COL])) for row in rows]
+
     async def get_combat_events_by_encounter_id(
         self, encounter_id: int
     ) -> list[CombatEvent]:
@@ -3551,8 +3616,11 @@ class Database:
             row[self.USER_EQUIPMENT_ACCESSORY_2_ID_COL]
         )
 
+        level = await self.get_guild_level(guild_id)
+
         return CharacterEquipment(
             member_id=member_id,
+            level=level,
             weapon=weapon,
             head_gear=head_gear,
             body_gear=body_gear,
@@ -3929,3 +3997,30 @@ class Database:
                 transformed[user_id].append(event)
 
         return transformed
+
+    async def get_already_bought_daily_gear(
+        self,
+        member_id: int,
+        guild_id: int,
+    ) -> list[int]:
+        command = f"""
+            SELECT * FROM {self.EQUIPMENT_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} 
+            ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.EQUIPMENT_EVENT_TABLE}.{self.EQUIPMENT_EVENT_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND {self.EQUIPMENT_EVENT_MEMBER_ID} = ?
+            AND {self.EQUIPMENT_EVENT_EQUIPMENT_EVENT_TYPE} = ?
+            ;
+        """
+
+        task = (guild_id, member_id, EquipmentEventType.SHOP_BUY.value)
+        rows = await self.__query_select(command, task)
+
+        if not rows or len(rows) < 1:
+            return {}
+
+        item_ids = []
+        for row in rows:
+            item_ids.append(int(row[self.EQUIPMENT_EVENT_ITEM_ID]))
+
+        return item_ids
