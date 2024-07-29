@@ -2,7 +2,6 @@ from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearBaseType
 from combat.skills.types import SkillType
-from items.types import ItemType
 
 
 class BoobaSlime(Enemy):
@@ -586,6 +585,69 @@ class SchoolBully(Enemy):
             gear_loot_table=[],
             skill_loot_table=[],
             initiative=16,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
+class Bonterry(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Bonterry",
+            type=EnemyType.BONTERRY,
+            description=(
+                "It was said that it once was a human, who tricked the Devil into not taking their soul. "
+                "After death, they became a mindless monster with nowhere to go, following a flame from the underworld."
+            ),
+            information="",
+            image_url="https://i.imgur.com/MDnqn2A.png",
+            # min_level=5,
+            min_level=4,
+            max_level=9,
+            health=4,
+            damage_scaling=3,
+            max_players=4,
+            skill_types=[
+                SkillType.CHEFS_KNIVE,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=5,
+            actions_per_turn=1,
+            author="Lusa",
+        )
+
+
+class BonterryKing(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Bonterry King",
+            type=EnemyType.BONTERRY_KING,
+            description=(
+                "The king is seeking revenge for his fallen friends. "
+                "He is the largest of his specimen."
+            ),
+            information="",
+            image_url="https://i.imgur.com/F8Cxo0R.png",
+            # min_level=5,
+            min_level=4,
+            max_level=9,
+            health=10,
+            damage_scaling=7,
+            max_players=5,
+            skill_types=[
+                SkillType.CHEFS_KNIVE,
+                SkillType.KARMA,
+                SkillType.GLOOM,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
+            min_gear_drop_count=5,
+            max_gear_drop_count=6,
+            initiative=25,
+            weighting=10,
             actions_per_turn=2,
             author="Lusa",
         )

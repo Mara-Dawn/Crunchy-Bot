@@ -142,6 +142,13 @@ class SkillType(str, Enum):
     KNEE_KICK = "KneeKick"
     HA_HA = "HaHa"
 
+    # Bonterry
+    CHEFS_KNIVE = "ChefsKnive"
+
+    # Bonterry King
+    KARMA = "Karma"
+    GLOOM = "Gloom"
+
     # Daddy
     HAIR_PULL = "HairPull"
     BELT = "Belt"

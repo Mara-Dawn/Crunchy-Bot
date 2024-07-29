@@ -483,14 +483,18 @@ class CombatStatusEffectManager(Service):
             if active_actor.id == actor.id:
                 actor = active_actor
 
+        if skill_effect in [
+            SkillEffect.NOTHING,
+            SkillEffect.HEALING,
+            SkillEffect.BUFF,
+        ]:
+            return 1, None
+
         triggered_status_effects = await self.actor_trigger(
             context, actor, StatusEffectTrigger.ON_DAMAGE_TAKEN
         )
 
-        if len(triggered_status_effects) <= 0 or skill_effect in [
-            SkillEffect.NOTHING,
-            SkillEffect.HEALING,
-        ]:
+        if len(triggered_status_effects):
             return 1, None
 
         if not skill.base_skill.modifiable:

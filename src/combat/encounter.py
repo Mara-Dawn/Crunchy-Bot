@@ -264,8 +264,10 @@ class TurnData:
         skill: Skill,
         damage_data: list[tuple[Actor, SkillInstance, int]],
         post_embed_data: dict[str, str] = None,
+        description_override: str = None,
     ):
         self.actor = actor
         self.skill = skill
         self.damage_data = damage_data
         self.post_embed_data = post_embed_data
+        self.description_override = description_override

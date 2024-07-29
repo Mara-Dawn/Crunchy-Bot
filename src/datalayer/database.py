@@ -3249,6 +3249,29 @@ class Database:
 
         return [EncounterEvent.from_db_row(row) for row in rows]
 
+    async def get_encounter_events(
+        self, guild_id: int, enemy_types: list[EnemyType], event_types: list[EncounterEventType]
+    ) -> list[tuple[EncounterEvent, EnemyType]]:
+        enemy_list_sanitized = self.__list_sanitizer(enemy_types)
+        event_type_list_sanitized = self.__list_sanitizer(event_types)
+
+        command = f"""
+            SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
+            INNER JOIN {self.ENCOUNTER_TABLE} ON {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = {self.ENCOUNTER_ID_COL}
+            WHERE {self.ENCOUNTER_ENEMY_TYPE_COL} in {enemy_list_sanitized}
+            AND {self.ENCOUNTER_EVENT_TYPE_COL} in {event_type_list_sanitized}
+            AND {self.ENCOUNTER_GUILD_ID_COL} = ?
+            ORDER BY {self.EVENT_ID_COL} DESC;
+        """
+
+        task = (*enemy_types, *event_types, guild_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        return [(EncounterEvent.from_db_row(row), EnemyType(row[self.ENCOUNTER_ENEMY_TYPE_COL])) for row in rows]
+
     async def get_combat_events_by_encounter_id(
         self, encounter_id: int
     ) -> list[CombatEvent]:

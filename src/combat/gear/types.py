@@ -159,6 +159,8 @@ class GearBaseType(str, Enum):
     BODYGEAR_T4 = "BodyGear_T4"
     BODYGEAR_T5 = "BodyGear_T5"
 
+    FEMALE_ARMOR = "FemaleArmor"
+
     DEFAULT_LEGS = "DefaultLegs"
     LEGGEAR_T0 = "LegGear_T0"
     LEGGEAR_T1 = "LegGear_T1"

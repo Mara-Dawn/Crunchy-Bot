@@ -427,14 +427,15 @@ class FireBall(BaseSkill):
             image_url="https://i.imgur.com/tzbLY8h.png",
         )
 
+
 class PartyDrugs(BaseSkill):
 
     def __init__(self):
         super().__init__(
             name="Party Drugs",
             skill_type=SkillType.PARTY_DRUGS,
-            description=( 
-                "This stuff will make you taste colours and see things you cant even imagine when sober! " 
+            description=(
+                "This stuff will make you taste colours and see things you cant even imagine when sober! "
                 "You take a hit and immediately fire a purple-green beam of magical vomit at your enemy. "
                 "You are high for the next 3 turns."
             ),
@@ -442,11 +443,7 @@ class PartyDrugs(BaseSkill):
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=6,
             status_effects=[
-                SkillStatusEffect(
-                    StatusEffectType.HIGH,
-                    3,
-                    self_target=True
-                )
+                SkillStatusEffect(StatusEffectType.HIGH, 3, self_target=True)
             ],
             min_level=4,
             base_value=6,
@@ -454,6 +451,7 @@ class PartyDrugs(BaseSkill):
             reset_after_encounter=False,
             image_url="https://i.imgur.com/M4P2k4J.png",
         )
+
 
 class MagicMissile(BaseSkill):
 
@@ -473,6 +471,7 @@ class MagicMissile(BaseSkill):
             image_url="https://i.imgur.com/NnNfa5U.png",
             author="Lusa",
         )
+
 
 class SpectralHand(BaseSkill):
 
@@ -502,6 +501,7 @@ class SpectralHand(BaseSkill):
             image_url="https://i.imgur.com/s1tXlJB.png",
             author="Lusa",
         )
+
 
 # Enemy Skills
 
@@ -1673,5 +1673,82 @@ class HaHa(BaseSkill):
             aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/nQFkAQn.png",
+            author="Lusa",
+        )
+
+
+class ChefsKnive(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Chef's Knive",
+            skill_type=SkillType.CHEFS_KNIVE,
+            description=(
+                "The Bonterry stabs you with its knive. "
+                "Its what it does best and it hurts a lot."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1.5,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/9VoHmE5.png",
+            author="Lusa",
+        )
+
+
+class Karma(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Karma",
+            skill_type=SkillType.KARMA,
+            description=(
+                "the souls of @ fallen bonterries drives bonterry kings grudge. "
+                "He stabs you with no remorse."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=3,
+            initial_cooldown=1,
+            base_value=1,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/kNETgLS.png",
+            author="Lusa",
+        )
+
+
+class Gloom(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Gloom",
+            skill_type=SkillType.GLOOM,
+            description=(
+                "Bonterry king wants you to suffer and despair, just like his friends did."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            base_value=3,
+            hits=1,
+            aoe=True,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/g2azYst.png",
             author="Lusa",
         )

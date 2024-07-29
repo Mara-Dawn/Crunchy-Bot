@@ -538,7 +538,9 @@ class CombatEmbedManager(Service):
         full_embed = discord.Embed(title="", description="", color=color)
         full_embed.set_author(name=title, icon_url=actor.image_url)
         full_embed.set_thumbnail(url=skill.base_skill.image_url)
-        skill_data.add_to_embed(full_embed)
+        skill_data.add_to_embed(
+            full_embed, description_override=turn_data.description_override
+        )
 
         yield full_embed
 

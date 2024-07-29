@@ -23,6 +23,8 @@ class EnemyType(str, Enum):
     HOE = "Hoe"
     MIMIC = "Mimic"
     SCHOOL_BULLY = "SchoolBully"
+    BONTERRY = "Bonterry"
+    BONTERRY_KING = "BonterryKing"
 
     DADDY_P1 = "Daddy_P1"
     DADDY_P2 = "Daddy_P2"

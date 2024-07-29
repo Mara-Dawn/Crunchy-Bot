@@ -1,4 +1,5 @@
 from combat.gear.bases import (
+    BodyGear_T3_1,
     HeadGear_T2,
     LegGear_T0,
     LegGear_T2,
@@ -197,6 +198,28 @@ class CatHands(Necklace_T2_2, Unique):
                 GearModifierType.ATTACK: 2,
                 GearModifierType.CRIT_RATE: 0.5,
                 GearModifierType.CRIT_DAMAGE: 1,
+            },
+        )
+
+
+class FemaleArmor(BodyGear_T3_1, Unique):
+
+    def __init__(self):
+        BodyGear_T3_1.__init__(self)
+        self.name = "Female Armor"
+        self.type = GearBaseType.FEMALE_ARMOR
+        self.description = (
+            "This intricate design promises the best possible protection from enemy attacks. "
+            "Extremely fashionable and highly sought after."
+        )
+        self.image_url = "https://i.imgur.com/OtTlqk5.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 2,
+                GearModifierType.EVASION: 2,
+                GearModifierType.DEFENSE: 6,
             },
         )
 

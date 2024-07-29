@@ -62,14 +62,14 @@ class CombatGearManager(Service):
         Rarity.UNCOMMON: 50,
         Rarity.RARE: 10,
         Rarity.LEGENDARY: 3,
-        Rarity.UNIQUE: 5,
+        Rarity.UNIQUE: 3,
     }
     RARITY_SCALING = {
         Rarity.COMMON: -15,
         Rarity.UNCOMMON: -1,
         Rarity.RARE: 7,
         Rarity.LEGENDARY: 2,
-        Rarity.UNIQUE: 0.5,
+        Rarity.UNIQUE: 0.7,
     }
 
     MODIFIER_COUNT = {

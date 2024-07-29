@@ -526,12 +526,15 @@ class CharacterSkill:
         show_info: bool = False,
         show_data: bool = False,
         max_width: int = None,
+        description_override: str = None,
     ) -> None:
         if max_width is None:
             max_width = Config.COMBAT_EMBED_MAX_WIDTH
 
         title = f"> {self.skill.name} "
         description = f'"{self.skill.description}"'
+        if description_override is not None:
+            description = f'"{description_override}"'
 
         cooldown_info = ""
         if self.skill.base_skill.cooldown > 0 and self.on_cooldown():

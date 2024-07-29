@@ -702,6 +702,7 @@ class BodyGear_T3_1(Tier3):
             description="See these bling bling dindonk dindonks? It is the source of all of my POWER!",
             information="Tier 3 body piece.",
             slot=EquipmentSlot.BODY,
+            uniques=[GearBaseType.FEMALE_ARMOR],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/DIosQoG.png",
         )
@@ -716,6 +717,7 @@ class BodyGear_T3_2(Tier3):
             description="See these bling bling dindonk dindonks? It is the source of all of my POWER!",
             information="Tier 3 body piece.",
             slot=EquipmentSlot.BODY,
+            uniques=[GearBaseType.FEMALE_ARMOR],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/rvjshYX.png",
         )

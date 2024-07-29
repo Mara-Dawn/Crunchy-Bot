@@ -135,6 +135,13 @@ class BasicEnemyController(EnemyController):
         )
         post_embed_data = {}
 
+        special_skill_modifier, description_override = (
+            await self.skill_manager.get_special_skill_modifier(
+                context,
+                skill,
+            )
+        )
+
         for instance in damage_instances:
             if len(available_targets) <= 0:
                 break
@@ -169,6 +176,9 @@ class BasicEnemyController(EnemyController):
 
             instance.apply_effect_modifier(on_damage_effect_modifier)
 
+            if special_skill_modifier != 1:
+                instance.apply_effect_modifier(special_skill_modifier)
+
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
             )
@@ -189,6 +199,7 @@ class BasicEnemyController(EnemyController):
             skill=skill,
             damage_data=damage_data,
             post_embed_data=post_embed_data,
+            description_override=description_override,
         )
 
     async def calculate_opponent_turn(

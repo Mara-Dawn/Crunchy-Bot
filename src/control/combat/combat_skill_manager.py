@@ -1,8 +1,11 @@
 import datetime
 import random
 
+from discord import guild
+
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
+from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import CharacterSkill, Skill, SkillType
 from combat.skills.skills import *  # noqa: F403
@@ -152,6 +155,35 @@ class CombatSkillManager(Service):
             return await self.get_character_skill_effect(
                 actor, skill, combatant_count, force_min, force_max
             )
+
+    async def get_special_skill_modifier(
+        self,
+        context: EncounterContext,
+        skill: Skill,
+    ) -> tuple[float, str]:
+        skill_type = skill.type
+        guild_id = context.encounter.guild_id
+
+        modifier = 1
+        description = None
+
+        match skill_type:
+            case SkillType.KARMA:
+                enemy_data = await self.database.get_encounter_events(
+                    guild_id,
+                    [EnemyType.BONTERRY, EnemyType.BONTERRY_KING],
+                    [EncounterEventType.ENEMY_DEFEAT],
+                )
+                kill_count = 0
+                for _, enemy_type in enemy_data:
+                    if enemy_type == EnemyType.BONTERRY:
+                        kill_count += 1
+                    if enemy_type == EnemyType.BONTERRY_KING:
+                        break
+                modifier = kill_count
+                description = skill.description.replace("@", str(kill_count))
+
+        return modifier, description
 
     async def trigger_special_skill_effects(
         self,
