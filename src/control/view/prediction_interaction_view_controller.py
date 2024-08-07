@@ -97,7 +97,7 @@ class PredictionInteractionViewController(ViewController):
     async def __refresh_view(
         self, interaction: discord.Interaction, prediction: Prediction, view_id: int
     ):
-        view: PredictionInteractionView = self.controller.get_view(view_id)
+        view: PredictionInteractionView | None = self.controller.get_view(view_id)
 
         if view is None:
             with contextlib.suppress(discord.errors.NotFound):
@@ -115,7 +115,7 @@ class PredictionInteractionViewController(ViewController):
         self,
         interaction: discord.Interaction,
         prediction: Prediction,
-        selected_outcome_id: int,
+        selected_outcome_id: int | None,
         view_id: int,
     ):
         guild_id = interaction.guild_id

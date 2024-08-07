@@ -122,7 +122,7 @@ class Combat(commands.Cog):
     @commands.Cog.listener("on_ready")
     async def on_ready_combat(self):
         for guild in self.bot.guilds:
-            await self.encounter_manager.refresh_combat_messages(guild.id)
+            await self.encounter_manager.refresh_combat_messages(guild.id, purge=True)
         self.random_encounter_task.start()
         self.random_low_lvl_encounter_task.start()
         self.logger.log("init", "Combat loaded.", cog=self.__cog_name__)
@@ -527,7 +527,9 @@ class Combat(commands.Cog):
             return
 
         await interaction.response.defer()
-        await self.encounter_manager.refresh_combat_messages(interaction.guild_id)
+        await self.encounter_manager.refresh_combat_messages(
+            interaction.guild_id, purge=True
+        )
 
         await self.bot.command_response(
             self.__cog_name__, interaction, "Successfully reloaded combats."
@@ -598,7 +600,9 @@ class Combat(commands.Cog):
             f"Added {channel.name} to combat channels.",
             args=[channel.name],
         )
-        await self.encounter_manager.refresh_combat_messages(interaction.guild_id)
+        await self.encounter_manager.refresh_combat_messages(
+            interaction.guild_id, purge=True
+        )
 
     @group.command(
         name="remove_combat_channel",
