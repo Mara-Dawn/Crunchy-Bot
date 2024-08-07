@@ -58,6 +58,17 @@ class CombatViewController(ViewController):
             guild_id = interaction.guild_id
             member_id = interaction.user.id
 
+            beans_role = await self.settings_manager.get_beans_role(guild_id)
+            if beans_role is not None and beans_role not in [
+                role.id for role in interaction.user.roles
+            ]:
+                role_name = interaction.guild.get_role(beans_role).name
+                await interaction.followup.send(
+                    f"You can only use this feature if you have the role `{role_name}`.",
+                    ephemeral=True,
+                )
+                return
+
             message = await interaction.original_response()
             encounter = await self.database.get_encounter_by_message_id(
                 guild_id, message.id

@@ -64,7 +64,9 @@ class ItemManager(Service):
         output = []
         for item_type in items:
             item = await self.get_item(guild_id, item_type)
-            if not item.secret:
+            if not item.secret and await self.settings_manager.get_shop_item_enabled(
+                guild_id, item_type
+            ):
                 output.append(item)
 
         output = sorted(
@@ -78,7 +80,12 @@ class ItemManager(Service):
         output = []
         for item_type in items:
             item = await self.get_item(guild_id, item_type)
-            if not item.hide_in_shop:
+            if (
+                not item.hide_in_shop
+                and await self.settings_manager.get_shop_item_enabled(
+                    guild_id, item_type
+                )
+            ):
                 output.append(item)
 
         return output

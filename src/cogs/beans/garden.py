@@ -22,14 +22,6 @@ class Garden(BeansGroup):
         super().__init__(bot)
         self.ai_manager: AIManager = self.controller.get_service(AIManager)
 
-    @staticmethod
-    async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
-        return (
-            interaction.user.id == author_id
-            or interaction.user.guild_permissions.administrator
-        )
-
     async def __check_enabled(self, interaction: discord.Interaction) -> bool:
         guild_id = interaction.guild_id
 
@@ -51,6 +43,24 @@ class Garden(BeansGroup):
             return False
 
         return True
+
+    async def __beans_role_check(self, interaction: discord.Interaction) -> bool:
+        member = interaction.user
+        guild_id = interaction.guild_id
+
+        beans_role = await self.settings_manager.get_beans_role(guild_id)
+        if beans_role is None:
+            return True
+        if beans_role in [role.id for role in member.roles]:
+            return True
+
+        role_name = interaction.guild.get_role(beans_role).name
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"You can only use this command if you have the role `{role_name}`.",
+        )
+        return False
 
     @commands.Cog.listener("on_ready")
     async def on_ready_garden(self):
@@ -128,6 +138,8 @@ class Garden(BeansGroup):
     @app_commands.guild_only()
     async def garden(self, interaction: discord.Interaction):
         if not await self.__check_enabled(interaction):
+            return
+        if not await self.__beans_role_check(interaction):
             return
 
         guild_id = interaction.guild_id
