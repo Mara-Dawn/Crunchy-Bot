@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 
 import discord
@@ -99,8 +100,9 @@ class PredictionInteractionViewController(ViewController):
         view: PredictionInteractionView = self.controller.get_view(view_id)
 
         if view is None:
-            message = await interaction.original_response()
-            await message.delete()
+            with contextlib.suppress(discord.errors.NotFound):
+                message = await interaction.original_response()
+                await message.delete()
 
         prediction_stats = await self.database.get_prediction_stats_by_prediction(
             prediction
