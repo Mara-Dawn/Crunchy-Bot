@@ -70,10 +70,9 @@ class Statistics(commands.Cog):
 
         maya = 95526988323753984
         mara = 90043934247501824
-        mia = 219145051375271937
         fuzia = 106752187530481664
 
-        if ctx.author.id not in [mara, mia, fuzia, maya]:
+        if ctx.author.id not in [mara, fuzia, maya]:
             raise commands.NotOwner("You do not own this bot.")
 
         if not guilds:

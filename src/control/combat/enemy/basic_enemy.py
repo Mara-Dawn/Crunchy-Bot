@@ -4,15 +4,10 @@ import random
 from combat.actors import Actor, Opponent
 from combat.encounter import EncounterContext, TurnData
 from combat.skills.skill import Skill
-from combat.skills.types import (
-    StatusEffectApplication,
-)
 from control.combat.enemy.enemy_controller import EnemyController
 from events.bot_event import BotEvent
-from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.types import (
-    CombatEventType,
     EncounterEventType,
 )
 
@@ -38,80 +33,6 @@ class BasicEnemyController(EnemyController):
 
     async def intro(self, encounter_id: int):
         pass
-
-    async def handle_turn(self, context: EncounterContext):
-        turn_data = await self.calculate_opponent_turn(context)
-        opponent = context.opponent
-
-        for turn in turn_data:
-            await self.context_loader.append_embed_generator_to_round(
-                context, self.embed_manager.handle_actor_turn_embed(turn, context)
-            )
-
-            if turn.post_embed_data is not None:
-                await self.context_loader.append_embeds_to_round(
-                    context, opponent, turn.post_embed_data
-                )
-
-            for target, damage_instance, _ in turn.damage_data:
-                total_damage = await self.actor_manager.get_skill_damage_after_defense(
-                    target, turn.skill, damage_instance.scaled_value
-                )
-                embed_data = (
-                    await self.status_effect_manager.handle_post_attack_status_effects(
-                        context,
-                        opponent,
-                        target,
-                        turn.skill,
-                        damage_instance,
-                    )
-                )
-                if embed_data is not None:
-                    await self.context_loader.append_embeds_to_round(
-                        context, opponent, embed_data
-                    )
-
-                for skill_status_effect in turn.skill.base_skill.status_effects:
-                    application_value = None
-                    match skill_status_effect.application:
-                        case StatusEffectApplication.ATTACK_VALUE:
-                            application_value = total_damage
-                        case StatusEffectApplication.MANUAL_VALUE:
-                            application_value = skill_status_effect.application_value
-                        case StatusEffectApplication.DEFAULT:
-                            if total_damage <= 0:
-                                application_value = total_damage
-
-                    context = await self.context_loader.load_encounter_context(
-                        context.encounter.id
-                    )
-                    target = context.get_actor(target.id)
-
-                    status_effect_target = target
-                    if skill_status_effect.self_target:
-                        status_effect_target = opponent
-
-                    await self.status_effect_manager.apply_status(
-                        context,
-                        opponent,
-                        status_effect_target,
-                        skill_status_effect.status_effect_type,
-                        skill_status_effect.stacks,
-                        application_value,
-                    )
-
-                event = CombatEvent(
-                    datetime.datetime.now(),
-                    context.encounter.guild_id,
-                    context.encounter.id,
-                    opponent.id,
-                    target.id,
-                    turn.skill.base_skill.skill_type,
-                    total_damage,
-                    None,
-                    CombatEventType.ENEMY_TURN,
-                )
-                await self.controller.dispatch_event(event)
 
     async def calculate_opponent_turn_data(
         self,
@@ -233,6 +154,7 @@ class BasicEnemyController(EnemyController):
         hp_cache = {}
         turn_data = []
         for skill in skills_to_use:
+
             turn_data.append(
                 await self.calculate_opponent_turn_data(
                     context, skill, available_targets, hp_cache

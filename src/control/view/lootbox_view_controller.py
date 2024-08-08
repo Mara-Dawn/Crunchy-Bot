@@ -24,6 +24,7 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.jail_manager import JailManager
 from control.logger import BotLogger
+from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
 
 
@@ -42,6 +43,9 @@ class LootBoxViewController(ViewController):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
         self.item_manager: ItemManager = controller.get_service(ItemManager)
         self.event_manager: EventManager = controller.get_service(EventManager)
         self.jail_manager: JailManager = self.controller.get_service(JailManager)

@@ -333,6 +333,8 @@ class SettingsManager(Service):
         )
 
     def handle_role_value(self, guild_id: int, role: int) -> str:
+        if role is None or role == []:
+            return " "
         guild_obj = self.bot.get_guild(guild_id)
         return (
             guild_obj.get_role(role).name
