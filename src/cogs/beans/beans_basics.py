@@ -10,6 +10,7 @@ from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType
 from items.types import ItemType
+from view.help import HelpEmbed
 from view.settings_modal import SettingsModal
 
 from cogs.beans.beans_group import BeansGroup
@@ -68,6 +69,32 @@ class BeansBasics(BeansGroup):
     @commands.Cog.listener("on_ready")
     async def on_ready_beansbasics(self) -> None:
         self.logger.log("init", "BeansBasics loaded.", cog=self.__cog_name__)
+
+    @app_commands.command(
+        name="help",
+        description="Shows a simple quick start guide.",
+    )
+    @app_commands.describe(advanced="Show all available commands.")
+    @app_commands.guild_only()
+    async def help(self, interaction: discord.Interaction, advanced: bool = False):
+        if not await self.__check_enabled(interaction):
+            return
+        if not await self.__beans_role_check(interaction):
+            return
+
+        help_embed = HelpEmbed(self.bot)
+        await help_embed.initialize(
+            interaction.guild_id, self.settings_manager, advanced=advanced
+        )
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            "",
+            embeds=[help_embed],
+            args=[advanced],
+            ephemeral=True,
+        )
 
     @app_commands.command(name="please", description="Your daily dose of beans.")
     @app_commands.guild_only()
