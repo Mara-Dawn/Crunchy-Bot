@@ -84,7 +84,7 @@ class AIManager(Service):
         )
         self.backstory_general = (
             "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
-            "When addressing users, always use their name. You may use their info as part of the conversation, especially to make fun of them. "
+            "When addressing users, always use their name. You may use their info as part of the conversation. "
         )
         self.backstory_jailing = (
             "Each message will contain information wether the user is currently jailed or not, delimited with the 'jailed' XML tags. "

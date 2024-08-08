@@ -83,22 +83,6 @@ class CombatStatusEffectManager(Service):
         stacks: int,
         application_value: float = None,
     ):
-        context = await self.context_loader.load_encounter_context(context.encounter.id)
-        status_effect = await self.factory.get_status_effect(type)
-
-        if (
-            application_value is not None
-            and application_value == 0
-            and not status_effect.apply_on_miss
-        ):
-            return
-
-        for active_actor in context.get_current_initiative():
-            if active_actor.id == source.id:
-                source = active_actor
-            if active_actor.id == target.id:
-                target = active_actor
-
         if type == StatusEffectType.RANDOM:
             random_positive_effect = [
                 StatusEffectType.HIGH,
@@ -121,6 +105,22 @@ class CombatStatusEffectManager(Service):
                 type = random.choice(random_positive_effect)
             else:
                 type = random.choice(random_negative_effect)
+
+        context = await self.context_loader.load_encounter_context(context.encounter.id)
+        status_effect = await self.factory.get_status_effect(type)
+
+        if (
+            application_value is not None
+            and application_value == 0
+            and not status_effect.apply_on_miss
+        ):
+            return
+
+        for active_actor in context.get_current_initiative():
+            if active_actor.id == source.id:
+                source = active_actor
+            if active_actor.id == target.id:
+                target = active_actor
 
         damage = 0
         match type:

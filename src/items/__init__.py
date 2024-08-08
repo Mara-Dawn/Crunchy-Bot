@@ -1015,8 +1015,8 @@ class DaddyKey(Item):
 # Debuffs
 class Debuff(Item):
 
-    DEBUFF_DURATION = 7
-    DEBUFF_BAKED_DURATION = 3
+    DEBUFF_DURATION = 5
+    DEBUFF_BAKED_DURATION = 1
 
     DEBUFFS = [
         ItemType.EGIRL_DEBUFF,

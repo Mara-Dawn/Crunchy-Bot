@@ -42,6 +42,7 @@ class SettingsManager(Service):
     BEANS_SUBSETTINGS_KEY = "beans"
     BEANS_ENABLED_KEY = "beans_enabled"
     BEANS_CHANNELS_KEY = "beans_channels"
+    BEANS_ROLE_KEY = "beans_role"
     BEANS_DAILY_MIN_KEY = "beans_daily_min"
     BEANS_DAILY_MAX_KEY = "beans_daily_max"
     BEANS_GAMBA_DEFAULT_KEY = "beans_gamba_default"
@@ -62,7 +63,7 @@ class SettingsManager(Service):
     BULLY_SUBSETTINGS_KEY = "bully"
     BULLY_ENABLED_KEY = "bully_enabled"
     BULLY_EXCLUDED_CHANNELS_KEY = "bully_channels"
-    BULLY_EXCLUDED_HAUNT_CHANNELS_KEY = "no_haunt_channels"
+    BULLY_HAUNT_CHANNELS_KEY = "no_haunt_channels"
 
     PREDICTIONS_SUBSETTINGS_KEY = "predictions"
     PREDICTIONS_ENABLED_KEY = "predictions_enabled"
@@ -180,6 +181,12 @@ class SettingsManager(Service):
             "handle_channels_value",
         )
         beans_settings.add_setting(
+            self.BEANS_ROLE_KEY,
+            [],
+            "Role to access beans content",
+            "handle_role_value",
+        )
+        beans_settings.add_setting(
             self.BEANS_DAILY_MIN_KEY, 10, "Mininum daily beans granted to users"
         )
         beans_settings.add_setting(
@@ -241,7 +248,7 @@ class SettingsManager(Service):
             "handle_channels_value",
         )
         bully_settings.add_setting(
-            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            self.BULLY_HAUNT_CHANNELS_KEY,
             [],
             "Channels excluded from haunting ghosts",
             "handle_channels_value",
@@ -326,6 +333,8 @@ class SettingsManager(Service):
         )
 
     def handle_role_value(self, guild_id: int, role: int) -> str:
+        if role is None or role == []:
+            return " "
         guild_obj = self.bot.get_guild(guild_id)
         return (
             guild_obj.get_role(role).name
@@ -725,6 +734,19 @@ class SettingsManager(Service):
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY, enabled
         )
 
+    async def get_beans_role(self, guild: int) -> int | None:
+        value = await self.get_setting(
+            guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ROLE_KEY
+        )
+        if value is None:
+            return None
+        return int(value) if value != [] else None
+
+    async def set_beans_role(self, guild: int, role_id: int | None) -> None:
+        await self.update_setting(
+            guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ROLE_KEY, role_id
+        )
+
     async def get_beans_daily_min(self, guild: int) -> int:
         return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN_KEY
@@ -890,6 +912,14 @@ class SettingsManager(Service):
             guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY, enabled
         )
 
+    async def get_shop_item_enabled(self, guild: int, item_type: ItemType) -> bool:
+        value = await self.get_setting(
+            guild, self.SHOP_SUBSETTINGS_KEY, item_type.value
+        )
+        if value is None:
+            return True
+        return value > 0
+
     async def get_shop_item_price(self, guild: int, item_type: ItemType) -> int:
         return await self.get_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type.value)
 
@@ -956,7 +986,7 @@ class SettingsManager(Service):
             for x in await self.get_setting(
                 guild,
                 self.BULLY_SUBSETTINGS_KEY,
-                self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+                self.BULLY_HAUNT_CHANNELS_KEY,
             )
         ]
 
@@ -964,7 +994,7 @@ class SettingsManager(Service):
         await self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,
-            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            self.BULLY_HAUNT_CHANNELS_KEY,
             channels,
         )
 
@@ -975,7 +1005,7 @@ class SettingsManager(Service):
         await self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,
-            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            self.BULLY_HAUNT_CHANNELS_KEY,
             channels,
         )
 
@@ -986,7 +1016,7 @@ class SettingsManager(Service):
         await self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,
-            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            self.BULLY_HAUNT_CHANNELS_KEY,
             channels,
         )
 

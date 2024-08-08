@@ -95,6 +95,25 @@ class ShopResponseViewController(ViewController):
             )
             return False
 
+        beans_role = await self.settings_manager.get_beans_role(guild_id)
+        if (
+            shop_data.selected_user is not None
+            and beans_role is not None
+            and beans_role not in [role.id for role in shop_data.selected_user.roles]
+        ):
+            role_name = interaction.guild.get_role(beans_role).name
+            await interaction.followup.send(
+                f"This user does not have the `{role_name}` role.",
+                ephemeral=True,
+            )
+            return
+
+        if shop_data.selected_user is not None and shop_data.selected_user.bot:
+            await interaction.followup.send(
+                "You cannot select bot users.", ephemeral=True
+            )
+            return False
+
         if shop_data.user_select is not None and shop_data.selected_user is None:
             await interaction.followup.send(
                 "Please select a user first.", ephemeral=True

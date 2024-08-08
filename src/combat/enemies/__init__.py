@@ -753,3 +753,104 @@ class Daddy_P2(Enemy):
             is_boss=True,
             author="Lusa, Mara",
         )
+
+
+class Weeb_P1(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Weeb",
+            type=EnemyType.WEEB_P1,
+            controller="WeebController",
+            description="",
+            information="Defeat this boss to unlock access to level 7 and above.",
+            image_url="",
+            min_level=6,
+            max_level=6,
+            health=7.5,
+            damage_scaling=10,
+            max_players=6,
+            min_encounter_scale=6,
+            skill_types=[
+                SkillType.WHIP,
+                SkillType.HAIR_PULL,
+                SkillType.BELT,
+                SkillType.BUTT_SLAP,
+            ],
+            item_loot_table=[],
+            min_gear_drop_count=7,
+            max_gear_drop_count=8,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=50,
+            actions_per_turn=2,
+            is_boss=True,
+            phases=[EnemyType.WEEB_P2],
+            author="Lusa, Mara",
+        )
+
+
+class Weeb_P2(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Weeb",
+            type=EnemyType.WEEB_P2,
+            controller="WeebController",
+            description="",
+            information="Defeat this boss to unlock access to level 7 and above.",
+            image_url="",
+            min_level=6,
+            max_level=6,
+            health=7.5,
+            damage_scaling=10,
+            max_players=6,
+            min_encounter_scale=6,
+            skill_types=[
+                SkillType.WHIP,
+                SkillType.HAIR_PULL,
+                SkillType.BELT,
+                SkillType.BUTT_SLAP,
+            ],
+            item_loot_table=[],
+            min_gear_drop_count=7,
+            max_gear_drop_count=8,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=50,
+            actions_per_turn=2,
+            is_boss=True,
+            phases=[EnemyType.WEEB_P3],
+            author="Lusa, Mara",
+        )
+
+
+class Weeb_P3(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Weeb",
+            type=EnemyType.WEEB_P3,
+            controller="WeebController",
+            description="",
+            information="Defeat this boss to unlock access to level 7 and above.",
+            image_url="",
+            min_level=6,
+            max_level=6,
+            health=7.5,
+            damage_scaling=10,
+            max_players=6,
+            min_encounter_scale=6,
+            skill_types=[
+                SkillType.WHIP,
+                SkillType.HAIR_PULL,
+                SkillType.BELT,
+                SkillType.BUTT_SLAP,
+            ],
+            item_loot_table=[],
+            min_gear_drop_count=7,
+            max_gear_drop_count=8,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=50,
+            actions_per_turn=2,
+            is_boss=True,
+            author="Lusa, Mara",
+        )

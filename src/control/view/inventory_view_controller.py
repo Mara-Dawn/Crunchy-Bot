@@ -233,6 +233,7 @@ class InventoryViewController(ViewController):
     ):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
+        beans_role = await self.settings_manager.get_beans_role(guild_id)
 
         match item.type:
             case ItemType.SPOOK_BEAN:
@@ -245,6 +246,16 @@ class InventoryViewController(ViewController):
                 if target is None:
                     await interaction.followup.send(
                         "Please select a user first.", ephemeral=True
+                    )
+                    return
+
+                if beans_role is not None and beans_role not in [
+                    role.id for role in target.roles
+                ]:
+                    role_name = interaction.guild.get_role(beans_role).name
+                    await interaction.followup.send(
+                        f"This user does not have the `{role_name}` role.",
+                        ephemeral=True,
                     )
                     return
 

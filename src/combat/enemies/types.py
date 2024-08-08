@@ -29,3 +29,7 @@ class EnemyType(str, Enum):
 
     DADDY_P1 = "Daddy_P1"
     DADDY_P2 = "Daddy_P2"
+
+    WEEB_P1 = "Weeb_P1"
+    WEEB_P2 = "Weeb_P2"
+    WEEB_P3 = "Weeb_P3"

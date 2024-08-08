@@ -93,7 +93,9 @@ class PredictionViewController(ViewController):
                 | UIEventType.PREDICTION_INTERACTION_PARENT_CHANGED
             ):
                 guild_id = event.payload
-                prediction_stats = await self.database.get_prediction_stats_by_guild(guild_id)
+                prediction_stats = await self.database.get_prediction_stats_by_guild(
+                    guild_id
+                )
                 event = UIEvent(
                     UIEventType.PREDICTION_REFRESH, prediction_stats, event.view_id
                 )
@@ -146,6 +148,17 @@ class PredictionViewController(ViewController):
     ):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
+
+        beans_role = await self.settings_manager.get_beans_role(guild_id)
+        if beans_role is not None and beans_role not in [
+            role.id for role in interaction.user.roles
+        ]:
+            role_name = interaction.guild.get_role(beans_role).name
+            await interaction.followup.send(
+                f"You can only use this feature if you have the role `{role_name}`.",
+                ephemeral=True,
+            )
+            return
 
         user_bets = await self.database.get_prediction_bets_by_user(
             interaction.guild_id, interaction.user.id

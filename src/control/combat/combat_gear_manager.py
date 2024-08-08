@@ -49,6 +49,7 @@ class CombatGearManager(Service):
     SKILL_DROP_CHANCE = 0.1
     GEAR_LEVEL_SCALING = 1
     MOB_LOOT_BONUS_SCALING = 1
+    MOB_LOOT_UNIQUE_SCALING = 0.2
 
     MIN_RARITY_LVL = {
         Rarity.COMMON: 0,
@@ -252,7 +253,10 @@ class CombatGearManager(Service):
                 base.type in enemy.skill_loot_table
                 or base.type in enemy.gear_loot_table
             ):
-                weight *= self.MOB_LOOT_BONUS_SCALING
+                scaling = self.MOB_LOOT_BONUS_SCALING
+                if issubclass(base.__class__, Unique):
+                    scaling *= self.MOB_LOOT_UNIQUE_SCALING
+                weight *= scaling
 
             match base.base_type:
                 case Base.SKILL:

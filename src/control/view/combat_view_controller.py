@@ -22,6 +22,7 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
+from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
 
 
@@ -36,6 +37,9 @@ class CombatViewController(ViewController):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
         self.event_manager: EventManager = controller.get_service(EventManager)
         self.item_manager: ItemManager = controller.get_service(ItemManager)
         self.encounter_manager: EncounterManager = controller.get_service(
@@ -57,6 +61,17 @@ class CombatViewController(ViewController):
 
             guild_id = interaction.guild_id
             member_id = interaction.user.id
+
+            beans_role = await self.settings_manager.get_beans_role(guild_id)
+            if beans_role is not None and beans_role not in [
+                role.id for role in interaction.user.roles
+            ]:
+                role_name = interaction.guild.get_role(beans_role).name
+                await interaction.followup.send(
+                    f"You can only use this feature if you have the role `{role_name}`.",
+                    ephemeral=True,
+                )
+                return
 
             message = await interaction.original_response()
             encounter = await self.database.get_encounter_by_message_id(

@@ -13,12 +13,10 @@ from events.types import (
 )
 
 
-class DaddyController(EnemyController):
+class WeebController(EnemyController):
     BOSS_LEVEL = {
-        EnemyType.DADDY_P2: 3,
-        # 6: None,
-        # 9: None,
-        # 12: None,
+        EnemyType.WEEB_P2: 6,
+        EnemyType.WEEB_P3: 6,
     }
 
     async def listen_for_event(self, event: BotEvent):

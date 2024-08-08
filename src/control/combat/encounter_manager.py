@@ -1188,23 +1188,9 @@ class EncounterManager(Service):
             if channel is None:
                 continue
 
-            async for message in channel.history(limit=1, oldest_first=True):
-                if message.author != self.bot.user or message.embeds is None:
-                    await self.refresh_combat_messages(guild_id)
-                    return
+            await self.refresh_combat_messages(guild_id)
 
-                embed_title = message.embeds[0].title
-                if embed_title[:16] != "Combat Zone":
-                    await self.refresh_combat_messages(guild_id)
-                    return
-
-                head_embed = EnemyOverviewEmbed(
-                    self.bot.user, guild_level, requirement, progress
-                )
-                await self.context_loader.edit_message(message, embed=head_embed)
-                break
-
-    async def refresh_combat_messages(self, guild_id: int):
+    async def refresh_combat_messages(self, guild_id: int, purge: bool = False):
         combat_channels = await self.settings_manager.get_combat_channels(guild_id)
 
         guild = self.bot.get_guild(guild_id)
@@ -1213,8 +1199,6 @@ class EncounterManager(Service):
             channel = guild.get_channel(channel_id)
             if channel is None:
                 continue
-
-            await channel.purge()
 
             guild_level = await self.database.get_guild_level(guild.id)
             requirement = Config.LEVEL_REQUIREMENTS[guild_level]
@@ -1239,6 +1223,21 @@ class EncounterManager(Service):
                 progress,
             )
 
-            await self.context_loader.send_message(
-                channel, content="", embed=head_embed
-            )
+            if purge:
+                await channel.purge()
+                await self.context_loader.send_message(
+                    channel, content="", embed=head_embed
+                )
+            else:
+                async for message in channel.history(limit=100):
+                    if message.thread is not None:
+                        await message.delete()
+
+                    if len(message.embeds) <= 0:
+                        continue
+
+                    embed_title = message.embeds[0].title
+                    if embed_title[:16] == "Combat Zone":
+                        await self.context_loader.edit_message(
+                            message, embed=head_embed
+                        )
