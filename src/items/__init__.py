@@ -533,7 +533,6 @@ class LootBoxItem(Item):
             emoji="🧰",
             cost=cost,
             value=None,
-            hide_in_shop=True,
         )
 
 
