@@ -19,6 +19,7 @@ from events.ui_event import UIEvent
 from control.controller import Controller
 from control.logger import BotLogger
 from control.prediction_manager import PredictionManager
+from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
 
 
@@ -39,6 +40,9 @@ class PredictionViewController(ViewController):
         self.controller = controller
         self.prediction_manager: PredictionManager = self.controller.get_service(
             PredictionManager
+        )
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
         )
 
     async def listen_for_event(self, event: BotEvent) -> None:
