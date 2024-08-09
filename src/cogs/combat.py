@@ -26,11 +26,17 @@ from view.combat.equipment_view import EquipmentView
 
 class Combat(commands.Cog):
 
-    ENCOUNTER_MIN_WAIT = 45
-    ENCOUNTER_MAX_WAIT = 75
+    # ENCOUNTER_MIN_WAIT = 45
+    # ENCOUNTER_MAX_WAIT = 75
+
+    ENCOUNTER_MIN_WAIT = 25
+    ENCOUNTER_MAX_WAIT = 35
+
+    # LOW_LVL_ENCOUNTER_MIN_WAIT = 20
+    # LOW_LVL_ENCOUNTER_MAX_WAIT = 40
 
     LOW_LVL_ENCOUNTER_MIN_WAIT = 20
-    LOW_LVL_ENCOUNTER_MAX_WAIT = 40
+    LOW_LVL_ENCOUNTER_MAX_WAIT = 30
 
     def __init__(self, bot: CrunchyBot) -> None:
         self.bot = bot
