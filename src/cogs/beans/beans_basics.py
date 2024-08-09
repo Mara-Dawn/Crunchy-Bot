@@ -136,7 +136,7 @@ class BeansBasics(BeansGroup):
                 "Use the same exact formatting to display the amount of beans, including the back tick characters."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
 
             # response = f"Welcome to the new Beans Season <@{user_id}>! Here are `🅱️{amount}` beans to get you started."
@@ -165,7 +165,7 @@ class BeansBasics(BeansGroup):
                 "Also keep it short, 15 words or less."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
             # response = "You already got your daily beans, dummy! Try again tomorrow."
 
@@ -193,7 +193,9 @@ class BeansBasics(BeansGroup):
             "Use the same exact formatting to display the amount of beans, including the back tick characters. "
             "Keep it short, 20 words or less."
         )
-        response = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+        response = await self.ai_manager.prompt(
+            guild_id, interaction.user.display_name, prompt
+        )
 
         # response = f"<@{user_id}> got their daily dose of `🅱️{amount}` beans."
 
@@ -232,7 +234,9 @@ class BeansBasics(BeansGroup):
             "Use the same exact formatting to display the amount of beans, including the back tick characters. "
             "Keep it short, 20 words or less."
         )
-        response = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+        response = await self.ai_manager.prompt(
+            guild_id, interaction.user.display_name, prompt
+        )
         # response = f"<@{user_id}> currently has `🅱️{current_balance}` beans."
 
         await self.bot.command_response(
@@ -311,7 +315,7 @@ class BeansBasics(BeansGroup):
                 "Keep it short, 15 words or less."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
             # response = "You dont have that many beans, idiot."
             await self.bot.command_response(
@@ -339,7 +343,9 @@ class BeansBasics(BeansGroup):
             "For the bean amount, please ue the same exact formatting to display it, including the back tick characters and 🅱️ currency symbol. "
             "Keep it short, 20 words or less."
         )
-        response = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+        response = await self.ai_manager.prompt(
+            guild_id, interaction.user.display_name, prompt
+        )
         # response = f"`🅱️{abs(amount)}` beans were transferred from <@{interaction.user.id}> to <@{user.id}>."
         response += f"\n*{interaction.user.display_name} -> {user.display_name}:* `🅱️{abs(amount)}`"
 

@@ -1,4 +1,5 @@
 from bot import CrunchyBot
+from control.ai_manager import AIManager
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.item_manager import ItemManager
@@ -20,6 +21,7 @@ class BeansGroup(commands.GroupCog):
         self.item_manager: ItemManager = self.controller.get_service(ItemManager)
         self.event_manager: EventManager = self.controller.get_service(EventManager)
         self.role_manager: RoleManager = self.controller.get_service(RoleManager)
+        self.ai_manager: AIManager = self.controller.get_service(AIManager)
         self.prediction_manager: PredictionManager = self.controller.get_service(
             PredictionManager
         )
