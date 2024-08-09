@@ -205,7 +205,7 @@ class Gamba(commands.Cog):
                 " the backticks (including them) like in my message. Also keep it short."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
 
             if response is None or len(response) == 0:
@@ -228,7 +228,7 @@ class Gamba(commands.Cog):
                 "which is not acceptable. Please tell me what i did wrong. Also keep it short, 30 words or less."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
 
             if response is None or len(response) == 0:
@@ -251,7 +251,7 @@ class Gamba(commands.Cog):
                 " Also keep it short, 30 words or less."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
 
             response += f"\n *Next gamba <t:{cooldowntimer}:R>.*"
@@ -324,7 +324,7 @@ class Gamba(commands.Cog):
             final_display = 2
             payout = amount * 3
             final = f"Wow you got lucky! Your payout is `🅱️{payout}` beans."
-            prompt += f"and i won `🅱️{payout}` beans, which is amoderate amount. Please congratulate me."
+            prompt += f"and i won `🅱️{payout}` beans, which is a moderate amount. Please congratulate me."
         elif result > (loss + times_two + times_three) and result <= (
             loss + times_two + times_three + times_five
         ):
@@ -341,11 +341,13 @@ class Gamba(commands.Cog):
 
         if result > loss:
             prompt += " please mention the amount of beans i won."
-            prompt += " Pleae use the same exact formatting to display the amount of beans, including the back tick characters."
+            prompt += " Please use the same exact formatting to display the amount of beans, including the back tick characters."
 
         prompt += " Also keep it super concise, 25 words or less preferably unless its a jackpot, and refer to the gamble as gamba."
 
-        final_ai = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+        final_ai = await self.ai_manager.prompt(
+            guild_id, interaction.user.display_name, prompt
+        )
 
         if final_ai is not None and len(response) > 0:
             final = final_ai

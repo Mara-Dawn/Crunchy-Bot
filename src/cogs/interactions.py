@@ -169,10 +169,11 @@ class Interactions(commands.Cog):
             "Keep it short, 30 words or less. Do not comment on the nature of the message, only describe its content in your words."
         )
         response = await self.ai_manager.prompt(
+            interaction.guild_id,
             interaction.user.display_name,
             prompt,
             additional_backstory=additional_backstory,
-            ai_version=AIVersion.GPT4,
+            ai_version=AIVersion.GPT4_O_MINI,
         )
         return response + "\n"
 
