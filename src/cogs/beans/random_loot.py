@@ -7,6 +7,7 @@ from bot import CrunchyBot
 from control.settings_manager import SettingsManager
 from discord import app_commands
 from discord.ext import commands, tasks
+from events.types import LootBoxEventType
 from view.settings_modal import SettingsModal
 
 from cogs.beans.beans_group import BeansGroup
@@ -14,9 +15,11 @@ from cogs.beans.beans_group import BeansGroup
 
 class RandomLoot(BeansGroup):
 
+    LOOTBOX_TIMEOUT = 60 * 60 * 10
+
     def __init__(self, bot: CrunchyBot) -> None:
         super().__init__(bot)
-        self.lootbox_timers = {}
+        self.lootbox_timers: dict[int, datetime.datetime] = {}
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
@@ -69,16 +72,42 @@ class RandomLoot(BeansGroup):
         self.logger.debug("sys", "Lootbox task started.", cog=self.__cog_name__)
 
         for guild in self.bot.guilds:
-            if datetime.datetime.now() < self.lootbox_timers[guild.id]:
+            loot_box_event = await self.database.get_last_loot_box_event(
+                guild.id, [LootBoxEventType.CLAIM, LootBoxEventType.DROP]
+            )
+
+            timeout = self.lootbox_timers[guild.id]
+
+            if timeout is None:
+                if loot_box_event.loot_box_event_type == LootBoxEventType.DROP:
+                    difference = datetime.datetime.now() - loot_box_event.datetime
+                    if difference.total_seconds() > self.LOOTBOX_TIMEOUT:
+                        self.logger.log(
+                            "sys",
+                            "Lootbox not claimed after 10 hours, resetting timer.",
+                            cog=self.__cog_name__,
+                        )
+                        await self.__reevaluate_next_lootbox(guild.id)
+                    continue
+
+                self.logger.log(
+                    "sys",
+                    "Lootbox claimed, applying new timeouit.",
+                    cog=self.__cog_name__,
+                )
+                await self.__reevaluate_next_lootbox(guild.id)
+                continue
+
+            if datetime.datetime.now() < timeout:
                 continue
 
             self.logger.log("sys", "Lootbox timeout reached.", cog=self.__cog_name__)
-            await self.__reevaluate_next_lootbox(guild.id)
-
             bean_channels = await self.settings_manager.get_beans_channels(guild.id)
             if len(bean_channels) == 0:
                 continue
             await self.item_manager.drop_loot_box(guild, secrets.choice(bean_channels))
+
+            self.lootbox_timers[guild.id] = None
 
     @loot_box_task.before_loop
     async def loot_box_task_before(self):
@@ -96,7 +125,9 @@ class RandomLoot(BeansGroup):
                 SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
             )
 
-            loot_box_event = await self.database.get_last_loot_box_event(guild.id)
+            loot_box_event = await self.database.get_last_loot_box_event(
+                guild.id, [LootBoxEventType.DROP]
+            )
             last_drop = datetime.datetime.now()
 
             if loot_box_event is not None:
