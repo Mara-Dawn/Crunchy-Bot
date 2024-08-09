@@ -81,8 +81,8 @@ class Config:
     # Guild Level Requirements
     LEVEL_REQUIREMENTS = {
         1: 15,
-        2: 25,
-        3: 35,
+        2: 35,
+        3: 45,
         # 3: 1,
         4: 99999,
         5: 20,
