@@ -1,5 +1,4 @@
 import traceback
-from types import _ReturnT_co
 
 import discord
 from datalayer.database import Database
