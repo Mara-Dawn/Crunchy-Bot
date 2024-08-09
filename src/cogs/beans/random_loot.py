@@ -72,18 +72,42 @@ class RandomLoot(BeansGroup):
         self.logger.debug("sys", "Lootbox task started.", cog=self.__cog_name__)
 
         for guild in self.bot.guilds:
-            loot_box_event = await self.database.get_last_loot_box_event(
-                guild.id, [LootBoxEventType.CLAIM, LootBoxEventType.DROP]
-            )
+            loot_box_event = None
 
             timeout = self.lootbox_timers[guild.id]
+
+            last_loot_box = await self.database.get_last_loot_box_drop(guild.id)
+            if last_loot_box is not None:
+                if last_loot_box.has_mimic() and timeout is None:
+                    self.logger.log(
+                        guild.id,
+                        "Last lootbox was mimic, applying new timer.",
+                        cog=self.__cog_name__,
+                    )
+                    await self.__reevaluate_next_lootbox(guild.id)
+                    continue
+
+                lootbox_events = await self.database.get_loot_box_events_by_lootbox(
+                    last_loot_box.id
+                )
+                if len(lootbox_events) > 0:
+                    loot_box_event = lootbox_events[0]
+
+            if loot_box_event is None:
+                self.logger.log(
+                    guild.id,
+                    "No previous lootbox found. applying timer.",
+                    cog=self.__cog_name__,
+                )
+                await self.__reevaluate_next_lootbox(guild.id)
+                continue
 
             if timeout is None:
                 if loot_box_event.loot_box_event_type == LootBoxEventType.DROP:
                     difference = datetime.datetime.now() - loot_box_event.datetime
                     if difference.total_seconds() > self.LOOTBOX_TIMEOUT:
                         self.logger.log(
-                            "sys",
+                            guild.id,
                             "Lootbox not claimed after 10 hours, resetting timer.",
                             cog=self.__cog_name__,
                         )
@@ -91,7 +115,7 @@ class RandomLoot(BeansGroup):
                     continue
 
                 self.logger.log(
-                    "sys",
+                    guild.id,
                     "Lootbox claimed, applying new timeouit.",
                     cog=self.__cog_name__,
                 )
@@ -101,10 +125,10 @@ class RandomLoot(BeansGroup):
             if datetime.datetime.now() < timeout:
                 continue
 
-            self.logger.log("sys", "Lootbox timeout reached.", cog=self.__cog_name__)
             bean_channels = await self.settings_manager.get_beans_channels(guild.id)
             if len(bean_channels) == 0:
                 continue
+            self.logger.log(guild.id, "Lootbox timeout reached.", cog=self.__cog_name__)
             await self.item_manager.drop_loot_box(guild, secrets.choice(bean_channels))
 
             self.lootbox_timers[guild.id] = None
@@ -125,9 +149,15 @@ class RandomLoot(BeansGroup):
                 SettingsManager.BEANS_LOOTBOX_MAX_WAIT_KEY,
             )
 
-            loot_box_event = await self.database.get_last_loot_box_event(
-                guild.id, [LootBoxEventType.DROP]
-            )
+            loot_box_event = None
+            last_loot_box = await self.database.get_last_loot_box_drop(guild.id)
+            if last_loot_box is not None:
+                lootbox_events = await self.database.get_loot_box_events_by_lootbox(
+                    last_loot_box.id
+                )
+                if len(lootbox_events) > 0:
+                    loot_box_event = lootbox_events[0]
+
             last_drop = datetime.datetime.now()
 
             if loot_box_event is not None:
@@ -137,7 +167,7 @@ class RandomLoot(BeansGroup):
             diff_minutes = int(diff.total_seconds() / 60)
             self.logger.log(
                 guild.id,
-                f"Last loot box drop was {diff_minutes} minutes ago.",
+                f"Last loot box event was {diff_minutes} minutes ago.",
                 cog=self.__cog_name__,
             )
 

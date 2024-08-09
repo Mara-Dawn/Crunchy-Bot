@@ -1177,37 +1177,37 @@ class Database:
 
         match event.type:
             case EventType.INTERACTION:
-                 await self.__create_interaction_event(event_id, event)
+                await self.__create_interaction_event(event_id, event)
             case EventType.JAIL:
-                 await self.__create_jail_event(event_id, event)
+                await self.__create_jail_event(event_id, event)
             case EventType.TIMEOUT:
-                 await self.__create_timeout_event(event_id, event)
+                await self.__create_timeout_event(event_id, event)
             case EventType.QUOTE:
-                 await self.__create_quote_event(event_id, event)
+                await self.__create_quote_event(event_id, event)
             case EventType.SPAM:
-                 await self.__create_spam_event(event_id, event)
+                await self.__create_spam_event(event_id, event)
             case EventType.BEANS:
-                 await self.__create_beans_event(event_id, event)
+                await self.__create_beans_event(event_id, event)
             case EventType.INVENTORY:
-                 await self.__create_inventory_event(event_id, event)
+                await self.__create_inventory_event(event_id, event)
             case EventType.INVENTORYBATCH:
-                 await self.__create_batch_inventory_event(event_id, event)
+                await self.__create_batch_inventory_event(event_id, event)
             case EventType.LOOTBOX:
-                 await self.__create_loot_box_event(event_id, event)
+                await self.__create_loot_box_event(event_id, event)
             case EventType.BAT:
-                 await self.__create_bat_event(event_id, event)
+                await self.__create_bat_event(event_id, event)
             case EventType.PREDICTION:
-                 await self.__create_prediction_event(event_id, event)
+                await self.__create_prediction_event(event_id, event)
             case EventType.GARDEN:
-                 await self.__create_garden_event(event_id, event)
+                await self.__create_garden_event(event_id, event)
             case EventType.ENCOUNTER:
-                 await self.__create_encounter_event(event_id, event)
+                await self.__create_encounter_event(event_id, event)
             case EventType.COMBAT:
-                 await self.__create_combat_event(event_id, event)
+                await self.__create_combat_event(event_id, event)
             case EventType.STATUS_EFFECT:
-                 await self.__create_status_effect_event(event_id, event)
+                await self.__create_status_effect_event(event_id, event)
             case EventType.KARMA:
-                 await self.__create_karma_event(event_id, event)
+                await self.__create_karma_event(event_id, event)
             case EventType.EQUIPMENT:
                 await self.__create_equipment_event(event_id, event)
 
@@ -1951,31 +1951,38 @@ class Database:
 
         return LootBox.from_db_row(rows[0], items)
 
-    async def get_last_loot_box_event(
-        self, guild_id: int, event_types: list[LootBoxEventType] = None, season: Season = Season.CURRENT
-    ):
-        if event_types is None:
-            event_types = [type.value for type in LootBoxEventType]
-        else:
-            event_types = [type.value for type in event_types]
-
-        list_sanitized = self.__list_sanitizer(event_types)
-
-        start_timestamp, end_timestamp = self.__get_season_interval(season)
-        command = f"""
-            SELECT * FROM {self.LOOTBOX_EVENT_TABLE} 
-            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
-            WHERE {self.LOOTBOX_EVENT_TYPE_COL} in {list_sanitized}
-            AND {self.EVENT_GUILD_ID_COL} = ?
-            AND {self.EVENT_TIMESTAMP_COL} > ?
-            AND {self.EVENT_TIMESTAMP_COL} <= ?
-            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
+    async def get_last_loot_box_drop(self, guild_id: int) -> LootBox:
+        command = f""" 
+            SELECT * FROM {self.LOOTBOX_TABLE} 
+            INNER JOIN {self.LOOTBOX_EVENT_TABLE} ON {self.LOOTBOX_ID_COL} = {self.LOOTBOX_EVENT_LOOTBOX_ID_COL}
+            WHERE {self.LOOTBOX_GUILD_COL} = ?
+            AND {self.LOOTBOX_EVENT_TYPE_COL} = ?
+            ORDER BY {self.LOOTBOX_ID_COL} DESC
+            LIMIT 1;
         """
-        task = (*event_types, guild_id, start_timestamp, end_timestamp)
+        task = (guild_id, LootBoxEventType.DROP.value)
         rows = await self.__query_select(command, task)
         if not rows:
             return None
-        return LootBoxEvent.from_db_row(rows[0])
+
+        items = await self.get_lootbox_items(rows[0][self.LOOTBOX_ID_COL])
+
+        return LootBox.from_db_row(rows[0], items)
+
+    async def get_loot_box_events_by_lootbox(
+        self,
+        lootbox_id: int,
+    ) -> list[LootBoxEvent]:
+        command = f"""
+            SELECT * FROM {self.LOOTBOX_EVENT_TABLE} 
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
+            WHERE {self.LOOTBOX_EVENT_LOOTBOX_ID_COL} = {int(lootbox_id)}
+            ORDER BY {self.EVENT_TIMESTAMP_COL} DESC;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return []
+        return [LootBoxEvent.from_db_row(row) for row in rows]
 
     async def get_member_beans(
         self, guild_id: int, user_id: int, season: Season = Season.CURRENT
@@ -3257,7 +3264,10 @@ class Database:
         return [EncounterEvent.from_db_row(row) for row in rows]
 
     async def get_encounter_events(
-        self, guild_id: int, enemy_types: list[EnemyType], event_types: list[EncounterEventType]
+        self,
+        guild_id: int,
+        enemy_types: list[EnemyType],
+        event_types: list[EncounterEventType],
     ) -> list[tuple[EncounterEvent, EnemyType]]:
         enemy_list_sanitized = self.__list_sanitizer(enemy_types)
         event_type_list_sanitized = self.__list_sanitizer(event_types)
@@ -3277,7 +3287,13 @@ class Database:
         if not rows:
             return []
 
-        return [(EncounterEvent.from_db_row(row), EnemyType(row[self.ENCOUNTER_ENEMY_TYPE_COL])) for row in rows]
+        return [
+            (
+                EncounterEvent.from_db_row(row),
+                EnemyType(row[self.ENCOUNTER_ENEMY_TYPE_COL]),
+            )
+            for row in rows
+        ]
 
     async def get_combat_events_by_encounter_id(
         self, encounter_id: int
