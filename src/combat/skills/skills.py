@@ -113,7 +113,7 @@ class SecondWind(BaseSkill):
         super().__init__(
             name="Second Wind",
             skill_type=SkillType.SECOND_WIND,
-            description="Heal yourself for a small amount and heals bleeding.",
+            description="Heal yourself for a small amount. Also cleanses bleeding and poison.",
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=0,
