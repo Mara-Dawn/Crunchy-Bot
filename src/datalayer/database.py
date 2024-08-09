@@ -1952,19 +1952,26 @@ class Database:
         return LootBox.from_db_row(rows[0], items)
 
     async def get_last_loot_box_event(
-        self, guild_id: int, season: Season = Season.CURRENT
+        self, guild_id: int, event_types: list[LootBoxEventType] = None, season: Season = Season.CURRENT
     ):
+        if event_types is None:
+            event_types = [type.value for type in LootBoxEventType]
+        else:
+            event_types = [type.value for type in event_types]
+
+        list_sanitized = self.__list_sanitizer(event_types)
+
         start_timestamp, end_timestamp = self.__get_season_interval(season)
         command = f"""
             SELECT * FROM {self.LOOTBOX_EVENT_TABLE} 
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.LOOTBOX_EVENT_TABLE}.{self.LOOTBOX_EVENT_ID_COL}
-            WHERE {self.LOOTBOX_EVENT_TYPE_COL} = ?
+            WHERE {self.LOOTBOX_EVENT_TYPE_COL} in {list_sanitized}
             AND {self.EVENT_GUILD_ID_COL} = ?
             AND {self.EVENT_TIMESTAMP_COL} > ?
             AND {self.EVENT_TIMESTAMP_COL} <= ?
             ORDER BY {self.EVENT_TIMESTAMP_COL} DESC LIMIT 1;
         """
-        task = (LootBoxEventType.DROP.value, guild_id, start_timestamp, end_timestamp)
+        task = (*event_types, guild_id, start_timestamp, end_timestamp)
         rows = await self.__query_select(command, task)
         if not rows:
             return None
