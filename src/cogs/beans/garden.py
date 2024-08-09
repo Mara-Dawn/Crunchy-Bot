@@ -127,9 +127,10 @@ class Garden(BeansGroup):
                         )
 
                         message = await self.ai_manager.prompt(
+                            guild_id=guild.id,
                             name=user.display_name,
                             text_prompt=prompt,
-                            ai_version=AIVersion.GPT4,
+                            ai_version=AIVersion.GPT4_O_MINI,
                         )
 
                         await user.send(message)
