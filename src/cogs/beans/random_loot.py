@@ -93,7 +93,7 @@ class RandomLoot(BeansGroup):
                 if len(lootbox_events) > 0:
                     loot_box_event = lootbox_events[0]
 
-            if loot_box_event is None:
+            if loot_box_event is None and timeout is None:
                 self.logger.log(
                     guild.id,
                     "No previous lootbox found. applying timer.",
