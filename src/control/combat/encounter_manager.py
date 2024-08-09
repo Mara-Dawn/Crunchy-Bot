@@ -1183,6 +1183,25 @@ class EncounterManager(Service):
             guild_level += 1
             await self.database.set_guild_level(guild.id, guild_level)
 
+            bean_channels = await self.settings_manager.get_beans_notification_channels(
+                guild_id
+            )
+            beans_role_id = await self.settings_manager.get_beans_role(guild_id)
+            guild = self.bot.get_guild(guild_id)
+            if guild is not None:
+                announcement = (
+                    "**A new Level has been unlocked!**\n"
+                    f"Congratulations! You fulfilled the requirements to reach **Level {guild_level}**.\n"
+                    "Good luck facing the challenges ahead, stronger opponents and greater rewards are waiting for you."
+                )
+                if beans_role_id is not None:
+                    announcement += f"\n<@{beans_role_id}>"
+
+                for channel_id in bean_channels:
+                    channel = guild.get_channel(channel_id)
+                    if channel is not None:
+                        await channel.send(announcement)
+
         for channel_id in combat_channels:
             channel = guild.get_channel(channel_id)
             if channel is None:
