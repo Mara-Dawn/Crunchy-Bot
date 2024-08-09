@@ -1,4 +1,5 @@
 import traceback
+from types import _ReturnT_co
 
 import discord
 from datalayer.database import Database
@@ -144,6 +145,9 @@ class RoleManager(Service):
     async def update_username_color(self, guild_id: int, user_id: int):
         guild: discord.Guild = self.bot.get_guild(guild_id)
         member: discord.Member = guild.get_member(user_id)
+
+        if member is None:
+            return
 
         custom_role_id = await self.database.get_custom_role(guild_id, user_id)
         custom_color = await self.database.get_custom_color(guild_id, user_id)
