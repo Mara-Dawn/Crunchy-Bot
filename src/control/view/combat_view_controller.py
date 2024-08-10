@@ -71,7 +71,7 @@ class CombatViewController(ViewController):
                     f"You can only use this feature if you have the role `{role_name}`.",
                     ephemeral=True,
                 )
-                return
+                continue
 
             message = await interaction.original_response()
             encounter = await self.database.get_encounter_by_message_id(
