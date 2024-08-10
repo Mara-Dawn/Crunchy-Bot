@@ -229,11 +229,11 @@ class AIManager(Service):
                 title_part = title_result[0].strip()
 
         match version:
-            case AIVersion.GPT3_5:
+            case AIVersion.GPT3_5 | AIVersion.GPT4_O_MINI:
                 response = f"My name is {name_part}"
                 if len(title_part) > 0:
                     response += f" and my info is {title_part}. "
-            case AIVersion.GPT4_O | AIVersion.GPT4_O_MINI:
+            case AIVersion.GPT4_O:
                 response = f"<user>{name_part}</user>"
                 if len(title_part) > 0:
                     response += f"<info>{title_part}</info>"
@@ -250,9 +250,9 @@ class AIManager(Service):
         backstory = personality.backstory
 
         match ai_version:
-            case AIVersion.GPT3_5:
+            case AIVersion.GPT3_5 | AIVersion.GPT4_O_MINI:
                 return backstory + self.backstory_general
-            case AIVersion.GPT4_O | AIVersion.GPT4_O_MINI:
+            case AIVersion.GPT4_O:
                 return backstory + self.backstory_GPT4 + self.backstory_general
 
         return ""
