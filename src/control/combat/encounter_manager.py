@@ -26,6 +26,7 @@ from control.combat.object_factory import ObjectFactory
 from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
 from control.item_manager import ItemManager
+from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
@@ -98,6 +99,7 @@ class EncounterManager(Service):
         )
         self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
+        self.jail_manager: JailManager = self.controller.get_service(JailManager)
         self.log_name = "Encounter"
 
     async def listen_for_event(self, event: BotEvent):
@@ -808,6 +810,11 @@ class EncounterManager(Service):
         )
         timeout_count += 1
 
+        jail_time = Config.TIMEOUT_JAIL_TIME
+        jail_message = (
+            f"<@{character.member.id}> was jailed for missing their turn in combat."
+        )
+
         if (
             timeout_count >= Config.TIMEOUT_COUNT_LIMIT
             and not context.opponent.enemy.is_boss
@@ -821,8 +828,17 @@ class EncounterManager(Service):
             )
             await self.controller.dispatch_event(event)
             message += f" They reached {Config.TIMEOUT_COUNT_LIMIT} total timeouts and will be excluded from the fight."
+            jail_time += Config.KICK_JAIL_TIME
+            jail_message = f"<@{character.member.id}> was jailed for repeatedly missing their turn in combat, leading to them getting kicked."
 
         await self.skip_turn(character, context, message, timeout=True)
+        await self.jail_manager.jail_or_extend_user(
+            context.encounter.guild_id,
+            self.bot.user.id,
+            character.member,
+            jail_time,
+            jail_message,
+        )
 
     async def conclude_encounter(self, context: EncounterContext, success: bool = True):
 
@@ -1195,7 +1211,7 @@ class EncounterManager(Service):
                     "Good luck facing the challenges ahead, stronger opponents and greater rewards are waiting for you."
                 )
                 if beans_role_id is not None:
-                    announcement += f"\n<@{beans_role_id}>"
+                    announcement += f"\n<@&{beans_role_id}>"
 
                 for channel_id in bean_channels:
                     channel = guild.get_channel(channel_id)
@@ -1250,7 +1266,9 @@ class EncounterManager(Service):
             else:
                 async for message in channel.history(limit=100):
                     if message.thread is not None:
-                        await message.delete()
+                        age_delta = datetime.datetime.now(datetime.UTC) - message.created_at
+                        if age_delta.total_seconds() > 60 * 60:
+                            await message.delete()
 
                     if len(message.embeds) <= 0:
                         continue

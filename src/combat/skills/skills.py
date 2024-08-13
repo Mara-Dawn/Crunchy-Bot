@@ -79,7 +79,7 @@ class TapeAttack(BaseSkill):
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.BLEED,
-                    4,
+                    2,
                     StatusEffectApplication.ATTACK_VALUE,
                 )
             ],

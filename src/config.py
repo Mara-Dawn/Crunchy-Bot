@@ -7,6 +7,8 @@ class Config:
     DEFAULT_TIMEOUT = 60 * 3
     SHORT_TIMEOUT = 60
     TIMEOUT_COUNT_LIMIT = 2
+    TIMEOUT_JAIL_TIME = 30
+    KICK_JAIL_TIME = 60
 
     ENEMY_HEALTH_SCALING = {
         1: 8.40,
@@ -95,7 +97,7 @@ class Config:
         12: 40,
     }
     BOSS_LEVELS = [3, 6, 9, 12]
-    BOSS_RETRY_REQUIREMENT = 1
+    BOSS_RETRY_REQUIREMENT = 5
     BOSS_KEY_CLAIM_DELAY = 180
 
     # Scrap

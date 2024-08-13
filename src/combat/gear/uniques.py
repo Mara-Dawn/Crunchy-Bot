@@ -128,8 +128,8 @@ class CatHead(HeadGear_T2, Unique):
             unique_modifiers={
                 GearModifierType.ARMOR: 0.5,
                 GearModifierType.EVASION: 1,
-                GearModifierType.MAGIC: 2,
-                GearModifierType.ATTACK: 2,
+                GearModifierType.MAGIC: 1.5,
+                GearModifierType.ATTACK: 1.5,
                 GearModifierType.CRIT_RATE: 0.5,
                 GearModifierType.CRIT_DAMAGE: 1,
             },
@@ -150,8 +150,8 @@ class CatLegs(LegGear_T2, Unique):
             unique_modifiers={
                 GearModifierType.ARMOR: 0.5,
                 GearModifierType.EVASION: 1,
-                GearModifierType.MAGIC: 2,
-                GearModifierType.ATTACK: 2,
+                GearModifierType.MAGIC: 1.5,
+                GearModifierType.ATTACK: 1.5,
                 GearModifierType.CRIT_RATE: 0.5,
                 GearModifierType.CRIT_DAMAGE: 1,
             },
@@ -172,8 +172,8 @@ class CatTail(Necklace_T2_1, Unique):
             unique_modifiers={
                 GearModifierType.DEXTERITY: 3,
                 GearModifierType.EVASION: 1,
-                GearModifierType.MAGIC: 2,
-                GearModifierType.ATTACK: 2,
+                GearModifierType.MAGIC: 1.5,
+                GearModifierType.ATTACK: 1.5,
                 GearModifierType.CRIT_RATE: 0.5,
                 GearModifierType.CRIT_DAMAGE: 1,
             },
@@ -194,8 +194,8 @@ class CatHands(Necklace_T2_2, Unique):
             unique_modifiers={
                 GearModifierType.DEXTERITY: 3,
                 GearModifierType.EVASION: 1,
-                GearModifierType.MAGIC: 2,
-                GearModifierType.ATTACK: 2,
+                GearModifierType.MAGIC: 1.5,
+                GearModifierType.ATTACK: 1.5,
                 GearModifierType.CRIT_RATE: 0.5,
                 GearModifierType.CRIT_DAMAGE: 1,
             },

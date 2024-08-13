@@ -231,6 +231,18 @@ class CombatViewController(ViewController):
         match event.type:
             case UIEventType.COMBAT_ENGAGE:
                 interaction = event.payload
+                try:
+                    exception = self.join_worker.exception()
+                    if exception is not None:
+                        raise exception
+                        self.join_worker = asyncio.create_task(
+                            self.join_request_worker()
+                        )
+                except asyncio.CancelledError:
+                    pass
+                    self.join_worker = asyncio.create_task(self.join_request_worker())
+                except asyncio.InvalidStateError:
+                    pass
                 await self.join_queue.put(interaction)
             case UIEventType.COMBAT_LEAVE:
                 interaction = event.payload

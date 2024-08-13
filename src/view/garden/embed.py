@@ -27,7 +27,7 @@ class GardenEmbed(discord.Embed):
             if hours > 0:
 
                 description += (
-                    f"\nDriest Plot: Plot {plot_nr} will be dry in <t:{timestamp}:R>."
+                    f"\nDriest Plot: Plot {plot_nr} will be dry <t:{timestamp}:R>."
                 )
             else:
                 description += f"\nDriest Plot: Plot {plot_nr} needs water."

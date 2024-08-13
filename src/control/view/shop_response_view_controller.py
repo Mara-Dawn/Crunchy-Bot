@@ -21,6 +21,7 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.jail_manager import JailManager
 from control.logger import BotLogger
+from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
 
 
@@ -41,6 +42,9 @@ class ShopResponseViewController(ViewController):
         self.controller = controller
         self.event_manager: EventManager = controller.get_service(EventManager)
         self.jail_manager: JailManager = self.controller.get_service(JailManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:

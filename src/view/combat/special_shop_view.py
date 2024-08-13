@@ -13,7 +13,6 @@ from view.combat.elements import (
     ImplementsBack,
     ScrapBalanceButton,
 )
-from view.combat.equipment_view import EquipmentViewState
 from view.combat.special_shop_embed import SpecialShopHeadEmbed
 from view.view_menu import ViewMenu
 
@@ -200,7 +199,7 @@ class Dropdown(discord.ui.Select):
                 description = []
 
                 description.append(f"USES: {item.base_skill.stacks}")
-                description.append(f"PWR: {item.base_skill.base_value}")
+                description.append(f"PWR: {item.base_skill.base_value:.1f}")
                 description = " | ".join(description)
                 description = (
                     (description[:95] + "..") if len(description) > 95 else description
