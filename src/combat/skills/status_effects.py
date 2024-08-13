@@ -23,7 +23,7 @@ class Cleanse(StatusEffect):
             effect_type=StatusEffectType.CLEANSE,
             name="Cleanse",
             description="Cleanses Bleeding.",
-            trigger=[StatusEffectTrigger.END_OF_TURN],
+            trigger=[StatusEffectTrigger.END_OF_TURN, StatusEffectTrigger.POST_ATTACK],
             consumed=[StatusEffectTrigger.END_OF_TURN],
             priority=1,
             emoji="🩹",

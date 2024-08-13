@@ -110,6 +110,50 @@ class JailManager(Service):
 
         return True
 
+    async def jail_or_extend_user(
+        self,
+        guild_id: int,
+        jailed_by_id: int,
+        user: discord.Member,
+        duration: int,
+        message: str,
+    ) -> bool:
+        success = await self.jail_user(guild_id, jailed_by_id, user, duration)
+        jail_announcement = message
+        if not success:
+            time_now = datetime.datetime.now()
+            affected_jails = await self.database.get_active_jails_by_member(
+                guild_id, user.id
+            )
+            if len(affected_jails) > 0:
+                event = JailEvent(
+                    time_now,
+                    guild_id,
+                    JailEventType.INCREASE,
+                    jailed_by_id,
+                    duration,
+                    affected_jails[0].id,
+                )
+                await self.controller.dispatch_event(event)
+                remaining = await self.get_jail_remaining(affected_jails[0])
+                jail_announcement += (
+                    "\nSince they were already in jail, "
+                    f"`{BotUtil.strfdelta(duration, inputtype="minutes")}` have been added to their sentence.\n"
+                    f"`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
+                )
+                await self.announce(user.guild, jail_announcement)
+            else:
+                self.logger.error(
+                    guild_id,
+                    "User already jailed but no active jail was found.",
+                    "Shop",
+                )
+        else:
+            timestamp_now = int(datetime.datetime.now().timestamp())
+            release = timestamp_now + (duration * 60)
+            jail_announcement += f"\nThey will be released <t:{release}:R>."
+            await self.announce(user.guild, jail_announcement)
+
     async def release_user(
         self, guild_id: int, released_by_id: int, user: discord.Member
     ) -> str:
