@@ -63,7 +63,7 @@ class CombatGearManager(Service):
         Rarity.UNCOMMON: 50,
         Rarity.RARE: 10,
         Rarity.LEGENDARY: 3,
-        Rarity.UNIQUE: 2,
+        Rarity.UNIQUE: 1,
     }
     RARITY_SCALING = {
         Rarity.COMMON: -15,
@@ -314,6 +314,9 @@ class CombatGearManager(Service):
                 base, item_level, modifier_type
             )
 
+            min_roll *= 0.9
+            max_roll *= 1.1
+
             if random_seed is not None:
                 random.seed(random_seed)
 
@@ -386,20 +389,17 @@ class CombatGearManager(Service):
                 + self.MODIFIER_BASE[modifier_type]
                 * (self.MODIFIER_SCALING[modifier_type])
                 * (item_level - 1)
-                # TODO: remove the -1
                 * self.GEAR_LEVEL_SCALING
             )
             * slot_scaling
             * base.scaling
         )
 
-        unique_range = 1.5 * self.MODIFIER_RANGE[modifier_type]
-
         min_roll = max(
             self.MODIFIER_BASE[modifier_type] * slot_scaling,
-            base_value * (1 - unique_range),
+            base_value * (1 - self.MODIFIER_RANGE[modifier_type]),
         )
-        max_roll = base_value * (1 + unique_range)
+        max_roll = base_value * (1 + self.MODIFIER_RANGE[modifier_type])
 
         return min_roll, max_roll
 
