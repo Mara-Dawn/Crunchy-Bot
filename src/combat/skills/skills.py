@@ -145,7 +145,8 @@ class SecondHeart(BaseSkill):
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=5,
-            min_level=4,
+            # min_level=4,
+            min_level=5,
             base_value=0.5,
             status_effects=[
                 SkillStatusEffect(
