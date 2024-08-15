@@ -1158,7 +1158,7 @@ class ButtSlap(BaseSkill):
             description=(
                 "Daddys hand slams into your butt cheek with the force of a wild bear, leaving "
                 "a surprisingly detailed red imprint behind.\nThe sound of the impact can be heard from "
-                "miles away, followed by noises you didnt even know you were capabler of."
+                "miles away, followed by noises you didnt even know you were capable of."
             ),
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
