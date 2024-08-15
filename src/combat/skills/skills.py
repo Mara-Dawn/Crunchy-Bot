@@ -145,7 +145,8 @@ class SecondHeart(BaseSkill):
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=5,
-            min_level=4,
+            # min_level=4,
+            min_level=5,
             base_value=0.5,
             status_effects=[
                 SkillStatusEffect(
@@ -1158,7 +1159,7 @@ class ButtSlap(BaseSkill):
             description=(
                 "Daddys hand slams into your butt cheek with the force of a wild bear, leaving "
                 "a surprisingly detailed red imprint behind.\nThe sound of the impact can be heard from "
-                "miles away, followed by noises you didnt even know you were capabler of."
+                "miles away, followed by noises you didnt even know you were capable of."
             ),
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
