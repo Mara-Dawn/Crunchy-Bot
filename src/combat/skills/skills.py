@@ -766,7 +766,7 @@ class FedoraTip(BaseSkill):
         super().__init__(
             name="Tips Fedora",
             skill_type=SkillType.FEDORA_TIP,
-            description="He tips his hat with a smoothness only possible with hundrets of hours of practice.",
+            description="He tips his hat with a smoothness only possible with hundreds of hours of practice.",
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=0,

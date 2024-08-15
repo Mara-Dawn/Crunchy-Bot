@@ -391,6 +391,9 @@ class EncounterManager(Service):
         encounters = await self.database.get_encounter_participants(encounter.guild_id)
         enemy = await self.factory.get_enemy(encounter.enemy_type)
         max_encounter_size = enemy.max_players
+        if encounter.id not in encounters:
+            #TODO why does this happen
+            return
         if len(encounters[encounter.id]) >= max_encounter_size and not enemy.is_boss:
             event = UIEvent(UIEventType.COMBAT_FULL, encounter.id)
             await self.controller.dispatch_ui_event(event)
