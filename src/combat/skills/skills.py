@@ -203,7 +203,8 @@ class LooksMaxxing(BaseSkill):
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=5,
-            min_level=4,
+            # min_level=4,
+            min_level=5,
             base_value=0.15,
             status_effects=[
                 SkillStatusEffect(
@@ -445,7 +446,8 @@ class PartyDrugs(BaseSkill):
             status_effects=[
                 SkillStatusEffect(StatusEffectType.HIGH, 3, self_target=True)
             ],
-            min_level=4,
+            # min_level=4,
+            min_level=5,
             base_value=6,
             stacks=3,
             reset_after_encounter=False,
