@@ -1,12 +1,12 @@
-from datalayer.database import Database
-from datalayer.settings import GuildSettings, ModuleSettings
 from discord.ext import commands
-from events.bot_event import BotEvent
-from items.types import ItemType
 
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
+from datalayer.database import Database
+from datalayer.settings import GuildSettings, ModuleSettings
+from events.bot_event import BotEvent
+from items.types import ItemType
 
 
 class SettingsManager(Service):
@@ -73,6 +73,10 @@ class SettingsManager(Service):
     COMBAT_SUBSETTINGS_KEY = "combat"
     COMBAT_ENABLED_KEY = "combat_enabled"
     COMBAT_CHANNELS_KEY = "combat_channels"
+    COMBAT_MAX_LVL_SPAWN_START_TIME_KEY = "combat_max_start"
+    COMBAT_MAX_LVL_SPAWN_END_TIME_KEY = "combat_max_end"
+    COMBAT_SPAWN_PING_ROLE_KEY = "combat_ping_role"
+    COMBAT_MAX_SPAWN_PING_ROLE_KEY = "combat_max_lvl_ping_role"
 
     KARMA_SUBSETTINGS_KEY = "karma"
     KARMA_ENABLED_KEY = "karma_enabled"
@@ -280,6 +284,24 @@ class SettingsManager(Service):
             [],
             "Overview Channels for the combat module.",
             "handle_channels_value",
+        )
+        combat_settings.add_setting(
+            self.COMBAT_MAX_LVL_SPAWN_START_TIME_KEY, 6, "Max Lvl Spawn Start"
+        )
+        combat_settings.add_setting(
+            self.COMBAT_MAX_LVL_SPAWN_END_TIME_KEY, 22, "Max Lvl Spawn End"
+        )
+        combat_settings.add_setting(
+            self.COMBAT_SPAWN_PING_ROLE_KEY,
+            None,
+            "Spawn Ping Role",
+            "handle_role_value",
+        )
+        combat_settings.add_setting(
+            self.COMBAT_MAX_SPAWN_PING_ROLE_KEY,
+            None,
+            "Max Lvl Spawn Ping Role",
+            "handle_role_value",
         )
 
         karma_settings = ModuleSettings(self.KARMA_SUBSETTINGS_KEY, "Karma")
@@ -1138,6 +1160,57 @@ class SettingsManager(Service):
             self.COMBAT_SUBSETTINGS_KEY,
             self.COMBAT_CHANNELS_KEY,
             channels,
+        )
+
+    async def get_combat_max_lvl_start(self, guild: int) -> int:
+        return await self.get_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_MAX_LVL_SPAWN_START_TIME_KEY
+        )
+
+    async def get_combat_max_lvl_end(self, guild: int) -> bool:
+        return await self.get_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_MAX_LVL_SPAWN_END_TIME_KEY
+        )
+
+    async def set_combat_max_lvl_start(self, guild: int, hour: int) -> None:
+        await self.update_setting(
+            guild,
+            self.COMBAT_SUBSETTINGS_KEY,
+            self.COMBAT_MAX_LVL_SPAWN_START_TIME_KEY,
+            hour,
+        )
+
+    async def set_combat_max_lvl_end(self, guild: int, hour: int) -> None:
+        await self.update_setting(
+            guild,
+            self.COMBAT_SUBSETTINGS_KEY,
+            self.COMBAT_MAX_LVL_SPAWN_END_TIME_KEY,
+            hour,
+        )
+
+    async def get_spawn_ping_role(self, guild: int) -> int:
+        value = await self.get_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_SPAWN_PING_ROLE_KEY
+        )
+        return int(value) if value is not None else None
+
+    async def set_spawn_ping_role(self, guild: int, role_id: int) -> None:
+        await self.update_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_SPAWN_PING_ROLE_KEY, role_id
+        )
+
+    async def get_max_lvl_spawn_ping_role(self, guild: int) -> int:
+        value = await self.get_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_MAX_SPAWN_PING_ROLE_KEY
+        )
+        return int(value) if value is not None else None
+
+    async def set_max_lvl_spawn_ping_role(self, guild: int, role_id: int) -> None:
+        await self.update_setting(
+            guild,
+            self.COMBAT_SUBSETTINGS_KEY,
+            self.COMBAT_MAX_SPAWN_PING_ROLE_KEY,
+            role_id,
         )
 
     # Karma Settings

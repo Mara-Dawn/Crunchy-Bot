@@ -162,20 +162,24 @@ class CombatViewController(ViewController):
 
             context = await self.context_loader.load_encounter_context(encounter.id)
 
-            if member_id == context.get_current_actor().id:
-                await interaction.followup.send(
-                    "Please finish your turn before you leave.",
-                    ephemeral=True,
-                )
-                continue
+            event_type = EncounterEventType.MEMBER_OUT
 
-            actor = context.get_actor(member_id)
-            if actor.defeated:
-                await interaction.followup.send(
-                    "You are defeated and cannot leave.",
-                    ephemeral=True,
-                )
-                continue
+            if context.is_initiated():
+                event_type = EncounterEventType.MEMBER_LEAVING
+                if member_id == context.get_current_actor().id:
+                    await interaction.followup.send(
+                        "Please finish your turn before you leave.",
+                        ephemeral=True,
+                    )
+                    continue
+
+                actor = context.get_actor(member_id)
+                if actor.defeated:
+                    await interaction.followup.send(
+                        "You are defeated and cannot leave.",
+                        ephemeral=True,
+                    )
+                    continue
 
             already_left = False
 
@@ -199,7 +203,7 @@ class CombatViewController(ViewController):
                 guild_id,
                 encounter.id,
                 member_id,
-                EncounterEventType.MEMBER_LEAVING,
+                event_type,
             )
             await self.controller.dispatch_event(event)
 
@@ -223,9 +227,11 @@ class CombatViewController(ViewController):
             EncounterEventType.MEMBER_ENGAGE,
             EncounterEventType.MEMBER_OUT,
             EncounterEventType.END,
+            EncounterEventType.INITIATE,
         ]:
             done = event.encounter_event_type == EncounterEventType.END
-            await self.update_encounter_message(encounter_id, done)
+            started = event.encounter_event_type == EncounterEventType.INITIATE
+            await self.update_encounter_message(encounter_id, started, done)
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -280,10 +286,14 @@ class CombatViewController(ViewController):
         )
         await self.controller.dispatch_event(event)
 
-    async def update_encounter_message(self, encounter_id: int, done: bool):
+    async def update_encounter_message(
+        self, encounter_id: int, started: bool, done: bool
+    ):
         encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
         embed = await self.embed_manager.get_spawn_embed(encounter, done=done)
-        event = UIEvent(UIEventType.COMBAT_ENGAGE_UPDATE, (encounter_id, embed, done))
+        event = UIEvent(
+            UIEventType.COMBAT_ENGAGE_UPDATE, (encounter_id, embed, started, done)
+        )
         await self.controller.dispatch_ui_event(event)
 
     async def player_action(

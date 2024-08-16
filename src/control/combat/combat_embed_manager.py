@@ -3,6 +3,8 @@ import copy
 import datetime
 
 import discord
+from discord.ext import commands
+
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.skills.skill import Skill
@@ -15,7 +17,6 @@ from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from items.item import Item
 
@@ -67,6 +68,14 @@ class CombatEmbedManager(Service):
             embed.add_field(name="", value=enemy_info, inline=False)
 
         min_encounter_size = enemy.min_encounter_scale
+        guild_level = await self.database.get_guild_level(encounter.guild_id)
+
+        if encounter.enemy_level == guild_level:
+            min_encounter_size = max(
+                min_encounter_size,
+                int(enemy.max_players * Config.ENCOUNTER_MAX_LVL_SIZE_SCALING),
+            )
+
         max_encounter_size = enemy.max_players
         participants = await self.database.get_encounter_participants_by_encounter_id(
             encounter.id

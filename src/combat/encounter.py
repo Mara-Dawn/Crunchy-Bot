@@ -249,6 +249,12 @@ class EncounterContext:
         else:
             return Config.SHORT_TIMEOUT
 
+    def is_initiated(self) -> bool:
+        for event in self.encounter_events:
+            if event.encounter_event_type == EncounterEventType.INITIATE:
+                return True
+        return False
+
     def is_concluded(self) -> bool:
         for event in self.encounter_events:
             if event.encounter_event_type == EncounterEventType.END:
