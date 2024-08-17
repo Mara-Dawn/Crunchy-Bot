@@ -92,19 +92,23 @@ class EncounterContext:
         return None
 
     def get_last_actor(self) -> Actor:
-        phase_event_id = None
-
+        new_round_event_id = None
+        # Reset initiative after boss phase change
         for event in self.encounter_events:
+            if event.encounter_event_type in [
+                EncounterEventType.NEW_ROUND,
+            ]:
+                new_round_event_id = event.id
+                break
             if event.encounter_event_type in [
                 EncounterEventType.ENEMY_PHASE_CHANGE,
             ]:
-                phase_event_id = event.id
-                break
+                return None
 
         relevant_combat_events = self.combat_events
-        if phase_event_id is not None:
+        if new_round_event_id is not None:
             relevant_combat_events = [
-                event for event in self.combat_events if event.id > phase_event_id
+                event for event in self.combat_events if event.id > new_round_event_id
             ]
 
         if len(relevant_combat_events) <= 0:
@@ -119,6 +123,9 @@ class EncounterContext:
             ]:
                 last_actor = event.member_id
                 break
+
+        if last_actor is None:
+            return None
 
         for actor in self.actors:
             if actor.id == last_actor:
@@ -158,6 +165,7 @@ class EncounterContext:
         return initiative_list[0]
 
     def get_current_initiative(self) -> list[Actor]:
+
         last_actor = self.get_last_actor()
         if last_actor is None:
             return self.actors

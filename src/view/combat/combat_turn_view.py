@@ -1,6 +1,7 @@
 import contextlib
 
 import discord
+
 from combat.actors import Character
 from combat.encounter import EncounterContext
 from combat.skills.skill import CharacterSkill
