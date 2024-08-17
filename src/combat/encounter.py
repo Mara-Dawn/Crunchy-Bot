@@ -9,6 +9,7 @@ from combat.skills.types import SkillInstance, StatusEffectType
 from config import Config
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
+from events.status_effect_event import StatusEffectEvent
 from events.types import CombatEventType, EncounterEventType
 
 
@@ -60,7 +61,7 @@ class EncounterContext:
         opponent: Opponent,
         encounter_events: list[EncounterEvent],
         combat_events: list[CombatEvent],
-        status_effects: dict[int, dict[StatusEffectType, int]],
+        status_effects: dict[int, list[StatusEffectEvent]],
         combatants: list[Character],
         thread: discord.Thread,
     ):
@@ -90,6 +91,22 @@ class EncounterContext:
             if actor.id == actor_id:
                 return actor
         return None
+
+    def get_applied_status_count(
+        self, actor_id: int, status_type: StatusEffectType, count_stacks: bool = False
+    ) -> int:
+        count = 0
+
+        if actor_id not in self.status_effects:
+            return count
+
+        for event in self.status_effects[actor_id]:
+            if event.status_type == status_type and event.stacks > 0:
+                if count_stacks:
+                    count = +event.stacks
+                else:
+                    count += 1
+        return count
 
     def get_last_actor(self) -> Actor:
         new_round_event_id = None

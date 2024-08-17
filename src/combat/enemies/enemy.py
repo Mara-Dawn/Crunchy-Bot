@@ -1,6 +1,7 @@
 import random
 
 import discord
+
 from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearBaseType
 from combat.skills.types import SkillType

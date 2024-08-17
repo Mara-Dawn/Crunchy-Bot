@@ -308,9 +308,17 @@ class CombatStatusEffectManager(Service):
                         effect_data[effect_type] += healing
                 case StatusEffectType.BLIND:
                     roll = random.random()
-                    effect_data[effect_type] = (
-                        0 if roll < Config.BLIND_MISS_CHANCE else 1
-                    )
+                    miss_chance = Config.BLIND_MISS_CHANCE
+
+                    if actor.is_enemy and actor.enemy.is_boss:
+                        blind_count = context.get_applied_status_count(
+                            actor.id, StatusEffectType.BLIND
+                        )
+                        miss_chance *= pow(
+                            Config.BLIND_DIMINISHING_RETURNS, max(0, blind_count - 1)
+                        )
+
+                    effect_data[effect_type] = 0 if roll < miss_chance else 1
                 case StatusEffectType.EVASIVE:
                     chance_to_evade = active_status_effect.event.value / 100
                     roll = random.random()

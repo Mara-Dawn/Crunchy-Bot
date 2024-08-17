@@ -2,6 +2,7 @@ from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearBaseType
 from combat.skills.types import SkillType
+from config import Config
 
 
 class BoobaSlime(Enemy):
@@ -41,7 +42,7 @@ class GarlicDog(Enemy):
             image_url="https://i.imgur.com/lTysGqh.png",
             min_level=1,
             max_level=2,
-            health=4,
+            health=8 * (1 - Config.BLIND_MISS_CHANCE),
             damage_scaling=8,
             max_players=4,
             skill_types=[SkillType.GARLIC_BREATH],
