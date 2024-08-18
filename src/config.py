@@ -1,8 +1,8 @@
 class Config:
 
     # General Combat
-    # COMBAT_INITIAL_WAIT = 90
-    COMBAT_INITIAL_WAIT = 10
+    COMBAT_INITIAL_WAIT = 90
+    # COMBAT_INITIAL_WAIT = 10
 
     DEFAULT_TIMEOUT = 60 * 3
     SHORT_TIMEOUT = 60
@@ -12,32 +12,22 @@ class Config:
 
     ENEMY_HEALTH_SCALING = {
         1: 8.40,
-        2: 14.18,
-        3: 31.77,
-        4: 56.63,
-        5: 97.03,
-        6: 135.81,
-        7: 205.78,
-        8: 270.94,
-        9: 348.14,
-        10: 443.79,
-        11: 590.67,
-        12: 747.50,
+        2: 15.93,
+        3: 38.41,
+        4: 96.22,
+        5: 190.19,
+        6: 356.37,
+        7: 771.77,
     }
 
     OPPONENT_DAMAGE_BASE = {
         1: 250,
-        2: 274.05,
-        3: 335.33,
-        4: 381.54,
-        5: 458.47,
-        6: 516.59,
-        7: 567.94,
-        8: 619.23,
-        9: 672.61,
-        10: 726.07,
-        11: 778.43,
-        12: 851.96,
+        2: 272.80,
+        3: 335.54,
+        4: 418.76,
+        5: 639.79,
+        6: 748.42,
+        7: 834.09,
     }
 
     AVERAGE_PLAYER_POTENCY = {
@@ -48,11 +38,6 @@ class Config:
         5: 3.3,
         6: 3.7,
         7: 4,
-        8: 3,
-        9: 3,
-        10: 3,
-        11: 3,
-        12: 3,
     }
 
     CHARACTER_BASE_INITIATIVE = 10
@@ -84,19 +69,13 @@ class Config:
 
     # Guild Level Requirements
     LEVEL_REQUIREMENTS = {
-        1: 15,
-        2: 35,
-        3: 45,
-        # 3: 1,
-        4: 99999,
-        5: 20,
-        6: 25,
-        7: 25,
-        8: 25,
-        9: 30,
-        10: 30,
-        11: 35,
-        12: 40,
+        1: 100,
+        2: 150,
+        3: 175,
+        4: 200,
+        5: 225,
+        6: 250,
+        7: 9999999,
     }
     BOSS_LEVELS = [3, 6, 9, 12]
     BOSS_RETRY_REQUIREMENT = 5

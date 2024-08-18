@@ -669,6 +669,20 @@ class Database:
         PRIMARY KEY ({EQUIPMENT_EVENT_ID_COL})
     );"""
 
+    USER_SETTINGS_TABLE = "usersettings"
+    USER_SETTINGS_GUILD_ID_COL = "usrs_guild_id"
+    USER_SETTINGS_MEMBER_ID_COL = "usrs_member_id"
+    USER_SETTINGS_SETTING_ID_COL = "usrs_setting_id"
+    USER_SETTINGS_VALUE_COL = "usrs_value"
+    CREATE_USER_SETTINGS_TABLE = f"""
+    CREATE TABLE if not exists {USER_SETTINGS_TABLE} (
+        {USER_SETTINGS_MEMBER_ID_COL} INTEGER,
+        {USER_SETTINGS_GUILD_ID_COL} INTEGER,
+        {USER_SETTINGS_SETTING_ID_COL} INTEGER,
+        {USER_SETTINGS_VALUE_COL} TEXT,
+        PRIMARY KEY ({USER_SETTINGS_MEMBER_ID_COL}, {USER_SETTINGS_GUILD_ID_COL}, {USER_SETTINGS_SETTING_ID_COL})
+    );"""
+
     PERMANENT_ITEMS = [
         ItemType.REACTION_SPAM,
         ItemType.LOTTERY_TICKET,
@@ -739,6 +753,7 @@ class Database:
             await db.execute(self.CREATE_KARMA_EVENT_TABLE)
             await db.execute(self.CREATE_STATUS_EFFECT_EVENT_TABLE)
             await db.execute(self.CREATE_EQUIPMENT_EVENT_TABLE)
+            await db.execute(self.CREATE_USER_SETTINGS_TABLE)
             await db.commit()
             self.logger.log(
                 "DB", f"Loaded DB version {aiosqlite.__version__} from {self.db_file}."
@@ -4047,3 +4062,47 @@ class Database:
             item_ids.append(int(row[self.EQUIPMENT_EVENT_ITEM_ID]))
 
         return item_ids
+
+    async def set_user_setting(
+        self, member_id: int, guild_id: int, setting_id: str, value
+    ):
+        command = f"""
+            INSERT INTO {self.USER_SETTINGS_TABLE} (
+            {self.USER_SETTINGS_GUILD_ID_COL},
+            {self.USER_SETTINGS_MEMBER_ID_COL},
+            {self.USER_SETTINGS_SETTING_ID_COL},
+            {self.USER_SETTINGS_VALUE_COL})
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(
+            {self.USER_SETTINGS_GUILD_ID_COL},
+            {self.USER_SETTINGS_MEMBER_ID_COL},
+            {self.USER_SETTINGS_SETTING_ID_COL}
+            ) 
+            DO UPDATE SET 
+            {self.USER_SETTINGS_VALUE_COL}=excluded.{self.USER_SETTINGS_VALUE_COL};
+        """
+        task = (guild_id, member_id, setting_id, value)
+
+        return await self.__query_insert(command, task)
+
+    async def get_user_setting(
+        self,
+        member_id: int,
+        guild_id: int,
+        setting_id: str,
+    ):
+        command = f"""
+            SELECT * FROM {self.USER_SETTINGS_TABLE} 
+            WHERE {self.USER_SETTINGS_GUILD_ID_COL} = ?
+            AND {self.USER_SETTINGS_MEMBER_ID_COL} = ?
+            AND {self.USER_SETTINGS_SETTING_ID_COL} = ?
+            LIMIT 1;
+        """
+
+        task = (guild_id, member_id, setting_id)
+        rows = await self.__query_select(command, task)
+
+        if not rows or len(rows) < 1:
+            return None
+
+        return rows[0][self.USER_SETTINGS_VALUE_COL]

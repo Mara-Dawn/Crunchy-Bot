@@ -1,4 +1,3 @@
-from asyncio.tasks import current_task
 import datetime
 import random
 import secrets
@@ -217,6 +216,8 @@ class Combat(commands.Cog):
                 continue
 
             max_encounter_level = await self.database.get_guild_level(guild.id) - 1
+            max_encounter_level = max(1, max_encounter_level)
+
             if max_encounter_level <= 0:
                 continue
 

@@ -3,6 +3,9 @@ import datetime
 import random
 
 import discord
+from discord import app_commands
+from discord.ext import commands
+
 from bot import CrunchyBot
 from control.ai_manager import AIManager
 from control.controller import Controller
@@ -11,10 +14,9 @@ from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
+from control.types import UserSetting
 from datalayer.database import Database
 from datalayer.types import ItemTrigger
-from discord import app_commands
-from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.types import BeansEventType
 from items.item import Item
@@ -136,7 +138,12 @@ class Gamba(commands.Cog):
     @app_commands.command(name="gamba", description="Gamba away your beans.")
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 5)
-    async def gamba(self, interaction: discord.Interaction, amount: int | None = None):
+    async def gamba(
+        self,
+        interaction: discord.Interaction,
+        amount: int | None = None,
+        set_as_default: bool = False,
+    ):
         if not await self.__check_enabled(interaction):
             return
         if not await self.__beans_role_check(interaction):
@@ -155,7 +162,10 @@ class Gamba(commands.Cog):
         default_amount = await self.settings_manager.get_beans_gamba_cost(guild_id)
 
         if amount is None or amount <= 0:
-            amount = default_amount
+            user_default = await self.database.get_user_setting(
+                user_id, guild_id, UserSetting.GAMBA_DEFAULT
+            )
+            amount = int(user_default) if user_default is not None else default_amount
 
         over_limit = not (beans_gamba_min <= amount and amount <= beans_gamba_max)
 
@@ -279,6 +289,11 @@ class Gamba(commands.Cog):
         await self.__consume_gamba_items(
             interaction, user_items, no_limit, cooldown_override
         )
+
+        if set_as_default:
+            await self.database.set_user_setting(
+                user_id, guild_id, UserSetting.GAMBA_DEFAULT, amount
+            )
 
         event = BeansEvent(
             datetime.datetime.now(),
