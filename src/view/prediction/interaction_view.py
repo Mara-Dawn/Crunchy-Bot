@@ -2,6 +2,7 @@ import contextlib
 import datetime
 
 import discord
+
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.prediction import Prediction

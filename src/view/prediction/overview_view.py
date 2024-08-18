@@ -1,9 +1,11 @@
 import contextlib
 
 import discord
+
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.prediction_stats import PredictionStats
+from datalayer.types import PredictionState
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.view_menu import ViewMenu
@@ -41,6 +43,8 @@ class PredictionOverviewView(ViewMenu):
 
         self.clear_items()
 
+        locked = self.prediction_stats.prediction.state == PredictionState.LOCKED
+
         for idx, outcome in enumerate(self.prediction_stats.prediction.outcomes):
             self.add_item(
                 BetInputButton(
@@ -48,6 +52,7 @@ class PredictionOverviewView(ViewMenu):
                     outcome,
                     self.prediction_stats.prediction.outcomes[outcome],
                     self.prediction_stats.prediction.id,
+                    locked,
                 )
             )
 
@@ -81,6 +86,23 @@ class PredictionOverviewView(ViewMenu):
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
+
+    async def on_bet_button_pressed(
+        self,
+        interaction: discord.Interaction,
+        outcome_id: int,
+        outcome_text: str,
+    ):
+
+        user_id = interaction.user.id
+        guild_id = interaction.guild_id
+        user_balance = await self.controller.database.get_member_beans(
+            guild_id, user_id
+        )
+
+        await interaction.response.send_modal(
+            BetInputModal(self, outcome_id, outcome_text, user_balance)
+        )
 
     async def submit_bet(
         self,
@@ -138,7 +160,12 @@ class InfoButton(discord.ui.Button):
 class BetInputButton(discord.ui.Button):
 
     def __init__(
-        self, label: int, outcome_id: int, outcome_text: str, prediction_id: int
+        self,
+        label: int,
+        outcome_id: int,
+        outcome_text: str,
+        prediction_id: int,
+        disabled: bool = False,
     ):
 
         outcome_prefixes = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
@@ -149,13 +176,14 @@ class BetInputButton(discord.ui.Button):
             style=discord.ButtonStyle.green,
             row=0,
             custom_id=f"BetInputButton:{label}:{prediction_id}",
+            disabled=disabled,
         )
 
     async def callback(self, interaction: discord.Interaction):
         view: PredictionOverviewView = self.view
         if await view.interaction_check(interaction):
-            await interaction.response.send_modal(
-                BetInputModal(self.view, self.outcome_id, self.outcome_text)
+            await view.on_bet_button_pressed(
+                interaction, self.outcome_id, self.outcome_text
             )
 
 
@@ -166,6 +194,7 @@ class BetInputModal(discord.ui.Modal):
         view: PredictionOverviewView,
         outcome_id: int,
         outcome_text: str,
+        user_balance: int,
     ):
         super().__init__(title="Place your Bet")
         self.view = view
@@ -173,7 +202,7 @@ class BetInputModal(discord.ui.Modal):
 
         self.amount = discord.ui.TextInput(
             label=f'Beans bet on "{outcome_text[:20]}"',
-            placeholder="Enter how many beans you want to bet.",
+            placeholder=f"Place your bet. Your current balance is 🅱️{user_balance}",
         )
         self.add_item(self.amount)
 
