@@ -32,13 +32,15 @@ from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
-from control.types import ControllerModuleMap
+from control.types import ControllerModuleMap, UserSetting
 from datalayer.database import Database
+from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.inventory_event import InventoryEvent
 from events.types import (
+    BeansEventType,
     CombatEventType,
     EncounterEventType,
     EventType,
@@ -898,8 +900,7 @@ class EncounterManager(Service):
         for member, member_loot in loot.items():
 
             await asyncio.sleep(1)
-            # beans = member_loot[0]
-            beans = 0
+            beans = member_loot[0]
             embeds = []
             loot_head_embed = await self.embed_manager.get_loot_embed(member, beans)
             embeds.append(loot_head_embed)
@@ -908,18 +909,39 @@ class EncounterManager(Service):
                 context.thread, content=f"<@{member.id}>", embeds=embeds
             )
 
-            # event = BeansEvent(
-            #     now,
-            #     member.guild.id,
-            #     BeansEventType.COMBAT_LOOT,
-            #     member.id,
-            #     beans,
-            # )
-            # await self.controller.dispatch_event(event)
+            event = BeansEvent(
+                now,
+                member.guild.id,
+                BeansEventType.COMBAT_LOOT,
+                member.id,
+                beans,
+            )
+            await self.controller.dispatch_event(event)
 
+            auto_scrap = await self.database.get_user_setting(
+                member.id, context.encounter.guild_id, UserSetting.AUTO_SCRAP
+            )
+            if auto_scrap is None:
+                auto_scrap = 0
+            auto_scrap = int(auto_scrap)
+
+            gear_to_scrap = []
             for drop in member_loot[1]:
+                if drop.level <= auto_scrap:
+                    gear_to_scrap.append(drop)
+                    continue
                 embeds.append(drop.get_embed())
                 await asyncio.sleep(1)
+                await self.context_loader.edit_message(message, embeds=embeds)
+
+            if len(gear_to_scrap) > 0:
+                total_scrap = await self.gear_manager.scrap_gear(
+                    member.id, context.encounter.guild_id, gear_to_scrap
+                )
+                scrap_embed = await self.embed_manager.get_loot_scrap_embed(
+                    member, total_scrap, auto_scrap
+                )
+                embeds.append(scrap_embed)
                 await self.context_loader.edit_message(message, embeds=embeds)
 
             item = member_loot[2]

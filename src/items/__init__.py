@@ -12,7 +12,6 @@ from datalayer.garden import (
 )
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, PlantType
-
 from items.item import Item
 from items.types import ItemGroup, ItemType, ShopCategory
 

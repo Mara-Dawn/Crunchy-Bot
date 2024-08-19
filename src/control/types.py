@@ -3,6 +3,7 @@ from enum import Enum
 
 class UserSetting(str, Enum):
     GAMBA_DEFAULT = "gamba_default"
+    AUTO_SCRAP = "auto_scrap"
 
 
 class ControllerType(str, Enum):

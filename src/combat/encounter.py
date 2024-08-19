@@ -2,6 +2,7 @@ from collections import deque
 from typing import Any
 
 import discord
+
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill

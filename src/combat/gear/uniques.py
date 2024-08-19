@@ -43,8 +43,8 @@ class HotPants(LegGear_T0, Unique):
             self,
             unique_modifiers={
                 GearModifierType.CONSTITUTION: -2,
-                GearModifierType.MAGIC: 4,
-                GearModifierType.ATTACK: 4,
+                GearModifierType.MAGIC: 3,
+                GearModifierType.ATTACK: 3,
             },
         )
 

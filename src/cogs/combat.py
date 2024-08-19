@@ -19,6 +19,7 @@ from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
+from control.types import UserSetting
 from datalayer.database import Database
 from items.types import ItemType
 from view.combat.embed import EquipmentHeadEmbed
@@ -516,6 +517,35 @@ class Combat(commands.Cog):
     )
 
     @group.command(
+        name="auto_scrap",
+        description="Automatically scrap all loot up to and including this level.",
+    )
+    @app_commands.guild_only()
+    async def auto_scrap(
+        self,
+        interaction: discord.Interaction,
+        level: app_commands.Range[int, 0],
+    ):
+        if not await self.__check_enabled(interaction, all_channels=True):
+            return
+        await interaction.response.defer(ephemeral=True)
+
+        member_id = interaction.user.id
+        guild_id = interaction.guild_id
+
+        await self.database.set_user_setting(
+            member_id, guild_id, UserSetting.AUTO_SCRAP, level
+        )
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Auto scrapping enabled for loot of level {level} and below.",
+            ephemeral=True,
+            args=[level],
+        )
+
+    @group.command(
         name="give_loot",
         description="Give specific loot.",
     )
@@ -740,6 +770,45 @@ class Combat(commands.Cog):
             interaction,
             f"Max lvl encounter ping role was set to `{role.name}` .",
             args=[role.name],
+        )
+
+    @group.command(
+        name="force_reload",
+        description="foces a encounter reload.",
+    )
+    @app_commands.check(__has_permission)
+    async def force_reload(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        channel_id = interaction.channel_id
+        guild_id = interaction.guild_id
+
+        if channel_id is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Please use this command inside an encounter thread.",
+                ephemeral=True,
+            )
+            return
+
+        encounter = await self.database.get_encounter_by_thread_id(guild_id, channel_id)
+
+        if encounter is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "No encounter found for this thread.",
+                ephemeral=True,
+            )
+            return
+
+        await self.encounter_manager.refresh_encounter_thread(encounter.id)
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            "Forced Encounter Reload.",
+            ephemeral=True,
         )
 
 

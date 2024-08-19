@@ -3053,6 +3053,24 @@ class Database:
 
         return Encounter.from_db_row(rows[0])
 
+    async def get_encounter_by_thread_id(
+        self, guild_id: int, channel_id: int
+    ) -> Encounter | None:
+        command = f""" 
+            SELECT * FROM {self.ENCOUNTER_TABLE} 
+            INNER JOIN {self.ENCOUNTER_THREAD_TABLE} 
+            ON {self.ENCOUNTER_ID_COL} = {self.ENCOUNTER_THREAD_ENCOUNTER_ID_COL}
+            WHERE {self.ENCOUNTER_THREAD_ID_COL} = ?
+            AND {self.ENCOUNTER_GUILD_ID_COL} = ?
+            LIMIT 1;
+        """
+        task = (channel_id, guild_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return None
+
+        return Encounter.from_db_row(rows[0])
+
     async def get_encounter_by_message_id(
         self, guild_id: int, message_id: int
     ) -> Encounter:
