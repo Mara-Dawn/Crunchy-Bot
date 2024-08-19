@@ -2,33 +2,31 @@ import copy
 import datetime
 from typing import Any
 
+from discord.ext import commands
+
 from bot_util import BotUtil
+from control.controller import Controller
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.service import Service
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.lootbox import LootBox
 from datalayer.stats import UserStats
-from datalayer.types import Season, UserInteraction
-from discord.ext import commands
+from datalayer.types import UserInteraction
 from events.bat_event import BatEvent
 from events.bot_event import BotEvent
-from events.combat_event import CombatEvent
 from events.jail_event import JailEvent
 from events.notification_event import NotificationEvent
 from events.prediction_event import PredictionEvent
 from events.types import (
     BeansEventType,
-    CombatEventType,
     EventType,
     JailEventType,
     PredictionEventType,
 )
 from items.types import ItemType
 from view.types import RankingType
-
-from control.controller import Controller
-from control.item_manager import ItemManager
-from control.logger import BotLogger
-from control.service import Service
-from control.settings_manager import SettingsManager
 
 
 class EventManager(Service):
@@ -170,9 +168,9 @@ class EventManager(Service):
         return 0
 
     async def has_jail_event_from_user(
-        self, jail_id: int, user_id: int, jail_event_type: JailEventType
+        self, jail_id: int, guild_id: int, user_id: int, jail_event_type: JailEventType
     ) -> bool:
-        events = await self.database.get_jail_events_by_user(user_id)
+        events = await self.database.get_jail_events_by_user(guild_id, user_id)
 
         for event in events:
             if event.jail_id == jail_id and event.jail_event_type == jail_event_type:
@@ -321,7 +319,7 @@ class EventManager(Service):
         guild_id: int,
         outgoing: bool,
         interaction_type: UserInteraction,
-        season: Season,
+        season: int,
     ) -> list[tuple[int, Any]]:
         guild_interaction_events = await self.database.get_guild_interaction_events(
             guild_id, interaction_type, season
@@ -338,7 +336,7 @@ class EventManager(Service):
         return sorted(parsing_list.items(), key=lambda item: item[1], reverse=True)
 
     async def get_user_rankings(
-        self, guild_id: int, ranking_type: RankingType, season: Season
+        self, guild_id: int, ranking_type: RankingType, season: int
     ) -> dict[str, Any]:
         parsing_list = {}
         ranking_data = []

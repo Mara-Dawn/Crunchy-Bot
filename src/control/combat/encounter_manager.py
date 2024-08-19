@@ -32,13 +32,15 @@ from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
-from control.types import ControllerModuleMap
+from control.types import ControllerModuleMap, UserSetting
 from datalayer.database import Database
+from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.inventory_event import InventoryEvent
 from events.types import (
+    BeansEventType,
     CombatEventType,
     EncounterEventType,
     EventType,
@@ -222,6 +224,35 @@ class EncounterManager(Service):
             guild.id, enemy_type=enemy_type, level=level
         )
 
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
+        view = EnemyEngageView(self.controller, enemy)
+        channel = guild.get_channel(channel_id)
+
+        spawn_pings = ""
+        ping_role = await self.settings_manager.get_spawn_ping_role(guild.id)
+        if ping_role is not None:
+            spawn_pings += f"<@&{ping_role}>"
+
+        guild_level = await self.database.get_guild_level(encounter.guild_id)
+        if level == guild_level:
+            max_lvl_ping_role = await self.settings_manager.get_max_lvl_spawn_ping_role(
+                guild.id
+            )
+            if max_lvl_ping_role is not None:
+                spawn_pings += f"<@&{max_lvl_ping_role}>"
+
+        message = await self.context_loader.send_message(
+            channel, content=spawn_pings, view=view
+        )
+
+        encounter.message_id = message.id
+        encounter.channel_id = message.channel.id
+
+        encounter_id = await self.database.log_encounter(encounter)
+
+        view.set_message(message)
+        encounter.id = encounter_id
+
         if encounter.enemy_type == EnemyType.MIMIC:
             mock_enemy = await self.get_random_enemy(
                 encounter.enemy_level, exclude=[EnemyType.MIMIC]
@@ -233,20 +264,6 @@ class EncounterManager(Service):
         else:
             embed = await self.embed_manager.get_spawn_embed(encounter)
 
-        enemy = await self.factory.get_enemy(encounter.enemy_type)
-        view = EnemyEngageView(self.controller, enemy)
-        channel = guild.get_channel(channel_id)
-
-        message = await self.context_loader.send_message(
-            channel, content="", embed=embed, view=view
-        )
-
-        encounter.message_id = message.id
-        encounter.channel_id = message.channel.id
-
-        encounter_id = await self.database.log_encounter(encounter)
-
-        view.set_message(message)
         await view.refresh_ui(embed=embed, encounter_id=encounter_id)
 
         event = EncounterEvent(
@@ -272,8 +289,7 @@ class EncounterManager(Service):
         )
         opponent = await self.actor_manager.get_opponent(
             enemy,
-            encounter.enemy_level,
-            encounter.max_hp,
+            encounter,
             encounter_events,
             combat_events,
             status_effects,
@@ -352,22 +368,34 @@ class EncounterManager(Service):
             return
 
         enemy = await self.factory.get_enemy(encounter.enemy_type)
-        if enemy.min_encounter_scale > 1:
+
+        min_participants = enemy.min_encounter_scale
+        guild_level = await self.database.get_guild_level(encounter.guild_id)
+
+        if encounter.enemy_level == guild_level:
+            min_participants = max(
+                min_participants,
+                int(enemy.max_players * Config.ENCOUNTER_MAX_LVL_SIZE_SCALING),
+            )
+
+        if min_participants > 1:
             initiate_combat = False
             participants = (
                 await self.database.get_encounter_participants_by_encounter_id(
                     encounter.id
                 )
             )
-            if len(participants) == enemy.min_encounter_scale:
+            if len(participants) == min_participants:
                 initiate_combat = True
 
         if new_thread and not initiate_combat:
             wait_embed = await self.embed_manager.get_waiting_for_party_embed(
-                enemy.min_encounter_scale
+                min_participants
             )
+            if not enemy.is_boss:
+                leave_view = EncounterLeaveView(self.controller)
             message = await self.context_loader.send_message(
-                thread, content="", embed=wait_embed
+                thread, content="", embed=wait_embed, view=leave_view
             )
 
         if initiate_combat:
@@ -393,7 +421,7 @@ class EncounterManager(Service):
         enemy = await self.factory.get_enemy(encounter.enemy_type)
         max_encounter_size = enemy.max_players
         if encounter.id not in encounters:
-            #TODO why does this happen
+            # TODO why does this happen
             return
         if len(encounters[encounter.id]) >= max_encounter_size and not enemy.is_boss:
             event = UIEvent(UIEventType.COMBAT_FULL, encounter.id)
@@ -873,8 +901,7 @@ class EncounterManager(Service):
         for member, member_loot in loot.items():
 
             await asyncio.sleep(1)
-            # beans = member_loot[0]
-            beans = 0
+            beans = member_loot[0]
             embeds = []
             loot_head_embed = await self.embed_manager.get_loot_embed(member, beans)
             embeds.append(loot_head_embed)
@@ -883,18 +910,39 @@ class EncounterManager(Service):
                 context.thread, content=f"<@{member.id}>", embeds=embeds
             )
 
-            # event = BeansEvent(
-            #     now,
-            #     member.guild.id,
-            #     BeansEventType.COMBAT_LOOT,
-            #     member.id,
-            #     beans,
-            # )
-            # await self.controller.dispatch_event(event)
+            event = BeansEvent(
+                now,
+                member.guild.id,
+                BeansEventType.COMBAT_LOOT,
+                member.id,
+                beans,
+            )
+            await self.controller.dispatch_event(event)
 
+            auto_scrap = await self.database.get_user_setting(
+                member.id, context.encounter.guild_id, UserSetting.AUTO_SCRAP
+            )
+            if auto_scrap is None:
+                auto_scrap = 0
+            auto_scrap = int(auto_scrap)
+
+            gear_to_scrap = []
             for drop in member_loot[1]:
+                if drop.level <= auto_scrap:
+                    gear_to_scrap.append(drop)
+                    continue
                 embeds.append(drop.get_embed())
                 await asyncio.sleep(1)
+                await self.context_loader.edit_message(message, embeds=embeds)
+
+            if len(gear_to_scrap) > 0:
+                total_scrap = await self.gear_manager.scrap_gear(
+                    member.id, context.encounter.guild_id, gear_to_scrap
+                )
+                scrap_embed = await self.embed_manager.get_loot_scrap_embed(
+                    member, total_scrap, auto_scrap
+                )
+                embeds.append(scrap_embed)
                 await self.context_loader.edit_message(message, embeds=embeds)
 
             item = member_loot[2]
@@ -1270,7 +1318,9 @@ class EncounterManager(Service):
             else:
                 async for message in channel.history(limit=100):
                     if message.thread is not None:
-                        age_delta = datetime.datetime.now(datetime.UTC) - message.created_at
+                        age_delta = (
+                            datetime.datetime.now(datetime.UTC) - message.created_at
+                        )
                         if age_delta.total_seconds() > 60 * 60:
                             await message.delete()
 

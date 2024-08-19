@@ -1,12 +1,21 @@
 import datetime
 
 import discord
+from discord.ext import commands
+
 from combat.gear.gear import Gear
 from combat.gear.types import Base, EquipmentSlot
 from combat.skills.skill import Skill
 from config import Config
+from control.combat.combat_actor_manager import CombatActorManager
+from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.combat_gear_manager import CombatGearManager
+from control.combat.encounter_manager import EncounterManager
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.logger import BotLogger
+from control.view.view_controller import ViewController
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.equipment_event import EquipmentEvent
 from events.inventory_event import InventoryEvent
@@ -23,15 +32,6 @@ from view.combat.equipment_select_view import EquipmentSelectView
 from view.combat.equipment_view import EquipmentView, EquipmentViewState
 from view.combat.skill_select_view import SkillSelectView, SkillViewState
 from view.combat.special_shop_view import SpecialShopView
-
-from control.combat.combat_actor_manager import CombatActorManager
-from control.combat.combat_embed_manager import CombatEmbedManager
-from control.combat.combat_gear_manager import CombatGearManager
-from control.combat.encounter_manager import EncounterManager
-from control.controller import Controller
-from control.event_manager import EventManager
-from control.logger import BotLogger
-from control.view.view_controller import ViewController
 
 
 class EquipmentViewController(ViewController):
@@ -545,28 +545,7 @@ class EquipmentViewController(ViewController):
                     guild_id, member_id
                 )
 
-        total_scraps = 0
-
-        for gear in gear_to_scrap:
-            total_scraps += await self.gear_manager.get_gear_scrap_value(gear)
-
-            self.logger.log(
-                guild_id,
-                f"Gear piece was scrapped: lvl.{gear.level} {gear.rarity.value} {gear.name}",
-                cog="Equipment",
-            )
-
-        await self.database.delete_gear_by_ids([gear.id for gear in gear_to_scrap])
-
-        if total_scraps > 0:
-            event = InventoryEvent(
-                now,
-                guild_id,
-                member_id,
-                ItemType.SCRAP,
-                total_scraps,
-            )
-            await self.controller.dispatch_event(event)
+        await self.gear_manager.scrap_gear(member_id, guild_id, gear_to_scrap)
 
         if gear_slot is None:
             await self.open_gear_overview(interaction, view_id)

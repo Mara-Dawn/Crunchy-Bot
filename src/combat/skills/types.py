@@ -136,6 +136,11 @@ class SkillType(str, Enum):
     HOE_SHANK = "HoeShank"
     HOE_SPREAD = "HoeSpread"
 
+    # Scribbler
+    ERASE = "Erase"
+    EYE_POKE = "EyePoke"
+    PAPER_CUTS = "PaperCuts"
+
     # Mimic
     DEVOUR = "Devour"
     LOOT_SPIT = "LootSpit"

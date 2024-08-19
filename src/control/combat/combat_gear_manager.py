@@ -1,6 +1,8 @@
 import datetime
 import random
 
+from discord.ext import commands
+
 from combat.actors import Character
 from combat.encounter import EncounterContext
 from combat.enemies.enemy import Enemy
@@ -27,7 +29,6 @@ from combat.gear.uniques import Unique
 from combat.skills.skill import BaseSkill, Skill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillType
-from config import Config
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
@@ -35,10 +36,11 @@ from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
+from events.inventory_event import InventoryEvent
 from events.types import EncounterEventType
+from items.types import ItemType
 
 
 class CombatGearManager(Service):
@@ -599,6 +601,32 @@ class CombatGearManager(Service):
                     case EncounterEventType.PENALTY75:
                         return 0.75
         return 0
+
+    async def scrap_gear(
+        self, member_id: int, guild_id: int, gear_to_scrap: list[Gear]
+    ) -> int:
+        total_scraps = 0
+        for gear in gear_to_scrap:
+            total_scraps += await self.get_gear_scrap_value(gear)
+
+            self.logger.log(
+                guild_id,
+                f"Gear piece was scrapped: lvl.{gear.level} {gear.rarity.value} {gear.name}",
+                cog="Equipment",
+            )
+
+        await self.database.delete_gear_by_ids([gear.id for gear in gear_to_scrap])
+
+        if total_scraps > 0:
+            event = InventoryEvent(
+                datetime.datetime.now(),
+                guild_id,
+                member_id,
+                ItemType.SCRAP,
+                total_scraps,
+            )
+            await self.controller.dispatch_event(event)
+        return total_scraps
 
     async def roll_enemy_loot(self, context: EncounterContext):
         enemy = context.opponent.enemy

@@ -1,8 +1,8 @@
 import discord
-from config import Config
-from datalayer.types import ItemTrigger
 from discord.ext import commands
 
+from config import Config
+from datalayer.types import ItemTrigger
 from items.types import ItemGroup, ItemType, ShopCategory
 
 

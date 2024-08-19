@@ -2,6 +2,7 @@ from collections import deque
 from typing import Any
 
 import discord
+
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
@@ -9,6 +10,7 @@ from combat.skills.types import SkillInstance, StatusEffectType
 from config import Config
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
+from events.status_effect_event import StatusEffectEvent
 from events.types import CombatEventType, EncounterEventType
 
 
@@ -60,7 +62,7 @@ class EncounterContext:
         opponent: Opponent,
         encounter_events: list[EncounterEvent],
         combat_events: list[CombatEvent],
-        status_effects: dict[int, dict[StatusEffectType, int]],
+        status_effects: dict[int, list[StatusEffectEvent]],
         combatants: list[Character],
         thread: discord.Thread,
     ):
@@ -91,20 +93,40 @@ class EncounterContext:
                 return actor
         return None
 
-    def get_last_actor(self) -> Actor:
-        phase_event_id = None
+    def get_applied_status_count(
+        self, actor_id: int, status_type: StatusEffectType, count_stacks: bool = False
+    ) -> int:
+        count = 0
 
+        if actor_id not in self.status_effects:
+            return count
+
+        for event in self.status_effects[actor_id]:
+            if event.status_type == status_type and event.stacks > 0:
+                if count_stacks:
+                    count = +event.stacks
+                else:
+                    count += 1
+        return count
+
+    def get_last_actor(self) -> Actor:
+        new_round_event_id = None
+        # Reset initiative after boss phase change
         for event in self.encounter_events:
+            if event.encounter_event_type in [
+                EncounterEventType.NEW_ROUND,
+            ]:
+                new_round_event_id = event.id
+                break
             if event.encounter_event_type in [
                 EncounterEventType.ENEMY_PHASE_CHANGE,
             ]:
-                phase_event_id = event.id
-                break
+                return None
 
         relevant_combat_events = self.combat_events
-        if phase_event_id is not None:
+        if new_round_event_id is not None:
             relevant_combat_events = [
-                event for event in self.combat_events if event.id > phase_event_id
+                event for event in self.combat_events if event.id > new_round_event_id
             ]
 
         if len(relevant_combat_events) <= 0:
@@ -119,6 +141,9 @@ class EncounterContext:
             ]:
                 last_actor = event.member_id
                 break
+
+        if last_actor is None:
+            return None
 
         for actor in self.actors:
             if actor.id == last_actor:
@@ -158,6 +183,7 @@ class EncounterContext:
         return initiative_list[0]
 
     def get_current_initiative(self) -> list[Actor]:
+
         last_actor = self.get_last_actor()
         if last_actor is None:
             return self.actors
@@ -248,6 +274,12 @@ class EncounterContext:
             return Config.DEFAULT_TIMEOUT
         else:
             return Config.SHORT_TIMEOUT
+
+    def is_initiated(self) -> bool:
+        for event in self.encounter_events:
+            if event.encounter_event_type == EncounterEventType.INITIATE:
+                return True
+        return False
 
     def is_concluded(self) -> bool:
         for event in self.encounter_events:

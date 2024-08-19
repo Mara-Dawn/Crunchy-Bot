@@ -1,6 +1,7 @@
 import discord
-from control.settings_manager import SettingsManager
 from discord.ext import commands
+
+from control.settings_manager import SettingsManager
 
 
 class HelpEmbed(discord.Embed):
@@ -43,6 +44,9 @@ class HelpEmbed(discord.Embed):
                 f"`/gamba <amount>` - You may specify a custom amount, up to **{gamba_max}** beans."
             )
             beans_commands.append(
+                "`/gamba <amount> set_as_default=True` - Set a default amount to use when only using /gamba without arguments."
+            )
+            beans_commands.append(
                 "`/beans transfer <user> <amount>` - Transfer your beans to another user."
             )
             beans_commands.append(
@@ -81,6 +85,10 @@ class HelpEmbed(discord.Embed):
         beans_commands.append(
             "`/equipment` - Manage your combat equipment, skills and stats."
         )
+        if advanced:
+            beans_commands.append(
+                "`/combat auto_scrap <level>` - Automatically scrap all drops up to and including the specified level."
+            )
         description = "\n\n".join(beans_commands)
         description = "```RPG and Combat```\n" + description
         self.add_field(name="", value=description, inline=False)

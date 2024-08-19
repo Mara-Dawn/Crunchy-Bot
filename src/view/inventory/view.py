@@ -367,10 +367,14 @@ class Dropdown(discord.ui.Select):
                 min((item.cost * UserInventory.SELL_MODIFIER) / item.base_amount, 100)
             )
 
+            emoji = item.emoji
+            if isinstance(item.emoji, int):
+                emoji = str(self.bot.get_emoji(item.emoji))
+
             option = discord.SelectOption(
                 label=item.name,
                 description=f"Sells for 🅱️{sell_price} a piece",
-                emoji=item.emoji,
+                emoji=emoji,
                 value=item.type,
                 default=(selected == item.type),
             )

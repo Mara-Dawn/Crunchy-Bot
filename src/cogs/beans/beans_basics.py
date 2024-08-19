@@ -3,17 +3,17 @@ import random
 import typing
 
 import discord
-from control.settings_manager import SettingsManager
 from discord import app_commands
 from discord.ext import commands
+
+from cogs.beans.beans_group import BeansGroup
+from control.settings_manager import SettingsManager
 from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType
 from items.types import ItemType
 from view.help import HelpEmbed
 from view.settings_modal import SettingsModal
-
-from cogs.beans.beans_group import BeansGroup
 
 
 class BeansBasics(BeansGroup):

@@ -4,6 +4,9 @@ import time
 from typing import Literal
 
 import discord
+from discord import app_commands
+from discord.ext import commands, tasks
+
 from bot import CrunchyBot
 from control.ai_manager import AIManager
 from control.controller import Controller
@@ -13,8 +16,6 @@ from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
-from discord import app_commands
-from discord.ext import commands, tasks
 from events.inventory_batchevent import InventoryBatchEvent
 from events.inventory_event import InventoryEvent
 from events.karma_event import KarmaEvent

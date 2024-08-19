@@ -12,7 +12,6 @@ from datalayer.garden import (
 )
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, PlantType
-
 from items.item import Item
 from items.types import ItemGroup, ItemType, ShopCategory
 
@@ -1574,6 +1573,29 @@ class FlashSeed(BaseSeed):
 
 
 # Permanent Rare Items
+
+
+class BetaBadge(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Beta Badge",
+            type=ItemType.BETA_BADGE,
+            group=ItemGroup.MISC,
+            shop_category=ShopCategory.FUN,
+            description="A token of appreciation for participating in a Beans Beta event. You are awesome!",
+            information="Thank you so much! c: (Art by Smorlis)",
+            emoji=1275081546713534464,
+            cost=cost,
+            value=1,
+            hide_in_shop=True,
+            permanent=True,
+        )
 
 
 class PrestigeBean(Item):

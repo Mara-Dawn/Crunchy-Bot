@@ -1,6 +1,7 @@
 import discord
-from bot import CrunchyBot
 from discord import app_commands
+
+from bot import CrunchyBot
 
 TOKEN_FILE = "key.txt"
 

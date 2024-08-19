@@ -2,10 +2,15 @@ import datetime
 import random
 
 import discord
+from discord.ext import commands
+
 from bot_util import BotUtil
+from control.controller import Controller
+from control.logger import BotLogger
+from control.service import Service
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.jail import UserJail
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
@@ -14,11 +19,6 @@ from events.types import EventType, JailEventType
 # needed for global access
 from items import *  # noqa: F403
 from items.types import ItemType
-
-from control.controller import Controller
-from control.logger import BotLogger
-from control.service import Service
-from control.settings_manager import SettingsManager
 
 
 class JailManager(Service):
@@ -62,7 +62,7 @@ class JailManager(Service):
         return affected_jails[0]
 
     async def get_jail_duration(self, jail: UserJail) -> int:
-        events = await self.database.get_jail_events_by_jail(jail.id)
+        events = await self.database.get_jail_events_by_jail(jail.guild_id, jail.id)
         total_duration = 0
         for event in events:
             total_duration += event.duration

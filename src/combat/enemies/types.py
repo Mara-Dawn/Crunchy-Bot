@@ -13,6 +13,7 @@ class EnemyType(str, Enum):
     PIMPLE = "Pimple"
     CAT_DOG = "CatDog"
     MUSHROOM = "Mushroom"
+    SCRIBBLER = "Scribbler"
     BROCOLI = "BroColi"
     DF_TANK = "DFTank"
     CUDDLES = "Cuddles"

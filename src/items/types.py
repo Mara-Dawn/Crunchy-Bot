@@ -41,6 +41,7 @@ class ItemType(str, Enum):
     INSTANT_GAMBA = "NoCooldownGamba"
     CRAPPY_COUPON = "CrappyDrawing"
     PRESTIGE_BEAN = "PrestigeBean"
+    BETA_BADGE = "BetaBadge"
     PERM_PET_BOOST = "PermPetBoost"
     PERM_SLAP_BOOST = "PermSlapBoost"
     PERM_FART_BOOST = "PermFartBoost"
@@ -104,6 +105,7 @@ class ItemGroup(str, Enum):
     SEED = "seed"
     DEBUFF = "debuff"
     GEAR = "gear"
+    MISC = "misc"
 
 
 class ShopCategory(int, Enum):

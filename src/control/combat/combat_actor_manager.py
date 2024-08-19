@@ -1,7 +1,10 @@
 import datetime
 
 import discord
+from discord.ext import commands
+
 from combat.actors import Actor, Character, Opponent
+from combat.encounter import Encounter
 from combat.enemies.enemy import Enemy
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
@@ -10,10 +13,10 @@ from combat.skills.types import SkillEffect, SkillType, StatusEffectType
 from config import Config
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
+from control.imgur_manager import ImgurManager
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
@@ -32,6 +35,7 @@ class CombatActorManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
+        self.imgur_manager: ImgurManager = self.controller.get_service(ImgurManager)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "Combat Skills"
 
@@ -143,12 +147,13 @@ class CombatActorManager(Service):
     async def get_opponent(
         self,
         enemy: Enemy,
-        enemy_level: int,
-        max_hp: int,
+        encounter: Encounter,
         encounter_events: list[EncounterEvent],
         combat_events: list[CombatEvent],
         status_effects: dict[int, list[StatusEffectEvent]],
     ) -> Opponent:
+        enemy_level = encounter.enemy_level
+        max_hp = encounter.max_hp
         defeated = False
         encounter_id = None
         id = -1
@@ -191,6 +196,8 @@ class CombatActorManager(Service):
             id, status_effects, combat_events
         )
 
+        image_url = await self.imgur_manager.get_random_encounter_image(encounter)
+
         return Opponent(
             id=id,
             enemy=enemy,
@@ -202,6 +209,7 @@ class CombatActorManager(Service):
             status_effects=active_status_effects,
             defeated=defeated,
             force_skip=force_skip,
+            image_url=image_url,
         )
 
     async def get_character(

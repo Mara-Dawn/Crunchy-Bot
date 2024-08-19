@@ -1,6 +1,7 @@
 import random
 
 import discord
+
 from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearBaseType
 from combat.skills.types import SkillType
@@ -40,18 +41,13 @@ class Enemy:
     }
 
     LOOT_BONUS_CHANCE_BY_LVL = {
-        1: 0.1,
-        2: 0.2,
-        3: 0.3,
-        4: 0.4,
-        5: 0.5,
-        6: 0.6,
-        7: 0.7,
-        8: 0.8,
-        9: 0.9,
-        10: 1,
-        11: 1,
-        12: 1,
+        1: 0.01,
+        2: 0.02,
+        3: 0.03,
+        4: 0.04,
+        5: 0.05,
+        6: 0.06,
+        7: 0.07,
     }
 
     def __init__(
@@ -140,9 +136,9 @@ class Enemy:
 
     def roll_beans_amount(self, level: int):
         if self.min_beans_reward is None:
-            self.min_beans_reward = 95 * level
+            self.min_beans_reward = 5 * level
         if self.max_beans_reward is None:
-            self.max_beans_reward = 105 * level
+            self.max_beans_reward = 15 * level
 
         return random.randint(self.min_beans_reward, self.max_beans_reward)
 

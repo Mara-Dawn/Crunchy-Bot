@@ -1,6 +1,8 @@
 import datetime
 import random
 
+from discord.ext import commands
+
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
 from combat.enemies.types import EnemyType
@@ -14,7 +16,6 @@ from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent

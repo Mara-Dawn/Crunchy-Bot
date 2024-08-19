@@ -2,6 +2,7 @@ import contextlib
 import datetime
 
 import discord
+
 from combat.enemies.enemy import Enemy
 from control.controller import Controller
 from control.types import ControllerType
@@ -42,8 +43,10 @@ class EnemyEngageView(ViewMenu):
                 if encounter_id != self.encounter_id:
                     return
                 embed = event.payload[1]
-                done = event.payload[2]
-                self.active = True
+                started = event.payload[2]
+                if started:
+                    self.active = True
+                done = event.payload[3]
                 await self.refresh_ui(embed=embed, done=done)
 
     async def engage(self, interaction: discord.Interaction):

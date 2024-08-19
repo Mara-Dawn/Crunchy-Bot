@@ -4,6 +4,9 @@ import secrets
 from typing import Literal
 
 import discord
+from discord import app_commands
+from discord.ext import commands, tasks
+
 from bot import CrunchyBot
 from combat.enemies.types import EnemyType
 from combat.gear.types import GearBaseType, Rarity
@@ -14,29 +17,24 @@ from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
+from control.imgur_manager import ImgurManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
+from control.types import UserSetting
 from datalayer.database import Database
-from discord import app_commands
-from discord.ext import commands, tasks
 from items.types import ItemType
 from view.combat.embed import EquipmentHeadEmbed
 from view.combat.equipment_view import EquipmentView
+from view.settings_modal import SettingsModal
 
 
 class Combat(commands.Cog):
 
-    # ENCOUNTER_MIN_WAIT = 45
-    # ENCOUNTER_MAX_WAIT = 75
+    ENCOUNTER_MIN_WAIT = 45
+    ENCOUNTER_MAX_WAIT = 75
 
-    ENCOUNTER_MIN_WAIT = 35
-    ENCOUNTER_MAX_WAIT = 55
-
-    # LOW_LVL_ENCOUNTER_MIN_WAIT = 20
-    # LOW_LVL_ENCOUNTER_MAX_WAIT = 40
-
-    LOW_LVL_ENCOUNTER_MIN_WAIT = 15
-    LOW_LVL_ENCOUNTER_MAX_WAIT = 30
+    LOW_LVL_ENCOUNTER_MIN_WAIT = 20
+    LOW_LVL_ENCOUNTER_MAX_WAIT = 40
 
     def __init__(self, bot: CrunchyBot) -> None:
         self.bot = bot
@@ -58,6 +56,7 @@ class Combat(commands.Cog):
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
+        self.imgur_manager: ImgurManager = self.controller.get_service(ImgurManager)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.enemy_timers = {}
         self.enemy_timers_low_lvl = {}
@@ -174,11 +173,27 @@ class Combat(commands.Cog):
             if guild.id not in self.enemy_timers:
                 continue
 
-            if datetime.datetime.now() < self.enemy_timers[guild.id]:
+            current_time = datetime.datetime.now()
+            if current_time < self.enemy_timers[guild.id]:
                 continue
 
             if not await self.settings_manager.get_combat_enabled(guild.id):
                 continue
+
+            start_hour = await self.settings_manager.get_combat_max_lvl_start(guild.id)
+            end_hour = await self.settings_manager.get_combat_max_lvl_end(guild.id)
+
+            current_hour = current_time.hour
+
+            post_start = start_hour <= current_hour
+            pre_end = current_hour < end_hour
+
+            if start_hour < end_hour:
+                if not (post_start and pre_end):
+                    continue
+            else:
+                if not (post_start or pre_end):
+                    continue
 
             self.logger.log("sys", "Enemy timeout reached.", cog=self.__cog_name__)
             await self.__reevaluate_next_enemy(guild.id)
@@ -204,6 +219,8 @@ class Combat(commands.Cog):
                 continue
 
             max_encounter_level = await self.database.get_guild_level(guild.id) - 1
+            max_encounter_level = max(1, max_encounter_level)
+
             if max_encounter_level <= 0:
                 continue
 
@@ -502,6 +519,35 @@ class Combat(commands.Cog):
     )
 
     @group.command(
+        name="auto_scrap",
+        description="Automatically scrap all loot up to and including this level.",
+    )
+    @app_commands.guild_only()
+    async def auto_scrap(
+        self,
+        interaction: discord.Interaction,
+        level: app_commands.Range[int, 0],
+    ):
+        if not await self.__check_enabled(interaction, all_channels=True):
+            return
+        await interaction.response.defer(ephemeral=True)
+
+        member_id = interaction.user.id
+        guild_id = interaction.guild_id
+
+        await self.database.set_user_setting(
+            member_id, guild_id, UserSetting.AUTO_SCRAP, level
+        )
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Auto scrapping enabled for loot of level {level} and below.",
+            ephemeral=True,
+            args=[level],
+        )
+
+    @group.command(
         name="give_loot",
         description="Give specific loot.",
     )
@@ -569,22 +615,6 @@ class Combat(commands.Cog):
     @app_commands.guild_only()
     async def get_settings(self, interaction: discord.Interaction):
 
-        # for enemy_type in EnemyType:
-        #     enemy = await self.factory.get_enemy(enemy_type)
-        #     opponent = await self.actor_manager.get_opponent(
-        #         enemy,
-        #         3,
-        #         100,
-        #         [],
-        #         [],
-        #         {},
-        #     )
-        #     test_a = opponent.get_potency_per_turn()
-        #
-        #     log_message = f"\n {enemy.name}:\n"
-        #     log_message += f"  old: {test_a}\n"
-        #     self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
-
         output = await self.settings_manager.get_settings_string(
             interaction.guild_id, SettingsManager.COMBAT_SUBSETTINGS_KEY
         )
@@ -649,6 +679,122 @@ class Combat(commands.Cog):
             interaction,
             f"Removed {channel.name} from combat channels.",
             args=[channel.name],
+        )
+
+    @group.command(
+        name="setup",
+        description="Opens a dialog to edit various combat settings.",
+    )
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def gamba_setup(self, interaction: discord.Interaction) -> None:
+        guild_id = interaction.guild_id
+        modal = SettingsModal(
+            self.bot,
+            self.settings_manager,
+            self.__cog_name__,
+            interaction.command.name,
+            "Settings for Combat related Features",
+        )
+
+        await modal.add_field(
+            guild_id,
+            SettingsManager.COMBAT_SUBSETTINGS_KEY,
+            SettingsManager.COMBAT_MAX_LVL_SPAWN_START_TIME_KEY,
+            int,
+        )
+        await modal.add_field(
+            guild_id,
+            SettingsManager.COMBAT_SUBSETTINGS_KEY,
+            SettingsManager.COMBAT_MAX_LVL_SPAWN_END_TIME_KEY,
+            int,
+        )
+
+        modal.add_constraint(
+            [SettingsManager.COMBAT_MAX_LVL_SPAWN_START_TIME_KEY],
+            lambda a: a <= 23 and a >= 0,
+            "Start hour must be between 0 and 23",
+        )
+
+        modal.add_constraint(
+            [SettingsManager.COMBAT_MAX_LVL_SPAWN_END_TIME_KEY],
+            lambda a: a <= 23 and a >= 0,
+            "End hour must be between 0 and 23",
+        )
+
+        await interaction.response.send_modal(modal)
+
+    @group.command(
+        name="set_ping_role",
+        description="This role will be pinged with each encounter spawn.",
+    )
+    @app_commands.describe(role="The role to be pinged.")
+    @app_commands.check(__has_permission)
+    async def set_ping_role(self, interaction: discord.Interaction, role: discord.Role):
+        await self.settings_manager.set_spawn_ping_role(interaction.guild_id, role.id)
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Encounter ping role was set to `{role.name}` .",
+            args=[role.name],
+        )
+
+    @group.command(
+        name="set_max_lvl_ping_role",
+        description="This role will be pinged when a max lvl encounter spawns.",
+    )
+    @app_commands.describe(role="The role to be pinged.")
+    @app_commands.check(__has_permission)
+    async def set_max_lvl_ping_role(
+        self, interaction: discord.Interaction, role: discord.Role
+    ):
+        await self.settings_manager.set_max_lvl_spawn_ping_role(
+            interaction.guild_id, role.id
+        )
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Max lvl encounter ping role was set to `{role.name}` .",
+            args=[role.name],
+        )
+
+    @group.command(
+        name="force_reload",
+        description="foces a encounter reload.",
+    )
+    @app_commands.check(__has_permission)
+    async def force_reload(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        channel_id = interaction.channel_id
+        guild_id = interaction.guild_id
+
+        if channel_id is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Please use this command inside an encounter thread.",
+                ephemeral=True,
+            )
+            return
+
+        encounter = await self.database.get_encounter_by_thread_id(guild_id, channel_id)
+
+        if encounter is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "No encounter found for this thread.",
+                ephemeral=True,
+            )
+            return
+
+        await self.encounter_manager.refresh_encounter_thread(encounter.id)
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            "Forced Encounter Reload.",
+            ephemeral=True,
         )
 
 

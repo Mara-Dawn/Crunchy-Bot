@@ -2,6 +2,7 @@ from collections import Counter
 from functools import lru_cache
 
 import discord
+
 from combat.enemies.enemy import Enemy
 from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
@@ -104,7 +105,10 @@ class Opponent(Actor):
         status_effects: list[ActiveStatusEffect],
         defeated: bool,
         force_skip: bool = True,
+        image_url: str = None,
     ):
+        if image_url is None:
+            image_url = enemy.image_url
         super().__init__(
             id=None,
             name=enemy.name,
@@ -117,7 +121,7 @@ class Opponent(Actor):
             status_effects=status_effects,
             defeated=defeated,
             force_skip=force_skip,
-            image_url=enemy.image_url,
+            image_url=image_url,
         )
         self.level = level
         self.enemy = enemy
