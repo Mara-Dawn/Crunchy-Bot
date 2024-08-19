@@ -15,5 +15,4 @@ RUN python -m pip install -r requirements.txt
 WORKDIR /app
 
 RUN git clone https://github.com/Mara-Dawn/Crunchy-Bot
-
 WORKDIR /app/Crunchy-Bot
