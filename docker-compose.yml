@@ -7,6 +7,8 @@ services:
     volumes:
       - ./database.sqlite:/app/Crunchy-Bot/database.sqlite
       - ./key.txt:/app/Crunchy-Bot/key.txt
+      - ./imgur.txt:/app/Crunchy-Bot/imgur.txt
+      - ./imgursecret.txt:/app/Crunchy-Bot/imgursecret.txt
       - ./openai.txt:/app/Crunchy-Bot/openai.txt
       - ./tenor.txt:/app/Crunchy-Bot/tenor.txt
       - ./log:/app/Crunchy-Bot/log
