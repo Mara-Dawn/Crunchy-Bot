@@ -1,4 +1,5 @@
 import datetime
+from logging import WARN
 import random
 
 import discord
@@ -461,7 +462,10 @@ class InteractionManager(Service):
                     item_text += f"They will have to sit out the remaining sentence of `{BotUtil.strfdelta(remaining, inputtype='minutes')}`."
                     item_text += "\n"
 
-            response += f"\n\n**{item.emoji} {item.name} {item.emoji} was used.**\n"
+            emoji = item.emoji
+            if isinstance(item.emoji, int):
+                emoji = str(self.bot.get_emoji(item.emoji))
+            response += f"\n\n**{emoji} {item.name} {emoji} was used.**\n"
             response += item_text
 
             event = InventoryEvent(
