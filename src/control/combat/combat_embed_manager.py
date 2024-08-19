@@ -7,6 +7,8 @@ from discord.ext import commands
 
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext, TurnData
+from combat.enemies.enemy import Enemy
+from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect, SkillInstance
 from config import Config
@@ -14,6 +16,7 @@ from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
+from control.imgur_manager import ImgurManager
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
@@ -35,6 +38,7 @@ class CombatEmbedManager(Service):
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
+        self.imgur_manager: ImgurManager = self.controller.get_service(ImgurManager)
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
         )
@@ -96,11 +100,20 @@ class CombatEmbedManager(Service):
         else:
             participant_info = "This Encounter Has Concluded."
         embed.add_field(name=participant_info, value="", inline=False)
-        embed.set_image(url=enemy.image_url)
+
+        image_url = await self.get_custom_image(encounter)
+        if image_url is None:
+            image_url = enemy.image_url
+        embed.set_image(url=image_url)
+
         if enemy.author is not None:
             embed.set_footer(text=f"by {enemy.author}")
 
         return embed
+
+    async def get_custom_image(self, encounter: Encounter):
+        image_url = await self.imgur_manager.get_random_encounter_image(encounter)
+        return image_url
 
     def add_health_bar(
         self,
@@ -221,7 +234,10 @@ class CombatEmbedManager(Service):
                 max_width=Config.ENEMY_MAX_WIDTH,
             )
 
-        embed.set_image(url=enemy.image_url)
+        image_url = await self.get_custom_image(context.encounter)
+        if image_url is None:
+            image_url = enemy.image_url
+        embed.set_image(url=image_url)
         if enemy.author is not None:
             embed.set_footer(text=f"by {enemy.author}")
 
@@ -250,7 +266,10 @@ class CombatEmbedManager(Service):
         defeated_message = f"You successfully defeated *{enemy.name}*."
         embed.add_field(name="Congratulations!", value=defeated_message, inline=False)
 
-        embed.set_image(url=enemy.image_url)
+        image_url = await self.get_custom_image(context.encounter)
+        if image_url is None:
+            image_url = enemy.image_url
+        embed.set_image(url=image_url)
         if enemy.author is not None:
             embed.set_footer(text=f"by {enemy.author}")
 
@@ -277,7 +296,10 @@ class CombatEmbedManager(Service):
         defeated_message = f"You were defeated by *{enemy.name}*."
         embed.add_field(name="Failure!", value=defeated_message, inline=False)
 
-        embed.set_image(url=enemy.image_url)
+        image_url = await self.get_custom_image(context.encounter)
+        if image_url is None:
+            image_url = enemy.image_url
+        embed.set_image(url=image_url)
         if enemy.author is not None:
             embed.set_footer(text=f"by {enemy.author}")
 

@@ -3,20 +3,20 @@ import re
 from dataclasses import dataclass
 
 import discord
-from bot_util import BotUtil
-from datalayer.chat_log import ChatLog
-from datalayer.database import Database
 from discord.ext import commands
-from events.bot_event import BotEvent
-from events.jail_event import JailEvent
-from events.types import JailEventType
 from openai import AsyncOpenAI
 
+from bot_util import BotUtil
 from control.controller import Controller
 from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.service import Service
 from control.types import AIVersion
+from datalayer.chat_log import ChatLog
+from datalayer.database import Database
+from events.bot_event import BotEvent
+from events.jail_event import JailEvent
+from events.types import JailEventType
 
 
 @dataclass

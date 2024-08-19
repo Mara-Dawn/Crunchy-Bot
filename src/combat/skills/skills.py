@@ -1875,3 +1875,78 @@ class FollowMe(BaseSkill):
             image_url="https://i.imgur.com/odiIUnp.png",
             author="Lusa",
         )
+
+class Erase(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Erase",
+            skill_type=SkillType.ERASE,
+            description=(
+                "The Scribbler takes out his oversized pen and uses the eraser end to erase you."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            initial_cooldown=1,
+            cooldown=2,
+            base_value=4,
+            hits=1,
+            aoe=False,
+            droppable=False,
+            image_url="",
+            author="Lusa",
+        )
+
+class EyePoke(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Eye Poke",
+            skill_type=SkillType.EYE_POKE,
+            description=(
+                "The Scribbler takes a few quick stabs at your eyes. Watch out!"
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            initial_cooldown=0,
+            cooldown=3,
+            base_value=1,
+            hits=2,
+            aoe=False,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                ),
+            ],
+            droppable=False,
+            image_url="",
+            author="Lusa",
+        )
+
+class PaperCuts(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Paper Cuts",
+            skill_type=SkillType.PAPER_CUTS,
+            description=(
+                "Light as a feather the Scribbler swooshes around, cutting everyone with its razor sharp paper edges."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=0,
+            cooldown=0,
+            base_value=2,
+            hits=1,
+            aoe=True,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    1,
+                ),
+            ],
+            droppable=False,
+            image_url="",
+            author="Lusa",
+        )

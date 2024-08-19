@@ -224,17 +224,6 @@ class EncounterManager(Service):
             guild.id, enemy_type=enemy_type, level=level
         )
 
-        if encounter.enemy_type == EnemyType.MIMIC:
-            mock_enemy = await self.get_random_enemy(
-                encounter.enemy_level, exclude=[EnemyType.MIMIC]
-            )
-            mock_encounter = Encounter(
-                guild.id, mock_enemy.type, encounter.enemy_level, encounter.max_hp
-            )
-            embed = await self.embed_manager.get_spawn_embed(mock_encounter)
-        else:
-            embed = await self.embed_manager.get_spawn_embed(encounter)
-
         enemy = await self.factory.get_enemy(encounter.enemy_type)
         view = EnemyEngageView(self.controller, enemy)
         channel = guild.get_channel(channel_id)
@@ -253,7 +242,7 @@ class EncounterManager(Service):
                 spawn_pings += f"<@&{max_lvl_ping_role}>"
 
         message = await self.context_loader.send_message(
-            channel, content=spawn_pings, embed=embed, view=view
+            channel, content=spawn_pings, view=view
         )
 
         encounter.message_id = message.id
@@ -262,6 +251,19 @@ class EncounterManager(Service):
         encounter_id = await self.database.log_encounter(encounter)
 
         view.set_message(message)
+        encounter.id = encounter_id
+
+        if encounter.enemy_type == EnemyType.MIMIC:
+            mock_enemy = await self.get_random_enemy(
+                encounter.enemy_level, exclude=[EnemyType.MIMIC]
+            )
+            mock_encounter = Encounter(
+                guild.id, mock_enemy.type, encounter.enemy_level, encounter.max_hp
+            )
+            embed = await self.embed_manager.get_spawn_embed(mock_encounter)
+        else:
+            embed = await self.embed_manager.get_spawn_embed(encounter)
+
         await view.refresh_ui(embed=embed, encounter_id=encounter_id)
 
         event = EncounterEvent(
@@ -287,8 +289,7 @@ class EncounterManager(Service):
         )
         opponent = await self.actor_manager.get_opponent(
             enemy,
-            encounter.enemy_level,
-            encounter.max_hp,
+            encounter,
             encounter_events,
             combat_events,
             status_effects,

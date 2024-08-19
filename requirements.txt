@@ -4,3 +4,4 @@ Pillow==10.3.0
 Requests==2.32.0
 tiktoken==0.6.0
 aiosqlite==0.20.0
+imgurpython==1.1.7

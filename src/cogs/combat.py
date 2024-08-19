@@ -17,6 +17,7 @@ from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
+from control.imgur_manager import ImgurManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from control.types import UserSetting
@@ -55,6 +56,7 @@ class Combat(commands.Cog):
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
+        self.imgur_manager: ImgurManager = self.controller.get_service(ImgurManager)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.enemy_timers = {}
         self.enemy_timers_low_lvl = {}
@@ -612,22 +614,6 @@ class Combat(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def get_settings(self, interaction: discord.Interaction):
-
-        # for enemy_type in EnemyType:
-        #     enemy = await self.factory.get_enemy(enemy_type)
-        #     opponent = await self.actor_manager.get_opponent(
-        #         enemy,
-        #         3,
-        #         100,
-        #         [],
-        #         [],
-        #         {},
-        #     )
-        #     test_a = opponent.get_potency_per_turn()
-        #
-        #     log_message = f"\n {enemy.name}:\n"
-        #     log_message += f"  old: {test_a}\n"
-        #     self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
 
         output = await self.settings_manager.get_settings_string(
             interaction.guild_id, SettingsManager.COMBAT_SUBSETTINGS_KEY

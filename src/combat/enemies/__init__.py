@@ -259,6 +259,34 @@ class Mushroom(Enemy):
         )
 
 
+class Scribbler(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Scribbler",
+            type=EnemyType.SCRIBBLER,
+            description=(
+                "It can appear in many shapes and forms. Nobody knows where it came from or what it wants."
+                " It is extremely agressive, dangerous, and should be approached with caution."
+            ),
+            information="Dont say I didnt warn ya.",
+            image_url="https://i.imgur.com/E3ZCVU5.png",
+            min_level=2,
+            max_level=7,
+            health=7,
+            damage_scaling=3,
+            max_players=5,
+            skill_types=[SkillType.ERASE, SkillType.EYE_POKE, SkillType.PAPER_CUTS],
+            item_loot_table=RARE_LOOT,
+            min_gear_drop_count=4,
+            max_gear_drop_count=5,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=20,
+            actions_per_turn=2,
+            author="Lusa",
+        )
+
+
 class BroColi(Enemy):
     def __init__(self):
         super().__init__(

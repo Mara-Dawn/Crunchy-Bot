@@ -2,6 +2,8 @@ import asyncio
 from collections.abc import AsyncGenerator
 
 import discord
+from discord.ext import commands
+
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext
 from control.combat.combat_actor_manager import CombatActorManager
@@ -11,7 +13,6 @@ from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
@@ -143,8 +144,7 @@ class ContextLoader(Service):
 
         opponent = await self.actor_manager.get_opponent(
             enemy,
-            encounter.enemy_level,
-            encounter.max_hp,
+            encounter,
             encounter_events,
             combat_events,
             status_effects,

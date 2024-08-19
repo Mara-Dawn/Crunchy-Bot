@@ -1,6 +1,8 @@
 import datetime
 import random
 
+from discord.ext import commands
+
 from combat.actors import Character
 from combat.encounter import EncounterContext
 from combat.enemies.enemy import Enemy
@@ -27,7 +29,6 @@ from combat.gear.uniques import Unique
 from combat.skills.skill import BaseSkill, Skill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillType
-from config import Config
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
@@ -35,7 +36,6 @@ from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
 from events.inventory_event import InventoryEvent
