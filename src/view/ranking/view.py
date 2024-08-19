@@ -1,9 +1,9 @@
 import discord
+
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.types import ControllerType
 from datalayer.ranking import Ranking
-from datalayer.types import Season
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.types import RankingType
@@ -13,7 +13,7 @@ from view.view_menu import ViewMenu
 class RankingView(ViewMenu):
 
     def __init__(
-        self, controller: Controller, interaction: discord.Interaction, season: Season
+        self, controller: Controller, interaction: discord.Interaction, season: int
     ):
         super().__init__(timeout=180)
         self.interaction = interaction

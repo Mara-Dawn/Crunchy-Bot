@@ -1,13 +1,20 @@
 import datetime
-from logging import WARN
 import random
 
 import discord
+from discord.ext import commands
+
 from bot_util import BotUtil
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.jail_manager import JailManager
+from control.logger import BotLogger
+from control.service import Service
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.interaction_modifiers import InteractionModifiers
 from datalayer.types import UserInteraction
-from discord.ext import commands
 from events.bat_event import BatEvent
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
@@ -17,14 +24,6 @@ from events.jail_event import JailEvent
 from items import *  # noqa: F403
 from items.item import Item
 from items.types import ItemGroup, ItemType
-
-from control.controller import Controller
-from control.event_manager import EventManager
-from control.item_manager import ItemManager
-from control.jail_manager import JailManager
-from control.logger import BotLogger
-from control.service import Service
-from control.settings_manager import SettingsManager
 
 
 class InteractionManager(Service):
@@ -185,7 +184,7 @@ class InteractionManager(Service):
             return "", []
 
         already_interacted = await self.event_manager.has_jail_event_from_user(
-            affected_jail.id, interaction.user.id, command_type
+            affected_jail.id, guild_id, interaction.user.id, command_type
         )
         self_target = interaction.user.id == user.id
 

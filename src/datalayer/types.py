@@ -57,15 +57,9 @@ class PlotState(Enum):
     READY = 5
 
 
-class SeasonDate(Enum):
-    BEGINNING = 0
-    SEASON_1 = 1715162400
-
-
-class Season(str, Enum):
-    ALL_TIME = "All Time"
-    SEASON_1 = "Season 1"
-    CURRENT = "Season 2"
+# class SeasonDate(Enum):
+#     BEGINNING = 0
+#     SEASON_1 = 1715162400
 
 
 class PredictionStateSort(int, Enum):
