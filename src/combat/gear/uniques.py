@@ -415,9 +415,8 @@ class GenerationalSlipper(GigaBonk, Unique):
         self.name = "Generational Slipper"
         self.skill_type = SkillType.GENERATIONAL_SLIPPER
         self.description = (
-            "This is a slipper that has been in your family for generations. "
-            "Your mom threw it to you with high precision, but not at you (This time). "
-            "Now your turn has come."
+            "You have been bequeathed with The Slipper, a weapon passed down through generations. "
+            "Once the bane of your childhood it is now yours to lay waste with."
         )
         self.image_url = "https://i.imgur.com/X0n7DRG.png"
         self.cooldown = 3

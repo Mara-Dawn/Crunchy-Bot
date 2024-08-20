@@ -995,6 +995,7 @@ class DaddyKey(Item):
                 "When used from your inventory, it will open a path to the lvl. 3 Boss.\n"
                 "You will need 6 players to face this challenge.\n"
                 "Come prepared, this key only grants you a single attempt."
+                " Set aside sufficient time for this encounter, it might take a while."
             ),
             information=(
                 "Boss Key to spawn the lvl.3 boss encounter.\n"
