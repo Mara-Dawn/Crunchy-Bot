@@ -213,6 +213,7 @@ class HeadGear_T0(Tier0):
             information="Tier 0 head piece.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[GearBaseType.SHOOTER_WIG],
             image_url="https://i.imgur.com/a55rCkb.png",
         )
 
@@ -366,6 +367,7 @@ class HeadGear_T1(Tier1):
             ),
             information="Tier 1 head piece.",
             slot=EquipmentSlot.HEAD,
+            uniques=[GearBaseType.SHOOTER_WIG],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/LGEy5Km.png",
         )
@@ -384,6 +386,7 @@ class BodyGear_T1(Tier1):
             ),
             information="Tier 1 body piece.",
             slot=EquipmentSlot.BODY,
+            uniques=[GearBaseType.FAST_FOOD_CAP],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/oAWzovW.png",
         )
@@ -438,6 +441,7 @@ class Necklace_T1_2(Tier1):
                 "a huge boost of confidence in combat."
             ),
             information="Tier 1 accessory",
+            uniques=[GearBaseType.RABBIT_FOOT],
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
             image_url="https://i.imgur.com/HfhMNNW.png",

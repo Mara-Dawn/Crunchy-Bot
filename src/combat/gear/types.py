@@ -185,12 +185,16 @@ class GearBaseType(str, Enum):
     NECKLACE_T5_2 = "Necklace_T5_2"
 
     DEEZ_NUTS = "DeezNutsAccessory"
+    RABBIT_FOOT = "RabbitFoot"
     USELESS_AMULET = "UselessAmulet"
 
     CAT_HEAD = "CatHead"
     CAT_LEGS = "CatLegs"
     CAT_TAIL = "CatTail"
     CAT_HANDS = "CatHands"
+
+    FAST_FOOD_CAP = "FastFoodCap"
+    SHOOTER_WIG = "ShooterWig"
 
     KEBAB_HAT = "KebabHat"
     KEBAB_APRON = "KebabApron"

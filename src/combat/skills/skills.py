@@ -451,6 +451,7 @@ class GigaBonk(BaseSkill):
             cooldown=5,
             base_value=5,
             stacks=3,
+            uniques=[SkillType.GENERATIONAL_SLIPPER],
             reset_after_encounter=False,
             image_url="https://i.imgur.com/JNNbXJa.png",
         )

@@ -40,6 +40,7 @@ class SkillType(str, Enum):
     HOLY_GANG_SIGNS = "HolyGangSigns"
     LOOKSMAXXING = "LooksMaxxing"
     GIGA_BONK = "GigaBonk"
+    GENERATIONAL_SLIPPER = "GenerationalSlipper"
     SLICE_N_DICE = "SliceAndDice"
 
     # Neutral

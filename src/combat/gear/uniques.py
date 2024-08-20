@@ -1,19 +1,22 @@
 from combat.gear.bases import (
     BodyGear_T3_1,
     BodyGear_T4,
+    HeadGear_T0,
+    HeadGear_T1,
     HeadGear_T2,
     HeadGear_T4,
     LegGear_T0,
     LegGear_T2,
     LegGear_T4,
     Necklace_T0,
+    Necklace_T1_2,
     Necklace_T2_1,
     Necklace_T2_2,
     Stick_T2,
     Stick_T4,
 )
 from combat.gear.types import GearBaseType, GearModifierType
-from combat.skills.skills import BloodRage, FineAss, SecondWind
+from combat.skills.skills import BloodRage, FineAss, GigaBonk, SecondWind
 from combat.skills.status_effect import SkillStatusEffect
 from combat.skills.types import (
     SkillEffect,
@@ -321,7 +324,88 @@ class KebabSkewer(Stick_T4, Unique):
         )
 
 
+class RabbitFoot(Necklace_T1_2, Unique):
+
+    def __init__(self):
+        Necklace_T1_2.__init__(self)
+        self.name = "Rabbit Foot"
+        self.type = GearBaseType.RABBIT_FOOT
+        self.description = "Oh wow, lucky! Someone dropped their rabbit foot. Surely it will bring you more luck that it did for its previous owner. It does look a little weird though, how curious..."
+        self.image_url = "https://i.imgur.com/aLUBL2Y.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.DEXTERITY: 4,
+                GearModifierType.CRIT_RATE: 4,
+            },
+        )
+
+
+class FastFoodCap(HeadGear_T1, Unique):
+
+    def __init__(self):
+        HeadGear_T1.__init__(self)
+        self.name = "Fast Food Cap"
+        self.type = GearBaseType.FAST_FOOD_CAP
+        self.description = "Nothing can phase you, you have seen it all."
+        self.image_url = "https://i.imgur.com/iXoO6xH.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 3,
+                GearModifierType.EVASION: 2,
+                GearModifierType.DEFENSE: 5,
+                GearModifierType.HEALING: 2.5,
+                GearModifierType.DEXTERITY: 2,
+            },
+        )
+
+
+class ShooterWig(HeadGear_T0, Unique):
+
+    def __init__(self):
+        HeadGear_T0.__init__(self)
+        self.name = "Shooter Wig"
+        self.type = GearBaseType.SHOOTER_WIG
+        self.description = "Give off cool dad vibes wile shooting your gun with this high quality shooting wig."
+        self.image_url = "https://i.imgur.com/V8z1W9s.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 1,
+                GearModifierType.DEXTERITY: 2,
+                GearModifierType.CRIT_RATE: 2,
+                GearModifierType.CRIT_DAMAGE: 6,
+            },
+        )
+
+
 # Skills
+
+
+class GenerationalSlipper(GigaBonk, Unique):
+
+    def __init__(self):
+        GigaBonk.__init__(self)
+        self.name = "Generational Slipper"
+        self.skill_type = SkillType.GENERATIONAL_SLIPPER
+        self.description = (
+            "This is a slipper that has been in your family for generations. "
+            "Your mom threw it to you with high precision, but not at you (This time). "
+            "Now your turn has come."
+        )
+        self.image_url = "https://i.imgur.com/X0n7DRG.png"
+        self.cooldown = 3
+        self.base_value = 6
+        self.stacks = 2
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={},
+        )
 
 
 class WarGodRage(BloodRage, Unique):
