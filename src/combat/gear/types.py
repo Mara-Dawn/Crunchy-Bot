@@ -195,6 +195,7 @@ class GearBaseType(str, Enum):
 
     FAST_FOOD_CAP = "FastFoodCap"
     SHOOTER_WIG = "ShooterWig"
+    PROFESSIONAL_DISGUISE = "ProfessionalDisguise"
 
     KEBAB_HAT = "KebabHat"
     KEBAB_APRON = "KebabApron"

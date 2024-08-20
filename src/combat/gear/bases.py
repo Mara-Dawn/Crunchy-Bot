@@ -1022,6 +1022,9 @@ class HeadGear_T5(Tier5):
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/gQuNCvP.png",
+            uniques=[
+                GearBaseType.PROFESSIONAL_DISGUISE,
+            ],
         )
 
 

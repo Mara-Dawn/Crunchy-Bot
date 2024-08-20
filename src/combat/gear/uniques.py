@@ -5,6 +5,7 @@ from combat.gear.bases import (
     HeadGear_T1,
     HeadGear_T2,
     HeadGear_T4,
+    HeadGear_T5,
     LegGear_T0,
     LegGear_T2,
     LegGear_T4,
@@ -379,6 +380,27 @@ class ShooterWig(HeadGear_T0, Unique):
                 GearModifierType.DEXTERITY: 2,
                 GearModifierType.CRIT_RATE: 2,
                 GearModifierType.CRIT_DAMAGE: 6,
+            },
+        )
+
+
+class ProfessionalDisguise(HeadGear_T5, Unique):
+
+    def __init__(self):
+        HeadGear_T5.__init__(self)
+        self.name = "Professional Disguise"
+        self.type = GearBaseType.PROFESSIONAL_DISGUISE
+        self.description = (
+            "When equipping this highly advanced masking device, you greatly increase "
+            "the chance of enemies mistaking you for a harmless bystander."
+        )
+        self.image_url = "https://i.imgur.com/8pUj385.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 1,
+                GearModifierType.EVASION: 3,
             },
         )
 
