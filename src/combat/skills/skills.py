@@ -294,6 +294,39 @@ class FineAss(BaseSkill):
         )
 
 
+class NeuronActivation(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Neuron Activation",
+            skill_type=SkillType.NEURON_ACTIVATION,
+            description=(
+                "A spark lights up in the vast and dark space inside your head. It slowly rises upwards and shines bright and strong. "
+                "A neuron fired off a signal! This historical event will dramatically increase the effect of your next skill."
+            ),
+            information="",
+            skill_effect=SkillEffect.BUFF,
+            cooldown=8,
+            min_level=4,
+            base_value=85,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.INSPIRED,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            stacks=2,
+            aoe=False,
+            weight=25,
+            reset_after_encounter=False,
+            uniques=[],
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/gVVnWTi.png",
+            author="Lusa",
+        )
+
+
 class SliceAndDice(BaseSkill):
 
     def __init__(self):
@@ -1876,6 +1909,7 @@ class FollowMe(BaseSkill):
             author="Lusa",
         )
 
+
 class Erase(BaseSkill):
 
     def __init__(self):
@@ -1893,9 +1927,10 @@ class Erase(BaseSkill):
             hits=1,
             aoe=False,
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/Zgf5YHf.png",
             author="Lusa",
         )
+
 
 class EyePoke(BaseSkill):
 
@@ -1920,9 +1955,10 @@ class EyePoke(BaseSkill):
                 ),
             ],
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/aJnhIlV.png",
             author="Lusa",
         )
+
 
 class PaperCuts(BaseSkill):
 
@@ -1944,9 +1980,10 @@ class PaperCuts(BaseSkill):
                 SkillStatusEffect(
                     StatusEffectType.BLEED,
                     1,
+                    StatusEffectApplication.ATTACK_VALUE,
                 ),
             ],
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/YjWVjfA.png",
             author="Lusa",
         )

@@ -145,6 +145,7 @@ class GearBaseType(str, Enum):
     HEADGEAR_T0 = "HeadGear_T0"
     HEADGEAR_T1 = "HeadGear_T1"
     HEADGEAR_T2 = "HeadGear_T2"
+    HEADGEAR_T2_2 = "HeadGear_T2_2"
     HEADGEAR_T3_1 = "HeadGear_T3_1"
     HEADGEAR_T3_2 = "HeadGear_T3_2"
     HEADGEAR_T4 = "HeadGear_T4"

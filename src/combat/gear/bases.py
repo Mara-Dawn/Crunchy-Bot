@@ -460,7 +460,10 @@ class Tier2(GearBase):
         skills: list[SkillType] = None,
         uniques: list[GearBaseType] = None,
         image_url: str = None,
+        author=None,
     ):
+        if author is None:
+            author = "Klee"
         super().__init__(
             name=name,
             type=type,
@@ -474,7 +477,7 @@ class Tier2(GearBase):
             uniques=uniques,
             scaling=1.2,
             image_url=image_url,
-            author="Klee",
+            author=author,
         )
 
 
@@ -526,6 +529,21 @@ class HeadGear_T2(Tier2):
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/AjKaSDI.jpg",
+        )
+
+
+class HeadGear_T2_2(Tier2):
+
+    def __init__(self):
+        super().__init__(
+            name="President Dump",
+            type=GearBaseType.HEADGEAR_T2_2,
+            description="Does a 'Sssshhlorp' sound when putting it on.",
+            information="Tier 2 head piece.",
+            slot=EquipmentSlot.HEAD,
+            modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/7pCIdFM.png",
+            author="Lusa",
         )
 
 

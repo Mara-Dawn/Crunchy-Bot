@@ -2,18 +2,12 @@ import asyncio
 import datetime
 
 import discord
+from discord.ext import commands
+
 from combat.actors import Character
 from combat.encounter import Encounter, EncounterContext
 from combat.skills.skill import CharacterSkill
 from config import Config
-from datalayer.database import Database
-from discord.ext import commands
-from events.bot_event import BotEvent
-from events.encounter_event import EncounterEvent
-from events.types import EncounterEventType, EventType, UIEventType
-from events.ui_event import UIEvent
-from items.item import Item
-
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.context_loader import ContextLoader
 from control.combat.encounter_manager import EncounterManager
@@ -24,6 +18,12 @@ from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
+from datalayer.database import Database
+from events.bot_event import BotEvent
+from events.encounter_event import EncounterEvent
+from events.types import EncounterEventType, EventType, UIEventType
+from events.ui_event import UIEvent
+from items.item import Item
 
 
 class CombatViewController(ViewController):
@@ -86,6 +86,7 @@ class CombatViewController(ViewController):
             already_involved = False
             for _, participants in encounters.items():
                 if member_id in participants:
+
                     await interaction.followup.send(
                         "You are already involved in a currently active encounter.",
                         ephemeral=True,
@@ -153,16 +154,9 @@ class CombatViewController(ViewController):
                 )
                 continue
 
-            if not is_involved or encounter is None:
-                await interaction.followup.send(
-                    "You are not involved in any encounter.",
-                    ephemeral=True,
-                )
-                continue
-
             context = await self.context_loader.load_encounter_context(encounter.id)
 
-            event_type = EncounterEventType.MEMBER_OUT
+            event_type = EncounterEventType.MEMBER_DISENGAGE
 
             if context.is_initiated():
                 event_type = EncounterEventType.MEMBER_LEAVING
@@ -184,10 +178,9 @@ class CombatViewController(ViewController):
             already_left = False
 
             for event in context.encounter_events:
-                if (
-                    event.member_id == member_id
-                    and event.encounter_event_type == EncounterEventType.MEMBER_LEAVING
-                ):
+                if event.member_id == member_id and event.encounter_event_type in [
+                    EncounterEventType.MEMBER_LEAVING,
+                ]:
                     already_left = True
                     break
 
@@ -209,7 +202,7 @@ class CombatViewController(ViewController):
 
             character = context.get_actor(member_id)
 
-            embed = self.embed_manager.get_member_out_embed(character, "")
+            embed = self.embed_manager.get_member_out_embed(character, event_type, "")
             await context.thread.send("", embed=embed)
 
             self.leave_queue.task_done()
@@ -226,6 +219,7 @@ class CombatViewController(ViewController):
         if encounter_id is not None and event.encounter_event_type in [
             EncounterEventType.MEMBER_ENGAGE,
             EncounterEventType.MEMBER_OUT,
+            EncounterEventType.MEMBER_DISENGAGE,
             EncounterEventType.END,
             EncounterEventType.INITIATE,
         ]:

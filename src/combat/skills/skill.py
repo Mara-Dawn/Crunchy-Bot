@@ -1,4 +1,5 @@
 import discord
+
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
 from combat.skills.status_effect import SkillStatusEffect
@@ -223,10 +224,13 @@ class Skill(Droppable):
             # Base Value
             if self.scaling > 0:
                 name = "Power"
+                suffix_sign = ""
+                if self.base_skill.skill_effect == SkillEffect.BUFF:
+                    suffix_sign = "%"
                 spacing = " " * (max_len_pre - len(name))
-                base_value_text = f"{spacing}{name}: {self.scaling:.1f}"
+                base_value_text = f"{spacing}{name}: {self.scaling:.1f}{suffix_sign}"
                 base_value_text_colored = (
-                    f"{spacing}{name}: [35m{self.scaling:.1f}[0m"
+                    f"{spacing}{name}: [35m{self.scaling:.1f}{suffix_sign}[0m"
                 )
                 prefixes.append((base_value_text_colored, len(base_value_text)))
 
@@ -422,9 +426,9 @@ class CharacterSkill:
             match self.skill.base_skill.skill_effect:
                 case SkillEffect.BUFF:
                     damage_text = (
-                        f"{spacing}{caption}: {self.skill.base_skill.base_value}%"
+                        f"{spacing}{caption}: {self.skill.base_skill.base_value:.1f}%"
                     )
-                    damage_text_colored = f"{spacing}{caption}: [35m{self.skill.base_skill.base_value}%[0m"
+                    damage_text_colored = f"{spacing}{caption}: [35m{self.skill.base_skill.base_value:.1f}%[0m"
                 case _:
                     damage_text = f"{spacing}{caption}: {self.min_roll} - {self.max_roll}{penalty}"
                     damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m{penalty_colored}"

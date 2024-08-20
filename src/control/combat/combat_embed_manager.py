@@ -21,6 +21,7 @@ from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
 from events.bot_event import BotEvent
+from events.types import CombatEventType, EncounterEventType
 from items.item import Item
 
 
@@ -632,10 +633,14 @@ class CombatEmbedManager(Service):
 
         return embed
 
-    def get_member_out_embed(self, actor: Actor, reason: str) -> discord.Embed:
+    def get_member_out_embed(
+        self, actor: Actor, event_type: EncounterEventType, reason: str
+    ) -> discord.Embed:
         actor_name = f"{actor.name}"
 
-        content = f"{actor_name} left the encounter. They will be removed at the start of the next round."
+        content = f"{actor_name} left the encounter."
+        if event_type == EncounterEventType.MEMBER_LEAVING:
+            content += " They will be removed at the start of the next round."
 
         embed = discord.Embed(
             title="", description="", color=discord.Colour.light_grey()

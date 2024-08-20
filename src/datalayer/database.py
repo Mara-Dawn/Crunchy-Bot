@@ -3208,7 +3208,12 @@ class Database:
             AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} IN {list_sanitized};
         """
 
-        task = (guild_id, EncounterEventType.MEMBER_OUT.value, *active_encounters)
+        task = (
+            guild_id,
+            EncounterEventType.MEMBER_OUT.value,
+            *active_encounters,
+        )
+
         rows = await self.__query_select(command, task)
         if not rows:
             return participants
@@ -3236,11 +3241,17 @@ class Database:
             SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
-            AND  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
-            AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} IN {list_sanitized};
+            AND  {self.ENCOUNTER_EVENT_TYPE_COL} IN (?, ?)
+            AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} IN {list_sanitized}
+            ORDER BY {self.ENCOUNTER_EVENT_ID_COL} ASC;
         """
 
-        task = (guild_id, EncounterEventType.MEMBER_ENGAGE.value, *active_encounters)
+        task = (
+            guild_id,
+            EncounterEventType.MEMBER_ENGAGE.value,
+            EncounterEventType.MEMBER_DISENGAGE.value,
+            *active_encounters,
+        )
         rows = await self.__query_select(command, task)
         if not rows:
             return participants
@@ -3248,7 +3259,10 @@ class Database:
         for row in rows:
             encounter_id = row[self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL]
             member_id = row[self.ENCOUNTER_EVENT_MEMBER_ID]
-            participants[encounter_id].append(member_id)
+            if row[self.ENCOUNTER_EVENT_TYPE_COL] == EncounterEventType.MEMBER_ENGAGE:
+                participants[encounter_id].append(member_id)
+            else:
+                participants[encounter_id].remove(member_id)
 
         return participants
 
@@ -3262,7 +3276,10 @@ class Database:
             AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = ?;
         """
 
-        task = (EncounterEventType.MEMBER_OUT.value, encounter_id)
+        task = (
+            EncounterEventType.MEMBER_OUT.value,
+            encounter_id,
+        )
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -3280,11 +3297,16 @@ class Database:
         command = f"""
             SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.ENCOUNTER_EVENT_TABLE}.{self.ENCOUNTER_EVENT_ID_COL}
-            WHERE  {self.ENCOUNTER_EVENT_TYPE_COL} = ?
-            AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = ?;
+            WHERE  {self.ENCOUNTER_EVENT_TYPE_COL} IN (?, ?)
+            AND  {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = ?
+            ORDER BY {self.ENCOUNTER_EVENT_ID_COL} ASC;
         """
 
-        task = (EncounterEventType.MEMBER_ENGAGE.value, encounter_id)
+        task = (
+            EncounterEventType.MEMBER_ENGAGE.value,
+            EncounterEventType.MEMBER_DISENGAGE.value,
+            encounter_id,
+        )
         rows = await self.__query_select(command, task)
         if not rows:
             return []
@@ -3292,7 +3314,10 @@ class Database:
         participants = []
         for row in rows:
             member_id = row[self.ENCOUNTER_EVENT_MEMBER_ID]
-            participants.append(member_id)
+            if row[self.ENCOUNTER_EVENT_TYPE_COL] == EncounterEventType.MEMBER_ENGAGE:
+                participants.append(member_id)
+            else:
+                participants.remove(member_id)
 
         return participants
 
