@@ -30,6 +30,8 @@ class SkillType(str, Enum):
     HEAVY_ATTACK = "HeavyAttack"
 
     TAPE_ATTACK = "TapeAttack"
+    DONER_KEBAB = "DonerKebab"
+    KEBAB_SMILE = "KebabSmile"
 
     SECOND_WIND = "SecondWind"
     SECOND_HEART = "SecondHeart"
@@ -177,8 +179,10 @@ class SkillType(str, Enum):
         return skill_type in [
             SkillType.NORMAL_ATTACK,
             SkillType.HEAVY_ATTACK,
-            SkillType.TAPE_ATTACK,
             SkillType.MAGIC_ATTACK,
+            SkillType.TAPE_ATTACK,
+            SkillType.DONER_KEBAB,
+            SkillType.KEBAB_SMILE,
         ]
 
 

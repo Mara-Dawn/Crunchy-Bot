@@ -2,6 +2,8 @@ import datetime
 import random
 from typing import Any
 
+from discord.ext import commands
+
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
 from combat.skills.skill import Skill
@@ -26,7 +28,6 @@ from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
@@ -181,6 +182,8 @@ class CombatStatusEffectManager(Service):
                         active_effect,
                         active_effect.remaining_stacks,
                     )
+
+        stacks = min(stacks, status_effect.max_stacks)
 
         event = StatusEffectEvent(
             datetime.datetime.now(),

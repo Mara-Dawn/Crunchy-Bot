@@ -26,8 +26,10 @@ class Cleanse(StatusEffect):
             trigger=[StatusEffectTrigger.END_OF_TURN, StatusEffectTrigger.POST_ATTACK],
             consumed=[StatusEffectTrigger.END_OF_TURN],
             priority=1,
+            max_stacks=1,
             emoji="🩹",
             apply_on_miss=True,
+            override=True,
         )
 
 

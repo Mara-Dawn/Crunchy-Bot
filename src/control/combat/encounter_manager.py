@@ -792,14 +792,15 @@ class EncounterManager(Service):
                 if skill_status_effect.self_target:
                     status_effect_target = character
 
-                await self.status_effect_manager.apply_status(
-                    context,
-                    character,
-                    status_effect_target,
-                    skill_status_effect.status_effect_type,
-                    skill_status_effect.stacks,
-                    application_value,
-                )
+                if random.random() < skill_status_effect.application_chance:
+                    await self.status_effect_manager.apply_status(
+                        context,
+                        character,
+                        status_effect_target,
+                        skill_status_effect.status_effect_type,
+                        skill_status_effect.stacks,
+                        application_value,
+                    )
 
             event = CombatEvent(
                 datetime.datetime.now(),

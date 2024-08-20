@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 from abc import ABC, abstractmethod
+import random
 
 import discord
 from combat.actors import Actor, Opponent
@@ -147,14 +148,15 @@ class EnemyController(Service, ABC):
                     if skill_status_effect.self_target:
                         status_effect_target = opponent
 
-                    await self.status_effect_manager.apply_status(
-                        context,
-                        opponent,
-                        status_effect_target,
-                        skill_status_effect.status_effect_type,
-                        skill_status_effect.stacks,
-                        application_value,
-                    )
+                    if random.random() < skill_status_effect.application_chance:
+                        await self.status_effect_manager.apply_status(
+                            context,
+                            opponent,
+                            status_effect_target,
+                            skill_status_effect.status_effect_type,
+                            skill_status_effect.stacks,
+                            application_value,
+                        )
 
                 event = CombatEvent(
                     datetime.datetime.now(),

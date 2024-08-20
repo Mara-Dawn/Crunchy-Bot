@@ -1,12 +1,16 @@
 from combat.gear.bases import (
     BodyGear_T3_1,
+    BodyGear_T4,
     HeadGear_T2,
+    HeadGear_T4,
     LegGear_T0,
     LegGear_T2,
+    LegGear_T4,
     Necklace_T0,
     Necklace_T2_1,
     Necklace_T2_2,
     Stick_T2,
+    Stick_T4,
 )
 from combat.gear.types import GearBaseType, GearModifierType
 from combat.skills.skills import BloodRage, FineAss, SecondWind
@@ -220,6 +224,99 @@ class FemaleArmor(BodyGear_T3_1, Unique):
                 GearModifierType.ARMOR: 2,
                 GearModifierType.EVASION: 2,
                 GearModifierType.DEFENSE: 6,
+            },
+        )
+
+
+class KebabHat(HeadGear_T4, Unique):
+
+    def __init__(self):
+        HeadGear_T4.__init__(self)
+        self.name = "Kebab Hat & Beard"
+        self.type = GearBaseType.KEBAB_HAT
+        self.description = "Only a true kebab chef wears such a majestic mustache."
+        self.image_url = "https://i.imgur.com/QToRVBg.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 1,
+                GearModifierType.EVASION: 0.5,
+                GearModifierType.ATTACK: 0.5,
+                GearModifierType.HEALING: 2.5,
+                GearModifierType.CRIT_RATE: 0.5,
+            },
+        )
+
+
+class KebabApron(BodyGear_T4, Unique):
+
+    def __init__(self):
+        BodyGear_T4.__init__(self)
+        self.name = "Kebab Apron"
+        self.type = GearBaseType.KEBAB_APRON
+        self.description = (
+            "Your grandpa used this apron back when he opened the Kebab shop. "
+            "The decades of grease and sweat give it a very distinguished aroma."
+        )
+        self.image_url = "https://i.imgur.com/3xInorn.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 1,
+                GearModifierType.EVASION: 0.5,
+                GearModifierType.ATTACK: 0.5,
+                GearModifierType.HEALING: 2,
+                GearModifierType.CRIT_RATE: 0.5,
+                GearModifierType.CRIT_DAMAGE: 0.5,
+            },
+        )
+
+
+class KebabPants(LegGear_T4, Unique):
+
+    def __init__(self):
+        LegGear_T4.__init__(self)
+        self.name = "Kebab Pants"
+        self.type = GearBaseType.KEBAB_PANTS
+        self.description = (
+            "The kebab man is always well dressed under his apron. "
+            "With these stylish pants and some classic slippers you are well equipped to handle a skewer."
+        )
+        self.image_url = "https://i.imgur.com/mmbiA2S.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 1,
+                GearModifierType.EVASION: 0.5,
+                GearModifierType.ATTACK: 0.5,
+                GearModifierType.HEALING: 2.5,
+                GearModifierType.CRIT_DAMAGE: 0.5,
+            },
+        )
+
+
+class KebabSkewer(Stick_T4, Unique):
+
+    def __init__(self):
+        Stick_T4.__init__(self)
+        self.name = "Kebab Skewer"
+        self.type = GearBaseType.KEBAB_SKEWER
+        self.description = (
+            "A fresh, beatiful kebab skewer. It is greasy, heavy and smells delicious."
+        )
+        self.image_url = "https://i.imgur.com/yarx7l2.png"
+        self.author = "Lusa"
+        self.skills = [SkillType.DONER_KEBAB, SkillType.KEBAB_SMILE]
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.WEAPON_DAMAGE_MIN: 1,
+                GearModifierType.WEAPON_DAMAGE_MAX: 1,
+                GearModifierType.ATTACK: 1,
+                GearModifierType.HEALING: 2.5,
             },
         )
 

@@ -104,6 +104,64 @@ class MagicAttack(BaseSkill):
         )
 
 
+class DonerKebab(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Döner Kebab",
+            skill_type=SkillType.DONER_KEBAB,
+            description=(
+                "With great speed you skillfuilly assemble a beatiful doner "
+                "kebab and toss it at your foe. Has a small chance to blind and poison your target."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.POISON,
+                    1,
+                    application_chance=0.2,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                    application_chance=0.2,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/mFR1cN5.png",
+        )
+
+
+class KebabSmile(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Kebab Man Smile",
+            skill_type=SkillType.KEBAB_SMILE,
+            description=(
+                "You embody the friendly kebab man and embolden your party with phrases such as "
+                "'Yes chef!', 'With or without onion?' and 'Ahh why not spicy?'. Everyone feels "
+                " happy and heals for a small amount."
+            ),
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=4,
+            base_value=0.1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                ),
+            ],
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/TD9P3CR.png",
+        )
+
+
 # Special Skills
 
 

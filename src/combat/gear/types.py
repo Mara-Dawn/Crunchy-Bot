@@ -192,6 +192,11 @@ class GearBaseType(str, Enum):
     CAT_TAIL = "CatTail"
     CAT_HANDS = "CatHands"
 
+    KEBAB_HAT = "KebabHat"
+    KEBAB_APRON = "KebabApron"
+    KEBAB_PANTS = "KebabPants"
+    KEBAB_SKEWER = "KebabSkewer"
+
 
 class CharacterAttribute(str, Enum):
     PHYS_DAMAGE_INCREASE = "Physical Damage Inc."

@@ -831,6 +831,9 @@ class Stick_T4(Tier4):
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
+            uniques=[
+                GearBaseType.KEBAB_SKEWER,
+            ],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
             image_url="https://i.imgur.com/quQ83yx.png",
         )
@@ -867,6 +870,9 @@ class HeadGear_T4(Tier4):
             information="Tier 4 head piece.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[
+                GearBaseType.KEBAB_HAT,
+            ],
             image_url="https://i.imgur.com/WUSr2XH.png",
         )
 
@@ -884,8 +890,11 @@ class BodyGear_T4(Tier4):
             ),
             information="Tier 4 body piece.",
             slot=EquipmentSlot.BODY,
-            uniques=[GearBaseType.FEMALE_ARMOR],
             modifiers=[GearModifierType.ARMOR],
+            uniques=[
+                GearBaseType.FEMALE_ARMOR,
+                GearBaseType.KEBAB_APRON,
+            ],
             image_url="https://i.imgur.com/6qSt8Zg.png",
         )
 
@@ -903,6 +912,9 @@ class LegGear_T4(Tier4):
             ),
             information="Tier 4 leg piece.",
             slot=EquipmentSlot.LEGS,
+            uniques=[
+                GearBaseType.KEBAB_PANTS,
+            ],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/43nxRE5.png",
         )
