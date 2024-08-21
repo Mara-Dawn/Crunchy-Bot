@@ -4,9 +4,11 @@ from enum import Enum
 class StatusEffectType(str, Enum):
     BLEED = "Bleed"
     CLEANSE = "Cleanse"
+    PROTECTION = "Protection"
     BLIND = "Blind"
     EVASIVE = "Evasive"
     FLUSTERED = "Flustered"
+    SIMP = "Simp"
     INSPIRED = "Inspired"
     RAGE = "Rage"
     FEAR = "Fear"
@@ -38,6 +40,7 @@ class SkillType(str, Enum):
     SMELLING_SALT = "SmellingSalt"
     FAMILY_PIZZA = "FamilyPizza"
     HOLY_GANG_SIGNS = "HolyGangSigns"
+    FORESIGHT = "Foresight"
     LOOKSMAXXING = "LooksMaxxing"
     GIGA_BONK = "GigaBonk"
     GENERATIONAL_SLIPPER = "GenerationalSlipper"
@@ -174,6 +177,24 @@ class SkillType(str, Enum):
     BUTT_SLAP = "ButtSlap"
     WHIP = "Whip"
     ON_YOUR_KNEES = "OnYourKnees"
+
+    # Weeb
+    OMAE_WA = "OmaeWa"
+    POTATO_CHIP = "PotatoChip"
+    DAKIMAKURA = "Dakimakura"
+    WEEB_KAWAII = "WeebKawaii"
+    WEEB_SPLAINING = "WeebSplaining"
+    ALCHEMY = "Alchemy"
+
+    WEEBI_HAME_HA = "WeebiHameHa"
+    WEEBI_DAMA_CHARGE_1 = "WeebiDamaCharge1"
+    WEEBI_DAMA_CHARGE_2 = "WeebiDamaCharge2"
+    WEEBI_DAMA_CHARGE_3 = "WeebiDamaCharge3"
+    WEEBI_DAMA = "WeebiDama"
+
+    MEOW_TIARA = "MeowTiara"
+    MEOW_SPIRAL = "MeowSpiral"
+    MEOW_KISS = "MeowKiss"
 
     @staticmethod
     def is_weapon_skill(skill_type: "SkillType"):

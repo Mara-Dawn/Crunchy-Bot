@@ -268,7 +268,12 @@ class CombatSkillManager(Service):
             crit_roll = random.random()
             critical_hit = False
             critical_modifier = 1
-            if crit_roll < character.equipment.attributes[CharacterAttribute.CRIT_RATE]:
+
+            crit_rate = character.equipment.attributes[CharacterAttribute.CRIT_RATE]
+            if skill.base_skill.custom_crit is not None:
+                crit_rate = skill.base_skill.custom_crit
+
+            if crit_roll < crit_rate:
                 critical_hit = True
                 critical_modifier = character.equipment.attributes[
                     CharacterAttribute.CRIT_DAMAGE
@@ -359,7 +364,12 @@ class CombatSkillManager(Service):
             crit_roll = random.random()
             critical_hit = False
             critical_modifier = 1
-            if crit_roll < opponent.enemy.attributes[CharacterAttribute.CRIT_RATE]:
+
+            crit_rate = opponent.enemy.attributes[CharacterAttribute.CRIT_RATE]
+            if skill.base_skill.custom_crit is not None:
+                crit_rate = skill.base_skill.custom_crit
+
+            if crit_roll < crit_rate:
                 critical_hit = True
                 critical_modifier = opponent.enemy.attributes[
                     CharacterAttribute.CRIT_DAMAGE

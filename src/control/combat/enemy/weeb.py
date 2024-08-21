@@ -5,6 +5,7 @@ from combat.actors import Actor, Opponent
 from combat.encounter import EncounterContext, TurnData
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
+from combat.skills.types import SkillEffect, SkillTarget
 from control.combat.enemy.enemy_controller import EnemyController
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
@@ -31,47 +32,7 @@ class WeebController(EnemyController):
         intro_message = "As you gather around the artifact, the lights in the room start to dim and a rather plain looking door appears in front of you."
         await self.send_story_box(title, intro_message, thread)
 
-        title = ""
-        intro_message = "You firmly grasp its handle and slowly start to push it open."
-        await self.send_story_box(title, intro_message, thread)
-
-        title = "> ~* A Sensual Experience *~"
-        intro_message = (
-            "The very first thing you notice is a heavy, musky air pouring out of the newly formed gap, enveloping you with "
-            "a sensual and spicy aroma that reminds you of tobacco, leather and wood."
-        )
-        await self.send_story_box(title, intro_message, thread)
-
-        title = ""
-        intro_message = (
-            "A warm feeling of safety and content overcomes you, "
-            "but for some yet unknown reason you feel a growing weakness in your knees."
-        )
-        await self.send_story_box(title, intro_message, thread)
-
-        title = "> ~* Anticipation *~"
-        intro_message = "You manage to catch yourself.\nWith new resolve, you proceed to fully open the door infront of you."
-        await self.send_story_box(title, intro_message, thread)
-
-        title = ""
-        intro_message = "And there he is."
-        await self.send_story_box(title, intro_message, thread)
-
-        title = ""
-        intro_message = (
-            "Looking right into your soul with his gentle, yet commanding eyes."
-        )
-        await self.send_story_box(title, intro_message, thread)
-
-        title = ""
-        intro_message = "He smirks."
-        await self.send_story_box(title, intro_message, thread)
-
-        title = "> ~* He Is Here *~"
-        intro_message = "'Come closer darling, Daddy is waiting for you.'"
-        await self.send_story_box(title, intro_message, thread)
-
-    async def phase_change(self, context: EncounterContext):
+    async def phase_change_one(self, context: EncounterContext):
         thread = context.thread
 
         title = "> ~* Conclusion *~"
@@ -81,56 +42,14 @@ class WeebController(EnemyController):
         )
         await self.send_story_box(title, message, thread)
 
-        title = ""
-        message = "He tumbles a few steps back, first one, then another."
-        await self.send_story_box(title, message, thread)
+    async def phase_change_two(self, context: EncounterContext):
+        thread = context.thread
 
-        title = ""
-        message = "Completely out of breath, he crouches over."
-        await self.send_story_box(title, message, thread)
-
-        title = ""
-        message = "His legs are shaking, any minute now he will collapse."
-        await self.send_story_box(title, message, thread)
-
-        title = ""
-        message = "You take a step forward to deliver the final blow."
-        await self.send_story_box(title, message, thread)
-
-        title = "> ~* Conclusion? *~"
-        message = "But wait!"
-        await self.send_story_box(title, message, thread)
-
-        title = ""
-        message = "Your instincts stop you from moving any further."
-        await self.send_story_box(title, message, thread)
-
-        title = ""
-        message = "Cold sweat starts running down your neck as you feel an overwhelming sense of dread creeping up your spine."
-        await self.send_story_box(title, message, thread)
-
-        title = "> ~* Renewed Vigor *~"
-        message = "Wham! Within an instant, Daddy regains his composure and stomps on the ground demandingly."
-        await self.send_story_box(title, message, thread)
-
-        title = ""
-        message = "His eyes pierce your soul, his gaze now full of excitement and determination."
-        await self.send_story_box(title, message, thread)
-
-        title = "> ~* Playtime Is Over *~"
-        message = "He rips away his shirt, exposing his firm and chiseled upper body."
-        await self.send_story_box(title, message, thread)
-
-        title = ""
-        message = "With a wild, hungry grin he readies himself for his next move."
-        await self.send_story_box(title, message, thread)
-
-        title = "> ~* Round Two *~"
-        message = "'Looks like we have a little brat over here. I know just the right way to deal with pets that dont behave.'"
-        await self.send_story_box(title, message, thread)
-
-        title = ""
-        message = "Its Daddys turn now."
+        title = "> ~* Conclusion *~"
+        message = (
+            "Beaten and Bruised by those, that should have submitted to him long ago, Daddy musters "
+            "up the strength he has left and pushes you away from him."
+        )
         await self.send_story_box(title, message, thread)
 
     async def defeat(self, context: EncounterContext):
@@ -140,18 +59,14 @@ class WeebController(EnemyController):
         message = "You hear an agonizing groan as Daddy drops down to his knees."
         await self.send_story_box(title, message, thread)
 
-        title = ""
-        message = (
-            "He looks up at you one last time, a single tear rolling down his face."
-        )
-        await self.send_story_box(title, message, thread, wait=13)
-
-        title = ""
-        message = "'See you later, alligator.'"
-        await self.send_story_box(title, message, thread)
-
     async def on_defeat(self, context: EncounterContext, opponent: Opponent):
-        if opponent.enemy.type == EnemyType.DADDY_P2:
+        if opponent.enemy.type == EnemyType.WEEB_P1:
+            await self.phase_change_one(context)
+            encounter_event_type = EncounterEventType.ENEMY_PHASE_CHANGE
+        elif opponent.enemy.type == EnemyType.WEEB_P2:
+            await self.phase_change_two(context)
+            encounter_event_type = EncounterEventType.ENEMY_PHASE_CHANGE
+        else:
             await self.defeat(context)
             encounter_event_type = EncounterEventType.ENEMY_DEFEAT
             embed = self.embed_manager.get_actor_defeated_embed(opponent)
@@ -162,9 +77,6 @@ class WeebController(EnemyController):
                 await self.database.set_guild_level(
                     context.thread.guild.id, guild_level
                 )
-        else:
-            await self.phase_change(context)
-            encounter_event_type = EncounterEventType.ENEMY_PHASE_CHANGE
 
         event = EncounterEvent(
             datetime.datetime.now(),
@@ -183,6 +95,9 @@ class WeebController(EnemyController):
         hp_cache: dict[int, int],
     ):
         damage_data = []
+
+        if skill.base_skill.default_target == SkillTarget.SELF:
+            available_targets = [context.opponent]
 
         if skill.base_skill.aoe:
             damage_data, post_embed_data = await self.calculate_aoe_skill(
@@ -269,7 +184,13 @@ class WeebController(EnemyController):
         available_skills = []
 
         sorted_skills = sorted(
-            opponent.skills, key=lambda x: x.base_skill.base_value, reverse=True
+            opponent.skills,
+            key=lambda x: (
+                x.base_skill.base_value
+                if x.base_skill.skill_effect != SkillEffect.BUFF
+                else 0
+            ),
+            reverse=True,
         )
         for skill in sorted_skills:
             skill_data = await self.skill_manager.get_skill_data(opponent, skill)

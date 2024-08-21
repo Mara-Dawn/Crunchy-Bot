@@ -21,6 +21,7 @@ class ControllerType(str, Enum):
 
     BASIC_ENEMY = "BasicEnemyController"
     BOSS_DADDY = "DaddyController"
+    BOSS_WEEB = "WeebController"
 
 
 class AIVersion(str, Enum):
@@ -47,6 +48,7 @@ class ControllerModuleMap(str, Enum):
             ControllerType.EQUIPMENT: "equipment_view_controller",
             ControllerType.BASIC_ENEMY: "basic_enemy",
             ControllerType.BOSS_DADDY: "daddy",
+            ControllerType.BOSS_WEEB: "weeb",
         }
 
         return map[controller_type]

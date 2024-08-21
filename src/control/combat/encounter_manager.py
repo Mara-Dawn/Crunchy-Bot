@@ -60,14 +60,14 @@ class EncounterManager(Service):
 
     BOSS_TYPE = {
         3: EnemyType.DADDY_P1,
-        # 6: None,
+        6: EnemyType.WEEB_P1,
         # 9: None,
         # 12: None,
     }
     BOSS_LEVEL = {v: k for k, v in BOSS_TYPE.items()}
     BOSS_KEY = {
         3: ItemType.DADDY_KEY,
-        6: None,
+        6: ItemType.WEEB_KEY,
         9: None,
         12: None,
     }
@@ -139,6 +139,7 @@ class EncounterManager(Service):
                     )
                     if await self.context_needs_update_check(context):
                         return
+                    await self.refresh_round_overview(context)
                 if combat_event.combat_event_type not in [
                     CombatEventType.ENEMY_END_TURN,
                     CombatEventType.MEMBER_END_TURN,
@@ -379,7 +380,8 @@ class EncounterManager(Service):
             )
 
         if min_participants > 1:
-            initiate_combat = False
+            # initiate_combat = False
+            initiate_combat = True
             participants = (
                 await self.database.get_encounter_participants_by_encounter_id(
                     encounter.id
@@ -1112,6 +1114,19 @@ class EncounterManager(Service):
         await enemy_controller.intro(encounter_id)
         await self.refresh_encounter_thread(encounter_id)
 
+    async def refresh_round_overview(self, context: EncounterContext):
+        round_message = await self.context_loader.get_previous_turn_message(
+            context.thread
+        )
+        if round_message is not None:
+            round_embeds = round_message.embeds
+            cont = round_embeds[0].title == "Round Continued.."
+            round_embed = await self.embed_manager.get_round_embed(context, cont=cont)
+            round_embeds[0] = round_embed
+            await self.context_loader.edit_message(
+                round_message, embeds=round_embeds, attachments=[]
+            )
+
     async def refresh_encounter_thread(self, encounter_id: int):
         context = await self.context_loader.load_encounter_context(encounter_id)
 
@@ -1147,17 +1162,7 @@ class EncounterManager(Service):
             await self.controller.dispatch_event(event)
             return
 
-        round_message = await self.context_loader.get_previous_turn_message(
-            context.thread
-        )
-        if round_message is not None:
-            round_embeds = round_message.embeds
-            cont = round_embeds[0].title == "Round Continued.."
-            round_embed = await self.embed_manager.get_round_embed(context, cont=cont)
-            round_embeds[0] = round_embed
-            await self.context_loader.edit_message(
-                round_message, embeds=round_embeds, attachments=[]
-            )
+        await self.refresh_round_overview(context)
 
         if not context.new_turn():
             return

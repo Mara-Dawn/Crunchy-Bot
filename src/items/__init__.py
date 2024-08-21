@@ -1007,7 +1007,43 @@ class DaddyKey(Item):
             useable=True,
             value=1,
             hide_in_shop=True,
+            secret=True,
             image_url="https://i.imgur.com/QqrB4OS.png",
+        )
+
+class WeebKey(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Master Ball",
+            type=ItemType.WEEB_KEY,
+            group=ItemGroup.GEAR,
+            shop_category=ShopCategory.GEAR,
+            description=(
+                "Woah is this one of those super rare master balls? Hmm interesting, the label "
+                "looks like it was printed upside down. Did it just move !? What could be hiding inside?"
+                "When used from your inventory, it will open a path to the lvl. 6 Boss.\n"
+                "You will need 6 players to face this challenge.\n"
+                "Come prepared, this key only grants you a single attempt."
+                " Set aside sufficient time for this encounter, it might take a while."
+            ),
+            information=(
+                "Boss Key to spawn the lvl.6 boss encounter.\n"
+                "6-9 players\n"
+                "Unlocks the 7th level."
+            ),
+            emoji="🔑",
+            cost=cost,
+            useable=True,
+            value=1,
+            hide_in_shop=True,
+            secret=True,
+            image_url="https://i.imgur.com/VAtRjZK.png",
         )
 
 
@@ -1380,6 +1416,10 @@ class BaseSeed(Item):
 class RareSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
+        defaultcost = 5000
+        if cost is None:
+            cost = defaultcost
+
         super().__init__(cost)
         self.name = "Rare Bean Seed"
         self.type = ItemType.RARE_SEED
@@ -1398,6 +1438,10 @@ class RareSeed(BaseSeed):
 class SpeedSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
+        defaultcost = 3000
+        if cost is None:
+            cost = defaultcost
+
         super().__init__(cost)
         self.name = "Speed Bean Seed"
         self.type = ItemType.SPEED_SEED
@@ -1416,6 +1460,10 @@ class SpeedSeed(BaseSeed):
 class CrystalSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
+        defaultcost = 1000
+        if cost is None:
+            cost = defaultcost
+
         super().__init__(cost)
         self.name = "Crystal Bean Seed"
         self.type = ItemType.CRYSTAL_SEED

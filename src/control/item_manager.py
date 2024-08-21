@@ -529,7 +529,7 @@ class ItemManager(Service):
                 view.set_message(message)
                 await view.refresh_ui()
                 return
-            case ItemType.DADDY_KEY:
+            case ItemType.DADDY_KEY | ItemType.WEEB_KEY:
                 item = await self.get_item(guild.id, item_type)
                 embed = item.get_embed(self.bot, show_price=False)
 

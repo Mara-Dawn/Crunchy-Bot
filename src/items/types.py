@@ -79,6 +79,7 @@ class ItemType(str, Enum):
 
     SCRAP = "Scrap"
     DADDY_KEY = "DaddyKey"
+    WEEB_KEY = "WeebKey"
 
 
 class ItemState(str, Enum):

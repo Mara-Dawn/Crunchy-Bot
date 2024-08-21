@@ -39,6 +39,7 @@ class BaseSkill(DroppableBase):
         default_target: SkillTarget = SkillTarget.OPPONENT,
         modifiable: bool = True,
         max_targets: int = None,
+        custom_crit: float = None,
         uniques: list[SkillType] = None,
         author: str = None,
     ):
@@ -70,6 +71,7 @@ class BaseSkill(DroppableBase):
         self.modifiable = modifiable
         self.default_target = default_target
         self.image_url = image_url
+        self.custom_crit = custom_crit
         self.max_targets = max_targets
 
         if self.image_url is None:
