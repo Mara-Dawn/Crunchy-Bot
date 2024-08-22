@@ -1,15 +1,23 @@
 from combat.gear.bases import (
     BodyGear_T3_1,
+    BodyGear_T4,
+    HeadGear_T0,
+    HeadGear_T1,
     HeadGear_T2,
+    HeadGear_T4,
+    HeadGear_T5,
     LegGear_T0,
     LegGear_T2,
+    LegGear_T4,
     Necklace_T0,
+    Necklace_T1_2,
     Necklace_T2_1,
     Necklace_T2_2,
     Stick_T2,
+    Stick_T4,
 )
 from combat.gear.types import GearBaseType, GearModifierType
-from combat.skills.skills import BloodRage, FineAss, SecondWind
+from combat.skills.skills import BloodRage, FineAss, GigaBonk, SecondWind
 from combat.skills.status_effect import SkillStatusEffect
 from combat.skills.types import (
     SkillEffect,
@@ -224,7 +232,201 @@ class FemaleArmor(BodyGear_T3_1, Unique):
         )
 
 
+class KebabHat(HeadGear_T4, Unique):
+
+    def __init__(self):
+        HeadGear_T4.__init__(self)
+        self.name = "Kebab Hat & Beard"
+        self.type = GearBaseType.KEBAB_HAT
+        self.description = "Only a true kebab chef wears such a majestic mustache."
+        self.image_url = "https://i.imgur.com/QToRVBg.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 1,
+                GearModifierType.EVASION: 0.5,
+                GearModifierType.ATTACK: 0.5,
+                GearModifierType.HEALING: 2.5,
+                GearModifierType.CRIT_RATE: 0.5,
+            },
+        )
+
+
+class KebabApron(BodyGear_T4, Unique):
+
+    def __init__(self):
+        BodyGear_T4.__init__(self)
+        self.name = "Kebab Apron"
+        self.type = GearBaseType.KEBAB_APRON
+        self.description = (
+            "Your grandpa used this apron back when he opened the Kebab shop. "
+            "The decades of grease and sweat give it a very distinguished aroma."
+        )
+        self.image_url = "https://i.imgur.com/3xInorn.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 1,
+                GearModifierType.EVASION: 0.5,
+                GearModifierType.ATTACK: 0.5,
+                GearModifierType.HEALING: 2,
+                GearModifierType.CRIT_RATE: 0.5,
+                GearModifierType.CRIT_DAMAGE: 0.5,
+            },
+        )
+
+
+class KebabPants(LegGear_T4, Unique):
+
+    def __init__(self):
+        LegGear_T4.__init__(self)
+        self.name = "Kebab Pants"
+        self.type = GearBaseType.KEBAB_PANTS
+        self.description = (
+            "The kebab man is always well dressed under his apron. "
+            "With these stylish pants and some classic slippers you are well equipped to handle a skewer."
+        )
+        self.image_url = "https://i.imgur.com/mmbiA2S.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 1,
+                GearModifierType.EVASION: 0.5,
+                GearModifierType.ATTACK: 0.5,
+                GearModifierType.HEALING: 2.5,
+                GearModifierType.CRIT_DAMAGE: 0.5,
+            },
+        )
+
+
+class KebabSkewer(Stick_T4, Unique):
+
+    def __init__(self):
+        Stick_T4.__init__(self)
+        self.name = "Kebab Skewer"
+        self.type = GearBaseType.KEBAB_SKEWER
+        self.description = (
+            "A fresh, beatiful kebab skewer. It is greasy, heavy and smells delicious."
+        )
+        self.image_url = "https://i.imgur.com/yarx7l2.png"
+        self.author = "Lusa"
+        self.skills = [SkillType.DONER_KEBAB, SkillType.KEBAB_SMILE]
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.WEAPON_DAMAGE_MIN: 1,
+                GearModifierType.WEAPON_DAMAGE_MAX: 1,
+                GearModifierType.ATTACK: 1,
+                GearModifierType.HEALING: 2.5,
+            },
+        )
+
+
+class RabbitFoot(Necklace_T1_2, Unique):
+
+    def __init__(self):
+        Necklace_T1_2.__init__(self)
+        self.name = "Rabbit Foot"
+        self.type = GearBaseType.RABBIT_FOOT
+        self.description = "Oh wow, lucky! Someone dropped their rabbit foot. Surely it will bring you more luck that it did for its previous owner. It does look a little weird though, how curious..."
+        self.image_url = "https://i.imgur.com/aLUBL2Y.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.DEXTERITY: 4,
+                GearModifierType.CRIT_RATE: 4,
+            },
+        )
+
+
+class FastFoodCap(HeadGear_T1, Unique):
+
+    def __init__(self):
+        HeadGear_T1.__init__(self)
+        self.name = "Fast Food Cap"
+        self.type = GearBaseType.FAST_FOOD_CAP
+        self.description = "Nothing can phase you, you have seen it all."
+        self.image_url = "https://i.imgur.com/iXoO6xH.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 3,
+                GearModifierType.EVASION: 2,
+                GearModifierType.DEFENSE: 5,
+                GearModifierType.HEALING: 2.5,
+                GearModifierType.DEXTERITY: 2,
+            },
+        )
+
+
+class ShooterWig(HeadGear_T0, Unique):
+
+    def __init__(self):
+        HeadGear_T0.__init__(self)
+        self.name = "Shooter Wig"
+        self.type = GearBaseType.SHOOTER_WIG
+        self.description = "Give off cool dad vibes wile shooting your gun with this high quality shooting wig."
+        self.image_url = "https://i.imgur.com/V8z1W9s.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 1,
+                GearModifierType.DEXTERITY: 2,
+                GearModifierType.CRIT_RATE: 2,
+                GearModifierType.CRIT_DAMAGE: 6,
+            },
+        )
+
+
+class ProfessionalDisguise(HeadGear_T5, Unique):
+
+    def __init__(self):
+        HeadGear_T5.__init__(self)
+        self.name = "Professional Disguise"
+        self.type = GearBaseType.PROFESSIONAL_DISGUISE
+        self.description = (
+            "When equipping this highly advanced masking device, you greatly increase "
+            "the chance of enemies mistaking you for a harmless bystander."
+        )
+        self.image_url = "https://i.imgur.com/8pUj385.png"
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.ARMOR: 1,
+                GearModifierType.EVASION: 3,
+            },
+        )
+
+
 # Skills
+
+
+class GenerationalSlipper(GigaBonk, Unique):
+
+    def __init__(self):
+        GigaBonk.__init__(self)
+        self.name = "Generational Slipper"
+        self.skill_type = SkillType.GENERATIONAL_SLIPPER
+        self.description = (
+            "You have been bequeathed with The Slipper, a weapon passed down through generations. "
+            "Once the bane of your childhood it is now yours to lay waste with."
+        )
+        self.image_url = "https://i.imgur.com/X0n7DRG.png"
+        self.cooldown = 3
+        self.base_value = 6
+        self.stacks = 2
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={},
+        )
 
 
 class WarGodRage(BloodRage, Unique):

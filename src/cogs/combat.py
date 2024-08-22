@@ -189,9 +189,17 @@ class Combat(commands.Cog):
             pre_end = current_hour < end_hour
 
             if start_hour < end_hour:
+                if current_time.weekday in [4, 5] and not pre_end:
+                    pre_end = True
+                if current_time.weekday in [5, 6] and not post_start:
+                    post_start = True
                 if not (post_start and pre_end):
                     continue
             else:
+                if current_time.weekday() in [5, 6] and not pre_end:
+                    pre_end = True
+                if current_time.weekday() in [5, 6] and not post_start:
+                    post_start = True
                 if not (post_start or pre_end):
                     continue
 

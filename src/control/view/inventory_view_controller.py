@@ -293,16 +293,25 @@ class InventoryViewController(ViewController):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
 
+        boss_key_map = {
+            ItemType.DADDY_KEY: EnemyType.DADDY_P1,
+            ItemType.WEEB_KEY: EnemyType.WEEB_BALL,
+        }
+        boss_lvl_map = {
+            ItemType.DADDY_KEY: 3,
+            ItemType.WEEB_KEY: 6,
+        }
+
         match item.type:
-            case ItemType.DADDY_KEY:
+            case ItemType.DADDY_KEY | ItemType.WEEB_KEY:
                 combat_channels = await self.settings_manager.get_combat_channels(
                     interaction.guild_id
                 )
                 await self.encounter_manager.spawn_encounter(
                     interaction.guild,
                     secrets.choice(combat_channels),
-                    EnemyType.DADDY_P1,
-                    3,
+                    boss_key_map[item.type],
+                    boss_lvl_map[item.type],
                 )
 
                 event = InventoryEvent(

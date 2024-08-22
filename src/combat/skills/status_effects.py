@@ -26,8 +26,10 @@ class Cleanse(StatusEffect):
             trigger=[StatusEffectTrigger.END_OF_TURN, StatusEffectTrigger.POST_ATTACK],
             consumed=[StatusEffectTrigger.END_OF_TURN],
             priority=1,
+            max_stacks=1,
             emoji="🩹",
             apply_on_miss=True,
+            override=True,
         )
 
 
@@ -43,6 +45,21 @@ class Flustered(StatusEffect):
             emoji="😳",
             display_status=True,
             override=True,
+        )
+
+
+class Simp(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.SIMP,
+            name="SO CUTE OMG",
+            description="Your attacks are half as effective.",
+            trigger=[StatusEffectTrigger.ON_ATTACK],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="😍",
+            display_status=True,
+            stack=True,
         )
 
 
@@ -124,13 +141,29 @@ class Fear(StatusEffect):
         )
 
 
+class Protection(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.PROTECTION,
+            name="Protection",
+            description="Damage Reduction",
+            trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="🛡️",
+            display_status=True,
+            override=True,
+            apply_on_miss=True,
+        )
+
+
 class Inspired(StatusEffect):
 
     def __init__(self):
         super().__init__(
             effect_type=StatusEffectType.INSPIRED,
             name="Inspired",
-            description="Increased Crit Chance",
+            description="Increased Damage",
             trigger=[StatusEffectTrigger.ON_ATTACK],
             consumed=[StatusEffectTrigger.END_OF_TURN],
             emoji="🍑",

@@ -1,13 +1,17 @@
 import asyncio
 import datetime
+import random
 from abc import ABC, abstractmethod
 
 import discord
+from discord.ext import commands
+
 from combat.actors import Actor, Opponent
 from combat.encounter import EncounterContext
 from combat.enemies import *  # noqa: F403
 from combat.skills.skill import Skill
 from combat.skills.types import (
+    SkillEffect,
     SkillInstance,
     StatusEffectApplication,
 )
@@ -24,7 +28,6 @@ from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.types import CombatEventType
@@ -80,19 +83,36 @@ class EnemyController(Service, ABC):
         pass
 
     def get_notification_embed(
-        self, title: str, message: str, actor: Actor = None
+        self, title: str, message: str, img_url: str = None
     ) -> discord.Embed:
         embed = discord.Embed(title=title, color=discord.Colour.red())
         self.embed_manager.add_text_bar(embed, "", message, max_width=56)
+        if img_url is not None:
+            embed.set_image(url=img_url)
         return embed
 
     async def send_story_box(
-        self, title: str, message: str, thread: discord.Thread, wait: float = None
+        self,
+        title: str,
+        message: str,
+        thread: discord.Thread,
+        img_url: str = None,
+        wait: float = None,
     ):
+        if img_url is not None:
+            embed = discord.Embed(color=discord.Colour.red())
+            embed.set_image(url=img_url)
+            await thread.send("", embed=embed)
+            await asyncio.sleep(1)
+
         embed = self.get_notification_embed(title, message)
         await thread.send("", embed=embed)
+
         if wait is None:
             wait = max(len(message) * 0.085, 4)
+
+        if img_url is not None:
+            wait += 1
         await asyncio.sleep(wait)
 
     async def handle_turn(self, context: EncounterContext):
@@ -131,7 +151,10 @@ class EnemyController(Service, ABC):
                     application_value = None
                     match skill_status_effect.application:
                         case StatusEffectApplication.ATTACK_VALUE:
-                            application_value = total_damage
+                            if turn.skill.base_skill.skill_effect == SkillEffect.BUFF:
+                                application_value = turn.skill.base_skill.base_value
+                            else:
+                                application_value = total_damage
                         case StatusEffectApplication.MANUAL_VALUE:
                             application_value = skill_status_effect.application_value
                         case StatusEffectApplication.DEFAULT:
@@ -147,14 +170,19 @@ class EnemyController(Service, ABC):
                     if skill_status_effect.self_target:
                         status_effect_target = opponent
 
-                    await self.status_effect_manager.apply_status(
-                        context,
-                        opponent,
-                        status_effect_target,
-                        skill_status_effect.status_effect_type,
-                        skill_status_effect.stacks,
-                        application_value,
-                    )
+                    application_chance = skill_status_effect.application_chance
+                    if damage_instance.is_crit:
+                        application_chance = min(1, application_chance * 2)
+
+                    if random.random() < application_chance:
+                        await self.status_effect_manager.apply_status(
+                            context,
+                            opponent,
+                            status_effect_target,
+                            skill_status_effect.status_effect_type,
+                            skill_status_effect.stacks,
+                            application_value,
+                        )
 
                 event = CombatEvent(
                     datetime.datetime.now(),

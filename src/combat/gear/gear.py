@@ -247,6 +247,8 @@ class Gear(Droppable):
                         SkillType.NORMAL_ATTACK,
                         SkillType.HEAVY_ATTACK,
                         SkillType.TAPE_ATTACK,
+                        SkillType.DONER_KEBAB,
+                        SkillType.KEBAB_SMILE,
                     ]:
                         effect = SkillEffect.PHYSICAL_DAMAGE
                     if effect not in damage_types:

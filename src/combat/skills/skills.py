@@ -104,6 +104,64 @@ class MagicAttack(BaseSkill):
         )
 
 
+class DonerKebab(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Döner Kebab",
+            skill_type=SkillType.DONER_KEBAB,
+            description=(
+                "With great speed you skillfuilly assemble a beatiful doner "
+                "kebab and toss it at your foe. Has a small chance to blind and poison your target."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.POISON,
+                    1,
+                    application_chance=0.2,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                    application_chance=0.2,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/mFR1cN5.png",
+        )
+
+
+class KebabSmile(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Kebab Man Smile",
+            skill_type=SkillType.KEBAB_SMILE,
+            description=(
+                "You embody the friendly kebab man and embolden your party with phrases such as "
+                "'Yes chef!', 'With or without onion?' and 'Ahh why not spicy?'. Everyone feels "
+                " happy and heals for a small amount."
+            ),
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=3,
+            base_value=0.1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                ),
+            ],
+            aoe=True,
+            droppable=False,
+            image_url="https://i.imgur.com/TD9P3CR.png",
+        )
+
+
 # Special Skills
 
 
@@ -262,6 +320,39 @@ class HolyGangSigns(BaseSkill):
         )
 
 
+class Foresight(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Creepy Glass Ball",
+            skill_type=SkillType.FORESIGHT,
+            description=(
+                "The magic orb of space and time grants you a small glimpse of the future. "
+                "Most of the time it just shows you embarassing memories from your childhood though. "
+                "Your party will take reduced damage in the next turn. "
+            ),
+            information="",
+            skill_effect=SkillEffect.BUFF,
+            cooldown=6,
+            min_level=5,
+            base_value=45,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.PROTECTION,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            stacks=3,
+            aoe=True,
+            weight=30,
+            reset_after_encounter=False,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/lgBwv4v.png",
+            author="Lusa",
+        )
+
+
 class FineAss(BaseSkill):
 
     def __init__(self):
@@ -290,6 +381,39 @@ class FineAss(BaseSkill):
             uniques=[SkillType.NOT_SO_FINE_ASS],
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/wWYtgye.png",
+            author="Lusa",
+        )
+
+
+class NeuronActivation(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Neuron Activation",
+            skill_type=SkillType.NEURON_ACTIVATION,
+            description=(
+                "A spark lights up in the vast and dark space inside your head. It slowly rises upwards and shines bright and strong. "
+                "A neuron fired off a signal! This historical event will dramatically increase the effect of your next skill."
+            ),
+            information="",
+            skill_effect=SkillEffect.BUFF,
+            cooldown=8,
+            min_level=4,
+            base_value=85,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.INSPIRED,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            stacks=2,
+            aoe=False,
+            weight=25,
+            reset_after_encounter=False,
+            uniques=[],
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/gVVnWTi.png",
             author="Lusa",
         )
 
@@ -360,6 +484,7 @@ class GigaBonk(BaseSkill):
             cooldown=5,
             base_value=5,
             stacks=3,
+            uniques=[SkillType.GENERATIONAL_SLIPPER],
             reset_after_encounter=False,
             image_url="https://i.imgur.com/JNNbXJa.png",
         )
@@ -1595,6 +1720,7 @@ class LootSpit(BaseSkill):
                     StatusEffectType.RANDOM,
                     1,
                     StatusEffectApplication.ATTACK_VALUE,
+                    application_chance=0.7,
                 )
             ],
             aoe=False,
@@ -1876,6 +2002,7 @@ class FollowMe(BaseSkill):
             author="Lusa",
         )
 
+
 class Erase(BaseSkill):
 
     def __init__(self):
@@ -1893,9 +2020,10 @@ class Erase(BaseSkill):
             hits=1,
             aoe=False,
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/Zgf5YHf.png",
             author="Lusa",
         )
+
 
 class EyePoke(BaseSkill):
 
@@ -1920,9 +2048,10 @@ class EyePoke(BaseSkill):
                 ),
             ],
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/aJnhIlV.png",
             author="Lusa",
         )
+
 
 class PaperCuts(BaseSkill):
 
@@ -1944,9 +2073,475 @@ class PaperCuts(BaseSkill):
                 SkillStatusEffect(
                     StatusEffectType.BLEED,
                     1,
+                    StatusEffectApplication.ATTACK_VALUE,
                 ),
             ],
             droppable=False,
-            image_url="",
+            image_url="https://i.imgur.com/YjWVjfA.png",
+            author="Lusa",
+        )
+
+
+class OmaeWa(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Omae wa mou shindeiru",
+            skill_type=SkillType.OMAE_WA,
+            description=(
+                "He teleports behind you and slowly unsheathes his katana. "
+                "The moonlight is glistening and reflecting on his glasses. "
+                "A faint smirk forms on his face. Then, THUNDER CRACKS! With a swift strike, he slices his opponent!"
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=0,
+            cooldown=3,
+            base_value=3.5,
+            custom_crit=1,
+            hits=1,
+            max_targets=1,
+            aoe=False,
+            droppable=False,
+            image_url="https://i.imgur.com/ZF21vKW.png",
+            author="Lusa",
+        )
+
+
+class PotatoChip(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Potato Chip",
+            skill_type=SkillType.POTATO_CHIP,
+            description=(
+                "He is calculating a million possibilities and figuring out the best way to defeat you. "
+                "He smiles, because he knows that you, yes you, are doomed! His attacks will hit a lot harder next turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.BUFF,
+            initial_cooldown=3,
+            cooldown=3,
+            base_value=30,
+            aoe=False,
+            default_target=SkillTarget.SELF,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.INSPIRED,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/ICdd9V7.png",
+            author="Lusa",
+        )
+
+
+class Dakimakura(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Dakimakura",
+            skill_type=SkillType.DAKIMAKURA,
+            description=(
+                "He throws his dakimakura at you! What is that awful smell? And why is it sticky??? "
+                "You are so disgusted that you can't do anything on your next turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=0,
+            cooldown=1,
+            base_value=1,
+            aoe=False,
+            hits=1,
+            max_targets=2,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.STUN,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/wbMjzR0.png",
+            author="Lusa",
+        )
+
+
+class WeebKawaii(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Kawaii Desu Neeee ~",
+            skill_type=SkillType.WEEB_KAWAII,
+            description=(
+                "He uses his anime eyes to be extra cute just for you. "
+                "You cannot resist the power of his UwU and you feel your will to fight him fade. "
+                "You will deal halved damage on your next two turns."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=0,
+            cooldown=3,
+            base_value=1,
+            aoe=False,
+            hits=2,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.SIMP,
+                    2,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/laNHppG.png",
+            author="Lusa",
+        )
+
+
+class WeebSplaining(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Weeb-Splaining",
+            skill_type=SkillType.WEEB_SPLAINING,
+            description=(
+                "He keeps on talking about his favourite anime and what a bitch the main character is for "
+                "not going for the romantic route he wished for. He was obviously meant to be together "
+                "with his male childhood friend! This keeps on going for so long that your ears start bleeding."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=1,
+            cooldown=1,
+            base_value=3,
+            aoe=True,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    2,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/ZSxtSfL.png",
+            author="Lusa",
+        )
+
+
+class Alchemy(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Full Metal Alchemy",
+            skill_type=SkillType.ALCHEMY,
+            description=(
+                "Through the law of equivalent exchange he "
+                "transmutes his bottled up emotions and the dark terrors of his past into a pure, malicious "
+                "energy affecting all of you. You get afflicted with random status effects."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=2,
+            cooldown=3,
+            base_value=2.5,
+            aoe=True,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.RANDOM,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.FLUSTERED,
+                    1,
+                    application_chance=0.05,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.STUN,
+                    1,
+                    application_chance=0.05,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    10,
+                    StatusEffectApplication.ATTACK_VALUE,
+                    application_chance=0.05,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.FROGGED,
+                    2,
+                    application_chance=0.05,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.SIMP,
+                    1,
+                    application_chance=0.1,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/0t9hkLd.png",
+            author="Lusa",
+        )
+
+
+class WeebiHameHa(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Weebi Hame Ha!",
+            skill_type=SkillType.WEEBI_HAME_HA,
+            description=(
+                "A concentrated beam of pure anime power, filled with the love for his waifu, explodes from his palms "
+                "and all over your face and body."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=0,
+            cooldown=10,
+            base_value=1,
+            aoe=True,
+            custom_crit=1,
+            hits=1,
+            modifiable=False,
+            droppable=False,
+            image_url="https://i.imgur.com/B1Ig4Nj.png",
+            author="Lusa",
+        )
+
+
+class WeebiDamaCharge1(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="HAAAAAAAAAA!!!",
+            skill_type=SkillType.WEEBI_DAMA_CHARGE_1,
+            description=(
+                "He rises up into the air and with both arms held up high, he charges a massive ball of energy above his head. "
+                "While doing so he does not stop screaming his lungs out. Maybe it increases his focus, who knows. "
+                "It keeps getting bigger though, so you better do something fast!"
+            ),
+            information="",
+            skill_effect=SkillEffect.BUFF,
+            initial_cooldown=1,
+            default_target=SkillTarget.SELF,
+            cooldown=10,
+            base_value=10000,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.INSPIRED,
+                    1337,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            aoe=False,
+            hits=1,
+            modifiable=False,
+            droppable=False,
+            image_url="https://i.imgur.com/GfELHio.png",
+            author="Lusa",
+        )
+
+
+class WeebiDamaCharge2(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="HAAAAAAAAAAaaaaAAAAAAAAAA!!!",
+            skill_type=SkillType.WEEBI_DAMA_CHARGE_2,
+            description=(
+                "He keeps on screaming, its getting even more violent! "
+                "Bolts of lightning start to zap around on the surface of the ever growing energy ball."
+            ),
+            information="",
+            skill_effect=SkillEffect.BUFF,
+            initial_cooldown=2,
+            default_target=SkillTarget.SELF,
+            cooldown=10,
+            base_value=10000,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.INSPIRED,
+                    6969,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            aoe=False,
+            hits=1,
+            modifiable=False,
+            droppable=False,
+            image_url="https://i.imgur.com/GfELHio.png",
+            author="Lusa",
+        )
+
+
+class WeebiDamaCharge3(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="HAAAAAAAAAA- *Cough* -AAAAaAAaAeeaaAaaee!!!",
+            skill_type=SkillType.WEEBI_DAMA_CHARGE_3,
+            description=(
+                "His screams start to become more of a screech as he pulls out the last of his energy reserves. "
+                "The orb now blocks out most of the sky and starts to vibrate. Its gonna blow soon!"
+            ),
+            information="",
+            skill_effect=SkillEffect.BUFF,
+            initial_cooldown=3,
+            default_target=SkillTarget.SELF,
+            cooldown=10,
+            base_value=10000,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.INSPIRED,
+                    9001,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            aoe=False,
+            hits=1,
+            modifiable=False,
+            droppable=False,
+            image_url="https://i.imgur.com/GfELHio.png",
+            author="Lusa",
+        )
+
+
+class WeebiDama(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Weebi-Dama",
+            skill_type=SkillType.WEEBI_DAMA,
+            description=(
+                "With one final outcry he lowers his arms, dropping the immense mass down on you. Its Joever, you had a good run. "
+                "Your bodies disintergrate instantly and nothing is left behind."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=4,
+            cooldown=0,
+            base_value=2,
+            aoe=True,
+            hits=1,
+            modifiable=False,
+            droppable=False,
+            image_url="https://i.imgur.com/GfELHio.png",
+            author="Lusa",
+        )
+
+
+class MeowTiara(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Meow Tiara :3",
+            skill_type=SkillType.MEOW_TIARA,
+            description=(
+                "She winks at you playfully and pulls out a cat eared tiara. With a cute twirl she skillfully "
+                "tosses it towards you and it perfectly lands on your head. Wow! Suddenly you feel a spine shattering shock "
+                "exploding inside your head, jolting through your entire body. You realize, that she is your queen and you love her forever. "
+                "Your nose is bleeding and you cannot hurt her on your next turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            initial_cooldown=0,
+            cooldown=0,
+            base_value=3,
+            aoe=False,
+            hits=1,
+            max_targets=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FLUSTERED,
+                    1,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/dXzQSrC.png",
+            author="Lusa",
+        )
+
+
+class MeowSpiral(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Meow Spiral Heart Attack :3",
+            skill_type=SkillType.MEOW_SPIRAL,
+            description=(
+                "She performs a twirly dance, waving her scepter in big, wavy spirals as sparkles form and slowly glitter around her. "
+                "As she strikes a final pose, she raises it up high in the air and summons a large whirling spiral of funny shaped "
+                "hearts that quickly grows and envelops you all. You realize that those 'hearts' actually hurt quite a lot "
+                "when they smack you in the face!"
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=0,
+            cooldown=1,
+            base_value=1,
+            aoe=False,
+            hits=6,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.SIMP,
+                    1,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/x5t2E6h.png",
+            author="Lusa",
+        )
+
+
+class MeowKiss(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Starlight Honeymeow Therapy Kiss :3",
+            skill_type=SkillType.MEOW_KISS,
+            description=(
+                "Darkness beyond twilight, crimson beyond blood that flows, "
+                "Buried in the stream of time is where your power grows. \n\n"
+                "I pledge myself to conquer all the foes who stand "
+                "Before the mighty gift bestowed in my unworthy hand. \n\n"
+                "Let the fools who stand before me be destroyed by the power you and I possess! "
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=1,
+            cooldown=2,
+            base_value=3,
+            aoe=True,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.STUN,
+                    1,
+                    application_chance=0.3,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.RANDOM,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/yG15RnX.png",
             author="Lusa",
         )

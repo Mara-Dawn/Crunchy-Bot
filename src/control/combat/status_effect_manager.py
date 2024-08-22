@@ -2,6 +2,8 @@ import datetime
 import random
 from typing import Any
 
+from discord.ext import commands
+
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
 from combat.skills.skill import Skill
@@ -26,7 +28,6 @@ from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
@@ -87,18 +88,12 @@ class CombatStatusEffectManager(Service):
             random_positive_effect = [
                 StatusEffectType.HIGH,
                 StatusEffectType.RAGE,
-                StatusEffectType.INSPIRED,
             ]
             random_negative_effect = [
                 StatusEffectType.BLEED,
                 StatusEffectType.BLIND,
                 StatusEffectType.POISON,
-                StatusEffectType.FLUSTERED,
             ]
-
-            chance_for_nothing = 0.3
-            if random.random() < chance_for_nothing:
-                return
 
             chance_for_positive = 0.15
             if random.random() < chance_for_positive:
@@ -146,6 +141,7 @@ class CombatStatusEffectManager(Service):
                 StatusEffectType.INSPIRED
                 | StatusEffectType.HEAL_OVER_TIME
                 | StatusEffectType.EVASIVE
+                | StatusEffectType.PROTECTION
             ):
                 damage = application_value
 
@@ -181,6 +177,9 @@ class CombatStatusEffectManager(Service):
                         active_effect,
                         active_effect.remaining_stacks,
                     )
+
+        if not (target.is_enemy and source.is_enemy):
+            stacks = min(stacks, status_effect.max_stacks)
 
         event = StatusEffectEvent(
             datetime.datetime.now(),
@@ -325,6 +324,8 @@ class CombatStatusEffectManager(Service):
                     effect_data[effect_type] = 0 if roll < chance_to_evade else 1
                 case StatusEffectType.FLUSTERED:
                     effect_data[effect_type] = 0
+                case StatusEffectType.SIMP:
+                    effect_data[effect_type] = 0.5
                 case StatusEffectType.STUN:
                     effect_data[effect_type] = 1
                     event = EncounterEvent(
@@ -351,6 +352,10 @@ class CombatStatusEffectManager(Service):
                         await self.controller.dispatch_event(event)
                 case StatusEffectType.INSPIRED:
                     effect_data[effect_type] = 1 + (
+                        active_status_effect.event.value / 100
+                    )
+                case StatusEffectType.PROTECTION:
+                    effect_data[effect_type] = 1 - (
                         active_status_effect.event.value / 100
                     )
                 case StatusEffectType.FEAR:
@@ -407,28 +412,23 @@ class CombatStatusEffectManager(Service):
     ) -> dict[str, str]:
         outcome_info = {}
         for effect_type, data in effect_data.items():
-            title = ""
-            description = ""
             status_effect = await self.factory.get_status_effect(effect_type)
+            title = f"{status_effect.emoji} {status_effect.name}"
+            description = ""
 
             match effect_type:
                 case StatusEffectType.CLEANSE:
                     if data != "":
-                        title = f"{status_effect.emoji} Cleanse"
                         description = data
                 case StatusEffectType.BLEED:
-                    title = f"{status_effect.emoji} Bleed"
                     description = f"{actor.name} suffers {data} bleeding damage."
                 case StatusEffectType.HEAL_OVER_TIME:
-                    title = f"{status_effect.emoji} Heal"
                     description = f"{actor.name} heals for {data} hp."
                 case StatusEffectType.POISON:
-                    title = f"{status_effect.emoji} Poison"
                     description = f"{actor.name} suffers {data} poison damage."
                 case StatusEffectType.BLIND:
                     if data != 0:
                         continue
-                    title = f"{status_effect.emoji} Blind"
                     description = f"{actor.name} misses their attack!"
                 case StatusEffectType.EVASIVE:
                     if data != 0:
@@ -436,31 +436,26 @@ class CombatStatusEffectManager(Service):
                     title = f"{status_effect.emoji} Miss"
                     description = f"{actor.name} dodged the attack!"
                 case StatusEffectType.FLUSTERED:
-                    title = f"{status_effect.emoji} Flustered"
                     description = f"{actor.name} cannot harm their opponent!"
+                case StatusEffectType.SIMP:
+                    description = f"{actor.name}'s attacks are half as effective!"
                 case StatusEffectType.FEAR:
-                    title = f"{status_effect.emoji} Fear"
                     description = f"{actor.name}'s fear increases their damage taken."
                 case StatusEffectType.HIGH:
-                    title = f"{status_effect.emoji} High"
                     description = f"{actor.name} is blazed out of their mind causing unexpected skill outcomes."
                 case StatusEffectType.RAGE_QUIT:
-                    title = f"{status_effect.emoji} Rage Quit"
                     description = data
                 case StatusEffectType.FROGGED:
                     if data != 0:
                         continue
-                    title = f"{status_effect.emoji} Frogged"
                     description = "You are a frog and fail your action."
                 case StatusEffectType.STUN:
-                    title = f"{status_effect.emoji} Stunned"
                     description = "You are stunned."
                 case StatusEffectType.DEATH_PROTECTION:
                     if data:
-                        title = f"{status_effect.emoji} {status_effect.name}"
                         description = f"{actor.name} was spared from dying, surviving with 1 health."
 
-            if title != "":
+            if description != "":
                 outcome_info[title] = description
 
         return outcome_info
@@ -499,9 +494,6 @@ class CombatStatusEffectManager(Service):
         ]:
             return 1, None
 
-        if not skill.base_skill.modifiable:
-            return 1, None
-
         effect_data = await self.get_status_effect_outcomes(
             context, actor, triggered_status_effects, skill=skill
         )
@@ -509,6 +501,8 @@ class CombatStatusEffectManager(Service):
         modifier = 1
 
         for _, data in effect_data.items():
+            if not skill.base_skill.modifiable and data < 1:
+                continue
             modifier *= float(data)
 
         embed_data = await self.get_status_effect_outcome_info(

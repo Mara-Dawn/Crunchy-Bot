@@ -53,6 +53,8 @@ class CombatGearManager(Service):
     MOB_LOOT_BONUS_SCALING = 1
     MOB_LOOT_UNIQUE_SCALING = 0.2
 
+    BOSS_PLUS_LEVEL_CHANCE = 0.25
+
     MIN_RARITY_LVL = {
         Rarity.COMMON: 0,
         Rarity.UNCOMMON: 1,
@@ -587,6 +589,9 @@ class CombatGearManager(Service):
 
         guild_level = await self.database.get_guild_level(guild_id)
         item_level = min(enemy_level, guild_level)
+
+        if enemy.is_boss and random.random() < self.BOSS_PLUS_LEVEL_CHANCE:
+            item_level += 1
 
         return await self.generate_drop(member_id, guild_id, item_level, enemy)
 

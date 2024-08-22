@@ -8,7 +8,7 @@ from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
 from combat.skills.status_effect import ActiveStatusEffect
-from combat.skills.types import SkillType
+from combat.skills.types import SkillEffect, SkillType
 from config import Config
 
 
@@ -68,6 +68,7 @@ class Character(Actor):
         self.member = member
         self.equipment = equipment
         max_hp = self.equipment.attributes[CharacterAttribute.MAX_HEALTH]
+        # max_hp = 9999999999
         initiative = (
             Config.CHARACTER_BASE_INITIATIVE
             + self.equipment.gear_modifiers[GearModifierType.DEXTERITY]
@@ -135,7 +136,7 @@ class Opponent(Actor):
             self.skills, key=lambda x: x.base_skill.base_value, reverse=True
         )
 
-        max_depth = self.enemy.health * 2
+        max_depth = max(self.enemy.health, self.enemy.damage_scaling) * 2
         cooldowns: dict[SkillType, int] = {}
         initial_state: dict[SkillType, int] = {}
 
@@ -183,7 +184,9 @@ class Opponent(Actor):
         potency = 0
 
         for skill in sorted_skills:
-            base_potency = skill.base_skill.base_value * skill.base_skill.hits
+            base_potency = 0
+            if skill.base_skill.skill_effect != SkillEffect.BUFF:
+                base_potency = skill.base_skill.base_value * skill.base_skill.hits
             potency_per_turn = (
                 base_potency
                 * skill_count[skill.base_skill.skill_type]

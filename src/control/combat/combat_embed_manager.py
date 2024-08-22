@@ -7,8 +7,6 @@ from discord.ext import commands
 
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext, TurnData
-from combat.enemies.enemy import Enemy
-from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect, SkillInstance
 from config import Config
@@ -21,6 +19,7 @@ from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
 from events.bot_event import BotEvent
+from events.types import EncounterEventType
 from items.item import Item
 
 
@@ -227,12 +226,16 @@ class CombatEmbedManager(Service):
         )
 
         if enemy.information != "":
-            self.add_text_bar(
-                embed,
-                name="Additional Information:",
-                value=enemy.information,
-                max_width=Config.ENEMY_MAX_WIDTH,
-            )
+            if enemy.is_boss:
+                enemy_info = f"```ansi\n[33m{enemy.information}```"
+                embed.add_field(name="", value=enemy_info, inline=False)
+            else:
+                self.add_text_bar(
+                    embed,
+                    name="Additional Information:",
+                    value=enemy.information,
+                    max_width=Config.ENEMY_MAX_WIDTH,
+                )
 
         image_url = await self.get_custom_image(context.encounter)
         if image_url is None:
@@ -587,11 +590,8 @@ class CombatEmbedManager(Service):
 
         yield full_embed
 
-        if (
-            actor.is_enemy
-            # and actor.enemy.is_boss
-            and skill.type
-            not in self.actor_manager.get_used_skills(actor.id, context.combat_events)
+        if actor.is_enemy and skill.type not in self.actor_manager.get_used_skills(
+            actor.id, context.combat_events
         ):
             wait = max(len(skill.description) * 0.06, 3)
             await asyncio.sleep(wait)
@@ -632,10 +632,14 @@ class CombatEmbedManager(Service):
 
         return embed
 
-    def get_member_out_embed(self, actor: Actor, reason: str) -> discord.Embed:
+    def get_member_out_embed(
+        self, actor: Actor, event_type: EncounterEventType, reason: str
+    ) -> discord.Embed:
         actor_name = f"{actor.name}"
 
-        content = f"{actor_name} left the encounter. They will be removed at the start of the next round."
+        content = f"{actor_name} left the encounter."
+        if event_type == EncounterEventType.MEMBER_LEAVING:
+            content += " They will be removed at the start of the next round."
 
         embed = discord.Embed(
             title="", description="", color=discord.Colour.light_grey()

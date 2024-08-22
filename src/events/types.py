@@ -90,6 +90,7 @@ class EncounterEventType(str, Enum):
     FORCE_SKIP = "force_skip"
     MEMBER_LEAVING = "member_leaving"
     MEMBER_OUT = "member_timeout"
+    MEMBER_DISENGAGE = "member_disengage"
     ENEMY_DEFEAT = "enemy_defeat"
     ENEMY_PHASE_CHANGE = "enemy_phase_change"
     END = "end"

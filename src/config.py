@@ -1,8 +1,8 @@
 class Config:
 
     # General Combat
-    # COMBAT_INITIAL_WAIT = 90
-    COMBAT_INITIAL_WAIT = 10
+    COMBAT_INITIAL_WAIT = 90
+    # COMBAT_INITIAL_WAIT = 10
 
     DEFAULT_TIMEOUT = 60 * 3
     SHORT_TIMEOUT = 60
@@ -25,19 +25,19 @@ class Config:
         2: 272.80,
         3: 335.54,
         4: 418.76,
-        5: 639.79,
+        5: 595.03,
         6: 748.42,
         7: 834.09,
     }
 
     AVERAGE_PLAYER_POTENCY = {
         1: 2,
-        2: 2.3,
-        3: 2.6,
-        4: 3,
-        5: 3.3,
-        6: 3.7,
-        7: 4,
+        2: 2.15,
+        3: 2.3,
+        4: 2.45,
+        5: 2.6,
+        6: 2.75,
+        7: 3,
     }
 
     CHARACTER_BASE_INITIATIVE = 10
@@ -78,7 +78,7 @@ class Config:
         7: 9999999,
     }
     BOSS_LEVELS = [3, 6, 9, 12]
-    BOSS_RETRY_REQUIREMENT = 5
+    BOSS_RETRY_REQUIREMENT = 15
     BOSS_KEY_CLAIM_DELAY = 180
 
     # Scrap

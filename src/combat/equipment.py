@@ -1,4 +1,5 @@
 import discord
+
 from combat.gear import (
     DefaultAccessory1,
     DefaultAccessory2,

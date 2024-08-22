@@ -145,6 +145,7 @@ class GearBaseType(str, Enum):
     HEADGEAR_T0 = "HeadGear_T0"
     HEADGEAR_T1 = "HeadGear_T1"
     HEADGEAR_T2 = "HeadGear_T2"
+    HEADGEAR_T2_2 = "HeadGear_T2_2"
     HEADGEAR_T3_1 = "HeadGear_T3_1"
     HEADGEAR_T3_2 = "HeadGear_T3_2"
     HEADGEAR_T4 = "HeadGear_T4"
@@ -181,14 +182,25 @@ class GearBaseType(str, Enum):
     NECKLACE_T3_2 = "Necklace_T3_2"
     NECKLACE_T4 = "Necklace_T4"
     NECKLACE_T5 = "Necklace_T5"
+    NECKLACE_T5_2 = "Necklace_T5_2"
 
     DEEZ_NUTS = "DeezNutsAccessory"
+    RABBIT_FOOT = "RabbitFoot"
     USELESS_AMULET = "UselessAmulet"
 
     CAT_HEAD = "CatHead"
     CAT_LEGS = "CatLegs"
     CAT_TAIL = "CatTail"
     CAT_HANDS = "CatHands"
+
+    FAST_FOOD_CAP = "FastFoodCap"
+    SHOOTER_WIG = "ShooterWig"
+    PROFESSIONAL_DISGUISE = "ProfessionalDisguise"
+
+    KEBAB_HAT = "KebabHat"
+    KEBAB_APRON = "KebabApron"
+    KEBAB_PANTS = "KebabPants"
+    KEBAB_SKEWER = "KebabSkewer"
 
 
 class CharacterAttribute(str, Enum):

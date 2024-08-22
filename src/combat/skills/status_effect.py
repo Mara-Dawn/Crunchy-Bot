@@ -55,12 +55,14 @@ class SkillStatusEffect:
         stacks: int,
         application: StatusEffectApplication = StatusEffectApplication.DEFAULT,
         application_value: float = None,
+        application_chance: float = 1,
         self_target: bool = False,
     ):
         self.status_effect_type = status_effect_type
         self.stacks = stacks
         self.application = application
         self.application_value = application_value
+        self.application_chance = application_chance
         self.self_target = self_target
 
 
