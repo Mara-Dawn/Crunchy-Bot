@@ -3,12 +3,17 @@ import random
 import secrets
 
 import discord
+from discord.ext import commands
+
 from bot_util import BotUtil
+from control.controller import Controller
+from control.logger import BotLogger
+from control.service import Service
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.inventory import UserInventory
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, LootboxType, UserInteraction
-from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.inventory_batchevent import InventoryBatchEvent
@@ -24,11 +29,6 @@ from items.types import ItemState, ItemType
 from view.lootbox.view import LootBoxView
 from view.shop.confirm_view import ShopConfirmView
 from view.shop.user_select_view import ShopUserSelectView
-
-from control.controller import Controller
-from control.logger import BotLogger
-from control.service import Service
-from control.settings_manager import SettingsManager
 
 
 class ItemManager(Service):
@@ -123,7 +123,6 @@ class ItemManager(Service):
             ItemType.CATGIRL,
             ItemType.UNLIMITED_GAMBA,
             ItemType.INSTANT_GAMBA,
-            ItemType.CRAPPY_COUPON,
             ItemType.MIMIC_DETECTOR,
             ItemType.USEFUL_CATGIRL,
             ItemType.FLASH_SEED,

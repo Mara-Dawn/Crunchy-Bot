@@ -753,15 +753,17 @@ class Daddy_P2(Enemy):
         )
 
 
-class Weeb_P1(Enemy):
+class WeebBall(Enemy):
     def __init__(self):
         super().__init__(
-            name="Weeb",
-            type=EnemyType.WEEB_P1,
+            name="Mysterious Ball",
+            type=EnemyType.WEEB_BALL,
             controller="WeebController",
-            description="He has the power of God and Anime on his side.",
-            information="Defeat this boss to unlock access to level 7 and above.",
-            image_url="https://i.imgur.com/kauVRZ7.png",
+            description=(
+                "Ooo ho ho, what is this? A great sealing object from a time long past..."
+            ),
+            information="May or may not have something to do with the level 6 boss.",
+            image_url="https://i.imgur.com/VAtRjZK.png",
             min_level=6,
             max_level=6,
             health=7.5,
@@ -779,11 +781,45 @@ class Weeb_P1(Enemy):
             item_loot_table=[],
             gear_loot_table=[],
             skill_loot_table=[],
+            initiative=9999,
+            is_boss=True,
+            phases=[EnemyType.WEEB_P1, EnemyType.WEEB_P2, EnemyType.WEEB_P3],
+            author="Lusa, Sophie, Mara",
+        )
+
+
+class Weeb_P1(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Weeb",
+            type=EnemyType.WEEB_P1,
+            controller="WeebController",
+            description="He has the power of God and Anime on his side.",
+            information="Defeat this boss to unlock access to level 7 and above.",
+            image_url="https://i.imgur.com/kauVRZ7.png",
+            min_level=6,
+            max_level=6,
+            health=7.5,
+            # health=0.001,
+            damage_scaling=14,
+            max_players=6,
+            min_encounter_scale=6,
+            skill_types=[
+                SkillType.OMAE_WA,
+                SkillType.DAKIMAKURA,
+                SkillType.WEEB_KAWAII,
+                SkillType.WEEB_SPLAINING,
+                SkillType.ALCHEMY,
+                SkillType.POTATO_CHIP,
+            ],
+            item_loot_table=[],
+            gear_loot_table=[],
+            skill_loot_table=[],
             initiative=80,
             actions_per_turn=3,
             is_boss=True,
-            phases=[EnemyType.WEEB_P2, EnemyType.WEEB_P3],
-            author="Lusa, Mara",
+            phases=[EnemyType.WEEB_P1, EnemyType.WEEB_P2, EnemyType.WEEB_P3],
+            author="Lusa, Sophie, Mara",
         )
 
 
@@ -799,6 +835,7 @@ class Weeb_P2(Enemy):
             min_level=6,
             max_level=6,
             health=5,
+            # health=0.001,
             damage_scaling=10,
             max_players=6,
             min_encounter_scale=6,
@@ -815,15 +852,15 @@ class Weeb_P2(Enemy):
             initiative=20,
             actions_per_turn=1,
             is_boss=True,
-            phases=[EnemyType.WEEB_P2, EnemyType.WEEB_P3],
-            author="Lusa, Mara",
+            phases=[EnemyType.WEEB_P1, EnemyType.WEEB_P2, EnemyType.WEEB_P3],
+            author="Lusa, Sophie, Mara",
         )
 
 
 class Weeb_P3(Enemy):
     def __init__(self):
         super().__init__(
-            name="Magical Weebgirl",
+            name="Magical Weeb Girl",
             type=EnemyType.WEEB_P3,
             controller="WeebController",
             description="Unlocking ones inner potential to pierce the heavens above.",
@@ -832,6 +869,7 @@ class Weeb_P3(Enemy):
             min_level=6,
             max_level=6,
             health=7.5,
+            # health=0.001,
             damage_scaling=14,
             max_players=6,
             min_encounter_scale=6,
@@ -848,5 +886,5 @@ class Weeb_P3(Enemy):
             initiative=50,
             actions_per_turn=2,
             is_boss=True,
-            author="Lusa, Mara",
+            author="Lusa, Sophie, Mara",
         )

@@ -60,7 +60,7 @@ class EncounterManager(Service):
 
     BOSS_TYPE = {
         3: EnemyType.DADDY_P1,
-        6: EnemyType.WEEB_P1,
+        6: EnemyType.WEEB_BALL,
         # 9: None,
         # 12: None,
     }
@@ -380,8 +380,7 @@ class EncounterManager(Service):
             )
 
         if min_participants > 1:
-            # initiate_combat = False
-            initiate_combat = True
+            initiate_combat = False
             participants = (
                 await self.database.get_encounter_participants_by_encounter_id(
                     encounter.id
@@ -1087,7 +1086,7 @@ class EncounterManager(Service):
         async for message in thread.history(limit=100):
             if len(message.embeds) == 1 and message.author.id == self.bot.user.id:
                 embed = message.embeds[0]
-                if embed.image.url is not None:
+                if embed.image.url is not None and embed.title is not None:
                     await message.delete()
                     break
 
@@ -1095,7 +1094,7 @@ class EncounterManager(Service):
         async for message in thread.history(limit=100):
             if len(message.embeds) == 1 and message.author.id == self.bot.user.id:
                 embed = message.embeds[0]
-                if embed.image.url is not None:
+                if embed.image.url is not None and embed.title is not None:
                     return message
         return None
 

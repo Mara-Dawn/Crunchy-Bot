@@ -83,19 +83,36 @@ class EnemyController(Service, ABC):
         pass
 
     def get_notification_embed(
-        self, title: str, message: str, actor: Actor = None
+        self, title: str, message: str, img_url: str = None
     ) -> discord.Embed:
         embed = discord.Embed(title=title, color=discord.Colour.red())
         self.embed_manager.add_text_bar(embed, "", message, max_width=56)
+        if img_url is not None:
+            embed.set_image(url=img_url)
         return embed
 
     async def send_story_box(
-        self, title: str, message: str, thread: discord.Thread, wait: float = None
+        self,
+        title: str,
+        message: str,
+        thread: discord.Thread,
+        img_url: str = None,
+        wait: float = None,
     ):
+        if img_url is not None:
+            embed = discord.Embed(color=discord.Colour.red())
+            embed.set_image(url=img_url)
+            await thread.send("", embed=embed)
+            await asyncio.sleep(1)
+
         embed = self.get_notification_embed(title, message)
         await thread.send("", embed=embed)
+
         if wait is None:
             wait = max(len(message) * 0.085, 4)
+
+        if img_url is not None:
+            wait += 1
         await asyncio.sleep(wait)
 
     async def handle_turn(self, context: EncounterContext):

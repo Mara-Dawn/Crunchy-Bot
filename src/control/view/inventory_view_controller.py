@@ -295,7 +295,11 @@ class InventoryViewController(ViewController):
 
         boss_key_map = {
             ItemType.DADDY_KEY: EnemyType.DADDY_P1,
-            ItemType.WEEB_KEY: EnemyType.WEEB_P1,
+            ItemType.WEEB_KEY: EnemyType.WEEB_BALL,
+        }
+        boss_lvl_map = {
+            ItemType.DADDY_KEY: 3,
+            ItemType.WEEB_KEY: 6,
         }
 
         match item.type:
@@ -307,7 +311,7 @@ class InventoryViewController(ViewController):
                     interaction.guild,
                     secrets.choice(combat_channels),
                     boss_key_map[item.type],
-                    3,
+                    boss_lvl_map[item.type],
                 )
 
                 event = InventoryEvent(

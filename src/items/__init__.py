@@ -1026,8 +1026,8 @@ class WeebKey(Item):
             shop_category=ShopCategory.GEAR,
             description=(
                 "Woah is this one of those super rare master balls? Hmm interesting, the label "
-                "looks like it was printed upside down. Did it just move !? What could be hiding inside?"
-                "When used from your inventory, it will open a path to the lvl. 6 Boss.\n"
+                "looks like it was printed upside down. Did it just move !? What could be hiding inside?\n\n"
+                "When used from your inventory, it will open a path to the lvl. 6 Boss.\n\n"
                 "You will need 6 players to face this challenge.\n"
                 "Come prepared, this key only grants you a single attempt."
                 " Set aside sufficient time for this encounter, it might take a while."
