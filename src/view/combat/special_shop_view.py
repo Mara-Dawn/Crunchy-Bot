@@ -1,6 +1,7 @@
 import contextlib
 
 import discord
+
 from combat.gear.gear import Gear
 from combat.gear.types import Base, GearModifierType
 from control.combat.combat_embed_manager import CombatEmbedManager
@@ -72,6 +73,9 @@ class SpecialShopView(ViewMenu, ImplementsBack):
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
+
+    async def open_shop(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
 
     async def go_back(
         self,

@@ -1,6 +1,7 @@
 from enum import Enum
 
 import discord
+
 from combat.actors import Character
 from combat.gear.types import (
     EquipmentSlot,
