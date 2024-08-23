@@ -44,7 +44,7 @@ class HelpEmbed(discord.Embed):
                 f"`/gamba <amount>` - You may specify a custom amount, up to **{gamba_max}** beans."
             )
             beans_commands.append(
-                "`/gamba <amount> set_as_default=True` - Set a default amount to use when only using /gamba without arguments."
+                "`/set_gamba_default <amount>` - Set a default amount to use when only using /gamba without arguments."
             )
             beans_commands.append(
                 "`/beans transfer <user> <amount>` - Transfer your beans to another user."

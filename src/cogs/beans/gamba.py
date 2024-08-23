@@ -135,6 +135,64 @@ class Gamba(commands.Cog):
             "init", str(self.__cog_name__) + " loaded.", cog=self.__cog_name__
         )
 
+    @app_commands.command(
+        name="set_gamba_default", description="Set a personal default amount to /gamba."
+    )
+    @app_commands.guild_only()
+    async def set_gamba_default(
+        self,
+        interaction: discord.Interaction,
+        amount: int,
+    ):
+        if not await self.__check_enabled(interaction):
+            return
+        if not await self.__beans_role_check(interaction):
+            return
+
+        await interaction.response.defer()
+        guild_id = interaction.guild_id
+        user_id = interaction.user.id
+        beans_gamba_min = await self.settings_manager.get_beans_gamba_min(guild_id)
+        beans_gamba_max = await self.settings_manager.get_beans_gamba_max(guild_id)
+
+        over_limit = not (beans_gamba_min <= amount and amount <= beans_gamba_max)
+
+        if over_limit:
+            prompt = (
+                f"I tried to bet more than `🅱️{beans_gamba_max}` or less than `🅱️{beans_gamba_min}` beans,"
+                " which is not acceptable. Please tell me what i did wrong and keep the formatting between"
+                " the backticks (including them) like in my message. Also keep it short."
+            )
+            response = await self.ai_manager.prompt(
+                guild_id, interaction.user.display_name, prompt
+            )
+
+            if response is None or len(response) == 0:
+                response = f"Between `🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}` you fucking monkey."
+
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                response,
+                args=[amount],
+                ephemeral=False,
+            )
+            return
+
+        await self.database.set_user_setting(
+            user_id, guild_id, UserSetting.GAMBA_DEFAULT, amount
+        )
+
+        response = f"Default gamba amount was set to {amount}."
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            response,
+            args=[amount],
+            ephemeral=False,
+        )
+
     @app_commands.command(name="gamba", description="Gamba away your beans.")
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 5)
@@ -142,7 +200,6 @@ class Gamba(commands.Cog):
         self,
         interaction: discord.Interaction,
         amount: int | None = None,
-        set_as_default: bool = False,
     ):
         if not await self.__check_enabled(interaction):
             return
@@ -289,11 +346,6 @@ class Gamba(commands.Cog):
         await self.__consume_gamba_items(
             interaction, user_items, no_limit, cooldown_override
         )
-
-        if set_as_default:
-            await self.database.set_user_setting(
-                user_id, guild_id, UserSetting.GAMBA_DEFAULT, amount
-            )
 
         event = BeansEvent(
             datetime.datetime.now(),
