@@ -235,7 +235,7 @@ class EncounterManager(Service):
             spawn_pings += f"<@&{ping_role}>"
 
         guild_level = await self.database.get_guild_level(encounter.guild_id)
-        if level == guild_level:
+        if encounter.enemy_level == guild_level:
             max_lvl_ping_role = await self.settings_manager.get_max_lvl_spawn_ping_role(
                 guild.id
             )
