@@ -149,7 +149,7 @@ class Gamba(commands.Cog):
         if not await self.__beans_role_check(interaction):
             return
 
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         guild_id = interaction.guild_id
         user_id = interaction.user.id
         beans_gamba_min = await self.settings_manager.get_beans_gamba_min(guild_id)
@@ -175,7 +175,7 @@ class Gamba(commands.Cog):
                 interaction,
                 response,
                 args=[amount],
-                ephemeral=False,
+                ephemeral=True,
             )
             return
 
@@ -190,7 +190,7 @@ class Gamba(commands.Cog):
             interaction,
             response,
             args=[amount],
-            ephemeral=False,
+            ephemeral=True,
         )
 
     @app_commands.command(name="gamba", description="Gamba away your beans.")
