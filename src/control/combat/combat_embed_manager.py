@@ -677,7 +677,7 @@ class CombatEmbedManager(Service):
             title="Waiting for players to arrive.", color=discord.Colour.green()
         )
 
-        message = f"Combat will start as soon as {party_size} players join."
+        message = f"Combat will initiate after {party_size} players join."
         self.add_text_bar(embed, "", message)
 
         embed.set_thumbnail(url=self.bot.user.display_avatar)
