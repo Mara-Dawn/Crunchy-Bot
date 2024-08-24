@@ -64,6 +64,13 @@ class ContextLoader(Service):
                 ):
                     self.combatant_cache[encounter_id].append(encounter_event.member_id)
 
+                if (
+                    encounter_event.encounter_event_type
+                    == EncounterEventType.MEMBER_DISENGAGE
+                    and encounter_id in self.combatant_cache
+                ):
+                    self.combatant_cache[encounter_id].remove(encounter_event.member_id)
+
                 if encounter_id not in self.encounter_event_cache:
                     return
                 self.encounter_event_cache[encounter_id].insert(0, encounter_event)
