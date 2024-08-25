@@ -136,7 +136,8 @@ class Opponent(Actor):
             self.skills, key=lambda x: x.base_skill.base_value, reverse=True
         )
 
-        max_depth = max(self.enemy.health, self.enemy.damage_scaling) * 2
+        # max_depth = max(self.enemy.health, self.enemy.damage_scaling) * 2
+        max_depth = self.enemy.health * 2
         cooldowns: dict[SkillType, int] = {}
         initial_state: dict[SkillType, int] = {}
 
