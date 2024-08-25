@@ -376,11 +376,11 @@ class CombatEmbedManager(Service):
         self, member: discord.Member, scrap: int, level: int
     ):
         title = f"{member.display_name}'s Auto Scrap Results"
-        embed = discord.Embed(title=title, color=discord.Colour.green())
-        message = (
-            f"You gain ⚙️{scrap} scrap from scrapping all items up to level {level}.\n"
-            "To change this, please use the command /combat auto_scrap <level>."
+        content = f"You gain ⚙️{scrap} Scrap from scrapping all items up to and including level {level}."
+        embed = discord.Embed(
+            title=title, description=content, color=discord.Colour.green()
         )
+        message = "To change this, please use the command /combat auto_scrap <level>."
         self.add_text_bar(embed, "", message)
         embed.set_thumbnail(url=member.display_avatar.url)
         return embed

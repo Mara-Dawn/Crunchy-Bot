@@ -977,6 +977,83 @@ class Scrap(Item):
         )
 
 
+class BaseKey(Item):
+
+    BASE_COST = 3000
+    LEVEL_COST = 1000
+    TYPE_MAP = {
+        1: ItemType.ENCOUNTER_KEY_1,
+        2: ItemType.ENCOUNTER_KEY_2,
+        3: ItemType.ENCOUNTER_KEY_3,
+        4: ItemType.ENCOUNTER_KEY_4,
+        5: ItemType.ENCOUNTER_KEY_5,
+        6: ItemType.ENCOUNTER_KEY_6,
+    }
+
+    def __init__(self, cost: int | None = None, level: int = 1):
+
+        if cost is None:
+            cost = self.BASE_COST + (level * self.LEVEL_COST)
+
+        super().__init__(
+            name=f"Level {level} Key",
+            type=self.TYPE_MAP[level],
+            group=ItemGroup.GEAR,
+            shop_category=ShopCategory.GEAR,
+            description=(
+                "A magical key that allows you to open a portal to another dimension. "
+                f"Inside you will face an enemy of the {level}th level.\n"
+                "(Item can be used from your inventory.)"
+            ),
+            information=(
+                f"Spawns a random encounter of the {level}th level. "
+                "Anyone may join, so act fast after using this item."
+            ),
+            emoji="🔑",
+            cost=cost,
+            useable=True,
+            value=1,
+            hide_in_shop=True,
+            secret=True,
+        )
+
+
+class KeyLvl1(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=1)
+
+
+class KeyLvl2(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=2)
+
+
+class KeyLvl3(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=3)
+
+
+class KeyLvl4(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=4)
+
+
+class KeyLvl5(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=5)
+
+
+class KeyLvl6(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=6)
+
+
 class DaddyKey(Item):
 
     def __init__(self, cost: int | None):
@@ -1008,8 +1085,10 @@ class DaddyKey(Item):
             value=1,
             hide_in_shop=True,
             secret=True,
+            permanent=True,
             image_url="https://i.imgur.com/QqrB4OS.png",
         )
+
 
 class WeebKey(Item):
 
@@ -1043,6 +1122,7 @@ class WeebKey(Item):
             value=1,
             hide_in_shop=True,
             secret=True,
+            permanent=True,
             image_url="https://i.imgur.com/VAtRjZK.png",
         )
 

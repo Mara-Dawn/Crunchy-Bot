@@ -9,7 +9,6 @@ from combat.encounter import EncounterContext
 from combat.skills.skill import Skill
 from combat.skills.status_effect import (
     ActiveStatusEffect,
-    SkillStatusEffect,
 )
 from combat.skills.status_effects import *  # noqa: F403
 from combat.skills.types import (
@@ -65,15 +64,6 @@ class CombatStatusEffectManager(Service):
                 match encounter_event.encounter_event_type:
                     case EncounterEventType.NEW_ROUND:
                         await self.trigger_effects(StatusEffectTrigger.START_OF_ROUND)
-
-    async def apply_skill_status(
-        self,
-        context: EncounterContext,
-        source: Actor,
-        target: Actor,
-        skill_status_effect: SkillStatusEffect,
-    ):
-        pass
 
     async def apply_status(
         self,

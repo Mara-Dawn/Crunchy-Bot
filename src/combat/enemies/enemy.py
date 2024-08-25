@@ -135,10 +135,11 @@ class Enemy:
             self.author = "Mara"
 
     def roll_beans_amount(self, level: int):
+        base_amount = 10 * level
         if self.min_beans_reward is None:
-            self.min_beans_reward = 5 * level
+            self.min_beans_reward = base_amount - (level * 2)
         if self.max_beans_reward is None:
-            self.max_beans_reward = 15 * level
+            self.max_beans_reward = base_amount + (level * 2)
 
         return random.randint(self.min_beans_reward, self.max_beans_reward)
 

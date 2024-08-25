@@ -128,6 +128,13 @@ class ItemManager(Service):
             ItemType.FLASH_SEED,
         ]
 
+        guild_level = await self.database.get_guild_level(guild_id)
+
+        for key_level, key_type in BaseKey.TYPE_MAP.items():  # noqa: F405
+            if guild_level < key_level:
+                break
+            lucky_item_pool.append(key_type)
+
         item_pool = item_pool + lucky_item_pool
 
         weights = [(await self.get_item(guild_id, x)).weight for x in item_pool]
@@ -528,7 +535,16 @@ class ItemManager(Service):
                 view.set_message(message)
                 await view.refresh_ui()
                 return
-            case ItemType.DADDY_KEY | ItemType.WEEB_KEY:
+            case (
+                ItemType.DADDY_KEY
+                | ItemType.WEEB_KEY
+                | ItemType.ENCOUNTER_KEY_1
+                | ItemType.ENCOUNTER_KEY_2
+                | ItemType.ENCOUNTER_KEY_3
+                | ItemType.ENCOUNTER_KEY_4
+                | ItemType.ENCOUNTER_KEY_5
+                | ItemType.ENCOUNTER_KEY_6
+            ):
                 item = await self.get_item(guild.id, item_type)
                 embed = item.get_embed(self.bot, show_price=False)
 

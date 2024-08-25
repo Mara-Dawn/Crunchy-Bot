@@ -83,4 +83,4 @@ class Config:
 
     # Scrap
     SCRAP_FORGE_MULTI = 1.5
-    SCRAP_SHOP_MULTI = 5
+    SCRAP_SHOP_MULTI = 30

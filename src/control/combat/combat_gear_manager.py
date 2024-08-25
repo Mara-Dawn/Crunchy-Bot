@@ -40,6 +40,7 @@ from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
 from events.inventory_event import InventoryEvent
 from events.types import EncounterEventType
+from items import BaseKey
 from items.types import ItemType
 
 
@@ -60,14 +61,14 @@ class CombatGearManager(Service):
         Rarity.UNCOMMON: 1,
         Rarity.RARE: 2,
         Rarity.LEGENDARY: 5,
-        Rarity.UNIQUE: 3,
+        Rarity.UNIQUE: 2,
     }
     RARITY_WEIGHTS = {
         Rarity.COMMON: 100,
         Rarity.UNCOMMON: 50,
         Rarity.RARE: 10,
         Rarity.LEGENDARY: 3,
-        Rarity.UNIQUE: 1,
+        Rarity.UNIQUE: 0.5,
     }
     RARITY_SCALING = {
         Rarity.COMMON: -15,
@@ -666,10 +667,15 @@ class CombatGearManager(Service):
                     drops.append(drop)
 
             bonus_loot = None
-            if bonus_loot_drop and len(enemy.item_loot_table) > 0:
+            if bonus_loot_drop:
+                loot_table = enemy.item_loot_table
+                for key_level, key_type in BaseKey.TYPE_MAP.items():
+                    if context.encounter.enemy_level < key_level:
+                        break
+                    loot_table.append(key_type)
+
                 loot_items = [
-                    (await self.item_manager.get_item(guild_id, x))
-                    for x in enemy.item_loot_table
+                    (await self.item_manager.get_item(guild_id, x)) for x in loot_table
                 ]
                 weights = [item.weight for item in loot_items]
                 weights = [1.0 / w for w in weights]

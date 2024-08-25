@@ -11,6 +11,7 @@ from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
+from combat.gear.types import Base
 from combat.skills.skill import CharacterSkill, Skill
 from combat.skills.types import (
     SkillEffect,
@@ -329,9 +330,7 @@ class EncounterManager(Service):
 
         return additional_message
 
-    async def create_encounter_thread(
-        self, encounter: Encounter, first_member_id: int
-    ) -> discord.Thread:
+    async def create_encounter_thread(self, encounter: Encounter) -> discord.Thread:
         channel = self.bot.get_channel(encounter.channel_id)
         enemy = await self.factory.get_enemy(encounter.enemy_type)
         thread = await channel.create_thread(
@@ -356,7 +355,7 @@ class EncounterManager(Service):
         additional_message = ""
 
         if thread_id is None:
-            thread = await self.create_encounter_thread(encounter, member_id)
+            thread = await self.create_encounter_thread(encounter)
             initiate_combat = True
             new_thread = True
         else:
@@ -930,7 +929,7 @@ class EncounterManager(Service):
 
             gear_to_scrap = []
             for drop in member_loot[1]:
-                if drop.level <= auto_scrap:
+                if drop.level <= auto_scrap and drop.base.base_type != Base.SKILL:
                     gear_to_scrap.append(drop)
                     continue
                 embeds.append(drop.get_embed())

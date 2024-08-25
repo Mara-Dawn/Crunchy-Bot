@@ -24,7 +24,6 @@ from events.ui_event import UIEvent
 from items.types import ItemType
 from view.combat.embed import (
     EquipmentHeadEmbed,
-    ForgeEmbed,
     SelectGearHeadEmbed,
     SelectSkillHeadEmbed,
 )
@@ -530,8 +529,6 @@ class EquipmentViewController(ViewController):
             return
         guild_id = interaction.guild_id
         member_id = interaction.user.id
-
-        now = datetime.datetime.now()
 
         gear_to_scrap = selected
 

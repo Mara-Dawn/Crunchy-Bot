@@ -617,6 +617,26 @@ class Combat(commands.Cog):
         )
 
     @group.command(
+        name="debug",
+        description="Used for development and testing",
+    )
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def debug(self, interaction: discord.Interaction):
+
+        output = ""
+
+        for enemy_type in EnemyType:
+            enemy = await self.factory.get_enemy(enemy_type)
+            skills = []
+            for skill_type in enemy.skill_types:
+                skill = await self.factory.get_enemy_skill(skill_type)
+                skills.append(skill)
+            output += f"{enemy.name}: {enemy.get_potency_per_turn(skills)} | {enemy.get_potency_per_turn(skills, True)}\n"
+
+        await self.bot.command_response(self.__cog_name__, interaction, output)
+
+    @group.command(
         name="settings",
         description="Overview of all combat related settings and their current value.",
     )

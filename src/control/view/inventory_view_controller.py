@@ -3,26 +3,26 @@ import datetime
 import secrets
 
 import discord
-from combat.enemies.types import EnemyType
-from datalayer.database import Database
-from datalayer.inventory import UserInventory
 from discord.ext import commands
-from events.beans_event import BeansEvent
-from events.bot_event import BotEvent
-from events.inventory_event import InventoryEvent
-from events.types import BeansEventType, EventType, UIEventType
-from events.ui_event import UIEvent
-from items import Debuff
-from items.item import Item
-from items.types import ItemState, ItemType
-from view.types import ActionType
 
+from combat.enemies.types import EnemyType
 from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
+from datalayer.database import Database
+from datalayer.inventory import UserInventory
+from events.beans_event import BeansEvent
+from events.bot_event import BotEvent
+from events.inventory_event import InventoryEvent
+from events.types import BeansEventType, EventType, UIEventType
+from events.ui_event import UIEvent
+from items import BaseKey, Debuff
+from items.item import Item
+from items.types import ItemState, ItemType
+from view.types import ActionType
 
 
 class InventoryInteraction:
@@ -303,6 +303,41 @@ class InventoryViewController(ViewController):
         }
 
         match item.type:
+            case (
+                ItemType.ENCOUNTER_KEY_1
+                | ItemType.ENCOUNTER_KEY_2
+                | ItemType.ENCOUNTER_KEY_3
+                | ItemType.ENCOUNTER_KEY_4
+                | ItemType.ENCOUNTER_KEY_5
+                | ItemType.ENCOUNTER_KEY_6
+            ):
+                combat_channels = await self.settings_manager.get_combat_channels(
+                    interaction.guild_id
+                )
+                level_map = {v: k for k, v in BaseKey.TYPE_MAP.items()}
+                await self.encounter_manager.spawn_encounter(
+                    interaction.guild,
+                    secrets.choice(combat_channels),
+                    None,
+                    level_map[item.type],
+                )
+
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    user_id,
+                    item.type,
+                    -1,
+                )
+                await self.controller.dispatch_event(event)
+
+                await interaction.followup.send(
+                    "Encounter successfully spawned.",
+                    ephemeral=True,
+                )
+                message = await interaction.original_response()
+                await message.delete()
+
             case ItemType.DADDY_KEY | ItemType.WEEB_KEY:
                 combat_channels = await self.settings_manager.get_combat_channels(
                     interaction.guild_id
