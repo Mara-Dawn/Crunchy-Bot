@@ -1,4 +1,5 @@
 import discord
+
 from combat.gear.types import Rarity
 from config import Config
 
@@ -193,6 +194,7 @@ class EnemyOverviewEmbed(discord.Embed):
         guild_level: int,
         requirement: int,
         progress: int,
+        additional_info: str = None,
         max_width: int = 45,
     ):
         progress = min(progress, requirement)
@@ -212,6 +214,9 @@ class EnemyOverviewEmbed(discord.Embed):
             description += " " * spacing
 
         description = f"```ansi\n{description}```"
+
+        if additional_info is not None:
+            description += additional_info
 
         super().__init__(
             title="Combat Zone",

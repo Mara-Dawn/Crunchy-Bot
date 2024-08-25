@@ -11,6 +11,7 @@ from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
+from combat.gear.types import Base
 from combat.skills.skill import CharacterSkill, Skill
 from combat.skills.types import (
     SkillEffect,
@@ -329,9 +330,7 @@ class EncounterManager(Service):
 
         return additional_message
 
-    async def create_encounter_thread(
-        self, encounter: Encounter, first_member_id: int
-    ) -> discord.Thread:
+    async def create_encounter_thread(self, encounter: Encounter) -> discord.Thread:
         channel = self.bot.get_channel(encounter.channel_id)
         enemy = await self.factory.get_enemy(encounter.enemy_type)
         thread = await channel.create_thread(
@@ -356,7 +355,7 @@ class EncounterManager(Service):
         additional_message = ""
 
         if thread_id is None:
-            thread = await self.create_encounter_thread(encounter, member_id)
+            thread = await self.create_encounter_thread(encounter)
             initiate_combat = True
             new_thread = True
         else:
@@ -930,7 +929,7 @@ class EncounterManager(Service):
 
             gear_to_scrap = []
             for drop in member_loot[1]:
-                if drop.level <= auto_scrap:
+                if drop.level <= auto_scrap and drop.base.base_type != Base.SKILL:
                     gear_to_scrap.append(drop)
                     continue
                 embeds.append(drop.get_embed())
@@ -948,21 +947,15 @@ class EncounterManager(Service):
                 await self.context_loader.edit_message(message, embeds=embeds)
 
             item = member_loot[2]
-            if item is not None:
-                embeds.append(item.get_embed(self.bot, show_price=False))
 
+            if item is not None:
+                item = await self.item_manager.give_item(
+                    member.guild.id, member.id, item
+                )
+                embeds.append(item.get_embed(self.bot, show_price=False))
                 await asyncio.sleep(1)
 
                 await self.context_loader.edit_message(message, embeds=embeds)
-
-                event = InventoryEvent(
-                    now,
-                    member.guild.id,
-                    member.id,
-                    item.type,
-                    1,
-                )
-                await self.controller.dispatch_event(event)
 
         if await self.drop_boss_key_check(context):
             item_type = self.BOSS_KEY[context.encounter.enemy_level]
@@ -1161,7 +1154,8 @@ class EncounterManager(Service):
             await self.controller.dispatch_event(event)
             return
 
-        await self.refresh_round_overview(context)
+        if not context.new_round():
+            await self.refresh_round_overview(context)
 
         if not context.new_turn():
             return
@@ -1308,11 +1302,48 @@ class EncounterManager(Service):
                 guild.id, guild_level, start_id=start_event_id
             )
 
+            start_hour = await self.settings_manager.get_combat_max_lvl_start(guild.id)
+            end_hour = await self.settings_manager.get_combat_max_lvl_end(guild.id)
+
+            current_time = datetime.datetime.now()
+            current_hour = current_time.hour
+
+            post_start = start_hour <= current_hour
+            pre_end = current_hour < end_hour
+            enemies_asleep = False
+            wakeup = current_time
+
+            if start_hour < end_hour:
+                if current_time.weekday in [4, 5] and not pre_end:
+                    pre_end = True
+                if current_time.weekday in [5, 6] and not post_start:
+                    post_start = True
+                if not (post_start and pre_end):
+                    enemies_asleep = True
+            else:
+                if current_time.weekday() in [5, 6] and not pre_end:
+                    pre_end = True
+                if current_time.weekday() in [5, 6] and not post_start:
+                    post_start = True
+                if not (post_start or pre_end):
+                    enemies_asleep = True
+
+            additional_info = None
+            if enemies_asleep:
+                if current_hour > start_hour:
+                    wakeup = current_time + datetime.timedelta(days=1)
+                wakeup = wakeup.replace(hour=start_hour, minute=0)
+                additional_info = (
+                    f"**\nThe enemies of level {guild_level} and above are currently asleep.\n"
+                )
+                additional_info += f"They will return <t:{int(wakeup.timestamp())}:R> **"
+
             head_embed = EnemyOverviewEmbed(
                 self.bot.user,
                 guild_level,
                 requirement,
                 progress,
+                additional_info,
             )
 
             if purge:

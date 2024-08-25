@@ -1,4 +1,5 @@
 import discord
+
 from combat.gear.types import Base, EquipmentSlot, GearBaseType, Rarity
 from combat.skills.types import SkillType
 

@@ -245,17 +245,14 @@ class EncounterContext:
             CombatEventType.MEMBER_END_TURN,
         ]
 
-    def get_current_turn_number(self) -> int:
-        turn_count = 1
-        for event in self.combat_events:
-            if event.combat_event_type not in [
-                CombatEventType.ENEMY_END_TURN,
-                CombatEventType.MEMBER_END_TURN,
+    def get_current_round_number(self) -> int:
+        round_count = 0
+        for event in self.encounter_events:
+            if event.encounter_event_type in [
+                EncounterEventType.NEW_ROUND,
             ]:
-                continue
-            turn_count += 1
-
-        return turn_count
+                round_count += 1
+        return round_count
 
     def get_timeout_count(self, member_id: int) -> int:
         timeout_count = 0

@@ -11,6 +11,7 @@ GENERAL_LOOT = [
     ItemType.YELLOW_SEED,
     ItemType.BAKED_SEED,
     ItemType.BOX_SEED,
+    ItemType.CHEST_BEANS,
 ]
 
 RARE_LOOT = [
@@ -197,8 +198,8 @@ class YourMom(Enemy):
             min_level=2,
             max_level=5,
             health=10,
-            damage_scaling=8,
-            max_players=10,
+            damage_scaling=9,
+            max_players=8,
             skill_types=[SkillType.AROUND_THE_WORLD, SkillType.SIT],
             item_loot_table=GENERAL_LOOT,
             gear_loot_table=[],

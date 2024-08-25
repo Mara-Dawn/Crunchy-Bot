@@ -78,6 +78,15 @@ class ItemType(str, Enum):
     FLASH_SEED = "FlashSeed"
 
     SCRAP = "Scrap"
+
+    ENCOUNTER_KEY = "BaseKey"
+    ENCOUNTER_KEY_1 = "KeyLvl1"
+    ENCOUNTER_KEY_2 = "KeyLvl2"
+    ENCOUNTER_KEY_3 = "KeyLvl3"
+    ENCOUNTER_KEY_4 = "KeyLvl4"
+    ENCOUNTER_KEY_5 = "KeyLvl5"
+    ENCOUNTER_KEY_6 = "KeyLvl6"
+
     DADDY_KEY = "DaddyKey"
     WEEB_KEY = "WeebKey"
 

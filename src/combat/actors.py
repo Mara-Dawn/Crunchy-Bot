@@ -46,9 +46,6 @@ class Actor:
         self.force_skip = force_skip
         self.image_url = image_url
 
-    def get_encounter_scaling(self, combatant_count: int = 1) -> float:
-        pass
-
 
 class Character(Actor):
 
@@ -136,7 +133,6 @@ class Opponent(Actor):
             self.skills, key=lambda x: x.base_skill.base_value, reverse=True
         )
 
-        # max_depth = max(self.enemy.health, self.enemy.damage_scaling) * 2
         max_depth = self.enemy.health * 2
         cooldowns: dict[SkillType, int] = {}
         initial_state: dict[SkillType, int] = {}

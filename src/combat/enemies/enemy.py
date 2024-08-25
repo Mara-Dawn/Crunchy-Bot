@@ -41,13 +41,13 @@ class Enemy:
     }
 
     LOOT_BONUS_CHANCE_BY_LVL = {
-        1: 0.01,
-        2: 0.02,
-        3: 0.03,
-        4: 0.04,
-        5: 0.05,
-        6: 0.06,
-        7: 0.07,
+        1: 0.03,
+        2: 0.04,
+        3: 0.05,
+        4: 0.06,
+        5: 0.07,
+        6: 0.08,
+        7: 0.09,
     }
 
     def __init__(
@@ -135,10 +135,11 @@ class Enemy:
             self.author = "Mara"
 
     def roll_beans_amount(self, level: int):
+        base_amount = 10 * level
         if self.min_beans_reward is None:
-            self.min_beans_reward = 5 * level
+            self.min_beans_reward = base_amount - (level * 2)
         if self.max_beans_reward is None:
-            self.max_beans_reward = 15 * level
+            self.max_beans_reward = base_amount + (level * 2)
 
         return random.randint(self.min_beans_reward, self.max_beans_reward)
 
