@@ -949,7 +949,9 @@ class EncounterManager(Service):
             item = member_loot[2]
 
             if item is not None:
-                item = await self.item_manager.give_item(member.guild.id, member.id, item)
+                item = await self.item_manager.give_item(
+                    member.guild.id, member.id, item
+                )
                 embeds.append(item.get_embed(self.bot, show_price=False))
                 await asyncio.sleep(1)
 
@@ -1300,11 +1302,48 @@ class EncounterManager(Service):
                 guild.id, guild_level, start_id=start_event_id
             )
 
+            start_hour = await self.settings_manager.get_combat_max_lvl_start(guild.id)
+            end_hour = await self.settings_manager.get_combat_max_lvl_end(guild.id)
+
+            current_time = datetime.datetime.now()
+            current_hour = current_time.hour
+
+            post_start = start_hour <= current_hour
+            pre_end = current_hour < end_hour
+            enemies_asleep = False
+            wakeup = current_time
+
+            if start_hour < end_hour:
+                if current_time.weekday in [4, 5] and not pre_end:
+                    pre_end = True
+                if current_time.weekday in [5, 6] and not post_start:
+                    post_start = True
+                if not (post_start and pre_end):
+                    enemies_asleep = True
+            else:
+                if current_time.weekday() in [5, 6] and not pre_end:
+                    pre_end = True
+                if current_time.weekday() in [5, 6] and not post_start:
+                    post_start = True
+                if not (post_start or pre_end):
+                    enemies_asleep = True
+
+            additional_info = None
+            if enemies_asleep:
+                if current_hour > start_hour:
+                    wakeup = current_time + datetime.timedelta(days=1)
+                wakeup = wakeup.replace(hour=start_hour, minute=0)
+                additional_info = (
+                    f"**\nThe enemies of level {guild_level} and above are currently asleep.\n"
+                )
+                additional_info += f"They will return <t:{int(wakeup.timestamp())}:R> **"
+
             head_embed = EnemyOverviewEmbed(
                 self.bot.user,
                 guild_level,
                 requirement,
                 progress,
+                additional_info,
             )
 
             if purge:
