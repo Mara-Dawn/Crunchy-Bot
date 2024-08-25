@@ -703,6 +703,10 @@ class CombatEmbedManager(Service):
         if cont:
             title = "Round Continued.."
         embed = discord.Embed(title=title, color=discord.Colour.green())
+
+        round_count = context.get_current_round_number()
+        embed.add_field(name=f"Round {round_count}", value="", inline=False)
+
         initiative_list = context.actors
         current_actor = context.get_current_actor()
         initiative_display = ""

@@ -1349,7 +1349,7 @@ class Machofy(Debuff):
 class ChestBeansReward(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 0
+        defaultcost = 2500
 
         if cost is None:
             cost = defaultcost
@@ -1365,6 +1365,7 @@ class ChestBeansReward(Item):
             cost=cost,
             value=None,
             hide_in_shop=True,
+            image_url="https://i.imgur.com/jjBv2fG.png",
         )
 
 

@@ -109,6 +109,9 @@ class Item:
 
         embed = discord.Embed(title=title, description=info_block, color=color)
 
+        if self.image_url is not None:
+            embed.set_thumbnail(url=self.image_url)
+
         return embed
 
     def add_to_embed(

@@ -947,21 +947,13 @@ class EncounterManager(Service):
                 await self.context_loader.edit_message(message, embeds=embeds)
 
             item = member_loot[2]
-            if item is not None:
-                embeds.append(item.get_embed(self.bot, show_price=False))
 
+            if item is not None:
+                item = await self.item_manager.give_item(member.guild.id, member.id, item)
+                embeds.append(item.get_embed(self.bot, show_price=False))
                 await asyncio.sleep(1)
 
                 await self.context_loader.edit_message(message, embeds=embeds)
-
-                event = InventoryEvent(
-                    now,
-                    member.guild.id,
-                    member.id,
-                    item.type,
-                    1,
-                )
-                await self.controller.dispatch_event(event)
 
         if await self.drop_boss_key_check(context):
             item_type = self.BOSS_KEY[context.encounter.enemy_level]
@@ -1160,7 +1152,8 @@ class EncounterManager(Service):
             await self.controller.dispatch_event(event)
             return
 
-        await self.refresh_round_overview(context)
+        if not context.new_round():
+            await self.refresh_round_overview(context)
 
         if not context.new_turn():
             return

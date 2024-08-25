@@ -418,6 +418,22 @@ class ItemManager(Service):
         if not force:
             total_amount *= item.base_amount
 
+        now = datetime.datetime.now()
+
+        match item.type:
+            case ItemType.CHEST_BEANS:
+                beans = random.randint(LootBox.LARGE_MIN_BEANS, LootBox.LARGE_MAX_BEANS)
+                item.description = f"A whole {beans} of them."
+                event = BeansEvent(
+                    now,
+                    guild_id,
+                    BeansEventType.LOOTBOX_PAYOUT,
+                    member_id,
+                    beans,
+                )
+                await self.controller.dispatch_event(event)
+                return item
+
         if item.max_amount is not None:
             item_count = 0
 
@@ -431,13 +447,14 @@ class ItemManager(Service):
 
         if total_amount != 0:
             event = InventoryEvent(
-                datetime.datetime.now(),
+                now,
                 guild_id,
                 member_id,
                 item.type,
                 total_amount,
             )
             await self.controller.dispatch_event(event)
+        return item
 
     async def give_items(
         self,
