@@ -123,7 +123,7 @@ class EncounterManager(Service):
                         await self.add_member_to_encounter(
                             encounter_event.encounter_id, encounter_event.member_id
                         )
-                    case EncounterEventType.END:
+                    case EncounterEventType.END | EncounterEventType.SPAWN:
                         await self.update_guild_status(event.guild_id)
 
             case EventType.COMBAT:
@@ -1333,10 +1333,10 @@ class EncounterManager(Service):
                 if current_hour > start_hour:
                     wakeup = current_time + datetime.timedelta(days=1)
                 wakeup = wakeup.replace(hour=start_hour, minute=0)
-                additional_info = (
-                    f"**\nThe enemies of level {guild_level} and above are currently asleep.\n"
+                additional_info = f"**\nThe enemies of level {guild_level} and above are currently asleep.\n"
+                additional_info += (
+                    f"They will return <t:{int(wakeup.timestamp())}:R> **"
                 )
-                additional_info += f"They will return <t:{int(wakeup.timestamp())}:R> **"
 
             head_embed = EnemyOverviewEmbed(
                 self.bot.user,
