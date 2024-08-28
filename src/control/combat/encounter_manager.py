@@ -39,7 +39,6 @@ from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
-from events.inventory_event import InventoryEvent
 from events.types import (
     BeansEventType,
     CombatEventType,
@@ -133,6 +132,8 @@ class EncounterManager(Service):
                 if combat_event.combat_event_type in [
                     CombatEventType.MEMBER_TURN,
                     CombatEventType.ENEMY_TURN,
+                    CombatEventType.MEMBER_TURN_STEP,
+                    CombatEventType.ENEMY_TURN_STEP,
                 ]:
                     await self.skill_manager.trigger_special_skill_effects(event)
                     context = await self.context_loader.load_encounter_context(
@@ -140,6 +141,10 @@ class EncounterManager(Service):
                     )
                     if await self.context_needs_update_check(context):
                         return
+                if combat_event.combat_event_type in [
+                    CombatEventType.MEMBER_TURN,
+                    CombatEventType.ENEMY_TURN,
+                ]:
                     await self.refresh_round_overview(context)
                 if combat_event.combat_event_type not in [
                     CombatEventType.ENEMY_END_TURN,

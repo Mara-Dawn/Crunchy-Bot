@@ -312,6 +312,24 @@ class Combat(commands.Cog):
 
             self.enemy_timers[guild.id] = next_spawn
 
+    @random_encounter_task.after_loop
+    async def on_task_cancel(self):
+        if self.random_encounter_task.is_being_cancelled():
+            self.logger.error(
+                "sys",
+                f"Encounter Loop forcefully stopped. next iteration: {self.random_encounter_task.next_iteration}",
+                cog=self.__cog_name__,
+            )
+
+    @random_low_lvl_encounter_task.after_loop
+    async def on_low_lvl_task_cancel(self):
+        if self.random_low_lvl_encounter_task.is_being_cancelled():
+            self.logger.error(
+                "sys",
+                f"Low lvl encounter Loop forcefully stopped. next iteration: {self.random_low_lvl_encounter_task.next_iteration}",
+                cog=self.__cog_name__,
+            )
+
     @random_low_lvl_encounter_task.before_loop
     async def random_low_lvl_encounter_task_before(self):
         self.logger.log(
@@ -623,16 +641,16 @@ class Combat(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def debug(self, interaction: discord.Interaction):
-
+        await interaction.response.defer()
         output = ""
 
-        for enemy_type in EnemyType:
-            enemy = await self.factory.get_enemy(enemy_type)
-            skills = []
-            for skill_type in enemy.skill_types:
-                skill = await self.factory.get_enemy_skill(skill_type)
-                skills.append(skill)
-            output += f"{enemy.name}: {enemy.get_potency_per_turn(skills)} | {enemy.get_potency_per_turn(skills, True)}\n"
+        guild_id = interaction.guild_id
+        if guild_id in self.enemy_timers:
+            output += (
+                f"Enemy Timer: <t:{int(self.enemy_timers[guild_id].timestamp())}:R>"
+            )
+        if guild_id in self.enemy_timers_low_lvl:
+            output += f"Enemy Timer low lvl: <t:{int(self.enemy_timers_low_lvl[guild_id].timestamp())}:R>"
 
         await self.bot.command_response(self.__cog_name__, interaction, output)
 
@@ -724,6 +742,8 @@ class Combat(commands.Cog):
             self.__cog_name__,
             interaction.command.name,
             "Settings for Combat related Features",
+            callback=self.encounter_manager.refresh_combat_messages,
+            callback_arguments=[guild_id],
         )
 
         await modal.add_field(

@@ -1,6 +1,7 @@
 import contextlib
 
 import discord
+
 from combat.encounter import Encounter
 from control.controller import Controller
 from control.types import ControllerType

@@ -2,6 +2,7 @@ import contextlib
 import copy
 
 import discord
+
 from combat.gear.gear import Gear
 from combat.gear.types import EquipmentSlot, GearModifierType
 from control.combat.combat_embed_manager import CombatEmbedManager
@@ -112,9 +113,11 @@ class EquipmentSelectView(
 
     async def select_gear(self, interaction: discord.Interaction):
         await interaction.response.defer()
+        selected = [item for item in self.selected]
+        self.selected = []
         event = UIEvent(
             UIEventType.GEAR_EQUIP,
-            (interaction, self.selected),
+            (interaction, selected),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -125,6 +128,7 @@ class EquipmentSelectView(
         await interaction.response.defer()
 
         scrappable = [item for item in self.selected if not item.locked]
+        self.selected = []
 
         event = UIEvent(
             UIEventType.GEAR_DISMANTLE,
@@ -138,9 +142,11 @@ class EquipmentSelectView(
         interaction: discord.Interaction,
     ):
         await interaction.response.defer()
+        selected = [item for item in self.selected]
+        self.selected = []
         event = UIEvent(
             UIEventType.GEAR_LOCK,
-            (interaction, self.selected),
+            (interaction, selected),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -155,6 +161,7 @@ class EquipmentSelectView(
             for item in self.selected
             if item.id not in [item.id for item in self.current]
         ]
+        self.selected = []
         event = UIEvent(
             UIEventType.GEAR_UNLOCK,
             (interaction, items),

@@ -550,7 +550,7 @@ class ItemManager(Service):
                     "", embed=embed, view=view, ephemeral=True
                 )
                 view.set_message(message)
-                await view.refresh_ui()
+                await view.refresh_ui(force_embed=embed)
                 return
             case (
                 ItemType.DADDY_KEY
@@ -572,7 +572,7 @@ class ItemManager(Service):
                     "", embed=embed, view=view, ephemeral=True
                 )
                 view.set_message(message)
-                await view.refresh_ui()
+                await view.refresh_ui(force_embed=embed)
                 return
 
         return await self.use_item(guild, user_id, item_type, amount)

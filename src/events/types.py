@@ -99,11 +99,13 @@ class EncounterEventType(str, Enum):
 
 
 class CombatEventType(str, Enum):
-    MEMBER_TURN = "member_turn"
     STATUS_EFFECT = "status_effect"
     STATUS_EFFECT_OUTCOME = "status_effect_outcome"
     MEMBER_TURN_SKIP = "member_turn_skip"
+    MEMBER_TURN = "member_turn"
+    MEMBER_TURN_STEP = "member_turn_step"
     ENEMY_TURN = "enemy_turn"
+    ENEMY_TURN_STEP = "enemy_turn_step"
     MEMBER_END_TURN = "member_end_turn"
     ENEMY_END_TURN = "enemy_end_turn"
 

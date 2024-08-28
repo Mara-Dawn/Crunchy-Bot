@@ -73,7 +73,7 @@ class CombatEmbedManager(Service):
         min_encounter_size = enemy.min_encounter_scale
         guild_level = await self.database.get_guild_level(encounter.guild_id)
 
-        if encounter.enemy_level == guild_level:
+        if encounter.enemy_level > 1 and encounter.enemy_level == guild_level:
             min_encounter_size = max(
                 min_encounter_size,
                 int(enemy.max_players * Config.ENCOUNTER_MAX_LVL_SIZE_SCALING),
