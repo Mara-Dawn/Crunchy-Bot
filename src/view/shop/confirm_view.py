@@ -1,4 +1,5 @@
 import discord
+
 from control.controller import Controller
 from events.types import UIEventType
 from events.ui_event import UIEvent

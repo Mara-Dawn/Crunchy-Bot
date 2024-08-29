@@ -220,7 +220,7 @@ class AIManager(Service):
     def parse_user_name(self, name: str, version: AIVersion) -> str:
         name_result = re.findall(r"\(+(.*?)\)", name)
         title_part = ""
-        name_part = ""
+        name_part = name
         if len(name_result) > 0:
             name_part = name_result[0]
             title_result = re.findall(r"\(+.*?\)(.*)", name)

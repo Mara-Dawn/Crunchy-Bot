@@ -91,15 +91,19 @@ class ShopResponseView(ViewMenu):
                 element.disabled = disabled
                 self.add_item(element)
 
-    async def refresh_ui(self, disabled: bool = False):
+    async def refresh_ui(
+        self, disabled: bool = False, force_embed: discord.Embed = None
+    ):
         color = discord.Colour.purple()
         if self.selected_color is not None:
             hex_value = int(self.selected_color, 16)
             color = discord.Color(hex_value)
 
-        embed = self.item.get_embed(
-            self.controller.bot, color=color, amount_in_cart=self.selected_amount
-        )
+        embed = force_embed
+        if embed is None:
+            embed = self.item.get_embed(
+                self.controller.bot, color=color, amount_in_cart=self.selected_amount
+            )
 
         emoji = self.item.emoji
         if isinstance(self.item.emoji, int):

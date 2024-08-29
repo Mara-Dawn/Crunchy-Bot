@@ -198,6 +198,7 @@ class CombatStatusEffectManager(Service):
             status_effect_event.actor_id,
             status_effect_event.status_type,
             -amount,
+            -amount,
             status_effect_event.id,
             CombatEventType.STATUS_EFFECT,
         )
@@ -267,6 +268,7 @@ class CombatStatusEffectManager(Service):
                         event.actor_id,
                         event.status_type,
                         scaled_damage,
+                        total_damage,
                         event.id,
                         CombatEventType.STATUS_EFFECT_OUTCOME,
                     )
@@ -285,6 +287,7 @@ class CombatStatusEffectManager(Service):
                         event.source_id,
                         event.actor_id,
                         event.status_type,
+                        healing,
                         healing,
                         event.id,
                         CombatEventType.STATUS_EFFECT_OUTCOME,
@@ -369,6 +372,7 @@ class CombatStatusEffectManager(Service):
                         event.source_id,
                         event.actor_id,
                         event.status_type,
+                        1,
                         1,
                         event.id,
                         CombatEventType.STATUS_EFFECT_OUTCOME,
@@ -629,6 +633,9 @@ class CombatStatusEffectManager(Service):
                         continue
 
                     damage = max(1, int(damage_instance.value * Config.POISON_SCALING))
+                    if actor.is_enemy:
+                        damage_base = damage_instance.scaled_value
+                        damage_display = int(damage_base * Config.POISON_SCALING)
 
                     event = CombatEvent(
                         datetime.datetime.now(),
@@ -638,16 +645,13 @@ class CombatStatusEffectManager(Service):
                         current_actor.id,
                         StatusEffectType.POISON,
                         damage,
+                        damage_display,
                         None,
                         CombatEventType.STATUS_EFFECT_OUTCOME,
                     )
                     await self.controller.dispatch_event(event)
 
-                    if actor.is_enemy:
-                        damage_base = damage_instance.scaled_value
-                        damage = int(damage_base * Config.POISON_SCALING)
-
-                    effect_data[effect_type] = damage
+                    effect_data[effect_type] = damage_display
 
         embed_data = await self.get_status_effect_outcome_info(
             context, actor, effect_data

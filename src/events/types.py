@@ -84,6 +84,7 @@ class EncounterEventType(str, Enum):
     SPAWN = "spawn"
     INITIATE = "initiate"
     NEW_ROUND = "new_round"
+    MEMBER_REQUEST_JOIN = "member_request_join"
     MEMBER_ENGAGE = "member_engage"
     MEMBER_DEFEAT = "member_defeat"
     MEMBER_REVIVE = "member_revive"
@@ -99,11 +100,13 @@ class EncounterEventType(str, Enum):
 
 
 class CombatEventType(str, Enum):
-    MEMBER_TURN = "member_turn"
     STATUS_EFFECT = "status_effect"
     STATUS_EFFECT_OUTCOME = "status_effect_outcome"
     MEMBER_TURN_SKIP = "member_turn_skip"
+    MEMBER_TURN = "member_turn"
+    MEMBER_TURN_STEP = "member_turn_step"
     ENEMY_TURN = "enemy_turn"
+    ENEMY_TURN_STEP = "enemy_turn_step"
     MEMBER_END_TURN = "member_end_turn"
     ENEMY_END_TURN = "enemy_end_turn"
 
@@ -183,6 +186,7 @@ class UIEventType(str, Enum):
 
     COMBAT_ENGAGE = "combat_engage"
     COMBAT_LEAVE = "combat_leave"
+    COMBAT_APPROVE = "combat_approve"
     COMBAT_INITIATE = "combat_initiate"
     COMBAT_USE_SKILL = "combat_use_skill"
     COMBAT_TIMEOUT = "combat_timeout"

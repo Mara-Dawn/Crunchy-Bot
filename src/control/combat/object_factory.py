@@ -7,7 +7,7 @@ from combat.gear.bases import *  # noqa: F403
 from combat.gear.droppable import DroppableBase
 from combat.gear.types import Rarity
 from combat.gear.uniques import *  # noqa: F403
-from combat.skills.skill import Skill
+from combat.skills.skill import BaseSkill, Skill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.status_effect import (
     StatusEffect,
@@ -65,7 +65,7 @@ class ObjectFactory(Service):
         enemy_skill = Skill(base_skill=instance, rarity=Rarity.COMMON, level=1)
         return enemy_skill
 
-    async def get_base_skill(self, skill_type: SkillType) -> Skill:
+    async def get_base_skill(self, skill_type: SkillType) -> BaseSkill:
         skill = globals()[skill_type]
         instance = skill()
         return instance

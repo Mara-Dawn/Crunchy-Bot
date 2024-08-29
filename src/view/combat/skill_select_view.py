@@ -2,6 +2,7 @@ import contextlib
 from enum import Enum
 
 import discord
+
 from combat.actors import Character
 from combat.gear.types import EquipmentSlot, Rarity
 from combat.skills.skill import CharacterSkill, Skill
@@ -181,6 +182,7 @@ class SkillSelectView(
         }
 
         selected[slot] = self.selected[0]
+        self.selected = []
 
         event = UIEvent(
             UIEventType.SKILLS_EQUIP,
@@ -211,6 +213,7 @@ class SkillSelectView(
         await interaction.response.defer()
 
         scrappable = [item for item in self.selected if not item.locked]
+        self.selected = []
 
         event = UIEvent(
             UIEventType.GEAR_DISMANTLE,
@@ -224,9 +227,11 @@ class SkillSelectView(
         interaction: discord.Interaction,
     ):
         await interaction.response.defer()
+        selected = [item for item in self.selected]
+        self.selected = []
         event = UIEvent(
             UIEventType.GEAR_LOCK,
-            (interaction, self.selected),
+            (interaction, selected),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -236,9 +241,11 @@ class SkillSelectView(
         interaction: discord.Interaction,
     ):
         await interaction.response.defer()
+        selected = [item for item in self.selected]
+        self.selected = []
         event = UIEvent(
             UIEventType.GEAR_UNLOCK,
-            (interaction, self.selected),
+            (interaction, selected),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)

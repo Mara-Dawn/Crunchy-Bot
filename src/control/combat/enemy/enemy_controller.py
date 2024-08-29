@@ -192,10 +192,24 @@ class EnemyController(Service, ABC):
                     target.id,
                     turn.skill.base_skill.skill_type,
                     total_damage,
+                    total_damage,
                     None,
-                    CombatEventType.ENEMY_TURN,
+                    CombatEventType.ENEMY_TURN_STEP,
                 )
                 await self.controller.dispatch_event(event)
+            event = CombatEvent(
+                datetime.datetime.now(),
+                context.encounter.guild_id,
+                context.encounter.id,
+                opponent.id,
+                None,
+                turn.skill.base_skill.skill_type,
+                None,
+                None,
+                None,
+                CombatEventType.ENEMY_TURN,
+            )
+            await self.controller.dispatch_event(event)
 
     async def calculate_aoe_skill(
         self,

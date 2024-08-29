@@ -669,10 +669,9 @@ class CombatGearManager(Service):
             bonus_loot = None
             if bonus_loot_drop:
                 loot_table = enemy.item_loot_table
-                for key_level, key_type in BaseKey.TYPE_MAP.items():
-                    if context.encounter.enemy_level < key_level:
-                        break
-                    loot_table.append(key_type)
+                enemy_level = context.encounter.enemy_level
+                if enemy_level in BaseKey.TYPE_MAP:
+                    loot_table.append(BaseKey.TYPE_MAP[enemy_level])
 
                 loot_items = [
                     (await self.item_manager.get_item(guild_id, x)) for x in loot_table

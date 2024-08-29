@@ -285,6 +285,20 @@ class InventoryViewController(ViewController):
                 message = await interaction.original_response()
                 await message.delete()
 
+    async def encounter_check(self, interaction: discord.Interaction):
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+        encounters = await self.database.get_encounter_participants(guild_id)
+
+        for _, participants in encounters.items():
+            if member_id in participants:
+                await interaction.followup.send(
+                    "You cannot use this while you are in combat.",
+                    ephemeral=True,
+                )
+                return False
+        return True
+
     async def submit_confirm_view(
         self,
         interaction: discord.Interaction,
@@ -311,6 +325,8 @@ class InventoryViewController(ViewController):
                 | ItemType.ENCOUNTER_KEY_5
                 | ItemType.ENCOUNTER_KEY_6
             ):
+                if not await self.encounter_check(interaction):
+                    return
                 combat_channels = await self.settings_manager.get_combat_channels(
                     interaction.guild_id
                 )
@@ -320,6 +336,7 @@ class InventoryViewController(ViewController):
                     secrets.choice(combat_channels),
                     None,
                     level_map[item.type],
+                    owner_id=user_id,
                 )
 
                 event = InventoryEvent(
@@ -339,6 +356,8 @@ class InventoryViewController(ViewController):
                 await message.delete()
 
             case ItemType.DADDY_KEY | ItemType.WEEB_KEY:
+                if not await self.encounter_check(interaction):
+                    return
                 combat_channels = await self.settings_manager.get_combat_channels(
                     interaction.guild_id
                 )
@@ -347,6 +366,7 @@ class InventoryViewController(ViewController):
                     secrets.choice(combat_channels),
                     boss_key_map[item.type],
                     boss_lvl_map[item.type],
+                    owner_id=user_id,
                 )
 
                 event = InventoryEvent(
