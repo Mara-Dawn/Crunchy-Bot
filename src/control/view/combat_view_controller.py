@@ -118,8 +118,8 @@ class CombatViewController(ViewController):
                 )
                 continue
 
-            event_type = EncounterEventType.MEMBER_ENGAGE
-            # event_type = EncounterEventType.MEMBER_REQUEST_JOIN
+            # event_type = EncounterEventType.MEMBER_ENGAGE
+            event_type = EncounterEventType.MEMBER_REQUEST_JOIN
 
             if enemy.is_boss:
                 event_type = EncounterEventType.MEMBER_REQUEST_JOIN
