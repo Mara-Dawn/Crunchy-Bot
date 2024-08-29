@@ -29,7 +29,7 @@ class CombatEvent(BotEvent):
         self.target_id = target_id
         self.skill_type = skill_type
         self.skill_value = skill_value
-        self.display_value = skill_value
+        self.display_value = display_value
         self.skill_id = skill_id
         self.combat_event_type = combat_event_type
         self.id = id
