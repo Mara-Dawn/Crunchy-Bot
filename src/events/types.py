@@ -169,6 +169,7 @@ class UIEventType(str, Enum):
     PREDICTION_OVERVIEW_REFRESH = "prediction_overview_refresh"
 
     INVENTORY_REFRESH = "inventory_refresh"
+    INVENTORY_RESPONSE_CONFIRM_SUBMIT = "inventory_response_confirm_submit"
     INVENTORY_USER_REFRESH = "inventory_user_refresh"
     INVENTORY_ITEM_ACTION = "inventory_item_action"
     INVENTORY_SELL = "inventory_sell"

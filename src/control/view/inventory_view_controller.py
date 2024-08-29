@@ -157,7 +157,7 @@ class InventoryViewController(ViewController):
                 )
                 await self.request_queue.put(request)
 
-            case UIEventType.SHOP_RESPONSE_CONFIRM_SUBMIT:
+            case UIEventType.INVENTORY_RESPONSE_CONFIRM_SUBMIT:
                 interaction = event.payload[0]
                 shop_data = event.payload[1]
                 item = shop_data.item

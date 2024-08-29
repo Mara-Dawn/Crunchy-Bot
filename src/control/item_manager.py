@@ -26,8 +26,8 @@ from events.types import BeansEventType, LootBoxEventType
 from items import *  # noqa: F403
 from items.item import Item
 from items.types import ItemState, ItemType
+from view.inventory.confirm_view import InventoryConfirmView
 from view.lootbox.view import LootBoxView
-from view.shop.confirm_view import ShopConfirmView
 from view.shop.user_select_view import ShopUserSelectView
 
 
@@ -565,7 +565,7 @@ class ItemManager(Service):
                 item = await self.get_item(guild.id, item_type)
                 embed = item.get_embed(self.bot, show_price=False)
 
-                view = ShopConfirmView(self.controller, interaction, item, None)
+                view = InventoryConfirmView(self.controller, interaction, item, None)
                 await view.init()
 
                 message = await interaction.followup.send(
