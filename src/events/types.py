@@ -84,6 +84,7 @@ class EncounterEventType(str, Enum):
     SPAWN = "spawn"
     INITIATE = "initiate"
     NEW_ROUND = "new_round"
+    MEMBER_REQUEST_JOIN = "member_request_join"
     MEMBER_ENGAGE = "member_engage"
     MEMBER_DEFEAT = "member_defeat"
     MEMBER_REVIVE = "member_revive"
@@ -185,6 +186,7 @@ class UIEventType(str, Enum):
 
     COMBAT_ENGAGE = "combat_engage"
     COMBAT_LEAVE = "combat_leave"
+    COMBAT_APPROVE = "combat_approve"
     COMBAT_INITIATE = "combat_initiate"
     COMBAT_USE_SKILL = "combat_use_skill"
     COMBAT_TIMEOUT = "combat_timeout"

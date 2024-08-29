@@ -118,12 +118,18 @@ class CombatViewController(ViewController):
                 )
                 continue
 
+            event_type = EncounterEventType.MEMBER_ENGAGE
+            # event_type = EncounterEventType.MEMBER_REQUEST_JOIN
+
+            if enemy.is_boss:
+                event_type = EncounterEventType.MEMBER_REQUEST_JOIN
+
             event = EncounterEvent(
                 datetime.datetime.now(),
                 guild_id,
                 encounter.id,
                 member_id,
-                EncounterEventType.MEMBER_ENGAGE,
+                event_type,
             )
             await self.controller.dispatch_event(event)
 
@@ -247,6 +253,11 @@ class CombatViewController(ViewController):
             case UIEventType.COMBAT_LEAVE:
                 interaction = event.payload
                 await self.leave_queue.put(interaction)
+            case UIEventType.COMBAT_APPROVE:
+                interaction = event.payload[0]
+                encounter = event.payload[1]
+                member = event.payload[2]
+                await self.approve_player(interaction, encounter, member, event.view_id)
             case UIEventType.COMBAT_USE_SKILL:
                 interaction = event.payload[0]
                 skill_data = event.payload[1]
@@ -289,6 +300,63 @@ class CombatViewController(ViewController):
             UIEventType.COMBAT_ENGAGE_UPDATE, (encounter_id, embed, started, done)
         )
         await self.controller.dispatch_ui_event(event)
+
+    async def approve_player(
+        self,
+        interaction: discord.Interaction,
+        encounter: Encounter,
+        member: discord.Member,
+        view_id: int,
+    ):
+        message = await interaction.original_response()
+        guild_id = interaction.guild_id
+
+        encounters = await self.database.get_encounter_participants(guild_id)
+        encounters_filtered = await self.database.get_inactive_encounter_participants(
+            guild_id
+        )
+
+        for _, participants in encounters.items():
+            if member.id in participants:
+
+                await interaction.followup.send(
+                    "Player is already involved in a currently active encounter.",
+                    ephemeral=True,
+                )
+                return
+
+        if encounter.id not in encounters:
+            await interaction.followup.send(
+                "This encounter has already concluded.",
+                ephemeral=True,
+            )
+            return
+
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
+        max_encounter_size = enemy.max_players
+
+        active_participants = len(encounters[encounter.id])
+        if encounter.id in encounters_filtered:
+            active_participants -= len(encounters_filtered[encounter.id])
+
+        if active_participants >= max_encounter_size:
+            await interaction.followup.send(
+                "This encounter is already full.",
+                ephemeral=True,
+            )
+            return
+
+        event = EncounterEvent(
+            datetime.datetime.now(),
+            guild_id,
+            encounter.id,
+            member.id,
+            EncounterEventType.MEMBER_ENGAGE,
+        )
+        await self.controller.dispatch_event(event)
+
+        await message.delete()
+        self.controller.detach_view_by_id(view_id)
 
     async def player_action(
         self,

@@ -192,6 +192,7 @@ class EnemyController(Service, ABC):
                     target.id,
                     turn.skill.base_skill.skill_type,
                     total_damage,
+                    total_damage,
                     None,
                     CombatEventType.ENEMY_TURN_STEP,
                 )
@@ -203,6 +204,7 @@ class EnemyController(Service, ABC):
                 opponent.id,
                 None,
                 turn.skill.base_skill.skill_type,
+                None,
                 None,
                 None,
                 CombatEventType.ENEMY_TURN,

@@ -24,6 +24,7 @@ class Encounter:
         max_hp: int,
         message_id: int = None,
         channel_id: int = None,
+        owner_id: int = None,
         id: int = None,
     ):
         self.guild_id = guild_id
@@ -32,6 +33,7 @@ class Encounter:
         self.max_hp = max_hp
         self.message_id = message_id
         self.channel_id = channel_id
+        self.owner_id = owner_id
         self.id = id
 
     @staticmethod
@@ -48,6 +50,7 @@ class Encounter:
             max_hp=int(row[Database.ENCOUNTER_ENEMY_HEALTH_COL]),
             message_id=int(row[Database.ENCOUNTER_MESSAGE_ID_COL]),
             channel_id=int(row[Database.ENCOUNTER_CHANNEL_ID_COL]),
+            owner_id=row[Database.ENCOUNTER_OWNER_ID_COL],
             id=int(row[Database.ENCOUNTER_ID_COL]),
         )
 

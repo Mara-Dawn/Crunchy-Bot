@@ -12,6 +12,7 @@ from combat.skills.types import SkillEffect, SkillInstance
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_skill_manager import CombatSkillManager
+from control.combat.encounter_statistics import EncounterStatistics
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.imgur_manager import ImgurManager
@@ -40,6 +41,9 @@ class CombatEmbedManager(Service):
         self.imgur_manager: ImgurManager = self.controller.get_service(ImgurManager)
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
+        )
+        self.encounter_statistics: EncounterStatistics = self.controller.get_service(
+            EncounterStatistics
         )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "Combat Embeds"
@@ -268,6 +272,8 @@ class CombatEmbedManager(Service):
 
         defeated_message = f"You successfully defeated *{enemy.name}*."
         embed.add_field(name="Congratulations!", value=defeated_message, inline=False)
+
+        await self.encounter_statistics.add_to_embed(context, embed)
 
         image_url = await self.get_custom_image(context.encounter)
         if image_url is None:
@@ -766,6 +772,15 @@ class CombatEmbedManager(Service):
         message = f"Good luck {user.display_name}!"
         if additional_message is not None and additional_message != "":
             message += f"\n{additional_message}"
+        return self.get_notification_embed(title, message)
+
+    def get_actor_join_request_embed(
+        self,
+        user: discord.Member,
+        owner: discord.Member,
+    ) -> discord.Embed:
+        title = "A new player requests to join the battle!"
+        message = f"{user.display_name} arrived! They need to be approved by the encounter owner {owner.display_name} to join the fight."
         return self.get_notification_embed(title, message)
 
     def get_special_item_embed(self, item: Item, delay_claim: int = None):

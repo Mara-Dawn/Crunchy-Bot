@@ -1003,12 +1003,9 @@ class BaseKey(Item):
             description=(
                 "A magical key that allows you to open a portal to another dimension. "
                 f"Inside you will face an enemy of the {level}th level.\n"
-                "(Item can be used from your inventory.)"
+                "(Item can be used from your inventory. You will automatically join the spawned encounter.)"
             ),
-            information=(
-                f"Spawns a random encounter of the {level}th level. "
-                "Anyone may join, so act fast after using this item."
-            ),
+            information=(f"Spawns a random encounter of the {level}th level. "),
             emoji="🔑",
             cost=cost,
             useable=True,

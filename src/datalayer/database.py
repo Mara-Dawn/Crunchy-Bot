@@ -483,6 +483,7 @@ class Database:
     ENCOUNTER_ENEMY_HEALTH_COL = "encn_enemy_health"
     ENCOUNTER_MESSAGE_ID_COL = "encn_message_id"
     ENCOUNTER_CHANNEL_ID_COL = "encn_channel_id"
+    ENCOUNTER_OWNER_ID_COL = "encn_owner_id"
     CREATE_ENCOUNTER_TABLE = f"""
     CREATE TABLE if not exists {ENCOUNTER_TABLE} (
         {ENCOUNTER_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -491,7 +492,8 @@ class Database:
         {ENCOUNTER_ENEMY_LEVEL_COL} INTEGER,
         {ENCOUNTER_ENEMY_HEALTH_COL} INTEGER,
         {ENCOUNTER_MESSAGE_ID_COL} INTEGER,
-        {ENCOUNTER_CHANNEL_ID_COL} INTEGER
+        {ENCOUNTER_CHANNEL_ID_COL} INTEGER,
+        {ENCOUNTER_OWNER_ID_COL} INTEGER
     );"""
 
     ENCOUNTER_THREAD_TABLE = "encounterthreads"
@@ -616,6 +618,7 @@ class Database:
     COMBAT_EVENT_TARGET_ID = "cbev_target_id"
     COMBAT_EVENT_SKILL_TYPE = "cbev_skill_type"
     COMBAT_EVENT_SKILL_VALUE = "cbev_skill_value"
+    COMBAT_EVENT_DISPLAY_VALUE = "cbev_display_value"
     COMBAT_EVENT_SKILL_ID = "cbev_skill_id"
     COMBAT_EVENT_TYPE_COL = "cbev_type"
     CREATE_COMBAT_EVENT_TABLE = f"""
@@ -626,6 +629,7 @@ class Database:
         {COMBAT_EVENT_TARGET_ID} INTEGER, 
         {COMBAT_EVENT_SKILL_TYPE} TEXT, 
         {COMBAT_EVENT_SKILL_VALUE} INTEGER, 
+        {COMBAT_EVENT_DISPLAY_VALUE} INTEGER, 
         {COMBAT_EVENT_SKILL_ID} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}), 
         {COMBAT_EVENT_TYPE_COL} TEXT, 
         PRIMARY KEY ({COMBAT_EVENT_ID_COL})
@@ -1127,9 +1131,10 @@ class Database:
             {self.COMBAT_EVENT_TARGET_ID},
             {self.COMBAT_EVENT_SKILL_TYPE},
             {self.COMBAT_EVENT_SKILL_VALUE},
+            {self.COMBAT_EVENT_DISPLAY_VALUE},
             {self.COMBAT_EVENT_SKILL_ID},
             {self.COMBAT_EVENT_TYPE_COL})
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
         task = (
             event_id,
@@ -1138,6 +1143,7 @@ class Database:
             event.target_id,
             event.skill_type,
             event.skill_value,
+            event.display_value,
             event.skill_id,
             event.combat_event_type,
         )
@@ -1290,8 +1296,9 @@ class Database:
             {self.ENCOUNTER_ENEMY_LEVEL_COL},
             {self.ENCOUNTER_ENEMY_HEALTH_COL},
             {self.ENCOUNTER_MESSAGE_ID_COL},
-            {self.ENCOUNTER_CHANNEL_ID_COL})
-            VALUES (?, ?, ?, ?, ?, ?);
+            {self.ENCOUNTER_CHANNEL_ID_COL},
+            {self.ENCOUNTER_OWNER_ID_COL})
+            VALUES (?, ?, ?, ?, ?, ?, ?);
         """
         task = (
             encounter.guild_id,
@@ -1300,6 +1307,7 @@ class Database:
             encounter.max_hp,
             encounter.message_id,
             encounter.channel_id,
+            encounter.owner_id,
         )
 
         return await self.__query_insert(command, task)

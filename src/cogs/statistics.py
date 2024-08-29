@@ -10,6 +10,7 @@ from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
+from datalayer.patches.patch import DBPatcher
 from view.ranking.embed import RankingEmbed
 from view.ranking.view import RankingView
 from view.types import RankingType
@@ -207,6 +208,27 @@ class Statistics(commands.Cog):
             self.__cog_name__,
             interaction,
             "Season ended successfully.",
+            ephemeral=False,
+        )
+
+    @app_commands.command(
+        name="apply_db_patch", description="applies the specified db patch"
+    )
+    @app_commands.guild_only()
+    async def apply_db_patch(self, interaction: discord.Interaction, patch_id: str):
+        author_id = 90043934247501824
+        if interaction.user.id != author_id:
+            raise app_commands.MissingPermissions(missing_permissions=[])
+        await interaction.response.defer()
+
+        patcher = DBPatcher(self.database)
+
+        await patcher.apply_patch(patch_id)
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            "Patch applied.",
             ephemeral=False,
         )
 

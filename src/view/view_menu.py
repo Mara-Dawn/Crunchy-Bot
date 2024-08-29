@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import discord
+
 from control.types import ControllerType
 from events.ui_event import UIEvent
 
@@ -29,7 +30,7 @@ class ViewMenu(discord.ui.View, ABC):
             return True
         else:
             await interaction.response.send_message(
-                "Only the author of the command can perform this action.",
+                "You dont have permission to use this.",
                 ephemeral=True,
             )
             return False

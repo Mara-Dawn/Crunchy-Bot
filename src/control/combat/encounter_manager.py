@@ -48,6 +48,7 @@ from events.types import (
 )
 from events.ui_event import UIEvent
 from items.types import ItemType
+from view.combat.approve_view import ApproveMemberView
 from view.combat.combat_turn_view import CombatTurnView
 from view.combat.embed import EnemyOverviewEmbed
 from view.combat.engage_view import EnemyEngageView
@@ -120,6 +121,10 @@ class EncounterManager(Service):
                         await self.initiate_encounter(encounter_event.encounter_id)
                     case EncounterEventType.MEMBER_ENGAGE:
                         await self.add_member_to_encounter(
+                            encounter_event.encounter_id, encounter_event.member_id
+                        )
+                    case EncounterEventType.MEMBER_REQUEST_JOIN:
+                        await self.add_member_join_request(
                             encounter_event.encounter_id, encounter_event.member_id
                         )
                     case EncounterEventType.END | EncounterEventType.SPAWN:
@@ -223,6 +228,7 @@ class EncounterManager(Service):
         channel_id: int,
         enemy_type: EnemyType = None,
         level: int = None,
+        owner_id: int = None,
     ):
         log_message = f"Encounter was spawned in {guild.name}."
         self.logger.log(guild.id, log_message, cog=self.log_name)
@@ -254,6 +260,8 @@ class EncounterManager(Service):
 
         encounter.message_id = message.id
         encounter.channel_id = message.channel.id
+        if owner_id is not None:
+            encounter.owner_id = owner_id
 
         encounter_id = await self.database.log_encounter(encounter)
 
@@ -281,6 +289,16 @@ class EncounterManager(Service):
             EncounterEventType.SPAWN,
         )
         await self.controller.dispatch_event(event)
+
+        if owner_id is not None:
+            event = EncounterEvent(
+                datetime.datetime.now(),
+                guild.id,
+                encounter.id,
+                owner_id,
+                EncounterEventType.MEMBER_ENGAGE,
+            )
+            await self.controller.dispatch_event(event)
 
     async def apply_late_join_penalty(self, encounter_id: int, member_id: int) -> str:
         encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
@@ -350,6 +368,29 @@ class EncounterManager(Service):
 
         return thread
 
+    async def add_member_join_request(self, encounter_id: int, member_id: int):
+        thread_id = await self.database.get_encounter_thread(encounter_id)
+
+        encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
+
+        thread = self.bot.get_channel(encounter.channel_id).get_thread(thread_id)
+
+        if thread is None:
+            return
+
+        user = self.bot.get_guild(encounter.guild_id).get_member(member_id)
+        owner = self.bot.get_guild(encounter.guild_id).get_member(encounter.owner_id)
+        await thread.add_user(user)
+
+        embed = self.embed_manager.get_actor_join_request_embed(user, owner)
+        embed.set_thumbnail(url=user.display_avatar.url)
+
+        view = ApproveMemberView(self.controller, encounter, user, owner)
+        message = await self.context_loader.send_message(
+            thread, content="", embed=embed, view=view
+        )
+        view.set_message(message)
+
     async def add_member_to_encounter(self, encounter_id: int, member_id: int):
         thread_id = await self.database.get_encounter_thread(encounter_id)
 
@@ -397,6 +438,7 @@ class EncounterManager(Service):
             wait_embed = await self.embed_manager.get_waiting_for_party_embed(
                 min_participants
             )
+            leave_view = None
             if not enemy.is_boss:
                 leave_view = EncounterLeaveView(self.controller)
             message = await self.context_loader.send_message(
@@ -460,6 +502,7 @@ class EncounterManager(Service):
                 None,
                 None,
                 None,
+                None,
                 CombatEventType.MEMBER_TURN_SKIP,
             )
             await self.controller.dispatch_event(event)
@@ -474,6 +517,7 @@ class EncounterManager(Service):
             context.encounter.id,
             actor.id,
             actor.id,
+            None,
             None,
             None,
             None,
@@ -509,6 +553,7 @@ class EncounterManager(Service):
             context.encounter.guild_id,
             context.encounter.id,
             opponent.id,
+            None,
             None,
             None,
             None,
@@ -759,6 +804,9 @@ class EncounterManager(Service):
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.scaled_value
             )
+            display_damage = await self.actor_manager.get_skill_damage_after_defense(
+                target, turn.skill, damage_instance.value
+            )
 
             embed_data = (
                 await self.status_effect_manager.handle_post_attack_status_effects(
@@ -815,6 +863,7 @@ class EncounterManager(Service):
                 target.id,
                 skill_data.skill.base_skill.skill_type,
                 total_damage,
+                display_damage,
                 skill_data.skill.id,
                 CombatEventType.MEMBER_TURN,
             )
@@ -829,6 +878,7 @@ class EncounterManager(Service):
             context.encounter.guild_id,
             context.encounter.id,
             character.id,
+            None,
             None,
             None,
             None,
