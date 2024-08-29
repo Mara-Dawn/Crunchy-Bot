@@ -979,8 +979,8 @@ class Scrap(Item):
 
 class BaseKey(Item):
 
-    BASE_COST = 3000
-    LEVEL_COST = 1000
+    BASE_COST = 1000
+    LEVEL_COST = 200
     TYPE_MAP = {
         1: ItemType.ENCOUNTER_KEY_1,
         2: ItemType.ENCOUNTER_KEY_2,

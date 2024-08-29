@@ -1,19 +1,19 @@
 import datetime
 
 import discord
-from bot import CrunchyBot
-from control.ai_manager import AIManager
-from control.types import AIVersion
 from discord import app_commands
 from discord.ext import commands, tasks
+
+from bot import CrunchyBot
+from cogs.beans.beans_group import BeansGroup
+from control.ai_manager import AIManager
+from control.types import AIVersion
 from events.garden_event import GardenEvent
 from events.types import GardenEventType, UIEventType
 from events.ui_event import UIEvent
 from view.garden.embed import GardenEmbed
 from view.garden.plot_view import PlotView
 from view.garden.view import GardenView
-
-from cogs.beans.beans_group import BeansGroup
 
 
 class Garden(BeansGroup):
