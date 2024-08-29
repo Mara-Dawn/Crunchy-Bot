@@ -404,8 +404,9 @@ class CombatEmbedManager(Service):
         total_damage = await self.actor_manager.get_skill_damage_after_defense(
             target, skill, damage_instance.scaled_value
         )
-
-        display_dmg = damage_instance.value
+        display_dmg = await self.actor_manager.get_skill_damage_after_defense(
+            target, skill, damage_instance.value
+        )
         if current_actor.is_enemy:
             display_dmg = total_damage
 
