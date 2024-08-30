@@ -231,12 +231,13 @@ class EncounterContext:
             return True
 
         last_event = self.combat_events[0]
-        current_actor = self.get_current_initiative()[0]
-
-        if last_event.id < round_event_id:
-            return True
-
-        return last_event.member_id == current_actor.id
+        # current_actor = self.get_current_initiative()[0]
+        #
+        # if last_event.id < round_event_id:
+        #     return True
+        #
+        # return last_event.member_id == current_actor.id
+        return last_event.id < round_event_id
 
     def new_turn(self) -> bool:
         if len(self.combat_events) == 0:
