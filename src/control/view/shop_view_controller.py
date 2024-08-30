@@ -4,6 +4,7 @@ import datetime
 import discord
 from datalayer.database import Database
 from discord.ext import commands
+from datalayer.types import LootboxType
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
@@ -139,7 +140,8 @@ class ShopViewController(ViewController):
             match item.group:
                 case ItemGroup.LOOTBOX:
                     await self.item_manager.drop_private_loot_box(
-                        interaction, size=item.base_amount
+                        interaction,
+                        size=item.base_amount,
                     )
 
                     continue
@@ -203,6 +205,22 @@ class ShopViewController(ViewController):
                     selected=selected_item,
                     view_id=event.view_id,
                 )
+
+                try:
+                    exception = self.request_worker.exception()
+                    if exception is not None:
+                        raise exception
+                        self.join_worker = asyncio.create_task(
+                            self.shop_request_worker()
+                        )
+                except asyncio.CancelledError:
+                    pass
+                    self.request_worker = asyncio.create_task(
+                        self.shop_request_worker()
+                    )
+                except asyncio.InvalidStateError:
+                    pass
+
                 await self.shop_queue.put(shop_interaction)
 
             case UIEventType.SHOP_CHANGED:

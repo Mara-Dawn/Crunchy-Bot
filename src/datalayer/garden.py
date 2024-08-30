@@ -1,9 +1,8 @@
 import datetime
 
+from datalayer.types import PlantType, PlotState
 from events.garden_event import GardenEvent
 from events.types import GardenEventType
-
-from datalayer.types import PlantType, PlotState
 
 
 class PlotModifiers:
@@ -239,6 +238,21 @@ class BakedBeanPlant(Plant):
         self.grow_hours = 24 * 4 - 4
         # self.seed_hours = 2
         # self.grow_hours = 5
+
+
+class KeyBeanPlant(Plant):
+
+    SEED_EMOJI = 1239505232421982262
+    SEED_EMOJI_WATERED = 1239505228634521662
+    GROWING_EMOJI = 1239505230635339817
+    GROWING_EMOJI_WATERED = 1239505226969645099
+    READY_EMOJI = 1239505234435244042
+    IMAGE_DIR = "key_bean"
+
+    def __init__(self):
+        super().__init__(PlantType.BAKED_BEAN)
+        self.seed_hours = 24
+        self.grow_hours = 24 * 4 - 4
 
 
 class FlashBeanPlant(Plant):

@@ -6,6 +6,7 @@ from datalayer.garden import (
     CrystalBeanPlant,
     FlashBeanPlant,
     GhostBeanPlant,
+    KeyBeanPlant,
     RareBeanPlant,
     SpeedBeanPlant,
     YellowBeanPlant,
@@ -14,38 +15,6 @@ from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, PlantType
 from items.item import Item
 from items.types import ItemGroup, ItemType, ShopCategory
-
-# Copy this class as a base for adding new items.
-# class Example(Item):
-
-#     def __init__(self, cost: int | None):
-#         defaultcost = 0
-
-#         if cost is None:
-#             cost = defaultcost
-
-#         super().__init__(
-#             name="Item Name",
-#             type=ItemType.EXAMPLE,
-#             group=ItemGroup.GAMBA,
-#             shop_category=ShopCategory.FUN,
-#             description="Shown together with the item name.",
-#             information="Shown as additional info in the catalog.",
-#             emoji="🅱️",
-#             cost=0,
-#             value=1,
-#             view_class=None,
-#             allow_amount=False,
-#             base_amount=1,
-#             max_amount=None,
-#             trigger=[],
-#             hide_in_shop=False,
-#             weight=None,
-#             controllable=False,
-#             useable=False,
-#             permanent=False,
-#             secret=False,
-#         )
 
 
 class Arrest(Item):
@@ -1454,6 +1423,7 @@ class BaseSeed(Item):
         ItemType.GHOST_SEED,
         ItemType.BAKED_SEED,
         ItemType.FLASH_SEED,
+        ItemType.KEY_SEED,
     ]
 
     SEED_PLANT_MAP = {
@@ -1466,6 +1436,7 @@ class BaseSeed(Item):
         ItemType.GHOST_SEED: PlantType.GHOST_BEAN,
         ItemType.BAKED_SEED: PlantType.BAKED_BEAN,
         ItemType.FLASH_SEED: PlantType.FLASH_BEAN,
+        ItemType.KEY_SEED: PlantType.KEY_BEAN,
     }
 
     def __init__(self, cost: int | None):
@@ -1574,7 +1545,7 @@ class BoxSeed(BaseSeed):
         )
         self.information = "Available as a rare drop from lootboxes."
         self.information = (
-            "Available as a rare drop from lootboxes."
+            "Available as a rare drop from lootboxes and encounters."
             "\nTakes 4-8 Days to grow, depending on water."
             "\nProduces 900 - 1100 beans when harvested."
             "\nDrops a personal x10 chest when harvested."
@@ -1597,7 +1568,7 @@ class CatSeed(BaseSeed):
             "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
         )
         self.information = (
-            "Available as a rare drop from lootboxes."
+            "Available as a rare drop from lootboxes and encounters."
             "\nTakes 3-6 Days to grow, depending on water."
             "\nProduces 450 - 550 beans when harvested."
             "\nAttracts useless catgirls with a small chance to attract a useful one."
@@ -1620,7 +1591,7 @@ class YellowSeed(BaseSeed):
             "Yep, it's piss. And not a particularly healthy kind. Better go plant it quick. (Fertilizes the soil, making plants grow faster)"
         )
         self.information = (
-            "Available as a rare drop from lootboxes."
+            "Available as a rare drop from lootboxes and encounters."
             "\nTakes 2-4 Days to grow, depending on water."
             "\nProduces 200 - 300 beans when harvested."
             "\nFertilizes the plot it was planted on for 3 days, making beans grow 100% faster."
@@ -1643,7 +1614,7 @@ class GhostSeed(BaseSeed):
             "Plant it in your garden and maybe youll get to see something amazing."
         )
         self.information = (
-            "Available as a rare drop from lootboxes."
+            "Available as a rare drop from lootboxes and encounters."
             "\nTakes 3-6 Days to grow, depending on water."
             "\nProduces 450 - 550 beans when harvested."
             "\nWhen harvested it will always drop a Spooky Bean that allwos you to curse others."
@@ -1667,7 +1638,7 @@ class BakedSeed(BaseSeed):
             "Go plant them in your garden, im sure they wont care. "
         )
         self.information = (
-            "Available as a rare drop from lootboxes."
+            "Available as a rare drop from lootboxes and encounters."
             "\nTakes 2-4 Days to grow, depending on water."
             "\nProduces 420 - 690 beans when harvested."
             "\nWhen harvested they will make you stoned and turn your next few messages into stoner talk gibberish."
@@ -1691,12 +1662,34 @@ class FlashSeed(BaseSeed):
             "(Makes all your plots age twice as fast while active)"
         )
         self.information = (
-            "Available as a super rare drop from lootboxes."
+            "Available as a super rare drop from lootboxes and encounters."
+            "\nTakes 2-4 Days to grow, depending on water."
+            "\nProduces a random amount of encounter keys up to the current guild level."
+        )
+        self.emoji = FlashBeanPlant.SEED_EMOJI
+
+
+class KeySeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 2000
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(cost)
+        self.name = "Key Seed"
+        self.type = ItemType.KEY_SEED
+        self.description = (
+            "This seed almost looks like it could unlock a door."
+            "Maybe it will grow into something actually capable of doing so."
+        )
+        self.information = (
+            "Available as a super rare drop from lootboxes and encounters."
             "\nWill be active for 3 days, boosting the growth of all of your plants by an additional 100%. "
             "This stacks additively with other flash beans, water and fertilizer."
             "\nProduces a Ghost Bean Seed when harvested."
         )
-        self.emoji = FlashBeanPlant.SEED_EMOJI
+        self.emoji = KeyBeanPlant.SEED_EMOJI
 
 
 # Permanent Rare Items

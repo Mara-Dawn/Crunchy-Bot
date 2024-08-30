@@ -81,6 +81,7 @@ class SelectGearHeadEmbed(discord.Embed):
     ):
         description = "Manage your gear here. Equip pieces, lock them to keep them safe or scrap anything you don't need.\n\n"
         description += (
+            "[EQ] - Item is currently equipped.\n\n"
             "[🔒] - Item is locked and wont get scrapped by any scrap buttons."
         )
         if len(description) < max_width:
@@ -109,6 +110,7 @@ class ManageSkillHeadEmbed(discord.Embed):
         description = "Manage your skills here. Equip new ones, lock the ones you want to keep safe and scrap the ones you don't need.\n\n"
         description += "Once you equip a skill it will be removed from your inventory. Equipping a new skill [31mwill override the old one[0m.\n\n"
         description += (
+            "[EQ] - Item is currently equipped.\n\n"
             "[🔒] - Item is locked and wont get scrapped by any scrap buttons.\n\n"
         )
         description += "[30m[!][0m - Damage penalty for using the wrong weapon type."
@@ -138,6 +140,7 @@ class SelectSkillHeadEmbed(discord.Embed):
         description = "Select the skills you want to equip.\n\n"
         description += "Once you equip a skill it will be removed from your inventory. Equipping a new skill [31mwill override the old one[0m.\n\n"
         description += (
+            "[EQ] - Item is currently equipped.\n\n"
             "[🔒] - Item is locked and wont get scrapped by any scrap buttons.\n\n"
         )
         description += "[30m[!][0m - Damage penalty for using the wrong weapon type."

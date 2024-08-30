@@ -1,5 +1,12 @@
 class Config:
 
+    # Lootbox Settings
+    MIMIC_CHANCE = 0.1
+    LARGE_CHEST_CHANCE = 0.03
+    LARGE_MIMIC_CHANCE = 0.02
+    SPOOK_MIMIC_CHANCE = 0
+    LUCKY_ITEM_CHANCE = 0.05
+
     # General Combat
     COMBAT_INITIAL_WAIT = 90
     # COMBAT_INITIAL_WAIT = 10
