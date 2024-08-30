@@ -45,7 +45,14 @@ class ApproveMemberView(ViewMenu):
         await self.controller.dispatch_ui_event(event)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.owner.id
+        if interaction.user.id == self.owner.id:
+            return True
+        else:
+            await interaction.response.send_message(
+                "You dont have permission to use this.",
+                ephemeral=True,
+            )
+            return False
 
     async def on_timeout(self):
         with contextlib.suppress(discord.NotFound):

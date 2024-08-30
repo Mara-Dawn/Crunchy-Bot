@@ -151,6 +151,7 @@ class EncounterManager(Service):
                     CombatEventType.ENEMY_TURN,
                 ]:
                     await self.refresh_round_overview(context)
+                    return
                 if combat_event.combat_event_type not in [
                     CombatEventType.ENEMY_END_TURN,
                     CombatEventType.MEMBER_END_TURN,
