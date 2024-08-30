@@ -666,7 +666,7 @@ class LotteryTicket(Item):
             type=ItemType.LOTTERY_TICKET,
             group=ItemGroup.LOTTERY,
             shop_category=ShopCategory.FUN,
-            description="Enter the Weekly Crunchy Bean Lottery© and win big! Max 3 tickets per person.",
+            description="Enter the Weekly Bean Lottery and win big! Max 3 tickets per person.",
             information="Available in the shop. Use /shop for more Information.",
             emoji="🎫",
             cost=cost,
