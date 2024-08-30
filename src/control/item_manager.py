@@ -6,6 +6,7 @@ import discord
 from discord.ext import commands
 
 from bot_util import BotUtil
+from config import Config
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -126,23 +127,57 @@ class ItemManager(Service):
             ItemType.MIMIC_DETECTOR,
             ItemType.USEFUL_CATGIRL,
             ItemType.FLASH_SEED,
+            # ItemType.KEY_SEED,
         ]
 
+        key_item_pool = []
         guild_level = await self.database.get_guild_level(guild_id)
-
         for key_level, key_type in BaseKey.TYPE_MAP.items():  # noqa: F405
             if guild_level < key_level:
                 break
-            lucky_item_pool.append(key_type)
+            key_item_pool.append(key_type)
 
+        lucky_item_pool += key_item_pool
         item_pool = item_pool + lucky_item_pool
+
+        force_roll = None
+        if force_type is not None:
+            match force_type:
+                case LootboxType.SMALL_MIMIC:
+                    force_roll = Config.MIMIC_CHANCE
+                case LootboxType.BEANS:
+                    force_roll = Config.MIMIC_CHANCE + Config.LARGE_CHEST_CHANCE
+                case LootboxType.LARGE_MIMIC:
+                    force_roll = (
+                        Config.MIMIC_CHANCE
+                        + Config.LARGE_CHEST_CHANCE
+                        + Config.LARGE_MIMIC_CHANCE
+                    )
+                case LootboxType.LUCKY_ITEM:
+                    force_roll = (
+                        Config.MIMIC_CHANCE
+                        + Config.LARGE_CHEST_CHANCE
+                        + Config.LARGE_MIMIC_CHANCE
+                        + Config.LUCKY_ITEM_CHANCE
+                    )
+                case LootboxType.SPOOKY_MIMIC:
+                    force_roll = (
+                        Config.MIMIC_CHANCE
+                        + Config.LARGE_CHEST_CHANCE
+                        + Config.LARGE_MIMIC_CHANCE
+                        + Config.LUCKY_ITEM_CHANCE
+                        + Config.SPOOK_MIMIC_CHANCE
+                    )
+                case LootboxType.REGULAR:
+                    force_roll = 1
+                case LootboxType.KEYS:
+                    force_roll = 1
+                    item_pool = key_item_pool
 
         weights = [(await self.get_item(guild_id, x)).weight for x in item_pool]
         weights = [1.0 / w for w in weights]
         sum_weights = sum(weights)
         weights = [w / sum_weights for w in weights]
-
-        # test = {item_pool[index]: value for index, value in enumerate(weights)}
 
         lucky_weights = [
             (await self.get_item(guild_id, x)).weight for x in lucky_item_pool
@@ -151,45 +186,7 @@ class ItemManager(Service):
         sum_lucky_weights = sum(lucky_weights)
         lucky_weights = [w / sum_lucky_weights for w in lucky_weights]
 
-        # test2 = {
-        #     lucky_item_pool[index]: value for index, value in enumerate(lucky_weights)
-        # }
-        # Spawn Chances
-        mimic_chance = 0.1
-        large_chest_chance = 0.03
-        large_mimic_chance = 0.02
-        spook_mimic_chance = 0
-        lucky_item_chance = 0.05
-
         random_items = {}
-
-        force_roll = None
-
-        if force_type is not None:
-            match force_type:
-                case LootboxType.SMALL_MIMIC:
-                    force_roll = mimic_chance
-                case LootboxType.BEANS:
-                    force_roll = mimic_chance + large_chest_chance
-                case LootboxType.LARGE_MIMIC:
-                    force_roll = mimic_chance + large_chest_chance + large_mimic_chance
-                case LootboxType.LUCKY_ITEM:
-                    force_roll = (
-                        mimic_chance
-                        + large_chest_chance
-                        + large_mimic_chance
-                        + lucky_item_chance
-                    )
-                case LootboxType.SPOOKY_MIMIC:
-                    force_roll = (
-                        mimic_chance
-                        + large_chest_chance
-                        + large_mimic_chance
-                        + lucky_item_chance
-                        + spook_mimic_chance
-                    )
-                case LootboxType.REGULAR:
-                    force_roll = 1
 
         for _ in range(size):
             roll = random.random()
@@ -197,47 +194,53 @@ class ItemManager(Service):
             if force_roll is not None:
                 roll = force_roll
 
-            if roll <= mimic_chance:
+            if roll <= Config.MIMIC_CHANCE:
                 item_type = ItemType.CHEST_MIMIC
                 BotUtil.dict_append(random_items, item_type, 1)
-            elif roll > mimic_chance and roll <= (mimic_chance + large_chest_chance):
+            elif roll > Config.MIMIC_CHANCE and roll <= (
+                Config.MIMIC_CHANCE + Config.LARGE_CHEST_CHANCE
+            ):
                 item_type = ItemType.CHEST_BEANS
                 BotUtil.dict_append(random_items, item_type, 1)
-            elif roll > (mimic_chance + large_chest_chance) and roll <= (
-                mimic_chance + large_chest_chance + large_mimic_chance
+            elif roll > (Config.MIMIC_CHANCE + Config.LARGE_CHEST_CHANCE) and roll <= (
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
             ):
                 item_type = ItemType.CHEST_LARGE_MIMIC
                 BotUtil.dict_append(random_items, item_type, 1)
             elif roll > (
-                mimic_chance + large_chest_chance + large_mimic_chance
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
             ) and roll <= (
-                mimic_chance
-                + large_chest_chance
-                + large_mimic_chance
-                + lucky_item_chance
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
+                + Config.LUCKY_ITEM_CHANCE
             ):
                 item_type = random.choices(lucky_item_pool, weights=lucky_weights)[0]
                 BotUtil.dict_append(random_items, item_type, 1)
             elif roll > (
-                mimic_chance
-                + large_chest_chance
-                + large_mimic_chance
-                + lucky_item_chance
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
+                + Config.LUCKY_ITEM_CHANCE
             ) and roll <= (
-                mimic_chance
-                + large_chest_chance
-                + large_mimic_chance
-                + lucky_item_chance
-                + spook_mimic_chance
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
+                + Config.LUCKY_ITEM_CHANCE
+                + Config.SPOOK_MIMIC_CHANCE
             ):
                 item_type = ItemType.CHEST_SPOOK_MIMIC
                 BotUtil.dict_append(random_items, item_type, 1)
             elif roll > (
-                mimic_chance
-                + large_chest_chance
-                + large_mimic_chance
-                + lucky_item_chance
-                + spook_mimic_chance
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
+                + Config.LUCKY_ITEM_CHANCE
+                + Config.SPOOK_MIMIC_CHANCE
             ):
                 item_type = random.choices(item_pool, weights=weights)[0]
                 BotUtil.dict_append(random_items, item_type, 1)
@@ -284,7 +287,10 @@ class ItemManager(Service):
         await self.controller.dispatch_event(event)
 
     async def drop_private_loot_box(
-        self, interaction: discord.Interaction, size: int = 1
+        self,
+        interaction: discord.Interaction,
+        size: int = 1,
+        lootbox_type: LootboxType = None,
     ):
         member_id = interaction.user.id
         guild_id = interaction.guild_id
@@ -292,7 +298,9 @@ class ItemManager(Service):
         log_message = f"Loot box was dropped in {interaction.guild.name}."
         self.logger.log(guild_id, log_message, cog="Beans")
 
-        loot_box = await self.create_loot_box(guild_id, size=size)
+        loot_box = await self.create_loot_box(
+            guild_id, size=size, force_type=lootbox_type
+        )
 
         title = f"{interaction.user.display_name}'s Random Treasure Chest"
         description = f"Only you can claim this, <@{member_id}>!"

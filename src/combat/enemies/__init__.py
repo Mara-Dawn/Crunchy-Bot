@@ -11,6 +11,7 @@ GENERAL_LOOT = [
     ItemType.YELLOW_SEED,
     ItemType.BAKED_SEED,
     ItemType.BOX_SEED,
+    # ItemType.KEY_SEED,
     ItemType.CHEST_BEANS,
 ]
 

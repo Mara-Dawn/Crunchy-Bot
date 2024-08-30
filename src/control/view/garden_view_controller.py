@@ -5,7 +5,7 @@ import secrets
 import discord
 from datalayer.database import Database
 from datalayer.garden import Plot, UserGarden
-from datalayer.types import PlantType
+from datalayer.types import LootboxType, PlantType
 from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
@@ -200,6 +200,14 @@ class GardenViewController(ViewController):
                     1,
                 )
                 await self.controller.dispatch_event(event)
+            case PlantType.KEY_BEAN:
+                reward = random.randint(450, 550)
+                message = f"You harvest a Key Bean Plant and gain `🅱️{reward}`."
+                message += "\nIt also drops a whole bunch of keys!"
+                key_reward = random.randint(2, 4)
+                await self.item_manager.drop_private_loot_box(
+                    interaction, size=key_reward, lootbox_type=LootboxType.KEYS
+                )
             case PlantType.FLASH_BEAN:
                 message = "You remove the dried out Flash bean from the plot and find a small seed!"
                 message += "\nA Ghost Bean Seed has been added to your inventory."

@@ -669,7 +669,7 @@ class CombatGearManager(Service):
             bonus_loot = None
             if bonus_loot_drop:
                 loot_table = enemy.item_loot_table
-                enemy_level = context.encounter.enemy_level
+                enemy_level = context.opponent.level
                 if enemy_level in BaseKey.TYPE_MAP:
                     loot_table.append(BaseKey.TYPE_MAP[enemy_level])
 

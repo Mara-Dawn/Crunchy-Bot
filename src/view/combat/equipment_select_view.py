@@ -210,10 +210,16 @@ class EquipmentSelectView(
             max_values = 2
 
         disable_equip = disabled
-        if len(self.selected) > max_values:
+        disable_dismantle = disabled
+        disable_lock = disabled
+
+        if len(self.selected) <= 0:
+            disable_equip = True
+            disable_dismantle = True
+            disable_lock = True
+        elif len(self.selected) > max_values:
             disable_equip = True
 
-        disable_dismantle = disabled
         for selected_gear in self.selected:
             if selected_gear.id in [gear.id for gear in self.current]:
                 disable_dismantle = True
@@ -235,8 +241,8 @@ class EquipmentSelectView(
         self.add_item(CurrentPageButton(page_display))
         self.add_item(ScrapBalanceButton(self.scrap_balance))
         self.add_item(ScrapSelectedButton(disabled=disable_dismantle))
-        self.add_item(LockButton(disabled=disabled))
-        self.add_item(UnlockButton(disabled=disabled))
+        self.add_item(LockButton(disabled=disable_lock))
+        self.add_item(UnlockButton(disabled=disable_lock))
         self.add_item(BackButton(disabled=disabled))
         self.add_item(
             SelectGearSlot(

@@ -76,6 +76,7 @@ class ItemType(str, Enum):
     GHOST_SEED = "GhostSeed"
     BAKED_SEED = "BakedSeed"
     FLASH_SEED = "FlashSeed"
+    KEY_SEED = "KeySeed"
 
     SCRAP = "Scrap"
 
