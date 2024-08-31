@@ -39,13 +39,14 @@ class UserSettingsEmbed(discord.Embed):
             value = await self.user_settings_manager.get(
                 self.member.id, self.guild.id, setting_type
             )
-            if value is None:
-                value = ""
 
-            if definition.options is not None:
+            if value is not None and definition.options is not None:
                 value = list(definition.options.keys())[
                     list(definition.options.values()).index(value)
                 ]
+
+            if value is None:
+                value = "-"
 
             if isinstance(value, Enum):
                 value = value.value
