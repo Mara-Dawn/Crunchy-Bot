@@ -1509,7 +1509,7 @@ class SpeedSeed(BaseSeed):
 class CrystalSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
-        defaultcost = 1000
+        defaultcost = 7000
         if cost is None:
             cost = defaultcost
 
