@@ -967,7 +967,7 @@ class EncounterManager(Service):
             )
 
             if refresh_setting == SkillRefreshOption.DISABLED:
-                return
+                continue
 
             character = await self.actor_manager.get_character(member)
 
@@ -992,7 +992,7 @@ class EncounterManager(Service):
             self.logger.log(member.guild.id, log_message, cog=self.log_name)
 
             if len(spent_skills) <= 0:
-                return
+                continue
 
             user_skills = await self.database.get_user_skill_inventory(
                 member.guild.id, member.id
@@ -1054,7 +1054,7 @@ class EncounterManager(Service):
                         f"{member.display_name} auto refresh: found no replacements."
                     )
                     self.logger.log(member.guild.id, log_message, cog=self.log_name)
-                    return
+                    continue
 
                 log_message = f"{member.display_name} auto refresh: found: {replacement_skill.name} with rarity {replacement_skill.rarity.value}."
                 self.logger.log(member.guild.id, log_message, cog=self.log_name)
@@ -1064,7 +1064,7 @@ class EncounterManager(Service):
                 filtered_skills.remove(replacement_skill)
 
             if not changes_made:
-                return
+                continue
             log_message = f"{member.display_name} auto refresh: applying changes."
             self.logger.log(member.guild.id, log_message, cog=self.log_name)
 
