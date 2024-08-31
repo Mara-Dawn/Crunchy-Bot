@@ -64,7 +64,7 @@ class UserSettingViewController(ViewController):
         setting_definition = self.user_settings_manager.get_definition(setting_type)
         try:
             value = setting_definition.value_type(value)
-        except ValueError:
+        except TypeError:
             await interaction.followup.send(
                 "Invalid Value.",
                 ephemeral=True,

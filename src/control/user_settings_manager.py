@@ -72,7 +72,7 @@ class UserSettingsManager(Service):
         setting = self.SETTINGS[setting_type]
         try:
             value = setting.value_type(value)
-        except ValueError:
+        except TypeError:
             return False
 
         match setting_type:
@@ -97,7 +97,7 @@ class UserSettingsManager(Service):
 
         try:
             return setting.value_type(user_value)
-        except ValueError:
+        except TypeError:
             return user_value
 
     async def set(
