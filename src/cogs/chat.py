@@ -20,6 +20,7 @@ from events.inventory_batchevent import InventoryBatchEvent
 from events.inventory_event import InventoryEvent
 from events.karma_event import KarmaEvent
 from items.types import ItemType
+from view.settings.view import UserSettingView
 
 
 class Chat(commands.Cog):
@@ -256,6 +257,23 @@ class Chat(commands.Cog):
             args=[user.display_name],
             ephemeral=False,
         )
+
+    @app_commands.command(
+        name="personal_settings",
+        description="Adjust various personal settings that only apply to you.",
+    )
+    @app_commands.guild_only()
+    async def personal_settings(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        log_message = (
+            f"{interaction.user.name} used command `{interaction.command.name}`."
+        )
+        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
+
+        view = UserSettingView(self.controller, interaction)
+        message = await interaction.followup.send("", view=view, ephemeral=True)
+        view.set_message(message)
+        await view.refresh_ui()
 
     @app_commands.command(
         name="karma_settings",

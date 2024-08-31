@@ -20,7 +20,8 @@ from control.controller import Controller
 from control.imgur_manager import ImgurManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
-from control.types import UserSetting
+from control.types import UserSettingType
+from control.user_settings_manager import UserSettingsManager
 from datalayer.database import Database
 from items.types import ItemType
 from view.combat.embed import EquipmentHeadEmbed
@@ -46,6 +47,9 @@ class Combat(commands.Cog):
         )
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
+        )
+        self.user_settings_manager: UserSettingsManager = self.controller.get_service(
+            UserSettingsManager
         )
         self.gear_manager: CombatGearManager = self.controller.get_service(
             CombatGearManager
@@ -562,8 +566,8 @@ class Combat(commands.Cog):
         member_id = interaction.user.id
         guild_id = interaction.guild_id
 
-        await self.database.set_user_setting(
-            member_id, guild_id, UserSetting.AUTO_SCRAP, level
+        await self.user_settings_manager.set(
+            member_id, guild_id, UserSettingType.AUTO_SCRAP, level
         )
 
         await self.bot.command_response(

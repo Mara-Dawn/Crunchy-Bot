@@ -90,7 +90,7 @@ class SettingsManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
-        self.log_name = "Items"
+        self.log_name = "Settings"
 
         # defaults
         general_settings = ModuleSettings(self.GENERAL_SUBSETTINGS_KEY, name="General")

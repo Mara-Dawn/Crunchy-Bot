@@ -2,14 +2,14 @@ import datetime
 from typing import Literal
 
 import discord
-from control.settings_manager import SettingsManager
-from datalayer.types import PredictionState
 from discord import app_commands
 from discord.ext import commands, tasks
-from events.prediction_event import PredictionEvent
-from events.types import PredictionEventType
 
 from cogs.beans.beans_group import BeansGroup
+from control.settings_manager import SettingsManager
+from datalayer.types import PredictionState
+from events.prediction_event import PredictionEvent
+from events.types import PredictionEventType
 
 
 class Predictions(BeansGroup):

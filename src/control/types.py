@@ -1,9 +1,34 @@
 from enum import Enum
 
 
-class UserSetting(str, Enum):
+class UserSettingType(str, Enum):
     GAMBA_DEFAULT = "gamba_default"
     AUTO_SCRAP = "auto_scrap"
+    REFRESH_SKILLS = "refresh_skills"
+
+    def get_title(option: "UserSettingType") -> str:
+        title_map = {
+            UserSettingType.GAMBA_DEFAULT: "Default Gamba Amount",
+            UserSettingType.AUTO_SCRAP: "Auto Scrap Level",
+            UserSettingType.REFRESH_SKILLS: "Auto Replenish Skills of Same Type",
+        }
+        return title_map[option]
+
+
+class SkillRefreshOption(str, Enum):
+    DISABLED = "disabled"
+    SAME_RARITY = "same_rarity"
+    LOWEST_RARITY = "lowest_rarity"
+    HIGHEST_RARITY = "highest_rarity"
+
+    def get_title(option: "SkillRefreshOption") -> str:
+        title_map = {
+            SkillRefreshOption.DISABLED: "Disabled",
+            SkillRefreshOption.SAME_RARITY: "Same Rarity",
+            SkillRefreshOption.LOWEST_RARITY: "Lowest Rarity",
+            SkillRefreshOption.HIGHEST_RARITY: "Highest Rarity",
+        }
+        return title_map[option]
 
 
 class ControllerType(str, Enum):
@@ -18,6 +43,7 @@ class ControllerType(str, Enum):
     GARDEN_VIEW = "GardenViewController"
     COMBAT = "CombatViewController"
     EQUIPMENT = "EquipmentViewController"
+    USER_SETTING = "UserSettingViewController"
 
     BASIC_ENEMY = "BasicEnemyController"
     BOSS_DADDY = "DaddyController"
@@ -46,6 +72,7 @@ class ControllerModuleMap(str, Enum):
             ControllerType.GARDEN_VIEW: "garden_view_controller",
             ControllerType.COMBAT: "combat_view_controller",
             ControllerType.EQUIPMENT: "equipment_view_controller",
+            ControllerType.USER_SETTING: "user_setting_view_controller",
             ControllerType.BASIC_ENEMY: "basic_enemy",
             ControllerType.BOSS_DADDY: "daddy",
             ControllerType.BOSS_WEEB: "weeb",

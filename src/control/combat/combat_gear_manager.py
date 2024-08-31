@@ -1,6 +1,7 @@
 import datetime
 import random
 
+import discord
 from discord.ext import commands
 
 from combat.actors import Character
@@ -35,6 +36,7 @@ from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
+from control.types import SkillRefreshOption
 from datalayer.database import Database
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
@@ -636,6 +638,7 @@ class CombatGearManager(Service):
 
     async def roll_enemy_loot(self, context: EncounterContext):
         enemy = context.opponent.enemy
+        enemy_level = context.opponent.level
 
         loot = {}
 
@@ -650,11 +653,9 @@ class CombatGearManager(Service):
                 combatant, context.encounter_events
             )
 
-            beans_amount = int(
-                enemy.roll_beans_amount(context.opponent.level) * (1 - penalty)
-            )
+            beans_amount = int(enemy.roll_beans_amount(enemy_level) * (1 - penalty))
             loot_amount = max(
-                1, int(enemy.roll_loot_amount(context.opponent.level) * (1 - penalty))
+                1, int(enemy.roll_loot_amount(enemy_level) * (1 - penalty))
             )
             bonus_loot_drop = random.random() < (
                 enemy.bonus_loot_chance * (1 - penalty)
@@ -669,7 +670,6 @@ class CombatGearManager(Service):
             bonus_loot = None
             if bonus_loot_drop:
                 loot_table = enemy.item_loot_table
-                enemy_level = context.opponent.level
                 if enemy_level in BaseKey.TYPE_MAP:
                     loot_table.append(BaseKey.TYPE_MAP[enemy_level])
 
