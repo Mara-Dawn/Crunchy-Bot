@@ -971,6 +971,9 @@ class EncounterManager(Service):
 
             character = await self.actor_manager.get_character(member)
 
+            log_message = f"{member.display_name} auto refresh check started. {refresh_setting.value}"
+            self.logger.log(member.guild.id, log_message, cog=self.log_name)
+
             spent_skills: dict[int, CharacterSkill] = {}
             spent_skill_types = set()
 
@@ -985,12 +988,20 @@ class EncounterManager(Service):
                     spent_skills[slot] = skill_data
                     spent_skill_types.add(skill.type)
 
+            log_message = f"{member.display_name} auto refresh: {len(spent_skills)} spent skills found."
+            self.logger.log(member.guild.id, log_message, cog=self.log_name)
+
             if len(spent_skills) <= 0:
                 return
 
             user_skills = await self.database.get_user_skill_inventory(
                 member.guild.id, member.id
             )
+
+            log_message = f"{member.display_name} auto refresh skill types: "
+            for skilltype in spent_skill_types:
+                log_message += f"{skilltype.value}, "
+            self.logger.log(member.guild.id, log_message, cog=self.log_name)
 
             filtered_skills: list[Skill] = []
             for skill in user_skills:
@@ -1000,9 +1011,16 @@ class EncounterManager(Service):
                     continue
                 filtered_skills.append(skill)
 
+            log_message = f"{member.display_name} auto refresh: {len(filtered_skills)} possible replacement skills found."
+            self.logger.log(member.guild.id, log_message, cog=self.log_name)
+
             character_equipped_skills = character.skill_slots
             changes_made = False
             for slot, skill_data in spent_skills.items():
+
+                log_message = f"{member.display_name} auto refresh: Finding replacement for {skill_data.skill.name} in slot {slot}."
+                self.logger.log(member.guild.id, log_message, cog=self.log_name)
+
                 replacement_skill = None
                 for skill in filtered_skills:
                     if skill.type != skill_data.skill.type:
@@ -1032,18 +1050,27 @@ class EncounterManager(Service):
                                 break
 
                 if replacement_skill is None:
+                    log_message = (
+                        f"{member.display_name} auto refresh: found no replacements."
+                    )
+                    self.logger.log(member.guild.id, log_message, cog=self.log_name)
                     return
+
+                log_message = f"{member.display_name} auto refresh: found: {replacement_skill.name} with rarity {replacement_skill.rarity.value}."
+                self.logger.log(member.guild.id, log_message, cog=self.log_name)
+
                 character_equipped_skills[slot] = replacement_skill
                 changes_made = True
                 filtered_skills.remove(replacement_skill)
 
             if not changes_made:
                 return
+            log_message = f"{member.display_name} auto refresh: applying changes."
+            self.logger.log(member.guild.id, log_message, cog=self.log_name)
 
-            await self.database.set_selected_user_skills(member.guild.id, member.id, character_equipped_skills)
-
-
-                
+            await self.database.set_selected_user_skills(
+                member.guild.id, member.id, character_equipped_skills
+            )
 
     async def payout_loot(self, context: EncounterContext):
         loot = await self.gear_manager.roll_enemy_loot(context)
