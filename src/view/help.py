@@ -159,11 +159,15 @@ class HelpEmbed(discord.Embed):
             description = "```Quotes```\n" + description
             self.add_field(name="", value=description, inline=False)
 
-        if not advanced:
-            beans_commands = []
+        beans_commands = []
+        if advanced:
+            beans_commands.append(
+                "`/personal_settings` - Various settings that only affect you.\n"
+            )
+        else:
             beans_commands.append(
                 "`/beans help advanced` - Shows all available commands.\n"
             )
-            description = "\n\n".join(beans_commands)
-            description = "```More```\n" + description
-            self.add_field(name="", value=description, inline=False)
+        description = "\n\n".join(beans_commands)
+        description = "```More```\n" + description
+        self.add_field(name="", value=description, inline=False)

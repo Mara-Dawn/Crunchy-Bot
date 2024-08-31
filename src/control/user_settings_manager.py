@@ -95,7 +95,10 @@ class UserSettingsManager(Service):
         if user_value is None:
             user_value = setting.default
 
-        return setting.value_type(user_value)
+        try:
+            return setting.value_type(user_value)
+        except ValueError:
+            return user_value
 
     async def set(
         self, member_id: int, guild_id: int, setting_type: UserSettingType, value: Any
