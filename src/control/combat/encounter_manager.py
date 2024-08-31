@@ -11,7 +11,8 @@ from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
-from combat.gear.types import Base
+from combat.gear.droppable import Droppable
+from combat.gear.types import Base, Rarity
 from combat.skills.skill import CharacterSkill, Skill
 from combat.skills.types import (
     SkillEffect,
@@ -33,7 +34,7 @@ from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
-from control.types import ControllerModuleMap, UserSettingType
+from control.types import ControllerModuleMap, SkillRefreshOption, UserSettingType
 from control.user_settings_manager import UserSettingsManager
 from datalayer.database import Database
 from events.beans_event import BeansEvent
@@ -953,6 +954,96 @@ class EncounterManager(Service):
 
         if success:
             await self.payout_loot(context)
+
+        await self.handle_post_encounter(context)
+
+    async def handle_post_encounter(self, context: EncounterContext):
+
+        for combatant in context.combatants:
+            member = combatant.member
+
+            refresh_setting = await self.user_settings_manager.get(
+                member.id, member.guild.id, UserSettingType.REFRESH_SKILLS
+            )
+
+            if refresh_setting == SkillRefreshOption.DISABLED:
+                return
+
+            character = await self.actor_manager.get_character(member)
+
+            spent_skills: dict[int, CharacterSkill] = {}
+            spent_skill_types = set()
+
+            for slot, skill in character.skill_slots.items():
+                if skill.rarity == Rarity.UNIQUE:
+                    continue
+                skill_data = await self.skill_manager.get_skill_data(character, skill)
+                if (
+                    skill_data.stacks_left() is not None
+                    and skill_data.stacks_left() <= 0
+                ):
+                    spent_skills[slot] = skill_data
+                    spent_skill_types.add(skill.type)
+
+            if len(spent_skills) <= 0:
+                return
+
+            user_skills = await self.database.get_user_skill_inventory(
+                member.guild.id, member.id
+            )
+
+            filtered_skills: list[Skill] = []
+            for skill in user_skills:
+                if skill.type not in spent_skill_types:
+                    continue
+                if skill.rarity == Rarity.UNIQUE:
+                    continue
+                filtered_skills.append(skill)
+
+            character_equipped_skills = character.skill_slots
+            changes_made = False
+            for slot, skill_data in spent_skills.items():
+                replacement_skill = None
+                for skill in filtered_skills:
+                    if skill.type != skill_data.skill.type:
+                        continue
+                    match refresh_setting:
+                        case SkillRefreshOption.SAME_RARITY:
+                            if skill_data.skill.rarity == skill.rarity:
+                                replacement_skill = skill
+                                break
+                        case SkillRefreshOption.HIGHEST_RARITY:
+                            if (
+                                replacement_skill is None
+                                or Droppable.RARITY_SORT_MAP[skill.rarity]
+                                > Droppable.RARITY_SORT_MAP[replacement_skill.rarity]
+                            ):
+                                replacement_skill = skill
+                            if replacement_skill.rarity == Rarity.LEGENDARY:
+                                break
+                        case SkillRefreshOption.LOWEST_RARITY:
+                            if (
+                                replacement_skill is None
+                                or Droppable.RARITY_SORT_MAP[skill.rarity]
+                                < Droppable.RARITY_SORT_MAP[replacement_skill.rarity]
+                            ):
+                                replacement_skill = skill
+                            if replacement_skill.rarity == Rarity.COMMON:
+                                break
+
+                if replacement_skill is None:
+                    return
+                character_equipped_skills[slot] = replacement_skill
+                changes_made = True
+                filtered_skills.remove(replacement_skill)
+
+            if not changes_made:
+                return
+
+            await self.database.set_selected_user_skills(member.guild.id, member.id, character_equipped_skills)
+
+
+                
 
     async def payout_loot(self, context: EncounterContext):
         loot = await self.gear_manager.roll_enemy_loot(context)

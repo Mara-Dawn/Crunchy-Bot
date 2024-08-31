@@ -10,7 +10,7 @@ class UserSettingType(str, Enum):
         title_map = {
             UserSettingType.GAMBA_DEFAULT: "Default Gamba Amount",
             UserSettingType.AUTO_SCRAP: "Auto Scrap Level",
-            UserSettingType.REFRESH_SKILLS: "Skill Refresh",
+            UserSettingType.REFRESH_SKILLS: "Auto Replenish Skills of Same Type",
         }
         return title_map[option]
 
