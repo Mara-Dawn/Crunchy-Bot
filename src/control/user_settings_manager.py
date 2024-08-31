@@ -20,7 +20,7 @@ class UserSettingsManager(Service):
         UserSettingType.AUTO_SCRAP: UserSetting(
             UserSettingType.AUTO_SCRAP,
             int,
-            {f"<= Level {v}": v for v in list(range(0, Config.MAX_LVL))},
+            {f"Loot Level <= {v}": v for v in list(range(0, Config.MAX_LVL))},
             0,
             UserSettingType.get_title(UserSettingType.AUTO_SCRAP),
             "Level of autoscrapped gear (up to and incl.)",
@@ -31,7 +31,7 @@ class UserSettingsManager(Service):
             None,
             None,
             UserSettingType.get_title(UserSettingType.GAMBA_DEFAULT),
-            "Level of autoscrapped gear (up to and incl.)",
+            "Set your default /gamba amount.",
         ),
         UserSettingType.REFRESH_SKILLS: UserSetting(
             UserSettingType.REFRESH_SKILLS,

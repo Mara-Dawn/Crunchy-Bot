@@ -14,7 +14,6 @@ from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.settings.view import (
     EditUserSettingModal,
-    UserSettingsViewState,
 )
 
 

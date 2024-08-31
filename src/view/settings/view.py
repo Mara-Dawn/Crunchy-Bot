@@ -107,14 +107,16 @@ class UserSettingView(ViewMenu):
         if self.message is None:
             return
 
-        if self.selected is not None:
-            self.selected_definition = self.user_settings_manager.get_definition(
-                self.selected
+        if self.selected is None:
+            self.selected = UserSettingType.GAMBA_DEFAULT
+
+        self.selected_definition = self.user_settings_manager.get_definition(
+            self.selected
+        )
+        if self.selected_option is None:
+            self.selected_option = await self.user_settings_manager.get(
+                self.member_id, self.guild_id, self.selected
             )
-            if self.selected_option is None:
-                self.selected_option = await self.user_settings_manager.get(
-                    self.member_id, self.guild_id, self.selected
-                )
 
         self.refresh_elements(disabled)
 
@@ -200,7 +202,7 @@ class EditUserSettingModal(discord.ui.Modal):
         self.setting = setting.setting_type
 
         self.value_input = discord.ui.TextInput(
-            label="Enter your new setting:",
+            label=setting.description,
             placeholder=setting.description,
         )
 
@@ -262,8 +264,6 @@ class SettingsDropdown(discord.ui.Select):
     ):
 
         options = []
-        if selected is None:
-            selected = UserSettingType.GAMBA_DEFAULT
 
         for setting_type in UserSettingType:
             name = UserSettingType.get_title(setting_type)
