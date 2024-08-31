@@ -33,7 +33,8 @@ from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
-from control.types import ControllerModuleMap, UserSetting
+from control.types import ControllerModuleMap, UserSettingType
+from control.user_settings_manager import UserSettingsManager
 from datalayer.database import Database
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
@@ -84,6 +85,9 @@ class EncounterManager(Service):
         self.controller = controller
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
+        )
+        self.user_settings_manager: UserSettingsManager = self.controller.get_service(
+            UserSettingsManager
         )
         self.item_manager: ItemManager = self.controller.get_service(ItemManager)
         self.skill_manager: CombatSkillManager = self.controller.get_service(
@@ -976,8 +980,8 @@ class EncounterManager(Service):
             )
             await self.controller.dispatch_event(event)
 
-            auto_scrap = await self.database.get_user_setting(
-                member.id, context.encounter.guild_id, UserSetting.AUTO_SCRAP
+            auto_scrap = await self.user_settings_manager.get(
+                member.id, context.encounter.guild_id, UserSettingType.AUTO_SCRAP
             )
             if auto_scrap is None:
                 auto_scrap = 0

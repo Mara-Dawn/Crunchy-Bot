@@ -8,8 +8,10 @@ class Config:
     LUCKY_ITEM_CHANCE = 0.05
 
     # General Combat
-    COMBAT_INITIAL_WAIT = 90
-    # COMBAT_INITIAL_WAIT = 10
+    MAX_LVL = 7
+
+    # COMBAT_INITIAL_WAIT = 90
+    COMBAT_INITIAL_WAIT = 10
 
     DEFAULT_TIMEOUT = 60 * 3
     SHORT_TIMEOUT = 60

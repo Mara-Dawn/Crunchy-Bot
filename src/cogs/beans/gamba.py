@@ -14,7 +14,8 @@ from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
-from control.types import UserSetting
+from control.types import UserSettingType
+from control.user_settings_manager import UserSettingsManager
 from datalayer.database import Database
 from datalayer.types import ItemTrigger
 from events.beans_event import BeansEvent
@@ -36,6 +37,9 @@ class Gamba(commands.Cog):
         self.role_manager: RoleManager = self.controller.get_service(RoleManager)
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
+        )
+        self.user_settings_manager: UserSettingsManager = self.controller.get_service(
+            UserSettingsManager
         )
         self.ai_manager: AIManager = self.controller.get_service(AIManager)
 
@@ -179,8 +183,8 @@ class Gamba(commands.Cog):
             )
             return
 
-        await self.database.set_user_setting(
-            user_id, guild_id, UserSetting.GAMBA_DEFAULT, amount
+        await self.user_settings_manager.set(
+            user_id, guild_id, UserSettingType.GAMBA_DEFAULT, amount
         )
 
         response = f"Default gamba amount was set to {amount}."
@@ -219,8 +223,8 @@ class Gamba(commands.Cog):
         default_amount = await self.settings_manager.get_beans_gamba_cost(guild_id)
 
         if amount is None or amount <= 0:
-            user_default = await self.database.get_user_setting(
-                user_id, guild_id, UserSetting.GAMBA_DEFAULT
+            user_default = await self.user_settings_manager.get(
+                user_id, guild_id, UserSettingType.GAMBA_DEFAULT
             )
             amount = int(user_default) if user_default is not None else default_amount
 

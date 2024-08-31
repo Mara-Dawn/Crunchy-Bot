@@ -1,3 +1,9 @@
+from dataclasses import dataclass
+from typing import Any, Type
+
+from control.types import UserSettingType
+
+
 class Setting:
 
     def __init__(
@@ -53,3 +59,13 @@ class GuildSettings:
             return None
 
         return module_setting.default
+
+
+@dataclass
+class UserSetting:
+    setting_type: UserSettingType
+    value_type: type
+    options: dict[str, Any] | None
+    default: Any
+    title: str
+    description: str
