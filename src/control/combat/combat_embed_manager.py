@@ -422,7 +422,10 @@ class CombatEmbedManager(Service):
                 damage_info = f"**{display_dmg}** [magic]"
             case SkillEffect.HEALING:
                 outcome_title = "Healing"
-                damage_info = f"**{display_dmg}**"
+                if current_actor.is_enemy:
+                    damage_info = f"**{int(display_dmg/current_actor.max_hp*100)}%**"
+                else:
+                    damage_info = f"**{display_dmg}**"
 
         if damage_instance.is_crit:
             damage_info = "CRIT! " + damage_info

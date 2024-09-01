@@ -4,6 +4,7 @@ import random
 from combat.actors import Actor, Opponent
 from combat.encounter import EncounterContext, TurnData
 from combat.skills.skill import Skill
+from combat.skills.types import SkillEffect, SkillTarget
 from control.combat.enemy.enemy_controller import EnemyController
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
@@ -43,6 +44,9 @@ class BasicEnemyController(EnemyController):
     ):
         damage_data = []
 
+        if skill.base_skill.default_target == SkillTarget.SELF:
+            available_targets = [context.opponent]
+
         if skill.base_skill.aoe:
             damage_data, post_embed_data = await self.calculate_aoe_skill(
                 context, skill, available_targets, hp_cache
@@ -66,11 +70,22 @@ class BasicEnemyController(EnemyController):
             )
         )
 
+        skill_targets = []
+
         for instance in damage_instances:
             if len(available_targets) <= 0:
                 break
 
-            target = random.choice(available_targets)
+            if (
+                skill.base_skill.max_targets is not None
+                and len(skill_targets) >= skill.base_skill.max_targets
+            ):
+                target = random.choice(skill_targets)
+            else:
+                target = random.choice(available_targets)
+
+            if target not in skill_targets:
+                skill_targets.append(target)
 
             if target.id not in hp_cache:
                 current_hp = await self.actor_manager.get_actor_current_hp(
@@ -107,7 +122,10 @@ class BasicEnemyController(EnemyController):
                 target, skill, instance.scaled_value
             )
 
-            new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
+            if skill.base_skill.skill_effect != SkillEffect.HEALING:
+                total_damage *= -1
+
+            new_target_hp = min(max(0, current_hp + total_damage), target.max_hp)
 
             damage_data.append((target, instance, new_target_hp))
 
@@ -135,7 +153,13 @@ class BasicEnemyController(EnemyController):
         available_skills = []
 
         sorted_skills = sorted(
-            opponent.skills, key=lambda x: x.base_skill.base_value, reverse=True
+            opponent.skills,
+            key=lambda x: (
+                x.base_skill.base_value
+                if x.base_skill.skill_effect != SkillEffect.HEALING
+                else 100
+            ),
+            reverse=True,
         )
         for skill in sorted_skills:
             skill_data = await self.skill_manager.get_skill_data(opponent, skill)

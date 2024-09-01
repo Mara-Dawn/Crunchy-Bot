@@ -377,8 +377,8 @@ class SchoolBully(Enemy):
             description="Loot at this little douche bag. Dont you just wanna punch his face? (Hes talking about you.)",
             information="",
             image_url="https://i.imgur.com/DWqm3oz.png",
-            min_level=3,
-            max_level=7,
+            min_level=6,
+            max_level=9,
             health=6,
             damage_scaling=5.5,
             max_players=5,
@@ -705,6 +705,33 @@ class Boomer(Enemy):
             initiative=15,
             actions_per_turn=1,
             author="Kiwi",
+        )
+
+
+class SausageButcher(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Sausage Butcher",
+            type=EnemyType.SAUSAGE_BUTCHER,
+            description=("For some reason, all he's selling is sausages."),
+            information="",
+            image_url="https://i.imgur.com/js3YqhU.png",
+            min_level=3,
+            max_level=6,
+            health=6,
+            damage_scaling=5,
+            max_players=3,
+            skill_types=[
+                SkillType.BIG_SALAMI,
+                SkillType.WIENER_BOMB,
+                SkillType.BRATWURST_BREAK,
+            ],
+            item_loot_table=RARE_LOOT,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=35,
+            actions_per_turn=1,
+            author="Waldheld",
         )
 
 

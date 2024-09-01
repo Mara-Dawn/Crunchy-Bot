@@ -28,6 +28,7 @@ class EnemyType(str, Enum):
     BONTERRY_KING = "BonterryKing"
     FAIRY = "Fairy"
     BOOMER = "Boomer"
+    SAUSAGE_BUTCHER = "SausageButcher"
 
     DADDY_P1 = "Daddy_P1"
     DADDY_P2 = "Daddy_P2"

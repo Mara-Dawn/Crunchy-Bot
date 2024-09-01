@@ -336,7 +336,7 @@ class EncounterManager(Service):
         if combat_progress >= 0.5:
             return ""
 
-        if combat_progress < 0.5:
+        if combat_progress < 0.5 and combat_progress > 0.25:
             additional_message = "You joined late, so you will get a 50% loot penalty."
             event = EncounterEvent(
                 datetime.datetime.now(),
@@ -813,7 +813,6 @@ class EncounterManager(Service):
             display_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.value
             )
-
             embed_data = (
                 await self.status_effect_manager.handle_post_attack_status_effects(
                     context,
@@ -828,11 +827,7 @@ class EncounterManager(Service):
                     context, character, embed_data
                 )
 
-            status_effect_damage = (
-                await self.actor_manager.get_skill_damage_after_defense(
-                    target, turn.skill, damage_instance.value
-                )
-            )
+            status_effect_damage = display_damage 
             for skill_status_effect in turn.skill.base_skill.status_effects:
                 application_value = None
                 match skill_status_effect.application:

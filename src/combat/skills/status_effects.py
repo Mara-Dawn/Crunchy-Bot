@@ -167,6 +167,7 @@ class Inspired(StatusEffect):
             trigger=[StatusEffectTrigger.ON_ATTACK],
             consumed=[StatusEffectTrigger.END_OF_TURN],
             emoji="🍑",
+            max_stacks=99999,
             display_status=True,
             override=True,
             apply_on_miss=True,
