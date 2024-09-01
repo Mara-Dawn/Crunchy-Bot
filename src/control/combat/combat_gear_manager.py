@@ -639,13 +639,28 @@ class CombatGearManager(Service):
     async def roll_enemy_loot(self, context: EncounterContext):
         enemy = context.opponent.enemy
         enemy_level = context.opponent.level
+        guild_id = context.encounter.guild_id
 
         loot = {}
 
+        loot_table = enemy.item_loot_table
+        if enemy_level in BaseKey.TYPE_MAP:
+            loot_table.append(BaseKey.TYPE_MAP[enemy_level])
+
+        loot_items = [
+            (await self.item_manager.get_item(guild_id, x)) for x in loot_table
+        ]
+        weights = [item.weight for item in loot_items]
+        weights = [1.0 / w for w in weights]
+        sum_weights = sum(weights)
+        weights = [w / sum_weights for w in weights]
+
+        log_message = "Loot Table for encounter: "
+        for item in loot_items:
+            log_message += f"{item.name}, "
+        self.logger.log(guild_id, log_message, cog=self.log_name)
+
         for combatant in context.combatants:
-
-            guild_id = combatant.member.guild.id
-
             if combatant.is_out:
                 continue
 
@@ -669,17 +684,6 @@ class CombatGearManager(Service):
 
             bonus_loot = None
             if bonus_loot_drop:
-                loot_table = enemy.item_loot_table
-                if enemy_level in BaseKey.TYPE_MAP:
-                    loot_table.append(BaseKey.TYPE_MAP[enemy_level])
-
-                loot_items = [
-                    (await self.item_manager.get_item(guild_id, x)) for x in loot_table
-                ]
-                weights = [item.weight for item in loot_items]
-                weights = [1.0 / w for w in weights]
-                sum_weights = sum(weights)
-                weights = [w / sum_weights for w in weights]
                 bonus_loot = random.choices(loot_items, weights=weights)[0]
 
             loot[combatant.member] = (beans_amount, drops, bonus_loot)
