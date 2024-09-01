@@ -1,4 +1,6 @@
+from dataclasses import dataclass
 from enum import Enum
+import random
 
 
 class StatusEffectType(str, Enum):
@@ -253,6 +255,20 @@ class StatusEffectApplication(Enum):
     MANUAL_VALUE = 2
 
 
+@dataclass
+class StatusEffectOutcome:
+    value: int | None
+    modifier: float | None
+    crit_chance: float | None
+    crit_chance_modifier: float | None
+    info: str | None
+    embed_data: dict[str, str] | None
+
+    @staticmethod
+    def EMPTY():
+        return StatusEffectOutcome(None, None, None, None, None, None)
+
+
 class SkillInstance:
 
     def __init__(
@@ -262,29 +278,54 @@ class SkillInstance:
         modifier: float,
         critical_modifier: float,
         encounter_scaling: float,
-        is_crit: bool,
+        crit_chance: float,
+        is_crit: bool | None,
     ):
         self.weapon_roll = weapon_roll
         self.skill_base = skill_base
         self.modifier = modifier
         self.critical_modifier = critical_modifier
         self.encounter_scaling = encounter_scaling
+        self.critical_chance = crit_chance
         self.is_crit = is_crit
 
-        self.value = self.weapon_roll * self.skill_base * self.modifier
-        self.raw_value = int(self.value)
+    @property
+    def value(self):
+        if self.is_crit is None:
+            self.is_crit = random.random() < self.critical_chance
+
+        value = self.weapon_roll * self.skill_base * self.modifier
+
         if self.is_crit:
-            self.value *= self.critical_modifier
+            value *= self.critical_modifier
 
-        self.scaled_value = 0
-        if self.value > 0:
-            self.scaled_value = max(1, int(self.value * self.encounter_scaling))
-        self.value: int = int(self.value)
+        return int(value)
 
-    def apply_effect_modifier(self, modifier: float):
-        self.value *= modifier
-        self.raw_value = int(self.value)
-        self.scaled_value = 0
-        if self.value > 0:
-            self.scaled_value = max(1, int(self.value * self.encounter_scaling))
-        self.value: int = int(self.value)
+    @property
+    def raw_value(self):
+        value = self.weapon_roll * self.skill_base * self.modifier
+        return int(value)
+
+    @property
+    def scaled_value(self):
+        if self.is_crit is None:
+            self.is_crit = random.random() < self.critical_chance
+
+        value = self.weapon_roll * self.skill_base * self.modifier
+
+        if self.is_crit:
+            value *= self.critical_modifier
+
+        if value > 0:
+            value = max(1, value * self.encounter_scaling)
+
+        return int(value)
+
+    def apply_effect_outcome(self, outcome: StatusEffectOutcome):
+        if outcome.modifier is not None:
+            self.modifier *= outcome.modifier
+        if self.is_crit is None:
+            if outcome.crit_chance is not None:
+                self.critical_chance = outcome.crit_chance
+            if outcome.crit_chance_modifier is not None:
+                self.critical_chance *= outcome.crit_chance_modifier

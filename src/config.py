@@ -41,12 +41,12 @@ class Config:
 
     AVERAGE_PLAYER_POTENCY = {
         1: 2,
-        2: 2.15,
-        3: 2.3,
-        4: 2.45,
-        5: 2.6,
-        6: 2.75,
-        7: 3,
+        2: 2.2,
+        3: 2.4,
+        4: 2.6,
+        5: 2.8,
+        6: 3,
+        7: 3.2,
     }
 
     CHARACTER_BASE_INITIATIVE = 10

@@ -584,13 +584,13 @@ class EncounterManager(Service):
             if len(triggered_status_effects) <= 0:
                 continue
 
-            effect_data = await self.status_effect_manager.handle_status_effects(
+            outcome = await self.status_effect_manager.handle_status_effects(
                 context, active_actor, triggered_status_effects
             )
 
-            if len(effect_data) > 0:
+            if outcome.embed_data is not None:
                 status_effect_embed = self.embed_manager.get_status_effect_embed(
-                    active_actor, effect_data
+                    active_actor, outcome.embed_data
                 )
                 await self.context_loader.append_embed_to_round(
                     context, status_effect_embed
@@ -618,13 +618,13 @@ class EncounterManager(Service):
         if len(triggered_status_effects) <= 0:
             return context
 
-        effect_data = await self.status_effect_manager.handle_status_effects(
+        outcome = await self.status_effect_manager.handle_status_effects(
             context, actor, triggered_status_effects
         )
 
-        if len(effect_data) > 0:
+        if outcome.embed_data is not None:
             status_effect_embed = self.embed_manager.get_status_effect_embed(
-                actor, effect_data
+                actor, outcome.embed_data
             )
             await self.context_loader.append_embed_to_round(
                 context, status_effect_embed
@@ -643,26 +643,24 @@ class EncounterManager(Service):
     ) -> tuple[list[tuple[Actor, SkillInstance, float], discord.Embed]]:
         damage_data = []
         embed_data = {}
-        effect_modifier, post_embed_data = (
-            await self.status_effect_manager.handle_attack_status_effects(
-                context, source, skill
-            )
+        outcome = await self.status_effect_manager.handle_attack_status_effects(
+            context, source, skill
         )
-        if post_embed_data is not None:
-            embed_data = embed_data | post_embed_data
+        if outcome.embed_data is not None:
+            embed_data = embed_data | outcome.embed_data
 
         for target in available_targets:
             instances = await self.skill_manager.get_skill_effect(
                 source, skill, combatant_count=context.get_combat_scale()
             )
             instance = instances[0]
-            instance.apply_effect_modifier(effect_modifier)
+            instance.apply_effect_outcome(outcome)
 
             current_hp = await self.actor_manager.get_actor_current_hp(
                 target, context.combat_events
             )
 
-            on_damage_effect_modifier, post_embed_data = (
+            outcome_on_dmg = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
                     target,
@@ -670,10 +668,10 @@ class EncounterManager(Service):
                 )
             )
 
-            if post_embed_data is not None:
-                embed_data = embed_data | post_embed_data
+            if outcome_on_dmg.embed_data is not None:
+                embed_data = embed_data | outcome_on_dmg.embed_data
 
-            instance.apply_effect_modifier(on_damage_effect_modifier)
+            instance.apply_effect_outcome(outcome_on_dmg)
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
@@ -703,19 +701,16 @@ class EncounterManager(Service):
         embed_data = {}
 
         for instance in skill_instances:
-            effect_modifier, post_embed_data = (
-                await self.status_effect_manager.handle_attack_status_effects(
-                    context,
-                    source,
-                    skill,
-                )
+            outcome = await self.status_effect_manager.handle_attack_status_effects(
+                context,
+                source,
+                skill,
             )
-            if post_embed_data is not None:
-                embed_data = embed_data | post_embed_data
+            if outcome.embed_data is not None:
+                embed_data = embed_data | outcome.embed_data
+            instance.apply_effect_outcome(outcome)
 
-            instance.apply_effect_modifier(effect_modifier)
-
-            effect_modifier, post_embed_data = (
+            outcome = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
                     target,
@@ -723,10 +718,9 @@ class EncounterManager(Service):
                 )
             )
 
-            if post_embed_data is not None:
-                embed_data = embed_data | post_embed_data
-
-            instance.apply_effect_modifier(effect_modifier)
+            if outcome.embed_data is not None:
+                embed_data = embed_data | outcome.embed_data
+            instance.apply_effect_outcome(outcome)
 
             total_skill_value = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
@@ -813,7 +807,7 @@ class EncounterManager(Service):
             display_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.value
             )
-            embed_data = (
+            outcome = (
                 await self.status_effect_manager.handle_post_attack_status_effects(
                     context,
                     character,
@@ -822,12 +816,12 @@ class EncounterManager(Service):
                     damage_instance,
                 )
             )
-            if embed_data is not None:
+            if outcome.embed_data is not None:
                 await self.context_loader.append_embeds_to_round(
-                    context, character, embed_data
+                    context, character, outcome.embed_data
                 )
 
-            status_effect_damage = display_damage 
+            status_effect_damage = display_damage
             for skill_status_effect in turn.skill.base_skill.status_effects:
                 application_value = None
                 match skill_status_effect.application:
@@ -1222,16 +1216,16 @@ class EncounterManager(Service):
                     await enemy_controller.on_defeat(context, actor)
                     continue
 
-                embed_data, prevent_death = (
+                outcome = (
                     await self.status_effect_manager.handle_on_death_status_effects(
                         context, actor
                     )
                 )
-                if embed_data is not None:
+                if outcome.embed_data is not None:
                     await self.context_loader.append_embeds_to_round(
-                        context, actor, embed_data
+                        context, actor, outcome.embed_data
                     )
-                if prevent_death:
+                if outcome.value == 1:
                     continue
 
                 encounter_event_type = EncounterEventType.MEMBER_DEFEAT
