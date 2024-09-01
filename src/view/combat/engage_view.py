@@ -110,6 +110,9 @@ class EnemyEngageView(ViewMenu):
             self.controller.detach_view(self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if not self.active and not self.done and self.timeout is not None:
+            now = datetime.datetime.now().timestamp()
+            self.timeout = max(1, int(self.timeout_timestamp - now))
         return True
 
     async def on_timeout(self):
