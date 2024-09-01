@@ -73,7 +73,7 @@ class EncounterStatistics(Service):
         max_hit: CombatEvent | None = None
 
         for event in context.combat_events:
-            if event.combat_event_type == CombatEventType.MEMBER_TURN:
+            if event.combat_event_type == CombatEventType.MEMBER_TURN_STEP:
                 if event.skill_value is None or event.skill_value <= 0:
                     continue
                 skill = await self.factory.get_base_skill(event.skill_type)
@@ -104,7 +104,7 @@ class EncounterStatistics(Service):
 
         for event in context.combat_events:
             if event.combat_event_type in [
-                CombatEventType.MEMBER_TURN,
+                CombatEventType.MEMBER_TURN_STEP,
                 CombatEventType.STATUS_EFFECT_OUTCOME,
             ]:
                 if event.skill_value is None or event.skill_value <= 0:
@@ -211,7 +211,7 @@ class EncounterStatistics(Service):
 
         for event in context.combat_events:
             if event.combat_event_type in [
-                CombatEventType.MEMBER_TURN,
+                CombatEventType.MEMBER_TURN_STEP,
                 CombatEventType.STATUS_EFFECT_OUTCOME,
             ]:
                 if event.skill_value is None or event.skill_value <= 0:

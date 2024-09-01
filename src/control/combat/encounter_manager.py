@@ -871,9 +871,23 @@ class EncounterManager(Service):
                 total_damage,
                 display_damage,
                 skill_data.skill.id,
-                CombatEventType.MEMBER_TURN,
+                CombatEventType.MEMBER_TURN_STEP,
             )
             await self.controller.dispatch_event(event)
+
+        event = CombatEvent(
+            datetime.datetime.now(),
+            context.encounter.guild_id,
+            context.encounter.id,
+            character.id,
+            None,
+            skill_data.skill.base_skill.skill_type,
+            None,
+            None,
+            None,
+            CombatEventType.MEMBER_TURN,
+        )
+        await self.controller.dispatch_event(event)
 
         await self.handle_turn_status_effects(
             context, character, StatusEffectTrigger.END_OF_TURN

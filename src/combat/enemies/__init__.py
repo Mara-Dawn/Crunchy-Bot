@@ -681,6 +681,33 @@ class Fairy(Enemy):
         )
 
 
+class Boomer(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="The Boomer",
+            type=EnemyType.BOOMER,
+            description=("A powerful aura of technological ineptitude fills the room."),
+            information="",
+            image_url="https://i.imgur.com/bPKSVcp.png",
+            min_level=3,
+            max_level=7,
+            health=7,
+            damage_scaling=6,
+            max_players=5,
+            skill_types=[
+                SkillType.BACK_IN_MY_DAYS,
+                SkillType.OUTDATED_ADVICE,
+                SkillType.NOSTALGIA_BOMB,
+            ],
+            item_loot_table=GENERAL_LOOT,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=15,
+            actions_per_turn=1,
+            author="Kiwi",
+        )
+
+
 # Bosses
 
 

@@ -2529,6 +2529,7 @@ class MeowKiss(BaseSkill):
                 SkillStatusEffect(
                     StatusEffectType.BLEED,
                     3,
+                    StatusEffectApplication.ATTACK_VALUE,
                 ),
                 SkillStatusEffect(
                     StatusEffectType.STUN,
@@ -2544,4 +2545,88 @@ class MeowKiss(BaseSkill):
             droppable=False,
             image_url="https://i.imgur.com/yG15RnX.png",
             author="Lusa",
+        )
+
+
+class BackInMyDays(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Back In My Days",
+            skill_type=SkillType.BACK_IN_MY_DAYS,
+            description=(
+                "He keeps talking and talking about the good old times and "
+                "literally makes your ears bleed. Literally!!"
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=1,
+            cooldown=0,
+            base_value=3,
+            aoe=True,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    2,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/B11mxMc.png",
+            author="Kiwi",
+        )
+
+
+class OutdatedAdvice(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Outdated Advice",
+            skill_type=SkillType.OUTDATED_ADVICE,
+            description=(
+                "The Boomer gives you unsolicited and completely irrelevant advice "
+                "and makes you question your own judgement. "
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            initial_cooldown=0,
+            cooldown=1,
+            base_value=1,
+            aoe=False,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    2,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/Af2MfSG.png",
+            author="Kiwi",
+        )
+
+
+class NostalgiaBomb(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Nostalgia Bomb",
+            skill_type=SkillType.NOSTALGIA_BOMB,
+            description=(
+                "The Boomer reminisces about his 'glory days' with such intensity, "
+                "that it creates a wave of nostalgia. You get lost in your own "
+                "memories and suddenly vividly remember all the times you embarrassed yourself."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=1,
+            cooldown=2,
+            base_value=5,
+            aoe=True,
+            hits=1,
+            status_effects=[],
+            droppable=False,
+            image_url="https://i.imgur.com/Rno01UO.png",
+            author="Kiwi",
         )

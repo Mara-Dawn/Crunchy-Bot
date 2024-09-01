@@ -170,6 +170,11 @@ class SkillType(str, Enum):
     WHISPERING = "Whispering"
     FOLLOW_ME = "FollowMe"
 
+    # Boomer
+    BACK_IN_MY_DAYS = "BackInMyDays"
+    OUTDATED_ADVICE = "OutdatedAdvice"
+    NOSTALGIA_BOMB = "NostalgiaBomb"
+
     # Daddy
     HAIR_PULL = "HairPull"
     BELT = "Belt"
