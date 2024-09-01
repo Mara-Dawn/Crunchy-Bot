@@ -451,6 +451,15 @@ class EncounterManager(Service):
                 thread, content="", embed=wait_embed, view=leave_view
             )
 
+        user = self.bot.get_guild(encounter.guild_id).get_member(member_id)
+        await thread.add_user(user)
+
+        embed = self.embed_manager.get_actor_join_embed(
+            user, additional_message=additional_message
+        )
+        embed.set_thumbnail(url=user.display_avatar.url)
+        await self.context_loader.send_message(thread, content="", embed=embed)
+
         if initiate_combat:
             wait_time = Config.COMBAT_INITIAL_WAIT
             round_embed = await self.embed_manager.get_initiation_embed(wait_time)
@@ -460,15 +469,6 @@ class EncounterManager(Service):
                 thread, content="", embed=round_embed, view=view
             )
             view.set_message(message)
-
-        user = self.bot.get_guild(encounter.guild_id).get_member(member_id)
-        await thread.add_user(user)
-
-        embed = self.embed_manager.get_actor_join_embed(
-            user, additional_message=additional_message
-        )
-        embed.set_thumbnail(url=user.display_avatar.url)
-        await self.context_loader.send_message(thread, content="", embed=embed)
 
         encounters = await self.database.get_encounter_participants(encounter.guild_id)
         enemy = await self.factory.get_enemy(encounter.enemy_type)
