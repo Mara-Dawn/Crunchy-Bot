@@ -175,6 +175,11 @@ class SkillType(str, Enum):
     OUTDATED_ADVICE = "OutdatedAdvice"
     NOSTALGIA_BOMB = "NostalgiaBomb"
 
+    # Sausage Butcher
+    BIG_SALAMI = "BigSalami"
+    WIENER_BOMB = "WienerBomb"
+    BRATWURST_BREAK = "BratwurstBreak"
+
     # Daddy
     HAIR_PULL = "HairPull"
     BELT = "Belt"

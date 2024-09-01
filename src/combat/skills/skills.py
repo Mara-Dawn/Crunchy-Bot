@@ -2630,3 +2630,81 @@ class NostalgiaBomb(BaseSkill):
             image_url="https://i.imgur.com/Rno01UO.png",
             author="Kiwi",
         )
+
+
+class BigSalami(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Big Ass Salami",
+            skill_type=SkillType.BIG_SALAMI,
+            description=(
+                "He takes out a big ass salami and slaps you in the face with it. Twice."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            initial_cooldown=0,
+            cooldown=1,
+            base_value=2,
+            aoe=False,
+            hits=2,
+            max_targets=1,
+            no_scaling=True,
+            status_effects=[],
+            droppable=False,
+            image_url="https://i.imgur.com/m1uToVo.png",
+            author="Waldheld",
+        )
+
+
+class WienerBomb(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Wiener Bomb",
+            skill_type=SkillType.WIENER_BOMB,
+            description=(
+                "Is this a delicious bbq you're smelling? NO! It's a bomb! "
+                "A bomb filled with wieners!! It explodes and shoots flaming hot wieners everywhere!"
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            initial_cooldown=1,
+            cooldown=0,
+            base_value=1,
+            aoe=True,
+            hits=1,
+            status_effects=[],
+            droppable=False,
+            image_url="https://i.imgur.com/qKaiEUL.png",
+            author="Waldheld",
+        )
+
+
+class BratwurstBreak(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Delicious Bratwurst Break",
+            skill_type=SkillType.BRATWURST_BREAK,
+            description=(
+                "The Sausage Butcher munches on his own supply! He eats a bratwurst and heals himself."
+            ),
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            default_target=SkillTarget.SELF,
+            initial_cooldown=2,
+            cooldown=2,
+            base_value=0.33,
+            aoe=False,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/r9JxieA.png",
+            author="Waldheld",
+        )

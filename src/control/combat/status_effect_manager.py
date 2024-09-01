@@ -168,8 +168,7 @@ class CombatStatusEffectManager(Service):
                         active_effect.remaining_stacks,
                     )
 
-        if not (target.is_enemy and source.is_enemy):
-            stacks = min(stacks, status_effect.max_stacks)
+        stacks = min(stacks, status_effect.max_stacks)
 
         event = StatusEffectEvent(
             datetime.datetime.now(),
@@ -220,7 +219,7 @@ class CombatStatusEffectManager(Service):
             match effect_type:
                 case StatusEffectType.CLEANSE:
                     effect_data[effect_type] = []
-                    for status in status_effects:
+                    for status in actor.status_effects:
                         message = ""
                         if status.status_effect.effect_type == StatusEffectType.BLEED:
                             await self.consume_status_stack(
@@ -629,6 +628,11 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.POISON:
                     if StatusEffectType.CLEANSE in [
                         x.status_effect.effect_type for x in triggered_status_effects
+                    ]:
+                        continue
+                    if skill.base_skill.skill_effect in [
+                        SkillEffect.BUFF,
+                        SkillEffect.HEALING,
                     ]:
                         continue
 

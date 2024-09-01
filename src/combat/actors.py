@@ -130,7 +130,13 @@ class Opponent(Actor):
     @lru_cache(maxsize=10)  # noqa: B019
     def get_potency_per_turn(self):
         sorted_skills = sorted(
-            self.skills, key=lambda x: x.base_skill.base_value, reverse=True
+            self.skills,
+            key=lambda x: (
+                x.base_skill.base_value
+                if x.base_skill.skill_effect != SkillEffect.HEALING
+                else 100
+            ),
+            reverse=True,
         )
 
         max_depth = self.enemy.health * 2
@@ -182,7 +188,10 @@ class Opponent(Actor):
 
         for skill in sorted_skills:
             base_potency = 0
-            if skill.base_skill.skill_effect != SkillEffect.BUFF:
+            if skill.base_skill.skill_effect not in [
+                SkillEffect.BUFF,
+                SkillEffect.HEALING,
+            ]:
                 base_potency = skill.base_skill.base_value * skill.base_skill.hits
             potency_per_turn = (
                 base_potency
