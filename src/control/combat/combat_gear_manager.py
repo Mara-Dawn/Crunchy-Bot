@@ -643,19 +643,35 @@ class CombatGearManager(Service):
 
         loot = {}
 
+        log_message = "Loot Table pre keys for encounter: "
+        for item in enemy.item_loot_table:
+            log_message += f"{item.value}, "
+        self.logger.log(guild_id, log_message, cog=self.log_name)
+
         loot_table = enemy.item_loot_table
         if enemy_level in BaseKey.TYPE_MAP:
             loot_table.append(BaseKey.TYPE_MAP[enemy_level])
 
+        log_message = "Loot Table post keys for encounter: "
+        for item in enemy.item_loot_table:
+            log_message += f"{item.value}, "
+        self.logger.log(guild_id, log_message, cog=self.log_name)
+
         loot_items = [
             (await self.item_manager.get_item(guild_id, x)) for x in loot_table
         ]
+
+        log_message = "Loot Table post items for encounter: "
+        for item in loot_items:
+            log_message += f"{item.name}, "
+        self.logger.log(guild_id, log_message, cog=self.log_name)
+
         weights = [item.weight for item in loot_items]
         weights = [1.0 / w for w in weights]
         sum_weights = sum(weights)
         weights = [w / sum_weights for w in weights]
 
-        log_message = "Loot Table for encounter: "
+        log_message = "Loot Table post weights for encounter: "
         for item in loot_items:
             log_message += f"{item.name}, "
         self.logger.log(guild_id, log_message, cog=self.log_name)
