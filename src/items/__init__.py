@@ -6,47 +6,15 @@ from datalayer.garden import (
     CrystalBeanPlant,
     FlashBeanPlant,
     GhostBeanPlant,
+    KeyBeanPlant,
     RareBeanPlant,
     SpeedBeanPlant,
     YellowBeanPlant,
 )
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, PlantType
-
 from items.item import Item
 from items.types import ItemGroup, ItemType, ShopCategory
-
-# Copy this class as a base for adding new items.
-# class Example(Item):
-
-#     def __init__(self, cost: int | None):
-#         defaultcost = 0
-
-#         if cost is None:
-#             cost = defaultcost
-
-#         super().__init__(
-#             name="Item Name",
-#             type=ItemType.EXAMPLE,
-#             group=ItemGroup.GAMBA,
-#             shop_category=ShopCategory.FUN,
-#             description="Shown together with the item name.",
-#             information="Shown as additional info in the catalog.",
-#             emoji="🅱️",
-#             cost=0,
-#             value=1,
-#             view_class=None,
-#             allow_amount=False,
-#             base_amount=1,
-#             max_amount=None,
-#             trigger=[],
-#             hide_in_shop=False,
-#             weight=None,
-#             controllable=False,
-#             useable=False,
-#             permanent=False,
-#             secret=False,
-#         )
 
 
 class Arrest(Item):
@@ -533,7 +501,6 @@ class LootBoxItem(Item):
             emoji="🧰",
             cost=cost,
             value=None,
-            hide_in_shop=True,
         )
 
 
@@ -668,7 +635,7 @@ class LotteryTicket(Item):
             type=ItemType.LOTTERY_TICKET,
             group=ItemGroup.LOTTERY,
             shop_category=ShopCategory.FUN,
-            description="Enter the Weekly Crunchy Bean Lottery© and win big! Max 3 tickets per person.",
+            description="Enter the Weekly Bean Lottery and win big! Max 3 tickets per person.",
             information="Available in the shop. Use /shop for more Information.",
             emoji="🎫",
             cost=cost,
@@ -945,7 +912,9 @@ class GhostBean(Item):
             hide_in_shop=True,
         )
 
+
 # Combat Items
+
 
 class Scrap(Item):
 
@@ -976,6 +945,81 @@ class Scrap(Item):
             hide_in_shop=True,
         )
 
+
+class BaseKey(Item):
+
+    BASE_COST = 1000
+    LEVEL_COST = 200
+    TYPE_MAP = {
+        1: ItemType.ENCOUNTER_KEY_1,
+        2: ItemType.ENCOUNTER_KEY_2,
+        3: ItemType.ENCOUNTER_KEY_3,
+        4: ItemType.ENCOUNTER_KEY_4,
+        5: ItemType.ENCOUNTER_KEY_5,
+        6: ItemType.ENCOUNTER_KEY_6,
+    }
+
+    def __init__(self, cost: int | None = None, level: int = 1):
+
+        if cost is None:
+            cost = self.BASE_COST + (level * self.LEVEL_COST)
+
+        super().__init__(
+            name=f"Level {level} Key",
+            type=self.TYPE_MAP[level],
+            group=ItemGroup.GEAR,
+            shop_category=ShopCategory.GEAR,
+            description=(
+                "A magical key that allows you to open a portal to another dimension. "
+                f"Inside you will face an enemy of the {level}th level.\n"
+                "(Item can be used from your inventory. You will automatically join the spawned encounter.)"
+            ),
+            information=(f"Spawns a random encounter of the {level}th level. "),
+            emoji="🔑",
+            cost=cost,
+            useable=True,
+            value=1,
+            hide_in_shop=True,
+            secret=True,
+        )
+
+
+class KeyLvl1(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=1)
+
+
+class KeyLvl2(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=2)
+
+
+class KeyLvl3(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=3)
+
+
+class KeyLvl4(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=4)
+
+
+class KeyLvl5(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=5)
+
+
+class KeyLvl6(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=6)
+
+
 class DaddyKey(Item):
 
     def __init__(self, cost: int | None):
@@ -991,9 +1035,10 @@ class DaddyKey(Item):
             shop_category=ShopCategory.GEAR,
             description=(
                 "This key looks rather normal, but you feel a strong commanding magic radiating from it. "
-                "When used from your inventory, it will open a path to the lvl.3 Boss.\n"
-                "You will need at least 6 players to face this challenge.\n"
+                "When used from your inventory, it will open a path to the lvl. 3 Boss.\n"
+                "You will need 6 players to face this challenge.\n"
                 "Come prepared, this key only grants you a single attempt."
+                " Set aside sufficient time for this encounter, it might take a while."
             ),
             information=(
                 "Boss Key to spawn the lvl.3 boss encounter.\n"
@@ -1005,13 +1050,54 @@ class DaddyKey(Item):
             useable=True,
             value=1,
             hide_in_shop=True,
+            secret=True,
+            permanent=True,
+            image_url="https://i.imgur.com/QqrB4OS.png",
         )
+
+
+class WeebKey(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Master Ball",
+            type=ItemType.WEEB_KEY,
+            group=ItemGroup.GEAR,
+            shop_category=ShopCategory.GEAR,
+            description=(
+                "Woah is this one of those super rare master balls? Hmm interesting, the label "
+                "looks like it was printed upside down. Did it just move !? What could be hiding inside?\n\n"
+                "When used from your inventory, it will open a path to the lvl. 6 Boss.\n\n"
+                "You will need 6 players to face this challenge.\n"
+                "Come prepared, this key only grants you a single attempt."
+                " Set aside sufficient time for this encounter, it might take a while."
+            ),
+            information=(
+                "Boss Key to spawn the lvl.6 boss encounter.\n"
+                "6-9 players\n"
+                "Unlocks the 7th level."
+            ),
+            emoji="🔑",
+            cost=cost,
+            useable=True,
+            value=1,
+            hide_in_shop=True,
+            secret=True,
+            permanent=True,
+            image_url="https://i.imgur.com/VAtRjZK.png",
+        )
+
 
 # Debuffs
 class Debuff(Item):
 
-    DEBUFF_DURATION = 7
-    DEBUFF_BAKED_DURATION = 3
+    DEBUFF_DURATION = 5
+    DEBUFF_BAKED_DURATION = 1
 
     DEBUFFS = [
         ItemType.EGIRL_DEBUFF,
@@ -1229,7 +1315,7 @@ class Machofy(Debuff):
 class ChestBeansReward(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 0
+        defaultcost = 2500
 
         if cost is None:
             cost = defaultcost
@@ -1245,6 +1331,7 @@ class ChestBeansReward(Item):
             cost=cost,
             value=None,
             hide_in_shop=True,
+            image_url="https://i.imgur.com/jjBv2fG.png",
         )
 
 
@@ -1336,6 +1423,7 @@ class BaseSeed(Item):
         ItemType.GHOST_SEED,
         ItemType.BAKED_SEED,
         ItemType.FLASH_SEED,
+        ItemType.KEY_SEED,
     ]
 
     SEED_PLANT_MAP = {
@@ -1348,6 +1436,7 @@ class BaseSeed(Item):
         ItemType.GHOST_SEED: PlantType.GHOST_BEAN,
         ItemType.BAKED_SEED: PlantType.BAKED_BEAN,
         ItemType.FLASH_SEED: PlantType.FLASH_BEAN,
+        ItemType.KEY_SEED: PlantType.KEY_BEAN,
     }
 
     def __init__(self, cost: int | None):
@@ -1376,6 +1465,10 @@ class BaseSeed(Item):
 class RareSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
+        defaultcost = 3000
+        if cost is None:
+            cost = defaultcost
+
         super().__init__(cost)
         self.name = "Rare Bean Seed"
         self.type = ItemType.RARE_SEED
@@ -1394,6 +1487,10 @@ class RareSeed(BaseSeed):
 class SpeedSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
+        defaultcost = 3000
+        if cost is None:
+            cost = defaultcost
+
         super().__init__(cost)
         self.name = "Speed Bean Seed"
         self.type = ItemType.SPEED_SEED
@@ -1412,6 +1509,10 @@ class SpeedSeed(BaseSeed):
 class CrystalSeed(BaseSeed):
 
     def __init__(self, cost: int | None):
+        defaultcost = 7000
+        if cost is None:
+            cost = defaultcost
+
         super().__init__(cost)
         self.name = "Crystal Bean Seed"
         self.type = ItemType.CRYSTAL_SEED
@@ -1444,7 +1545,7 @@ class BoxSeed(BaseSeed):
         )
         self.information = "Available as a rare drop from lootboxes."
         self.information = (
-            "Available as a rare drop from lootboxes."
+            "Available as a rare drop from lootboxes and encounters."
             "\nTakes 4-8 Days to grow, depending on water."
             "\nProduces 900 - 1100 beans when harvested."
             "\nDrops a personal x10 chest when harvested."
@@ -1467,7 +1568,7 @@ class CatSeed(BaseSeed):
             "Plant it in your garden, who knows it might turn into catnip or something... that definitely won't end poorly right?"
         )
         self.information = (
-            "Available as a rare drop from lootboxes."
+            "Available as a rare drop from lootboxes and encounters."
             "\nTakes 3-6 Days to grow, depending on water."
             "\nProduces 450 - 550 beans when harvested."
             "\nAttracts useless catgirls with a small chance to attract a useful one."
@@ -1490,7 +1591,7 @@ class YellowSeed(BaseSeed):
             "Yep, it's piss. And not a particularly healthy kind. Better go plant it quick. (Fertilizes the soil, making plants grow faster)"
         )
         self.information = (
-            "Available as a rare drop from lootboxes."
+            "Available as a rare drop from lootboxes and encounters."
             "\nTakes 2-4 Days to grow, depending on water."
             "\nProduces 200 - 300 beans when harvested."
             "\nFertilizes the plot it was planted on for 3 days, making beans grow 100% faster."
@@ -1513,7 +1614,7 @@ class GhostSeed(BaseSeed):
             "Plant it in your garden and maybe youll get to see something amazing."
         )
         self.information = (
-            "Available as a rare drop from lootboxes."
+            "Available as a rare drop from lootboxes and encounters."
             "\nTakes 3-6 Days to grow, depending on water."
             "\nProduces 450 - 550 beans when harvested."
             "\nWhen harvested it will always drop a Spooky Bean that allwos you to curse others."
@@ -1537,7 +1638,7 @@ class BakedSeed(BaseSeed):
             "Go plant them in your garden, im sure they wont care. "
         )
         self.information = (
-            "Available as a rare drop from lootboxes."
+            "Available as a rare drop from lootboxes and encounters."
             "\nTakes 2-4 Days to grow, depending on water."
             "\nProduces 420 - 690 beans when harvested."
             "\nWhen harvested they will make you stoned and turn your next few messages into stoner talk gibberish."
@@ -1561,15 +1662,60 @@ class FlashSeed(BaseSeed):
             "(Makes all your plots age twice as fast while active)"
         )
         self.information = (
-            "Available as a super rare drop from lootboxes."
-            "\nWill be active for 3 days, boosting the growth of all of your plants by an additional 100%. "
-            "This stacks additively with other flash beans, water and fertilizer."
-            "\nProduces a Ghost Bean Seed when harvested."
+            "Available as a super rare drop from lootboxes and encounters."
+            "\nTakes 2-4 Days to grow, depending on water."
+            "\nProduces a random amount of encounter keys up to the current guild level."
         )
         self.emoji = FlashBeanPlant.SEED_EMOJI
 
 
+class KeySeed(BaseSeed):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 2000
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(cost)
+        self.name = "Key Seed"
+        self.type = ItemType.KEY_SEED
+        self.description = (
+            "This seed almost looks like it could unlock a door."
+            "Maybe it will grow into something actually capable of doing so."
+        )
+        self.information = (
+            "Available as a super rare drop from lootboxes and encounters."
+            "\nWill be active for 3 days, boosting the growth of all of your plants by an additional 100%. "
+            "This stacks additively with other flash beans, water and fertilizer."
+            "\nProduces a Ghost Bean Seed when harvested."
+        )
+        self.emoji = KeyBeanPlant.SEED_EMOJI
+
+
 # Permanent Rare Items
+
+
+class BetaBadge(Item):
+
+    def __init__(self, cost: int | None):
+        defaultcost = 0
+
+        if cost is None:
+            cost = defaultcost
+
+        super().__init__(
+            name="Beta Badge",
+            type=ItemType.BETA_BADGE,
+            group=ItemGroup.MISC,
+            shop_category=ShopCategory.FUN,
+            description="A token of appreciation for participating in a Beans Beta event. You are awesome!",
+            information="Thank you so much! c: (Art by Smorlis)",
+            emoji=1275081546713534464,
+            cost=cost,
+            value=1,
+            hide_in_shop=True,
+            permanent=True,
+        )
 
 
 class PrestigeBean(Item):

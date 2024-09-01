@@ -1,10 +1,11 @@
 from typing import Any
 
 import discord
+from discord.ext import commands
+
 from control.controller import Controller
 from control.logger import BotLogger
 from datalayer.database import Database
-from discord.ext import commands
 
 
 class CrunchyBot(commands.Bot):

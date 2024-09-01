@@ -1,16 +1,15 @@
 import discord
-from datalayer.database import Database
-from datalayer.types import Season
 from discord.ext import commands
-from events.types import UIEventType
-from events.ui_event import UIEvent
-from view.ranking.embed import RankingEmbed
-from view.types import RankingType
 
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
+from datalayer.database import Database
+from events.types import UIEventType
+from events.ui_event import UIEvent
+from view.ranking.embed import RankingEmbed
+from view.types import RankingType
 
 
 class RankingViewController(ViewController):
@@ -38,18 +37,15 @@ class RankingViewController(ViewController):
         self,
         interaction: discord.Interaction,
         ranking_type: RankingType,
-        season: Season,
+        season: int,
     ):
-        image = "./img/profile_picture.png"
-
         ranking_data = await self.event_manager.get_user_rankings(
             interaction.guild_id, ranking_type, season
         )
-        ranking_img = discord.File(image, "ranking_img.png")
 
         author_name = self.bot.user.display_name
         author_img = self.bot.user.display_avatar
         embed = RankingEmbed(
             author_name, author_img, interaction, ranking_type, ranking_data, season
         )
-        await interaction.edit_original_response(embed=embed, attachments=[ranking_img])
+        await interaction.edit_original_response(embed=embed)

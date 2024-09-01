@@ -1,46 +1,56 @@
 class Config:
 
+    # Lootbox Settings
+    MIMIC_CHANCE = 0.1
+    LARGE_CHEST_CHANCE = 0.03
+    LARGE_MIMIC_CHANCE = 0.02
+    SPOOK_MIMIC_CHANCE = 0
+    LUCKY_ITEM_CHANCE = 0.05
+
     # General Combat
+    MAX_LVL = 7
+
     COMBAT_INITIAL_WAIT = 90
     # COMBAT_INITIAL_WAIT = 10
 
     DEFAULT_TIMEOUT = 60 * 3
-    SHORT_TIMEOUT = 30
+    SHORT_TIMEOUT = 60
     TIMEOUT_COUNT_LIMIT = 2
+    TIMEOUT_JAIL_TIME = 30
+    KICK_JAIL_TIME = 60
 
     ENEMY_HEALTH_SCALING = {
-        1: 7.88,
-        2: 11.66,
-        3: 35.02,
-        4: 71.34,
-        5: 131.13,
-        6: 195.01,
-        7: 305.15,
-        8: 413.28,
-        9: 535.76,
-        10: 688.03,
-        11: 940.70,
-        12: 1198.12,
-        # 12: 1751.51,
+        1: 8.40,
+        2: 15.93,
+        3: 38.41,
+        4: 96.22,
+        5: 190.19,
+        6: 356.37,
+        7: 771.77,
     }
 
     OPPONENT_DAMAGE_BASE = {
         1: 250,
-        2: 274.05,
-        3: 325.79,
-        4: 395.58,
-        5: 458.11,
-        6: 529.87,
-        7: 586.03,
-        8: 642.17,
-        9: 703.50,
-        10: 764.18,
-        11: 822.77,
-        12: 940.77,
-        # 12: 1076.95,
+        2: 272.80,
+        3: 335.54,
+        4: 418.76,
+        5: 595.03,
+        6: 748.42,
+        7: 834.09,
+    }
+
+    AVERAGE_PLAYER_POTENCY = {
+        1: 2,
+        2: 2.15,
+        3: 2.3,
+        4: 2.45,
+        5: 2.6,
+        6: 2.75,
+        7: 3,
     }
 
     CHARACTER_BASE_INITIATIVE = 10
+    CHARACTER_LVL_HP_INCREASE = 25
     CHARACTER_ENCOUNTER_SCALING_FACOTR = 1
     OPPONENT_ENCOUNTER_SCALING_FACTOR = 0.95
     OPPONENT_LEVEL_SCALING_FACTOR = 0.97
@@ -48,12 +58,15 @@ class Config:
     SKILL_TYPE_PENALTY = 0.2
 
     ENCOUNTER_MIN_LVL_SCALING = 0.65
+    ENCOUNTER_MAX_LVL_SIZE_SCALING = 2 / 3
     ENEMY_HEALTH_LVL_FALLOFF = 0.95
-    AVERAGE_PLAYER_POTENCY = 2
 
     # Status Effects
     BLEED_SCALING = 0.25
-    BLIND_MISS_CHANCE = 0.5
+    POISON_SCALING = 0.15
+    BLIND_MISS_CHANCE = 0.3
+    BLIND_DIMINISHING_RETURNS = 0.6
+    FROGGED_FAIL_CHANCE = 0.5
     RAGE_QUIT_THRESHOLD = 0.1
 
     # Code Block Formatting
@@ -65,17 +78,18 @@ class Config:
 
     # Guild Level Requirements
     LEVEL_REQUIREMENTS = {
-        1: 15,
-        2: 25,
-        3: 35,
-        4: 99999,
-        5: 20,
-        6: 25,
-        7: 25,
-        8: 25,
-        9: 30,
-        10: 30,
-        11: 35,
-        12: 40,
+        1: 100,
+        2: 150,
+        3: 175,
+        4: 200,
+        5: 225,
+        6: 250,
+        7: 9999999,
     }
     BOSS_LEVELS = [3, 6, 9, 12]
+    BOSS_RETRY_REQUIREMENT = 15
+    BOSS_KEY_CLAIM_DELAY = 180
+
+    # Scrap
+    SCRAP_FORGE_MULTI = 1.5
+    SCRAP_SHOP_MULTI = 30

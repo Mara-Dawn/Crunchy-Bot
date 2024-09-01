@@ -41,6 +41,7 @@ class ItemType(str, Enum):
     INSTANT_GAMBA = "NoCooldownGamba"
     CRAPPY_COUPON = "CrappyDrawing"
     PRESTIGE_BEAN = "PrestigeBean"
+    BETA_BADGE = "BetaBadge"
     PERM_PET_BOOST = "PermPetBoost"
     PERM_SLAP_BOOST = "PermSlapBoost"
     PERM_FART_BOOST = "PermFartBoost"
@@ -75,9 +76,20 @@ class ItemType(str, Enum):
     GHOST_SEED = "GhostSeed"
     BAKED_SEED = "BakedSeed"
     FLASH_SEED = "FlashSeed"
+    KEY_SEED = "KeySeed"
 
     SCRAP = "Scrap"
+
+    ENCOUNTER_KEY = "BaseKey"
+    ENCOUNTER_KEY_1 = "KeyLvl1"
+    ENCOUNTER_KEY_2 = "KeyLvl2"
+    ENCOUNTER_KEY_3 = "KeyLvl3"
+    ENCOUNTER_KEY_4 = "KeyLvl4"
+    ENCOUNTER_KEY_5 = "KeyLvl5"
+    ENCOUNTER_KEY_6 = "KeyLvl6"
+
     DADDY_KEY = "DaddyKey"
+    WEEB_KEY = "WeebKey"
 
 
 class ItemState(str, Enum):
@@ -104,6 +116,7 @@ class ItemGroup(str, Enum):
     SEED = "seed"
     DEBUFF = "debuff"
     GEAR = "gear"
+    MISC = "misc"
 
 
 class ShopCategory(int, Enum):

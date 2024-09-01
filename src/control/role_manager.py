@@ -145,6 +145,9 @@ class RoleManager(Service):
         guild: discord.Guild = self.bot.get_guild(guild_id)
         member: discord.Member = guild.get_member(user_id)
 
+        if member is None:
+            return
+
         custom_role_id = await self.database.get_custom_role(guild_id, user_id)
         custom_color = await self.database.get_custom_color(guild_id, user_id)
 

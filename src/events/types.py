@@ -8,6 +8,7 @@ class EventType(str, Enum):
     QUOTE = "quote"
     SPAM = "spam"
     BEANS = "beans"
+    EQUIPMENT = "equipment"
     INVENTORY = "inventory"
     INVENTORYBATCH = "inventory_batch"
     LOOTBOX = "loot_box"
@@ -83,9 +84,14 @@ class EncounterEventType(str, Enum):
     SPAWN = "spawn"
     INITIATE = "initiate"
     NEW_ROUND = "new_round"
+    MEMBER_REQUEST_JOIN = "member_request_join"
     MEMBER_ENGAGE = "member_engage"
     MEMBER_DEFEAT = "member_defeat"
-    MEMBER_TIMEOUT = "member_timeout"
+    MEMBER_REVIVE = "member_revive"
+    FORCE_SKIP = "force_skip"
+    MEMBER_LEAVING = "member_leaving"
+    MEMBER_OUT = "member_timeout"
+    MEMBER_DISENGAGE = "member_disengage"
     ENEMY_DEFEAT = "enemy_defeat"
     ENEMY_PHASE_CHANGE = "enemy_phase_change"
     END = "end"
@@ -94,13 +100,19 @@ class EncounterEventType(str, Enum):
 
 
 class CombatEventType(str, Enum):
-    MEMBER_TURN = "member_turn"
     STATUS_EFFECT = "status_effect"
     STATUS_EFFECT_OUTCOME = "status_effect_outcome"
     MEMBER_TURN_SKIP = "member_turn_skip"
+    MEMBER_TURN = "member_turn"
+    MEMBER_TURN_STEP = "member_turn_step"
     ENEMY_TURN = "enemy_turn"
+    ENEMY_TURN_STEP = "enemy_turn_step"
     MEMBER_END_TURN = "member_end_turn"
     ENEMY_END_TURN = "enemy_end_turn"
+
+
+class EquipmentEventType(str, Enum):
+    SHOP_BUY = "shop_buy"
 
 
 class UIEventType(str, Enum):
@@ -157,6 +169,7 @@ class UIEventType(str, Enum):
     PREDICTION_OVERVIEW_REFRESH = "prediction_overview_refresh"
 
     INVENTORY_REFRESH = "inventory_refresh"
+    INVENTORY_RESPONSE_CONFIRM_SUBMIT = "inventory_response_confirm_submit"
     INVENTORY_USER_REFRESH = "inventory_user_refresh"
     INVENTORY_ITEM_ACTION = "inventory_item_action"
     INVENTORY_SELL = "inventory_sell"
@@ -174,10 +187,13 @@ class UIEventType(str, Enum):
 
     COMBAT_ENGAGE = "combat_engage"
     COMBAT_LEAVE = "combat_leave"
+    COMBAT_APPROVE = "combat_approve"
     COMBAT_INITIATE = "combat_initiate"
     COMBAT_USE_SKILL = "combat_use_skill"
     COMBAT_TIMEOUT = "combat_timeout"
     COMBAT_FULL = "combat_full"
+
+    CLAIM_SPECIAL_DROP = "claim_special_drop"
 
     GEAR_EQUIP = "gear_equip"
     GEAR_DISMANTLE = "gear_dismantle"
@@ -193,7 +209,16 @@ class UIEventType(str, Enum):
 
     FORGE_VIEW = "forge_view"
     FORGE_USE = "forge_use"
+    FORGE_OPEN_SHOP = "forge_open_select"
+    FORGE_OPEN_OVERVIEW = "forge_open_overview"
+    FORGE_SHOP_BUY = "forge_shop_buy"
 
     SCRAP_BALANCE_CHANGED = "scrap_balance_changed"
 
     COMBAT_ENGAGE_UPDATE = "combat_engage_update"
+
+    USER_SETTING_EDIT = "user_setting_edit"
+    USER_SETTING_STATE = "user_setting_state"
+    USER_SETTING_SHOW_OVERVIEW = "user_setting_show_overview"
+    USER_SETTING_APPLY = "user_setting_apply"
+    USER_SETTING_REFRESH = "user_setting_refresh"

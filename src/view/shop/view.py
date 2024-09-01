@@ -202,10 +202,13 @@ class Dropdown(discord.ui.Select):
         options = []
 
         for item in items:
+            emoji = item.emoji
+            if isinstance(item.emoji, int):
+                emoji = str(self.controller.bot.get_emoji(item.emoji))
             option = discord.SelectOption(
                 label=item.name,
                 description="",
-                emoji=item.emoji,
+                emoji=emoji,
                 value=item.type,
                 default=(selected == item.type),
             )

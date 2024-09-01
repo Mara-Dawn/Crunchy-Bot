@@ -2,6 +2,7 @@ from collections import deque
 from typing import Any
 
 import discord
+
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
@@ -9,6 +10,7 @@ from combat.skills.types import SkillInstance, StatusEffectType
 from config import Config
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
+from events.status_effect_event import StatusEffectEvent
 from events.types import CombatEventType, EncounterEventType
 
 
@@ -22,6 +24,7 @@ class Encounter:
         max_hp: int,
         message_id: int = None,
         channel_id: int = None,
+        owner_id: int = None,
         id: int = None,
     ):
         self.guild_id = guild_id
@@ -30,6 +33,7 @@ class Encounter:
         self.max_hp = max_hp
         self.message_id = message_id
         self.channel_id = channel_id
+        self.owner_id = owner_id
         self.id = id
 
     @staticmethod
@@ -46,6 +50,7 @@ class Encounter:
             max_hp=int(row[Database.ENCOUNTER_ENEMY_HEALTH_COL]),
             message_id=int(row[Database.ENCOUNTER_MESSAGE_ID_COL]),
             channel_id=int(row[Database.ENCOUNTER_CHANNEL_ID_COL]),
+            owner_id=row[Database.ENCOUNTER_OWNER_ID_COL],
             id=int(row[Database.ENCOUNTER_ID_COL]),
         )
 
@@ -60,7 +65,7 @@ class EncounterContext:
         opponent: Opponent,
         encounter_events: list[EncounterEvent],
         combat_events: list[CombatEvent],
-        status_effects: dict[int, dict[StatusEffectType, int]],
+        status_effects: dict[int, list[StatusEffectEvent]],
         combatants: list[Character],
         thread: discord.Thread,
     ):
@@ -91,20 +96,40 @@ class EncounterContext:
                 return actor
         return None
 
-    def get_last_actor(self) -> Actor:
-        phase_event_id = None
+    def get_applied_status_count(
+        self, actor_id: int, status_type: StatusEffectType, count_stacks: bool = False
+    ) -> int:
+        count = 0
 
+        if actor_id not in self.status_effects:
+            return count
+
+        for event in self.status_effects[actor_id]:
+            if event.status_type == status_type and event.stacks > 0:
+                if count_stacks:
+                    count = +event.stacks
+                else:
+                    count += 1
+        return count
+
+    def get_last_actor(self) -> Actor:
+        new_round_event_id = None
+        # Reset initiative after boss phase change
         for event in self.encounter_events:
+            if event.encounter_event_type in [
+                EncounterEventType.NEW_ROUND,
+            ]:
+                new_round_event_id = event.id
+                break
             if event.encounter_event_type in [
                 EncounterEventType.ENEMY_PHASE_CHANGE,
             ]:
-                phase_event_id = event.id
-                break
+                return None
 
         relevant_combat_events = self.combat_events
-        if phase_event_id is not None:
+        if new_round_event_id is not None:
             relevant_combat_events = [
-                event for event in self.combat_events if event.id > phase_event_id
+                event for event in self.combat_events if event.id > new_round_event_id
             ]
 
         if len(relevant_combat_events) <= 0:
@@ -120,19 +145,35 @@ class EncounterContext:
                 last_actor = event.member_id
                 break
 
+        if last_actor is None:
+            return None
+
         for actor in self.actors:
             if actor.id == last_actor:
                 return actor
 
-    def get_active_combatants(self) -> Actor:
+    def get_active_combatants(self) -> list[Actor]:
         return [
             actor
             for actor in self.combatants
-            if not actor.defeated and not actor.timed_out
+            if not actor.defeated and not actor.is_out and self.is_actor_ready(actor)
+        ]
+
+    def get_defeated_combatants(self) -> list[Actor]:
+        return [
+            actor
+            for actor in self.combatants
+            if actor.defeated and not actor.is_out and self.is_actor_ready(actor)
         ]
 
     def get_combat_scale(self) -> int:
-        return len([actor for actor in self.combatants if not actor.timed_out])
+        return len(
+            [
+                actor
+                for actor in self.combatants
+                if not actor.is_out and self.is_actor_ready(actor)
+            ]
+        )
 
     def get_current_actor(self) -> Actor:
         if self.new_round():
@@ -145,6 +186,7 @@ class EncounterContext:
         return initiative_list[0]
 
     def get_current_initiative(self) -> list[Actor]:
+
         last_actor = self.get_last_actor()
         if last_actor is None:
             return self.actors
@@ -154,15 +196,23 @@ class EncounterContext:
         return result
 
     def is_actor_ready(self, actor: Actor) -> bool:
+        ready = None
+        encounter_start = True
         for event in self.encounter_events:
             if event.encounter_event_type == EncounterEventType.NEW_ROUND:
-                return True
+                encounter_start = False
+                if ready is None:
+                    ready = True
             if (
                 event.member_id == actor.id
                 and event.encounter_event_type == EncounterEventType.MEMBER_ENGAGE
-            ):
-                return False
-        return False
+            ) and ready is None:
+                ready = False
+
+        if ready is None:
+            ready = False
+
+        return encounter_start or ready
 
     def new_round(self) -> bool:
         round_event_id = None
@@ -181,12 +231,13 @@ class EncounterContext:
             return True
 
         last_event = self.combat_events[0]
-        current_actor = self.get_current_initiative()[0]
-
-        if last_event.id < round_event_id:
-            return True
-
-        return last_event.member_id == current_actor.id
+        # current_actor = self.get_current_initiative()[0]
+        #
+        # if last_event.id < round_event_id:
+        #     return True
+        #
+        # return last_event.member_id == current_actor.id
+        return last_event.id < round_event_id
 
     def new_turn(self) -> bool:
         if len(self.combat_events) == 0:
@@ -198,17 +249,14 @@ class EncounterContext:
             CombatEventType.MEMBER_END_TURN,
         ]
 
-    def get_current_turn_number(self) -> int:
-        turn_count = 1
-        for event in self.combat_events:
-            if event.combat_event_type not in [
-                CombatEventType.ENEMY_END_TURN,
-                CombatEventType.MEMBER_END_TURN,
+    def get_current_round_number(self) -> int:
+        round_count = 0
+        for event in self.encounter_events:
+            if event.encounter_event_type in [
+                EncounterEventType.NEW_ROUND,
             ]:
-                continue
-            turn_count += 1
-
-        return turn_count
+                round_count += 1
+        return round_count
 
     def get_timeout_count(self, member_id: int) -> int:
         timeout_count = 0
@@ -228,6 +276,12 @@ class EncounterContext:
         else:
             return Config.SHORT_TIMEOUT
 
+    def is_initiated(self) -> bool:
+        for event in self.encounter_events:
+            if event.encounter_event_type == EncounterEventType.INITIATE:
+                return True
+        return False
+
     def is_concluded(self) -> bool:
         for event in self.encounter_events:
             if event.encounter_event_type == EncounterEventType.END:
@@ -242,9 +296,11 @@ class TurnData:
         actor: Actor,
         skill: Skill,
         damage_data: list[tuple[Actor, SkillInstance, int]],
-        post_embed: discord.Embed = None,
+        post_embed_data: dict[str, str] = None,
+        description_override: str = None,
     ):
         self.actor = actor
         self.skill = skill
         self.damage_data = damage_data
-        self.post_embed = post_embed
+        self.post_embed_data = post_embed_data
+        self.description_override = description_override

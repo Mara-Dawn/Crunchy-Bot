@@ -148,6 +148,7 @@ class Tier0(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -157,9 +158,10 @@ class Tier0(GearBase):
             information=information,
             slot=slot,
             min_level=1,
-            max_level=4,
+            max_level=3,
             modifiers=modifiers,
             skills=skills,
+            uniques=uniques,
             scaling=1,
             image_url=image_url,
         )
@@ -211,6 +213,7 @@ class HeadGear_T0(Tier0):
             information="Tier 0 head piece.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[GearBaseType.SHOOTER_WIG],
             image_url="https://i.imgur.com/a55rCkb.png",
         )
 
@@ -239,6 +242,7 @@ class LegGear_T0(Tier0):
             information="Tier 0 leg piece.",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[GearBaseType.HOT_PANTS],
             image_url="https://i.imgur.com/AAH2XAr.png",
         )
 
@@ -253,6 +257,7 @@ class Necklace_T0(Tier0):
             information="Tier 0 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            uniques=[GearBaseType.DEEZ_NUTS],
             image_url="https://i.imgur.com/BESjNWX.png",
         )
 
@@ -285,6 +290,7 @@ class Tier1(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -294,10 +300,11 @@ class Tier1(GearBase):
             information=information,
             slot=slot,
             min_level=2,
-            max_level=5,
+            max_level=4,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.15,
+            uniques=uniques,
+            scaling=1.1,
             image_url=image_url,
             author="Mia",
         )
@@ -320,6 +327,7 @@ class Stick_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            image_url="https://i.imgur.com/nUnH9G0.png",
         )
 
 
@@ -342,6 +350,7 @@ class Wand_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
+            image_url="https://i.imgur.com/rAGti7v.png",
         )
 
 
@@ -358,7 +367,9 @@ class HeadGear_T1(Tier1):
             ),
             information="Tier 1 head piece.",
             slot=EquipmentSlot.HEAD,
+            uniques=[GearBaseType.SHOOTER_WIG],
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/LGEy5Km.png",
         )
 
 
@@ -375,7 +386,9 @@ class BodyGear_T1(Tier1):
             ),
             information="Tier 1 body piece.",
             slot=EquipmentSlot.BODY,
+            uniques=[GearBaseType.FAST_FOOD_CAP],
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/oAWzovW.png",
         )
 
 
@@ -392,6 +405,8 @@ class LegGear_T1(Tier1):
             information="Tier 1 leg piece.",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[GearBaseType.HOT_PANTS],
+            image_url="https://i.imgur.com/F10kbxJ.png",
         )
 
 
@@ -409,6 +424,8 @@ class Necklace_T1(Tier1):
             information="Tier 1 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            uniques=[GearBaseType.DEEZ_NUTS],
+            image_url="https://i.imgur.com/XyoEXnO.png",
         )
 
 
@@ -424,8 +441,10 @@ class Necklace_T1_2(Tier1):
                 "a huge boost of confidence in combat."
             ),
             information="Tier 1 accessory",
+            uniques=[GearBaseType.RABBIT_FOOT],
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/HfhMNNW.png",
         )
 
 
@@ -443,8 +462,12 @@ class Tier2(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
+        author=None,
     ):
+        if author is None:
+            author = "Klee"
         super().__init__(
             name=name,
             type=type,
@@ -455,9 +478,10 @@ class Tier2(GearBase):
             max_level=6,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.3,
+            uniques=uniques,
+            scaling=1.2,
             image_url=image_url,
-            author="Klee",
+            author=author,
         )
 
 
@@ -475,6 +499,7 @@ class Stick_T2(Tier2):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            uniques=[GearBaseType.TAPE_MEASURE],
             image_url="https://i.imgur.com/2YUEVzU.jpg",
         )
 
@@ -508,6 +533,21 @@ class HeadGear_T2(Tier2):
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/AjKaSDI.jpg",
+        )
+
+
+class HeadGear_T2_2(Tier2):
+
+    def __init__(self):
+        super().__init__(
+            name="President Dump",
+            type=GearBaseType.HEADGEAR_T2_2,
+            description="Does a 'Sssshhlorp' sound when putting it on.",
+            information="Tier 2 head piece.",
+            slot=EquipmentSlot.HEAD,
+            modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/7pCIdFM.png",
+            author="Lusa",
         )
 
 
@@ -581,6 +621,7 @@ class Tier3(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -590,10 +631,11 @@ class Tier3(GearBase):
             information=information,
             slot=slot,
             min_level=4,
-            max_level=10,
+            max_level=7,
             modifiers=modifiers,
+            uniques=uniques,
             skills=skills,
-            scaling=1.45,
+            scaling=1.3,
             image_url=image_url,
             author="Franny",
         )
@@ -644,6 +686,7 @@ class HeadGear_T3_1(Tier3):
             description="Collection of all rewards striped around your baldy shiny head: the teeth of goblins and even your own rotten teeth coreved in blood or tomato sauce, none knows.",
             information="Tier 3 head piece.",
             slot=EquipmentSlot.HEAD,
+            uniques=[GearBaseType.CAT_HEAD],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/IVcrasV.png",
         )
@@ -700,6 +743,7 @@ class LegGear_T3(Tier3):
             description="The true hero must have travelled a lot. These THICC sandals are the best choice to make you feel comfortable wherever the battle takes place.",
             information="Tier 3 leg piece. (Comment from Franny: have to add a slip for consensus and actually i have no idea how such sandale works since i dont wear them lol)",
             slot=EquipmentSlot.LEGS,
+            uniques=[GearBaseType.CAT_LEGS],
             modifiers=[GearModifierType.ARMOR],
             image_url="https://i.imgur.com/zezOsp4.png",
         )
@@ -715,6 +759,10 @@ class Necklace_T3_1(Tier3):
             information="Tier 3 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            uniques=[
+                GearBaseType.CAT_TAIL,
+                GearBaseType.CAT_HANDS,
+            ],
             image_url="https://i.imgur.com/fkzteQU.png",
         )
 
@@ -729,6 +777,10 @@ class Necklace_T3_2(Tier3):
             information="Tier 3 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            uniques=[
+                GearBaseType.CAT_TAIL,
+                GearBaseType.CAT_HANDS,
+            ],
             image_url="https://i.imgur.com/9ceo3Yj.png",
         )
 
@@ -747,6 +799,7 @@ class Tier4(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -755,12 +808,14 @@ class Tier4(GearBase):
             description=description,
             information=information,
             slot=slot,
-            min_level=6,
-            max_level=12,
+            min_level=5,
+            max_level=8,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.6,
+            uniques=uniques,
+            scaling=1.4,
             image_url=image_url,
+            author="Lusa",
         )
 
 
@@ -768,16 +823,23 @@ class Stick_T4(Tier4):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Eepy Pillow",
             type=GearBaseType.STICK_T4,
-            description="",
+            description=(
+                "Your favourite pillow. You've been using it since you were small and it "
+                "has gotten crusty and stiff over time. Perfect for pillow fights and killing monsters."
+            ),
             information="",
             slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
-            skills=[SkillType.MAGIC_ATTACK],
+            uniques=[
+                GearBaseType.KEBAB_SKEWER,
+            ],
+            skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            image_url="https://i.imgur.com/quQ83yx.png",
         )
 
 
@@ -785,9 +847,12 @@ class Wand_T4(Tier4):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Eepy Glowy Pillow",
             type=GearBaseType.WAND_T4,
-            description="",
+            description=(
+                "You love this cuddly pillow so much that it started to "
+                "absorb your feelings for it, granting it magical powers."
+            ),
             information="",
             slot=EquipmentSlot.WEAPON,
             modifiers=[
@@ -795,6 +860,7 @@ class Wand_T4(Tier4):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
+            image_url="https://i.imgur.com/n9qrOAv.png",
         )
 
 
@@ -802,12 +868,16 @@ class HeadGear_T4(Tier4):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Eepy Pillow Helmet",
             type=GearBaseType.HEADGEAR_T4,
-            description="",
+            description="With the power of duct tape and your grandmas old pillows you managed to tape together the worlds most comfy headgear.",
             information="Tier 4 head piece.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[
+                GearBaseType.KEBAB_HAT,
+            ],
+            image_url="https://i.imgur.com/WUSr2XH.png",
         )
 
 
@@ -815,12 +885,21 @@ class BodyGear_T4(Tier4):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Eepy Pillow Armor",
             type=GearBaseType.BODYGEAR_T4,
-            description="",
+            description=(
+                "Someones very concerned mother once crafted this suit our of worry "
+                "for her child when it wanted to play with its friends. "
+                "Now you use it to defend against monsters."
+            ),
             information="Tier 4 body piece.",
             slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
+            uniques=[
+                GearBaseType.FEMALE_ARMOR,
+                GearBaseType.KEBAB_APRON,
+            ],
+            image_url="https://i.imgur.com/6qSt8Zg.png",
         )
 
 
@@ -828,12 +907,20 @@ class LegGear_T4(Tier4):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Eepy Pillow Pants",
             type=GearBaseType.LEGGEAR_T4,
-            description="",
+            description=(
+                "You swear that you hurt your shins on that stupid drawer for the last time! "
+                "As a protective countermeasure you wrap your entire lower body in pillows, "
+                "earning you weird looks from your friends."
+            ),
             information="Tier 4 leg piece.",
             slot=EquipmentSlot.LEGS,
+            uniques=[
+                GearBaseType.KEBAB_PANTS,
+            ],
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/43nxRE5.png",
         )
 
 
@@ -841,12 +928,16 @@ class Necklace_T4(Tier4):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Eepy Sleepy Moon",
             type=GearBaseType.NECKLACE_T4,
-            description="",
+            description=(
+                "A faint, gentle melody plays when closer inspecting this little trinket. "
+                "Dont listen for too long or you might doze off."
+            ),
             information="Tier 4 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/hr5PCRd.png",
         )
 
 
@@ -864,6 +955,7 @@ class Tier5(GearBase):
         slot: EquipmentSlot,
         modifiers: list[GearModifierType] = None,
         skills: list[SkillType] = None,
+        uniques: list[GearBaseType] = None,
         image_url: str = None,
     ):
         super().__init__(
@@ -872,13 +964,14 @@ class Tier5(GearBase):
             description=description,
             information=information,
             slot=slot,
-            min_level=8,
-            max_level=12,
+            min_level=6,
+            max_level=9,
             modifiers=modifiers,
             skills=skills,
-            scaling=1.75,
+            uniques=uniques,
+            scaling=1.5,
             image_url=image_url,
-            author="Mia",
+            author="Lusa",
         )
 
 
@@ -886,16 +979,17 @@ class Stick_T5(Tier5):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Happy Painter Pallette and Brush",
             type=GearBaseType.STICK_T5,
-            description="",
+            description="A palette of warm colors. Perfect to draw pictures beautiful landscapes and dreamy places.",
             information="",
             slot=EquipmentSlot.WEAPON,
             modifiers=[
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
-            skills=[SkillType.MAGIC_ATTACK],
+            skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
+            image_url="https://i.imgur.com/OTtSPXQ.png",
         )
 
 
@@ -903,9 +997,9 @@ class Wand_T5(Tier5):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Spicy Painter Pallette and Brush",
             type=GearBaseType.WAND_T5,
-            description="",
+            description="These colors give the artist a little bit of that extra kick. They will really spice up your paintings. Or your enemies eyes.",
             information="",
             slot=EquipmentSlot.WEAPON,
             modifiers=[
@@ -913,6 +1007,7 @@ class Wand_T5(Tier5):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.MAGIC_ATTACK],
+            image_url="https://i.imgur.com/nMptWYj.png",
         )
 
 
@@ -920,12 +1015,16 @@ class HeadGear_T5(Tier5):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Happy Painter Wig",
             type=GearBaseType.HEADGEAR_T5,
-            description="",
+            description="Floofy, puffy and soft. It smells a bit like old people but you immediately feel safe and calm when putting it on.",
             information="Tier 5 head piece.",
             slot=EquipmentSlot.HEAD,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/gQuNCvP.png",
+            uniques=[
+                GearBaseType.PROFESSIONAL_DISGUISE,
+            ],
         )
 
 
@@ -933,12 +1032,16 @@ class BodyGear_T5(Tier5):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Happy Painter Shirt",
             type=GearBaseType.BODYGEAR_T5,
-            description="",
+            description=(
+                "An artist doesn't require much when it comes to wearing a shirt. "
+                "Especially a talented one like you. I am talking about slaying monsters of course."
+            ),
             information="Tier 5 body piece.",
             slot=EquipmentSlot.BODY,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/3JhjIwz.png",
         )
 
 
@@ -946,12 +1049,16 @@ class LegGear_T5(Tier5):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Happy Painter Jeans",
             type=GearBaseType.LEGGEAR_T5,
-            description="",
+            description=(
+                "With these stylish pants you really show everyone how much you loved the 70s. "
+                "That, and the smell of weed they keep emanating."
+            ),
             information="Tier 5 leg piece.",
             slot=EquipmentSlot.LEGS,
             modifiers=[GearModifierType.ARMOR],
+            image_url="https://i.imgur.com/qoqWNh8.png",
         )
 
 
@@ -959,10 +1066,28 @@ class Necklace_T5(Tier5):
 
     def __init__(self):
         super().__init__(
-            name="",
+            name="Happy Little Trees",
             type=GearBaseType.NECKLACE_T5,
-            description="",
+            description=(
+                "This painting just brightens up your day every time you look at it. "
+                "It reminds you to keep on going after all those happy little accidents."
+            ),
             information="Tier 5 accessory",
             slot=EquipmentSlot.ACCESSORY,
             modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/Ik9GuY1.png",
+        )
+
+
+class Necklace_T5_2(Tier5):
+
+    def __init__(self):
+        super().__init__(
+            name="Happy Beard",
+            type=GearBaseType.NECKLACE_T5_2,
+            description="The beard gives your face a friendly vibe and makes you much more likeable.",
+            information="Tier 5 accessory",
+            slot=EquipmentSlot.ACCESSORY,
+            modifiers=[GearModifierType.DEXTERITY],
+            image_url="https://i.imgur.com/tuREpEs.png",
         )

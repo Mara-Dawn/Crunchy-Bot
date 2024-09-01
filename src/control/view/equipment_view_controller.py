@@ -1,14 +1,25 @@
 import datetime
 
 import discord
+from discord.ext import commands
+
 from combat.gear.gear import Gear
 from combat.gear.types import Base, EquipmentSlot
 from combat.skills.skill import Skill
+from config import Config
+from control.combat.combat_actor_manager import CombatActorManager
+from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.combat_gear_manager import CombatGearManager
+from control.combat.encounter_manager import EncounterManager
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.logger import BotLogger
+from control.view.view_controller import ViewController
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
+from events.equipment_event import EquipmentEvent
 from events.inventory_event import InventoryEvent
-from events.types import EventType, UIEventType
+from events.types import EquipmentEventType, EventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemType
 from view.combat.embed import (
@@ -19,15 +30,7 @@ from view.combat.embed import (
 from view.combat.equipment_select_view import EquipmentSelectView
 from view.combat.equipment_view import EquipmentView, EquipmentViewState
 from view.combat.skill_select_view import SkillSelectView, SkillViewState
-
-from control.combat.combat_actor_manager import CombatActorManager
-from control.combat.combat_embed_manager import CombatEmbedManager
-from control.combat.combat_gear_manager import CombatGearManager
-from control.combat.encounter_manager import EncounterManager
-from control.controller import Controller
-from control.event_manager import EventManager
-from control.logger import BotLogger
-from control.view.view_controller import ViewController
+from view.combat.special_shop_view import SpecialShopView
 
 
 class EquipmentViewController(ViewController):
@@ -132,12 +135,23 @@ class EquipmentViewController(ViewController):
             case UIEventType.FORGE_USE:
                 interaction = event.payload[0]
                 level = event.payload[1]
-                await self.use_forge(interaction, level, event.view_id)
+                slot = event.payload[2]
+                await self.use_forge(interaction, level, slot, event.view_id)
+            case UIEventType.FORGE_OPEN_OVERVIEW:
+                interaction = event.payload
+                await self.open_gear_overview(interaction, event.view_id)
+            case UIEventType.FORGE_OPEN_SHOP:
+                interaction = event.payload
+                await self.open_forge_shop(interaction, event.view_id)
+            case UIEventType.FORGE_SHOP_BUY:
+                interaction = event.payload[0]
+                selected = event.payload[1]
+                await self.buy_gear(interaction, selected, event.view_id)
 
     async def encounter_check(self, interaction: discord.Interaction):
         guild_id = interaction.guild.id
         member_id = interaction.user.id
-        encounters = await self.database.get_active_encounter_participants(guild_id)
+        encounters = await self.database.get_encounter_participants(guild_id)
 
         for _, participants in encounters.items():
             if member_id in participants:
@@ -161,7 +175,6 @@ class EquipmentViewController(ViewController):
         gear_inventory = await self.database.get_user_armory(guild_id, member_id)
         default_gear = await self.gear_manager.get_default_gear()
         gear_inventory.extend(default_gear)
-
         currently_equipped = await self.database.get_user_equipment_slot(
             guild_id, member_id, slot
         )
@@ -177,6 +190,48 @@ class EquipmentViewController(ViewController):
         await view.refresh_ui(
             gear_inventory=gear_inventory,
             currently_equipped=currently_equipped,
+            scrap_balance=scrap_balance,
+        )
+
+    async def refresh_special_shop(
+        self, interaction: discord.Interaction, view_id: int
+    ):
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+
+        if not await self.encounter_check(interaction):
+            return
+
+        user_daily_items = await self.gear_manager.get_member_daily_items(
+            member_id, guild_id
+        )
+        item_values = {}
+
+        for item in user_daily_items:
+            scrap_value = (
+                await self.gear_manager.get_gear_scrap_value(item)
+                * Config.SCRAP_SHOP_MULTI
+            )
+            item_values[item.id] = scrap_value
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        view = SpecialShopView(
+            self.controller,
+            interaction,
+            user_daily_items,
+            item_values,
+            scrap_balance,
+        )
+
+        view: SpecialShopView = self.controller.get_view(view_id)
+        await view.refresh_ui(
+            items=user_daily_items,
             scrap_balance=scrap_balance,
         )
 
@@ -269,6 +324,139 @@ class EquipmentViewController(ViewController):
         await view.refresh_ui()
         self.controller.detach_view_by_id(view_id)
 
+    async def open_forge_overview(
+        self,
+        interaction: discord.Interaction,
+        view_id: int,
+        state: EquipmentViewState = EquipmentViewState.FORGE,
+    ):
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        character = await self.actor_manager.get_character(interaction.user)
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        guild_level = await self.controller.database.get_guild_level(guild_id)
+
+        view = EquipmentView(
+            self.controller, interaction, character, scrap_balance, guild_level, state
+        )
+
+        message = await interaction.original_response()
+        await message.edit(view=view, attachments=[])
+        view.set_message(message)
+        await view.refresh_ui()
+        self.controller.detach_view_by_id(view_id)
+
+    async def open_forge_shop(self, interaction: discord.Interaction, view_id: int):
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+
+        if not await self.encounter_check(interaction):
+            return
+
+        user_daily_items = await self.gear_manager.get_member_daily_items(
+            member_id, guild_id
+        )
+        item_values = {}
+
+        for item in user_daily_items:
+            scrap_value = (
+                await self.gear_manager.get_gear_scrap_value(item)
+                * Config.SCRAP_SHOP_MULTI
+            )
+            item_values[item.id] = scrap_value
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        view = SpecialShopView(
+            self.controller,
+            interaction,
+            user_daily_items,
+            item_values,
+            scrap_balance,
+        )
+
+        message = await interaction.original_response()
+        await message.edit(view=view, attachments=[])
+        view.set_message(message)
+        await view.refresh_ui()
+        self.controller.detach_view_by_id(view_id)
+
+    async def buy_gear(
+        self, interaction: discord.Interaction, selected: Gear, view_id: int
+    ):
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        if not await self.encounter_check(interaction):
+            return
+
+        if selected is None:
+            return
+
+        scrap_value = (
+            await self.gear_manager.get_gear_scrap_value(selected)
+            * Config.SCRAP_SHOP_MULTI
+        )
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        if scrap_balance < scrap_value:
+            await interaction.followup.send(
+                "You don't have enough scrap for this. Go and scrap some equipment you no longer need and come back.",
+                ephemeral=True,
+            )
+            return
+
+        event = InventoryEvent(
+            datetime.datetime.now(),
+            guild_id,
+            member_id,
+            ItemType.SCRAP,
+            -scrap_value,
+        )
+        await self.controller.dispatch_event(event)
+
+        event = EquipmentEvent(
+            datetime.datetime.now(),
+            guild_id,
+            member_id,
+            EquipmentEventType.SHOP_BUY,
+            selected.id,
+        )
+        await self.controller.dispatch_event(event)
+
+        await self.database.log_user_drop(
+            guild_id=guild_id,
+            member_id=member_id,
+            drop=selected,
+            generator_version=CombatGearManager.GENERATOR_VERSION,
+        )
+
+        await self.refresh_special_shop(interaction, view_id)
+
+        await interaction.followup.send(
+            "Purchase Successful.",
+            ephemeral=True,
+        )
+
     async def equip_gear(
         self, interaction: discord.Interaction, selected: list[Gear], view_id: int
     ):
@@ -342,8 +530,6 @@ class EquipmentViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        now = datetime.datetime.now()
-
         gear_to_scrap = selected
 
         if scrap_all:
@@ -356,28 +542,7 @@ class EquipmentViewController(ViewController):
                     guild_id, member_id
                 )
 
-        total_scraps = 0
-
-        for gear in gear_to_scrap:
-            total_scraps += await self.gear_manager.get_gear_score(gear)
-
-            self.logger.log(
-                guild_id,
-                f"Gear piece was scrapped: lvl.{gear.level} {gear.rarity.value} {gear.name}",
-                cog="Equipment",
-            )
-
-        await self.database.delete_gear_by_ids([gear.id for gear in gear_to_scrap])
-
-        if total_scraps > 0:
-            event = InventoryEvent(
-                now,
-                guild_id,
-                member_id,
-                ItemType.SCRAP,
-                total_scraps,
-            )
-            await self.controller.dispatch_event(event)
+        await self.gear_manager.scrap_gear(member_id, guild_id, gear_to_scrap)
 
         if gear_slot is None:
             await self.open_gear_overview(interaction, view_id)
@@ -497,14 +662,21 @@ class EquipmentViewController(ViewController):
         )
 
     async def use_forge(
-        self, interaction: discord.Interaction, level: int, view_id: int
+        self,
+        interaction: discord.Interaction,
+        level: int,
+        slot: EquipmentSlot,
+        view_id: int,
     ):
         if not await self.encounter_check(interaction):
             return
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        scrap_value = EquipmentView.SCRAP_ILVL_MAP[level]
+        scaling = 1
+        if slot is not None:
+            scaling = CombatGearManager.SLOT_SCALING[slot] * Config.SCRAP_FORGE_MULTI
+        scrap_value = int(EquipmentView.SCRAP_ILVL_MAP[level] * scaling)
 
         user_items = await self.database.get_item_counts_by_user(
             guild_id, member_id, item_types=[ItemType.SCRAP]
@@ -521,7 +693,7 @@ class EquipmentViewController(ViewController):
             return
 
         drop = await self.gear_manager.generate_drop(
-            member_id, guild_id, level, exclude_skills=True
+            member_id, guild_id, level, gear_slot=slot
         )
 
         event = InventoryEvent(

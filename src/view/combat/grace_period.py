@@ -1,8 +1,8 @@
 import contextlib
 
 import discord
+
 from combat.encounter import Encounter
-from config import Config
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -12,8 +12,8 @@ from view.view_menu import ViewMenu
 
 class GracePeriodView(ViewMenu):
 
-    def __init__(self, controller: Controller, encounter: Encounter):
-        super().__init__(timeout=Config.COMBAT_INITIAL_WAIT)
+    def __init__(self, controller: Controller, encounter: Encounter, wait_time: float):
+        super().__init__(timeout=wait_time)
         self.controller = controller
 
         self.controller_type = ControllerType.COMBAT

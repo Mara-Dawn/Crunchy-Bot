@@ -3,6 +3,8 @@ import copy
 import datetime
 
 import discord
+from discord.ext import commands
+
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext, TurnData
 from combat.skills.skill import Skill
@@ -10,13 +12,16 @@ from combat.skills.types import SkillEffect, SkillInstance
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_skill_manager import CombatSkillManager
+from control.combat.encounter_statistics import EncounterStatistics
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
+from control.imgur_manager import ImgurManager
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
+from events.types import EncounterEventType
+from items.item import Item
 
 
 class CombatEmbedManager(Service):
@@ -33,8 +38,12 @@ class CombatEmbedManager(Service):
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
+        self.imgur_manager: ImgurManager = self.controller.get_service(ImgurManager)
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
+        )
+        self.encounter_statistics: EncounterStatistics = self.controller.get_service(
+            EncounterStatistics
         )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "Combat Embeds"
@@ -66,24 +75,48 @@ class CombatEmbedManager(Service):
             embed.add_field(name="", value=enemy_info, inline=False)
 
         min_encounter_size = enemy.min_encounter_scale
+        guild_level = await self.database.get_guild_level(encounter.guild_id)
+
+        if encounter.enemy_level > 1 and encounter.enemy_level == guild_level:
+            min_encounter_size = max(
+                min_encounter_size,
+                int(enemy.max_players * Config.ENCOUNTER_MAX_LVL_SIZE_SCALING),
+            )
+
         max_encounter_size = enemy.max_players
         participants = await self.database.get_encounter_participants_by_encounter_id(
             encounter.id
         )
+        out_participants = (
+            await self.database.get_encounter_out_participants_by_encounter_id(
+                encounter.id
+            )
+        )
+        active_participants = len(participants) - len(out_participants)
         if not done:
-            if min_encounter_size > 1 and len(participants) < min_encounter_size:
-                participant_info = f"\nCombatants Needed to Start: {len(participants)}/{min_encounter_size}"
+            if min_encounter_size > 1 and active_participants < min_encounter_size:
+                participant_info = f"\nCombatants Needed to Start: {active_participants}/{min_encounter_size}"
             else:
                 participant_info = (
-                    f"\nActive Combatants: {len(participants)}/{max_encounter_size}"
+                    f"\nActive Combatants: {active_participants}/{max_encounter_size}"
                 )
         else:
             participant_info = "This Encounter Has Concluded."
         embed.add_field(name=participant_info, value="", inline=False)
-        embed.set_image(url=enemy.image_url)
-        embed.set_footer(text=f"by {enemy.author}")
+
+        image_url = await self.get_custom_image(encounter)
+        if image_url is None:
+            image_url = enemy.image_url
+        embed.set_image(url=image_url)
+
+        if enemy.author is not None:
+            embed.set_footer(text=f"by {enemy.author}")
 
         return embed
+
+    async def get_custom_image(self, encounter: Encounter):
+        image_url = await self.imgur_manager.get_random_encounter_image(encounter)
+        return image_url
 
     def add_health_bar(
         self,
@@ -197,15 +230,23 @@ class CombatEmbedManager(Service):
         )
 
         if enemy.information != "":
-            self.add_text_bar(
-                embed,
-                name="Additional Information:",
-                value=enemy.information,
-                max_width=Config.ENEMY_MAX_WIDTH,
-            )
+            if enemy.is_boss:
+                enemy_info = f"```ansi\n[33m{enemy.information}```"
+                embed.add_field(name="", value=enemy_info, inline=False)
+            else:
+                self.add_text_bar(
+                    embed,
+                    name="Additional Information:",
+                    value=enemy.information,
+                    max_width=Config.ENEMY_MAX_WIDTH,
+                )
 
-        embed.set_image(url=enemy.image_url)
-        embed.set_footer(text=f"by {enemy.author}")
+        image_url = await self.get_custom_image(context.encounter)
+        if image_url is None:
+            image_url = enemy.image_url
+        embed.set_image(url=image_url)
+        if enemy.author is not None:
+            embed.set_footer(text=f"by {enemy.author}")
 
         return embed
 
@@ -232,8 +273,14 @@ class CombatEmbedManager(Service):
         defeated_message = f"You successfully defeated *{enemy.name}*."
         embed.add_field(name="Congratulations!", value=defeated_message, inline=False)
 
-        embed.set_image(url=enemy.image_url)
-        embed.set_footer(text=f"by {enemy.author}")
+        await self.encounter_statistics.add_to_embed(context, embed)
+
+        image_url = await self.get_custom_image(context.encounter)
+        if image_url is None:
+            image_url = enemy.image_url
+        embed.set_image(url=image_url)
+        if enemy.author is not None:
+            embed.set_footer(text=f"by {enemy.author}")
 
         return embed
 
@@ -258,8 +305,12 @@ class CombatEmbedManager(Service):
         defeated_message = f"You were defeated by *{enemy.name}*."
         embed.add_field(name="Failure!", value=defeated_message, inline=False)
 
-        embed.set_image(url=enemy.image_url)
-        embed.set_footer(text=f"by {enemy.author}")
+        image_url = await self.get_custom_image(context.encounter)
+        if image_url is None:
+            image_url = enemy.image_url
+        embed.set_image(url=image_url)
+        if enemy.author is not None:
+            embed.set_footer(text=f"by {enemy.author}")
 
         return embed
 
@@ -327,6 +378,19 @@ class CombatEmbedManager(Service):
         embed.set_thumbnail(url=member.display_avatar.url)
         return embed
 
+    async def get_loot_scrap_embed(
+        self, member: discord.Member, scrap: int, level: int
+    ):
+        title = f"{member.display_name}'s Auto Scrap Results"
+        content = f"You gain ⚙️{scrap} Scrap from scrapping all items up to and including level {level}."
+        embed = discord.Embed(
+            title=title, description=content, color=discord.Colour.green()
+        )
+        message = "To change this, please use the command /combat auto_scrap <level>."
+        self.add_text_bar(embed, "", message)
+        embed.set_thumbnail(url=member.display_avatar.url)
+        return embed
+
     async def get_embed_attack_data(
         self,
         current_actor: Actor,
@@ -340,8 +404,9 @@ class CombatEmbedManager(Service):
         total_damage = await self.actor_manager.get_skill_damage_after_defense(
             target, skill, damage_instance.scaled_value
         )
-
-        display_dmg = damage_instance.value
+        display_dmg = await self.actor_manager.get_skill_damage_after_defense(
+            target, skill, damage_instance.value
+        )
         if current_actor.is_enemy:
             display_dmg = total_damage
 
@@ -526,20 +591,26 @@ class CombatEmbedManager(Service):
         full_embed = discord.Embed(title="", description="", color=color)
         full_embed.set_author(name=title, icon_url=actor.image_url)
         full_embed.set_thumbnail(url=skill.base_skill.image_url)
-        skill_data.add_to_embed(full_embed)
+        skill_data.add_to_embed(
+            full_embed, description_override=turn_data.description_override
+        )
 
         yield full_embed
 
-        if (
-            actor.is_enemy
-            # and actor.enemy.is_boss
-            and skill.type
-            not in self.actor_manager.get_used_skills(actor.id, context.combat_events)
+        if actor.is_enemy and skill.type not in self.actor_manager.get_used_skills(
+            actor.id, context.combat_events
         ):
             wait = max(len(skill.description) * 0.06, 3)
             await asyncio.sleep(wait)
 
-        if not skill.base_skill.base_value <= 0:
+        if (
+            not skill.base_skill.base_value <= 0
+            and skill.base_skill.skill_effect
+            not in [
+                SkillEffect.NOTHING,
+                SkillEffect.BUFF,
+            ]
+        ):
             if skill.base_skill.aoe:
                 async for embed in self.display_aoe_skill(turn_data, skill, full_embed):
                     yield embed
@@ -568,6 +639,27 @@ class CombatEmbedManager(Service):
 
         return embed
 
+    def get_member_out_embed(
+        self, actor: Actor, event_type: EncounterEventType, reason: str
+    ) -> discord.Embed:
+        actor_name = f"{actor.name}"
+
+        content = f"{actor_name} left the encounter."
+        if event_type == EncounterEventType.MEMBER_LEAVING:
+            content += " They will be removed at the start of the next round."
+
+        embed = discord.Embed(
+            title="", description="", color=discord.Colour.light_grey()
+        )
+        embed.set_author(name=actor_name, icon_url=actor.image_url)
+        self.add_text_bar(embed, "", content)
+
+        if actor.image_url is not None:
+            embed.set_thumbnail(url=actor.image_url)
+        if reason is not None and len(reason) > 0:
+            embed.add_field(name="Reason", value=reason)
+        return embed
+
     def get_turn_skip_embed(
         self, actor: Actor, reason: str, context: EncounterContext
     ) -> discord.Embed:
@@ -583,7 +675,8 @@ class CombatEmbedManager(Service):
 
         if actor.image_url is not None:
             embed.set_thumbnail(url=actor.image_url)
-        embed.add_field(name="Reason", value=reason)
+        if reason is not None and len(reason) > 0:
+            embed.add_field(name="Reason", value=reason)
         return embed
 
     async def get_waiting_for_party_embed(self, party_size: int):
@@ -591,17 +684,17 @@ class CombatEmbedManager(Service):
             title="Waiting for players to arrive.", color=discord.Colour.green()
         )
 
-        message = f"Combat will start as soon as {party_size} players join."
+        message = f"Combat will initiate after {party_size} players join."
         self.add_text_bar(embed, "", message)
 
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         return embed
 
-    async def get_initiation_embed(self):
+    async def get_initiation_embed(self, wait_time: float):
         embed = discord.Embed(title="Get Ready to Fight!", color=discord.Colour.green())
 
         now = datetime.datetime.now().timestamp()
-        timer = int(now + Config.COMBAT_INITIAL_WAIT)
+        timer = int(now + wait_time)
 
         message = f"Combat will start <t:{timer}:R>."
         embed.add_field(name=message, value="", inline=False)
@@ -617,11 +710,17 @@ class CombatEmbedManager(Service):
         if cont:
             title = "Round Continued.."
         embed = discord.Embed(title=title, color=discord.Colour.green())
+
+        round_count = context.get_current_round_number()
+        embed.add_field(name=f"Round {round_count}", value="", inline=False)
+
         initiative_list = context.actors
         current_actor = context.get_current_actor()
         initiative_display = ""
 
         for idx, actor in enumerate(initiative_list):
+            if actor.is_out:
+                continue
             number = idx + 1
             current_hp = await self.actor_manager.get_actor_current_hp(
                 actor, context.combat_events
@@ -675,3 +774,40 @@ class CombatEmbedManager(Service):
         if additional_message is not None and additional_message != "":
             message += f"\n{additional_message}"
         return self.get_notification_embed(title, message)
+
+    def get_actor_join_request_embed(
+        self,
+        user: discord.Member,
+        owner: discord.Member,
+    ) -> discord.Embed:
+        title = "A new player requests to join the battle!"
+        message = f"{user.display_name} arrived! They need to be approved by the encounter owner {owner.display_name} to join the fight."
+        return self.get_notification_embed(title, message)
+
+    def get_special_item_embed(self, item: Item, delay_claim: int = None):
+        title = "Special Item"
+        embed = discord.Embed(title=title, description="", color=discord.Colour.gold())
+        message = (
+            "A boss key dropped! Only one of you may claim this item. "
+            "The one who takes up the responsibility may spawn the boss encounter at any time. "
+        )
+
+        self.add_text_bar(embed, "", message)
+
+        item.add_to_embed(
+            self.bot,
+            embed,
+            Config.SHOP_ITEM_MAX_WIDTH,
+            count=1,
+            show_price=False,
+        )
+
+        if item.image_url is not None:
+            embed.set_image(url=item.image_url)
+
+        if delay_claim is not None:
+            now = datetime.datetime.now().timestamp()
+            timer = int(now + delay_claim)
+            embed.add_field(name="", value=f"Able to claim <t:{timer}:R>.")
+
+        return embed

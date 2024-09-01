@@ -2,6 +2,7 @@ import contextlib
 import re
 
 import discord
+
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.prediction import Prediction
@@ -90,17 +91,24 @@ class ShopResponseView(ViewMenu):
                 element.disabled = disabled
                 self.add_item(element)
 
-    async def refresh_ui(self, disabled: bool = False):
+    async def refresh_ui(
+        self, disabled: bool = False, force_embed: discord.Embed = None
+    ):
         color = discord.Colour.purple()
         if self.selected_color is not None:
             hex_value = int(self.selected_color, 16)
             color = discord.Color(hex_value)
 
-        embed = self.item.get_embed(
-            self.controller.bot, color=color, amount_in_cart=self.selected_amount
-        )
+        embed = force_embed
+        if embed is None:
+            embed = self.item.get_embed(
+                self.controller.bot, color=color, amount_in_cart=self.selected_amount
+            )
 
-        embed.title = f"{self.item.emoji} {self.item.name} {self.item.emoji}"
+        emoji = self.item.emoji
+        if isinstance(self.item.emoji, int):
+            emoji = str(self.controller.bot.get_emoji(self.item.emoji))
+        embed.title = f"{emoji} {self.item.name} {emoji}"
 
         if self.selected_amount > 1:
             embed.title = f"{self.selected_amount}x {embed.title}"

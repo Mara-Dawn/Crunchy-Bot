@@ -3,6 +3,9 @@ import datetime
 import random
 
 import discord
+from discord import app_commands
+from discord.ext import commands
+
 from bot import CrunchyBot
 from control.ai_manager import AIManager
 from control.controller import Controller
@@ -11,10 +14,10 @@ from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
+from control.types import UserSettingType
+from control.user_settings_manager import UserSettingsManager
 from datalayer.database import Database
 from datalayer.types import ItemTrigger
-from discord import app_commands
-from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.types import BeansEventType
 from items.item import Item
@@ -35,6 +38,9 @@ class Gamba(commands.Cog):
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
         )
+        self.user_settings_manager: UserSettingsManager = self.controller.get_service(
+            UserSettingsManager
+        )
         self.ai_manager: AIManager = self.controller.get_service(AIManager)
 
     @staticmethod
@@ -44,6 +50,24 @@ class Gamba(commands.Cog):
             interaction.user.id == author_id
             or interaction.user.guild_permissions.administrator
         )
+
+    async def __beans_role_check(self, interaction: discord.Interaction) -> bool:
+        member = interaction.user
+        guild_id = interaction.guild_id
+
+        beans_role = await self.settings_manager.get_beans_role(guild_id)
+        if beans_role is None:
+            return True
+        if beans_role in [role.id for role in member.roles]:
+            return True
+
+        role_name = interaction.guild.get_role(beans_role).name
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"You can only use this command if you have the role `{role_name}`.",
+        )
+        return False
 
     async def __check_enabled(self, interaction: discord.Interaction) -> bool:
         guild_id = interaction.guild_id
@@ -115,11 +139,75 @@ class Gamba(commands.Cog):
             "init", str(self.__cog_name__) + " loaded.", cog=self.__cog_name__
         )
 
+    @app_commands.command(
+        name="set_gamba_default", description="Set a personal default amount to /gamba."
+    )
+    @app_commands.guild_only()
+    async def set_gamba_default(
+        self,
+        interaction: discord.Interaction,
+        amount: int,
+    ):
+        if not await self.__check_enabled(interaction):
+            return
+        if not await self.__beans_role_check(interaction):
+            return
+
+        await interaction.response.defer(ephemeral=True)
+        guild_id = interaction.guild_id
+        user_id = interaction.user.id
+        beans_gamba_min = await self.settings_manager.get_beans_gamba_min(guild_id)
+        beans_gamba_max = await self.settings_manager.get_beans_gamba_max(guild_id)
+
+        over_limit = not (beans_gamba_min <= amount and amount <= beans_gamba_max)
+
+        if over_limit:
+            prompt = (
+                f"I tried to bet more than `🅱️{beans_gamba_max}` or less than `🅱️{beans_gamba_min}` beans,"
+                " which is not acceptable. Please tell me what i did wrong and keep the formatting between"
+                " the backticks (including them) like in my message. Also keep it short."
+            )
+            response = await self.ai_manager.prompt(
+                guild_id, interaction.user.display_name, prompt
+            )
+
+            if response is None or len(response) == 0:
+                response = f"Between `🅱️{beans_gamba_min}` and `🅱️{beans_gamba_max}` you fucking monkey."
+
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                response,
+                args=[amount],
+                ephemeral=True,
+            )
+            return
+
+        await self.user_settings_manager.set(
+            user_id, guild_id, UserSettingType.GAMBA_DEFAULT, amount
+        )
+
+        response = f"Default gamba amount was set to {amount}."
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            response,
+            args=[amount],
+            ephemeral=True,
+        )
+
     @app_commands.command(name="gamba", description="Gamba away your beans.")
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 5)
-    async def gamba(self, interaction: discord.Interaction, amount: int | None = None):
+    async def gamba(
+        self,
+        interaction: discord.Interaction,
+        amount: int | None = None,
+    ):
         if not await self.__check_enabled(interaction):
+            return
+        if not await self.__beans_role_check(interaction):
             return
 
         await interaction.response.defer()
@@ -135,7 +223,10 @@ class Gamba(commands.Cog):
         default_amount = await self.settings_manager.get_beans_gamba_cost(guild_id)
 
         if amount is None or amount <= 0:
-            amount = default_amount
+            user_default = await self.user_settings_manager.get(
+                user_id, guild_id, UserSettingType.GAMBA_DEFAULT
+            )
+            amount = int(user_default) if user_default is not None else default_amount
 
         over_limit = not (beans_gamba_min <= amount and amount <= beans_gamba_max)
 
@@ -185,7 +276,7 @@ class Gamba(commands.Cog):
                 " the backticks (including them) like in my message. Also keep it short."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
 
             if response is None or len(response) == 0:
@@ -208,7 +299,7 @@ class Gamba(commands.Cog):
                 "which is not acceptable. Please tell me what i did wrong. Also keep it short, 30 words or less."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
 
             if response is None or len(response) == 0:
@@ -231,7 +322,7 @@ class Gamba(commands.Cog):
                 " Also keep it short, 30 words or less."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
 
             response += f"\n *Next gamba <t:{cooldowntimer}:R>.*"
@@ -304,7 +395,7 @@ class Gamba(commands.Cog):
             final_display = 2
             payout = amount * 3
             final = f"Wow you got lucky! Your payout is `🅱️{payout}` beans."
-            prompt += f"and i won `🅱️{payout}` beans, which is amoderate amount. Please congratulate me."
+            prompt += f"and i won `🅱️{payout}` beans, which is a moderate amount. Please congratulate me."
         elif result > (loss + times_two + times_three) and result <= (
             loss + times_two + times_three + times_five
         ):
@@ -321,11 +412,13 @@ class Gamba(commands.Cog):
 
         if result > loss:
             prompt += " please mention the amount of beans i won."
-            prompt += " Pleae use the same exact formatting to display the amount of beans, including the back tick characters."
+            prompt += " Please use the same exact formatting to display the amount of beans, including the back tick characters."
 
         prompt += " Also keep it super concise, 25 words or less preferably unless its a jackpot, and refer to the gamble as gamba."
 
-        final_ai = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+        final_ai = await self.ai_manager.prompt(
+            guild_id, interaction.user.display_name, prompt
+        )
 
         if final_ai is not None and len(response) > 0:
             final = final_ai

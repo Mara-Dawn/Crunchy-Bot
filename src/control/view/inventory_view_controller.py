@@ -3,26 +3,26 @@ import datetime
 import secrets
 
 import discord
-from combat.enemies.types import EnemyType
-from datalayer.database import Database
-from datalayer.inventory import UserInventory
 from discord.ext import commands
-from events.beans_event import BeansEvent
-from events.bot_event import BotEvent
-from events.inventory_event import InventoryEvent
-from events.types import BeansEventType, EventType, UIEventType
-from events.ui_event import UIEvent
-from items import Debuff
-from items.item import Item
-from items.types import ItemState, ItemType
-from view.types import ActionType
 
+from combat.enemies.types import EnemyType
 from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
+from datalayer.database import Database
+from datalayer.inventory import UserInventory
+from events.beans_event import BeansEvent
+from events.bot_event import BotEvent
+from events.inventory_event import InventoryEvent
+from events.types import BeansEventType, EventType, UIEventType
+from events.ui_event import UIEvent
+from items import BaseKey, Debuff
+from items.item import Item
+from items.types import ItemState, ItemType
+from view.types import ActionType
 
 
 class InventoryInteraction:
@@ -157,7 +157,7 @@ class InventoryViewController(ViewController):
                 )
                 await self.request_queue.put(request)
 
-            case UIEventType.SHOP_RESPONSE_CONFIRM_SUBMIT:
+            case UIEventType.INVENTORY_RESPONSE_CONFIRM_SUBMIT:
                 interaction = event.payload[0]
                 shop_data = event.payload[1]
                 item = shop_data.item
@@ -233,6 +233,7 @@ class InventoryViewController(ViewController):
     ):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
+        beans_role = await self.settings_manager.get_beans_role(guild_id)
 
         match item.type:
             case ItemType.SPOOK_BEAN:
@@ -245,6 +246,16 @@ class InventoryViewController(ViewController):
                 if target is None:
                     await interaction.followup.send(
                         "Please select a user first.", ephemeral=True
+                    )
+                    return
+
+                if beans_role is not None and beans_role not in [
+                    role.id for role in target.roles
+                ]:
+                    role_name = interaction.guild.get_role(beans_role).name
+                    await interaction.followup.send(
+                        f"This user does not have the `{role_name}` role.",
+                        ephemeral=True,
                     )
                     return
 
@@ -274,6 +285,20 @@ class InventoryViewController(ViewController):
                 message = await interaction.original_response()
                 await message.delete()
 
+    async def encounter_check(self, interaction: discord.Interaction):
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+        encounters = await self.database.get_encounter_participants(guild_id)
+
+        for _, participants in encounters.items():
+            if member_id in participants:
+                await interaction.followup.send(
+                    "You cannot use this while you are in combat.",
+                    ephemeral=True,
+                )
+                return False
+        return True
+
     async def submit_confirm_view(
         self,
         interaction: discord.Interaction,
@@ -282,16 +307,66 @@ class InventoryViewController(ViewController):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
 
+        boss_key_map = {
+            ItemType.DADDY_KEY: EnemyType.DADDY_P1,
+            ItemType.WEEB_KEY: EnemyType.WEEB_BALL,
+        }
+        boss_lvl_map = {
+            ItemType.DADDY_KEY: 3,
+            ItemType.WEEB_KEY: 6,
+        }
+
         match item.type:
-            case ItemType.DADDY_KEY:
+            case (
+                ItemType.ENCOUNTER_KEY_1
+                | ItemType.ENCOUNTER_KEY_2
+                | ItemType.ENCOUNTER_KEY_3
+                | ItemType.ENCOUNTER_KEY_4
+                | ItemType.ENCOUNTER_KEY_5
+                | ItemType.ENCOUNTER_KEY_6
+            ):
+                if not await self.encounter_check(interaction):
+                    return
+                combat_channels = await self.settings_manager.get_combat_channels(
+                    interaction.guild_id
+                )
+                level_map = {v: k for k, v in BaseKey.TYPE_MAP.items()}
+                await self.encounter_manager.spawn_encounter(
+                    interaction.guild,
+                    secrets.choice(combat_channels),
+                    None,
+                    level_map[item.type],
+                    owner_id=user_id,
+                )
+
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    guild_id,
+                    user_id,
+                    item.type,
+                    -1,
+                )
+                await self.controller.dispatch_event(event)
+
+                await interaction.followup.send(
+                    "Encounter successfully spawned.",
+                    ephemeral=True,
+                )
+                message = await interaction.original_response()
+                await message.delete()
+
+            case ItemType.DADDY_KEY | ItemType.WEEB_KEY:
+                if not await self.encounter_check(interaction):
+                    return
                 combat_channels = await self.settings_manager.get_combat_channels(
                     interaction.guild_id
                 )
                 await self.encounter_manager.spawn_encounter(
                     interaction.guild,
                     secrets.choice(combat_channels),
-                    EnemyType.DADDY_P1,
-                    3,
+                    boss_key_map[item.type],
+                    boss_lvl_map[item.type],
+                    owner_id=user_id,
                 )
 
                 event = InventoryEvent(

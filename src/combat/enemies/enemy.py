@@ -1,6 +1,7 @@
 import random
 
 import discord
+
 from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearBaseType
 from combat.skills.types import SkillType
@@ -40,18 +41,13 @@ class Enemy:
     }
 
     LOOT_BONUS_CHANCE_BY_LVL = {
-        1: 0.1,
-        2: 0.2,
-        3: 0.3,
-        4: 0.4,
-        5: 0.5,
-        6: 0.6,
-        7: 0.7,
-        8: 0.8,
-        9: 0.9,
-        10: 1,
-        11: 1,
-        12: 1,
+        1: 0.10,
+        2: 0.11,
+        3: 0.12,
+        4: 0.13,
+        5: 0.14,
+        6: 0.15,
+        7: 0.16,
     }
 
     def __init__(
@@ -84,6 +80,7 @@ class Enemy:
         phases: list[EnemyType] = None,
         controller: str = "BasicEnemyController",
         author: str = None,
+        random_loot: bool = True,
     ):
         self.name = name
         self.type = type
@@ -111,6 +108,7 @@ class Enemy:
         self.controller = controller
         self.is_boss = is_boss
         self.phases = phases
+        self.random_loot = random_loot
 
         self.attribute_overrides = attribute_overrides
 
@@ -125,21 +123,23 @@ class Enemy:
         }
 
         if attribute_overrides is not None:
-            for attribute_type, value in attribute_overrides:
+            for attribute_type, value in attribute_overrides.items():
                 self.attributes[attribute_type] = value
 
         if self.bonus_loot_chance is None:
             self.bonus_loot_chance = self.LOOT_BONUS_CHANCE_BY_LVL[self.min_level]
 
         self.author = author
+
         if self.author is None:
             self.author = "Mara"
 
     def roll_beans_amount(self, level: int):
+        base_amount = 10 * level
         if self.min_beans_reward is None:
-            self.min_beans_reward = 95 * level
+            self.min_beans_reward = base_amount - (level * 2)
         if self.max_beans_reward is None:
-            self.max_beans_reward = 105 * level
+            self.max_beans_reward = base_amount + (level * 2)
 
         return random.randint(self.min_beans_reward, self.max_beans_reward)
 

@@ -3,16 +3,17 @@ import random
 import typing
 
 import discord
-from control.settings_manager import SettingsManager
 from discord import app_commands
 from discord.ext import commands
+
+from cogs.beans.beans_group import BeansGroup
+from control.settings_manager import SettingsManager
 from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType
 from items.types import ItemType
+from view.help import HelpEmbed
 from view.settings_modal import SettingsModal
-
-from cogs.beans.beans_group import BeansGroup
 
 
 class BeansBasics(BeansGroup):
@@ -47,14 +48,61 @@ class BeansBasics(BeansGroup):
 
         return True
 
+    async def __beans_role_check(self, interaction: discord.Interaction) -> bool:
+        member = interaction.user
+        guild_id = interaction.guild_id
+
+        beans_role = await self.settings_manager.get_beans_role(guild_id)
+        if beans_role is None:
+            return True
+        if beans_role in [role.id for role in member.roles]:
+            return True
+
+        role_name = interaction.guild.get_role(beans_role).name
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"You can only use this command if you have the role `{role_name}`.",
+        )
+        return False
+
     @commands.Cog.listener("on_ready")
     async def on_ready_beansbasics(self) -> None:
         self.logger.log("init", "BeansBasics loaded.", cog=self.__cog_name__)
+
+    @app_commands.command(
+        name="help",
+        description="Shows a simple quick start guide.",
+    )
+    @app_commands.describe(advanced="Show all available commands.")
+    @app_commands.guild_only()
+    async def help(self, interaction: discord.Interaction, advanced: bool = False):
+        if not await self.__check_enabled(interaction):
+            return
+        if not await self.__beans_role_check(interaction):
+            return
+
+        help_embed = HelpEmbed(self.bot)
+        await help_embed.initialize(
+            interaction.guild_id, self.settings_manager, advanced=advanced
+        )
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            "",
+            embeds=[help_embed],
+            args=[advanced],
+            ephemeral=True,
+        )
 
     @app_commands.command(name="please", description="Your daily dose of beans.")
     @app_commands.guild_only()
     async def please(self, interaction: discord.Interaction) -> None:
         if not await self.__check_enabled(interaction):
+            return
+
+        if not await self.__beans_role_check(interaction):
             return
 
         await interaction.response.defer()
@@ -88,7 +136,7 @@ class BeansBasics(BeansGroup):
                 "Use the same exact formatting to display the amount of beans, including the back tick characters."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
 
             # response = f"Welcome to the new Beans Season <@{user_id}>! Here are `🅱️{amount}` beans to get you started."
@@ -117,7 +165,7 @@ class BeansBasics(BeansGroup):
                 "Also keep it short, 15 words or less."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
             # response = "You already got your daily beans, dummy! Try again tomorrow."
 
@@ -145,7 +193,9 @@ class BeansBasics(BeansGroup):
             "Use the same exact formatting to display the amount of beans, including the back tick characters. "
             "Keep it short, 20 words or less."
         )
-        response = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+        response = await self.ai_manager.prompt(
+            guild_id, interaction.user.display_name, prompt
+        )
 
         # response = f"<@{user_id}> got their daily dose of `🅱️{amount}` beans."
 
@@ -167,6 +217,9 @@ class BeansBasics(BeansGroup):
     ) -> None:
         if not await self.__check_enabled(interaction):
             return
+        if not await self.__beans_role_check(interaction):
+            return
+
         await interaction.response.defer()
 
         user = user if user is not None else interaction.user
@@ -181,7 +234,9 @@ class BeansBasics(BeansGroup):
             "Use the same exact formatting to display the amount of beans, including the back tick characters. "
             "Keep it short, 20 words or less."
         )
-        response = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+        response = await self.ai_manager.prompt(
+            guild_id, interaction.user.display_name, prompt
+        )
         # response = f"<@{user_id}> currently has `🅱️{current_balance}` beans."
 
         await self.bot.command_response(
@@ -242,6 +297,10 @@ class BeansBasics(BeansGroup):
         user: discord.Member,
         amount: app_commands.Range[int, 1],
     ) -> None:
+        if not await self.__check_enabled(interaction):
+            return
+        if not await self.__beans_role_check(interaction):
+            return
         await interaction.response.defer()
 
         guild_id = interaction.guild_id
@@ -256,7 +315,7 @@ class BeansBasics(BeansGroup):
                 "Keep it short, 15 words or less."
             )
             response = await self.ai_manager.prompt(
-                interaction.user.display_name, prompt
+                guild_id, interaction.user.display_name, prompt
             )
             # response = "You dont have that many beans, idiot."
             await self.bot.command_response(
@@ -284,7 +343,9 @@ class BeansBasics(BeansGroup):
             "For the bean amount, please ue the same exact formatting to display it, including the back tick characters and 🅱️ currency symbol. "
             "Keep it short, 20 words or less."
         )
-        response = await self.ai_manager.prompt(interaction.user.display_name, prompt)
+        response = await self.ai_manager.prompt(
+            guild_id, interaction.user.display_name, prompt
+        )
         # response = f"`🅱️{abs(amount)}` beans were transferred from <@{interaction.user.id}> to <@{user.id}>."
         response += f"\n*{interaction.user.display_name} -> {user.display_name}:* `🅱️{abs(amount)}`"
 
@@ -534,6 +595,36 @@ class BeansBasics(BeansGroup):
             interaction,
             f"Removed {channel.name} from beans notification channels.",
             args=[channel.name],
+        )
+
+    @app_commands.command(
+        name="set_beans_role",
+        description="Sets the role for people participating in beans content.",
+    )
+    @app_commands.describe(role="The role for beans users.")
+    @app_commands.check(__has_permission)
+    async def set_beans_role(
+        self, interaction: discord.Interaction, role: discord.Role
+    ):
+        await self.settings_manager.set_beans_role(interaction.guild_id, role.id)
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Beans role was set to `{role.name}` .",
+            args=[role.name],
+        )
+
+    @app_commands.command(
+        name="unset_beans_role",
+        description="This will make beans commands available to everyone.",
+    )
+    @app_commands.check(__has_permission)
+    async def unset_beans_role(self, interaction: discord.Interaction):
+        await self.settings_manager.set_beans_role(interaction.guild_id, None)
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            "Beans role was unset.",
         )
 
 

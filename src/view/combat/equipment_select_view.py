@@ -2,6 +2,7 @@ import contextlib
 import copy
 
 import discord
+
 from combat.gear.gear import Gear
 from combat.gear.types import EquipmentSlot, GearModifierType
 from control.combat.combat_embed_manager import CombatEmbedManager
@@ -112,9 +113,11 @@ class EquipmentSelectView(
 
     async def select_gear(self, interaction: discord.Interaction):
         await interaction.response.defer()
+        selected = [item for item in self.selected]
+        self.selected = []
         event = UIEvent(
             UIEventType.GEAR_EQUIP,
-            (interaction, self.selected),
+            (interaction, selected),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -125,6 +128,7 @@ class EquipmentSelectView(
         await interaction.response.defer()
 
         scrappable = [item for item in self.selected if not item.locked]
+        self.selected = []
 
         event = UIEvent(
             UIEventType.GEAR_DISMANTLE,
@@ -138,9 +142,11 @@ class EquipmentSelectView(
         interaction: discord.Interaction,
     ):
         await interaction.response.defer()
+        selected = [item for item in self.selected]
+        self.selected = []
         event = UIEvent(
             UIEventType.GEAR_LOCK,
-            (interaction, self.selected),
+            (interaction, selected),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -155,6 +161,7 @@ class EquipmentSelectView(
             for item in self.selected
             if item.id not in [item.id for item in self.current]
         ]
+        self.selected = []
         event = UIEvent(
             UIEventType.GEAR_UNLOCK,
             (interaction, items),
@@ -183,6 +190,15 @@ class EquipmentSelectView(
         )
         await self.controller.dispatch_ui_event(event)
 
+    async def open_shop(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        event = UIEvent(
+            UIEventType.FORGE_OPEN_SHOP,
+            interaction,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     def refresh_elements(self, disabled: bool = False):
         page_display = f"Page {self.current_page + 1}/{self.page_count}"
 
@@ -194,10 +210,16 @@ class EquipmentSelectView(
             max_values = 2
 
         disable_equip = disabled
-        if len(self.selected) > max_values:
+        disable_dismantle = disabled
+        disable_lock = disabled
+
+        if len(self.selected) <= 0:
+            disable_equip = True
+            disable_dismantle = True
+            disable_lock = True
+        elif len(self.selected) > max_values:
             disable_equip = True
 
-        disable_dismantle = disabled
         for selected_gear in self.selected:
             if selected_gear.id in [gear.id for gear in self.current]:
                 disable_dismantle = True
@@ -219,8 +241,8 @@ class EquipmentSelectView(
         self.add_item(CurrentPageButton(page_display))
         self.add_item(ScrapBalanceButton(self.scrap_balance))
         self.add_item(ScrapSelectedButton(disabled=disable_dismantle))
-        self.add_item(LockButton(disabled=disabled))
-        self.add_item(UnlockButton(disabled=disabled))
+        self.add_item(LockButton(disabled=disable_lock))
+        self.add_item(UnlockButton(disabled=disable_lock))
         self.add_item(BackButton(disabled=disabled))
         self.add_item(
             SelectGearSlot(

@@ -2,6 +2,7 @@ import contextlib
 from enum import Enum
 
 import discord
+
 from combat.actors import Character
 from combat.gear.types import EquipmentSlot, Rarity
 from combat.skills.skill import CharacterSkill, Skill
@@ -148,7 +149,7 @@ class SkillSelectView(
             key=lambda x: (
                 (x.id in [skill.id for skill in self.equipped_skills]),
                 # x.locked,
-                x.level,
+                # x.level,
                 Skill.RARITY_SORT_MAP[x.rarity],
                 Skill.EFFECT_SORT_MAP[x.base_skill.skill_effect],
             ),
@@ -162,6 +163,15 @@ class SkillSelectView(
         # self.selected_slots = {}
         await self.refresh_ui()
 
+    async def open_shop(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        event = UIEvent(
+            UIEventType.FORGE_OPEN_SHOP,
+            interaction,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     async def equip_selected_skill(self, interaction: discord.Interaction, slot: int):
         await interaction.response.defer()
 
@@ -172,6 +182,7 @@ class SkillSelectView(
         }
 
         selected[slot] = self.selected[0]
+        self.selected = []
 
         event = UIEvent(
             UIEventType.SKILLS_EQUIP,
@@ -202,6 +213,7 @@ class SkillSelectView(
         await interaction.response.defer()
 
         scrappable = [item for item in self.selected if not item.locked]
+        self.selected = []
 
         event = UIEvent(
             UIEventType.GEAR_DISMANTLE,
@@ -215,9 +227,11 @@ class SkillSelectView(
         interaction: discord.Interaction,
     ):
         await interaction.response.defer()
+        selected = [item for item in self.selected]
+        self.selected = []
         event = UIEvent(
             UIEventType.GEAR_LOCK,
-            (interaction, self.selected),
+            (interaction, selected),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -227,9 +241,11 @@ class SkillSelectView(
         interaction: discord.Interaction,
     ):
         await interaction.response.defer()
+        selected = [item for item in self.selected]
+        self.selected = []
         event = UIEvent(
             UIEventType.GEAR_UNLOCK,
-            (interaction, self.selected),
+            (interaction, selected),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -667,7 +683,7 @@ class Dropdown(discord.ui.Select):
             description = []
 
             if skill.id is not None:
-                description.append(f"ILVL: {skill.level}")
+                # description.append(f"ILVL: {skill.level}")
                 description.append(
                     f"USE: {data.stacks_left()}/{skill.base_skill.stacks}"
                 )

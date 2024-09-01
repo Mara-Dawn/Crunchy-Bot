@@ -1,11 +1,13 @@
 from enum import Enum
 
 import discord
+
 from combat.actors import Character
 from combat.gear.types import (
     EquipmentSlot,
     Rarity,
 )
+from config import Config
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
@@ -32,17 +34,12 @@ class EquipmentView(ViewMenu):
 
     SCRAP_ILVL_MAP = {
         1: 15,
-        2: 40,
-        3: 80,
-        4: 120,
-        5: 180,
-        6: 240,
-        7: 300,
-        8: 350,
-        9: 400,
-        10: 450,
-        11: 500,
-        12: 550,
+        2: 30,
+        3: 60,
+        4: 100,
+        5: 150,
+        6: 200,
+        7: 250,
     }
 
     def __init__(
@@ -68,7 +65,7 @@ class EquipmentView(ViewMenu):
         )
 
         self.guild_level = guild_level
-        self.max_rarity = Rarity.NORMAL
+        self.max_rarity = Rarity.COMMON
         for rarity, level in CombatGearManager.MIN_RARITY_LVL.items():
             if level <= self.guild_level:
                 self.max_rarity = rarity
@@ -82,6 +79,7 @@ class EquipmentView(ViewMenu):
         }
         self.max_forge_level = max(self.forge_options.keys())
         self.selected: int = self.max_forge_level
+        self.selected_slot: EquipmentSlot = None
 
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
@@ -132,7 +130,16 @@ class EquipmentView(ViewMenu):
             case EquipmentViewState.FORGE:
                 forge_button_selected = True
                 self.add_item(ForgeDropdown(self.forge_options, self.selected))
-                self.add_item(ForgeUseButton())
+                self.add_item(SlotDropdown(self.selected_slot, disabled=disabled))
+                scaling = 1
+                if self.selected_slot is not None:
+                    scaling = (
+                        CombatGearManager.SLOT_SCALING[self.selected_slot]
+                        * Config.SCRAP_FORGE_MULTI
+                    )
+                total = int(self.SCRAP_ILVL_MAP[self.selected] * scaling)
+                self.add_item(ForgeUseButton(total))
+                self.add_item(ForgeShopButton())
 
         self.add_item(GearButton(selected=gear_button_selected, disabled=disabled))
         self.add_item(StatsButton(selected=stats_button_selected, disabled=disabled))
@@ -208,6 +215,13 @@ class EquipmentView(ViewMenu):
         self.selected = item_level
         await self.refresh_ui()
 
+    async def set_selected_slot(
+        self, interaction: discord.Interaction, slot: EquipmentSlot
+    ):
+        await interaction.response.defer()
+        self.selected_slot = slot
+        await self.refresh_ui()
+
     async def change_gear(self, interaction: discord.Interaction, slot: EquipmentSlot):
         await interaction.response.defer()
         event = UIEvent(
@@ -221,7 +235,16 @@ class EquipmentView(ViewMenu):
         await interaction.response.defer(ephemeral=True)
         event = UIEvent(
             UIEventType.FORGE_USE,
-            (interaction, self.selected),
+            (interaction, self.selected, self.selected_slot),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def open_shop(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        event = UIEvent(
+            UIEventType.FORGE_OPEN_SHOP,
+            interaction,
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -379,7 +402,7 @@ class ScrapBalanceButton(discord.ui.Button):
         view: EquipmentView = self.view
 
         if await view.interaction_check(interaction):
-            await interaction.response.defer(ephemeral=True)
+            await view.open_shop(interaction)
 
 
 class SkillManageButton(discord.ui.Button):
@@ -449,8 +472,8 @@ class ForgeDropdown(discord.ui.Select):
     ):
         options = []
 
-        for item_level, scrap_amount in scrap_options.items():
-            label = f"⚙️{scrap_amount} Scrap"
+        for item_level, _ in scrap_options.items():
+            label = f"Item Level {item_level}"
             description = f"Gain a random level {item_level} item or skill."
 
             option = discord.SelectOption(
@@ -462,7 +485,7 @@ class ForgeDropdown(discord.ui.Select):
             options.append(option)
 
         super().__init__(
-            placeholder="Select one or more pieces of equipment.",
+            placeholder="",
             min_values=1,
             max_values=1,
             options=options,
@@ -479,12 +502,38 @@ class ForgeDropdown(discord.ui.Select):
             )
 
 
-class ForgeUseButton(discord.ui.Button):
+class SlotDropdown(discord.ui.Select):
 
-    def __init__(self, disabled: bool = False):
+    def __init__(
+        self,
+        selected: EquipmentSlot = None,
+        disabled: bool = False,
+    ):
+        option = discord.SelectOption(
+            label="Any",
+            description="Drop a completely random item or skill.",
+            value="Any",
+            default=(selected is None),
+        )
+        options = [option]
+
+        for slot in EquipmentSlot:
+            label = slot.value
+            description = f"Gain a random {slot.value}."
+
+            option = discord.SelectOption(
+                label=label,
+                description=description,
+                value=slot.value,
+                default=(slot == selected),
+            )
+            options.append(option)
+
         super().__init__(
-            label="Throw Scrap into Forge",
-            style=discord.ButtonStyle.green,
+            placeholder="",
+            min_values=1,
+            max_values=1,
+            options=options,
             row=2,
             disabled=disabled,
         )
@@ -493,4 +542,41 @@ class ForgeUseButton(discord.ui.Button):
         view: EquipmentView = self.view
 
         if await view.interaction_check(interaction):
+            selected = self.values[0]
+            selected = None if selected == "Any" else EquipmentSlot(selected)
+
+            await view.set_selected_slot(interaction, selected)
+
+
+class ForgeUseButton(discord.ui.Button):
+
+    def __init__(self, total: int, disabled: bool = False):
+        super().__init__(
+            label=f"Throw {total}⚙️ Scrap into Forge",
+            style=discord.ButtonStyle.green,
+            row=3,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+
+        if await view.interaction_check(interaction):
             await view.use_forge(interaction)
+
+
+class ForgeShopButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Secret Shop",
+            style=discord.ButtonStyle.green,
+            row=3,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.open_shop(interaction)

@@ -12,8 +12,8 @@ class EquipmentSlot(str, Enum):
 
 class Rarity(str, Enum):
     DEFAULT = "Default"
-    NORMAL = "Normal"
-    MAGIC = "Magic"
+    COMMON = "Common"
+    UNCOMMON = "Uncommon"
     RARE = "Rare"
     LEGENDARY = "Legendary"
     UNIQUE = "Unique"
@@ -34,6 +34,7 @@ class GearModifierType(str, Enum):
     CRIT_RATE = "Crit Rate"
     CRIT_DAMAGE = "Crit Damage"
     DEFENSE = "Defense"
+    EVASION = "Evasion"
     DEXTERITY = "Dexterity"
     CONSTITUTION = "Constitution"
 
@@ -45,6 +46,11 @@ class GearModifierType(str, Enum):
         return max_len
 
     @staticmethod
+    def is_unique_modifier(modifier_type: "GearModifierType"):
+        unique_modifiers = [GearModifierType.EVASION]
+        return modifier_type in unique_modifiers
+
+    @staticmethod
     def short_label(modifier_type: "GearModifierType"):
         label_map = {
             GearModifierType.WEAPON_DAMAGE_MIN: "MIN DMG",
@@ -53,6 +59,7 @@ class GearModifierType(str, Enum):
             GearModifierType.DEXTERITY: "DEX",
             GearModifierType.CONSTITUTION: "CON",
             GearModifierType.DEFENSE: "DEF",
+            GearModifierType.EVASION: "EVA",
             GearModifierType.ATTACK: "ATK",
             GearModifierType.MAGIC: "MGC",
             GearModifierType.HEALING: "HLG",
@@ -74,6 +81,7 @@ class GearModifierType(str, Enum):
 
         float_modifiers = [
             GearModifierType.DEFENSE,
+            GearModifierType.EVASION,
             GearModifierType.ATTACK,
             GearModifierType.MAGIC,
             GearModifierType.HEALING,
@@ -98,6 +106,7 @@ class GearModifierType(str, Enum):
             GearModifierType.DEXTERITY,
             GearModifierType.CONSTITUTION,
             GearModifierType.DEFENSE,
+            GearModifierType.EVASION,
             GearModifierType.ATTACK,
             GearModifierType.MAGIC,
             GearModifierType.HEALING,
@@ -122,6 +131,8 @@ class GearBaseType(str, Enum):
     STICK_T4 = "Stick_T4"
     STICK_T5 = "Stick_T5"
 
+    TAPE_MEASURE = "TapeMeasure"
+
     DEFAULT_MAGICAL = "DefaultMagical"
     WAND_T0 = "Wand_T0"
     WAND_T1 = "Wand_T1"
@@ -134,6 +145,7 @@ class GearBaseType(str, Enum):
     HEADGEAR_T0 = "HeadGear_T0"
     HEADGEAR_T1 = "HeadGear_T1"
     HEADGEAR_T2 = "HeadGear_T2"
+    HEADGEAR_T2_2 = "HeadGear_T2_2"
     HEADGEAR_T3_1 = "HeadGear_T3_1"
     HEADGEAR_T3_2 = "HeadGear_T3_2"
     HEADGEAR_T4 = "HeadGear_T4"
@@ -148,6 +160,8 @@ class GearBaseType(str, Enum):
     BODYGEAR_T4 = "BodyGear_T4"
     BODYGEAR_T5 = "BodyGear_T5"
 
+    FEMALE_ARMOR = "FemaleArmor"
+
     DEFAULT_LEGS = "DefaultLegs"
     LEGGEAR_T0 = "LegGear_T0"
     LEGGEAR_T1 = "LegGear_T1"
@@ -155,6 +169,8 @@ class GearBaseType(str, Enum):
     LEGGEAR_T3 = "LegGear_T3"
     LEGGEAR_T4 = "LegGear_T4"
     LEGGEAR_T5 = "LegGear_T5"
+
+    HOT_PANTS = "HotPants"
 
     NECKLACE_T0 = "Necklace_T0"
     RING_T0 = "Ring_T0"
@@ -166,6 +182,25 @@ class GearBaseType(str, Enum):
     NECKLACE_T3_2 = "Necklace_T3_2"
     NECKLACE_T4 = "Necklace_T4"
     NECKLACE_T5 = "Necklace_T5"
+    NECKLACE_T5_2 = "Necklace_T5_2"
+
+    DEEZ_NUTS = "DeezNutsAccessory"
+    RABBIT_FOOT = "RabbitFoot"
+    USELESS_AMULET = "UselessAmulet"
+
+    CAT_HEAD = "CatHead"
+    CAT_LEGS = "CatLegs"
+    CAT_TAIL = "CatTail"
+    CAT_HANDS = "CatHands"
+
+    FAST_FOOD_CAP = "FastFoodCap"
+    SHOOTER_WIG = "ShooterWig"
+    PROFESSIONAL_DISGUISE = "ProfessionalDisguise"
+
+    KEBAB_HAT = "KebabHat"
+    KEBAB_APRON = "KebabApron"
+    KEBAB_PANTS = "KebabPants"
+    KEBAB_SKEWER = "KebabSkewer"
 
 
 class CharacterAttribute(str, Enum):

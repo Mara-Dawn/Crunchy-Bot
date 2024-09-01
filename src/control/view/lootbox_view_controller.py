@@ -24,6 +24,7 @@ from control.event_manager import EventManager
 from control.item_manager import ItemManager
 from control.jail_manager import JailManager
 from control.logger import BotLogger
+from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
 
 
@@ -42,6 +43,9 @@ class LootBoxViewController(ViewController):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
         self.item_manager: ItemManager = controller.get_service(ItemManager)
         self.event_manager: EventManager = controller.get_service(EventManager)
         self.jail_manager: JailManager = self.controller.get_service(JailManager)
@@ -58,6 +62,17 @@ class LootBoxViewController(ViewController):
     ) -> bool:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
+
+        beans_role = await self.settings_manager.get_beans_role(guild_id)
+        if beans_role is not None and beans_role not in [
+            role.id for role in interaction.user.roles
+        ]:
+            role_name = interaction.guild.get_role(beans_role).name
+            await interaction.followup.send(
+                f"You can only use this feature if you have the role `{role_name}`.",
+                ephemeral=True,
+            )
+            return False
 
         stun_base_duration = (
             await self.item_manager.get_item(guild_id, ItemType.BAT)
@@ -84,12 +99,18 @@ class LootBoxViewController(ViewController):
         return True
 
     async def mimic_detector(
-        self, interaction: discord.Interaction, user_items: list[Item]
+        self,
+        interaction: discord.Interaction,
+        user_items: list[Item],
+        lootbox_size: int,
     ) -> bool:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        if ItemType.MIMIC_DETECTOR in [item.type for item in user_items]:
+        if (
+            ItemType.MIMIC_DETECTOR in [item.type for item in user_items]
+            and lootbox_size == 1
+        ):
             message = (
                 "**Oh, wait a second!**\nYou feel something tugging on your leg. It's the Foxgirl you found and took care of until now. "
                 "She is signaling you **not to open that chest**, looks like its a **mimic**! Whew that was close. Before you get to thank her, "
@@ -227,8 +248,9 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
+        lootbox_size: int,
     ) -> int:
-        if await self.mimic_detector(interaction, user_items):
+        if await self.mimic_detector(interaction, user_items, lootbox_size):
             raise MimicProtectedException
         beans = -random.randint(LootBox.SMALL_MIN_BEANS, LootBox.SMALL_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -250,9 +272,10 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
+        lootbox_size: int,
     ) -> tuple[int, int]:
         jailings = 0
-        if await self.mimic_detector(interaction, user_items):
+        if await self.mimic_detector(interaction, user_items, lootbox_size):
             raise MimicProtectedException
         beans = -random.randint(LootBox.LARGE_MIN_BEANS, LootBox.LARGE_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -276,8 +299,9 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
+        lootbox_size: int,
     ) -> int:
-        if await self.mimic_detector(interaction, user_items):
+        if await self.mimic_detector(interaction, user_items, lootbox_size):
             raise MimicProtectedException
         beans = -random.randint(LootBox.SMALL_MIN_BEANS, LootBox.SMALL_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -321,6 +345,7 @@ class LootBoxViewController(ViewController):
         haunts = 0
 
         if loot_box.items is not None and len(loot_box.items) > 0:
+            lootbox_size = len(loot_box.items)
             for item_type, amount in loot_box.items.items():
                 item = await self.item_manager.get_item(guild_id, item_type)
                 item_count = item.base_amount * amount
@@ -334,7 +359,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 total_beans += await self.handle_mimic_item(
-                                    interaction, user_items, item, embed
+                                    interaction, user_items, item, embed, lootbox_size
                                 )
                             except MimicProtectedException:
                                 return False
@@ -342,7 +367,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 jailing, beans = await self.handle_large_mimic_item(
-                                    interaction, user_items, item, embed
+                                    interaction, user_items, item, embed, lootbox_size
                                 )
                                 total_beans += beans
                                 jailings += jailing
@@ -352,7 +377,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 total_beans += await self.handle_spook_mimic_item(
-                                    interaction, user_items, item, embed
+                                    interaction, user_items, item, embed, lootbox_size
                                 )
                                 haunts += 1
                             except MimicProtectedException:

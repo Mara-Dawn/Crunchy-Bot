@@ -1,8 +1,8 @@
 from typing import Any
 
 import discord
+
 from datalayer.ranking import Ranking
-from datalayer.types import Season
 from view.types import RankingType
 
 
@@ -15,10 +15,12 @@ class RankingEmbed(discord.Embed):
         interaction: discord.Interaction,
         ranking_type: RankingType,
         rankings: dict[str, Any],
-        season: Season,
+        season: int,
     ):
+        season_title = f"Season {season}" if season is not None else "Current Season"
+
         super().__init__(
-            title=f"Leaderbords for {interaction.guild.name} ({season.value})",
+            title=f"Leaderbords for {interaction.guild.name} ({season_title})",
             color=discord.Colour.purple(),
         )
         self.set_author(name=author_name, icon_url=author_img)
@@ -37,4 +39,4 @@ class RankingEmbed(discord.Embed):
                 break
 
         self.add_field(name="", value=leaderbord_msg)
-        self.set_image(url="attachment://ranking_img.png")
+        self.set_image(url=author_img)

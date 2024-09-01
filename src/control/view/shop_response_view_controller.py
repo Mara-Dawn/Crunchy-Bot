@@ -21,6 +21,7 @@ from control.controller import Controller
 from control.event_manager import EventManager
 from control.jail_manager import JailManager
 from control.logger import BotLogger
+from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
 
 
@@ -41,6 +42,9 @@ class ShopResponseViewController(ViewController):
         self.controller = controller
         self.event_manager: EventManager = controller.get_service(EventManager)
         self.jail_manager: JailManager = self.controller.get_service(JailManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -88,6 +92,25 @@ class ShopResponseViewController(ViewController):
                     "You dont have enough beans to buy that.", ephemeral=True
                 )
                 return False
+
+        if shop_data.selected_user is not None and shop_data.selected_user.bot:
+            await interaction.followup.send(
+                "You cannot select bot users.", ephemeral=True
+            )
+            return False
+
+        beans_role = await self.settings_manager.get_beans_role(guild_id)
+        if (
+            shop_data.selected_user is not None
+            and beans_role is not None
+            and beans_role not in [role.id for role in shop_data.selected_user.roles]
+        ):
+            role_name = interaction.guild.get_role(beans_role).name
+            await interaction.followup.send(
+                f"This user does not have the `{role_name}` role.",
+                ephemeral=True,
+            )
+            return
 
         if shop_data.selected_user is not None and shop_data.selected_user.bot:
             await interaction.followup.send(

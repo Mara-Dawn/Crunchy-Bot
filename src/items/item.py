@@ -1,8 +1,8 @@
 import discord
-from config import Config
-from datalayer.types import ItemTrigger
 from discord.ext import commands
 
+from config import Config
+from datalayer.types import ItemTrigger
 from items.types import ItemGroup, ItemType, ShopCategory
 
 
@@ -30,6 +30,7 @@ class Item:
         useable: bool = False,
         permanent: bool = False,
         secret: bool = False,
+        image_url: str = None,
     ):
         self.name = name
         self.type = type
@@ -53,6 +54,7 @@ class Item:
         self.useable = useable
         self.permanent = permanent
         self.secret = secret
+        self.image_url = image_url
 
     def activated(self, action: ItemTrigger):
         if self.trigger is None:
@@ -106,6 +108,9 @@ class Item:
             info_block += f"```ansi\n[37m{self.information}```"
 
         embed = discord.Embed(title=title, description=info_block, color=color)
+
+        if self.image_url is not None:
+            embed.set_thumbnail(url=self.image_url)
 
         return embed
 

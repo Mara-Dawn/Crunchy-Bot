@@ -1,4 +1,5 @@
 import discord
+
 from combat.gear.types import Rarity
 from config import Config
 
@@ -80,6 +81,7 @@ class SelectGearHeadEmbed(discord.Embed):
     ):
         description = "Manage your gear here. Equip pieces, lock them to keep them safe or scrap anything you don't need.\n\n"
         description += (
+            "[EQ] - Item is currently equipped.\n\n"
             "[🔒] - Item is locked and wont get scrapped by any scrap buttons."
         )
         if len(description) < max_width:
@@ -108,6 +110,7 @@ class ManageSkillHeadEmbed(discord.Embed):
         description = "Manage your skills here. Equip new ones, lock the ones you want to keep safe and scrap the ones you don't need.\n\n"
         description += "Once you equip a skill it will be removed from your inventory. Equipping a new skill [31mwill override the old one[0m.\n\n"
         description += (
+            "[EQ] - Item is currently equipped.\n\n"
             "[🔒] - Item is locked and wont get scrapped by any scrap buttons.\n\n"
         )
         description += "[30m[!][0m - Damage penalty for using the wrong weapon type."
@@ -137,6 +140,7 @@ class SelectSkillHeadEmbed(discord.Embed):
         description = "Select the skills you want to equip.\n\n"
         description += "Once you equip a skill it will be removed from your inventory. Equipping a new skill [31mwill override the old one[0m.\n\n"
         description += (
+            "[EQ] - Item is currently equipped.\n\n"
             "[🔒] - Item is locked and wont get scrapped by any scrap buttons.\n\n"
         )
         description += "[30m[!][0m - Damage penalty for using the wrong weapon type."
@@ -191,29 +195,31 @@ class EnemyOverviewEmbed(discord.Embed):
         self,
         member: discord.Member,
         guild_level: int,
+        requirement: int,
         progress: int,
+        additional_info: str = None,
         max_width: int = 45,
     ):
+        progress = min(progress, requirement)
         description = (
             "Random encounters will spawn here, group up and strategize together to overcome them.\n"
             "As you defeat more enemies, your level will rise and unlock more powerful foes with even better rewards.\n\n"
             f"Current Server Level: [35m{guild_level}[0m\n"
-            f"Progress to next level: [35m{progress}[0m/[35m{Config.LEVEL_REQUIREMENTS[guild_level]}[0m"
+            f"Progress to next level: [35m{progress}[0m/[35m{requirement}[0m"
             # f" lvl.[35m{guild_level}[0m Enemies\n"
         )
 
-        progress = min(progress, Config.LEVEL_REQUIREMENTS[guild_level])
-
-        if (
-            guild_level
-        ) in Config.BOSS_LEVELS and progress == Config.LEVEL_REQUIREMENTS[guild_level]:
-            description += "\n[31mA POWERFUL FOE IS APPROACHING[0m"
+        if guild_level in Config.BOSS_LEVELS and progress >= requirement:
+            description += "\n[31mDefeat The Boss To Progress.[0m"
 
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += " " * spacing
 
         description = f"```ansi\n{description}```"
+
+        if additional_info is not None:
+            description += additional_info
 
         super().__init__(
             title="Combat Zone",

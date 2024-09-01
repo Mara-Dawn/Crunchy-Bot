@@ -1,5 +1,10 @@
+import datetime
+
 import discord
+from discord.ext import commands
+
 from combat.actors import Actor, Character, Opponent
+from combat.encounter import Encounter
 from combat.enemies.enemy import Enemy
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
@@ -8,15 +13,15 @@ from combat.skills.types import SkillEffect, SkillType, StatusEffectType
 from config import Config
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
+from control.imgur_manager import ImgurManager
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.status_effect_event import StatusEffectEvent
-from events.types import CombatEventType, EncounterEventType
+from events.types import CombatEventType, EncounterEventType, EventType
 
 
 class CombatActorManager(Service):
@@ -30,11 +35,23 @@ class CombatActorManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
+        self.imgur_manager: ImgurManager = self.controller.get_service(ImgurManager)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "Combat Skills"
 
     async def listen_for_event(self, event: BotEvent):
-        pass
+        match event.type:
+            case EventType.ENCOUNTER:
+                if not event.synchronized:
+                    return
+                encounter_event: EncounterEvent = event
+                match encounter_event.encounter_event_type:
+                    case EncounterEventType.MEMBER_ENGAGE:
+                        await self.initialize_actor(
+                            encounter_event.member_id,
+                            encounter_event.guild_id,
+                            encounter_event.encounter_id,
+                        )
 
     async def get_actor_current_hp(
         self, actor: Actor, combat_events: list[CombatEvent]
@@ -56,6 +73,8 @@ class CombatActorManager(Service):
                 skill_effect = base_skill.skill_effect
 
             match skill_effect:
+                case SkillEffect.BUFF | SkillEffect.NOTHING:
+                    pass
                 case SkillEffect.PHYSICAL_DAMAGE:
                     health -= event.skill_value
                 case SkillEffect.MAGICAL_DAMAGE:
@@ -66,11 +85,30 @@ class CombatActorManager(Service):
                     health -= event.skill_value
                 case SkillEffect.HEALING:
                     health += event.skill_value
-            health = min(health, actor.max_hp)
+            health = max(0, min(health, actor.max_hp))
 
-            if health <= 0:
-                return 0
         return int(health)
+
+    async def initialize_actor(
+        self,
+        member_id: int,
+        guild_id: int,
+        encounter_id: int,
+    ):
+        equipment = await self.database.get_user_equipment(guild_id, member_id)
+
+        if equipment.gear_modifiers[GearModifierType.EVASION] > 0:
+            event = StatusEffectEvent(
+                datetime.datetime.now(),
+                guild_id,
+                encounter_id,
+                member_id,
+                member_id,
+                StatusEffectType.EVASIVE,
+                1,
+                equipment.gear_modifiers[GearModifierType.EVASION],
+            )
+            await self.controller.dispatch_event(event)
 
     async def get_active_status_effects(
         self,
@@ -109,27 +147,40 @@ class CombatActorManager(Service):
     async def get_opponent(
         self,
         enemy: Enemy,
-        enemy_level: int,
-        max_hp: int,
+        encounter: Encounter,
         encounter_events: list[EncounterEvent],
         combat_events: list[CombatEvent],
         status_effects: dict[int, list[StatusEffectEvent]],
     ) -> Opponent:
+        enemy_level = encounter.enemy_level
+        max_hp = encounter.max_hp
         defeated = False
         encounter_id = None
         id = -1
         phase = 1
+
+        defeated = False
+        new_round = False
+        force_skip = False
         for event in encounter_events:
             if encounter_id is None:
                 encounter_id = event.encounter_id
-            if event.encounter_event_type == EncounterEventType.ENEMY_PHASE_CHANGE:
-                phase += 1
-            if event.encounter_event_type == EncounterEventType.ENEMY_DEFEAT:
-                defeated = True
+            match event.encounter_event_type:
+                case EncounterEventType.ENEMY_PHASE_CHANGE:
+                    phase += 1
+                case EncounterEventType.ENEMY_DEFEAT:
+                    defeated = True
+                case EncounterEventType.NEW_ROUND:
+                    new_round = True
+                case EncounterEventType.FORCE_SKIP:
+                    if event.member_id < 0 and not new_round:
+                        force_skip = True
 
         if phase > 1:
             enemy_type = enemy.phases[phase - 2]
-            enemy = await self.factory.get_enemy(enemy_type)
+            new_enemy = await self.factory.get_enemy(enemy_type)
+            max_hp = int(max_hp * new_enemy.health / enemy.health)
+            enemy = new_enemy
             id -= phase + 10
 
         skills = []
@@ -145,6 +196,8 @@ class CombatActorManager(Service):
             id, status_effects, combat_events
         )
 
+        image_url = await self.imgur_manager.get_random_encounter_image(encounter)
+
         return Opponent(
             id=id,
             enemy=enemy,
@@ -155,6 +208,8 @@ class CombatActorManager(Service):
             skill_stacks_used=skill_stacks_used,
             status_effects=active_status_effects,
             defeated=defeated,
+            force_skip=force_skip,
+            image_url=image_url,
         )
 
     async def get_character(
@@ -174,18 +229,35 @@ class CombatActorManager(Service):
             status_effects = {}
 
         defeated = False
-        timed_out = False
+        revived = False
+        leaving = False
+        is_out = False
+        new_round = False
+        force_skip = False
         for event in encounter_events:
-            if (
-                event.encounter_event_type == EncounterEventType.MEMBER_DEFEAT
-                and event.member_id == member.id
-            ):
-                defeated = True
-            if (
-                event.encounter_event_type == EncounterEventType.MEMBER_TIMEOUT
-                and event.member_id == member.id
-            ):
-                timed_out = True
+            match event.encounter_event_type:
+                case EncounterEventType.NEW_ROUND:
+                    new_round = True
+            if event.member_id == member.id:
+                match event.encounter_event_type:
+                    case EncounterEventType.MEMBER_DEFEAT:
+                        if not revived:
+                            defeated = True
+                    case EncounterEventType.MEMBER_REVIVE:
+                        revived = True
+                    case EncounterEventType.MEMBER_LEAVING:
+                        leaving = True
+                    case EncounterEventType.MEMBER_OUT:
+                        is_out = True
+                    case EncounterEventType.FORCE_SKIP:
+                        if not new_round:
+                            force_skip = True
+
+        if is_out:
+            leaving = False
+
+        if is_out or leaving or defeated:
+            force_skip = False
 
         equipment = await self.database.get_user_equipment(member.guild.id, member.id)
 
@@ -226,7 +298,9 @@ class CombatActorManager(Service):
             status_effects=active_status_effects,
             equipment=equipment,
             defeated=defeated,
-            timed_out=timed_out,
+            leaving=leaving,
+            is_out=is_out,
+            force_skip=force_skip,
         )
         return character
 
@@ -287,7 +361,7 @@ class CombatActorManager(Service):
 
     def get_encounter_scaling(self, actor: Actor, combatant_count: int = 1) -> float:
         encounter_scaling = 1
-        if actor.is_enemy:
+        if not actor.is_enemy:
             return encounter_scaling
 
         if combatant_count > 1:
@@ -327,7 +401,7 @@ class CombatActorManager(Service):
                     CharacterAttribute.DAMAGE_REDUCTION
                 ]
                 flat_reduction = int(
-                    character.equipment.gear_modifiers[GearModifierType.ARMOR] / 4
+                    character.equipment.gear_modifiers[GearModifierType.ARMOR] / 6
                 )
             case SkillEffect.NEUTRAL_DAMAGE:
                 modifier -= character.equipment.attributes[
@@ -343,6 +417,9 @@ class CombatActorManager(Service):
                 ]
             case SkillEffect.HEALING:
                 pass
+            case SkillEffect.NOTHING | SkillEffect.BUFF:
+                modifier = 0
+                flat_reduction = 0
 
         return int(max(0, ((incoming_damage * modifier) - flat_reduction)))
 
@@ -371,5 +448,8 @@ class CombatActorManager(Service):
                 ]
             case SkillEffect.HEALING:
                 pass
+            case SkillEffect.NOTHING | SkillEffect.BUFF:
+                modifier = 0
+                flat_reduction = 0
 
         return int(max(0, ((incoming_damage - flat_reduction) * modifier)))

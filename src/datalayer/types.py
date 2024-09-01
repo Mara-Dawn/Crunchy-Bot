@@ -33,6 +33,7 @@ class LootboxType(Enum):
     BEANS = 4
     LUCKY_ITEM = 5
     SPOOKY_MIMIC = 6
+    KEYS = 7
 
 
 class PlantType(str, Enum):
@@ -45,6 +46,7 @@ class PlantType(str, Enum):
     YELLOW_BEAN = "Piss Bean"
     GHOST_BEAN = "Ghost Bean"
     BAKED_BEAN = "Baked Bean"
+    KEY_BEAN = "Key Bean"
     FLASH_BEAN = "Flash Bean"
 
 
@@ -57,15 +59,9 @@ class PlotState(Enum):
     READY = 5
 
 
-class SeasonDate(Enum):
-    BEGINNING = 0
-    SEASON_1 = 1715162400
-
-
-class Season(str, Enum):
-    ALL_TIME = "All Time"
-    SEASON_1 = "Season 1"
-    CURRENT = "Season 2"
+# class SeasonDate(Enum):
+#     BEGINNING = 0
+#     SEASON_1 = 1715162400
 
 
 class PredictionStateSort(int, Enum):

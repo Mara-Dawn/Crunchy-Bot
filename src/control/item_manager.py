@@ -3,12 +3,18 @@ import random
 import secrets
 
 import discord
+from discord.ext import commands
+
 from bot_util import BotUtil
+from config import Config
+from control.controller import Controller
+from control.logger import BotLogger
+from control.service import Service
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.inventory import UserInventory
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger, LootboxType, UserInteraction
-from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.inventory_batchevent import InventoryBatchEvent
@@ -21,14 +27,9 @@ from events.types import BeansEventType, LootBoxEventType
 from items import *  # noqa: F403
 from items.item import Item
 from items.types import ItemState, ItemType
+from view.inventory.confirm_view import InventoryConfirmView
 from view.lootbox.view import LootBoxView
-from view.shop.confirm_view import ShopConfirmView
 from view.shop.user_select_view import ShopUserSelectView
-
-from control.controller import Controller
-from control.logger import BotLogger
-from control.service import Service
-from control.settings_manager import SettingsManager
 
 
 class ItemManager(Service):
@@ -64,7 +65,9 @@ class ItemManager(Service):
         output = []
         for item_type in items:
             item = await self.get_item(guild_id, item_type)
-            if not item.secret:
+            if not item.secret and await self.settings_manager.get_shop_item_enabled(
+                guild_id, item_type
+            ):
                 output.append(item)
 
         output = sorted(
@@ -78,7 +81,12 @@ class ItemManager(Service):
         output = []
         for item_type in items:
             item = await self.get_item(guild_id, item_type)
-            if not item.hide_in_shop:
+            if (
+                not item.hide_in_shop
+                and await self.settings_manager.get_shop_item_enabled(
+                    guild_id, item_type
+                )
+            ):
                 output.append(item)
 
         return output
@@ -116,20 +124,60 @@ class ItemManager(Service):
             ItemType.CATGIRL,
             ItemType.UNLIMITED_GAMBA,
             ItemType.INSTANT_GAMBA,
-            ItemType.CRAPPY_COUPON,
             ItemType.MIMIC_DETECTOR,
             ItemType.USEFUL_CATGIRL,
             ItemType.FLASH_SEED,
+            # ItemType.KEY_SEED,
         ]
 
+        key_item_pool = []
+        guild_level = await self.database.get_guild_level(guild_id)
+        for key_level, key_type in BaseKey.TYPE_MAP.items():  # noqa: F405
+            if guild_level < key_level:
+                break
+            key_item_pool.append(key_type)
+
+        lucky_item_pool += key_item_pool
         item_pool = item_pool + lucky_item_pool
+
+        force_roll = None
+        if force_type is not None:
+            match force_type:
+                case LootboxType.SMALL_MIMIC:
+                    force_roll = Config.MIMIC_CHANCE
+                case LootboxType.BEANS:
+                    force_roll = Config.MIMIC_CHANCE + Config.LARGE_CHEST_CHANCE
+                case LootboxType.LARGE_MIMIC:
+                    force_roll = (
+                        Config.MIMIC_CHANCE
+                        + Config.LARGE_CHEST_CHANCE
+                        + Config.LARGE_MIMIC_CHANCE
+                    )
+                case LootboxType.LUCKY_ITEM:
+                    force_roll = (
+                        Config.MIMIC_CHANCE
+                        + Config.LARGE_CHEST_CHANCE
+                        + Config.LARGE_MIMIC_CHANCE
+                        + Config.LUCKY_ITEM_CHANCE
+                    )
+                case LootboxType.SPOOKY_MIMIC:
+                    force_roll = (
+                        Config.MIMIC_CHANCE
+                        + Config.LARGE_CHEST_CHANCE
+                        + Config.LARGE_MIMIC_CHANCE
+                        + Config.LUCKY_ITEM_CHANCE
+                        + Config.SPOOK_MIMIC_CHANCE
+                    )
+                case LootboxType.REGULAR:
+                    force_roll = 1
+                case LootboxType.KEYS:
+                    force_roll = 1
+                    item_pool = key_item_pool
 
         weights = [(await self.get_item(guild_id, x)).weight for x in item_pool]
         weights = [1.0 / w for w in weights]
         sum_weights = sum(weights)
         weights = [w / sum_weights for w in weights]
-
-        # test = {item_pool[index]: value for index, value in enumerate(weights)}
 
         lucky_weights = [
             (await self.get_item(guild_id, x)).weight for x in lucky_item_pool
@@ -138,45 +186,7 @@ class ItemManager(Service):
         sum_lucky_weights = sum(lucky_weights)
         lucky_weights = [w / sum_lucky_weights for w in lucky_weights]
 
-        # test2 = {
-        #     lucky_item_pool[index]: value for index, value in enumerate(lucky_weights)
-        # }
-        # Spawn Chances
-        mimic_chance = 0.1
-        large_chest_chance = 0.03
-        large_mimic_chance = 0.02
-        spook_mimic_chance = 0
-        lucky_item_chance = 0.05
-
         random_items = {}
-
-        force_roll = None
-
-        if force_type is not None:
-            match force_type:
-                case LootboxType.SMALL_MIMIC:
-                    force_roll = mimic_chance
-                case LootboxType.BEANS:
-                    force_roll = mimic_chance + large_chest_chance
-                case LootboxType.LARGE_MIMIC:
-                    force_roll = mimic_chance + large_chest_chance + large_mimic_chance
-                case LootboxType.LUCKY_ITEM:
-                    force_roll = (
-                        mimic_chance
-                        + large_chest_chance
-                        + large_mimic_chance
-                        + lucky_item_chance
-                    )
-                case LootboxType.SPOOKY_MIMIC:
-                    force_roll = (
-                        mimic_chance
-                        + large_chest_chance
-                        + large_mimic_chance
-                        + lucky_item_chance
-                        + spook_mimic_chance
-                    )
-                case LootboxType.REGULAR:
-                    force_roll = 1
 
         for _ in range(size):
             roll = random.random()
@@ -184,47 +194,53 @@ class ItemManager(Service):
             if force_roll is not None:
                 roll = force_roll
 
-            if roll <= mimic_chance:
+            if roll <= Config.MIMIC_CHANCE:
                 item_type = ItemType.CHEST_MIMIC
                 BotUtil.dict_append(random_items, item_type, 1)
-            elif roll > mimic_chance and roll <= (mimic_chance + large_chest_chance):
+            elif roll > Config.MIMIC_CHANCE and roll <= (
+                Config.MIMIC_CHANCE + Config.LARGE_CHEST_CHANCE
+            ):
                 item_type = ItemType.CHEST_BEANS
                 BotUtil.dict_append(random_items, item_type, 1)
-            elif roll > (mimic_chance + large_chest_chance) and roll <= (
-                mimic_chance + large_chest_chance + large_mimic_chance
+            elif roll > (Config.MIMIC_CHANCE + Config.LARGE_CHEST_CHANCE) and roll <= (
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
             ):
                 item_type = ItemType.CHEST_LARGE_MIMIC
                 BotUtil.dict_append(random_items, item_type, 1)
             elif roll > (
-                mimic_chance + large_chest_chance + large_mimic_chance
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
             ) and roll <= (
-                mimic_chance
-                + large_chest_chance
-                + large_mimic_chance
-                + lucky_item_chance
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
+                + Config.LUCKY_ITEM_CHANCE
             ):
                 item_type = random.choices(lucky_item_pool, weights=lucky_weights)[0]
                 BotUtil.dict_append(random_items, item_type, 1)
             elif roll > (
-                mimic_chance
-                + large_chest_chance
-                + large_mimic_chance
-                + lucky_item_chance
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
+                + Config.LUCKY_ITEM_CHANCE
             ) and roll <= (
-                mimic_chance
-                + large_chest_chance
-                + large_mimic_chance
-                + lucky_item_chance
-                + spook_mimic_chance
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
+                + Config.LUCKY_ITEM_CHANCE
+                + Config.SPOOK_MIMIC_CHANCE
             ):
                 item_type = ItemType.CHEST_SPOOK_MIMIC
                 BotUtil.dict_append(random_items, item_type, 1)
             elif roll > (
-                mimic_chance
-                + large_chest_chance
-                + large_mimic_chance
-                + lucky_item_chance
-                + spook_mimic_chance
+                Config.MIMIC_CHANCE
+                + Config.LARGE_CHEST_CHANCE
+                + Config.LARGE_MIMIC_CHANCE
+                + Config.LUCKY_ITEM_CHANCE
+                + Config.SPOOK_MIMIC_CHANCE
             ):
                 item_type = random.choices(item_pool, weights=weights)[0]
                 BotUtil.dict_append(random_items, item_type, 1)
@@ -271,7 +287,10 @@ class ItemManager(Service):
         await self.controller.dispatch_event(event)
 
     async def drop_private_loot_box(
-        self, interaction: discord.Interaction, size: int = 1
+        self,
+        interaction: discord.Interaction,
+        size: int = 1,
+        lootbox_type: LootboxType = None,
     ):
         member_id = interaction.user.id
         guild_id = interaction.guild_id
@@ -279,7 +298,9 @@ class ItemManager(Service):
         log_message = f"Loot box was dropped in {interaction.guild.name}."
         self.logger.log(guild_id, log_message, cog="Beans")
 
-        loot_box = await self.create_loot_box(guild_id, size=size)
+        loot_box = await self.create_loot_box(
+            guild_id, size=size, force_type=lootbox_type
+        )
 
         title = f"{interaction.user.display_name}'s Random Treasure Chest"
         description = f"Only you can claim this, <@{member_id}>!"
@@ -405,6 +426,22 @@ class ItemManager(Service):
         if not force:
             total_amount *= item.base_amount
 
+        now = datetime.datetime.now()
+
+        match item.type:
+            case ItemType.CHEST_BEANS:
+                beans = random.randint(LootBox.LARGE_MIN_BEANS, LootBox.LARGE_MAX_BEANS)
+                item.description = f"A whole {beans} of them."
+                event = BeansEvent(
+                    now,
+                    guild_id,
+                    BeansEventType.LOOTBOX_PAYOUT,
+                    member_id,
+                    beans,
+                )
+                await self.controller.dispatch_event(event)
+                return item
+
         if item.max_amount is not None:
             item_count = 0
 
@@ -418,13 +455,14 @@ class ItemManager(Service):
 
         if total_amount != 0:
             event = InventoryEvent(
-                datetime.datetime.now(),
+                now,
                 guild_id,
                 member_id,
                 item.type,
                 total_amount,
             )
             await self.controller.dispatch_event(event)
+        return item
 
     async def give_items(
         self,
@@ -520,20 +558,29 @@ class ItemManager(Service):
                     "", embed=embed, view=view, ephemeral=True
                 )
                 view.set_message(message)
-                await view.refresh_ui()
+                await view.refresh_ui(force_embed=embed)
                 return
-            case ItemType.DADDY_KEY:
+            case (
+                ItemType.DADDY_KEY
+                | ItemType.WEEB_KEY
+                | ItemType.ENCOUNTER_KEY_1
+                | ItemType.ENCOUNTER_KEY_2
+                | ItemType.ENCOUNTER_KEY_3
+                | ItemType.ENCOUNTER_KEY_4
+                | ItemType.ENCOUNTER_KEY_5
+                | ItemType.ENCOUNTER_KEY_6
+            ):
                 item = await self.get_item(guild.id, item_type)
                 embed = item.get_embed(self.bot, show_price=False)
 
-                view = ShopConfirmView(self.controller, interaction, item, None)
+                view = InventoryConfirmView(self.controller, interaction, item, None)
                 await view.init()
 
                 message = await interaction.followup.send(
                     "", embed=embed, view=view, ephemeral=True
                 )
                 view.set_message(message)
-                await view.refresh_ui()
+                await view.refresh_ui(force_embed=embed)
                 return
 
         return await self.use_item(guild, user_id, item_type, amount)

@@ -3,9 +3,8 @@ import datetime
 from typing import Any
 
 from combat.skills.types import SkillType, StatusEffectType
-
 from events.bot_event import BotEvent
-from events.types import CombatEventType, EncounterEventType, EventType
+from events.types import CombatEventType, EventType
 
 
 class CombatEvent(BotEvent):
@@ -19,8 +18,9 @@ class CombatEvent(BotEvent):
         target_id: int,
         skill_type: SkillType,
         skill_value: int,
+        display_value: int,
         skill_id: int,
-        combat_event_type: EncounterEventType,
+        combat_event_type: CombatEventType,
         id: int = None,
     ):
         super().__init__(timestamp, guild_id, EventType.COMBAT, id)
@@ -29,6 +29,7 @@ class CombatEvent(BotEvent):
         self.target_id = target_id
         self.skill_type = skill_type
         self.skill_value = skill_value
+        self.display_value = display_value
         self.skill_id = skill_id
         self.combat_event_type = combat_event_type
         self.id = id
@@ -42,6 +43,7 @@ class CombatEvent(BotEvent):
             self.target_id,
             self.skill_type,
             self.skill_value,
+            self.display_value,
             self.skill_id,
             self.combat_event_type,
         ]
@@ -73,6 +75,7 @@ class CombatEvent(BotEvent):
             target_id=row[Database.COMBAT_EVENT_TARGET_ID],
             skill_type=skill_type,
             skill_value=row[Database.COMBAT_EVENT_SKILL_VALUE],
+            display_value=row[Database.COMBAT_EVENT_DISPLAY_VALUE],
             skill_id=row[Database.COMBAT_EVENT_SKILL_ID],
             combat_event_type=CombatEventType(row[Database.COMBAT_EVENT_TYPE_COL]),
             id=row[Database.EVENT_ID_COL],

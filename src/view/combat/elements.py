@@ -9,6 +9,10 @@ class ImplementsPages(ABC):
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         pass
 
+    @abstractmethod
+    async def open_shop(self, interaction: discord.Interaction):
+        pass
+
 
 class ImplementsBack(ABC):
 
@@ -81,7 +85,7 @@ class ScrapBalanceButton(discord.ui.Button):
         view: ImplementsPages = self.view
 
         if await view.interaction_check(interaction):
-            await interaction.response.defer(ephemeral=True)
+            await view.open_shop(interaction)
 
 
 class BackButton(discord.ui.Button):

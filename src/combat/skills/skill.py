@@ -1,4 +1,5 @@
 import discord
+
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
 from combat.skills.status_effect import SkillStatusEffect
@@ -38,6 +39,8 @@ class BaseSkill(DroppableBase):
         default_target: SkillTarget = SkillTarget.OPPONENT,
         modifiable: bool = True,
         max_targets: int = None,
+        custom_crit: float = None,
+        uniques: list[SkillType] = None,
         author: str = None,
     ):
         super().__init__(
@@ -49,6 +52,7 @@ class BaseSkill(DroppableBase):
             max_level=max_level,
             weight=weight,
             droppable=droppable,
+            uniques=uniques,
             author=author,
         )
         self.name = name
@@ -67,6 +71,7 @@ class BaseSkill(DroppableBase):
         self.modifiable = modifiable
         self.default_target = default_target
         self.image_url = image_url
+        self.custom_crit = custom_crit
         self.max_targets = max_targets
 
         if self.image_url is None:
@@ -78,23 +83,19 @@ class BaseSkill(DroppableBase):
 
 class Skill(Droppable):
 
-    BASE_LOOT_SKILLS = [
-        SkillType.SECOND_WIND,
-        SkillType.GIGA_BONK,
-        SkillType.FIRE_BALL,
-    ]
-
     EFFECT_LABEL_MAP = {
         SkillEffect.NEUTRAL_DAMAGE: "Damage",
         SkillEffect.PHYSICAL_DAMAGE: "Damage",
         SkillEffect.MAGICAL_DAMAGE: "Damage",
+        SkillEffect.NOTHING: "",
+        SkillEffect.BUFF: "Effect",
         SkillEffect.HEALING: "Healing",
     }
 
     RARITY_SORT_MAP = {
         Rarity.DEFAULT: 0,
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 2,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 2,
         Rarity.RARE: 3,
         Rarity.LEGENDARY: 4,
         Rarity.UNIQUE: 5,
@@ -106,12 +107,14 @@ class Skill(Droppable):
         SkillEffect.NEUTRAL_DAMAGE: 2,
         SkillEffect.STATUS_EFFECT_DAMAGE: 3,
         SkillEffect.HEALING: 4,
+        SkillEffect.BUFF: 5,
+        SkillEffect.NOTHING: 6,
     }
 
     RARITY_STACKS_SCALING = {
         Rarity.DEFAULT: 1,
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 1.2,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 1.2,
         Rarity.RARE: 1.5,
         Rarity.LEGENDARY: 2,
         Rarity.UNIQUE: 1,
@@ -119,8 +122,8 @@ class Skill(Droppable):
 
     RARITY_DAMAGE_SCALING = {
         Rarity.DEFAULT: 1,
-        Rarity.NORMAL: 1,
-        Rarity.MAGIC: 1.1,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 1.1,
         Rarity.RARE: 1.2,
         Rarity.LEGENDARY: 1.3,
         Rarity.UNIQUE: 1,
@@ -165,6 +168,7 @@ class Skill(Droppable):
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
+        scrap_value: int = None,
         max_width: int = None,
     ) -> discord.Embed:
         if max_width is None:
@@ -220,11 +224,25 @@ class Skill(Droppable):
             # suffixes.append((level_line_colored, len(level_line)))
 
             # Base Value
-            name = "Power"
-            spacing = " " * (max_len_pre - len(name))
-            base_value_text = f"{spacing}{name}: {self.scaling:.1f}"
-            base_value_text_colored = f"{spacing}{name}: [35m{self.scaling:.1f}[0m"
-            prefixes.append((base_value_text_colored, len(base_value_text)))
+            if self.scaling > 0:
+                name = "Power"
+                suffix_sign = ""
+                if self.base_skill.skill_effect == SkillEffect.BUFF:
+                    suffix_sign = "%"
+                spacing = " " * (max_len_pre - len(name))
+                base_value_text = f"{spacing}{name}: {self.scaling:.1f}{suffix_sign}"
+                base_value_text_colored = (
+                    f"{spacing}{name}: [35m{self.scaling:.1f}{suffix_sign}[0m"
+                )
+                prefixes.append((base_value_text_colored, len(base_value_text)))
+
+            # Hits
+            if self.base_skill.hits > 1:
+                name = "Hits"
+                spacing = " " * (max_len_pre - len(name))
+                type_text = f"{spacing}{name}: {self.base_skill.hits}"
+                type_text_colored = f"{spacing}{name}: [35m{self.base_skill.hits}[0m"
+                prefixes.append((type_text_colored, len(type_text)))
 
             # Type
             name = "Type"
@@ -286,6 +304,15 @@ class Skill(Droppable):
             info_block += "```"
 
         info_block += f"```python\n{description}```"
+
+        if scrap_value is not None:
+            stock_label = "Stock: 1"
+            scrap_label = f"Cost: ⚙️{scrap_value}"
+            spacing_width = max_width - len(scrap_label) - len(stock_label)
+            spacing = " " * spacing_width
+
+            scrap_text = f"{stock_label}{spacing}{scrap_label}"
+            info_block += f"```python\n{scrap_text}```"
 
         if show_info:
             info_block += f"```ansi\n[37m{self.information}```"
@@ -398,11 +425,26 @@ class CharacterSkill:
             if self.penalty:
                 penalty = " [!]"
                 penalty_colored = f"[30m{penalty}[0m "
-            damage_text = (
-                f"{spacing}{caption}: {self.min_roll} - {self.max_roll}{penalty}"
-            )
-            damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m{penalty_colored}"
+            match self.skill.base_skill.skill_effect:
+                case SkillEffect.BUFF:
+                    damage_text = (
+                        f"{spacing}{caption}: {self.skill.base_skill.base_value:.1f}%"
+                    )
+                    damage_text_colored = f"{spacing}{caption}: [35m{self.skill.base_skill.base_value:.1f}%[0m"
+                case _:
+                    damage_text = f"{spacing}{caption}: {self.min_roll} - {self.max_roll}{penalty}"
+                    damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m{penalty_colored}"
             prefixes.append((damage_text_colored, len(damage_text)))
+
+            # Hits
+            if self.skill.base_skill.hits > 1:
+                name = "Hits"
+                spacing = " " * (max_len_pre - len(name))
+                type_text = f"{spacing}{name}: {self.skill.base_skill.hits}"
+                type_text_colored = (
+                    f"{spacing}{name}: [35m{self.skill.base_skill.hits}[0m"
+                )
+                prefixes.append((type_text_colored, len(type_text)))
 
             # Type
             name = "Type"
@@ -490,12 +532,15 @@ class CharacterSkill:
         show_info: bool = False,
         show_data: bool = False,
         max_width: int = None,
+        description_override: str = None,
     ) -> None:
         if max_width is None:
             max_width = Config.COMBAT_EMBED_MAX_WIDTH
 
         title = f"> {self.skill.name} "
         description = f'"{self.skill.description}"'
+        if description_override is not None:
+            description = f'"{description_override}"'
 
         cooldown_info = ""
         if self.skill.base_skill.cooldown > 0 and self.on_cooldown():

@@ -36,6 +36,9 @@ class LootBox:
         self.beans = beans  # deprecated
         self.id = id
 
+    def has_mimic(self) -> bool:
+        return any(item in self.MIMICS for item in self.items)
+
     @staticmethod
     def from_db_row(row: dict[str, Any], items: dict[ItemType, int]) -> "LootBox":
         from datalayer.database import Database

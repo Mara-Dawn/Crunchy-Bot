@@ -1,18 +1,25 @@
+import datetime
 import random
+
+from discord.ext import commands
 
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
+from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearModifierType
-from combat.skills.skill import CharacterSkill, Skill
+from combat.skills.skill import CharacterSkill, Skill, SkillType
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillEffect, SkillInstance, SkillTarget
 from config import Config
+from control.ai_manager import AIManager
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
-from discord.ext import commands
 from events.bot_event import BotEvent
+from events.combat_event import CombatEvent
+from events.encounter_event import EncounterEvent
+from events.types import EncounterEventType
 
 
 class CombatSkillManager(Service):
@@ -26,6 +33,7 @@ class CombatSkillManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
+        self.ai_manager: AIManager = self.controller.get_service(AIManager)
         self.log_name = "Combat Skills"
 
     async def listen_for_event(self, event: BotEvent):
@@ -33,13 +41,23 @@ class CombatSkillManager(Service):
 
     async def get_character_default_target(
         self, source: Actor, skill: Skill, context: EncounterContext
-    ) -> Actor:
+    ) -> Actor | None:
 
         match skill.base_skill.default_target:
             case SkillTarget.OPPONENT:
                 return context.opponent
             case SkillTarget.SELF:
                 return source
+            case SkillTarget.RANDOM_PARTY_MEMBER:
+                active_combatants = context.get_active_combatants()
+                if len(active_combatants) <= 0:
+                    return None
+                return random.choice(active_combatants)
+            case SkillTarget.RANDOM_DEFEATED_PARTY_MEMBER:
+                defeated_combatants = context.get_defeated_combatants()
+                if len(defeated_combatants) <= 0:
+                    return None
+                return random.choice(defeated_combatants)
 
     async def get_skill_data(self, actor: Actor, skill: Skill) -> CharacterSkill:
         if actor.is_enemy:
@@ -57,7 +75,6 @@ class CombatSkillManager(Service):
 
         if skill_id in character.skill_stacks_used:
             stacks_used = character.skill_stacks_used[skill_id]
-
         if skill_type in character.skill_cooldowns:
             last_used = character.skill_cooldowns[skill.base_skill.skill_type]
 
@@ -96,6 +113,10 @@ class CombatSkillManager(Service):
         if skill_id in opponent.skill_stacks_used:
             stacks_used = opponent.skill_stacks_used[skill_id]
 
+        custom_description = await self.custom_skill_description(skill.type)
+        if custom_description is not None:
+            skill.description = custom_description
+
         return CharacterSkill(
             skill=skill,
             last_used=opponent.skill_cooldowns[skill.base_skill.skill_type],
@@ -107,6 +128,15 @@ class CombatSkillManager(Service):
                 await self.get_skill_effect(opponent, skill, force_max=weapon_max_roll)
             )[0].raw_value,
         )
+
+    async def custom_skill_description(self, skill_type: SkillType) -> str | None:
+        match skill_type:
+            case SkillType.AROUND_THE_WORLD:
+                joke = await self.ai_manager.raw_prompt(
+                    "Tell a creative yo mama joke. Maximum length is 30 words."
+                )
+                return joke.replace('"', "'")
+        return None
 
     async def get_skill_effect(
         self,
@@ -124,6 +154,55 @@ class CombatSkillManager(Service):
             return await self.get_character_skill_effect(
                 actor, skill, combatant_count, force_min, force_max
             )
+
+    async def get_special_skill_modifier(
+        self,
+        context: EncounterContext,
+        skill: Skill,
+    ) -> tuple[float, str]:
+        skill_type = skill.type
+        guild_id = context.encounter.guild_id
+
+        modifier = 1
+        description = None
+
+        match skill_type:
+            case SkillType.KARMA:
+                enemy_data = await self.database.get_encounter_events(
+                    guild_id,
+                    [EnemyType.BONTERRY, EnemyType.BONTERRY_KING],
+                    [EncounterEventType.ENEMY_DEFEAT],
+                )
+                kill_count = 0
+                for _, enemy_type in enemy_data:
+                    if enemy_type == EnemyType.BONTERRY:
+                        kill_count += 1
+                    if enemy_type == EnemyType.BONTERRY_KING:
+                        break
+                modifier = kill_count
+                description = skill.description.replace("@", str(kill_count))
+
+        return modifier, description
+
+    async def trigger_special_skill_effects(
+        self,
+        event: CombatEvent,
+    ) -> list[SkillInstance]:
+
+        skill_type = event.skill_type
+        if skill_type is None:
+            return
+
+        match skill_type:
+            case SkillType.SMELLING_SALT:
+                event = EncounterEvent(
+                    datetime.datetime.now(),
+                    event.guild_id,
+                    event.encounter_id,
+                    event.target_id,
+                    EncounterEventType.MEMBER_REVIVE,
+                )
+                await self.controller.dispatch_event(event)
 
     async def get_character_skill_effect(
         self,
@@ -172,6 +251,8 @@ class CombatSkillManager(Service):
                 modifier += character.equipment.attributes[
                     CharacterAttribute.HEALING_BONUS
                 ]
+            case SkillEffect.NOTHING | SkillEffect.BUFF:
+                modifier = 0
 
         attack_count = skill.base_skill.hits
         skill_instances = []
@@ -187,7 +268,12 @@ class CombatSkillManager(Service):
             crit_roll = random.random()
             critical_hit = False
             critical_modifier = 1
-            if crit_roll < character.equipment.attributes[CharacterAttribute.CRIT_RATE]:
+
+            crit_rate = character.equipment.attributes[CharacterAttribute.CRIT_RATE]
+            if skill.base_skill.custom_crit is not None:
+                crit_rate = skill.base_skill.custom_crit
+
+            if crit_roll < crit_rate:
                 critical_hit = True
                 critical_modifier = character.equipment.attributes[
                     CharacterAttribute.CRIT_DAMAGE
@@ -244,6 +330,8 @@ class CombatSkillManager(Service):
                 ]
             case SkillEffect.HEALING:
                 modifier += opponent.enemy.attributes[CharacterAttribute.HEALING_BONUS]
+            case SkillEffect.NOTHING | SkillEffect.BUFF:
+                modifier = 0
 
         encounter_scaling = opponent.enemy.min_encounter_scale
         raw_attack_count = skill.base_skill.hits
@@ -276,7 +364,12 @@ class CombatSkillManager(Service):
             crit_roll = random.random()
             critical_hit = False
             critical_modifier = 1
-            if crit_roll < opponent.enemy.attributes[CharacterAttribute.CRIT_RATE]:
+
+            crit_rate = opponent.enemy.attributes[CharacterAttribute.CRIT_RATE]
+            if skill.base_skill.custom_crit is not None:
+                crit_rate = skill.base_skill.custom_crit
+
+            if crit_roll < crit_rate:
                 critical_hit = True
                 critical_modifier = opponent.enemy.attributes[
                     CharacterAttribute.CRIT_DAMAGE

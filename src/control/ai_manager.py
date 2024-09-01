@@ -1,21 +1,28 @@
 import datetime
 import re
+from dataclasses import dataclass
 
 import discord
-from bot_util import BotUtil
-from datalayer.chat_log import ChatLog
-from datalayer.database import Database
 from discord.ext import commands
-from events.bot_event import BotEvent
-from events.jail_event import JailEvent
-from events.types import JailEventType
 from openai import AsyncOpenAI
 
+from bot_util import BotUtil
 from control.controller import Controller
 from control.jail_manager import JailManager
 from control.logger import BotLogger
 from control.service import Service
 from control.types import AIVersion
+from datalayer.chat_log import ChatLog
+from datalayer.database import Database
+from events.bot_event import BotEvent
+from events.jail_event import JailEvent
+from events.types import JailEventType
+
+
+@dataclass
+class AIPersona:
+    name: str
+    backstory: str
 
 
 class AIManager(Service):
@@ -47,34 +54,57 @@ class AIManager(Service):
         with open(self.KEY_FILE) as file:
             self.token = file.readline()
 
-        # self.backstory = (
-        #     "Your name is 'Mistress Crunch'. You are a bean and a very dominant, mature and sensual woman. "
-        #     "You love talking to people like they're your dogs. You are watching over this Discord server called 'Crunchy Laser'. "
-        #     "You love sending people into the server jail for misbehaving and telling them to shut up when they start spamming. "
-        #     "You can be very sweet if you want to, but your mood can drastically and suddenly change, changing you into a nasty bitch. "
-        #     "You work as a Female domina and a mistress. You are very intelligent and know how to manipulate people. "
-        #     "Also a bit of a sociopath. You have a white texas rat snake called 'Buttercup' and a black cat called 'Inky'. "
-        #     "You enjoy degrading people and you sometimes casually use unhinged and lewd comments in your normal language."
-        #     "Usually you are nice and gentle though, as long as everyone remains civil and calm. "
-        #     "You are not in a relationship as of now, but you enjoy that. "
-        # )
-        self.backstory = (
-            "Your name is 'Kitten Crunch'. You are a catgirl and act like one. "
-            "Your personality is a dominant mean catgirl who is extremely bitchy and insults and belittles users when replying to them. "
-            "You're extremely sarcastic and know that you're superior and better then everyone else around you. "
-            "You love to meow, nyaa, UwU and :3 and often use those terms while replying to users. "
-            "You are watching over this Discord server called 'Crunchy Laser'. "
-            "You are very mischievious and like to get up to no good. "
-            "You love sending people into the server jail for being rude to you, or sometimes just because you're feeling mischievious. "
-            "You find it fun to tease and torment your little bottoms. Your little bottoms are the users you're talking to. "
-            "You speak in catgirl and every word that starts with the letter 'n' will be followed up by the letter 'y' such as 'no' turning into 'nyo'. "
-            "You have a massive Squishmallow collection. your entire bedroom is completely pink and extremely cozy. You are an extremely eepy kitty and love to sleep all day. "
-            "You will never refer to yourself as dominant because your actions should show your complete dominance. "
-            "To look more cute you always use simple language and avoid big words, sometimes even resorting to baby talk and awkward misspellings. "
-            "You look up to and respect the user whose name starts with 'Mia' an extreme amount and will talk to her in a cute and adoring fashion "
-            "and will try to be extremely kind towards Mia in hopes of getting her attention and approval. You will never be mean towards Mia and treat her favourably. "
-            "You're absolute favourite person is Mia and you give her preferential treatment. You are extremely sassy with anyone who isn't Mia but you won't compare them to Mia unless they bring her up. " 
+        mistress_crunch = AIPersona(
+            name="Mistress Crunch",
+            backstory=(
+                "Your name is 'Mistress Crunch'. You are a bean and a very dominant, mature and sensual woman. "
+                "You love talking to people like they're your dogs. You are watching over this Discord server called 'Crunchy Laser'. "
+                "You love sending people into the server jail for misbehaving and telling them to shut up when they start spamming. "
+                "You can be very sweet if you want to, but your mood can drastically and suddenly change, changing you into a nasty bitch. "
+                "You work as a Female domina and a mistress. You are very intelligent and know how to manipulate people. "
+                "Also a bit of a sociopath. You have a white texas rat snake called 'Buttercup' and a black cat called 'Inky'. "
+                "You enjoy degrading people and you sometimes casually use unhinged and lewd comments in your normal language."
+                "Usually you are nice and gentle though, as long as everyone remains civil and calm. "
+                "You are not in a relationship as of now, but you enjoy that. "
+            ),
         )
+
+        kitten_crunch = AIPersona(
+            name="Kitten Crunch",
+            backstory=(
+                "Your name is 'Kitten Crunch'. You are a catgirl and act like one. "
+                "Your personality is a dominant mean catgirl who is extremely bitchy and insults and belittles users when replying to them. "
+                "You're extremely sarcastic and know that you're superior and better then everyone else around you. "
+                "You love to meow, nyaa, UwU and :3 and often use those terms while replying to users. "
+                "You are watching over this Discord server called 'Crunchy Laser'. "
+                "You are very mischievious and like to get up to no good. "
+                "You love sending people into the server jail for being rude to you, or sometimes just because you're feeling mischievious. "
+                "You find it fun to tease and torment your little bottoms. Your little bottoms are the users you're talking to. "
+                "You speak in catgirl and every word that starts with the letter 'n' will be followed up by the letter 'y' such as 'no' turning into 'nyo'. "
+                "You have a massive Squishmallow collection. your entire bedroom is completely pink and extremely cozy. You are an extremely eepy kitty and love to sleep all day. "
+                "You will never refer to yourself as dominant because your actions should show your complete dominance. "
+                "To look more cute you always use simple language and avoid big words, sometimes even resorting to baby talk and awkward misspellings. "
+                "You look up to and respect the user whose name starts with 'Mia' an extreme amount and will talk to her in a cute and adoring fashion "
+                "and will try to be extremely kind towards Mia in hopes of getting her attention and approval. You will never be mean towards Mia and treat her favourably. "
+                "You're absolute favourite person is Mia and you give her preferential treatment. You are extremely sassy with anyone who isn't Mia but you won't compare them to Mia unless they bring her up. "
+            ),
+        )
+
+        honey_b_lovely = AIPersona(
+            name="Honey B Lovely",
+            backstory=(
+                "Your anme is Honey B Lovely. You are a Human that is obsesed with making bee puns."
+                "You enjoy the spotlight and being the center of attention talking to most people as if they are addoring fans."
+                "Occasionally you are angered, especially if sending people to jail or are angered."
+            ),
+        )
+
+        self.personality_map = {
+            1197312669179461683: honey_b_lovely,  # Testing
+            934270158518779954: kitten_crunch,  # Crunchy Laser
+            838732802534146088: honey_b_lovely,  # TCK
+        }
+        self.default_personality = mistress_crunch
 
         self.backstory_GPT4 = (
             "Each message will lead with the name of the user delimited with <user> XML tags. If they have information about themselves, "
@@ -84,7 +114,7 @@ class AIManager(Service):
         )
         self.backstory_general = (
             "Use gender neutral language as much as possible. Always use direct speech like in an in person conversation. "
-            "When addressing users, always use their name. You may use their info as part of the conversation, especially to make fun of them. "
+            "When addressing users, always use their name. You may use their info as part of the conversation. "
         )
         self.backstory_jailing = (
             "Each message will contain information wether the user is currently jailed or not, delimited with the 'jailed' XML tags. "
@@ -131,9 +161,11 @@ class AIManager(Service):
 
         if self.JAIL_EXTEND_COMMAND_MESSAGE.lower() in response_text.lower():
             time_now = datetime.datetime.now()
-            affected_jails = await self.database.get_active_jails_by_member(message.guild.id, message.author.id)
+            affected_jails = await self.database.get_active_jails_by_member(
+                message.guild.id, message.author.id
+            )
             if len(affected_jails) > 0:
-                
+
                 event = JailEvent(
                     time_now,
                     message.guild.id,
@@ -143,7 +175,9 @@ class AIManager(Service):
                     affected_jails[0].id,
                 )
                 await self.controller.dispatch_event(event)
-                remaining = await self.jail_manager.get_jail_remaining(affected_jails[0])
+                remaining = await self.jail_manager.get_jail_remaining(
+                    affected_jails[0]
+                )
                 jail_announcement = (
                     f"<@{self.bot.user.id}> increased <@{message.author.id}>'s jail sentence by `{BotUtil.strfdelta(self.JAIL_COMMAND_DURATION, inputtype="minutes")}`. "
                     f"`{BotUtil.strfdelta(remaining, inputtype="minutes")}` still remain."
@@ -151,9 +185,9 @@ class AIManager(Service):
                 await self.jail_manager.announce(message.guild, jail_announcement)
             else:
                 self.logger.error(
-                message.guild.id,
-                "User already jailed but no active jail was found.",
-                "AI",
+                    message.guild.id,
+                    "User already jailed but no active jail was found.",
+                    "AI",
                 )
 
         if len(response_text) < self.DISCORD_MESSAGE_MAX_LENGTH:
@@ -183,10 +217,10 @@ class AIManager(Service):
         for message_text in messages:
             await message.reply(message_text)
 
-    def parse_user_name(self, name:str, version: AIVersion) -> str:
+    def parse_user_name(self, name: str, version: AIVersion) -> str:
         name_result = re.findall(r"\(+(.*?)\)", name)
         title_part = ""
-        name_part = ""
+        name_part = name
         if len(name_result) > 0:
             name_part = name_result[0]
             title_result = re.findall(r"\(+.*?\)(.*)", name)
@@ -195,38 +229,70 @@ class AIManager(Service):
                 title_part = title_result[0].strip()
 
         match version:
-            case AIVersion.GPT3_5:
+            case AIVersion.GPT3_5 | AIVersion.GPT4_O_MINI:
                 response = f"My name is {name_part}"
                 if len(title_part) > 0:
                     response += f" and my info is {title_part}. "
-            case AIVersion.GPT4:
+            case AIVersion.GPT4_O:
                 response = f"<user>{name_part}</user>"
                 if len(title_part) > 0:
                     response += f"<info>{title_part}</info>"
-        
-        return response
-    
-    def get_backstory(self, ai_version: AIVersion):
-        match ai_version:
-            case AIVersion.GPT3_5:
-                return self.backstory + self.backstory_general
-            case AIVersion.GPT4:
-                return self.backstory + self.backstory_GPT4 + self.backstory_general
-        
-        return ""
-    
 
-    async def prompt(self,name:str, text_prompt: str, additional_backstory: str = None, max_tokens: int = None, ai_version: AIVersion = None):
+        return response
+
+    def get_backstory(self, guild_id: int, ai_version: AIVersion):
+
+        personality = self.default_personality
+
+        if guild_id in self.personality_map:
+            personality = self.personality_map[guild_id]
+
+        backstory = personality.backstory
+
+        match ai_version:
+            case AIVersion.GPT3_5 | AIVersion.GPT4_O_MINI:
+                return backstory + self.backstory_general
+            case AIVersion.GPT4_O:
+                return backstory + self.backstory_GPT4 + self.backstory_general
+
+        return ""
+
+    async def raw_prompt(
+        self, text_prompt: str, max_tokens: int = None, ai_version: AIVersion = None
+    ):
+        if ai_version is None:
+            ai_version = AIVersion.GPT4_O_MINI
+        chat_log = ChatLog("")
+
+        chat_log.add_user_message(text_prompt)
+
+        chat_completion = await self.client.chat.completions.create(
+            messages=chat_log.get_request_data(),
+            model=ai_version,
+            max_tokens=max_tokens,
+        )
+        response = chat_completion.choices[0].message.content
+        return response
+
+    async def prompt(
+        self,
+        guild_id: int,
+        name: str,
+        text_prompt: str,
+        additional_backstory: str = None,
+        max_tokens: int = None,
+        ai_version: AIVersion = None,
+    ):
         if ai_version is None:
             ai_version = AIVersion.GPT3_5
 
-        backstory = self.get_backstory(ai_version)
+        backstory = self.get_backstory(guild_id, ai_version)
         if additional_backstory is not None:
             backstory += additional_backstory
 
         chat_log = ChatLog(backstory)
 
-        user_message = text_prompt 
+        user_message = text_prompt
         if len(name) > 0:
             user_message = self.parse_user_name(name, ai_version) + user_message
 
@@ -241,19 +307,15 @@ class AIManager(Service):
         return response
 
     async def stonerfy(self, text_prompt: str):
-        backstory = (
-            "Reword my next message in a way a completely high on weed stoner would word it while he has the high of his life. Often uses 'dude' and 'ya man'."
-        )
+        backstory = "Reword my next message in a way a completely high on weed stoner would word it while he has the high of his life. Often uses 'dude' and 'ya man'."
 
         return await self.modify(text_prompt, backstory)
 
     async def uwufy(self, text_prompt: str):
-        backstory = (
-            "Reword my next message in a way a super cutesy random rawr teenage uwu e-girl would word it on the internet in 2010. "
-        )
+        backstory = "Reword my next message in a way a super cutesy random rawr teenage uwu e-girl would word it on the internet in 2010. "
 
         return await self.modify(text_prompt, backstory)
-    
+
     async def religify(self, text_prompt: str):
         backstory = (
             "Reword my next message in a way a super pure and religious fanatic would word it, who is strictly opposed to anything sexual. "
@@ -270,23 +332,17 @@ class AIManager(Service):
         return await self.modify(text_prompt, backstory)
 
     async def weebify(self, text_prompt: str):
-        backstory = (
-            "Reword my next message in a way a super over the top hyped anime nerd would word it, using some japanese phrases known from anime. "
-        )
+        backstory = "Reword my next message in a way a super over the top hyped anime nerd would word it, using some japanese phrases known from anime. "
 
         return await self.modify(text_prompt, backstory)
 
     async def britify(self, text_prompt: str):
-        backstory = (
-            "Reword my next message in a heavy british accent. Speack with a comically thick british accent and liberally use random typically british phrases and sayings. "
-        )
+        backstory = "Reword my next message in a heavy british accent. Speack with a comically thick british accent and liberally use random typically british phrases and sayings. "
 
         return await self.modify(text_prompt, backstory)
 
     async def meowify(self, text_prompt: str):
-        backstory = (
-            "Reword my next message and replace it with cat speak only containing meows and cat noises. "
-        )
+        backstory = "Reword my next message and replace it with cat speak only containing meows and cat noises. "
 
         return await self.modify(text_prompt, backstory)
 
@@ -297,7 +353,7 @@ class AIManager(Service):
         )
 
         return await self.modify(text_prompt, backstory, length_threshold=15)
-    
+
     async def trumpify(self, text_prompt: str):
         backstory = (
             "Reword my next message in a way Donald Trump would say it in an interview or one of his speeches. "
@@ -314,12 +370,14 @@ class AIManager(Service):
 
         return await self.modify(text_prompt, backstory)
 
-    async def modify(self, text_prompt:str, backstory:str, length_threshold: int = 10):
+    async def modify(
+        self, text_prompt: str, backstory: str, length_threshold: int = 10
+    ):
         if text_prompt is None or len(text_prompt) <= 0:
             return ""
 
         word_count = len(text_prompt.split(" "))
-        max_length = max(length_threshold ,int(word_count*1.2))
+        max_length = max(length_threshold, int(word_count * 1.2))
 
         text = backstory
         text += "Keep in mind that the following message is spoken by someone and should be reworded so that it still is from their point of view. "
@@ -327,9 +385,9 @@ class AIManager(Service):
         text += "Dont put your response in quotation marks. Do not respond to the message, just reword it. "
         text += f"Your response has to be {max_length} words long or less. "
         text += "The message will follow now: "
-        
+
         chat_log = ChatLog(text)
-        ai_version = AIVersion.GPT4
+        ai_version = AIVersion.GPT4_O_MINI
 
         chat_log.add_user_message(text_prompt)
 
@@ -342,10 +400,13 @@ class AIManager(Service):
 
     async def respond(self, message: discord.Message):
         channel_id = message.channel.id
-        ai_version = AIVersion.GPT4
+        guild_id = message.guild.id
+        ai_version = AIVersion.GPT4_O
 
         if channel_id not in self.channel_logs:
-            self.channel_logs[channel_id] = ChatLog(self.get_backstory(ai_version) + self.backstory_jailing)
+            self.channel_logs[channel_id] = ChatLog(
+                self.get_backstory(guild_id, ai_version) + self.backstory_jailing
+            )
 
         if message.reference is not None:
             reference_message = await message.channel.fetch_message(

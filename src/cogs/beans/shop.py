@@ -46,6 +46,24 @@ class Shop(commands.Cog):
             or interaction.user.guild_permissions.administrator
         )
 
+    async def __beans_role_check(self, interaction: discord.Interaction) -> bool:
+        member = interaction.user
+        guild_id = interaction.guild_id
+
+        beans_role = await self.settings_manager.get_beans_role(guild_id)
+        if beans_role is None:
+            return True
+        if beans_role in [role.id for role in member.roles]:
+            return True
+
+        role_name = interaction.guild.get_role(beans_role).name
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"You can only use this command if you have the role `{role_name}`.",
+        )
+        return False
+
     async def __check_enabled(self, interaction: discord.Interaction):
         guild_id = interaction.guild_id
 
@@ -128,6 +146,8 @@ class Shop(commands.Cog):
     async def shop(self, interaction: discord.Interaction):
         if not await self.__check_enabled(interaction):
             return
+        if not await self.__beans_role_check(interaction):
+            return
 
         log_message = (
             f"{interaction.user.name} used command `{interaction.command.name}`."
@@ -164,6 +184,8 @@ class Shop(commands.Cog):
     async def catalog(self, interaction: discord.Interaction):
         if not await self.__check_enabled(interaction):
             return
+        if not await self.__beans_role_check(interaction):
+            return
 
         log_message = (
             f"{interaction.user.name} used command `{interaction.command.name}`."
@@ -189,6 +211,8 @@ class Shop(commands.Cog):
     @app_commands.guild_only()
     async def inventory(self, interaction: discord.Interaction):
         if not await self.__check_enabled(interaction):
+            return
+        if not await self.__beans_role_check(interaction):
             return
 
         log_message = (
@@ -286,7 +310,10 @@ class Shop(commands.Cog):
             args=[enabled],
         )
 
-    @group.command(name="price", description="Adjust item prices for the beans shop.")
+    @group.command(
+        name="price",
+        description="Adjust item prices for the beans shop. Set to 0 to disable.",
+    )
     @app_commands.describe(
         item="The item you are about to change.",
         amount="The new price for the specified item.",
@@ -298,7 +325,7 @@ class Shop(commands.Cog):
         self,
         interaction: discord.Interaction,
         item: str,
-        amount: app_commands.Range[int, 1],
+        amount: app_commands.Range[int, 0],
     ):
         if item not in ItemType._value2member_map_:
             await self.bot.command_response(

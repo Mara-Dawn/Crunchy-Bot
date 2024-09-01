@@ -2,12 +2,13 @@ from collections import Counter
 from functools import lru_cache
 
 import discord
+
 from combat.enemies.enemy import Enemy
 from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
 from combat.skills.status_effect import ActiveStatusEffect
-from combat.skills.types import SkillType
+from combat.skills.types import SkillEffect, SkillType
 from config import Config
 
 
@@ -26,7 +27,9 @@ class Actor:
         status_effects: list[ActiveStatusEffect],
         defeated: bool,
         image_url: str,
-        timed_out: bool = False,
+        leaving: bool = False,
+        is_out: bool = False,
+        force_skip: bool = True,
     ):
         self.id = id
         self.name = name
@@ -38,11 +41,10 @@ class Actor:
         self.skill_stacks_used = skill_stacks_used
         self.status_effects = status_effects
         self.defeated = defeated
-        self.timed_out = timed_out
+        self.leaving = leaving
+        self.is_out = is_out
+        self.force_skip = force_skip
         self.image_url = image_url
-
-    def get_encounter_scaling(self, combatant_count: int = 1) -> float:
-        pass
 
 
 class Character(Actor):
@@ -56,11 +58,14 @@ class Character(Actor):
         status_effects: list[ActiveStatusEffect],
         equipment: CharacterEquipment,
         defeated: bool,
-        timed_out: bool = False,
+        leaving: bool = False,
+        is_out: bool = False,
+        force_skip: bool = True,
     ):
         self.member = member
         self.equipment = equipment
         max_hp = self.equipment.attributes[CharacterAttribute.MAX_HEALTH]
+        # max_hp = 9999999999
         initiative = (
             Config.CHARACTER_BASE_INITIATIVE
             + self.equipment.gear_modifiers[GearModifierType.DEXTERITY]
@@ -77,7 +82,9 @@ class Character(Actor):
             skill_stacks_used=skill_stacks_used,
             status_effects=status_effects,
             defeated=defeated,
-            timed_out=timed_out,
+            leaving=leaving,
+            is_out=is_out,
+            force_skip=force_skip,
             image_url=member.display_avatar.url,
         )
 
@@ -95,7 +102,11 @@ class Opponent(Actor):
         skill_stacks_used: dict[int, int],
         status_effects: list[ActiveStatusEffect],
         defeated: bool,
+        force_skip: bool = True,
+        image_url: str = None,
     ):
+        if image_url is None:
+            image_url = enemy.image_url
         super().__init__(
             id=None,
             name=enemy.name,
@@ -107,7 +118,8 @@ class Opponent(Actor):
             skill_stacks_used=skill_stacks_used,
             status_effects=status_effects,
             defeated=defeated,
-            image_url=enemy.image_url,
+            force_skip=force_skip,
+            image_url=image_url,
         )
         self.level = level
         self.enemy = enemy
@@ -121,14 +133,15 @@ class Opponent(Actor):
             self.skills, key=lambda x: x.base_skill.base_value, reverse=True
         )
 
-        max_depth = 1
+        max_depth = self.enemy.health * 2
         cooldowns: dict[SkillType, int] = {}
         initial_state: dict[SkillType, int] = {}
 
         for skill in sorted_skills:
             cooldowns[skill.base_skill.type] = skill.base_skill.cooldown
             initial_state[skill.base_skill.type] = 0
-            max_depth *= skill.base_skill.cooldown + 1
+            if skill.base_skill.initial_cooldown is not None:
+                initial_state[skill.base_skill.type] = skill.base_skill.initial_cooldown
 
         state_list: list[dict[SkillType, int]] = []
         skill_count = Counter()
@@ -139,7 +152,7 @@ class Opponent(Actor):
             state: dict[SkillType, int],
             depth_check: int,
         ) -> list[dict[SkillType, int]]:
-            if state in state_list or depth_check <= 0:
+            if depth_check <= 0:
                 return
 
             state_list.append(state)
@@ -168,7 +181,9 @@ class Opponent(Actor):
         potency = 0
 
         for skill in sorted_skills:
-            base_potency = skill.base_skill.base_value * skill.base_skill.hits
+            base_potency = 0
+            if skill.base_skill.skill_effect != SkillEffect.BUFF:
+                base_potency = skill.base_skill.base_value * skill.base_skill.hits
             potency_per_turn = (
                 base_potency
                 * skill_count[skill.base_skill.skill_type]

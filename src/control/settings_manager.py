@@ -1,12 +1,12 @@
-from datalayer.database import Database
-from datalayer.settings import GuildSettings, ModuleSettings
 from discord.ext import commands
-from events.bot_event import BotEvent
-from items.types import ItemType
 
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
+from datalayer.database import Database
+from datalayer.settings import GuildSettings, ModuleSettings
+from events.bot_event import BotEvent
+from items.types import ItemType
 
 
 class SettingsManager(Service):
@@ -42,6 +42,7 @@ class SettingsManager(Service):
     BEANS_SUBSETTINGS_KEY = "beans"
     BEANS_ENABLED_KEY = "beans_enabled"
     BEANS_CHANNELS_KEY = "beans_channels"
+    BEANS_ROLE_KEY = "beans_role"
     BEANS_DAILY_MIN_KEY = "beans_daily_min"
     BEANS_DAILY_MAX_KEY = "beans_daily_max"
     BEANS_GAMBA_DEFAULT_KEY = "beans_gamba_default"
@@ -62,7 +63,7 @@ class SettingsManager(Service):
     BULLY_SUBSETTINGS_KEY = "bully"
     BULLY_ENABLED_KEY = "bully_enabled"
     BULLY_EXCLUDED_CHANNELS_KEY = "bully_channels"
-    BULLY_EXCLUDED_HAUNT_CHANNELS_KEY = "no_haunt_channels"
+    BULLY_HAUNT_CHANNELS_KEY = "no_haunt_channels"
 
     PREDICTIONS_SUBSETTINGS_KEY = "predictions"
     PREDICTIONS_ENABLED_KEY = "predictions_enabled"
@@ -72,6 +73,10 @@ class SettingsManager(Service):
     COMBAT_SUBSETTINGS_KEY = "combat"
     COMBAT_ENABLED_KEY = "combat_enabled"
     COMBAT_CHANNELS_KEY = "combat_channels"
+    COMBAT_MAX_LVL_SPAWN_START_TIME_KEY = "combat_max_start"
+    COMBAT_MAX_LVL_SPAWN_END_TIME_KEY = "combat_max_end"
+    COMBAT_SPAWN_PING_ROLE_KEY = "combat_ping_role"
+    COMBAT_MAX_SPAWN_PING_ROLE_KEY = "combat_max_lvl_ping_role"
 
     KARMA_SUBSETTINGS_KEY = "karma"
     KARMA_ENABLED_KEY = "karma_enabled"
@@ -85,7 +90,7 @@ class SettingsManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
-        self.log_name = "Items"
+        self.log_name = "Settings"
 
         # defaults
         general_settings = ModuleSettings(self.GENERAL_SUBSETTINGS_KEY, name="General")
@@ -180,6 +185,12 @@ class SettingsManager(Service):
             "handle_channels_value",
         )
         beans_settings.add_setting(
+            self.BEANS_ROLE_KEY,
+            [],
+            "Role to access beans content",
+            "handle_role_value",
+        )
+        beans_settings.add_setting(
             self.BEANS_DAILY_MIN_KEY, 10, "Mininum daily beans granted to users"
         )
         beans_settings.add_setting(
@@ -241,7 +252,7 @@ class SettingsManager(Service):
             "handle_channels_value",
         )
         bully_settings.add_setting(
-            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            self.BULLY_HAUNT_CHANNELS_KEY,
             [],
             "Channels excluded from haunting ghosts",
             "handle_channels_value",
@@ -273,6 +284,24 @@ class SettingsManager(Service):
             [],
             "Overview Channels for the combat module.",
             "handle_channels_value",
+        )
+        combat_settings.add_setting(
+            self.COMBAT_MAX_LVL_SPAWN_START_TIME_KEY, 6, "Max Lvl Spawn Start"
+        )
+        combat_settings.add_setting(
+            self.COMBAT_MAX_LVL_SPAWN_END_TIME_KEY, 22, "Max Lvl Spawn End"
+        )
+        combat_settings.add_setting(
+            self.COMBAT_SPAWN_PING_ROLE_KEY,
+            None,
+            "Spawn Ping Role",
+            "handle_role_value",
+        )
+        combat_settings.add_setting(
+            self.COMBAT_MAX_SPAWN_PING_ROLE_KEY,
+            None,
+            "Max Lvl Spawn Ping Role",
+            "handle_role_value",
         )
 
         karma_settings = ModuleSettings(self.KARMA_SUBSETTINGS_KEY, "Karma")
@@ -326,6 +355,8 @@ class SettingsManager(Service):
         )
 
     def handle_role_value(self, guild_id: int, role: int) -> str:
+        if role is None or role == []:
+            return " "
         guild_obj = self.bot.get_guild(guild_id)
         return (
             guild_obj.get_role(role).name
@@ -725,6 +756,19 @@ class SettingsManager(Service):
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ENABLED_KEY, enabled
         )
 
+    async def get_beans_role(self, guild: int) -> int | None:
+        value = await self.get_setting(
+            guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ROLE_KEY
+        )
+        if value is None:
+            return None
+        return int(value) if value != [] else None
+
+    async def set_beans_role(self, guild: int, role_id: int | None) -> None:
+        await self.update_setting(
+            guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_ROLE_KEY, role_id
+        )
+
     async def get_beans_daily_min(self, guild: int) -> int:
         return await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN_KEY
@@ -890,6 +934,14 @@ class SettingsManager(Service):
             guild, self.SHOP_SUBSETTINGS_KEY, self.SHOP_ENABLED_KEY, enabled
         )
 
+    async def get_shop_item_enabled(self, guild: int, item_type: ItemType) -> bool:
+        value = await self.get_setting(
+            guild, self.SHOP_SUBSETTINGS_KEY, item_type.value
+        )
+        if value is None:
+            return True
+        return value > 0
+
     async def get_shop_item_price(self, guild: int, item_type: ItemType) -> int:
         return await self.get_setting(guild, self.SHOP_SUBSETTINGS_KEY, item_type.value)
 
@@ -956,7 +1008,7 @@ class SettingsManager(Service):
             for x in await self.get_setting(
                 guild,
                 self.BULLY_SUBSETTINGS_KEY,
-                self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+                self.BULLY_HAUNT_CHANNELS_KEY,
             )
         ]
 
@@ -964,7 +1016,7 @@ class SettingsManager(Service):
         await self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,
-            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            self.BULLY_HAUNT_CHANNELS_KEY,
             channels,
         )
 
@@ -975,7 +1027,7 @@ class SettingsManager(Service):
         await self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,
-            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            self.BULLY_HAUNT_CHANNELS_KEY,
             channels,
         )
 
@@ -986,7 +1038,7 @@ class SettingsManager(Service):
         await self.update_setting(
             guild,
             self.BULLY_SUBSETTINGS_KEY,
-            self.BULLY_EXCLUDED_HAUNT_CHANNELS_KEY,
+            self.BULLY_HAUNT_CHANNELS_KEY,
             channels,
         )
 
@@ -1108,6 +1160,57 @@ class SettingsManager(Service):
             self.COMBAT_SUBSETTINGS_KEY,
             self.COMBAT_CHANNELS_KEY,
             channels,
+        )
+
+    async def get_combat_max_lvl_start(self, guild: int) -> int:
+        return await self.get_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_MAX_LVL_SPAWN_START_TIME_KEY
+        )
+
+    async def get_combat_max_lvl_end(self, guild: int) -> bool:
+        return await self.get_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_MAX_LVL_SPAWN_END_TIME_KEY
+        )
+
+    async def set_combat_max_lvl_start(self, guild: int, hour: int) -> None:
+        await self.update_setting(
+            guild,
+            self.COMBAT_SUBSETTINGS_KEY,
+            self.COMBAT_MAX_LVL_SPAWN_START_TIME_KEY,
+            hour,
+        )
+
+    async def set_combat_max_lvl_end(self, guild: int, hour: int) -> None:
+        await self.update_setting(
+            guild,
+            self.COMBAT_SUBSETTINGS_KEY,
+            self.COMBAT_MAX_LVL_SPAWN_END_TIME_KEY,
+            hour,
+        )
+
+    async def get_spawn_ping_role(self, guild: int) -> int:
+        value = await self.get_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_SPAWN_PING_ROLE_KEY
+        )
+        return int(value) if value is not None else None
+
+    async def set_spawn_ping_role(self, guild: int, role_id: int) -> None:
+        await self.update_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_SPAWN_PING_ROLE_KEY, role_id
+        )
+
+    async def get_max_lvl_spawn_ping_role(self, guild: int) -> int:
+        value = await self.get_setting(
+            guild, self.COMBAT_SUBSETTINGS_KEY, self.COMBAT_MAX_SPAWN_PING_ROLE_KEY
+        )
+        return int(value) if value is not None else None
+
+    async def set_max_lvl_spawn_ping_role(self, guild: int, role_id: int) -> None:
+        await self.update_setting(
+            guild,
+            self.COMBAT_SUBSETTINGS_KEY,
+            self.COMBAT_MAX_SPAWN_PING_ROLE_KEY,
+            role_id,
         )
 
     # Karma Settings
