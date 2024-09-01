@@ -3945,11 +3945,15 @@ class Database:
 
             skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
 
-            if previous_skill is not None and previous_skill == skill_type:
-                continue
-            previous_skill = skill_type
 
             skill_id = row[self.COMBAT_EVENT_SKILL_ID]
+            if skill_id is None:
+                continue
+
+            if previous_skill is not None and previous_skill == skill_type:
+                continue
+
+            previous_skill = skill_type
             base_class = globals()[skill_type]
             base_skill: BaseSkill = base_class()  # noqa: F405
 
@@ -3991,7 +3995,7 @@ class Database:
                 CombatEventType.ENEMY_END_TURN,
                 CombatEventType.MEMBER_END_TURN,
             ]:
-                break
+                continue
 
             with contextlib.suppress(Exception):
                 skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
