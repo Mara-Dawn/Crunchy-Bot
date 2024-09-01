@@ -218,26 +218,23 @@ class DaddyController(EnemyController):
             else:
                 current_hp = hp_cache[target.id]
 
-            effect_modifier, instance_post_embed_data = (
-                await self.status_effect_manager.handle_attack_status_effects(
-                    context, context.opponent, skill
-                )
+            outcome = await self.status_effect_manager.handle_attack_status_effects(
+                context, context.opponent, skill
             )
-            instance.apply_effect_modifier(effect_modifier)
-            if instance_post_embed_data is not None:
-                post_embed_data = post_embed_data | instance_post_embed_data
+            instance.apply_effect_outcome(outcome)
+            if outcome.embed_data is not None:
+                post_embed_data = post_embed_data | outcome.embed_data
 
-            on_damage_effect_modifier, dmg_taken_embed_data = (
+            outcome = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
                     target,
                     skill,
                 )
             )
-            if dmg_taken_embed_data is not None:
-                post_embed_data = post_embed_data | dmg_taken_embed_data
-
-            instance.apply_effect_modifier(on_damage_effect_modifier)
+            instance.apply_effect_outcome(outcome)
+            if outcome.embed_data is not None:
+                post_embed_data = post_embed_data | outcome.embed_data
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value

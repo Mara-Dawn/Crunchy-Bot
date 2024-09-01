@@ -285,6 +285,7 @@ class CombatSkillManager(Service):
                 modifier=modifier,
                 critical_modifier=critical_modifier,
                 encounter_scaling=encounter_scaling,
+                crit_chance=crit_rate,
                 is_crit=critical_hit,
             )
             skill_instances.append(skill_instance)
@@ -387,6 +388,7 @@ class CombatSkillManager(Service):
                 modifier=modifier,
                 critical_modifier=critical_modifier,
                 encounter_scaling=encounter_scaling,
+                crit_chance=crit_rate,
                 is_crit=critical_hit,
             )
             attacks.append(damage_instance)
