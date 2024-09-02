@@ -436,7 +436,8 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.HIGH:
                     description = f"{actor.name} is blazed out of their mind causing unexpected skill outcomes."
                 case StatusEffectType.RAGE_QUIT:
-                    description = outcome.info
+                    if outcome.info is not None:
+                        description = outcome.info
                 case StatusEffectType.FROGGED:
                     if outcome.modifier != 0:
                         continue
