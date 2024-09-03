@@ -204,7 +204,7 @@ class GardenViewController(ViewController):
                 reward = random.randint(450, 550)
                 message = f"You harvest a Key Bean Plant and gain `🅱️{reward}`."
                 message += "\nIt also drops a whole bunch of keys!"
-                key_reward = random.randint(2, 4)
+                key_reward = random.randint(3, 4)
                 await self.item_manager.drop_private_loot_box(
                     interaction, size=key_reward, lootbox_type=LootboxType.KEYS
                 )

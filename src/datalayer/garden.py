@@ -242,15 +242,15 @@ class BakedBeanPlant(Plant):
 
 class KeyBeanPlant(Plant):
 
-    SEED_EMOJI = 1239505232421982262
-    SEED_EMOJI_WATERED = 1239505228634521662
-    GROWING_EMOJI = 1239505230635339817
-    GROWING_EMOJI_WATERED = 1239505226969645099
-    READY_EMOJI = 1239505234435244042
+    SEED_EMOJI = 1280493602740371528
+    SEED_EMOJI_WATERED = 1280493594288980040
+    GROWING_EMOJI = 1280493624320065646
+    GROWING_EMOJI_WATERED = 1280493613528125554
+    READY_EMOJI = 1280493581022531634
     IMAGE_DIR = "key_bean"
 
     def __init__(self):
-        super().__init__(PlantType.BAKED_BEAN)
+        super().__init__(PlantType.KEY_BEAN)
         self.seed_hours = 24
         self.grow_hours = 24 * 4 - 4
 
@@ -697,4 +697,6 @@ class UserGarden:
                 return BakedBeanPlant()
             case PlantType.FLASH_BEAN:
                 return FlashBeanPlant()
+            case PlantType.KEY_BEAN:
+                return KeyBeanPlant()
         return None
