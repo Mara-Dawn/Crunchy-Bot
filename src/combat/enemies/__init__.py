@@ -692,7 +692,7 @@ class Boomer(Enemy):
             min_level=3,
             max_level=7,
             health=7,
-            damage_scaling=6,
+            damage_scaling=5,
             max_players=5,
             skill_types=[
                 SkillType.BACK_IN_MY_DAYS,
