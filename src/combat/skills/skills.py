@@ -2562,7 +2562,7 @@ class BackInMyDays(BaseSkill):
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             initial_cooldown=1,
             cooldown=0,
-            base_value=3,
+            base_value=4,
             aoe=True,
             hits=1,
             status_effects=[
@@ -2589,7 +2589,7 @@ class OutdatedAdvice(BaseSkill):
                 "and makes you question your own judgement. "
             ),
             information="",
-            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
             initial_cooldown=0,
             cooldown=1,
             base_value=1,
@@ -2645,7 +2645,7 @@ class BigSalami(BaseSkill):
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             initial_cooldown=0,
             cooldown=0,
-            base_value=1.5,
+            base_value=1.15,
             aoe=False,
             hits=2,
             max_targets=1,
