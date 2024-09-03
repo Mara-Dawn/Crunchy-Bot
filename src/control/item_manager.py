@@ -127,7 +127,7 @@ class ItemManager(Service):
             ItemType.MIMIC_DETECTOR,
             ItemType.USEFUL_CATGIRL,
             ItemType.FLASH_SEED,
-            # ItemType.KEY_SEED,
+            ItemType.KEY_SEED,
         ]
 
         key_item_pool = []
@@ -139,6 +139,7 @@ class ItemManager(Service):
 
         lucky_item_pool += key_item_pool
         item_pool = item_pool + lucky_item_pool
+        random_items = {}
 
         force_roll = None
         if force_type is not None:
@@ -173,6 +174,9 @@ class ItemManager(Service):
                 case LootboxType.KEYS:
                     force_roll = 1
                     item_pool = key_item_pool
+                    BotUtil.dict_append(
+                        random_items, BaseKey.TYPE_MAP[guild_level], 1
+                    )  # noqa: F405
 
         weights = [(await self.get_item(guild_id, x)).weight for x in item_pool]
         weights = [1.0 / w for w in weights]
@@ -185,8 +189,6 @@ class ItemManager(Service):
         lucky_weights = [1.0 / w for w in lucky_weights]
         sum_lucky_weights = sum(lucky_weights)
         lucky_weights = [w / sum_lucky_weights for w in lucky_weights]
-
-        random_items = {}
 
         for _ in range(size):
             roll = random.random()

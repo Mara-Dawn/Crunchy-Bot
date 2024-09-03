@@ -302,6 +302,8 @@ class CombatStatusEffectManager(Service):
                     else:
                         value = effect_data[effect_type].value + healing
                 case StatusEffectType.BLIND:
+                    if skill is not None and not skill.base_skill.modifiable:
+                        continue
                     roll = random.random()
                     miss_chance = Config.BLIND_MISS_CHANCE
 
@@ -315,6 +317,8 @@ class CombatStatusEffectManager(Service):
 
                     modifier = 0 if roll < miss_chance else 1
                 case StatusEffectType.EVASIVE:
+                    if skill is not None and not skill.base_skill.modifiable:
+                        continue
                     chance_to_evade = active_status_effect.event.value / 100
                     roll = random.random()
                     modifier = 0 if roll < chance_to_evade else 1

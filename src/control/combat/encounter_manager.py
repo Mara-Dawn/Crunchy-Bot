@@ -337,7 +337,7 @@ class EncounterManager(Service):
             return ""
 
         if combat_progress < 0.5 and combat_progress > 0.25:
-            additional_message = "You joined late, so you will get a 50% loot penalty."
+            additional_message = "You joined late, so you will only get 50% of the loot."
             event = EncounterEvent(
                 datetime.datetime.now(),
                 encounter.guild_id,
@@ -347,7 +347,7 @@ class EncounterManager(Service):
             )
             await self.controller.dispatch_event(event)
         elif combat_progress <= 0.25:
-            additional_message = "You joined late, so you will get a 75% loot penalty."
+            additional_message = "You joined late, so you will only get 25% of the loot."
             event = EncounterEvent(
                 datetime.datetime.now(),
                 encounter.guild_id,
