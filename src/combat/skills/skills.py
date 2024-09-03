@@ -1048,7 +1048,7 @@ class BroArrows(BaseSkill):
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
             base_value=1,
-            initial_cooldown=1,
+            initial_cooldown=0,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.BLEED,
@@ -1075,7 +1075,7 @@ class BroBiotics(BaseSkill):
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=1,
             base_value=2,
-            initial_cooldown=1,
+            initial_cooldown=0,
             hits=1,
             aoe=True,
             droppable=False,
@@ -1095,7 +1095,7 @@ class BroBlast(BaseSkill):
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             cooldown=3,
             base_value=6,
-            initial_cooldown=5,
+            initial_cooldown=1,
             hits=1,
             aoe=False,
             droppable=False,
