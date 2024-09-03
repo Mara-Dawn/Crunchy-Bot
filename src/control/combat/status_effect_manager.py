@@ -409,7 +409,7 @@ class CombatStatusEffectManager(Service):
             match effect_type:
                 case StatusEffectType.CLEANSE:
                     if outcome.info is not None:
-                        description = outcome
+                        description = outcome.info
                 case StatusEffectType.BLEED:
                     description = (
                         f"{actor.name} suffers {outcome.value} bleeding damage."
