@@ -23,6 +23,8 @@ from control.settings_manager import SettingsManager
 from control.types import UserSettingType
 from control.user_settings_manager import UserSettingsManager
 from datalayer.database import Database
+from events.encounter_event import EncounterEvent
+from events.types import EncounterEventType
 from items.types import ItemType
 from view.combat.embed import EquipmentHeadEmbed
 from view.combat.equipment_view import EquipmentView
@@ -847,6 +849,52 @@ class Combat(commands.Cog):
             self.__cog_name__,
             interaction,
             "Forced Encounter Reload.",
+            ephemeral=True,
+        )
+
+    @group.command(
+        name="force_end",
+        description="Foces a encounter to end.",
+    )
+    @app_commands.check(__has_permission)
+    async def force_end(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        channel_id = interaction.channel_id
+        guild_id = interaction.guild_id
+
+        if channel_id is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Please use this command inside an encounter thread.",
+                ephemeral=True,
+            )
+            return
+
+        encounter = await self.database.get_encounter_by_thread_id(guild_id, channel_id)
+
+        if encounter is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "No encounter found for this thread.",
+                ephemeral=True,
+            )
+            return
+
+        event = EncounterEvent(
+            datetime.datetime.now(),
+            guild_id,
+            encounter.id,
+            interaction.user.id,
+            EncounterEventType.END,
+        )
+        await self.controller.dispatch_event(event)
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            "Forced Encounter End.",
             ephemeral=True,
         )
 

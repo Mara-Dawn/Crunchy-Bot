@@ -323,21 +323,7 @@ class CombatSkillManager(Service):
         encounter_scaling = opponent.enemy.min_encounter_scale
         raw_attack_count = skill.base_skill.hits
         attack_count = raw_attack_count
-
-        if (
-            combatant_count > opponent.enemy.min_encounter_scale
-            and not skill.base_skill.aoe
-        ):
-            encounter_scale = combatant_count - (opponent.enemy.min_encounter_scale - 1)
-            if not skill.base_skill.no_scaling:
-                attack_count_scaling = max(1, encounter_scale * 0.75)
-                attack_count = int(raw_attack_count * attack_count_scaling)
-            encounter_scaling += (
-                encounter_scale
-                * Config.OPPONENT_ENCOUNTER_SCALING_FACTOR
-                * raw_attack_count
-                / attack_count
-            ) - 1
+        force_scaling = False
 
         match skill.base_skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
@@ -349,7 +335,8 @@ class CombatSkillManager(Service):
                     CharacterAttribute.MAGIC_DAMAGE_INCREASE
                 ]
             case SkillEffect.HEALING:
-                encounter_scale = 1
+                encounter_scaling = 1
+                force_scaling = True
                 skill_scaling = skill_base_value
                 modifier += opponent.enemy.attributes[CharacterAttribute.HEALING_BONUS]
                 base_roll = opponent.max_hp
@@ -357,6 +344,23 @@ class CombatSkillManager(Service):
                 weapon_max_roll = base_roll * (1 + Config.OPPONENT_DAMAGE_VARIANCE)
             case SkillEffect.NOTHING | SkillEffect.BUFF:
                 modifier = 0
+
+        if (
+            combatant_count > opponent.enemy.min_encounter_scale
+            and not skill.base_skill.aoe
+            and not force_scaling
+            and not skill.base_skill.no_scaling
+        ):
+            encounter_scale = combatant_count - (opponent.enemy.min_encounter_scale - 1)
+            if not skill.base_skill.no_scaling:
+                attack_count_scaling = max(1, encounter_scale * 0.75)
+                attack_count = int(raw_attack_count * attack_count_scaling)
+            encounter_scaling += (
+                encounter_scale
+                * Config.OPPONENT_ENCOUNTER_SCALING_FACTOR
+                * raw_attack_count
+                / attack_count
+            ) - 1
 
         attacks = []
         for _ in range(attack_count):

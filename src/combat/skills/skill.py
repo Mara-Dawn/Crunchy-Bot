@@ -123,12 +123,12 @@ class Skill(Droppable):
     }
 
     RARITY_DAMAGE_SCALING = {
-        Rarity.DEFAULT: 1,
-        Rarity.COMMON: 1,
-        Rarity.UNCOMMON: 1.1,
-        Rarity.RARE: 1.2,
-        Rarity.LEGENDARY: 1.3,
-        Rarity.UNIQUE: 1,
+        Rarity.DEFAULT: 0,
+        Rarity.COMMON: 0,
+        Rarity.UNCOMMON: 0.1,
+        Rarity.RARE: 0.2,
+        Rarity.LEGENDARY: 0.3,
+        Rarity.UNIQUE: 0,
     }
 
     def __init__(
@@ -140,8 +140,8 @@ class Skill(Droppable):
         id: int = None,
     ):
         if not SkillType.is_weapon_skill(base_skill.skill_type):
-            base_skill.base_value = (
-                base_skill.base_value * self.RARITY_DAMAGE_SCALING[rarity]
+            base_skill.base_value = base_skill.base_value * (
+                1 + (self.RARITY_DAMAGE_SCALING[rarity] / base_skill.hits)
             )
         if base_skill.stacks is not None:
             base_skill.stacks = int(
