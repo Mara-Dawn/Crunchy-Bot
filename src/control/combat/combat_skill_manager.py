@@ -349,7 +349,6 @@ class CombatSkillManager(Service):
             combatant_count > opponent.enemy.min_encounter_scale
             and not skill.base_skill.aoe
             and not force_scaling
-            and not skill.base_skill.no_scaling
         ):
             encounter_scale = combatant_count - (opponent.enemy.min_encounter_scale - 1)
             if not skill.base_skill.no_scaling:

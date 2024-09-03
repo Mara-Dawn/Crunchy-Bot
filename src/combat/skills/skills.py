@@ -2645,7 +2645,7 @@ class BigSalami(BaseSkill):
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             initial_cooldown=0,
             cooldown=0,
-            base_value=1,
+            base_value=1.5,
             aoe=False,
             hits=2,
             max_targets=1,
