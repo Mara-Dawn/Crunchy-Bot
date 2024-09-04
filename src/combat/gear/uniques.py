@@ -379,7 +379,7 @@ class ShooterWig(HeadGear_T0, Unique):
                 GearModifierType.ARMOR: 1,
                 GearModifierType.DEXTERITY: 2,
                 GearModifierType.CRIT_RATE: 2,
-                GearModifierType.CRIT_DAMAGE: 6,
+                GearModifierType.CRIT_DAMAGE: 4,
             },
         )
 
