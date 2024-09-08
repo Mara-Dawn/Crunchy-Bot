@@ -48,7 +48,7 @@ class EquipmentView(ViewMenu):
         interaction: discord.Interaction,
         character: Character,
         scrap_balance: int,
-        guild_level: int,
+        forge_level: int,
         state: EquipmentViewState = EquipmentViewState.GEAR,
     ):
         super().__init__(timeout=None)
@@ -64,10 +64,10 @@ class EquipmentView(ViewMenu):
             CombatSkillManager
         )
 
-        self.guild_level = guild_level
+        self.forge_level = forge_level
         self.max_rarity = Rarity.COMMON
         for rarity, level in CombatGearManager.MIN_RARITY_LVL.items():
-            if level <= self.guild_level:
+            if level <= self.forge_level:
                 self.max_rarity = rarity
             else:
                 break
@@ -75,7 +75,7 @@ class EquipmentView(ViewMenu):
         self.forge_options = {
             level: scrap
             for level, scrap in self.SCRAP_ILVL_MAP.items()
-            if level <= self.guild_level
+            if level <= self.forge_level
         }
         self.max_forge_level = max(self.forge_options.keys())
         self.selected: int = self.max_forge_level
@@ -191,7 +191,7 @@ class EquipmentView(ViewMenu):
             case EquipmentViewState.FORGE:
                 embed = ForgeEmbed(
                     self.member,
-                    self.guild_level,
+                    self.forge_level,
                     self.max_rarity,
                 )
                 embeds.append(embed)

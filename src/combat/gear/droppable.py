@@ -63,7 +63,6 @@ class Droppable:
         Rarity.DEFAULT: discord.Color.dark_gray(),
         Rarity.COMMON: discord.Color(int("ffffff", 16)),
         Rarity.UNCOMMON: discord.Color(int("2aa198", 16)),
-        # Rarity.MAGIC: discord.Color(int("859900", 16)),
         Rarity.RARE: discord.Color(int("268bd2", 16)),
         Rarity.LEGENDARY: discord.Color(int("b58900", 16)),
         Rarity.UNIQUE: discord.Color(int("a43033", 16)),

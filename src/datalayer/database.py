@@ -34,6 +34,7 @@ from combat.gear.uniques import *  # noqa: F403
 from combat.skills.skill import BaseSkill, Skill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillType
+from config import Config
 from control.logger import BotLogger
 from datalayer.garden import Plot, PlotModifiers, UserGarden
 from datalayer.jail import UserJail
@@ -3057,6 +3058,14 @@ class Database:
 
         return int(rows[0][self.GUILD_CURRENT_SEASON_GUILD_LEVEL_COL])
 
+    async def get_forge_level(self, guild_id: int) -> int:
+        guild_level = await self.get_guild_level(guild_id)
+
+        progress = await self.get_guild_current_level_kills(guild_id, guild_level)
+        if progress < Config.FORGE_UNLOCK_REQUIREMENT:
+            return max(1, guild_level - 1)
+        return guild_level
+
     async def set_guild_level(self, guild_id: int, level: int) -> int:
         command = f""" 
             UPDATE {self.GUILD_CURRENT_SEASON_TABLE} 
@@ -3066,9 +3075,9 @@ class Database:
         task = (level, guild_id)
         return await self.__query_insert(command, task)
 
-    async def get_guild_level_progress(
-        self, guild_id: int, guild_level: int, start_id: int = None
-    ) -> int:
+    async def get_guild_current_level_kills(
+        self, guild_id: int, guild_level: int, start_id: int | None = None
+    ) -> tuple[int, int]:
         if start_id is None:
             start_id = 0
 
@@ -3089,6 +3098,26 @@ class Database:
             return 0
 
         return int(rows[0]["progress"])
+
+    async def get_guild_level_progress(
+        self, guild_id: int, guild_level: int
+    ) -> tuple[int, int]:
+        start_id = 0
+        requirement = Config.LEVEL_REQUIREMENTS[guild_level]
+
+        if guild_level in Config.BOSS_LEVELS:
+            last_fight_event = await self.get_guild_last_boss_attempt(
+                guild_id, Config.BOSS_TYPE[guild_level]
+            )
+            if last_fight_event is not None:
+                start_id = last_fight_event.id
+                requirement = Config.BOSS_RETRY_REQUIREMENT
+
+        progress = await self.get_guild_current_level_kills(
+            guild_id, guild_level, start_id
+        )
+
+        return progress, requirement
 
     async def get_guild_last_boss_attempt(
         self, guild_id: int, enemy_type: EnemyType
@@ -3944,7 +3973,6 @@ class Database:
                 continue
 
             skill_type = SkillType(row[self.COMBAT_EVENT_SKILL_TYPE])
-
 
             skill_id = row[self.COMBAT_EVENT_SKILL_ID]
             if skill_id is None:

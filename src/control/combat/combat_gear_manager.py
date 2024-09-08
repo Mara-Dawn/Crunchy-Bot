@@ -1,7 +1,6 @@
 import datetime
 import random
 
-import discord
 from discord.ext import commands
 
 from combat.actors import Character
@@ -17,6 +16,7 @@ from combat.gear import (
     DefaultWand,
 )
 from combat.gear.bases import *  # noqa: F403
+from combat.gear.droppable import Droppable
 from combat.gear.gear import DroppableBase, Gear, GearBase
 from combat.gear.types import (
     Base,
@@ -36,13 +36,13 @@ from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
-from control.types import SkillRefreshOption
 from datalayer.database import Database
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
 from events.inventory_event import InventoryEvent
 from events.types import EncounterEventType
 from items import BaseKey
+from items.item import Item
 from items.types import ItemType
 
 
@@ -424,7 +424,7 @@ class CombatGearManager(Service):
                 hash = (hash * 281 ^ ord(ch) * 997) & 0xFFFFFFFF
             return hash
 
-        level = await self.database.get_guild_level(guild_id)
+        level = await self.database.get_forge_level(guild_id)
 
         already_bought = await self.database.get_already_bought_daily_gear(
             member_id, guild_id
@@ -636,7 +636,9 @@ class CombatGearManager(Service):
             await self.controller.dispatch_event(event)
         return total_scraps
 
-    async def roll_enemy_loot(self, context: EncounterContext):
+    async def roll_enemy_loot(
+        self, context: EncounterContext
+    ) -> dict[int, tuple[int, list[Droppable], Item]]:
         enemy = context.opponent.enemy
         enemy_level = context.opponent.level
         guild_id = context.encounter.guild_id

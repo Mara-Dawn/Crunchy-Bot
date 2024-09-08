@@ -11,10 +11,11 @@ from view.view_menu import ViewMenu
 
 class EncounterLeaveView(ViewMenu):
 
-    def __init__(self, controller: Controller):
+    def __init__(self, controller: Controller, encounter_id: int):
         timeout = None
         super().__init__(timeout=timeout)
         self.controller = controller
+        self.encounter_id = encounter_id
 
         self.controller_type = ControllerType.COMBAT
         self.controller.register_view(self)
@@ -22,7 +23,11 @@ class EncounterLeaveView(ViewMenu):
         self.add_item(LeaveButton())
 
     async def listen_for_ui_event(self, event: UIEvent):
-        pass
+        match event.type:
+            case UIEventType.ENCOUNTER_INITIATED:
+                encounter_id = event.payload
+                if encounter_id == self.encounter_id:
+                    await self.on_timeout()
 
     async def leave(self, interaction: discord.Interaction):
         await interaction.response.defer()

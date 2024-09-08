@@ -61,13 +61,6 @@ from view.combat.special_drop import SpecialDropView
 
 class EncounterManager(Service):
 
-    BOSS_TYPE = {
-        3: EnemyType.DADDY_P1,
-        6: EnemyType.WEEB_BALL,
-        # 9: None,
-        # 12: None,
-    }
-    BOSS_LEVEL = {v: k for k, v in BOSS_TYPE.items()}
     BOSS_KEY = {
         3: ItemType.DADDY_KEY,
         6: ItemType.WEEB_KEY,
@@ -337,7 +330,9 @@ class EncounterManager(Service):
             return ""
 
         if combat_progress < 0.5 and combat_progress > 0.25:
-            additional_message = "You joined late, so you will only get 50% of the loot."
+            additional_message = (
+                "You joined late, so you will only get 50% of the loot."
+            )
             event = EncounterEvent(
                 datetime.datetime.now(),
                 encounter.guild_id,
@@ -347,7 +342,9 @@ class EncounterManager(Service):
             )
             await self.controller.dispatch_event(event)
         elif combat_progress <= 0.25:
-            additional_message = "You joined late, so you will only get 25% of the loot."
+            additional_message = (
+                "You joined late, so you will only get 25% of the loot."
+            )
             event = EncounterEvent(
                 datetime.datetime.now(),
                 encounter.guild_id,
@@ -446,10 +443,12 @@ class EncounterManager(Service):
             )
             leave_view = None
             if not enemy.is_boss:
-                leave_view = EncounterLeaveView(self.controller)
+                leave_view = EncounterLeaveView(self.controller, encounter_id)
             message = await self.context_loader.send_message(
                 thread, content="", embed=wait_embed, view=leave_view
             )
+            if not enemy.is_boss:
+                leave_view.set_message(message)
 
         user = self.bot.get_guild(encounter.guild_id).get_member(member_id)
         await thread.add_user(user)
@@ -1110,7 +1109,11 @@ class EncounterManager(Service):
 
             gear_to_scrap = []
             for drop in member_loot[1]:
-                if drop.level <= auto_scrap and drop.base.base_type != Base.SKILL:
+                if (
+                    drop.level <= auto_scrap
+                    and drop.base.base_type != Base.SKILL
+                    and drop.rarity != Rarity.UNIQUE
+                ):
                     gear_to_scrap.append(drop)
                     continue
                 embeds.append(drop.get_embed())
@@ -1166,19 +1169,8 @@ class EncounterManager(Service):
         if guild_level not in Config.BOSS_LEVELS:
             return False
 
-        requirement = Config.LEVEL_REQUIREMENTS[guild_level]
-        start_event_id = 0
-
-        if (guild_level) in Config.BOSS_LEVELS:
-            last_fight_event = await self.database.get_guild_last_boss_attempt(
-                guild.id, self.BOSS_TYPE[guild_level]
-            )
-            if last_fight_event is not None:
-                start_event_id = last_fight_event.id
-                requirement = Config.BOSS_RETRY_REQUIREMENT
-
-        progress = await self.database.get_guild_level_progress(
-            guild.id, guild_level, start_id=start_event_id
+        progress, requirement = await self.database.get_guild_level_progress(
+            guild.id, guild_level
         )
 
         return progress == requirement
@@ -1261,6 +1253,9 @@ class EncounterManager(Service):
             if len(message.embeds) == 1 and message.author.id == self.bot.user.id:
                 embed = message.embeds[0]
                 if embed.image.url is not None and embed.title is not None:
+                    view = discord.ui.View.from_message(message)
+                    if view is not None:
+                        self.controller.detach_view_by_id(view.id)
                     await message.delete()
                     break
 
@@ -1347,7 +1342,7 @@ class EncounterManager(Service):
             await self.delete_previous_combat_info(context.thread)
             leave_view = None
             if not context.opponent.enemy.is_boss:
-                leave_view = EncounterLeaveView(self.controller)
+                leave_view = EncounterLeaveView(self.controller, encounter_id)
             message = await self.context_loader.send_message(
                 context.thread, content="", embed=enemy_embed, view=leave_view
             )
@@ -1412,19 +1407,8 @@ class EncounterManager(Service):
 
         guild_level = await self.database.get_guild_level(guild.id)
 
-        requirement = Config.LEVEL_REQUIREMENTS[guild_level]
-        start_event_id = 0
-
-        if (guild_level) in Config.BOSS_LEVELS:
-            last_fight_event = await self.database.get_guild_last_boss_attempt(
-                guild.id, self.BOSS_TYPE[guild_level]
-            )
-            if last_fight_event is not None:
-                start_event_id = last_fight_event.id
-                requirement = Config.BOSS_RETRY_REQUIREMENT
-
-        progress = await self.database.get_guild_level_progress(
-            guild.id, guild_level, start_id=start_event_id
+        progress, requirement = await self.database.get_guild_level_progress(
+            guild.id, guild_level
         )
 
         if progress >= requirement and (guild_level) not in Config.BOSS_LEVELS:
@@ -1468,19 +1452,9 @@ class EncounterManager(Service):
                 continue
 
             guild_level = await self.database.get_guild_level(guild.id)
-            requirement = Config.LEVEL_REQUIREMENTS[guild_level]
-            start_event_id = 0
 
-            if (guild_level) in Config.BOSS_LEVELS:
-                last_fight_event = await self.database.get_guild_last_boss_attempt(
-                    guild.id, self.BOSS_TYPE[guild_level]
-                )
-                if last_fight_event is not None:
-                    start_event_id = last_fight_event.id
-                    requirement = Config.BOSS_RETRY_REQUIREMENT
-
-            progress = await self.database.get_guild_level_progress(
-                guild.id, guild_level, start_id=start_event_id
+            progress, requirement = await self.database.get_guild_level_progress(
+                guild.id, guild_level
             )
 
             start_hour = await self.settings_manager.get_combat_max_lvl_start(guild.id)
@@ -1519,11 +1493,19 @@ class EncounterManager(Service):
                     f"They will return <t:{int(wakeup.timestamp())}:R> **"
                 )
 
+            fresh_prog = True
+            if guild_level in Config.BOSS_LEVELS:
+                last_fight_event = await self.database.get_guild_last_boss_attempt(
+                    guild_id, Config.BOSS_TYPE[guild_level]
+                )
+                fresh_prog = last_fight_event is None
+
             head_embed = EnemyOverviewEmbed(
                 self.bot.user,
                 guild_level,
                 requirement,
                 progress,
+                fresh_prog,
                 additional_info,
             )
 

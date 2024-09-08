@@ -24,7 +24,8 @@ from control.types import UserSettingType
 from control.user_settings_manager import UserSettingsManager
 from datalayer.database import Database
 from events.encounter_event import EncounterEvent
-from events.types import EncounterEventType
+from events.types import EncounterEventType, UIEventType
+from events.ui_event import UIEvent
 from items.types import ItemType
 from view.combat.embed import EquipmentHeadEmbed
 from view.combat.equipment_view import EquipmentView
@@ -527,10 +528,10 @@ class Combat(commands.Cog):
         if ItemType.SCRAP in user_items:
             scrap_balance = user_items[ItemType.SCRAP]
 
-        guild_level = await self.controller.database.get_guild_level(guild_id)
+        forge_level = await self.controller.database.get_forge_level(guild_id)
 
         view = EquipmentView(
-            self.controller, interaction, character, scrap_balance, guild_level
+            self.controller, interaction, character, scrap_balance, forge_level
         )
 
         embeds = []
@@ -895,6 +896,49 @@ class Combat(commands.Cog):
             self.__cog_name__,
             interaction,
             "Forced Encounter End.",
+            ephemeral=True,
+        )
+
+    @group.command(
+        name="force_start",
+        description="Foces a encounter to start even when the participant requirements are not met.",
+    )
+    @app_commands.check(__has_permission)
+    async def force_start(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        channel_id = interaction.channel_id
+        guild_id = interaction.guild_id
+
+        if channel_id is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Please use this command inside an encounter thread.",
+                ephemeral=True,
+            )
+            return
+
+        encounter = await self.database.get_encounter_by_thread_id(guild_id, channel_id)
+
+        if encounter is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "No encounter found for this thread.",
+                ephemeral=True,
+            )
+            return
+
+        event = UIEvent(
+            UIEventType.COMBAT_INITIATE,
+            encounter,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            "Forced Encounter Start.",
             ephemeral=True,
         )
 

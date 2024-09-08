@@ -164,13 +164,13 @@ class ForgeEmbed(discord.Embed):
     def __init__(
         self,
         member: discord.Member,
-        guild_level: int,
+        forge_level: int,
         max_rarity: Rarity,
         max_width: int = 45,
     ):
         description = (
             "Toss your scrap into this gaping hole and it will spit out random items for you.\n\n"
-            f"Max item level: [35m{guild_level}[0m\n"
+            f"Max item level: [35m{forge_level}[0m\n"
             f"Max item rarity: [35m{max_rarity.value}[0m"
         )
 
@@ -197,6 +197,7 @@ class EnemyOverviewEmbed(discord.Embed):
         guild_level: int,
         requirement: int,
         progress: int,
+        fresh_prog: bool,
         additional_info: str = None,
         max_width: int = 45,
     ):
@@ -205,8 +206,13 @@ class EnemyOverviewEmbed(discord.Embed):
             "Random encounters will spawn here, group up and strategize together to overcome them.\n"
             "As you defeat more enemies, your level will rise and unlock more powerful foes with even better rewards.\n\n"
             f"Current Server Level: [35m{guild_level}[0m\n"
-            f"Progress to next level: [35m{progress}[0m/[35m{requirement}[0m"
-            # f" lvl.[35m{guild_level}[0m Enemies\n"
+        )
+
+        if fresh_prog and progress < Config.FORGE_UNLOCK_REQUIREMENT:
+            description += f"Progress to next forge level: [35m{progress}[0m/[35m{Config.FORGE_UNLOCK_REQUIREMENT}[0m\n"
+
+        description += (
+            f"Progress to next guild level: [35m{progress}[0m/[35m{requirement}[0m"
         )
 
         if guild_level in Config.BOSS_LEVELS and progress >= requirement:
