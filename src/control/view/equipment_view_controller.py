@@ -302,10 +302,10 @@ class EquipmentViewController(ViewController):
         if ItemType.SCRAP in user_items:
             scrap_balance = user_items[ItemType.SCRAP]
 
-        guild_level = await self.controller.database.get_guild_level(guild_id)
+        forge_level = await self.controller.database.get_forge_level(guild_id)
 
         view = EquipmentView(
-            self.controller, interaction, character, scrap_balance, guild_level, state
+            self.controller, interaction, character, scrap_balance, forge_level, state
         )
 
         embeds = []
@@ -342,10 +342,10 @@ class EquipmentViewController(ViewController):
         if ItemType.SCRAP in user_items:
             scrap_balance = user_items[ItemType.SCRAP]
 
-        guild_level = await self.controller.database.get_guild_level(guild_id)
+        forge_level = await self.controller.database.get_forge_level(guild_id)
 
         view = EquipmentView(
-            self.controller, interaction, character, scrap_balance, guild_level, state
+            self.controller, interaction, character, scrap_balance, forge_level, state
         )
 
         message = await interaction.original_response()

@@ -223,6 +223,15 @@ class CombatViewController(ViewController):
                 encounter_id = event.encounter_id
 
         if encounter_id is not None and event.encounter_event_type in [
+            EncounterEventType.INITIATE,
+        ]:
+            ui_event = UIEvent(
+                UIEventType.ENCOUNTER_INITIATED,
+                encounter_id,
+            )
+            await self.controller.dispatch_ui_event(ui_event)
+
+        if encounter_id is not None and event.encounter_event_type in [
             EncounterEventType.MEMBER_ENGAGE,
             EncounterEventType.MEMBER_OUT,
             EncounterEventType.MEMBER_DISENGAGE,
@@ -240,10 +249,10 @@ class CombatViewController(ViewController):
                 try:
                     exception = self.join_worker.exception()
                     if exception is not None:
-                        raise exception
                         self.join_worker = asyncio.create_task(
                             self.join_request_worker()
                         )
+                        raise exception
                 except asyncio.CancelledError:
                     pass
                     self.join_worker = asyncio.create_task(self.join_request_worker())

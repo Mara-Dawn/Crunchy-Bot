@@ -216,6 +216,7 @@ class UIEventType(str, Enum):
     SCRAP_BALANCE_CHANGED = "scrap_balance_changed"
 
     COMBAT_ENGAGE_UPDATE = "combat_engage_update"
+    ENCOUNTER_INITIATED = "encounter_initiated"
 
     USER_SETTING_EDIT = "user_setting_edit"
     USER_SETTING_STATE = "user_setting_state"

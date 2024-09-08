@@ -144,10 +144,13 @@ class EncounterStatistics(Service):
 
         highest_dmg_member_id = max(damage_sum, key=damage_sum.get)
 
+        dmg_total = sum(damage_sum.values())
+        percentage = damage_sum[highest_dmg_member_id] / dmg_total
+
         return EncounterStatistic(
             "Highest Total Damage",
             highest_dmg_member_id,
-            "total",
+            f"{int(percentage*100)}%",
             damage_sum[highest_dmg_member_id],
         )
 
@@ -199,10 +202,13 @@ class EncounterStatistics(Service):
 
         highest_dmg_member_id = max(damage_sum, key=damage_sum.get)
 
+        dmg_total = sum(damage_sum.values())
+        percentage = damage_sum[highest_dmg_member_id] / dmg_total
+
         return EncounterStatistic(
             "Highest Total Damage Taken",
             highest_dmg_member_id,
-            "total",
+            f"{int(percentage*100)}%",
             damage_sum[highest_dmg_member_id],
         )
 
@@ -245,9 +251,12 @@ class EncounterStatistics(Service):
 
         highest_healing_member_id = max(healing_sum, key=healing_sum.get)
 
+        healing_total = sum(healing_sum.values())
+        percentage = healing_sum[highest_healing_member_id] / healing_total
+
         return EncounterStatistic(
             "Highest Total Healing",
             highest_healing_member_id,
-            "total",
+            f"{int(percentage*100)}%",
             healing_sum[highest_healing_member_id],
         )
