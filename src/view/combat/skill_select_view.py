@@ -1,4 +1,5 @@
 import contextlib
+from dataclasses import dataclass
 from enum import Enum
 
 import discord
@@ -7,6 +8,7 @@ from combat.actors import Character
 from combat.gear.types import EquipmentSlot, Rarity
 from combat.skills.skill import CharacterSkill, Skill
 from combat.skills.skills import EmptySkill
+from combat.skills.types import SkillType
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
@@ -20,11 +22,10 @@ from view.combat.elements import (
     ImplementsLocking,
     ImplementsPages,
     ImplementsScrapping,
-    LockButton,
     PageButton,
+    ScrapAllButton,
+    ScrapAmountButton,
     ScrapBalanceButton,
-    ScrapSelectedButton,
-    UnlockButton,
 )
 from view.combat.embed import ManageSkillHeadEmbed, SelectSkillHeadEmbed
 from view.combat.equipment_view import EquipmentViewState
@@ -35,6 +36,34 @@ class SkillViewState(Enum):
     EQUIP = 0
     MANAGE = 1
     SELECT_MODE = 2
+
+
+@dataclass
+class SkillGroup:
+    skill_type: SkillType
+    rarity: Rarity
+    skills: list[Skill]
+    skill_data: CharacterSkill = None
+
+    @property
+    def amount(self) -> int:
+        return len(self.skills)
+
+    @property
+    def skill(self) -> Skill:
+        return self.skills[0]
+
+    @property
+    def id(self) -> int:
+        return self.skills[0].id
+
+    def is_equipped(self, equipped_skills: list[Skill]) -> bool:
+        return (self.skill_type, self.rarity) in [
+            (skill.base_skill.skill_type, skill.rarity) for skill in equipped_skills
+        ]
+
+    def add_skill_data(self, data: CharacterSkill):
+        self.skill_data = data
 
 
 class SkillSelectView(
@@ -61,9 +90,11 @@ class SkillSelectView(
         self.equipped_skill_slots = character.skill_slots
         self.equipped_skills = character.skills
         self.scrap_balance = scrap_balance
+        self.skill_info: dict[SkillType, str] = {}
 
         self.current_page = 0
-        self.selected = []
+        self.selected: list[SkillGroup] = []
+        self.selected_filter_type: SkillType = None
         self.selected_slots = {}
 
         self.skill_manager: CombatSkillManager = self.controller.get_service(
@@ -76,9 +107,9 @@ class SkillSelectView(
         self.equipped_skill_slot_data = {}
 
         self.filter = EquipmentSlot.SKILL
-        self.filtered_items = []
+        self.filtered_items: list[SkillGroup] = []
         self.display_items = []
-        self.display_skill_data = []
+        self.display_skills = []
         self.item_count = 0
         self.page_count = 1
         self.filter_items()
@@ -96,30 +127,6 @@ class SkillSelectView(
             CombatSkillManager
         )
 
-    @classmethod
-    async def create(
-        cls: "SkillSelectView",
-        controller: Controller,
-        interaction: discord.Interaction,
-        character: Character,
-        skill_inventory: list[Skill],
-        scrap_balance: int,
-        state: SkillViewState,
-    ):
-        view = cls(
-            controller, interaction, character, skill_inventory, scrap_balance, state
-        )
-        for slot, skill in view.equipped_skill_slots.items():
-            if skill is None:
-                view.equipped_skill_slot_data[slot] = None
-                continue
-            view.equipped_skill_slot_data[slot] = (
-                await view.skill_manager.get_skill_data(character, skill)
-            )
-
-        await view.refresh_elements()
-        return view
-
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
             case UIEventType.SCRAP_BALANCE_CHANGED:
@@ -134,10 +141,46 @@ class SkillSelectView(
         if event.view_id != self.id:
             return
 
+    def group_skills(self):
+
+        skill_stock: dict[SkillType, dict[Rarity, list[Skill]]] = {}
+
+        sorted_skills = sorted(self.skills, key=lambda x: x.id)
+
+        skill_info = {}
+
+        for skill in sorted_skills:
+            skill_type = skill.base_skill.skill_type
+            skill_rarity = skill.rarity
+
+            if skill_type not in skill_info:
+                skill_info[skill_type] = skill.name
+
+            if (
+                self.selected_filter_type is not None
+                and skill.base_skill.base_skill_type != self.selected_filter_type
+            ):
+                continue
+
+            if skill_type not in skill_stock:
+                skill_stock[skill_type] = {}
+
+            if skill_rarity not in skill_stock[skill_type]:
+                skill_stock[skill_type][skill_rarity] = []
+
+            skill_stock[skill_type][skill_rarity].append(skill)
+
+        self.skill_info = skill_info
+
+        skill_groups = []
+        for skill_type, stock in skill_stock.items():
+            for rarity, skills in stock.items():
+                skill_groups.append(SkillGroup(skill_type, rarity, skills))
+
+        self.filtered_items = skill_groups
+
     def filter_items(self):
-        self.filtered_items = [
-            gear for gear in self.skills if gear.base.slot == self.filter
-        ]
+        self.group_skills()
         self.item_count = len(self.filtered_items)
         self.page_count = int(self.item_count / SelectSkillHeadEmbed.ITEMS_PER_PAGE) + (
             self.item_count % SelectSkillHeadEmbed.ITEMS_PER_PAGE > 0
@@ -147,11 +190,9 @@ class SkillSelectView(
         self.filtered_items = sorted(
             self.filtered_items,
             key=lambda x: (
-                (x.id in [skill.id for skill in self.equipped_skills]),
-                # x.locked,
-                # x.level,
+                x.skill.base_skill.base_skill_type.value,
+                Skill.EFFECT_SORT_MAP[x.skill.base_skill.skill_effect],
                 Skill.RARITY_SORT_MAP[x.rarity],
-                Skill.EFFECT_SORT_MAP[x.base_skill.skill_effect],
             ),
             reverse=True,
         )
@@ -160,7 +201,6 @@ class SkillSelectView(
         await interaction.response.defer()
         self.current_page = (self.current_page + (1 if right else -1)) % self.page_count
         self.selected = []
-        # self.selected_slots = {}
         await self.refresh_ui()
 
     async def open_shop(self, interaction: discord.Interaction):
@@ -181,7 +221,7 @@ class SkillSelectView(
             if skill is not None and skill.id is not None and skill.id > 0
         }
 
-        selected[slot] = self.selected[0]
+        selected[slot] = self.selected[0].skill
         self.selected = []
 
         event = UIEvent(
@@ -208,11 +248,28 @@ class SkillSelectView(
         await self.controller.dispatch_ui_event(event)
 
     async def scrap_selected(
-        self, interaction: discord.Interaction, scrap_all: bool = False
+        self,
+        interaction: discord.Interaction,
+        scrap_all: bool = False,
+        amount: int | None = None,
+        scrap_until: bool = False,
     ):
         await interaction.response.defer()
 
-        scrappable = [item for item in self.selected if not item.locked]
+        if len(self.selected) != 1:
+            return
+
+        selected = self.selected[0]
+
+        scrappable = selected.skills
+
+        if amount is not None:
+            if not scrap_until:
+                scrappable = scrappable[:amount]
+            else:
+                total = len(scrappable) - amount
+                scrappable = scrappable[:total]
+
         self.selected = []
 
         event = UIEvent(
@@ -289,19 +346,18 @@ class SkillSelectView(
 
         disable_equip = disabled
         disable_dismantle = disabled
-        disable_locking = disabled
-        for equipped_skill_data in self.selected:
-            if equipped_skill_data is None:
+        for skill_group in self.selected:
+            if skill_group is None:
                 continue
-            if equipped_skill_data.id in [skill.id for skill in self.equipped_skills]:
+            if skill_group.is_equipped(self.equipped_skills):
                 disable_dismantle = True
-
-            if equipped_skill_data.id is None or equipped_skill_data.id < 0:
+                break
+            if skill_group.skill.id is None or skill_group.skill.id < 0:
                 # Default Gear
                 disable_dismantle = True
+                break
 
         if len(self.selected) <= 0:
-            disable_locking = True
             disable_equip = True
             disable_dismantle = True
 
@@ -309,20 +365,24 @@ class SkillSelectView(
 
         match self.state:
             case SkillViewState.EQUIP:
-                if len(self.display_skill_data) > 0:
-                    for slot, equipped_skill_data in self.selected_slots.items():
-                        selected_skill_data = None
-                        if equipped_skill_data is not None:
-                            selected_skill_data = (
-                                await self.skill_manager.get_skill_data(
-                                    self.character, equipped_skill_data
-                                )
+                if len(self.display_skills) > 0:
+                    for slot, skill in self.selected_slots.items():
+                        skill_group = None
+                        if skill is not None:
+                            skill_data = await self.skill_manager.get_skill_data(
+                                self.character, skill
+                            )
+                            skill_group = SkillGroup(
+                                skill.base_skill.skill_type,
+                                skill.rarity,
+                                [skill],
+                                skill_data,
                             )
                         self.add_item(
                             Dropdown(
-                                self.display_skill_data,
+                                self.display_skills,
                                 self.equipped_skill_slot_data,
-                                [selected_skill_data],
+                                [skill_group],
                                 self.state,
                                 row=slot + 1,
                             )
@@ -337,27 +397,23 @@ class SkillSelectView(
                 if len(self.selected) > 1:
                     disable_equip = True
                 elif len(self.selected) == 1:
-                    equipped_skill_data = self.selected[0]
-                    if equipped_skill_data.id in [
-                        skill.id for skill in self.equipped_skills
-                    ]:
-                        disable_equip = True
-
-                if len(self.display_skill_data) > 0:
-                    selected_skill_data = []
-                    for equipped_skill_data in self.selected:
-                        skill_data = await self.skill_manager.get_skill_data(
-                            self.character, equipped_skill_data
+                    disable_equip = self.selected[0].is_equipped(self.equipped_skills)
+                if len(self.display_skills) > 0:
+                    self.add_item(
+                        SkillTypeDropdown(
+                            self.skill_info,
+                            self.selected_filter_type,
                         )
-                        selected_skill_data.append(skill_data)
+                    )
                     self.add_item(
                         Dropdown(
-                            self.display_skill_data,
+                            self.display_skills,
                             self.equipped_skill_slot_data,
-                            selected_skill_data,
+                            self.selected,
                             self.state,
+                            row=1,
                             min_values=0,
-                            max_values=5,
+                            max_values=1,
                         )
                     )
 
@@ -366,30 +422,23 @@ class SkillSelectView(
                 self.add_item(PageButton(">", True))
                 self.add_item(CurrentPageButton(page_display))
                 self.add_item(ScrapBalanceButton(self.scrap_balance))
-                self.add_item(ScrapSelectedButton(disabled=disable_dismantle))
-                self.add_item(LockButton(disabled=disable_locking))
-                self.add_item(UnlockButton(disabled=disable_locking))
+                self.add_item(ScrapAllButton(disabled=disable_dismantle))
+                self.add_item(ScrapAmountButton(disabled=disable_dismantle))
                 self.add_item(BackButton())
 
             case SkillViewState.SELECT_MODE:
                 if len(self.selected) > 1:
                     disable_equip = True
 
-                if len(self.display_skill_data) > 0:
-                    selected_skill_data = []
-                    for equipped_skill_data in self.selected:
-                        skill_data = await self.skill_manager.get_skill_data(
-                            self.character, equipped_skill_data
-                        )
-                        selected_skill_data.append(skill_data)
+                if len(self.display_skills) > 0:
                     self.add_item(
                         Dropdown(
-                            self.display_skill_data,
+                            self.display_skills,
                             self.equipped_skill_slot_data,
-                            selected_skill_data,
+                            self.selected,
                             self.state,
                             min_values=0,
-                            max_values=5,
+                            max_values=1,
                             disabled=True,
                         )
                     )
@@ -402,10 +451,10 @@ class SkillSelectView(
                 self.add_item(CurrentPageButton(page_display, row=1))
                 self.add_item(ScrapBalanceButton(self.scrap_balance, row=1))
 
-                for slot, equipped_skill_data in self.equipped_skill_slot_data.items():
+                for slot, skill_data in self.equipped_skill_slot_data.items():
                     self.add_item(
                         SkillSlotButton(
-                            equipped_skill_data,
+                            skill_data,
                             slot,
                         )
                     )
@@ -455,7 +504,7 @@ class SkillSelectView(
         if None not in [self.scrap_balance, self.skills]:
             self.loaded = True
 
-        self.display_skill_data = []
+        self.display_skills = []
         embeds = []
 
         match self.state:
@@ -464,18 +513,38 @@ class SkillSelectView(
             case SkillViewState.MANAGE | SkillViewState.SELECT_MODE:
                 embeds.append(ManageSkillHeadEmbed(self.member))
 
-        for skill in self.display_items:
-            equipped = False
-            if skill.id in [skill.id for skill in self.equipped_skills]:
-                equipped = True
+        for skill_group in self.display_items:
+            equipped = skill_group.is_equipped(self.equipped_skills)
 
-            skill_data = await self.skill_manager.get_skill_data(self.character, skill)
-            self.display_skill_data.append(skill_data)
+            skill_data = await self.skill_manager.get_skill_data(
+                self.character, skill_group.skill
+            )
 
-            embeds.append(
-                skill_data.get_embed(
-                    equipped=equipped, show_full_data=True, show_locked_state=True
+            skill_group.add_skill_data(skill_data)
+            self.display_skills.append(skill_group)
+
+            skill_embed = skill_data.get_embed(
+                equipped=equipped,
+                show_full_data=True,
+                show_locked_state=True,
+                amount=skill_group.amount,
+            )
+            embeds.append(skill_embed)
+
+        for skill_group in self.selected:
+            if skill_group.skill_data is None:
+                skill_data = await self.skill_manager.get_skill_data(
+                    self.character, skill_group.skill
                 )
+
+                skill_group.add_skill_data(skill_data)
+
+        for slot, skill in self.equipped_skill_slots.items():
+            if skill is None:
+                self.equipped_skill_slot_data[slot] = None
+                continue
+            self.equipped_skill_slot_data[slot] = (
+                await self.skill_manager.get_skill_data(self.character, skill)
             )
 
         await self.refresh_elements(disabled)
@@ -492,6 +561,17 @@ class SkillSelectView(
 
         await self.message.edit(embeds=embeds, view=self)
 
+    async def set_filter_type(
+        self,
+        interaction: discord.Interaction,
+        selected_type: SkillType,
+    ):
+        await interaction.response.defer()
+        self.selected_filter_type = selected_type
+        self.filter_items()
+        self.current_page = min(self.current_page, (self.page_count - 1))
+        await self.refresh_ui()
+
     async def set_selected(
         self,
         interaction: discord.Interaction,
@@ -500,18 +580,27 @@ class SkillSelectView(
     ):
         await interaction.response.defer()
 
+        self.selected = [
+            group for group in self.filtered_items if group.id in skill_ids
+        ]
+
         if self.state == SkillViewState.EQUIP:
-            skill_list = [skill for skill in self.skills if skill.id in skill_ids]
-            skill_list.extend(
-                [skill for skill in self.equipped_skills if skill.id in skill_ids]
-            )
+            if len(skill_ids) != 1:
+                return
 
-            if len(skill_list) <= 0:
-                self.selected_slots[index] = None
-            else:
-                self.selected_slots[index] = skill_list[0]
+            selected = None
 
-        self.selected = [skill for skill in self.skills if skill.id in skill_ids]
+            if len(self.selected) == 1:
+                selected = self.selected[0].skill
+
+            elif len(self.selected) < len(skill_ids):
+                equipped = [
+                    skill for skill in self.equipped_skills if skill.id in skill_ids
+                ]
+                if len(equipped) == 1:
+                    selected = equipped[0]
+
+            self.selected_slots[index] = selected
 
         no_embeds = self.state == SkillViewState.EQUIP
         await self.refresh_ui(no_embeds=no_embeds)
@@ -605,13 +694,52 @@ class SkillSlotButton(discord.ui.Button):
             await view.equip_selected_skill(interaction, self.slot)
 
 
+class SkillTypeDropdown(discord.ui.Select):
+
+    def __init__(
+        self,
+        skill_selection: dict[SkillType, str],
+        selected: SkillType,
+        disabled: bool = False,
+        row: int = 0,
+    ):
+        self.row = row
+        options = []
+
+        for skill_type, name in skill_selection.items():
+
+            option = discord.SelectOption(
+                label=name,
+                value=skill_type.value,
+                default=skill_type == selected,
+            )
+            options.append(option)
+
+        placeholder = "Filter Skills"
+
+        super().__init__(
+            placeholder=placeholder,
+            min_values=0,
+            max_values=1,
+            options=options,
+            row=row,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: SkillSelectView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.set_filter_type(interaction, SkillType(self.values[0]))
+
+
 class Dropdown(discord.ui.Select):
 
     def __init__(
         self,
-        skill_data: list[CharacterSkill],
+        skill_data: list[SkillGroup],
         equipped_data: dict[int, CharacterSkill],
-        selected_data: list[CharacterSkill],
+        selected_data: list[SkillGroup],
         state: SkillViewState,
         disabled: bool = False,
         row: int = 0,
@@ -631,13 +759,26 @@ class Dropdown(discord.ui.Select):
                 level=1,
                 id=-row,
             )
-            empty = CharacterSkill(empty_skill, 0, 0, 0, 0)
+            empty_data = CharacterSkill(empty_skill, 0, 0, 0, 0)
+            empty = SkillGroup(
+                empty_skill.base_skill.skill_type,
+                empty_skill.rarity,
+                [empty_skill],
+                empty_data,
+            )
+
             available = skill_data + [empty]
             slot = row - 1
-            equipped = equipped_data[slot]
+            equipped_skill_data = equipped_data[slot]
 
-            if equipped is not None:
-                if equipped.skill.id not in [data.skill.id for data in skill_data]:
+            if equipped_skill_data is not None:
+                equipped = SkillGroup(
+                    equipped_skill_data.skill.base_skill.skill_type,
+                    equipped_skill_data.skill.rarity,
+                    [equipped_skill_data.skill],
+                    equipped_skill_data,
+                )
+                if equipped.id not in [x.id for x in skill_data if x is not None]:
                     available.append(equipped)
                 if equipped.skill.id is None:
                     # disabled = True
@@ -646,22 +787,15 @@ class Dropdown(discord.ui.Select):
             if (
                 len(selected_data) == 1
                 and selected_data[0] is not None
-                and selected_data[0].skill.id
-                not in [data.skill.id for data in available]
+                and selected_data[0].id not in [x.id for x in available]
             ):
                 available.append(selected_data[0])
 
         max_values = min(max_values, len(available))
 
-        equipped_ids = [
-            data.skill.id for data in equipped_data.values() if data is not None
-        ]
-        selected_ids = [
-            data.skill.id if data is not None else -row for data in selected_data
-        ]
-
-        for data in available:
-            skill = data.skill
+        for group in available:
+            data = group.skill_data
+            skill = group.skill
 
             name = skill.name
             name_prefix = f"[{skill.rarity.value}] "
@@ -674,7 +808,9 @@ class Dropdown(discord.ui.Select):
                 # Weaponskill
                 name_prefix = ""
                 name_suffix = " [WEAPON] "
-            elif skill.id in equipped_ids:
+            elif group.is_equipped(
+                [x.skill for x in equipped_data.values() if x is not None]
+            ):
                 name_suffix = " [EQ]"
             elif skill.locked:
                 name_suffix = " [🔒]"
@@ -689,6 +825,7 @@ class Dropdown(discord.ui.Select):
                 )
             description.append(f"MIN: {data.min_roll}")
             description.append(f"MAX: {data.max_roll}")
+            description.append(f"CNT: {group.amount}")
             description = " | ".join(description)
             description = (
                 (description[:95] + "..") if len(description) > 95 else description
@@ -698,7 +835,7 @@ class Dropdown(discord.ui.Select):
                 label = skill.name
                 description = ""
 
-            default = skill.id in selected_ids
+            default = group.id in [x.id for x in selected_data if x is not None]
 
             if (
                 state == SkillViewState.EQUIP
@@ -715,7 +852,7 @@ class Dropdown(discord.ui.Select):
             )
             options.append(option)
 
-        placeholder = "Select one or more Skills."
+        placeholder = "Select a Skill."
         if state == SkillViewState.EQUIP:
             placeholder = "Select a Skill to equip."
 

@@ -123,7 +123,11 @@ class EquipmentSelectView(
         await self.controller.dispatch_ui_event(event)
 
     async def scrap_selected(
-        self, interaction: discord.Interaction, scrap_all: bool = False
+        self,
+        interaction: discord.Interaction,
+        scrap_all: bool = False,
+        amount: int | None = None,
+        scrap_until: bool = False,
     ):
         await interaction.response.defer()
 

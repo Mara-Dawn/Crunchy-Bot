@@ -42,6 +42,7 @@ class BaseSkill(DroppableBase):
         no_scaling: bool = False,
         custom_crit: float = None,
         uniques: list[SkillType] = None,
+        base_skill_type: SkillType = None,
         author: str = None,
     ):
         super().__init__(
@@ -75,12 +76,16 @@ class BaseSkill(DroppableBase):
         self.custom_crit = custom_crit
         self.max_targets = max_targets
         self.no_scaling = no_scaling
+        self.base_skill_type = base_skill_type
 
         if self.image_url is None:
             self.image_url = self.DEFAULT_IMAGE[self.skill_effect]
 
         if self.status_effects is None:
             self.status_effects = []
+
+        if self.base_skill_type is None:
+            self.base_skill_type = self.skill_type
 
 
 class Skill(Droppable):
@@ -361,6 +366,7 @@ class CharacterSkill:
         show_info: bool = False,
         equipped: bool = False,
         show_locked_state: bool = False,
+        amount: int = None,
         max_width: int = None,
     ) -> discord.Embed:
         if max_width is None:
@@ -516,6 +522,12 @@ class CharacterSkill:
                 cooldown_info = f"\navailable in [35m{cooldown_remaining}[0m turn(s)"
 
             info_block += f"{cooldown_info}```"
+
+        if amount is not None and amount > 1:
+            amount_text = f"amount: {amount}"
+            spacing_width = max_width - max(11, len(amount_text))
+            spacing = " " * spacing_width
+            description += f"\n\n{spacing}{amount_text}"
 
         info_block += f"```python\n{description}```"
 
