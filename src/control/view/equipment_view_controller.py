@@ -576,7 +576,7 @@ class EquipmentViewController(ViewController):
 
         user_skills = await self.database.get_user_skill_inventory(guild_id, member_id)
 
-        view = await SkillSelectView.create(
+        view = SkillSelectView(
             self.controller, interaction, character, user_skills, scrap_balance, state
         )
 
@@ -617,7 +617,7 @@ class EquipmentViewController(ViewController):
 
         user_skills = await self.database.get_user_skill_inventory(guild_id, member_id)
 
-        view = await SkillSelectView.create(
+        view = SkillSelectView(
             self.controller, interaction, character, user_skills, scrap_balance, state
         )
 

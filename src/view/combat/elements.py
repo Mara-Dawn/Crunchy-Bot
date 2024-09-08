@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 import discord
 
+from view.view_menu import ViewMenu
+
 
 class ImplementsPages(ABC):
 
@@ -45,7 +47,11 @@ class ImplementsScrapping(ABC):
 
     @abstractmethod
     async def scrap_selected(
-        self, interaction: discord.Interaction, scrap_all: bool = False
+        self,
+        interaction: discord.Interaction,
+        scrap_all: bool = False,
+        amount: int | None = None,
+        scrap_until: bool = False,
     ):
         pass
 
@@ -156,11 +162,90 @@ class ScrapSelectedButton(discord.ui.Button):
             await view.scrap_selected(interaction)
 
 
+class ScrapAmountButton(discord.ui.Button):
+
+    def __init__(self, row: int = 3, disabled: bool = False):
+        super().__init__(
+            label="Scrap Selected Amount",
+            style=discord.ButtonStyle.red,
+            row=row,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ImplementsScrapping = self.view
+
+        if await view.interaction_check(interaction):
+            await interaction.response.send_modal(ScrapAmountModal(self.view))
+
+
+class ScrapAmountModal(discord.ui.Modal):
+
+    def __init__(self, view: ViewMenu):
+        super().__init__(title="Specify how much you want to scrap.")
+        self.view = view
+
+        self.amount = discord.ui.TextInput(
+            label="Specify an amount to Scrap:",
+            placeholder="Scrap amount",
+            required=False,
+        )
+        self.add_item(self.amount)
+        self.amount_left = discord.ui.TextInput(
+            label="OR scrap all until you have this many left:",
+            placeholder="scrap until amount left",
+            required=False,
+        )
+        self.add_item(self.amount_left)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        scrap_amount_str = self.amount.value
+        scrap_until_str = self.amount_left.value
+
+        if len(scrap_amount_str) == 0 and len(scrap_until_str) == 0:
+            await interaction.followup.send(
+                "Please specify either a scrap amount or a scrap until value.",
+                ephemeral=True,
+            )
+            return
+
+        if len(scrap_amount_str) > 0 and len(scrap_until_str) > 0:
+            await interaction.followup.send(
+                "You can only specify either scrap amount or scrap until, not both.",
+                ephemeral=True,
+            )
+            return
+
+        scrap_until = False
+
+        amount = scrap_amount_str
+        if len(amount) == 0:
+            amount = scrap_until_str
+            scrap_until = True
+
+        error = False
+        try:
+            amount = int(amount)
+            error = amount < 0
+        except ValueError:
+            error = True
+
+        if error:
+            await interaction.followup.send(
+                "Please enter a valid amount above 0.", ephemeral=True
+            )
+            return
+
+        await self.view.scrap_selected(
+            interaction, amount=amount, scrap_until=scrap_until
+        )
+
+
 class ScrapAllButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         super().__init__(
-            label="Scrap All (non locked)",
+            label="Scrap All Selected",
             style=discord.ButtonStyle.red,
             row=3,
             disabled=disabled,

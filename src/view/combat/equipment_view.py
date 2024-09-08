@@ -124,9 +124,6 @@ class EquipmentView(ViewMenu):
                 skills_button_selected = True
                 self.add_item(SkillManageButton(disabled=disabled))
                 self.add_item(SkillEquipButton(disabled=disabled))
-                self.add_item(
-                    ScrapAllButton(slot=EquipmentSlot.SKILL, disabled=disabled)
-                )
             case EquipmentViewState.FORGE:
                 forge_button_selected = True
                 self.add_item(ForgeDropdown(self.forge_options, self.selected))

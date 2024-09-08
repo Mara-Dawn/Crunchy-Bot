@@ -414,6 +414,7 @@ class GenerationalSlipper(GigaBonk, Unique):
         GigaBonk.__init__(self)
         self.name = "Generational Slipper"
         self.skill_type = SkillType.GENERATIONAL_SLIPPER
+        self.base_skill_type = SkillType.GIGA_BONK
         self.description = (
             "You have been bequeathed with The Slipper, a weapon passed down through generations. "
             "Once the bane of your childhood it is now yours to lay waste with."
@@ -435,6 +436,7 @@ class WarGodRage(BloodRage, Unique):
         BloodRage.__init__(self)
         self.name = "Warrior Rage"
         self.skill_type = SkillType.WAR_RAGE
+        self.base_skill_type = SkillType.BLOOD_RAGE
         self.description = (
             "You are absolutely infuriated. Completely flabbergasted by the sheer AUDACITY! "
             "Who do they think they are!? Your anger transforms you from a mere Karen into an "
@@ -474,6 +476,7 @@ class SmellingSalt(SecondWind, Unique):
         SecondWind.__init__(self)
         self.name = "Smelling Salt"
         self.skill_type = SkillType.SMELLING_SALT
+        self.base_skill_type = SkillType.SECOND_WIND
         self.description = (
             "This stuff is crazy, it smells so incredibly disgusting that it would even "
             "bring back your grandmas grandma from the grave. Using it revives a random defeated party member."
@@ -496,6 +499,7 @@ class NotSoFineAss(FineAss, Unique):
         FineAss.__init__(self)
         self.name = "Not So Fine Ass"
         self.skill_type = SkillType.NOT_SO_FINE_ASS
+        self.base_skill_type = SkillType.FINE_ASS
         self.description = (
             "You try to inspire your party with your mighty fine booty, but what is this? You accidentally "
             "let out a massive fart instead. "
