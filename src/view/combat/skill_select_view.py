@@ -274,7 +274,7 @@ class SkillSelectView(
 
         event = UIEvent(
             UIEventType.GEAR_DISMANTLE,
-            (interaction, scrappable, scrap_all, self.filter),
+            (interaction, scrappable, False, self.filter),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -730,7 +730,8 @@ class SkillTypeDropdown(discord.ui.Select):
         view: SkillSelectView = self.view
 
         if await view.interaction_check(interaction):
-            await view.set_filter_type(interaction, SkillType(self.values[0]))
+            value = SkillType(self.values[0]) if len(self.values) > 0 else None
+            await view.set_filter_type(interaction, value)
 
 
 class Dropdown(discord.ui.Select):
