@@ -526,7 +526,6 @@ class SkillSelectView(
             skill_embed = skill_data.get_embed(
                 equipped=equipped,
                 show_full_data=True,
-                show_locked_state=True,
                 amount=skill_group.amount,
             )
             embeds.append(skill_embed)
@@ -813,8 +812,6 @@ class Dropdown(discord.ui.Select):
                 [x.skill for x in equipped_data.values() if x is not None]
             ):
                 name_suffix = " [EQ]"
-            elif skill.locked:
-                name_suffix = " [🔒]"
 
             label = f"{name_prefix}{name}{name_suffix}"
             description = []
