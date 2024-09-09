@@ -660,6 +660,7 @@ class IceBall(BaseSkill):
             weight=70,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/mFbbWVm.png",
+            author="Waldheld",
         )
 
 
@@ -685,6 +686,7 @@ class PartyDrugs(BaseSkill):
             stacks=3,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/M4P2k4J.png",
+            author="Lusa",
         )
 
 
