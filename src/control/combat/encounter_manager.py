@@ -642,6 +642,7 @@ class EncounterManager(Service):
     ) -> tuple[list[tuple[Actor, SkillInstance, float], discord.Embed]]:
         damage_data = []
         embed_data = {}
+        context = await self.context_loader.load_encounter_context(context.encounter.id)
         outcome = await self.status_effect_manager.handle_attack_status_effects(
             context, source, skill
         )
@@ -659,6 +660,9 @@ class EncounterManager(Service):
                 target, context.combat_events
             )
 
+            context = await self.context_loader.load_encounter_context(
+                context.encounter.id
+            )
             outcome_on_dmg = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
@@ -700,6 +704,9 @@ class EncounterManager(Service):
         embed_data = {}
 
         for instance in skill_instances:
+            context = await self.context_loader.load_encounter_context(
+                context.encounter.id
+            )
             outcome = await self.status_effect_manager.handle_attack_status_effects(
                 context,
                 source,
@@ -709,6 +716,9 @@ class EncounterManager(Service):
                 embed_data = embed_data | outcome.embed_data
             instance.apply_effect_outcome(outcome)
 
+            context = await self.context_loader.load_encounter_context(
+                context.encounter.id
+            )
             outcome = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
@@ -806,6 +816,9 @@ class EncounterManager(Service):
             display_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.value
             )
+            context = await self.context_loader.load_encounter_context(
+                context.encounter.id
+            )
             outcome = (
                 await self.status_effect_manager.handle_post_attack_status_effects(
                     context,
@@ -840,6 +853,9 @@ class EncounterManager(Service):
                     status_effect_target = character
 
                 if random.random() < skill_status_effect.application_chance:
+                    context = await self.context_loader.load_encounter_context(
+                        context.encounter.id
+                    )
                     await self.status_effect_manager.apply_status(
                         context,
                         character,
@@ -1208,6 +1224,9 @@ class EncounterManager(Service):
                     await enemy_controller.on_defeat(context, actor)
                     continue
 
+                context = await self.context_loader.load_encounter_context(
+                    context.encounter.id
+                )
                 outcome = (
                     await self.status_effect_manager.handle_on_death_status_effects(
                         context, actor

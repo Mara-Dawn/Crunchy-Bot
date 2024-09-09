@@ -1,4 +1,5 @@
 import discord
+
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import (
     Base,
@@ -241,7 +242,11 @@ class Gear(Droppable):
             if self.base.slot == EquipmentSlot.WEAPON and len(self.base.skills) > 0:
                 damage_types = []
                 for skill_type in self.base.skills:
-                    if skill_type == SkillType.MAGIC_ATTACK:
+                    if skill_type in [
+                        SkillType.MAGIC_ATTACK,
+                        SkillType.FROST_ATTACK,
+                        SkillType.FROZEN_DROPS,
+                    ]:
                         effect = SkillEffect.MAGICAL_DAMAGE
                     elif skill_type in [
                         SkillType.NORMAL_ATTACK,

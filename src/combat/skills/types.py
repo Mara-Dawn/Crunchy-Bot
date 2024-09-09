@@ -1,6 +1,6 @@
+import random
 from dataclasses import dataclass
 from enum import Enum
-import random
 
 
 class StatusEffectType(str, Enum):
@@ -12,6 +12,7 @@ class StatusEffectType(str, Enum):
     FLUSTERED = "Flustered"
     SIMP = "Simp"
     INSPIRED = "Inspired"
+    ZONED_IN = "ZonedIn"
     RAGE = "Rage"
     FEAR = "Fear"
     RAGE_QUIT = "RageQuit"
@@ -20,6 +21,7 @@ class StatusEffectType(str, Enum):
     RANDOM = "Random"
     DEATH_PROTECTION = "DeathProtection"
     HEAL_OVER_TIME = "HealOverTime"
+    FROST = "Frost"
 
     FROGGED = "Frogged"
     STUN = "Stun"
@@ -54,6 +56,7 @@ class SkillType(str, Enum):
     WAR_RAGE = "WarGodRage"
     PHYSICAL_MISSILE = "PhysicalMissile"
     FINE_ASS = "FineAss"
+    COLORFUL_VASE = "ColorfulVase"
     NOT_SO_FINE_ASS = "NotSoFineAss"
     NEURON_ACTIVATION = "NeuronActivation"
 
@@ -63,6 +66,10 @@ class SkillType(str, Enum):
     MAGIC_MISSILE = "MagicMissile"
     PARTY_DRUGS = "PartyDrugs"
     SPECTRAL_HAND = "SpectralHand"
+
+    FROST_ATTACK = "FrostAttack"
+    FROZEN_DROPS = "FrozenDrops"
+    ICE_BALL = "IceBall"
 
     # Enemy Skills
     # Mind Goblin
@@ -214,6 +221,8 @@ class SkillType(str, Enum):
             SkillType.NORMAL_ATTACK,
             SkillType.HEAVY_ATTACK,
             SkillType.MAGIC_ATTACK,
+            SkillType.FROST_ATTACK,
+            SkillType.FROZEN_DROPS,
             SkillType.TAPE_ATTACK,
             SkillType.DONER_KEBAB,
             SkillType.KEBAB_SMILE,
@@ -247,6 +256,7 @@ class StatusEffectTrigger(Enum):
     ON_DEATH = 5
     ON_ATTACK = 7
     POST_ATTACK = 8
+    ATTRIBUTE = 9
 
 
 class StatusEffectApplication(Enum):
@@ -257,16 +267,17 @@ class StatusEffectApplication(Enum):
 
 @dataclass
 class StatusEffectOutcome:
-    value: int | None
-    modifier: float | None
-    crit_chance: float | None
-    crit_chance_modifier: float | None
-    info: str | None
-    embed_data: dict[str, str] | None
+    value: int | None = None
+    modifier: float | None = None
+    crit_chance: float | None = None
+    crit_chance_modifier: float | None = None
+    initiative: int | None = None
+    info: str | None = None
+    embed_data: dict[str, str] | None = None
 
     @staticmethod
     def EMPTY():
-        return StatusEffectOutcome(None, None, None, None, None, None)
+        return StatusEffectOutcome()
 
 
 class SkillInstance:
@@ -279,7 +290,7 @@ class SkillInstance:
         critical_modifier: float,
         encounter_scaling: float,
         crit_chance: float,
-        is_crit: bool | None,
+        is_crit: bool | None = None,
     ):
         self.weapon_roll = weapon_roll
         self.skill_base = skill_base

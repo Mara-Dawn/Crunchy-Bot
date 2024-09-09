@@ -132,6 +132,7 @@ class GearBaseType(str, Enum):
     STICK_T5 = "Stick_T5"
 
     TAPE_MEASURE = "TapeMeasure"
+    FROZEN_WAND = "FrozenWand"
 
     DEFAULT_MAGICAL = "DefaultMagical"
     WAND_T0 = "Wand_T0"

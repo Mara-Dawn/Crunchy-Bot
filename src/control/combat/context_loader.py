@@ -9,6 +9,7 @@ from combat.encounter import Encounter, EncounterContext
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.object_factory import ObjectFactory
+from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -38,6 +39,9 @@ class ContextLoader(Service):
         )
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
+        )
+        self.status_effect_manager: CombatStatusEffectManager = (
+            self.controller.get_service(CombatStatusEffectManager)
         )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "ContextLoader"
@@ -177,9 +181,10 @@ class ContextLoader(Service):
             combatant = await self.actor_manager.get_character(
                 member, encounter_events, combat_events, status_effects
             )
+
             combatants.append(combatant)
 
-        return EncounterContext(
+        context = EncounterContext(
             encounter=encounter,
             opponent=opponent,
             encounter_events=encounter_events,
@@ -188,6 +193,20 @@ class ContextLoader(Service):
             combatants=combatants,
             thread=thread,
         )
+
+        outcome = await self.status_effect_manager.handle_attribute_status_effects(
+            context, context.opponent
+        )
+        context.opponent.apply_status_effect(outcome)
+
+        for combatant in context.combatants:
+            outcome = await self.status_effect_manager.handle_attribute_status_effects(
+                context, combatant
+            )
+            combatant.apply_status_effect(outcome)
+
+        context.sort_actors()
+        return context
 
     async def get_previous_turn_message(self, thread: discord.Thread):
         async for message in thread.history(limit=100):

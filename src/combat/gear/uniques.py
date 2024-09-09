@@ -15,6 +15,7 @@ from combat.gear.bases import (
     Necklace_T2_2,
     Stick_T2,
     Stick_T4,
+    Wand_T2,
 )
 from combat.gear.types import GearBaseType, GearModifierType
 from combat.skills.skills import BloodRage, FineAss, GigaBonk, SecondWind
@@ -115,6 +116,28 @@ class TapeMeasure(Stick_T2, Unique):
                 GearModifierType.ATTACK: 1,
                 GearModifierType.CRIT_RATE: 0.5,
                 GearModifierType.CRIT_DAMAGE: 1,
+            },
+        )
+
+
+class FrozenWand(Wand_T2, Unique):
+
+    def __init__(self):
+        Wand_T2.__init__(self)
+        self.name = "Frozen Beans Wand"
+        self.type = GearBaseType.FROZEN_WAND
+        self.description = "A wand infused with a the power of a frozen magical bean."
+        self.image_url = "https://i.imgur.com/4mHLUEH.png"
+        self.author = "Waldheld"
+        self.skills = [SkillType.FROST_ATTACK, SkillType.FROZEN_DROPS]
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.WEAPON_DAMAGE_MIN: 1,
+                GearModifierType.WEAPON_DAMAGE_MAX: 1,
+                GearModifierType.MAGIC: 1,
+                GearModifierType.CRIT_RATE: 1,
+                GearModifierType.CRIT_DAMAGE: 0.5,
             },
         )
 

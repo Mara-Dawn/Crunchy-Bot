@@ -27,6 +27,7 @@ class StatusEffect:
         display_status: bool = False,
         apply_on_miss: bool = False,
         emoji: str = None,
+        delay: bool = False,
     ):
         self.effect_type = effect_type
         self.name = name
@@ -42,6 +43,7 @@ class StatusEffect:
         self.override_by_actor = override_by_actor
         self.stack = stack
         self.apply_on_miss = apply_on_miss
+        self.delay = delay
 
         if self.damage_type is None:
             self.damage_type = SkillEffect.STATUS_EFFECT_DAMAGE

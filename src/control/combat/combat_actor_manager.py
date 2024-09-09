@@ -198,7 +198,7 @@ class CombatActorManager(Service):
 
         image_url = await self.imgur_manager.get_random_encounter_image(encounter)
 
-        return Opponent(
+        opponent = Opponent(
             id=id,
             enemy=enemy,
             level=enemy_level,
@@ -211,6 +211,7 @@ class CombatActorManager(Service):
             force_skip=force_skip,
             image_url=image_url,
         )
+        return opponent
 
     async def get_character(
         self,

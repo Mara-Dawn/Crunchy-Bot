@@ -265,19 +265,13 @@ class CombatSkillManager(Service):
             else:
                 weapon_roll = random.randint(int(weapon_min_roll), int(weapon_max_roll))
 
-            crit_roll = random.random()
-            critical_hit = False
-            critical_modifier = 1
-
             crit_rate = character.equipment.attributes[CharacterAttribute.CRIT_RATE]
             if skill.base_skill.custom_crit is not None:
                 crit_rate = skill.base_skill.custom_crit
 
-            if crit_roll < crit_rate:
-                critical_hit = True
-                critical_modifier = character.equipment.attributes[
-                    CharacterAttribute.CRIT_DAMAGE
-                ]
+            critical_modifier = character.equipment.attributes[
+                CharacterAttribute.CRIT_DAMAGE
+            ]
 
             skill_instance = SkillInstance(
                 weapon_roll=weapon_roll,
@@ -286,7 +280,6 @@ class CombatSkillManager(Service):
                 critical_modifier=critical_modifier,
                 encounter_scaling=encounter_scaling,
                 crit_chance=crit_rate,
-                is_crit=critical_hit,
             )
             skill_instances.append(skill_instance)
 
@@ -371,19 +364,13 @@ class CombatSkillManager(Service):
             else:
                 weapon_roll = random.randint(int(weapon_min_roll), int(weapon_max_roll))
 
-            crit_roll = random.random()
-            critical_hit = False
-            critical_modifier = 1
-
             crit_rate = opponent.enemy.attributes[CharacterAttribute.CRIT_RATE]
             if skill.base_skill.custom_crit is not None:
                 crit_rate = skill.base_skill.custom_crit
 
-            if crit_roll < crit_rate:
-                critical_hit = True
-                critical_modifier = opponent.enemy.attributes[
-                    CharacterAttribute.CRIT_DAMAGE
-                ]
+            critical_modifier = opponent.enemy.attributes[
+                CharacterAttribute.CRIT_DAMAGE
+            ]
 
             damage_instance = SkillInstance(
                 weapon_roll=weapon_roll,
@@ -392,7 +379,6 @@ class CombatSkillManager(Service):
                 critical_modifier=critical_modifier,
                 encounter_scaling=encounter_scaling,
                 crit_chance=crit_rate,
-                is_crit=critical_hit,
             )
             attacks.append(damage_instance)
 

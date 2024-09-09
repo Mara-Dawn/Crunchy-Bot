@@ -78,6 +78,21 @@ class Blind(StatusEffect):
         )
 
 
+class Frost(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.FROST,
+            name="Frost",
+            description="You are slowed.",
+            trigger=[StatusEffectTrigger.ATTRIBUTE],
+            consumed=[StatusEffectTrigger.END_OF_ROUND],
+            emoji="🥶",
+            display_status=True,
+            delay=True,
+        )
+
+
 class Evasive(StatusEffect):
 
     def __init__(self):
@@ -168,6 +183,22 @@ class Inspired(StatusEffect):
             consumed=[StatusEffectTrigger.END_OF_TURN],
             emoji="🍑",
             max_stacks=99999,
+            display_status=True,
+            override=True,
+            apply_on_miss=True,
+        )
+
+
+class ZonedIn(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.ZONED_IN,
+            name="Zoned In",
+            description="Guaranteed Crit",
+            trigger=[StatusEffectTrigger.ON_ATTACK],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="🫨",
             display_status=True,
             override=True,
             apply_on_miss=True,

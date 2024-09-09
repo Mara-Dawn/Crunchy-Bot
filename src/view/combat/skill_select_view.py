@@ -707,10 +707,12 @@ class SkillTypeDropdown(discord.ui.Select):
         self.row = row
         options = []
 
-        for skill_type, name in skill_selection.items():
+        sorted_skill_types = sorted(skill_selection, key=lambda x: skill_selection[x])
+
+        for skill_type in sorted_skill_types:
 
             option = discord.SelectOption(
-                label=name,
+                label=skill_selection[skill_type],
                 value=skill_type.value,
                 default=skill_type == selected,
             )
