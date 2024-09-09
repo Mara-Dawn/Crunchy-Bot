@@ -78,6 +78,21 @@ class Blind(StatusEffect):
         )
 
 
+class Frost(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.FROST,
+            name="Frost",
+            description="You are slowed.",
+            trigger=[StatusEffectTrigger.ATTRIBUTE],
+            consumed=[StatusEffectTrigger.END_OF_ROUND],
+            emoji="🥶",
+            display_status=True,
+            delay=True,
+        )
+
+
 class Evasive(StatusEffect):
 
     def __init__(self):

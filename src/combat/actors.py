@@ -8,7 +8,7 @@ from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
 from combat.skills.status_effect import ActiveStatusEffect
-from combat.skills.types import SkillEffect, SkillType
+from combat.skills.types import SkillEffect, SkillType, StatusEffectOutcome
 from config import Config
 
 
@@ -46,6 +46,10 @@ class Actor:
         self.force_skip = force_skip
         self.image_url = image_url
 
+    def apply_status_effect(self, outcome: StatusEffectOutcome):
+        if outcome.initiative is not None:
+            self.initiative += outcome.initiative
+
 
 class Character(Actor):
 
@@ -70,6 +74,7 @@ class Character(Actor):
             Config.CHARACTER_BASE_INITIATIVE
             + self.equipment.gear_modifiers[GearModifierType.DEXTERITY]
         )
+
         self.skill_slots = skill_slots
         super().__init__(
             id=member.id,

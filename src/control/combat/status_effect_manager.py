@@ -1,6 +1,5 @@
 import datetime
 import random
-from typing import Any
 
 from discord.ext import commands
 
@@ -22,7 +21,6 @@ from combat.skills.types import (
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
-from control.combat.context_loader import ContextLoader
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
@@ -53,7 +51,6 @@ class CombatStatusEffectManager(Service):
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
         )
-        self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
 
     async def listen_for_event(self, event: BotEvent):
@@ -92,7 +89,6 @@ class CombatStatusEffectManager(Service):
             else:
                 type = random.choice(random_negative_effect)
 
-        context = await self.context_loader.load_encounter_context(context.encounter.id)
         status_effect = await self.factory.get_status_effect(type)
 
         if (
@@ -167,6 +163,7 @@ class CombatStatusEffectManager(Service):
                         context,
                         active_effect,
                         active_effect.remaining_stacks,
+                        force=True,
                     )
 
         stacks = min(stacks, status_effect.max_stacks)
@@ -188,8 +185,15 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         status_effect: ActiveStatusEffect,
         amount: int = 1,
+        force: bool = False,
     ):
         status_effect_event = status_effect.event
+        if (
+            not force
+            and status_effect.status_effect.delay
+            and status_effect_event.id > context.get_current_round_event_id_cutoff()
+        ):
+            return
         event = CombatEvent(
             datetime.datetime.now(),
             context.encounter.guild_id,
@@ -203,6 +207,40 @@ class CombatStatusEffectManager(Service):
             CombatEventType.STATUS_EFFECT,
         )
         await self.controller.dispatch_event(event)
+
+    async def handle_attribute_status_effects(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+    ) -> StatusEffectOutcome:
+
+        triggered_status_effects = []
+        for active_status_effect in actor.status_effects:
+            if active_status_effect.remaining_stacks <= 0:
+                continue
+
+            status_effect = active_status_effect.status_effect
+
+            if (
+                status_effect.delay
+                and active_status_effect.event.id
+                > context.get_current_round_event_id_cutoff()
+            ):
+                continue
+
+            if StatusEffectTrigger.ATTRIBUTE in status_effect.trigger:
+                triggered_status_effects.append(active_status_effect)
+
+        if len(triggered_status_effects) <= 0:
+            return StatusEffectOutcome.EMPTY()
+
+        outcomes = await self.get_status_effect_outcomes(
+            None, actor, triggered_status_effects
+        )
+
+        combined = self.combine_outcomes(outcomes.values(), None)
+
+        return combined
 
     async def get_status_effect_outcomes(
         self,
@@ -221,6 +259,7 @@ class CombatStatusEffectManager(Service):
             modifier = None
             crit_chance = None
             crit_chance_modifier = None
+            initiative = None
             info = None
 
             match effect_type:
@@ -326,6 +365,12 @@ class CombatStatusEffectManager(Service):
                     modifier = 0
                 case StatusEffectType.SIMP:
                     modifier = 0.5
+                case StatusEffectType.FROST:
+                    initiative = -Config.FROST_PENALTY
+                    if effect_type not in effect_data:
+                        initiative = -Config.FROST_PENALTY
+                    else:
+                        initiative += -Config.FROST_PENALTY
                 case StatusEffectType.STUN:
                     modifier = 1
                     event = EncounterEvent(
@@ -396,7 +441,13 @@ class CombatStatusEffectManager(Service):
                         info = active_status_effect.status_effect.description
 
             effect_data[effect_type] = StatusEffectOutcome(
-                value, modifier, crit_chance, crit_chance_modifier, info, None
+                value,
+                modifier,
+                crit_chance,
+                crit_chance_modifier,
+                initiative,
+                info,
+                None,
             )
         return effect_data
 
@@ -469,6 +520,7 @@ class CombatStatusEffectManager(Service):
         crit_chance = None
         crit_chance_modifier = None
         info = None
+        initiative = None
 
         for outcome in outcomes:
             if outcome.value is not None:
@@ -493,6 +545,12 @@ class CombatStatusEffectManager(Service):
                 else:
                     crit_chance_modifier *= outcome.crit_chance_modifier
 
+            if outcome.initiative is not None:
+                if initiative is None:
+                    initiative = outcome.initiative
+                else:
+                    initiative += outcome.initiative
+
             if outcome.info is not None:
                 if info is None:
                     info = outcome.info
@@ -500,7 +558,13 @@ class CombatStatusEffectManager(Service):
                     info += "\n" + outcome.info
 
         return StatusEffectOutcome(
-            value, modifier, crit_chance, crit_chance_modifier, info, embed_data
+            value,
+            modifier,
+            crit_chance,
+            crit_chance_modifier,
+            initiative,
+            info,
+            embed_data,
         )
 
     async def handle_status_effects(
@@ -519,7 +583,6 @@ class CombatStatusEffectManager(Service):
         actor: Actor,
         skill: Skill,
     ) -> StatusEffectOutcome:
-        context = await self.context_loader.load_encounter_context(context.encounter.id)
         skill_effect = skill.base_skill.skill_effect
 
         for active_actor in context.get_current_initiative():
@@ -557,7 +620,6 @@ class CombatStatusEffectManager(Service):
         actor: Actor,
         skill: Skill,
     ) -> StatusEffectOutcome:
-        context = await self.context_loader.load_encounter_context(context.encounter.id)
         skill_effect = skill.base_skill.skill_effect
 
         for active_actor in context.get_current_initiative():
@@ -598,8 +660,6 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         actor: Actor,
     ) -> StatusEffectOutcome:
-        context = await self.context_loader.load_encounter_context(context.encounter.id)
-
         for active_actor in context.get_current_initiative():
             if active_actor.id == actor.id:
                 actor = active_actor
@@ -626,7 +686,6 @@ class CombatStatusEffectManager(Service):
         skill: Skill,
         damage_instance: SkillInstance,
     ) -> StatusEffectOutcome:
-        context = await self.context_loader.load_encounter_context(context.encounter.id)
         current_actor = context.get_actor(actor.id)
         current_target = context.get_actor(target.id)
         outcomes: dict[StatusEffectType, StatusEffectOutcome] = {}
@@ -641,6 +700,7 @@ class CombatStatusEffectManager(Service):
             modifier = None
             crit_chance = None
             crit_chance_modifier = None
+            initiative = None
             info = None
 
             match effect_type:
@@ -690,7 +750,13 @@ class CombatStatusEffectManager(Service):
                     value = damage_display
 
             outcomes[effect_type] = StatusEffectOutcome(
-                value, modifier, crit_chance, crit_chance_modifier, info, None
+                value,
+                modifier,
+                crit_chance,
+                crit_chance_modifier,
+                initiative,
+                info,
+                None,
             )
 
         embed_data = await self.get_status_effect_outcome_info(context, actor, outcomes)

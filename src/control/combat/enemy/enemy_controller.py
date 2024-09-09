@@ -133,6 +133,9 @@ class EnemyController(Service, ABC):
                 total_damage = await self.actor_manager.get_skill_damage_after_defense(
                     target, turn.skill, damage_instance.scaled_value
                 )
+                context = await self.context_loader.load_encounter_context(
+                    context.encounter.id
+                )
                 outcome = (
                     await self.status_effect_manager.handle_post_attack_status_effects(
                         context,
@@ -222,6 +225,9 @@ class EnemyController(Service, ABC):
         post_embed_data = {}
 
         for target in available_targets:
+            context = await self.context_loader.load_encounter_context(
+                context.encounter.id
+            )
             outcome = await self.status_effect_manager.handle_attack_status_effects(
                 context, context.opponent, skill
             )
@@ -241,6 +247,9 @@ class EnemyController(Service, ABC):
             else:
                 current_hp = hp_cache[target.id]
 
+            context = await self.context_loader.load_encounter_context(
+                context.encounter.id
+            )
             outcome = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,

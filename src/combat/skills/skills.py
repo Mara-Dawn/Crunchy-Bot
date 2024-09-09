@@ -104,6 +104,51 @@ class MagicAttack(BaseSkill):
         )
 
 
+class FrostAttack(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Beans Frost Attack",
+            skill_type=SkillType.FROST_ATTACK,
+            description="The frozen bean manifest a small frozen orb and shoot it to the enemy.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FROST,
+                    1,
+                )
+            ],
+            base_value=1.5,
+            droppable=False,
+            image_url="https://i.imgur.com/QRs4GXX.png",
+        )
+
+
+class FrozenDrops(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Beans Frozen Drops",
+            skill_type=SkillType.FROZEN_DROPS,
+            description="The bean concentrate to manifest multiple frozen drops to let them fall on the enemy.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=2,
+            base_value=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FROST,
+                    1,
+                )
+            ],
+            hits=3,
+            droppable=False,
+            image_url="https://i.imgur.com/r0ZqBon.png",
+        )
+
+
 class DonerKebab(BaseSkill):
 
     def __init__(self):
@@ -590,6 +635,31 @@ class FireBall(BaseSkill):
             weight=50,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/tzbLY8h.png",
+        )
+
+
+class IceBall(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Ice Ball",
+            skill_type=SkillType.ICE_BALL,
+            description="Everyone can shoot fire balls, this ice ball should do the same but colder.",
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=7,
+            min_level=3,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FROST,
+                    1,
+                )
+            ],
+            base_value=5.5,
+            stacks=3,
+            weight=70,
+            reset_after_encounter=False,
+            image_url="https://i.imgur.com/mFbbWVm.png",
         )
 
 

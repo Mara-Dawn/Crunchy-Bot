@@ -517,6 +517,7 @@ class Wand_T2(Tier2):
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
+            uniques=[GearBaseType.FROZEN_WAND],
             skills=[SkillType.MAGIC_ATTACK],
             image_url="https://i.imgur.com/skJlaSy.jpg",
         )

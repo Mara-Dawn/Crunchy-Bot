@@ -514,7 +514,7 @@ class Mommy(Enemy):
             image_url="https://i.imgur.com/1orHFL2.png",
             min_level=5,
             max_level=9,
-            health=7,
+            health=8,
             damage_scaling=4.5,
             max_players=4,
             skill_types=[

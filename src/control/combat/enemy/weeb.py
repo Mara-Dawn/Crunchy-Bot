@@ -246,6 +246,9 @@ class WeebController(EnemyController):
             else:
                 current_hp = hp_cache[target.id]
 
+            context = await self.context_loader.load_encounter_context(
+                context.encounter.id
+            )
             outcome = await self.status_effect_manager.handle_attack_status_effects(
                 context, context.opponent, skill
             )
@@ -253,6 +256,9 @@ class WeebController(EnemyController):
             if outcome.embed_data is not None:
                 post_embed_data = post_embed_data | outcome.embed_data
 
+            context = await self.context_loader.load_encounter_context(
+                context.encounter.id
+            )
             outcome = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,

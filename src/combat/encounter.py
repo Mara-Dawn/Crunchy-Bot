@@ -77,10 +77,14 @@ class EncounterContext:
         self.combatants = combatants
         self.thread = thread
 
-        self.actors: list[Actor] = []
-        self.actors.append(opponent)
+        self.actors: deque[Actor] = None
+        self.beginning_actor = None
 
-        for actor in combatants:
+    def sort_actors(self):
+        self.actors = []
+        self.actors.append(self.opponent)
+
+        for actor in self.combatants:
             if self.is_actor_ready(actor):
                 self.actors.append(actor)
 
@@ -88,6 +92,10 @@ class EncounterContext:
             self.actors, key=lambda item: item.initiative, reverse=True
         )
         self.beginning_actor = self.actors[0]
+        self.actors: deque[Actor] = deque(self.actors)
+        self.actors = sorted(
+            self.actors, key=lambda item: item.initiative, reverse=True
+        )
         self.actors: deque[Actor] = deque(self.actors)
 
     def get_actor(self, actor_id: int) -> Actor:
@@ -243,11 +251,18 @@ class EncounterContext:
         if len(self.combat_events) == 0:
             return True
 
-        last_event = self.combat_events[0]
-        return last_event.combat_event_type in [
-            CombatEventType.ENEMY_END_TURN,
-            CombatEventType.MEMBER_END_TURN,
-        ]
+        for event in self.combat_events:
+            if event.combat_event_type in [
+                CombatEventType.ENEMY_END_TURN,
+                CombatEventType.MEMBER_END_TURN,
+            ]:
+                return True
+            elif event.combat_event_type not in [
+                CombatEventType.STATUS_EFFECT,
+                CombatEventType.STATUS_EFFECT_OUTCOME,
+            ]:
+                break
+        return False
 
     def get_current_round_number(self) -> int:
         round_count = 0
@@ -257,6 +272,14 @@ class EncounterContext:
             ]:
                 round_count += 1
         return round_count
+
+    def get_current_round_event_id_cutoff(self) -> int:
+        for event in self.encounter_events:
+            if event.encounter_event_type in [
+                EncounterEventType.NEW_ROUND,
+            ]:
+                return event.id
+        return 0
 
     def get_timeout_count(self, member_id: int) -> int:
         timeout_count = 0
