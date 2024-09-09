@@ -3,10 +3,15 @@ import random
 import secrets
 
 import discord
+from discord.ext import commands
+
+from control.controller import Controller
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.garden import Plot, UserGarden
 from datalayer.types import LootboxType, PlantType
-from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.garden_event import GardenEvent
@@ -19,11 +24,6 @@ from view.garden.embed import GardenEmbed
 from view.garden.plot_embed import PlotEmbed
 from view.garden.plot_view import PlotView
 from view.garden.view import GardenView
-
-from control.controller import Controller
-from control.item_manager import ItemManager
-from control.logger import BotLogger
-from control.view.view_controller import ViewController
 
 
 class GardenViewController(ViewController):
@@ -204,7 +204,7 @@ class GardenViewController(ViewController):
                 reward = random.randint(450, 550)
                 message = f"You harvest a Key Bean Plant and gain `🅱️{reward}`."
                 message += "\nIt also drops a whole bunch of keys!"
-                key_reward = random.randint(3, 4)
+                key_reward = random.randint(2, 3)
                 await self.item_manager.drop_private_loot_box(
                     interaction, size=key_reward, lootbox_type=LootboxType.KEYS
                 )

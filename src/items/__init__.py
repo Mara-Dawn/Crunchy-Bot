@@ -1672,7 +1672,7 @@ class FlashSeed(BaseSeed):
 class KeySeed(BaseSeed):
 
     def __init__(self, cost: int | None):
-        defaultcost = 2000
+        defaultcost = 3000
         if cost is None:
             cost = defaultcost
 
