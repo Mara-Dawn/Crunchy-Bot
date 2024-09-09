@@ -353,6 +353,46 @@ class Foresight(BaseSkill):
         )
 
 
+class ColorfulVase(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Colorful Vase",
+            skill_type=SkillType.COLORFUL_VASE,
+            description=(
+                "A beautiful vase in vibrant colors, it will definitely brighten "
+                "up your room (or even your mind). Heals you and guarantees a critical "
+                "hit on your next two turns. However, you are also blinded."
+            ),
+            information="",
+            skill_effect=SkillEffect.HEALING,
+            cooldown=5,
+            min_level=2,
+            base_value=0.4,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.CLEANSE,
+                    1,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.ZONED_IN,
+                    2,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    2,
+                ),
+            ],
+            stacks=3,
+            aoe=False,
+            reset_after_encounter=False,
+            uniques=[],
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/BWMS7qy.png",
+            author="Kiwi",
+        )
+
+
 class FineAss(BaseSkill):
 
     def __init__(self):

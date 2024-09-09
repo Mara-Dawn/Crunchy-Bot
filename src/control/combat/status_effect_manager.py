@@ -350,6 +350,8 @@ class CombatStatusEffectManager(Service):
                         await self.controller.dispatch_event(event)
                 case StatusEffectType.INSPIRED:
                     modifier = 1 + (active_status_effect.event.value / 100)
+                case StatusEffectType.ZONED_IN:
+                    crit_chance = 1
                 case StatusEffectType.PROTECTION:
                     modifier = 1 - (active_status_effect.event.value / 100)
                 case StatusEffectType.FEAR:

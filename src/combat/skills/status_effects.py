@@ -174,6 +174,22 @@ class Inspired(StatusEffect):
         )
 
 
+class ZonedIn(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.ZONED_IN,
+            name="Zoned In",
+            description="Guaranteed Crit",
+            trigger=[StatusEffectTrigger.ON_ATTACK],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="🫨",
+            display_status=True,
+            override=True,
+            apply_on_miss=True,
+        )
+
+
 class High(StatusEffect):
 
     def __init__(self):

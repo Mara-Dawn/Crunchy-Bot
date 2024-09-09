@@ -1,6 +1,6 @@
+import random
 from dataclasses import dataclass
 from enum import Enum
-import random
 
 
 class StatusEffectType(str, Enum):
@@ -12,6 +12,7 @@ class StatusEffectType(str, Enum):
     FLUSTERED = "Flustered"
     SIMP = "Simp"
     INSPIRED = "Inspired"
+    ZONED_IN = "ZonedIn"
     RAGE = "Rage"
     FEAR = "Fear"
     RAGE_QUIT = "RageQuit"
@@ -54,6 +55,7 @@ class SkillType(str, Enum):
     WAR_RAGE = "WarGodRage"
     PHYSICAL_MISSILE = "PhysicalMissile"
     FINE_ASS = "FineAss"
+    COLORFUL_VASE = "ColorfulVase"
     NOT_SO_FINE_ASS = "NotSoFineAss"
     NEURON_ACTIVATION = "NeuronActivation"
 
@@ -279,7 +281,7 @@ class SkillInstance:
         critical_modifier: float,
         encounter_scaling: float,
         crit_chance: float,
-        is_crit: bool | None,
+        is_crit: bool | None = None,
     ):
         self.weapon_roll = weapon_roll
         self.skill_base = skill_base
