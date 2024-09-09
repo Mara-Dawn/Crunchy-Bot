@@ -1689,7 +1689,7 @@ class KeySeed(BaseSeed):
             "This stacks additively with other flash beans, water and fertilizer."
             "\nProduces a Ghost Bean Seed when harvested."
         )
-        self.emoji = KeyBeanPlant.SEED_EMOJI
+        self.emoji = KeyBeanPlant.READY_EMOJI
 
 
 # Permanent Rare Items
