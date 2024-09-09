@@ -153,8 +153,8 @@ class SkillSelectView(
             skill_type = skill.base_skill.skill_type
             skill_rarity = skill.rarity
 
-            if skill_type not in skill_info:
-                skill_info[skill_type] = skill.name
+            if skill.base_skill.base_skill_type not in skill_info:
+                skill_info[skill.base_skill.base_skill_type] = skill.name
 
             if (
                 self.selected_filter_type is not None
@@ -397,7 +397,9 @@ class SkillSelectView(
                 if len(self.selected) > 1:
                     disable_equip = True
                 elif len(self.selected) == 1:
-                    disable_equip = self.selected[0].is_equipped(self.equipped_skills)
+                    disable_equip = self.selected[0].id in [
+                        x.id for x in self.equipped_skills
+                    ]
                 if len(self.display_skills) > 0:
                     self.add_item(
                         SkillTypeDropdown(
