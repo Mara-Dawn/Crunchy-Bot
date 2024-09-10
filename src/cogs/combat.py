@@ -504,14 +504,15 @@ class Combat(commands.Cog):
         description="Manage your combat equipment and skills.",
     )
     @app_commands.guild_only()
-    async def equipment(self, interaction: discord.Interaction):
+    async def equipment(
+        self, interaction: discord.Interaction, user: discord.User | None
+    ):
         if not await self.__check_enabled(interaction):
             return
         if not await self.__beans_role_check(interaction):
             return
 
         guild_id = interaction.guild_id
-        member_id = interaction.user.id
 
         log_message = (
             f"{interaction.user.name} used command `{interaction.command.name}`."
@@ -519,26 +520,35 @@ class Combat(commands.Cog):
         self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
         await interaction.response.defer(ephemeral=True)
 
-        character = await self.actor_manager.get_character(interaction.user)
-
-        user_items = await self.database.get_item_counts_by_user(
-            guild_id, member_id, item_types=[ItemType.SCRAP]
-        )
         scrap_balance = 0
-        if ItemType.SCRAP in user_items:
-            scrap_balance = user_items[ItemType.SCRAP]
-
         forge_level = await self.controller.database.get_forge_level(guild_id)
 
+        if user is None:
+            user = interaction.user
+            user_items = await self.database.get_item_counts_by_user(
+                guild_id, user.id, item_types=[ItemType.SCRAP]
+            )
+            if ItemType.SCRAP in user_items:
+                scrap_balance = user_items[ItemType.SCRAP]
+
+        character = await self.actor_manager.get_character(user)
+
         view = EquipmentView(
-            self.controller, interaction, character, scrap_balance, forge_level
+            self.controller,
+            interaction,
+            character,
+            scrap_balance,
+            forge_level,
+            is_owner=(user.id == interaction.user.id),
         )
 
         embeds = []
-        embeds.append(EquipmentHeadEmbed(interaction.user))
+        embeds.append(
+            EquipmentHeadEmbed(user, is_owner=(user.id == interaction.user.id))
+        )
 
         loading_embed = discord.Embed(
-            title="Loadin Gear", color=discord.Colour.light_grey()
+            title="Loading Gear", color=discord.Colour.light_grey()
         )
         self.embed_manager.add_text_bar(loading_embed, "", "Please Wait...")
         loading_embed.set_thumbnail(url=self.bot.user.display_avatar)
