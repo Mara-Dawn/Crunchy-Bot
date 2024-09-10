@@ -9,14 +9,19 @@ class EquipmentHeadEmbed(discord.Embed):
     def __init__(
         self,
         member: discord.Member,
+        is_owner: bool = True,
         max_width: int = 45,
     ):
         description = "Here you can see the gear you are currently wearing."
+        if not is_owner:
+            description = (
+                f"Here you can see the gear {member.display_name} is currently wearing."
+            )
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += " " * spacing
 
-        description = f"```python\n{description}```"
+        description = f"```\n{description}```"
 
         super().__init__(
             title="Equipped Gear",
@@ -31,14 +36,17 @@ class AttributesHeadEmbed(discord.Embed):
     def __init__(
         self,
         member: discord.Member,
+        is_owner: bool = True,
         max_width: int = 45,
     ):
         description = "Here you can see how your gear affects you in combat."
+        if not is_owner:
+            description = f"Here you can see {member.display_name}'s attributes."
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += " " * spacing
 
-        description = f"```python\n{description}```"
+        description = f"```\n{description}```"
 
         super().__init__(
             title="Character Attributes",
@@ -53,14 +61,17 @@ class SkillsHeadEmbed(discord.Embed):
     def __init__(
         self,
         member: discord.Member,
+        is_owner: bool = True,
         max_width: int = 45,
     ):
         description = "Here you can see your currently equipped skills.\n"
+        if not is_owner:
+            description = f"Here you can see the skills {member.display_name} is currently using.\n"
         if len(description) < max_width:
             spacing = max_width - len(description)
             description += " " * spacing
 
-        description = f"```python\n{description}```"
+        description = f"```\n{description}```"
 
         super().__init__(
             title="Equipped Skills",

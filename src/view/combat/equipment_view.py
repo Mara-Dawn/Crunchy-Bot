@@ -50,14 +50,16 @@ class EquipmentView(ViewMenu):
         scrap_balance: int,
         forge_level: int,
         state: EquipmentViewState = EquipmentViewState.GEAR,
+        is_owner: bool = True,
     ):
         super().__init__(timeout=None)
         self.controller = controller
         self.character = character
-        self.member_id = character.member.id
+        self.member_id = interaction.user.id
         self.guild_id = character.member.guild.id
         self.member = interaction.user
         self.state = state
+        self.is_owner = is_owner
         self.scrap_balance = scrap_balance
         self.loaded = False
         self.skill_manager: CombatSkillManager = self.controller.get_service(
@@ -107,6 +109,17 @@ class EquipmentView(ViewMenu):
         forge_button_selected = False
 
         self.clear_items()
+
+        self.add_item(GearButton(selected=gear_button_selected, disabled=disabled))
+        self.add_item(StatsButton(selected=stats_button_selected, disabled=disabled))
+        self.add_item(SkillsButton(selected=skills_button_selected, disabled=disabled))
+
+        if not self.is_owner:
+            return
+
+        self.add_item(ForgeButton(selected=forge_button_selected, disabled=disabled))
+        self.add_item(ScrapBalanceButton(self.scrap_balance))
+
         match self.state:
             case EquipmentViewState.GEAR:
                 gear_button_selected = True
@@ -138,12 +151,6 @@ class EquipmentView(ViewMenu):
                 self.add_item(ForgeUseButton(total))
                 self.add_item(ForgeShopButton())
 
-        self.add_item(GearButton(selected=gear_button_selected, disabled=disabled))
-        self.add_item(StatsButton(selected=stats_button_selected, disabled=disabled))
-        self.add_item(SkillsButton(selected=skills_button_selected, disabled=disabled))
-        self.add_item(ForgeButton(selected=forge_button_selected, disabled=disabled))
-        self.add_item(ScrapBalanceButton(self.scrap_balance))
-
     async def refresh_ui(
         self,
         character: Character = None,
@@ -166,7 +173,9 @@ class EquipmentView(ViewMenu):
         embeds = []
         match self.state:
             case EquipmentViewState.GEAR:
-                embeds.append(EquipmentHeadEmbed(self.member))
+                embeds.append(
+                    EquipmentHeadEmbed(self.character.member, is_owner=self.is_owner)
+                )
                 embeds.append(self.character.equipment.weapon.get_embed())
                 embeds.append(self.character.equipment.head_gear.get_embed())
                 embeds.append(self.character.equipment.body_gear.get_embed())
@@ -174,11 +183,13 @@ class EquipmentView(ViewMenu):
                 embeds.append(self.character.equipment.accessory_1.get_embed())
                 embeds.append(self.character.equipment.accessory_2.get_embed())
             case EquipmentViewState.STATS:
-                embeds.append(AttributesHeadEmbed(self.member))
-                title = f"{self.member.display_name}'s Attributes"
+                embeds.append(
+                    AttributesHeadEmbed(self.character.member, is_owner=self.is_owner)
+                )
+                title = f"{self.character.member.display_name}'s Attributes"
                 embeds.append(self.character.equipment.get_embed(title=title))
             case EquipmentViewState.SKILLS:
-                embed = SkillsHeadEmbed(self.member)
+                embed = SkillsHeadEmbed(self.character.member, is_owner=self.is_owner)
                 embeds.append(embed)
                 for skill in self.character.skills:
                     skill_embed = (

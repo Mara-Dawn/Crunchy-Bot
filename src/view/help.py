@@ -87,7 +87,7 @@ class HelpEmbed(discord.Embed):
         )
         if advanced:
             beans_commands.append(
-                "`/combat auto_scrap <level>` - Automatically scrap all drops up to and including the specified level."
+                "`/equipment <user>` - Inspect another users equipment."
             )
         description = "\n\n".join(beans_commands)
         description = "```RPG and Combat```\n" + description
