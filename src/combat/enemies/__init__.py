@@ -197,7 +197,7 @@ class YourMom(Enemy):
             information="",
             image_url="https://i.imgur.com/71ztyhZ.png",
             min_level=2,
-            max_level=4,
+            max_level=3,
             health=10,
             damage_scaling=9,
             max_players=8,

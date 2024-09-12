@@ -444,8 +444,8 @@ class GenerationalSlipper(GigaBonk, Unique):
         )
         self.image_url = "https://i.imgur.com/X0n7DRG.png"
         self.cooldown = 3
-        self.base_value = 6
-        self.stacks = 2
+        self.base_value = 6.5
+        self.stacks = 5
         self.author = "Lusa"
         Unique.__init__(
             self,

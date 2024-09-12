@@ -326,6 +326,7 @@ class Stick_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
+            uniques=[GearBaseType.TAPE_MEASURE],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
             image_url="https://i.imgur.com/nUnH9G0.png",
         )
@@ -349,6 +350,7 @@ class Wand_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
+            uniques=[GearBaseType.FROZEN_WAND],
             skills=[SkillType.MAGIC_ATTACK],
             image_url="https://i.imgur.com/rAGti7v.png",
         )
@@ -475,7 +477,7 @@ class Tier2(GearBase):
             information=information,
             slot=slot,
             min_level=3,
-            max_level=6,
+            max_level=5,
             modifiers=modifiers,
             skills=skills,
             uniques=uniques,
@@ -598,7 +600,7 @@ class Necklace_T2_2(Tier2):
 
     def __init__(self):
         super().__init__(
-            name="Broken Poket watch",
+            name="Broken Pocket watch",
             type=GearBaseType.NECKLACE_T2_2,
             description="Doesn't work anymore, but the gril is cute",
             information="Tier 2 accessory",
@@ -632,7 +634,7 @@ class Tier3(GearBase):
             information=information,
             slot=slot,
             min_level=4,
-            max_level=7,
+            max_level=6,
             modifiers=modifiers,
             uniques=uniques,
             skills=skills,
@@ -810,7 +812,7 @@ class Tier4(GearBase):
             information=information,
             slot=slot,
             min_level=5,
-            max_level=8,
+            max_level=7,
             modifiers=modifiers,
             skills=skills,
             uniques=uniques,
@@ -966,7 +968,7 @@ class Tier5(GearBase):
             information=information,
             slot=slot,
             min_level=6,
-            max_level=9,
+            max_level=8,
             modifiers=modifiers,
             skills=skills,
             uniques=uniques,

@@ -629,7 +629,7 @@ class FireBall(BaseSkill):
             description="A true classic. Extremely powerful and highly effective.",
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
-            cooldown=10,
+            cooldown=8,
             base_value=7.5,
             stacks=2,
             weight=50,
@@ -647,8 +647,8 @@ class IceBall(BaseSkill):
             description="Everyone can shoot fire balls, this ice ball should do the same but colder.",
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
-            cooldown=7,
-            min_level=3,
+            cooldown=5,
+            min_level=2,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.FROST,
