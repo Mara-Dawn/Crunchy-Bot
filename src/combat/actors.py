@@ -30,11 +30,14 @@ class Actor:
         leaving: bool = False,
         is_out: bool = False,
         force_skip: bool = True,
+        timeout_count: int = 0,
+        ready: bool = False,
     ):
         self.id = id
         self.name = name
         self.max_hp = max_hp
-        self.initiative = initiative
+        self.current_hp = max_hp
+        self._initiative = initiative
         self.is_enemy = is_enemy
         self.skills = skills
         self.skill_cooldowns = skill_cooldowns
@@ -45,10 +48,16 @@ class Actor:
         self.is_out = is_out
         self.force_skip = force_skip
         self.image_url = image_url
+        self.ready = ready
+        self.timeout_count = timeout_count
+        self.round_modifier = StatusEffectOutcome.EMPTY()
 
-    def apply_status_effect(self, outcome: StatusEffectOutcome):
-        if outcome.initiative is not None:
-            self.initiative += outcome.initiative
+    @property
+    def initiative(self):
+        initiative = self._initiative
+        if self.round_modifier.initiative is not None:
+            initiative += self.round_modifier.initiative
+        return initiative
 
 
 class Character(Actor):
@@ -65,11 +74,13 @@ class Character(Actor):
         leaving: bool = False,
         is_out: bool = False,
         force_skip: bool = True,
+        timeout_count: int = 0,
+        ready: bool = False,
     ):
         self.member = member
         self.equipment = equipment
         max_hp = self.equipment.attributes[CharacterAttribute.MAX_HEALTH]
-        # max_hp = 9999999999
+
         initiative = (
             Config.CHARACTER_BASE_INITIATIVE
             + self.equipment.gear_modifiers[GearModifierType.DEXTERITY]
@@ -91,6 +102,8 @@ class Character(Actor):
             is_out=is_out,
             force_skip=force_skip,
             image_url=member.display_avatar.url,
+            timeout_count=timeout_count,
+            ready=ready,
         )
 
 
@@ -125,6 +138,8 @@ class Opponent(Actor):
             defeated=defeated,
             force_skip=force_skip,
             image_url=image_url,
+            timeout_count=0,
+            ready=True,
         )
         self.level = level
         self.enemy = enemy

@@ -46,109 +46,89 @@ class ContextLoader(Service):
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "ContextLoader"
 
-        self.encounter_cache: dict[int, Encounter] = {}
-        self.encounter_event_cache: dict[int, list[EncounterEvent]] = {}
-        self.combat_event_cache: dict[int, list[CombatEvent]] = {}
-        self.status_effect_cache: dict[int, list[StatusEffectEvent]] = {}
-        self.thread_id_cache: dict[int, int] = {}
-        self.combatant_cache: dict[int, list[int]] = {}
+        self.context_cache: dict[int, EncounterContext] = {}
 
     async def listen_for_event(self, event: BotEvent):
+        if not event.synchronized:
+            return
         match event.type:
             case EventType.ENCOUNTER:
-                if not event.synchronized:
-                    return
                 encounter_event: EncounterEvent = event
                 encounter_id = encounter_event.encounter_id
 
-                if (
-                    encounter_event.encounter_event_type
-                    == EncounterEventType.MEMBER_ENGAGE
-                    and encounter_id in self.combatant_cache
-                ):
-                    self.combatant_cache[encounter_id].append(encounter_event.member_id)
+                if encounter_id in self.context_cache:
+                    context = self.context_cache[encounter_id]
+                    context.apply_event(event)
+                    for actor in context.initiative:
+                        await self.actor_manager.apply_event(actor, event)
 
-                if (
-                    encounter_event.encounter_event_type
-                    == EncounterEventType.MEMBER_DISENGAGE
-                    and encounter_id in self.combatant_cache
-                ):
-                    self.combatant_cache[encounter_id].remove(encounter_event.member_id)
+                    if (
+                        encounter_event.encounter_event_type
+                        == EncounterEventType.NEW_ROUND
+                    ):
+                        for actor in context.initiative:
+                            actor.round_modifier = await self.status_effect_manager.handle_attribute_status_effects(
+                                context, actor
+                            )
 
-                if encounter_id not in self.encounter_event_cache:
-                    return
-                self.encounter_event_cache[encounter_id].insert(0, encounter_event)
+                    if (
+                        encounter_event.encounter_event_type
+                        == EncounterEventType.MEMBER_ENGAGE
+                    ):
+                        await self.add_character_to_encounter(
+                            encounter_id, encounter_event.member_id
+                        )
 
-                if encounter_event.encounter_event_type == EncounterEventType.END:
-                    del self.encounter_cache[encounter_id]
-                    del self.encounter_event_cache[encounter_id]
-                    del self.combat_event_cache[encounter_id]
-                    del self.status_effect_cache[encounter_id]
-                    del self.thread_id_cache[encounter_id]
-                    del self.combatant_cache[encounter_id]
+                    context.refresh_initiative()
 
             case EventType.COMBAT:
-                if not event.synchronized:
-                    return
-                combat_event: CombatEvent = event
-                encounter_id = combat_event.encounter_id
-                if encounter_id not in self.combat_event_cache:
-                    return
-                self.combat_event_cache[encounter_id].insert(0, combat_event)
+                event: CombatEvent = event
+                encounter_id = event.encounter_id
+                if encounter_id in self.context_cache:
+                    context = self.context_cache[encounter_id]
+                    context.apply_event(event)
+                    for actor in context.initiative:
+                        await self.actor_manager.apply_event(actor, event)
 
             case EventType.STATUS_EFFECT:
-                if not event.synchronized:
-                    return
-                status_event: StatusEffectEvent = event
-                encounter_id = status_event.encounter_id
-                user_id = status_event.actor_id
-                if encounter_id not in self.status_effect_cache:
-                    return
-                if user_id not in self.status_effect_cache[encounter_id]:
-                    self.status_effect_cache[encounter_id][user_id] = [status_event]
-                else:
-                    self.status_effect_cache[encounter_id][user_id].insert(
-                        0, status_event
-                    )
+                event: StatusEffectEvent = event
+                encounter_id = event.encounter_id
+                if encounter_id in self.context_cache:
+                    context = self.context_cache[encounter_id]
+                    context.apply_event(event)
+                    for actor in context.initiative:
+                        await self.actor_manager.apply_event(actor, event)
+
+    async def add_character_to_encounter(self, encounter_id: int, member_id: int):
+        encounter = self.encounter_cache[encounter_id]
+        guild = self.bot.get_guild(encounter.guild_id)
+        member = guild.get_member(member_id)
+        context = self.context_cache[encounter_id]
+
+        combatant = await self.actor_manager.get_character(
+            member,
+            context.encounter_events,
+            context.combat_events,
+            context.status_effects,
+        )
+
+        self.context_cache[encounter_id].add_combatant(combatant)
 
     async def load_encounter_context(self, encounter_id) -> EncounterContext:
+        if encounter_id in self.context_cache:
+            return self.context_cache[encounter_id]
 
-        if encounter_id not in self.encounter_cache:
-            encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
-            self.encounter_cache[encounter_id] = encounter
-        else:
-            encounter = self.encounter_cache[encounter_id]
-
-        if encounter_id not in self.encounter_event_cache:
-            encounter_events = await self.database.get_encounter_events_by_encounter_id(
-                encounter_id
-            )
-            self.encounter_event_cache[encounter_id] = encounter_events
-        else:
-            encounter_events = self.encounter_event_cache[encounter_id]
-
-        if encounter_id not in self.combat_event_cache:
-            combat_events = await self.database.get_combat_events_by_encounter_id(
-                encounter_id
-            )
-            self.combat_event_cache[encounter_id] = combat_events
-        else:
-            combat_events = self.combat_event_cache[encounter_id]
-
-        if encounter_id not in self.status_effect_cache:
-            status_effects = await self.database.get_status_effects_by_encounter(
-                encounter_id
-            )
-            self.status_effect_cache[encounter_id] = status_effects
-        else:
-            status_effects = self.status_effect_cache[encounter_id]
-
-        if encounter_id not in self.thread_id_cache:
-            thread_id = await self.database.get_encounter_thread(encounter_id)
-            self.thread_id_cache[encounter_id] = thread_id
-        else:
-            thread_id = self.thread_id_cache[encounter_id]
-
+        encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
+        encounter_events = await self.database.get_encounter_events_by_encounter_id(
+            encounter_id
+        )
+        combat_events = await self.database.get_combat_events_by_encounter_id(
+            encounter_id
+        )
+        status_effects = await self.database.get_status_effects_by_encounter(
+            encounter_id
+        )
+        thread_id = await self.database.get_encounter_thread(encounter_id)
         thread = self.bot.get_channel(encounter.channel_id).get_thread(thread_id)
 
         enemy = await self.factory.get_enemy(encounter.enemy_type)
@@ -161,15 +141,9 @@ class ContextLoader(Service):
             status_effects,
         )
 
-        if encounter_id not in self.combatant_cache:
-            combatant_ids = (
-                await self.database.get_encounter_participants_by_encounter_id(
-                    encounter_id
-                )
-            )
-            self.combatant_cache[encounter_id] = combatant_ids
-        else:
-            combatant_ids = self.combatant_cache[encounter_id]
+        combatant_ids = await self.database.get_encounter_participants_by_encounter_id(
+            encounter_id
+        )
 
         guild = self.bot.get_guild(encounter.guild_id)
         members = [guild.get_member(id) for id in combatant_ids]
@@ -197,16 +171,16 @@ class ContextLoader(Service):
         outcome = await self.status_effect_manager.handle_attribute_status_effects(
             context, context.opponent
         )
-        context.opponent.apply_status_effect(outcome)
+        context.opponent.round_modifier = outcome
 
         for combatant in context.combatants:
             outcome = await self.status_effect_manager.handle_attribute_status_effects(
                 context, combatant
             )
-            combatant.apply_status_effect(outcome)
+            combatant.round_modifier = outcome
 
-        context.sort_actors()
-        return context
+        self.context_cache[encounter_id] = context
+        return self.context_cache[encounter_id]
 
     async def get_previous_turn_message(self, thread: discord.Thread):
         async for message in thread.history(limit=100):

@@ -226,7 +226,7 @@ class WeebController(EnemyController):
             )
 
         damage_instances = await self.skill_manager.get_skill_effect(
-            context.opponent, skill, combatant_count=context.get_combat_scale()
+            context.opponent, skill, combatant_count=context.combat_scale
         )
         post_embed_data = {}
 
@@ -239,16 +239,8 @@ class WeebController(EnemyController):
             target = random.choice(available_targets)
             targets.append(target.id)
 
-            if target.id not in hp_cache:
-                current_hp = await self.actor_manager.get_actor_current_hp(
-                    target, context.combat_events
-                )
-            else:
-                current_hp = hp_cache[target.id]
+            current_hp = hp_cache.get(target.id, target.current_hp)
 
-            context = await self.context_loader.load_encounter_context(
-                context.encounter.id
-            )
             outcome = await self.status_effect_manager.handle_attack_status_effects(
                 context, context.opponent, skill
             )
@@ -256,9 +248,6 @@ class WeebController(EnemyController):
             if outcome.embed_data is not None:
                 post_embed_data = post_embed_data | outcome.embed_data
 
-            context = await self.context_loader.load_encounter_context(
-                context.encounter.id
-            )
             outcome = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
@@ -323,7 +312,7 @@ class WeebController(EnemyController):
             if len(skills_to_use) >= opponent.enemy.actions_per_turn:
                 break
 
-        available_targets = context.get_active_combatants()
+        available_targets = context.active_combatants
 
         hp_cache = {}
         turn_data = []

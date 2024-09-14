@@ -164,16 +164,16 @@ class CombatViewController(ViewController):
 
             event_type = EncounterEventType.MEMBER_DISENGAGE
 
-            if context.is_initiated():
+            if context.initiated:
                 event_type = EncounterEventType.MEMBER_LEAVING
-                if member_id == context.get_current_actor().id:
+                if member_id == context.current_actor.id:
                     await interaction.followup.send(
                         "Please finish your turn before you leave.",
                         ephemeral=True,
                     )
                     continue
 
-                actor = context.get_actor(member_id)
+                actor = context.get_actor_by_id(member_id)
                 if actor.defeated:
                     await interaction.followup.send(
                         "You are defeated and cannot leave.",
@@ -206,7 +206,7 @@ class CombatViewController(ViewController):
             )
             await self.controller.dispatch_event(event)
 
-            character = context.get_actor(member_id)
+            character = context.get_actor_by_id(member_id)
 
             embed = self.embed_manager.get_member_out_embed(character, event_type, "")
             await context.thread.send("", embed=embed)
@@ -381,13 +381,7 @@ class CombatViewController(ViewController):
         message = await interaction.original_response()
         await message.delete()
 
-        current_context = await self.context_loader.load_encounter_context(
-            context.encounter.id
-        )
-
-        await self.encounter_manager.combatant_turn(
-            current_context, character, skill_data
-        )
+        await self.encounter_manager.combatant_turn(context, character, skill_data)
 
         self.controller.detach_view_by_id(view_id)
 
@@ -396,11 +390,7 @@ class CombatViewController(ViewController):
         character: Character,
         context: EncounterContext,
     ):
-        current_context = await self.context_loader.load_encounter_context(
-            context.encounter.id
-        )
-
-        await self.encounter_manager.combatant_timeout(current_context, character)
+        await self.encounter_manager.combatant_timeout(context, character)
 
     async def handle_special_drop_claim(
         self,
@@ -417,7 +407,7 @@ class CombatViewController(ViewController):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        actor = context.get_actor(member_id)
+        actor = context.get_actor_by_id(member_id)
 
         if actor is None or actor.is_out:
             await interaction.followup.send(

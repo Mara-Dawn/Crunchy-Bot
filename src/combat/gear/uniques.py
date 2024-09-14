@@ -126,7 +126,7 @@ class FrozenWand(Wand_T2, Unique):
         Wand_T2.__init__(self)
         self.name = "Frozen Beans Wand"
         self.type = GearBaseType.FROZEN_WAND
-        self.description = "A wand infused with a the power of a frozen magical bean."
+        self.description = "A wand infused with the power of a frozen magical bean."
         self.image_url = "https://i.imgur.com/4mHLUEH.png"
         self.author = "Waldheld"
         self.skills = [SkillType.FROST_ATTACK, SkillType.FROZEN_DROPS]
