@@ -653,7 +653,8 @@ class CombatStatusEffectManager(Service):
         combined = self.combine_outcomes(outcomes.values(), embed_data)
 
         if not skill.base_skill.modifiable:
-            combined.modifier = max(1, combined.modifier)
+            if combined.modifier is not None:
+                combined.modifier = max(1, combined.modifier)
             combined.crit_chance = None
             combined.crit_chance_modifier = None
 
