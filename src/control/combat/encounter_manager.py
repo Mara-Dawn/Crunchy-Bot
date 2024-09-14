@@ -599,14 +599,14 @@ class EncounterManager(Service):
                 actor = active_actor
 
         if actor.defeated or actor.leaving or actor.is_out:
-            return context
+            return
 
         triggered_status_effects = await self.status_effect_manager.actor_trigger(
             context, actor, trigger
         )
 
         if len(triggered_status_effects) <= 0:
-            return context
+            return
 
         outcome = await self.status_effect_manager.handle_status_effects(
             context, actor, triggered_status_effects
@@ -1332,7 +1332,7 @@ class EncounterManager(Service):
             if message is not None:
                 await self.context_loader.edit_message(message, embed=enemy_embed)
 
-        context = await self.handle_turn_status_effects(
+        await self.handle_turn_status_effects(
             context, current_actor, StatusEffectTrigger.START_OF_TURN
         )
         current_actor = context.current_actor
