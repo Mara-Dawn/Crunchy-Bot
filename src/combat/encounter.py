@@ -7,7 +7,6 @@ from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill
 from combat.skills.types import SkillInstance, StatusEffectType
-from config import Config
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
@@ -38,7 +37,7 @@ class Encounter:
         self.id = id
 
     @staticmethod
-    def from_db_row(row: dict[str, Any]) -> "Encounter":
+    def from_db_row(row: dict[str, Any] | None) -> "Encounter":
         from datalayer.database import Database
 
         if row is None:

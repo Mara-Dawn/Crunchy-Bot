@@ -62,23 +62,19 @@ class ContextLoader(Service):
                     for actor in context.initiative:
                         await self.actor_manager.apply_event(actor, event)
 
-                    if (
-                        encounter_event.encounter_event_type
-                        == EncounterEventType.NEW_ROUND
-                    ):
-                        for actor in context.initiative:
-                            actor.round_modifier = await self.status_effect_manager.handle_attribute_status_effects(
-                                context, actor
+                    match encounter_event.encounter_event_type:
+                        case EncounterEventType.NEW_ROUND:
+                            for actor in context.initiative:
+                                actor.round_modifier = await self.status_effect_manager.handle_attribute_status_effects(
+                                    context, actor
+                                )
+                        case EncounterEventType.MEMBER_ENGAGE:
+                            await self.add_character_to_encounter(
+                                encounter_id, encounter_event.member_id
                             )
-
-                    if (
-                        encounter_event.encounter_event_type
-                        == EncounterEventType.MEMBER_ENGAGE
-                    ):
-                        await self.add_character_to_encounter(
-                            encounter_id, encounter_event.member_id
-                        )
-
+                        case EncounterEventType.END:
+                            del self.context_cache[encounter_id]
+                            return
                     context.refresh_initiative()
 
             case EventType.COMBAT:
@@ -100,7 +96,7 @@ class ContextLoader(Service):
                         await self.actor_manager.apply_event(actor, event)
 
     async def add_character_to_encounter(self, encounter_id: int, member_id: int):
-        encounter = self.encounter_cache[encounter_id]
+        encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
         guild = self.bot.get_guild(encounter.guild_id)
         member = guild.get_member(member_id)
         context = self.context_cache[encounter_id]
