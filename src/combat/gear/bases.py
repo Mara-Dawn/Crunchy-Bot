@@ -326,7 +326,6 @@ class Stick_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
-            uniques=[GearBaseType.TAPE_MEASURE],
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
             image_url="https://i.imgur.com/nUnH9G0.png",
         )
@@ -350,7 +349,6 @@ class Wand_T1(Tier1):
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
-            uniques=[GearBaseType.FROZEN_WAND],
             skills=[SkillType.MAGIC_ATTACK],
             image_url="https://i.imgur.com/rAGti7v.png",
         )
