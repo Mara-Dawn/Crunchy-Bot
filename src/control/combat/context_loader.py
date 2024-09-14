@@ -59,7 +59,7 @@ class ContextLoader(Service):
                 if encounter_id in self.context_cache:
                     context = self.context_cache[encounter_id]
                     context.apply_event(event)
-                    for actor in context.initiative:
+                    for actor in context.actors:
                         await self.actor_manager.apply_event(actor, event)
 
                     match encounter_event.encounter_event_type:
@@ -83,7 +83,7 @@ class ContextLoader(Service):
                 if encounter_id in self.context_cache:
                     context = self.context_cache[encounter_id]
                     context.apply_event(event)
-                    for actor in context.initiative:
+                    for actor in context.actors:
                         await self.actor_manager.apply_event(actor, event)
 
             case EventType.STATUS_EFFECT:
@@ -92,7 +92,7 @@ class ContextLoader(Service):
                 if encounter_id in self.context_cache:
                     context = self.context_cache[encounter_id]
                     context.apply_event(event)
-                    for actor in context.initiative:
+                    for actor in context.actors:
                         await self.actor_manager.apply_event(actor, event)
 
     async def add_character_to_encounter(self, encounter_id: int, member_id: int):

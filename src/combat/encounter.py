@@ -301,6 +301,10 @@ class EncounterContext:
                 return actor
 
     @property
+    def actors(self) -> list[Actor]:
+        return self.combatants + [self.opponent]
+
+    @property
     def combat_scale(self) -> int:
         if self._combat_scale is None:
             self._combat_scale = len(
