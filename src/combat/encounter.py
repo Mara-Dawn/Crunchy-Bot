@@ -77,6 +77,7 @@ class EncounterContext:
 
         self.initiative: list[Actor] = None
         self.beginning_actor = None
+        self.reset_initiative: bool = False
 
         self.active_combatants: list[Actor] = [
             actor
@@ -102,7 +103,7 @@ class EncounterContext:
         self._new_round: bool = None
         self._new_turn: bool = None
         self._round_event_id_cutoff: int = None
-        self._initialized: bool = None
+        self._initiated: bool = None
         self._concluded: bool = None
 
         self.refresh_initiative()
@@ -133,12 +134,13 @@ class EncounterContext:
     def apply_encounter_event(self, event: EncounterEvent):
         match event.encounter_event_type:
             case EncounterEventType.INITIATE:
-                self._initialized = True
-            case EncounterEventType.NEW_ROUND | EncounterEventType.ENEMY_PHASE_CHANGE:
+                self._initiated = True
+            case EncounterEventType.NEW_ROUND:
                 self._new_round = True
                 self.round_number += 1
                 self._round_event_id_cutoff = event.id
                 self._current_actor = None
+                self.reset_initiative = False
                 for actor in self.combatants:
                     if (
                         not actor.defeated
@@ -147,6 +149,8 @@ class EncounterContext:
                         and actor not in self.active_combatants
                     ):
                         self.active_combatants.append(actor)
+            case EncounterEventType.ENEMY_PHASE_CHANGE:
+                self.reset_initiative = True
             case EncounterEventType.MEMBER_REQUEST_JOIN:
                 pass
             case EncounterEventType.MEMBER_ENGAGE:
@@ -208,6 +212,9 @@ class EncounterContext:
                 self._current_actor = self._current_initiative[0]
                 self._new_turn = True
 
+                if self.reset_initiative:
+                    self.refresh_initiative()
+
     def apply_status_event(self, event: StatusEffectEvent):
         pass
 
@@ -228,10 +235,11 @@ class EncounterContext:
 
         self._current_initiative = deque(self.initiative)
 
-        if self._current_actor is None:
-            self._current_actor = self.beginning_actor
-        index = self.initiative.index(self._current_actor)
-        self._current_initiative.rotate(-(index))
+        if self.initiated:
+            if self._current_actor is None or self.reset_initiative:
+                self._current_actor = self.beginning_actor
+            index = self.initiative.index(self._current_actor)
+            self._current_initiative.rotate(-(index))
 
     def get_actor_by_id(self, actor_id: int) -> Actor:
         for actor in self.initiative:
@@ -343,7 +351,6 @@ class EncounterContext:
         for event in self.encounter_events:
             if event.encounter_event_type in [
                 EncounterEventType.NEW_ROUND,
-                EncounterEventType.ENEMY_PHASE_CHANGE,
             ]:
                 round_event_id = event.id
                 break
@@ -401,12 +408,12 @@ class EncounterContext:
 
     @property
     def initiated(self) -> bool:
-        if self._initialized is None:
+        if self._initiated is None:
             for event in self.encounter_events:
                 if event.encounter_event_type == EncounterEventType.INITIATE:
-                    self._initialized = True
-            self._initialized = False
-        return self._initialized
+                    self._initiated = True
+            self._initiated = False
+        return self._initiated
 
     @property
     def concluded(self) -> bool:

@@ -770,7 +770,7 @@ class Daddy_P1(Enemy):
             initiative=30,
             actions_per_turn=2,
             is_boss=True,
-            phases=[EnemyType.DADDY_P2],
+            phases=[EnemyType.DADDY_P1, EnemyType.DADDY_P2],
             author="Lusa, Mara",
         )
 
@@ -807,6 +807,7 @@ class Daddy_P2(Enemy):
             initiative=35,
             actions_per_turn=3,
             is_boss=True,
+            phases=[EnemyType.DADDY_P1, EnemyType.DADDY_P2],
             author="Lusa, Mara",
         )
 
@@ -841,7 +842,12 @@ class WeebBall(Enemy):
             skill_loot_table=[],
             initiative=9999,
             is_boss=True,
-            phases=[EnemyType.WEEB_P1, EnemyType.WEEB_P2, EnemyType.WEEB_P3],
+            phases=[
+                EnemyType.WEEB_BALL,
+                EnemyType.WEEB_P1,
+                EnemyType.WEEB_P2,
+                EnemyType.WEEB_P3,
+            ],
             author="Lusa, Sophie, Mara",
         )
 
@@ -876,7 +882,12 @@ class Weeb_P1(Enemy):
             initiative=80,
             actions_per_turn=3,
             is_boss=True,
-            phases=[EnemyType.WEEB_P1, EnemyType.WEEB_P2, EnemyType.WEEB_P3],
+            phases=[
+                EnemyType.WEEB_BALL,
+                EnemyType.WEEB_P1,
+                EnemyType.WEEB_P2,
+                EnemyType.WEEB_P3,
+            ],
             author="Lusa, Sophie, Mara",
         )
 
@@ -910,7 +921,12 @@ class Weeb_P2(Enemy):
             initiative=20,
             actions_per_turn=1,
             is_boss=True,
-            phases=[EnemyType.WEEB_P1, EnemyType.WEEB_P2, EnemyType.WEEB_P3],
+            phases=[
+                EnemyType.WEEB_BALL,
+                EnemyType.WEEB_P1,
+                EnemyType.WEEB_P2,
+                EnemyType.WEEB_P3,
+            ],
             author="Lusa, Sophie, Mara",
         )
 
@@ -941,6 +957,12 @@ class Weeb_P3(Enemy):
             max_gear_drop_count=8,
             gear_loot_table=[],
             skill_loot_table=[],
+            phases=[
+                EnemyType.WEEB_BALL,
+                EnemyType.WEEB_P1,
+                EnemyType.WEEB_P2,
+                EnemyType.WEEB_P3,
+            ],
             initiative=50,
             actions_per_turn=2,
             is_boss=True,

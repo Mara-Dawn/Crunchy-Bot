@@ -261,6 +261,18 @@ class CombatViewController(ViewController):
                 await self.join_queue.put(interaction)
             case UIEventType.COMBAT_LEAVE:
                 interaction = event.payload
+                try:
+                    exception = self.leave_worker.exception()
+                    if exception is not None:
+                        self.leave_worker = asyncio.create_task(
+                            self.leave_request_worker()
+                        )
+                        raise exception
+                except asyncio.CancelledError:
+                    pass
+                    self.leave_worker = asyncio.create_task(self.leave_request_worker())
+                except asyncio.InvalidStateError:
+                    pass
                 await self.leave_queue.put(interaction)
             case UIEventType.COMBAT_APPROVE:
                 interaction = event.payload[0]
@@ -291,6 +303,9 @@ class CombatViewController(ViewController):
                 )
 
     async def initiate_encounter(self, encounter: Encounter):
+        context = await self.context_loader.load_encounter_context(encounter.id)
+        if context.initiated:
+            return
         event = EncounterEvent(
             datetime.datetime.now(),
             encounter.guild_id,
