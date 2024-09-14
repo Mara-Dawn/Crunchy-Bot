@@ -133,9 +133,6 @@ class EnemyController(Service, ABC):
                 total_damage = await self.actor_manager.get_skill_damage_after_defense(
                     target, turn.skill, damage_instance.scaled_value
                 )
-                context = await self.context_loader.load_encounter_context(
-                    context.encounter.id
-                )
                 outcome = (
                     await self.status_effect_manager.handle_post_attack_status_effects(
                         context,
@@ -164,10 +161,7 @@ class EnemyController(Service, ABC):
                             if total_damage <= 0:
                                 application_value = total_damage
 
-                    context = await self.context_loader.load_encounter_context(
-                        context.encounter.id
-                    )
-                    target = context.get_actor(target.id)
+                    target = context.get_actor_by_id(target.id)
 
                     status_effect_target = target
                     if skill_status_effect.self_target:
@@ -225,9 +219,6 @@ class EnemyController(Service, ABC):
         post_embed_data = {}
 
         for target in available_targets:
-            context = await self.context_loader.load_encounter_context(
-                context.encounter.id
-            )
             outcome = await self.status_effect_manager.handle_attack_status_effects(
                 context, context.opponent, skill
             )
@@ -235,21 +226,13 @@ class EnemyController(Service, ABC):
                 post_embed_data = post_embed_data | outcome.embed_data
 
             instances = await self.skill_manager.get_skill_effect(
-                context.opponent, skill, combatant_count=context.get_combat_scale()
+                context.opponent, skill, combatant_count=context.combat_scale
             )
             instance = instances[0]
             instance.apply_effect_outcome(outcome)
 
-            if target.id not in hp_cache:
-                current_hp = await self.actor_manager.get_actor_current_hp(
-                    target, context.combat_events
-                )
-            else:
-                current_hp = hp_cache[target.id]
+            current_hp = hp_cache.get(target.id, target.current_hp)
 
-            context = await self.context_loader.load_encounter_context(
-                context.encounter.id
-            )
             outcome = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,

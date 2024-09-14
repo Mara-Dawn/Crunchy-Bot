@@ -85,6 +85,7 @@ class TapeAttack(BaseSkill):
             ],
             droppable=False,
             image_url="https://i.imgur.com/cw1aPuB.jpeg",
+            author="Klee",
         )
 
 
@@ -123,6 +124,7 @@ class FrostAttack(BaseSkill):
             base_value=1.5,
             droppable=False,
             image_url="https://i.imgur.com/QRs4GXX.png",
+            author="Waldheld",
         )
 
 
@@ -146,6 +148,7 @@ class FrozenDrops(BaseSkill):
             hits=3,
             droppable=False,
             image_url="https://i.imgur.com/r0ZqBon.png",
+            author="Waldheld",
         )
 
 
@@ -177,6 +180,7 @@ class DonerKebab(BaseSkill):
             ],
             droppable=False,
             image_url="https://i.imgur.com/mFR1cN5.png",
+            author="Lusa",
         )
 
 
@@ -204,6 +208,7 @@ class KebabSmile(BaseSkill):
             aoe=True,
             droppable=False,
             image_url="https://i.imgur.com/TD9P3CR.png",
+            author="Lusa",
         )
 
 
@@ -263,6 +268,7 @@ class SecondHeart(BaseSkill):
             stacks=2,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/LQvjQbL.png",
+            author="Lusa",
         )
 
 
@@ -1361,7 +1367,7 @@ class TieYouUp(BaseSkill):
             skill_type=SkillType.TIE_YOU_UP,
             description=(
                 "Oh no, Daddy caught you! He ties up your hands and "
-                "forces you down to the floor. For 3 turns your attacks have a 50% "
+                "forces you down to the floor. For 3 turns your attacks have a 30% "
                 "chance to miss."
             ),
             information="",

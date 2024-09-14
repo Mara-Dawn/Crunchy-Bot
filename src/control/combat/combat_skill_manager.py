@@ -49,12 +49,12 @@ class CombatSkillManager(Service):
             case SkillTarget.SELF:
                 return source
             case SkillTarget.RANDOM_PARTY_MEMBER:
-                active_combatants = context.get_active_combatants()
+                active_combatants = context.active_combatants
                 if len(active_combatants) <= 0:
                     return None
                 return random.choice(active_combatants)
             case SkillTarget.RANDOM_DEFEATED_PARTY_MEMBER:
-                defeated_combatants = context.get_defeated_combatants()
+                defeated_combatants = context.defeated_combatants
                 if len(defeated_combatants) <= 0:
                     return None
                 return random.choice(defeated_combatants)

@@ -349,9 +349,9 @@ class SkillSelectView(
         for skill_group in self.selected:
             if skill_group is None:
                 continue
-            if skill_group.is_equipped(self.equipped_skills):
-                disable_dismantle = True
-                break
+            # if skill_group.is_equipped(self.equipped_skills):
+            #     disable_dismantle = True
+            #     break
             if skill_group.skill.id is None or skill_group.skill.id < 0:
                 # Default Gear
                 disable_dismantle = True
@@ -400,13 +400,13 @@ class SkillSelectView(
                     disable_equip = self.selected[0].id in [
                         x.id for x in self.equipped_skills
                     ]
-                if len(self.display_skills) > 0:
-                    self.add_item(
-                        SkillTypeDropdown(
-                            self.skill_info,
-                            self.selected_filter_type,
-                        )
+                self.add_item(
+                    SkillTypeDropdown(
+                        self.skill_info,
+                        self.selected_filter_type,
                     )
+                )
+                if len(self.display_skills) > 0:
                     self.add_item(
                         Dropdown(
                             self.display_skills,

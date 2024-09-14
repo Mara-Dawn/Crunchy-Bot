@@ -207,9 +207,7 @@ class CombatEmbedManager(Service):
             title=title, description=content, color=discord.Colour.red()
         )
 
-        current_hp = await self.actor_manager.get_actor_current_hp(
-            context.opponent, context.combat_events
-        )
+        current_hp = context.opponent.current_hp
         max_hp = context.opponent.max_hp
         self.add_health_bar(embed, current_hp, max_hp, max_width=Config.ENEMY_MAX_WIDTH)
 
@@ -264,9 +262,7 @@ class CombatEmbedManager(Service):
             title=title, description=content, color=discord.Colour.green()
         )
 
-        current_hp = await self.actor_manager.get_actor_current_hp(
-            context.opponent, context.combat_events
-        )
+        current_hp = context.opponent.current_hp
         max_hp = context.opponent.max_hp
         self.add_health_bar(embed, current_hp, max_hp, max_width=Config.ENEMY_MAX_WIDTH)
 
@@ -296,9 +292,7 @@ class CombatEmbedManager(Service):
             title=title, description=content, color=discord.Colour.red()
         )
 
-        current_hp = await self.actor_manager.get_actor_current_hp(
-            context.opponent, context.combat_events
-        )
+        current_hp = context.opponent.current_hp
         max_hp = context.opponent.max_hp
         self.add_health_bar(embed, current_hp, max_hp, max_width=Config.ENEMY_MAX_WIDTH)
 
@@ -317,7 +311,7 @@ class CombatEmbedManager(Service):
     async def get_character_turn_embeds(
         self, context: EncounterContext
     ) -> list[discord.Embed]:
-        actor = context.get_current_actor()
+        actor = context.current_actor
         embeds = []
 
         title = f"It's your turn {actor.name}!"
@@ -325,7 +319,12 @@ class CombatEmbedManager(Service):
         content = "Please select an action. Otherwise your turn will be skipped."
 
         now = datetime.datetime.now().timestamp()
-        turn_duration = context.get_turn_timeout(actor.id)
+
+        if actor.timeout_count == 0:
+            turn_duration = Config.DEFAULT_TIMEOUT
+        else:
+            turn_duration = Config.SHORT_TIMEOUT
+
         timeout = int(now + turn_duration)
 
         if len(content) < Config.COMBAT_EMBED_MAX_WIDTH:
@@ -339,13 +338,10 @@ class CombatEmbedManager(Service):
             title=title, description=content, color=discord.Colour.blurple()
         )
 
-        current_hp = await self.actor_manager.get_actor_current_hp(
-            actor, context.combat_events
-        )
         max_hp = int(actor.max_hp)
         self.add_health_bar(
             head_embed,
-            current_hp,
+            actor.current_hp,
             max_hp,
             hide_hp=False,
             max_width=Config.COMBAT_EMBED_MAX_WIDTH,
@@ -714,21 +710,18 @@ class CombatEmbedManager(Service):
             title = "Round Continued.."
         embed = discord.Embed(title=title, color=discord.Colour.green())
 
-        round_count = context.get_current_round_number()
+        round_count = context.round_number
         embed.add_field(name=f"Round {round_count}", value="", inline=False)
 
-        initiative_list = context.actors
-        current_actor = context.get_current_actor()
+        initiative_list = context.initiative
+        current_actor = context.current_actor
         initiative_display = ""
 
         for idx, actor in enumerate(initiative_list):
             if actor.is_out:
                 continue
             number = idx + 1
-            current_hp = await self.actor_manager.get_actor_current_hp(
-                actor, context.combat_events
-            )
-            fraction = current_hp / actor.max_hp
+            fraction = actor.current_hp / actor.max_hp
             percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
             name = actor.name[:13]
             display_hp = f"[{percentage}%]"

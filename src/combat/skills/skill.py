@@ -543,8 +543,6 @@ class CharacterSkill:
     def add_to_embed(
         self,
         embed: discord.Embed,
-        show_info: bool = False,
-        show_data: bool = False,
         max_width: int = None,
         description_override: str = None,
     ) -> None:
@@ -556,64 +554,9 @@ class CharacterSkill:
         if description_override is not None:
             description = f'"{description_override}"'
 
-        cooldown_info = ""
-        if self.skill.base_skill.cooldown > 0 and self.on_cooldown():
-            cooldown_remaining = self.base_skill.skill.cooldown - self.last_used
-            cooldown_info = f"\navailable in [35m{cooldown_remaining}[0m turn(s)"
-
         if len(description) < max_width:
             description += " " + "\u00a0" * max_width
 
-        prefixes = []
-        suffixes = []
-
         info_block = f"```python\n{description}```"
-
-        if show_data:
-            # Type
-            type_text = f"    Type: {self.skill.base_skill.skill_effect.value}"
-            type_text_colored = (
-                f"    Type: [35m{self.skill.base_skill.skill_effect.value}[0m"
-            )
-            prefixes.append((type_text_colored, len(type_text)))
-
-            # Cooldoqwn
-            if self.cooldown > 0:
-                cooldown_text = f"Cooldown: {self.skill.base_skill.cooldown} Turn(s)"
-                cooldown_text_colored = (
-                    f"Cooldown: [35m{self.skill.base_skill.cooldown}[0m Turn(s)"
-                )
-                prefixes.append((cooldown_text_colored, len(cooldown_text)))
-
-            # Type
-            damage_text = f"Damage: {self.min_roll} - {self.max_roll}"
-            damage_text_colored = (
-                f"Damage: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m"
-            )
-            suffixes.append((damage_text_colored, len(damage_text)))
-
-            info_block += "```ansi\n"
-
-            lines = max(len(prefixes), len(suffixes))
-
-            for line in range(lines):
-                prefix = ""
-                suffix = ""
-                if len(prefixes) > line:
-                    len_prefix = prefixes[line][1]
-                    prefix = prefixes[line][0]
-                if len(suffixes) > line:
-                    len_suffix = suffixes[line][1]
-                    suffix = suffixes[line][0]
-
-                spacing_width = max_width - len_prefix - len_suffix
-                spacing = " " * spacing_width
-                info_block += f"{prefix}{spacing}{suffix}\n"
-
-            info_block += cooldown_info
-            info_block += "```"
-
-        if show_info:
-            info_block += f"```ansi\n[37m{self.skill.base_skill.information}```"
 
         embed.add_field(name=title, value=info_block, inline=False)

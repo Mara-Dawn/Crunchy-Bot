@@ -61,33 +61,37 @@ class CombatActorManager(Service):
         for event in reversed(combat_events):
             if event.target_id != actor.id:
                 continue
-            if event.skill_type is None:
-                continue
-            if event.combat_event_type == CombatEventType.STATUS_EFFECT:
-                continue
-            if event.combat_event_type == CombatEventType.STATUS_EFFECT_OUTCOME:
-                status_effect = await self.factory.get_status_effect(event.skill_type)
-                skill_effect = status_effect.damage_type
-            else:
-                base_skill = await self.factory.get_base_skill(event.skill_type)
-                skill_effect = base_skill.skill_effect
-
-            match skill_effect:
-                case SkillEffect.BUFF | SkillEffect.NOTHING:
-                    pass
-                case SkillEffect.PHYSICAL_DAMAGE:
-                    health -= event.skill_value
-                case SkillEffect.MAGICAL_DAMAGE:
-                    health -= event.skill_value
-                case SkillEffect.NEUTRAL_DAMAGE:
-                    health -= event.skill_value
-                case SkillEffect.STATUS_EFFECT_DAMAGE:
-                    health -= event.skill_value
-                case SkillEffect.HEALING:
-                    health += event.skill_value
+            health = await self.get_event_health_delta(event)
             health = max(0, min(health, actor.max_hp))
 
         return int(health)
+
+    async def get_event_health_delta(self, event: CombatEvent) -> int:
+        if event.skill_type is None:
+            return 0
+        if event.combat_event_type == CombatEventType.STATUS_EFFECT:
+            return 0
+        if event.combat_event_type == CombatEventType.STATUS_EFFECT_OUTCOME:
+            status_effect = await self.factory.get_status_effect(event.skill_type)
+            skill_effect = status_effect.damage_type
+        else:
+            base_skill = await self.factory.get_base_skill(event.skill_type)
+            skill_effect = base_skill.skill_effect
+
+        health = 0
+        match skill_effect:
+            case SkillEffect.BUFF | SkillEffect.NOTHING:
+                pass
+            case (
+                SkillEffect.PHYSICAL_DAMAGE
+                | SkillEffect.MAGICAL_DAMAGE
+                | SkillEffect.NEUTRAL_DAMAGE
+                | SkillEffect.STATUS_EFFECT_DAMAGE
+            ):
+                health = -event.skill_value
+            case SkillEffect.HEALING:
+                health = event.skill_value
+        return health
 
     async def initialize_actor(
         self,
@@ -211,6 +215,8 @@ class CombatActorManager(Service):
             force_skip=force_skip,
             image_url=image_url,
         )
+
+        opponent.current_hp = await self.get_actor_current_hp(opponent, combat_events)
         return opponent
 
     async def get_character(
@@ -235,12 +241,20 @@ class CombatActorManager(Service):
         is_out = False
         new_round = False
         force_skip = False
+        ready = None
+        encounter_start = True
         for event in encounter_events:
             match event.encounter_event_type:
                 case EncounterEventType.NEW_ROUND:
                     new_round = True
+                    encounter_start = False
+                    if ready is None:
+                        ready = True
             if event.member_id == member.id:
                 match event.encounter_event_type:
+                    case EncounterEventType.MEMBER_ENGAGE:
+                        if ready is None:
+                            ready = False
                     case EncounterEventType.MEMBER_DEFEAT:
                         if not revived:
                             defeated = True
@@ -253,6 +267,10 @@ class CombatActorManager(Service):
                     case EncounterEventType.FORCE_SKIP:
                         if not new_round:
                             force_skip = True
+
+        if ready is None:
+            ready = False
+        ready = encounter_start or ready
 
         if is_out:
             leaving = False
@@ -291,6 +309,14 @@ class CombatActorManager(Service):
             member.id, status_effects, combat_events
         )
 
+        timeout_count = 0
+        for event in combat_events:
+            if (
+                event.member_id == member.id
+                and event.combat_event_type == CombatEventType.MEMBER_TURN_SKIP
+            ):
+                timeout_count += 1
+
         character = Character(
             member=member,
             skill_slots=skill_slots,
@@ -302,8 +328,124 @@ class CombatActorManager(Service):
             leaving=leaving,
             is_out=is_out,
             force_skip=force_skip,
+            ready=ready,
+            timeout_count=timeout_count,
         )
+        character.current_hp = await self.get_actor_current_hp(character, combat_events)
         return character
+
+    async def apply_event(self, actor: Actor, event: BotEvent):
+        match event.type:
+            case EventType.ENCOUNTER:
+                event: EncounterEvent = event
+                await self.apply_encounter_event(actor, event)
+            case EventType.COMBAT:
+                event: CombatEvent = event
+                await self.apply_combat_event(actor, event)
+            case EventType.STATUS_EFFECT:
+                event: StatusEffectEvent = event
+                await self.apply_status_event(actor, event)
+
+    async def apply_encounter_event(self, actor: Actor, event: EncounterEvent):
+        match event.encounter_event_type:
+            case EncounterEventType.INITIATE:
+                pass
+            case EncounterEventType.NEW_ROUND:
+                actor.force_skip = False
+                if not actor.leaving:
+                    actor.ready = True
+            case EncounterEventType.ENEMY_PHASE_CHANGE:
+                if not actor.leaving:
+                    actor.ready = True
+                actor: Opponent = actor
+                phase = actor.enemy.phases.index(actor.enemy.type)
+                enemy_type = actor.enemy.phases[phase + 1]
+                new_enemy = await self.factory.get_enemy(enemy_type)
+                actor.max_hp = int(actor.max_hp * new_enemy.health / actor.enemy.health)
+                actor.enemy = new_enemy
+                actor.id -= phase + 10
+
+        if event.member_id != actor.id:
+            return
+
+        match event.encounter_event_type:
+            case EncounterEventType.MEMBER_REQUEST_JOIN:
+                pass
+            case EncounterEventType.MEMBER_ENGAGE:
+                pass
+            case EncounterEventType.MEMBER_REVIVE:
+                actor.defeated = False
+            case EncounterEventType.FORCE_SKIP:
+                actor.force_skip = True
+            case EncounterEventType.MEMBER_LEAVING:
+                actor.leaving = True
+            case EncounterEventType.MEMBER_OUT:
+                actor.is_out = True
+            case EncounterEventType.MEMBER_DISENGAGE:
+                pass
+            case EncounterEventType.MEMBER_DEFEAT | EncounterEventType.ENEMY_DEFEAT:
+                actor.defeated = True
+            case EncounterEventType.END:
+                pass
+            case EncounterEventType.PENALTY50:
+                pass
+            case EncounterEventType.PENALTY75:
+                pass
+
+    async def apply_combat_event(self, actor: Actor, event: CombatEvent):
+        if event.target_id == actor.id:
+            health = await self.get_event_health_delta(event)
+            new_hp = actor.current_hp + health
+            actor.current_hp = max(0, min(new_hp, actor.max_hp))
+
+        if event.member_id != actor.id:
+            return
+
+        match event.combat_event_type:
+            case CombatEventType.STATUS_EFFECT:
+                status_id = event.skill_id
+                for status in actor.status_effects:
+                    if status.event.id != status_id:
+                        continue
+                    status.remaining_stacks += event.skill_value
+                    break
+            case CombatEventType.STATUS_EFFECT_OUTCOME:
+                pass
+            case CombatEventType.MEMBER_TURN_SKIP:
+                actor.timeout_count += 1
+            case CombatEventType.MEMBER_TURN | CombatEventType.ENEMY_TURN:
+                for skill_type in actor.skill_cooldowns:
+                    if event.skill_type == skill_type:
+                        actor.skill_cooldowns[skill_type] = 0
+                    else:
+                        if (
+                            skill_type not in actor.skill_cooldowns
+                            or actor.skill_cooldowns[skill_type] is None
+                        ):
+                            continue
+                        actor.skill_cooldowns[skill_type] += 1
+
+                skill_id = event.skill_type if actor.is_enemy else event.skill_id
+
+                if (
+                    skill_id not in actor.skill_stacks_used
+                    or actor.skill_stacks_used[skill_id] is None
+                ):
+                    actor.skill_stacks_used[skill_id] = 1
+                else:
+                    actor.skill_stacks_used[skill_id] += 1
+            case CombatEventType.ENEMY_TURN_STEP | CombatEventType.MEMBER_TURN_STEP:
+                pass
+            case CombatEventType.MEMBER_END_TURN | CombatEventType.ENEMY_END_TURN:
+                pass
+
+    async def apply_status_event(self, actor: Actor, event: StatusEffectEvent):
+        if event.actor_id != actor.id:
+            return
+
+        status_effect = await self.factory.get_status_effect(event.status_type)
+        active_status_effect = ActiveStatusEffect(status_effect, event, event.stacks)
+        actor.status_effects.append(active_status_effect)
 
     def get_undefeated_actors(self, actors: list[Actor]):
         return [actor for actor in actors if not actor.defeated]

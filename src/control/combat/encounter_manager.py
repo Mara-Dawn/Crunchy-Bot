@@ -319,12 +319,7 @@ class EncounterManager(Service):
             status_effects,
         )
 
-        max_enemy_hp = encounter.max_hp
-        current_enemy_hp = await self.actor_manager.get_actor_current_hp(
-            opponent, combat_events
-        )
-
-        combat_progress = current_enemy_hp / max_enemy_hp
+        combat_progress = opponent.current_hp / opponent.max_hp
 
         if combat_progress >= 0.5:
             return ""
@@ -533,7 +528,7 @@ class EncounterManager(Service):
     async def opponent_turn(self, context: EncounterContext):
         opponent = context.opponent
 
-        if context.is_concluded():
+        if context.concluded:
             await self.refresh_encounter_thread(context.encounter.id)
             return
 
@@ -572,9 +567,7 @@ class EncounterManager(Service):
         context: EncounterContext,
         trigger: StatusEffectTrigger,
     ):
-        context = await self.context_loader.load_encounter_context(context.encounter.id)
-
-        for active_actor in context.get_current_initiative():
+        for active_actor in context.current_initiative:
 
             triggered_status_effects = await self.status_effect_manager.actor_trigger(
                 context, active_actor, trigger
@@ -601,9 +594,7 @@ class EncounterManager(Service):
         actor: Actor,
         trigger: StatusEffectTrigger,
     ):
-        context = await self.context_loader.load_encounter_context(context.encounter.id)
-
-        for active_actor in context.get_current_initiative():
+        for active_actor in context.current_initiative:
             if active_actor.id == actor.id:
                 actor = active_actor
 
@@ -629,10 +620,6 @@ class EncounterManager(Service):
                 context, status_effect_embed
             )
 
-        context = await self.context_loader.load_encounter_context(context.encounter.id)
-
-        return context
-
     async def calculate_character_aoe_skill(
         self,
         context: EncounterContext,
@@ -642,7 +629,6 @@ class EncounterManager(Service):
     ) -> tuple[list[tuple[Actor, SkillInstance, float], discord.Embed]]:
         damage_data = []
         embed_data = {}
-        context = await self.context_loader.load_encounter_context(context.encounter.id)
         outcome = await self.status_effect_manager.handle_attack_status_effects(
             context, source, skill
         )
@@ -651,18 +637,13 @@ class EncounterManager(Service):
 
         for target in available_targets:
             instances = await self.skill_manager.get_skill_effect(
-                source, skill, combatant_count=context.get_combat_scale()
+                source, skill, combatant_count=context.combat_scale
             )
             instance = instances[0]
             instance.apply_effect_outcome(outcome)
 
-            current_hp = await self.actor_manager.get_actor_current_hp(
-                target, context.combat_events
-            )
+            current_hp = target.current_hp
 
-            context = await self.context_loader.load_encounter_context(
-                context.encounter.id
-            )
             outcome_on_dmg = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
@@ -696,7 +677,7 @@ class EncounterManager(Service):
         target: Actor,
     ) -> tuple[list[tuple[Actor, SkillInstance, float], list[discord.Embed]]]:
         skill_instances = await self.skill_manager.get_skill_effect(
-            source, skill, combatant_count=context.get_combat_scale()
+            source, skill, combatant_count=context.combat_scale
         )
 
         skill_value_data = []
@@ -704,9 +685,6 @@ class EncounterManager(Service):
         embed_data = {}
 
         for instance in skill_instances:
-            context = await self.context_loader.load_encounter_context(
-                context.encounter.id
-            )
             outcome = await self.status_effect_manager.handle_attack_status_effects(
                 context,
                 source,
@@ -716,9 +694,6 @@ class EncounterManager(Service):
                 embed_data = embed_data | outcome.embed_data
             instance.apply_effect_outcome(outcome)
 
-            context = await self.context_loader.load_encounter_context(
-                context.encounter.id
-            )
             outcome = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
@@ -740,9 +715,7 @@ class EncounterManager(Service):
                 target_id = -1
 
             if target_id not in hp_cache:
-                hp_cache[target_id] = await self.actor_manager.get_actor_current_hp(
-                    target, context.combat_events
-                )
+                hp_cache[target_id] = target.current_hp
 
             current_hp = hp_cache[target_id]
 
@@ -763,7 +736,7 @@ class EncounterManager(Service):
         skill_data: CharacterSkill,
         target: Actor = None,
     ):
-        if context.is_concluded():
+        if context.concluded:
             await self.refresh_encounter_thread(context.encounter.id)
             return
 
@@ -779,7 +752,7 @@ class EncounterManager(Service):
                     context,
                     skill_data.skill,
                     character,
-                    context.get_active_combatants(),
+                    context.active_combatants,
                 )
             else:
                 damage_data, post_embed_data = await self.calculate_character_skill(
@@ -816,9 +789,6 @@ class EncounterManager(Service):
             display_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.value
             )
-            context = await self.context_loader.load_encounter_context(
-                context.encounter.id
-            )
             outcome = (
                 await self.status_effect_manager.handle_post_attack_status_effects(
                     context,
@@ -853,9 +823,6 @@ class EncounterManager(Service):
                     status_effect_target = character
 
                 if random.random() < skill_status_effect.application_chance:
-                    context = await self.context_loader.load_encounter_context(
-                        context.encounter.id
-                    )
                     await self.status_effect_manager.apply_status(
                         context,
                         character,
@@ -916,7 +883,7 @@ class EncounterManager(Service):
         context: EncounterContext,
         character: Character,
     ):
-        timeout_count = context.get_timeout_count(character.id)
+        timeout_count = character.timeout_count
         message = (
             f"{character.name} was inactive for too long, their turn will be skipped."
         )
@@ -1192,21 +1159,13 @@ class EncounterManager(Service):
         return progress == requirement
 
     async def context_needs_update_check(self, context: EncounterContext) -> bool:
-        already_defeated = [actor.id for actor in context.get_defeated_combatants()]
         update_context = False
 
-        for event in context.encounter_events:
-            match event.encounter_event_type:
-                case EncounterEventType.ENEMY_DEFEAT:
-                    already_defeated.append(event.member_id)
-
-        for actor in context.actors:
-            if actor.id in already_defeated:
+        for actor in context.initiative:
+            if actor.defeated:
                 continue
 
-            health = await self.actor_manager.get_actor_current_hp(
-                actor, context.combat_events
-            )
+            health = actor.current_hp
 
             if health <= 0:
                 update_context = True
@@ -1224,9 +1183,6 @@ class EncounterManager(Service):
                     await enemy_controller.on_defeat(context, actor)
                     continue
 
-                context = await self.context_loader.load_encounter_context(
-                    context.encounter.id
-                )
                 outcome = (
                     await self.status_effect_manager.handle_on_death_status_effects(
                         context, actor
@@ -1254,7 +1210,7 @@ class EncounterManager(Service):
                 )
                 await self.controller.dispatch_event(event)
 
-            if context.new_round() and actor.leaving:
+            if context.new_round and actor.leaving:
                 event = EncounterEvent(
                     datetime.datetime.now(),
                     context.encounter.guild_id,
@@ -1320,7 +1276,7 @@ class EncounterManager(Service):
         if await self.context_needs_update_check(context):
             context = await self.context_loader.load_encounter_context(encounter_id)
 
-        if context.is_concluded():
+        if context.concluded:
             return
 
         if context.opponent.defeated:
@@ -1328,14 +1284,14 @@ class EncounterManager(Service):
             await self.conclude_encounter(context)
             return
 
-        if len(context.get_active_combatants()) <= 0:
+        if len(context.active_combatants) <= 0:
             await self.delete_previous_combat_info(context.thread)
             await self.conclude_encounter(context, success=False)
             return
 
-        current_actor = context.get_current_actor()
+        current_actor = context.current_actor
 
-        if current_actor.id == context.beginning_actor.id and not context.new_round():
+        if current_actor.id == context.beginning_actor.id and not context.new_round:
             await self.handle_round_status_effects(
                 context, StatusEffectTrigger.END_OF_ROUND
             )
@@ -1349,15 +1305,15 @@ class EncounterManager(Service):
             await self.controller.dispatch_event(event)
             return
 
-        if not context.new_round():
+        if not context.new_round:
             await self.refresh_round_overview(context)
 
-        if not context.new_turn():
+        if not context.new_turn:
             return
 
         enemy_embed = await self.embed_manager.get_combat_embed(context)
 
-        if context.new_round():
+        if context.new_round:
             await self.delete_previous_combat_info(context.thread)
             leave_view = None
             if not context.opponent.enemy.is_boss:
@@ -1379,7 +1335,7 @@ class EncounterManager(Service):
         context = await self.handle_turn_status_effects(
             context, current_actor, StatusEffectTrigger.START_OF_TURN
         )
-        current_actor = context.get_current_actor()
+        current_actor = context.current_actor
 
         if current_actor.force_skip:
             await self.skip_turn(current_actor, context)

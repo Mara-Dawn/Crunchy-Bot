@@ -51,6 +51,9 @@ class CombatStatusEffectManager(Service):
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
         )
+        self.embed_manager: CombatEmbedManager = self.controller.get_service(
+            CombatEmbedManager
+        )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
 
     async def listen_for_event(self, event: BotEvent):
@@ -98,7 +101,7 @@ class CombatStatusEffectManager(Service):
         ):
             return
 
-        for active_actor in context.get_current_initiative():
+        for active_actor in context.current_initiative:
             if active_actor.id == source.id:
                 source = active_actor
             if active_actor.id == target.id:
@@ -191,7 +194,7 @@ class CombatStatusEffectManager(Service):
         if (
             not force
             and status_effect.status_effect.delay
-            and status_effect_event.id > context.get_current_round_event_id_cutoff()
+            and status_effect_event.id > context.round_event_id_cutoff
         ):
             return
         event = CombatEvent(
@@ -223,8 +226,7 @@ class CombatStatusEffectManager(Service):
 
             if (
                 status_effect.delay
-                and active_status_effect.event.id
-                > context.get_current_round_event_id_cutoff()
+                and active_status_effect.event.id > context.round_event_id_cutoff
             ):
                 continue
 
@@ -291,7 +293,7 @@ class CombatStatusEffectManager(Service):
                         continue
                     damage = event.value
 
-                    combatant_count = context.get_combat_scale()
+                    combatant_count = context.combat_scale
                     encounter_scaling = self.actor_manager.get_encounter_scaling(
                         actor, combatant_count
                     )
@@ -366,11 +368,12 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.SIMP:
                     modifier = 0.5
                 case StatusEffectType.FROST:
-                    initiative = -Config.FROST_PENALTY
                     if effect_type not in effect_data:
                         initiative = -Config.FROST_PENALTY
                     else:
-                        initiative += -Config.FROST_PENALTY
+                        initiative = (
+                            effect_data[effect_type].initiative - Config.FROST_PENALTY
+                        )
                 case StatusEffectType.STUN:
                     modifier = 1
                     event = EncounterEvent(
@@ -425,10 +428,8 @@ class CombatStatusEffectManager(Service):
                     )
                     await self.controller.dispatch_event(event)
                 case StatusEffectType.RAGE_QUIT:
-                    current_hp = await self.actor_manager.get_actor_current_hp(
-                        actor, context.combat_events
-                    )
-                    remaining_health = current_hp / context.encounter.max_hp
+                    current_hp = actor.current_hp
+                    remaining_health = current_hp / actor.max_hp
                     if remaining_health <= Config.RAGE_QUIT_THRESHOLD:
                         event = EncounterEvent(
                             datetime.datetime.now(),
@@ -489,7 +490,10 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.SIMP:
                     description = f"{actor.name}'s attacks are half as effective!"
                 case StatusEffectType.FEAR:
-                    description = f"{actor.name}'s fear increases their damage taken."
+                    if outcome.modifier is not None:
+                        description = (
+                            f"{actor.name}'s fear increases their damage taken."
+                        )
                 case StatusEffectType.HIGH:
                     description = f"{actor.name} is blazed out of their mind causing unexpected skill outcomes."
                 case StatusEffectType.RAGE_QUIT:
@@ -585,7 +589,7 @@ class CombatStatusEffectManager(Service):
     ) -> StatusEffectOutcome:
         skill_effect = skill.base_skill.skill_effect
 
-        for active_actor in context.get_current_initiative():
+        for active_actor in context.current_initiative:
             if active_actor.id == actor.id:
                 actor = active_actor
 
@@ -622,7 +626,7 @@ class CombatStatusEffectManager(Service):
     ) -> StatusEffectOutcome:
         skill_effect = skill.base_skill.skill_effect
 
-        for active_actor in context.get_current_initiative():
+        for active_actor in context.current_initiative:
             if active_actor.id == actor.id:
                 actor = active_actor
 
@@ -649,7 +653,8 @@ class CombatStatusEffectManager(Service):
         combined = self.combine_outcomes(outcomes.values(), embed_data)
 
         if not skill.base_skill.modifiable:
-            combined.modifier = max(1, combined.modifier)
+            if combined.modifier is not None:
+                combined.modifier = max(1, combined.modifier)
             combined.crit_chance = None
             combined.crit_chance_modifier = None
 
@@ -660,7 +665,7 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         actor: Actor,
     ) -> StatusEffectOutcome:
-        for active_actor in context.get_current_initiative():
+        for active_actor in context.current_initiative:
             if active_actor.id == actor.id:
                 actor = active_actor
 
@@ -686,8 +691,8 @@ class CombatStatusEffectManager(Service):
         skill: Skill,
         damage_instance: SkillInstance,
     ) -> StatusEffectOutcome:
-        current_actor = context.get_actor(actor.id)
-        current_target = context.get_actor(target.id)
+        current_actor = context.get_actor_by_id(actor.id)
+        current_target = context.get_actor_by_id(target.id)
         outcomes: dict[StatusEffectType, StatusEffectOutcome] = {}
         triggered_status_effects = await self.actor_trigger(
             context, current_actor, StatusEffectTrigger.POST_ATTACK
@@ -728,10 +733,11 @@ class CombatStatusEffectManager(Service):
                     ]:
                         continue
 
-                    damage = max(1, int(damage_instance.value * Config.POISON_SCALING))
+                    damage_base = damage_instance.value
                     if actor.is_enemy:
                         damage_base = damage_instance.scaled_value
-                        damage_display = int(damage_base * Config.POISON_SCALING)
+
+                    damage_display = max(1, int(damage_base * Config.POISON_SCALING))
 
                     event = CombatEvent(
                         datetime.datetime.now(),

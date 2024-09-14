@@ -5,6 +5,7 @@ import discord
 from combat.actors import Character
 from combat.encounter import EncounterContext
 from combat.skills.skill import CharacterSkill
+from config import Config
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
 from control.types import ControllerType
@@ -21,7 +22,11 @@ class CombatTurnView(ViewMenu):
         character: Character,
         context: EncounterContext,
     ):
-        timeout = context.get_turn_timeout(character.id)
+        if character.timeout_count == 0:
+            timeout = Config.DEFAULT_TIMEOUT
+        else:
+            timeout = Config.SHORT_TIMEOUT
+
         super().__init__(timeout=timeout)
         self.controller = controller
         self.character = character
