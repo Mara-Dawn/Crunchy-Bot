@@ -68,6 +68,8 @@ class ContextLoader(Service):
                                 actor.round_modifier = await self.status_effect_manager.handle_attribute_status_effects(
                                     context, actor
                                 )
+
+                            context.refresh_initiative()
                         case EncounterEventType.MEMBER_ENGAGE:
                             await self.add_character_to_encounter(
                                 encounter_id, encounter_event.member_id
@@ -75,7 +77,6 @@ class ContextLoader(Service):
                         case EncounterEventType.END:
                             del self.context_cache[encounter_id]
                             return
-                    context.refresh_initiative()
 
             case EventType.COMBAT:
                 event: CombatEvent = event

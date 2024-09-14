@@ -355,15 +355,17 @@ class CombatActorManager(Service):
                 if not actor.leaving:
                     actor.ready = True
             case EncounterEventType.ENEMY_PHASE_CHANGE:
-                if not actor.leaving:
-                    actor.ready = True
-                actor: Opponent = actor
-                phase = actor.enemy.phases.index(actor.enemy.type)
-                enemy_type = actor.enemy.phases[phase + 1]
-                new_enemy = await self.factory.get_enemy(enemy_type)
-                actor.max_hp = int(actor.max_hp * new_enemy.health / actor.enemy.health)
-                actor.enemy = new_enemy
-                actor.id -= phase + 10
+                if actor.is_enemy:
+                    actor: Opponent = actor
+                    phase = actor.enemy.phases.index(actor.enemy.type)
+                    enemy_type = actor.enemy.phases[phase + 1]
+                    new_enemy = await self.factory.get_enemy(enemy_type)
+                    actor.max_hp = int(
+                        actor.max_hp * new_enemy.health / actor.enemy.health
+                    )
+                    actor.current_hp = actor.max_hp
+                    actor.enemy = new_enemy
+                    actor.id -= phase + 10
 
         if event.member_id != actor.id:
             return

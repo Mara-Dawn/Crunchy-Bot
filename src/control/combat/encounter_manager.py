@@ -855,7 +855,7 @@ class EncounterManager(Service):
             skill_data.skill.base_skill.skill_type,
             None,
             None,
-            None,
+            skill_data.skill.id,
             CombatEventType.MEMBER_TURN,
         )
         await self.controller.dispatch_event(event)
@@ -1158,7 +1158,7 @@ class EncounterManager(Service):
 
         return progress == requirement
 
-    async def context_needs_update_check(self, context: EncounterContext) -> bool:
+    async def context_needs_update_check(self, context: EncounterContext):
         update_context = False
 
         for actor in context.initiative:
@@ -1273,8 +1273,7 @@ class EncounterManager(Service):
     async def refresh_encounter_thread(self, encounter_id: int):
         context = await self.context_loader.load_encounter_context(encounter_id)
 
-        if await self.context_needs_update_check(context):
-            context = await self.context_loader.load_encounter_context(encounter_id)
+        await self.context_needs_update_check(context)
 
         if context.concluded:
             return
