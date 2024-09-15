@@ -112,7 +112,7 @@ class Quotes(commands.Cog):
         else:
 
             try:
-                channel = await interaction.guild.get_channel(channel_id)
+                channel = interaction.guild.get_channel(channel_id)
                 if channel is not None:
                     message = await channel.fetch_message(message_id)
             except discord.errors.NotFound:
