@@ -2,10 +2,17 @@ import datetime
 import random
 
 import discord
+from discord.ext import commands
+
 from bot_util import BotUtil
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.jail_manager import JailManager
+from control.logger import BotLogger
+from control.settings_manager import SettingsManager
+from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.prediction import Prediction
-from discord.ext import commands
 from events.bat_event import BatEvent
 from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
@@ -16,13 +23,6 @@ from events.ui_event import UIEvent
 from items.types import ItemType
 from view.shop.response_view import ShopResponseData
 from view.types import EmojiType
-
-from control.controller import Controller
-from control.event_manager import EventManager
-from control.jail_manager import JailManager
-from control.logger import BotLogger
-from control.settings_manager import SettingsManager
-from control.view.view_controller import ViewController
 
 
 class ShopResponseViewController(ViewController):
