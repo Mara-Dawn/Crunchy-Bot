@@ -380,7 +380,7 @@ class SchoolBully(Enemy):
             min_level=6,
             max_level=9,
             health=6,
-            damage_scaling=5,
+            damage_scaling=5.5,
             max_players=5,
             skill_types=[
                 SkillType.WEDGIE,
