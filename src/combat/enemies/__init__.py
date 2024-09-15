@@ -407,7 +407,7 @@ class Cuddles(Enemy):
             min_level=4,
             max_level=7,
             health=7,
-            damage_scaling=8,
+            damage_scaling=6,
             max_players=4,
             skill_types=[
                 SkillType.FEAR,
@@ -433,8 +433,8 @@ class Eli(Enemy):
             min_level=4,
             max_level=8,
             health=9,
-            damage_scaling=8,
-            max_players=5,
+            damage_scaling=7.5,
+            max_players=7,
             skill_types=[
                 SkillType.FAT_ASS,
                 SkillType.OH_LAWD_HE_COMIN,
@@ -489,7 +489,7 @@ class Crackachu(Enemy):
             min_level=5,
             max_level=8,
             health=5,
-            damage_scaling=5,
+            damage_scaling=4.5,
             max_players=4,
             skill_types=[
                 SkillType.THUNDER_CRACK,
@@ -544,7 +544,7 @@ class Hoe(Enemy):
             min_level=5,
             max_level=9,
             health=7,
-            damage_scaling=7,
+            damage_scaling=5.5,
             max_players=5,
             skill_types=[
                 SkillType.HOE_SHANK,
@@ -601,7 +601,7 @@ class Bonterry(Enemy):
             image_url="https://i.imgur.com/MDnqn2A.png",
             min_level=5,
             max_level=9,
-            health=4,
+            health=5,
             damage_scaling=3,
             max_players=4,
             skill_types=[
@@ -630,7 +630,7 @@ class BonterryKing(Enemy):
             min_level=5,
             max_level=9,
             health=10,
-            damage_scaling=7.5,
+            damage_scaling=6.5,
             max_players=5,
             skill_types=[
                 SkillType.CHEFS_KNIVE,
@@ -662,7 +662,7 @@ class Fairy(Enemy):
             min_level=6,
             max_level=9,
             health=7,
-            damage_scaling=7,
+            damage_scaling=6,
             max_players=4,
             skill_types=[
                 SkillType.SPARKLES,

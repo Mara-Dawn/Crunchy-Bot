@@ -400,6 +400,9 @@ class LootBoxViewController(ViewController):
         if len(items_to_give) > 0:
             await self.item_manager.give_items(guild_id, member_id, items_to_give)
 
+        bean_balance = await self.database.get_member_beans(guild_id, member_id)
+        total_beans = max(total_beans, -bean_balance)
+
         if total_beans != 0:
             event = BeansEvent(
                 datetime.datetime.now(),
