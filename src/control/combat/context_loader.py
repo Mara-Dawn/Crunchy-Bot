@@ -1,11 +1,6 @@
-import asyncio
-from collections.abc import AsyncGenerator
-
-import discord
 from discord.ext import commands
 
-from combat.actors import Actor
-from combat.encounter import Encounter, EncounterContext
+from combat.encounter import EncounterContext
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.object_factory import ObjectFactory
@@ -22,8 +17,6 @@ from events.types import EncounterEventType, EventType
 
 
 class ContextLoader(Service):
-
-    RETRY_LIMIT = 5
 
     def __init__(
         self,
@@ -178,93 +171,3 @@ class ContextLoader(Service):
 
         self.context_cache[encounter_id] = context
         return self.context_cache[encounter_id]
-
-    async def get_previous_turn_message(self, thread: discord.Thread):
-        async for message in thread.history(limit=100):
-            if len(message.embeds) >= 1 and message.author.id == self.bot.user.id:
-                embed = message.embeds[0]
-                if embed.title == "New Round" or embed.title == "Round Continued..":
-                    return message
-        return None
-
-    async def append_embed_generator_to_round(
-        self, context: EncounterContext, generator: AsyncGenerator
-    ):
-        thread = context.thread
-        message = await self.get_previous_turn_message(thread)
-
-        if len(message.embeds) >= 10:
-            round_embed = await self.embed_manager.get_round_embed(context, cont=True)
-            message = await self.send_message(
-                context.thread, content="", embed=round_embed
-            )
-
-        previous_embeds = message.embeds
-
-        async for embed in generator:
-            current_embeds = previous_embeds + [embed]
-            await self.edit_message(message, embeds=current_embeds)
-
-    async def append_embed_to_round(
-        self, context: EncounterContext, embed: discord.Embed
-    ):
-        thread = context.thread
-        message = await self.get_previous_turn_message(thread)
-
-        if len(message.embeds) >= 10:
-            round_embed = await self.embed_manager.get_round_embed(context, cont=True)
-            message = await self.send_message(
-                context.thread, content="", embed=round_embed
-            )
-
-        previous_embeds = message.embeds
-        current_embeds = previous_embeds + [embed]
-        await self.edit_message(message, embeds=current_embeds)
-
-    async def append_embeds_to_round(
-        self, context: EncounterContext, actor: Actor, embed_data: dict[str, str]
-    ):
-        message = None
-        if len(embed_data) <= 0:
-            return message
-        status_effect_embed = self.embed_manager.get_status_effect_embed(
-            actor, embed_data
-        )
-        message = await self.append_embed_to_round(context, status_effect_embed)
-        return message
-
-    async def edit_message(self, message: discord.Message, **kwargs):
-        retries = 0
-        success = False
-        new_message = None
-        while not success and retries <= self.RETRY_LIMIT:
-            try:
-                new_message = await message.edit(**kwargs)
-                success = True
-            except (discord.HTTPException, discord.DiscordServerError) as e:
-                self.logger.log(message.guild.id, e.text, self.log_name)
-                retries += 1
-                await asyncio.sleep(5)
-
-        if not success:
-            self.logger.error(message.guild.id, "edit message timeout", self.log_name)
-
-        return new_message
-
-    async def send_message(self, channel: discord.channel.TextChannel, **kwargs):
-        retries = 0
-        success = False
-        message = None
-        while not success and retries <= self.RETRY_LIMIT:
-            try:
-                message = await channel.send(**kwargs)
-                success = True
-            except (discord.HTTPException, discord.DiscordServerError) as e:
-                self.logger.log(channel.guild.id, e.text, self.log_name)
-                retries += 1
-                await asyncio.sleep(5)
-
-        if not success:
-            self.logger.error(message.guild.id, "send message timeout", self.log_name)
-
-        return message

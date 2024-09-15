@@ -20,6 +20,7 @@ from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.combat.context_loader import ContextLoader
+from control.combat.discord_manager import DiscordManager
 from control.combat.object_factory import ObjectFactory
 from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
@@ -65,6 +66,7 @@ class EnemyController(Service, ABC):
         )
         self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
+        self.discord: DiscordManager = self.controller.get_service(DiscordManager)
         self.log_name = "Enemy"
 
     async def listen_for_event(self, event: BotEvent):
@@ -120,12 +122,12 @@ class EnemyController(Service, ABC):
         opponent = context.opponent
 
         for turn in turn_data:
-            await self.context_loader.append_embed_generator_to_round(
+            await self.discord.append_embed_generator_to_round(
                 context, self.embed_manager.handle_actor_turn_embed(turn, context)
             )
 
             if turn.post_embed_data is not None:
-                await self.context_loader.append_embeds_to_round(
+                await self.discord.append_embeds_to_round(
                     context, opponent, turn.post_embed_data
                 )
 
@@ -143,7 +145,7 @@ class EnemyController(Service, ABC):
                     )
                 )
                 if outcome.embed_data is not None:
-                    await self.context_loader.append_embeds_to_round(
+                    await self.discord.append_embeds_to_round(
                         context, opponent, outcome.embed_data
                     )
 

@@ -26,6 +26,7 @@ from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.combat.context_loader import ContextLoader
+from control.combat.discord_manager import DiscordManager
 from control.combat.object_factory import ObjectFactory
 from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
@@ -100,6 +101,7 @@ class EncounterManager(Service):
             self.controller.get_service(CombatStatusEffectManager)
         )
         self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
+        self.discord: DiscordManager = self.controller.get_service(DiscordManager)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.jail_manager: JailManager = self.controller.get_service(JailManager)
         self.log_name = "Encounter"
@@ -126,7 +128,7 @@ class EncounterManager(Service):
                             encounter_event.encounter_id, encounter_event.member_id
                         )
                     case EncounterEventType.END | EncounterEventType.SPAWN:
-                        await self.update_guild_status(event.guild_id)
+                        await self.discord.update_guild_status(event.guild_id)
 
             case EventType.COMBAT:
                 combat_event: CombatEvent = event
@@ -148,7 +150,7 @@ class EncounterManager(Service):
                     CombatEventType.MEMBER_TURN,
                     CombatEventType.ENEMY_TURN,
                 ]:
-                    await self.refresh_round_overview(context)
+                    await self.discord.refresh_round_overview(context)
                     return
                 if combat_event.combat_event_type not in [
                     CombatEventType.ENEMY_END_TURN,
@@ -253,7 +255,7 @@ class EncounterManager(Service):
             if max_lvl_ping_role is not None:
                 spawn_pings += f"<@&{max_lvl_ping_role}>"
 
-        message = await self.context_loader.send_message(
+        message = await self.discord.send_message(
             channel, content=spawn_pings, view=view
         )
 
@@ -351,21 +353,6 @@ class EncounterManager(Service):
 
         return additional_message
 
-    async def create_encounter_thread(self, encounter: Encounter) -> discord.Thread:
-        channel = self.bot.get_channel(encounter.channel_id)
-        enemy = await self.factory.get_enemy(encounter.enemy_type)
-        thread = await channel.create_thread(
-            name=f"Encounter: {enemy.name}",
-            type=discord.ChannelType.public_thread,
-            auto_archive_duration=60,
-        )
-
-        await self.database.log_encounter_thread(
-            encounter.id, thread.id, encounter.guild_id, encounter.channel_id
-        )
-
-        return thread
-
     async def add_member_join_request(self, encounter_id: int, member_id: int):
         thread_id = await self.database.get_encounter_thread(encounter_id)
 
@@ -384,7 +371,7 @@ class EncounterManager(Service):
         embed.set_thumbnail(url=user.display_avatar.url)
 
         view = ApproveMemberView(self.controller, encounter, user, owner)
-        message = await self.context_loader.send_message(
+        message = await self.discord.send_message(
             thread, content="", embed=embed, view=view
         )
         view.set_message(message)
@@ -399,7 +386,7 @@ class EncounterManager(Service):
         additional_message = ""
 
         if thread_id is None:
-            thread = await self.create_encounter_thread(encounter)
+            thread = await self.discord.create_encounter_thread(encounter)
             initiate_combat = True
             new_thread = True
         else:
@@ -439,7 +426,7 @@ class EncounterManager(Service):
             leave_view = None
             if not enemy.is_boss:
                 leave_view = EncounterLeaveView(self.controller, encounter_id)
-            message = await self.context_loader.send_message(
+            message = await self.discord.send_message(
                 thread, content="", embed=wait_embed, view=leave_view
             )
             if not enemy.is_boss:
@@ -452,14 +439,14 @@ class EncounterManager(Service):
             user, additional_message=additional_message
         )
         embed.set_thumbnail(url=user.display_avatar.url)
-        await self.context_loader.send_message(thread, content="", embed=embed)
+        await self.discord.send_message(thread, content="", embed=embed)
 
         if initiate_combat:
             wait_time = Config.COMBAT_INITIAL_WAIT
             round_embed = await self.embed_manager.get_initiation_embed(wait_time)
             # will trigger the combat start on expiration
             view = GracePeriodView(self.controller, encounter, wait_time)
-            message = await self.context_loader.send_message(
+            message = await self.discord.send_message(
                 thread, content="", embed=round_embed, view=view
             )
             view.set_message(message)
@@ -486,7 +473,7 @@ class EncounterManager(Service):
             if reason is None:
                 reason = ""
             embed = self.embed_manager.get_turn_skip_embed(actor, reason, context)
-            await self.context_loader.append_embed_to_round(context, embed)
+            await self.discord.append_embed_to_round(context, embed)
 
         combat_event_type = CombatEventType.MEMBER_END_TURN
         if actor.is_enemy:
@@ -584,9 +571,7 @@ class EncounterManager(Service):
                 status_effect_embed = self.embed_manager.get_status_effect_embed(
                     active_actor, outcome.embed_data
                 )
-                await self.context_loader.append_embed_to_round(
-                    context, status_effect_embed
-                )
+                await self.discord.append_embed_to_round(context, status_effect_embed)
 
     async def handle_turn_status_effects(
         self,
@@ -616,9 +601,7 @@ class EncounterManager(Service):
             status_effect_embed = self.embed_manager.get_status_effect_embed(
                 actor, outcome.embed_data
             )
-            await self.context_loader.append_embed_to_round(
-                context, status_effect_embed
-            )
+            await self.discord.append_embed_to_round(context, status_effect_embed)
 
     async def calculate_character_aoe_skill(
         self,
@@ -773,12 +756,12 @@ class EncounterManager(Service):
                 post_embed_data={"No Target": "The Skill had no effect."},
             )
 
-        await self.context_loader.append_embed_generator_to_round(
+        await self.discord.append_embed_generator_to_round(
             context, self.embed_manager.handle_actor_turn_embed(turn, context)
         )
 
         if turn.post_embed_data is not None:
-            await self.context_loader.append_embeds_to_round(
+            await self.discord.append_embeds_to_round(
                 context, character, turn.post_embed_data
             )
 
@@ -799,7 +782,7 @@ class EncounterManager(Service):
                 )
             )
             if outcome.embed_data is not None:
-                await self.context_loader.append_embeds_to_round(
+                await self.discord.append_embeds_to_round(
                     context, character, outcome.embed_data
                 )
 
@@ -926,7 +909,7 @@ class EncounterManager(Service):
         else:
             embed = await self.embed_manager.get_combat_failed_embed(context)
 
-        await self.context_loader.send_message(context.thread, content="", embed=embed)
+        await self.discord.send_message(context.thread, content="", embed=embed)
 
         event = EncounterEvent(
             datetime.datetime.now(),
@@ -1070,7 +1053,7 @@ class EncounterManager(Service):
             loot_head_embed = await self.embed_manager.get_loot_embed(member, beans)
             embeds.append(loot_head_embed)
 
-            message = await self.context_loader.send_message(
+            message = await self.discord.send_message(
                 context.thread, content=f"<@{member.id}>", embeds=embeds
             )
 
@@ -1101,7 +1084,7 @@ class EncounterManager(Service):
                     continue
                 embeds.append(drop.get_embed())
                 await asyncio.sleep(1)
-                await self.context_loader.edit_message(message, embeds=embeds)
+                await self.discord.edit_message(message, embeds=embeds)
 
             if len(gear_to_scrap) > 0:
                 total_scrap = await self.gear_manager.scrap_gear(
@@ -1111,7 +1094,7 @@ class EncounterManager(Service):
                     member, total_scrap, auto_scrap
                 )
                 embeds.append(scrap_embed)
-                await self.context_loader.edit_message(message, embeds=embeds)
+                await self.discord.edit_message(message, embeds=embeds)
 
             item = member_loot[2]
 
@@ -1122,7 +1105,7 @@ class EncounterManager(Service):
                 embeds.append(item.get_embed(self.bot, show_price=False))
                 await asyncio.sleep(1)
 
-                await self.context_loader.edit_message(message, embeds=embeds)
+                await self.discord.edit_message(message, embeds=embeds)
 
         if await self.drop_boss_key_check(context):
             item_type = self.BOSS_KEY[context.encounter.enemy_level]
@@ -1138,7 +1121,7 @@ class EncounterManager(Service):
             embed = self.embed_manager.get_special_item_embed(
                 item, delay_claim=Config.BOSS_KEY_CLAIM_DELAY
             )
-            message = await self.context_loader.send_message(
+            message = await self.discord.send_message(
                 context.thread, embed=embed, view=view
             )
             view.set_message(message)
@@ -1189,7 +1172,7 @@ class EncounterManager(Service):
                     )
                 )
                 if outcome.embed_data is not None:
-                    await self.context_loader.append_embeds_to_round(
+                    await self.discord.append_embeds_to_round(
                         context, actor, outcome.embed_data
                     )
                 if outcome.value == 1:
@@ -1197,9 +1180,7 @@ class EncounterManager(Service):
 
                 encounter_event_type = EncounterEventType.MEMBER_DEFEAT
                 embed = self.embed_manager.get_actor_defeated_embed(actor)
-                await self.context_loader.send_message(
-                    context.thread, content="", embed=embed
-                )
+                await self.discord.send_message(context.thread, content="", embed=embed)
 
                 event = EncounterEvent(
                     datetime.datetime.now(),
@@ -1223,25 +1204,6 @@ class EncounterManager(Service):
 
         return update_context
 
-    async def delete_previous_combat_info(self, thread: discord.Thread):
-        async for message in thread.history(limit=100):
-            if len(message.embeds) == 1 and message.author.id == self.bot.user.id:
-                embed = message.embeds[0]
-                if embed.image.url is not None and embed.title is not None:
-                    view = discord.ui.View.from_message(message)
-                    if view is not None:
-                        self.controller.detach_view_by_id(view.id)
-                    await message.delete()
-                    break
-
-    async def get_previous_enemy_info(self, thread: discord.Thread):
-        async for message in thread.history(limit=100):
-            if len(message.embeds) == 1 and message.author.id == self.bot.user.id:
-                embed = message.embeds[0]
-                if embed.image.url is not None and embed.title is not None:
-                    return message
-        return None
-
     async def initiate_encounter(self, encounter_id: int):
         encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
         enemy = await self.factory.get_enemy(encounter.enemy_type)
@@ -1257,19 +1219,6 @@ class EncounterManager(Service):
         await enemy_controller.intro(encounter_id)
         await self.refresh_encounter_thread(encounter_id)
 
-    async def refresh_round_overview(self, context: EncounterContext):
-        round_message = await self.context_loader.get_previous_turn_message(
-            context.thread
-        )
-        if round_message is not None:
-            round_embeds = round_message.embeds
-            cont = round_embeds[0].title == "Round Continued.."
-            round_embed = await self.embed_manager.get_round_embed(context, cont=cont)
-            round_embeds[0] = round_embed
-            await self.context_loader.edit_message(
-                round_message, embeds=round_embeds, attachments=[]
-            )
-
     async def refresh_encounter_thread(self, encounter_id: int):
         context = await self.context_loader.load_encounter_context(encounter_id)
 
@@ -1279,12 +1228,12 @@ class EncounterManager(Service):
             return
 
         if context.opponent.defeated:
-            await self.delete_previous_combat_info(context.thread)
+            await self.discord.delete_previous_combat_info(context.thread)
             await self.conclude_encounter(context)
             return
 
         if len(context.active_combatants) <= 0:
-            await self.delete_previous_combat_info(context.thread)
+            await self.discord.delete_previous_combat_info(context.thread)
             await self.conclude_encounter(context, success=False)
             return
 
@@ -1305,7 +1254,7 @@ class EncounterManager(Service):
             return
 
         if not context.new_round:
-            await self.refresh_round_overview(context)
+            await self.discord.refresh_round_overview(context)
 
         if not context.new_turn:
             return
@@ -1313,23 +1262,23 @@ class EncounterManager(Service):
         enemy_embed = await self.embed_manager.get_combat_embed(context)
 
         if context.new_round:
-            await self.delete_previous_combat_info(context.thread)
+            await self.discord.delete_previous_combat_info(context.thread)
             leave_view = None
             if not context.opponent.enemy.is_boss:
                 leave_view = EncounterLeaveView(self.controller, encounter_id)
-            message = await self.context_loader.send_message(
+            message = await self.discord.send_message(
                 context.thread, content="", embed=enemy_embed, view=leave_view
             )
             if not context.opponent.enemy.is_boss:
                 leave_view.set_message(message)
             round_embed = await self.embed_manager.get_round_embed(context)
-            await self.context_loader.send_message(
+            await self.discord.send_message(
                 context.thread, content="", embed=round_embed
             )
         else:
-            message = await self.get_previous_enemy_info(context.thread)
+            message = await self.discord.get_previous_enemy_info(context.thread)
             if message is not None:
-                await self.context_loader.edit_message(message, embed=enemy_embed)
+                await self.discord.edit_message(message, embed=enemy_embed)
 
         await self.handle_turn_status_effects(
             context, current_actor, StatusEffectTrigger.START_OF_TURN
@@ -1366,7 +1315,7 @@ class EncounterManager(Service):
 
         view = await CombatTurnView.create(self.controller, current_actor, context)
 
-        message = await self.context_loader.send_message(
+        message = await self.discord.send_message(
             context.thread,
             content=f"<@{current_actor.id}>",
             embeds=enemy_embeds,
@@ -1374,134 +1323,3 @@ class EncounterManager(Service):
         )
         view.set_message(message)
         return
-
-    async def update_guild_status(self, guild_id: int):
-        combat_channels = await self.settings_manager.get_combat_channels(guild_id)
-        guild = self.bot.get_guild(guild_id)
-
-        guild_level = await self.database.get_guild_level(guild.id)
-
-        progress, requirement = await self.database.get_guild_level_progress(
-            guild.id, guild_level
-        )
-
-        if progress >= requirement and (guild_level) not in Config.BOSS_LEVELS:
-            guild_level += 1
-            await self.database.set_guild_level(guild.id, guild_level)
-
-            bean_channels = await self.settings_manager.get_beans_notification_channels(
-                guild_id
-            )
-            beans_role_id = await self.settings_manager.get_beans_role(guild_id)
-            guild = self.bot.get_guild(guild_id)
-            if guild is not None:
-                announcement = (
-                    "**A new Level has been unlocked!**\n"
-                    f"Congratulations! You fulfilled the requirements to reach **Level {guild_level}**.\n"
-                    "Good luck facing the challenges ahead, stronger opponents and greater rewards are waiting for you."
-                )
-                if beans_role_id is not None:
-                    announcement += f"\n<@&{beans_role_id}>"
-
-                for channel_id in bean_channels:
-                    channel = guild.get_channel(channel_id)
-                    if channel is not None:
-                        await channel.send(announcement)
-
-        for channel_id in combat_channels:
-            channel = guild.get_channel(channel_id)
-            if channel is None:
-                continue
-
-            await self.refresh_combat_messages(guild_id)
-
-    async def refresh_combat_messages(self, guild_id: int, purge: bool = False):
-        combat_channels = await self.settings_manager.get_combat_channels(guild_id)
-
-        guild = self.bot.get_guild(guild_id)
-
-        for channel_id in combat_channels:
-            channel = guild.get_channel(channel_id)
-            if channel is None:
-                continue
-
-            guild_level = await self.database.get_guild_level(guild.id)
-
-            progress, requirement = await self.database.get_guild_level_progress(
-                guild.id, guild_level
-            )
-
-            start_hour = await self.settings_manager.get_combat_max_lvl_start(guild.id)
-            end_hour = await self.settings_manager.get_combat_max_lvl_end(guild.id)
-
-            current_time = datetime.datetime.now()
-            current_hour = current_time.hour
-
-            post_start = start_hour <= current_hour
-            pre_end = current_hour < end_hour
-            enemies_asleep = False
-            wakeup = current_time
-
-            if start_hour < end_hour:
-                if current_time.weekday() in [4, 5] and not pre_end:
-                    pre_end = True
-                if current_time.weekday() in [5, 6] and not post_start:
-                    post_start = True
-                if not (post_start and pre_end):
-                    enemies_asleep = True
-            else:
-                if current_time.weekday() in [5, 6] and not pre_end:
-                    pre_end = True
-                if current_time.weekday() in [5, 6] and not post_start:
-                    post_start = True
-                if not (post_start or pre_end):
-                    enemies_asleep = True
-
-            additional_info = None
-            if enemies_asleep:
-                if current_hour > start_hour:
-                    wakeup = current_time + datetime.timedelta(days=1)
-                wakeup = wakeup.replace(hour=start_hour, minute=0)
-                additional_info = f"**\nThe enemies of level {guild_level} and above are currently asleep.\n"
-                additional_info += (
-                    f"They will return <t:{int(wakeup.timestamp())}:R> **"
-                )
-
-            fresh_prog = True
-            if guild_level in Config.BOSS_LEVELS:
-                last_fight_event = await self.database.get_guild_last_boss_attempt(
-                    guild_id, Config.BOSS_TYPE[guild_level]
-                )
-                fresh_prog = last_fight_event is None
-
-            head_embed = EnemyOverviewEmbed(
-                self.bot.user,
-                guild_level,
-                requirement,
-                progress,
-                fresh_prog,
-                additional_info,
-            )
-
-            if purge:
-                await channel.purge()
-                await self.context_loader.send_message(
-                    channel, content="", embed=head_embed
-                )
-            else:
-                async for message in channel.history(limit=100):
-                    if message.thread is not None:
-                        age_delta = (
-                            datetime.datetime.now(datetime.UTC) - message.created_at
-                        )
-                        if age_delta.total_seconds() > 60 * 60:
-                            await message.delete()
-
-                    if len(message.embeds) <= 0:
-                        continue
-
-                    embed_title = message.embeds[0].title
-                    if embed_title[:16] == "Combat Zone":
-                        await self.context_loader.edit_message(
-                            message, embed=head_embed
-                        )
