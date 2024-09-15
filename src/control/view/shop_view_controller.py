@@ -2,8 +2,13 @@ import asyncio
 import datetime
 
 import discord
-from datalayer.database import Database
 from discord.ext import commands
+
+from control.controller import Controller
+from control.item_manager import ItemManager
+from control.logger import BotLogger
+from control.view.view_controller import ViewController
+from datalayer.database import Database
 from datalayer.types import LootboxType
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
@@ -23,11 +28,6 @@ from view.shop.reaction_select_view import ShopReactionSelectView  # noqa: F401
 # noqa: F401
 from view.shop.response_view import ShopResponseView
 from view.shop.user_select_view import ShopUserSelectView  # noqa: F401
-
-from control.controller import Controller
-from control.item_manager import ItemManager
-from control.logger import BotLogger
-from control.view.view_controller import ViewController
 
 
 class ShopInteraction:

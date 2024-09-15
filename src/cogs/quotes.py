@@ -1,4 +1,7 @@
 import discord
+from discord import app_commands
+from discord.ext import commands
+
 from bot import CrunchyBot
 from control.controller import Controller
 from control.event_manager import EventManager
@@ -6,8 +9,6 @@ from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.quote import Quote
-from discord import app_commands
-from discord.ext import commands
 from events.quote_event import QuoteEvent
 from view.image_generator import ImageGenerator
 
@@ -111,9 +112,9 @@ class Quotes(commands.Cog):
         else:
 
             try:
-                message = await interaction.guild.get_channel(channel_id).fetch_message(
-                    message_id
-                )
+                channel = await interaction.guild.get_channel(channel_id)
+                if channel is not None:
+                    message = await channel.fetch_message(message_id)
             except discord.errors.NotFound:
                 pass
             except discord.errors.Forbidden:

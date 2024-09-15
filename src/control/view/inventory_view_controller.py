@@ -161,7 +161,7 @@ class InventoryViewController(ViewController):
                 interaction = event.payload[0]
                 shop_data = event.payload[1]
                 item = shop_data.item
-                await self.submit_confirm_view(interaction, item)
+                await self.submit_confirm_view(interaction, item, event.view_id)
 
             case UIEventType.SHOP_RESPONSE_USER_SUBMIT:
                 if event.view_id is not None:
@@ -170,7 +170,9 @@ class InventoryViewController(ViewController):
                 shop_data = event.payload[1]
                 selected_user = shop_data.selected_user
                 item = shop_data.item
-                await self.submit_user_view(interaction, selected_user, item)
+                await self.submit_user_view(
+                    interaction, selected_user, item, event.view_id
+                )
 
     async def sell(
         self,
@@ -230,10 +232,15 @@ class InventoryViewController(ViewController):
         interaction: discord.Interaction,
         target: discord.Member,
         item: Item,
+        view_id: int,
     ):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
         beans_role = await self.settings_manager.get_beans_role(guild_id)
+
+        self.controller.detach_view_by_id(view_id)
+        message = await interaction.original_response()
+        await message.delete()
 
         match item.type:
             case ItemType.SPOOK_BEAN:
@@ -282,8 +289,6 @@ class InventoryViewController(ViewController):
                     f"{target.display_name} was possessed by a random ghost.",
                     ephemeral=True,
                 )
-                message = await interaction.original_response()
-                await message.delete()
 
     async def encounter_check(self, interaction: discord.Interaction):
         guild_id = interaction.guild.id
@@ -299,10 +304,27 @@ class InventoryViewController(ViewController):
                 return False
         return True
 
+    async def inventory_check(self, interaction: discord.Interaction, item: Item):
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+
+        inventory = await self.item_manager.get_user_inventory(guild_id, member_id)
+        item_owned = inventory.get_item_count(item.type)
+
+        if item_owned == 0:
+            await interaction.followup.send(
+                "You dont have enough items of this type.",
+                ephemeral=True,
+            )
+            return False
+
+        return True
+
     async def submit_confirm_view(
         self,
         interaction: discord.Interaction,
         item: Item,
+        view_id: int,
     ):
         guild_id = interaction.guild_id
         user_id = interaction.user.id
@@ -315,6 +337,9 @@ class InventoryViewController(ViewController):
             ItemType.DADDY_KEY: 3,
             ItemType.WEEB_KEY: 6,
         }
+        self.controller.detach_view_by_id(view_id)
+        message = await interaction.original_response()
+        await message.delete()
 
         match item.type:
             case (
@@ -326,6 +351,8 @@ class InventoryViewController(ViewController):
                 | ItemType.ENCOUNTER_KEY_6
             ):
                 if not await self.encounter_check(interaction):
+                    return
+                if not await self.inventory_check(interaction, item):
                     return
                 combat_channels = await self.settings_manager.get_combat_channels(
                     interaction.guild_id
@@ -352,8 +379,6 @@ class InventoryViewController(ViewController):
                     "Encounter successfully spawned.",
                     ephemeral=True,
                 )
-                message = await interaction.original_response()
-                await message.delete()
 
             case ItemType.DADDY_KEY | ItemType.WEEB_KEY:
                 if not await self.encounter_check(interaction):
@@ -382,8 +407,6 @@ class InventoryViewController(ViewController):
                     "Encounter successfully spawned.",
                     ephemeral=True,
                 )
-                message = await interaction.original_response()
-                await message.delete()
 
     async def item_action(
         self,
