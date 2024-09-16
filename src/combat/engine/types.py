@@ -1,14 +1,18 @@
 from enum import Enum
 
 
-class EncounterState(str, Enum):
+class StateType(str, Enum):
     INITIAL = "Initial"
+    WAITING = "Waiting"
     FILLING = "Filling"
     COUNTDOWN = "Countdown"
-    NEW_ROUND = "NewRound"
-    NEW_TURN = "NewTurn"
+    ROUND_START = "RoundStart"
+    ROUND_END = "RoundEnd"
+    TURN_START = "TurnStart"
     PLAYER_TURN = "PlayerTurn"
     OPPONENT_TURN = "OpponentTurn"
-    END = "End"
+    TURN_END = "TurnEnd"
+    END_SUCCESS = "EndSuccess"
+    END_FAILED = "EndFailed"
     LOOT_PAYOUT = "LootPayout"
-    POST_END = "PostEnd"
+    POST_ENCOUNTER = "PostEncounter"

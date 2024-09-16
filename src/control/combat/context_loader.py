@@ -1,6 +1,6 @@
 from discord.ext import commands
 
-from combat.encounter import EncounterContext
+from combat.encounter import Encounter, EncounterContext
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.object_factory import ObjectFactory
@@ -51,22 +51,11 @@ class ContextLoader(Service):
 
                 if encounter_id in self.context_cache:
                     context = self.context_cache[encounter_id]
-                    context.apply_event(event)
+                    context.add_event(event)
                     for actor in context.actors:
                         await self.actor_manager.apply_event(actor, event)
 
                     match encounter_event.encounter_event_type:
-                        case EncounterEventType.NEW_ROUND:
-                            for actor in context.initiative:
-                                actor.round_modifier = await self.status_effect_manager.handle_attribute_status_effects(
-                                    context, actor
-                                )
-
-                            context.refresh_initiative()
-                        case EncounterEventType.MEMBER_ENGAGE:
-                            await self.add_character_to_encounter(
-                                encounter_id, encounter_event.member_id
-                            )
                         case EncounterEventType.END:
                             del self.context_cache[encounter_id]
                             return
@@ -76,7 +65,7 @@ class ContextLoader(Service):
                 encounter_id = event.encounter_id
                 if encounter_id in self.context_cache:
                     context = self.context_cache[encounter_id]
-                    context.apply_event(event)
+                    context.add_event(event)
                     for actor in context.actors:
                         await self.actor_manager.apply_event(actor, event)
 
@@ -85,24 +74,30 @@ class ContextLoader(Service):
                 encounter_id = event.encounter_id
                 if encounter_id in self.context_cache:
                     context = self.context_cache[encounter_id]
-                    context.apply_event(event)
+                    context.add_event(event)
                     for actor in context.actors:
                         await self.actor_manager.apply_event(actor, event)
 
-    async def add_character_to_encounter(self, encounter_id: int, member_id: int):
-        encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
-        guild = self.bot.get_guild(encounter.guild_id)
-        member = guild.get_member(member_id)
-        context = self.context_cache[encounter_id]
-
-        combatant = await self.actor_manager.get_character(
-            member,
-            context.encounter_events,
-            context.combat_events,
-            context.status_effects,
+    async def init_encounter_context(self, encounter: Encounter) -> EncounterContext:
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
+        opponent = await self.actor_manager.get_opponent(
+            enemy,
+            encounter,
+            [],
+            [],
+            {},
+        )
+        context = EncounterContext(
+            encounter=encounter,
+            opponent=opponent,
+            encounter_events=[],
+            combat_events=[],
+            status_effects=[],
+            combatants=[],
+            thread=None,
         )
 
-        self.context_cache[encounter_id].add_combatant(combatant)
+        return context
 
     async def load_encounter_context(self, encounter_id) -> EncounterContext:
         if encounter_id in self.context_cache:

@@ -66,6 +66,7 @@ class EncounterContext:
         status_effects: dict[int, list[StatusEffectEvent]],
         combatants: list[Character],
         thread: discord.Thread,
+        owner_id: int | None = None,
     ):
         self.encounter = encounter
         self.opponent = opponent
@@ -74,6 +75,7 @@ class EncounterContext:
         self.status_effects = status_effects
         self.combatants = combatants
         self.thread = thread
+        self.owner_id = owner_id
 
         self.initiative: list[Actor] = None
         self.beginning_actor = None
@@ -100,28 +102,20 @@ class EncounterContext:
         self._last_actor: Actor = None
         self._combat_scale: int = None
         self._current_initiative: deque[Actor] = None
-        self._new_round: bool = None
-        self._new_turn: bool = None
         self._round_event_id_cutoff: int = None
         self._initiated: bool = None
         self._concluded: bool = None
 
         self.refresh_initiative()
 
-    def add_combatant(self, character: Character):
-        self.combatants.append(character)
-        self.refresh_initiative()
-
-    def apply_event(self, event: BotEvent):
+    def add_event(self, event: BotEvent):
         match event.type:
             case EventType.ENCOUNTER:
                 event: EncounterEvent = event
                 self.encounter_events.insert(0, event)
-                self.apply_encounter_event(event)
             case EventType.COMBAT:
                 event: CombatEvent = event
                 self.combat_events.insert(0, event)
-                self.apply_combat_event(event)
             case EventType.STATUS_EFFECT:
                 event: StatusEffectEvent = event
                 member_id = event.actor_id
@@ -129,96 +123,8 @@ class EncounterContext:
                     self.status_effects[member_id] = [event]
                 else:
                     self.status_effects[member_id].insert(0, event)
-                self.apply_status_event(event)
 
-    def apply_encounter_event(self, event: EncounterEvent):
-        match event.encounter_event_type:
-            case EncounterEventType.INITIATE:
-                self._initiated = True
-            case EncounterEventType.NEW_ROUND:
-                self._new_round = True
-                self.round_number += 1
-                self._round_event_id_cutoff = event.id
-                self._current_actor = None
-                self.reset_initiative = False
-                for actor in self.combatants:
-                    if (
-                        not actor.defeated
-                        and not actor.leaving
-                        and not actor.is_out
-                        and actor not in self.active_combatants
-                    ):
-                        self.active_combatants.append(actor)
-            case EncounterEventType.ENEMY_PHASE_CHANGE:
-                self.reset_initiative = True
-            case EncounterEventType.MEMBER_REQUEST_JOIN:
-                pass
-            case EncounterEventType.MEMBER_ENGAGE:
-                pass
-            case EncounterEventType.MEMBER_DEFEAT:
-                actor = self.get_actor_by_id(event.member_id)
-                if actor in self.active_combatants:
-                    self.active_combatants.remove(actor)
-                if actor not in self.defeated_combatants:
-                    self.defeated_combatants.append(actor)
-            case EncounterEventType.MEMBER_REVIVE:
-                actor = self.get_actor_by_id(event.member_id)
-                if actor in self.defeated_combatants:
-                    self.defeated_combatants.remove(actor)
-                if actor not in self.active_combatants:
-                    self.active_combatants.append(actor)
-            case EncounterEventType.FORCE_SKIP:
-                pass
-            case EncounterEventType.MEMBER_LEAVING:
-                pass
-            case EncounterEventType.MEMBER_OUT:
-                actor = self.get_actor_by_id(event.member_id)
-                if actor in self.active_combatants:
-                    self.active_combatants.remove(actor)
-            case EncounterEventType.MEMBER_DISENGAGE:
-                actor = self.get_actor_by_id(event.member_id)
-                if actor is not None:
-                    self.combatants.remove(actor)
-            case EncounterEventType.ENEMY_DEFEAT:
-                pass
-            case EncounterEventType.END:
-                self._concluded = True
-            case EncounterEventType.PENALTY50:
-                pass
-            case EncounterEventType.PENALTY75:
-                pass
-
-    def apply_combat_event(self, event: CombatEvent):
-        self._new_round = False
-
-        match event.combat_event_type:
-            case CombatEventType.STATUS_EFFECT:
-                pass
-            case CombatEventType.STATUS_EFFECT_OUTCOME:
-                pass
-            case CombatEventType.MEMBER_TURN_SKIP:
-                self._new_turn = False
-            case CombatEventType.MEMBER_TURN:
-                self._new_turn = False
-            case CombatEventType.MEMBER_TURN_STEP:
-                self._new_turn = False
-            case CombatEventType.ENEMY_TURN:
-                self._new_turn = False
-            case CombatEventType.ENEMY_TURN_STEP:
-                self._new_turn = False
-            case CombatEventType.MEMBER_END_TURN | CombatEventType.ENEMY_END_TURN:
-                self._last_actor = self._current_actor
-                self._current_initiative.rotate(-1)
-                self._current_actor = self._current_initiative[0]
-                self._new_turn = True
-
-                if self.reset_initiative:
-                    self.refresh_initiative()
-
-    def apply_status_event(self, event: StatusEffectEvent):
-        pass
-
-    def refresh_initiative(self):
+    def refresh_initiative(self, reset: bool = False):
         self.initiative = []
         self.initiative.append(self.opponent)
 
@@ -236,7 +142,7 @@ class EncounterContext:
         self._current_initiative = deque(self.initiative)
 
         if self.initiated:
-            if self._current_actor is None or self.reset_initiative:
+            if self._current_actor is None or reset:
                 self._current_actor = self.beginning_actor
             index = self.initiative.index(self._current_actor)
             self._current_initiative.rotate(-(index))
@@ -324,9 +230,6 @@ class EncounterContext:
     def current_actor(self) -> Actor:
         if self._current_actor is None:
 
-            if self.new_round:
-                self._current_actor = self.beginning_actor
-
             initiative_list = self.current_initiative
             if len(initiative_list) <= 0:
                 return None
@@ -341,58 +244,6 @@ class EncounterContext:
             self.refresh_initiative()
 
         return self._current_initiative
-
-    @property
-    def new_round(self) -> bool:
-        if self._new_round is not None:
-            return self._new_round
-
-        round_event_id = None
-        for event in self.encounter_events:
-            if event.encounter_event_type in [
-                EncounterEventType.NEW_ROUND,
-            ]:
-                round_event_id = event.id
-                break
-
-        if round_event_id is None:
-            self._new_round = False
-            return self._new_round
-
-        if len(self.combat_events) == 0:
-            self._new_round = True
-            return self._new_round
-
-        last_event = self.combat_events[0]
-        self._new_round = last_event.id < round_event_id
-
-        return self._new_round
-
-    @property
-    def new_turn(self) -> bool:
-        if self._new_turn is not None:
-            return self._new_turn
-
-        if len(self.combat_events) == 0:
-            self._new_turn = True
-            return self._new_turn
-
-        for event in self.combat_events:
-            if event.combat_event_type in [
-                CombatEventType.ENEMY_END_TURN,
-                CombatEventType.MEMBER_END_TURN,
-            ]:
-                self._new_turn = True
-                return self._new_turn
-            elif event.combat_event_type not in [
-                CombatEventType.STATUS_EFFECT,
-                CombatEventType.STATUS_EFFECT_OUTCOME,
-            ]:
-                break
-
-        self._new_turn = False
-
-        return self._new_turn
 
     @property
     def round_event_id_cutoff(self) -> int:

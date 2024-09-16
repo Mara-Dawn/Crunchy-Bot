@@ -1,6 +1,5 @@
 import datetime
 import random
-import secrets
 from typing import Literal
 
 import discord
@@ -221,9 +220,7 @@ class Combat(commands.Cog):
 
             encounter_level = await self.database.get_guild_level(guild.id)
 
-            await self.encounter_manager.spawn_encounter(
-                guild, secrets.choice(combat_channels), level=encounter_level
-            )
+            await self.encounter_manager.spawn_encounter(guild, level=encounter_level)
 
     @tasks.loop(minutes=1)
     async def random_low_lvl_encounter_task(self):
@@ -258,9 +255,7 @@ class Combat(commands.Cog):
 
             encounter_level = random.randint(1, max_encounter_level)
 
-            await self.encounter_manager.spawn_encounter(
-                guild, secrets.choice(combat_channels), level=encounter_level
-            )
+            await self.encounter_manager.spawn_encounter(guild, level=encounter_level)
 
     @random_encounter_task.before_loop
     async def random_encounter_task_before(self):
@@ -489,7 +484,7 @@ class Combat(commands.Cog):
             )
 
         await self.encounter_manager.spawn_encounter(
-            interaction.guild, secrets.choice(combat_channels), enemy_type, level
+            interaction.guild, enemy_type, level
         )
         await self.bot.command_response(
             self.__cog_name__,
