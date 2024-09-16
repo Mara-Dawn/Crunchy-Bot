@@ -11,6 +11,7 @@ from combat.skills.skill import Skill
 from combat.skills.types import (
     SkillEffect,
     SkillInstance,
+    SkillType,
     StatusEffectApplication,
 )
 from config import Config
@@ -42,14 +43,15 @@ class PlayerTurn(State):
         )
         view.set_message(message)
 
-    async def handle(self, event: BotEvent):
+    async def handle(self, event: BotEvent) -> bool:
+        update = False
         if not event.synchronized:
-            return
+            return update
         match event.type:
             case EventType.ENCOUNTER:
                 encounter_event: EncounterEvent = event
                 if encounter_event.encounter_id != self.context.encounter.id:
-                    return
+                    return update
 
                 match encounter_event.encounter_event_type:
                     case EncounterEventType.MEMBER_ENGAGE:
@@ -66,37 +68,55 @@ class PlayerTurn(State):
                             self.context.defeated_combatants.remove(actor)
                         if actor not in self.context.active_combatants:
                             self.context.active_combatants.append(actor)
+                        update = True
             case EventType.COMBAT:
                 combat_event: CombatEvent = event
                 if combat_event.encounter_id != self.context.encounter.id:
-                    return
+                    return update
                 if combat_event.member_id != self.context.current_actor.id:
-                    return
+                    return update
 
                 match combat_event.combat_event_type:
                     case CombatEventType.MEMBER_TURN:
-                        await self.discord.refresh_round_overview(self.context)
+                        update = True
                     case CombatEventType.MEMBER_TURN_STEP:
                         await self.skill_manager.trigger_special_skill_effects(event)
                     case CombatEventType.MEMBER_TURN_ACTION:
-                        await self.combatant_turn(combat_event.skill_id)
+                        await self.combatant_turn(
+                            combat_event.skill_type, combat_event.skill_id
+                        )
                     case CombatEventType.MEMBER_TURN_SKIP:
                         await self.combatant_timeout()
+
+        return update
 
     async def update(self):
         pass
 
-    async def combatant_turn(self, skill_id: int):
-        character = self.context.current_actor.id
-        target = self.context.opponent
+    async def combatant_turn(self, skill_type: SkillType, skill_id: int):
+        character = self.context.current_actor
         context = self.context
-        skill = await self.database.get_skill_by_id(skill_id)
-        skill_data = await self.skill_manager.get_character_skill_data(skill)
 
-        if target is None:
-            target = await self.skill_manager.get_character_default_target(
-                character, skill_data.skill, context
+        skill = await self.database.get_skill_by_id(skill_id)
+
+        if SkillType.is_weapon_skill(skill_type):
+            equipment = await self.database.get_user_equipment(
+                character.member.guild.id, character.id
             )
+            weapon_skills = equipment.weapon.base.skills
+
+            for type in weapon_skills:
+                if type == skill_type:
+                    skill = await self.factory.get_weapon_skill(
+                        skill_type, equipment.weapon.rarity, equipment.weapon.level
+                    )
+                    break
+
+        skill_data = await self.skill_manager.get_character_skill_data(character, skill)
+
+        target = await self.skill_manager.get_character_default_target(
+            character, skill, context
+        )
 
         if target is not None:
             if skill_data.skill.base_skill.aoe:
@@ -199,6 +219,7 @@ class PlayerTurn(State):
             )
             await self.controller.dispatch_event(event)
 
+        self.done = True
         event = CombatEvent(
             datetime.datetime.now(),
             context.encounter.guild_id,
@@ -212,8 +233,6 @@ class PlayerTurn(State):
             CombatEventType.MEMBER_TURN,
         )
         await self.controller.dispatch_event(event)
-
-        self.done = True
 
     async def calculate_character_aoe_skill(
         self,

@@ -33,14 +33,15 @@ class OpponentTurnState(State):
         await enemy_controller.handle_turn(self.context)
         self.done = True
 
-    async def handle(self, event: BotEvent):
+    async def handle(self, event: BotEvent) -> bool:
+        update = False
         if not event.synchronized:
-            return
+            return update
         match event.type:
             case EventType.ENCOUNTER:
                 encounter_event: EncounterEvent = event
                 if encounter_event.encounter_id != self.context.encounter.id:
-                    return
+                    return update
 
                 match encounter_event.encounter_event_type:
                     case EncounterEventType.MEMBER_ENGAGE:
@@ -54,18 +55,19 @@ class OpponentTurnState(State):
             case EventType.COMBAT:
                 combat_event: CombatEvent = event
                 if combat_event.encounter_id != self.context.encounter.id:
-                    return
+                    return update
 
                 if combat_event.combat_event_type in [
                     CombatEventType.ENEMY_TURN,
                     CombatEventType.ENEMY_TURN_STEP,
                 ]:
                     await self.skill_manager.trigger_special_skill_effects(event)
-                    await self.common.check_actor_defeat(self.context)
                 if combat_event.combat_event_type in [
                     CombatEventType.ENEMY_TURN,
                 ]:
-                    await self.discord.refresh_round_overview(self.context)
+                    update = True
+
+        return update
 
     async def update(self):
         pass

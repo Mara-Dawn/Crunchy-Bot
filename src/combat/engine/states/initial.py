@@ -81,8 +81,8 @@ class InitialState(State):
 
         self.done = True
 
-    async def handle(self, event: BotEvent):
-        pass
+    async def handle(self, event: BotEvent) -> bool:
+        return False
 
     async def update(self):
         if not self.done:

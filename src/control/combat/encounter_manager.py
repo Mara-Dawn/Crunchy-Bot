@@ -4,10 +4,12 @@ import random
 import discord
 from discord.ext import commands
 
-from combat.encounter import Encounter
+from combat.actors import Character
+from combat.encounter import Encounter, EncounterContext
 from combat.enemies import *  # noqa: F403
 from combat.enemies.types import EnemyType
 from combat.engine.engine import Engine
+from combat.skills.skill import CharacterSkill
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
@@ -26,8 +28,10 @@ from control.settings_manager import SettingsManager
 from control.user_settings_manager import UserSettingsManager
 from datalayer.database import Database
 from events.bot_event import BotEvent
+from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.types import (
+    CombatEventType,
     EncounterEventType,
     EventType,
 )
@@ -176,5 +180,22 @@ class EncounterManager(Service):
             )
             await self.controller.dispatch_event(event)
 
-    async def combatant_turn(self):
-        pass
+    async def combatant_turn(
+        self,
+        context: EncounterContext,
+        character: Character,
+        skill_data: CharacterSkill,
+    ):
+        event = CombatEvent(
+            datetime.datetime.now(),
+            context.encounter.guild_id,
+            context.encounter.id,
+            character.id,
+            None,
+            skill_data.skill.base_skill.skill_type,
+            None,
+            None,
+            skill_data.skill.id,
+            CombatEventType.MEMBER_TURN_ACTION,
+        )
+        await self.controller.dispatch_event(event)

@@ -59,13 +59,16 @@ class State(ABC):
         self.jail_manager: JailManager = self.controller.get_service(JailManager)
         self.common: CommonService = self.controller.get_service(CommonService)
 
+        self.logger = self.controller.logger
+        self.log_name = "Combat Engine"
+
     @abstractmethod
     async def startup(self):
         pass
 
     @abstractmethod
-    async def handle(self, event: BotEvent):
-        pass
+    async def handle(self, event: BotEvent) -> bool:
+        return False
 
     @abstractmethod
     async def update(self):

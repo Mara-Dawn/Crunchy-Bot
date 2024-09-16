@@ -92,7 +92,7 @@ class ContextLoader(Service):
             opponent=opponent,
             encounter_events=[],
             combat_events=[],
-            status_effects=[],
+            status_effects={},
             combatants=[],
             thread=None,
         )

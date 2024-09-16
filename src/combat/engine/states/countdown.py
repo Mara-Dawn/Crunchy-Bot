@@ -30,18 +30,20 @@ class CountdownState(State):
         )
         view.set_message(message)
 
-    async def handle(self, event: BotEvent):
+    async def handle(self, event: BotEvent) -> bool:
+        update = False
         if not event.synchronized:
-            return
+            return update
         match event.type:
             case EventType.ENCOUNTER:
                 encounter_event: EncounterEvent = event
                 if encounter_event.encounter_id != self.context.encounter.id:
-                    return
+                    return update
 
                 match encounter_event.encounter_event_type:
                     case EncounterEventType.INITIATE:
                         await self.initiate_encounter()
+                        update = True
                     case EncounterEventType.MEMBER_ENGAGE:
                         await self.common.add_member_to_encounter(
                             encounter_event.member_id, self.context
@@ -50,6 +52,8 @@ class CountdownState(State):
                         await self.common.add_member_join_request(
                             encounter_event.member_id, self.context
                         )
+
+        return update
 
     async def update(self):
         pass

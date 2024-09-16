@@ -17,18 +17,21 @@ class WaitingState(State):
     async def startup(self):
         pass
 
-    async def handle(self, event: BotEvent):
+    async def handle(self, event: BotEvent) -> bool:
+        update = False
         if not event.synchronized:
-            return
+            return update
         match event.type:
             case EventType.ENCOUNTER:
                 encounter_event: EncounterEvent = event
                 if encounter_event.encounter_id != self.context.encounter.id:
-                    return
+                    return update
 
                 match encounter_event.encounter_event_type:
                     case EncounterEventType.MEMBER_ENGAGE:
                         await self.create_encounter_thread(encounter_event.member_id)
+                        update = True
+        return update
 
     async def update(self):
         pass

@@ -134,8 +134,8 @@ class PostEncounterState(State):
         self.done = True
         self.quit = True
 
-    async def handle(self, event: BotEvent):
-        pass
+    async def handle(self, event: BotEvent) -> bool:
+        return False
 
     async def update(self):
         pass

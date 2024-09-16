@@ -81,15 +81,21 @@ class Engine:
         if self.context.concluded:
             return
 
-        if self.context.opponent.defeated:
-            await self.discord.delete_previous_combat_info(self.context.thread)
-            self.state.done = True
-            self.state.next_state = StateType.END_SUCCESS
+        if self.current_state not in [
+            StateType.END_FAILED,
+            StateType.END_SUCCESS,
+            StateType.LOOT_PAYOUT,
+            StateType.POST_ENCOUNTER,
+        ]:
+            if self.context.opponent.defeated:
+                await self.discord.delete_previous_combat_info(self.context.thread)
+                self.state.done = True
+                self.state.next_state = StateType.END_SUCCESS
 
-        if self.context.initiated and len(self.context.active_combatants) <= 0:
-            await self.discord.delete_previous_combat_info(self.context.thread)
-            self.state.done = True
-            self.state.next_state = StateType.END_FAILED
+            if self.context.initiated and len(self.context.active_combatants) <= 0:
+                await self.discord.delete_previous_combat_info(self.context.thread)
+                self.state.done = True
+                self.state.next_state = StateType.END_FAILED
 
         if self.state.quit:
             self.done = True
@@ -105,11 +111,10 @@ class Engine:
             ):
                 return
 
-            message = f"({self.context.encounter.id}) Handling {event.type.value} event in state {self.state.state_type.value}"
-            self.logger.log(self.context.encounter.guild_id, message, self.log_name)
-
-            await self.state.handle(event)
-            await self.update()
+            # message = f"({self.context.encounter.id}) Handling {event.type.value} event in state {self.state.state_type.value}"
+            # self.logger.log(self.context.encounter.guild_id, message, self.log_name)
+            if await self.state.handle(event):
+                await self.update()
 
     async def run(self):
         message = "Initializing combat engine"

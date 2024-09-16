@@ -30,8 +30,8 @@ class EndFailedState(State):
         await self.controller.dispatch_event(event)
         self.done = True
 
-    async def handle(self, event: BotEvent):
-        pass
+    async def handle(self, event: BotEvent) -> bool:
+        return False
 
     async def update(self):
         pass

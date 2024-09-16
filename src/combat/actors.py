@@ -35,8 +35,8 @@ class Actor:
     ):
         self.id = id
         self.name = name
-        self.max_hp = max_hp
-        self.current_hp = max_hp
+        self.max_hp = int(max_hp)
+        self.current_hp = int(max_hp)
         self._initiative = initiative
         self.is_enemy = is_enemy
         self.skills = skills

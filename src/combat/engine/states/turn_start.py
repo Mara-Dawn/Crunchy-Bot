@@ -16,6 +16,8 @@ class TurnStartState(State):
         self.next_state: StateType = None
 
     async def startup(self):
+        await self.discord.refresh_round_overview(self.context)
+
         actor = self.context.current_actor
         outcome = await self.status_effect_manager.handle_turn_status_effects(
             self.context, actor, StatusEffectTrigger.START_OF_TURN
@@ -51,14 +53,15 @@ class TurnStartState(State):
 
         self.done = True
 
-    async def handle(self, event: BotEvent):
+    async def handle(self, event: BotEvent) -> bool:
+        update = False
         if not event.synchronized:
-            return
+            return update
         match event.type:
             case EventType.ENCOUNTER:
                 encounter_event: EncounterEvent = event
                 if encounter_event.encounter_id != self.context.encounter.id:
-                    return
+                    return update
 
                 match encounter_event.encounter_event_type:
                     case EncounterEventType.MEMBER_ENGAGE:
@@ -69,6 +72,8 @@ class TurnStartState(State):
                         await self.common.add_member_join_request(
                             encounter_event.member_id, self.context
                         )
+
+        return update
 
     async def update(self):
         pass

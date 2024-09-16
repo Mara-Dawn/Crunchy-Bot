@@ -93,14 +93,15 @@ class RoundStartState(State):
 
         self.done = True
 
-    async def handle(self, event: BotEvent):
+    async def handle(self, event: BotEvent) -> bool:
+        update = False
         if not event.synchronized:
-            return
+            return update
         match event.type:
             case EventType.ENCOUNTER:
                 encounter_event: EncounterEvent = event
                 if encounter_event.encounter_id != self.context.encounter.id:
-                    return
+                    return update
 
                 match encounter_event.encounter_event_type:
                     case EncounterEventType.MEMBER_ENGAGE:
@@ -113,6 +114,8 @@ class RoundStartState(State):
                         )
                     case EncounterEventType.NEW_ROUND:
                         self.context._round_event_id_cutoff = event.id
+
+        return update
 
     async def update(self):
         pass

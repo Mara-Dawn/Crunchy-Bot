@@ -46,14 +46,15 @@ class FillingState(State):
         if not enemy.is_boss:
             leave_view.set_message(message)
 
-    async def handle(self, event: BotEvent):
+    async def handle(self, event: BotEvent) -> bool:
+        update = False
         if not event.synchronized:
-            return
+            return update
         match event.type:
             case EventType.ENCOUNTER:
                 encounter_event: EncounterEvent = event
                 if encounter_event.encounter_id != self.context.encounter.id:
-                    return
+                    return update
 
                 match encounter_event.encounter_event_type:
                     case EncounterEventType.MEMBER_ENGAGE:
@@ -66,10 +67,12 @@ class FillingState(State):
                         )
                     case EncounterEventType.INITIATE:
                         await self.initiate_encounter()
+                        update = True
                     case EncounterEventType.MEMBER_DISENGAGE:
                         actor = self.context.get_actor_by_id(event.member_id)
                         if actor is not None:
                             self.context.combatants.remove(actor)
+        return update
 
     async def update(self):
         encounter = self.context.encounter
