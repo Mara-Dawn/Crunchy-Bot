@@ -16,6 +16,7 @@ class EndFailedState(State):
         self.next_state: StateType = StateType.POST_ENCOUNTER
 
     async def startup(self):
+        await self.discord.delete_previous_combat_info(self.context.thread)
         embed = await self.embed_manager.get_combat_failed_embed(self.context)
 
         await self.discord.send_message(self.context.thread, content="", embed=embed)

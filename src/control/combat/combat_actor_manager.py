@@ -430,8 +430,6 @@ class CombatActorManager(Service):
                     break
             case CombatEventType.STATUS_EFFECT_OUTCOME:
                 pass
-            case CombatEventType.MEMBER_TURN_SKIP:
-                actor.timeout_count += 1
             case CombatEventType.MEMBER_TURN | CombatEventType.ENEMY_TURN:
                 for skill_type in actor.skill_cooldowns:
                     if event.skill_type == skill_type:
