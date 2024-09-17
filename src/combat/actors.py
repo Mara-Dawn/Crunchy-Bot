@@ -144,7 +144,9 @@ class Opponent(Actor):
         self.enemy = enemy
         self.id = id
 
-        self.average_skill_multi = self.get_potency_per_turn()
+        self.average_skill_multi = enemy.fixed_avg_potency
+        if self.average_skill_multi is None:
+            self.average_skill_multi = self.get_potency_per_turn()
 
     def get_potency_per_turn(self):
         sorted_skills = sorted(

@@ -770,6 +770,7 @@ class Daddy_P1(Enemy):
             initiative=40,
             actions_per_turn=2,
             is_boss=True,
+            fixed_avg_potency=3.3,
             phases=[EnemyType.DADDY_P1, EnemyType.DADDY_P2],
             author="Lusa, Mara",
         )
@@ -806,6 +807,7 @@ class Daddy_P2(Enemy):
             skill_loot_table=[],
             initiative=45,
             actions_per_turn=3,
+            fixed_avg_potency=3.3,
             is_boss=True,
             phases=[EnemyType.DADDY_P1, EnemyType.DADDY_P2],
             author="Lusa, Mara",
