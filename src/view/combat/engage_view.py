@@ -29,12 +29,13 @@ class EnemyEngageView(ViewMenu):
         self.done = False
         self.active = False
         self.timeout_timestamp = None
+        self.loaded = False
 
         if timeout is not None:
             now = datetime.datetime.now().timestamp()
             self.timeout_timestamp = int(now + timeout)
 
-        self.refresh_elements()
+        self.refresh_elements(disabled=(not self.loaded))
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -48,6 +49,12 @@ class EnemyEngageView(ViewMenu):
                     self.active = True
                 done = event.payload[3]
                 await self.refresh_ui(embed=embed, done=done)
+            case UIEventType.COMBAT_LOADED:
+                encounter_id = event.payload
+                if encounter_id != self.encounter_id:
+                    return
+                self.loaded = True
+                await self.refresh_ui()
 
     async def engage(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -72,11 +79,11 @@ class EnemyEngageView(ViewMenu):
     def refresh_elements(self, disabled: bool = False):
         self.clear_items()
         if not self.done:
-            self.add_item(EngageButton())
+            self.add_item(EngageButton(disabled))
 
     async def refresh_ui(
         self,
-        embed: discord.Embed,
+        embed: discord.Embed = None,
         encounter_id: int = None,
         done: bool = None,
     ):
@@ -89,7 +96,14 @@ class EnemyEngageView(ViewMenu):
         if done is not None and done:
             self.done = done
 
-        self.refresh_elements()
+        self.refresh_elements(disabled=(not self.loaded))
+
+        if embed is None:
+            try:
+                await self.message.edit(view=self)
+            except (discord.NotFound, discord.HTTPException):
+                self.controller.detach_view(self)
+            return
 
         if self.active and self.timeout is not None:
             self.timeout = None
@@ -134,8 +148,10 @@ class LeaveButton(discord.ui.Button):
 
 class EngageButton(discord.ui.Button):
 
-    def __init__(self):
-        super().__init__(label="Engage!", style=discord.ButtonStyle.green)
+    def __init__(self, disabled: bool = False):
+        super().__init__(
+            label="Engage!", style=discord.ButtonStyle.green, disabled=disabled
+        )
 
     async def callback(self, interaction: discord.Interaction):
         view: EnemyEngageView = self.view

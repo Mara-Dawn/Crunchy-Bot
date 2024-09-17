@@ -5,7 +5,8 @@ from config import Config
 from control.controller import Controller
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
-from events.types import EncounterEventType, EventType
+from events.types import EncounterEventType, EventType, UIEventType
+from events.ui_event import UIEvent
 
 
 class WaitingState(State):
@@ -15,7 +16,8 @@ class WaitingState(State):
         self.next_state: StateType = StateType.COUNTDOWN
 
     async def startup(self):
-        pass
+        event = UIEvent(UIEventType.COMBAT_LOADED, self.context.encounter.id)
+        await self.controller.dispatch_ui_event(event)
 
     async def handle(self, event: BotEvent) -> bool:
         update = False
