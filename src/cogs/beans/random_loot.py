@@ -138,6 +138,10 @@ class RandomLoot(BeansGroup):
         self.logger.log("sys", "Lootbox before loop started.", cog=self.__cog_name__)
 
         for guild in self.bot.guilds:
+
+            if not await self.settings_manager.get_beans_enabled(guild.id):
+                continue
+
             min_wait = await self.settings_manager.get_setting(
                 guild.id,
                 SettingsManager.BEANS_SUBSETTINGS_KEY,
