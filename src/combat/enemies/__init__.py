@@ -770,7 +770,7 @@ class Daddy_P1(Enemy):
             initiative=40,
             actions_per_turn=2,
             is_boss=True,
-            fixed_avg_potency=3.3,
+            fixed_avg_potency=3.32,
             phases=[EnemyType.DADDY_P1, EnemyType.DADDY_P2],
             author="Lusa, Mara",
         )
@@ -807,7 +807,7 @@ class Daddy_P2(Enemy):
             skill_loot_table=[],
             initiative=45,
             actions_per_turn=3,
-            fixed_avg_potency=3.3,
+            fixed_avg_potency=4.28,
             is_boss=True,
             phases=[EnemyType.DADDY_P1, EnemyType.DADDY_P2],
             author="Lusa, Mara",
@@ -844,6 +844,7 @@ class WeebBall(Enemy):
             skill_loot_table=[],
             initiative=9999,
             is_boss=True,
+            fixed_avg_potency=2.4,
             phases=[
                 EnemyType.WEEB_BALL,
                 EnemyType.WEEB_P1,
@@ -884,6 +885,7 @@ class Weeb_P1(Enemy):
             initiative=80,
             actions_per_turn=3,
             is_boss=True,
+            fixed_avg_potency=4,
             phases=[
                 EnemyType.WEEB_BALL,
                 EnemyType.WEEB_P1,
@@ -923,6 +925,7 @@ class Weeb_P2(Enemy):
             initiative=20,
             actions_per_turn=1,
             is_boss=True,
+            fixed_avg_potency=1.3,
             phases=[
                 EnemyType.WEEB_BALL,
                 EnemyType.WEEB_P1,
@@ -968,5 +971,6 @@ class Weeb_P3(Enemy):
             initiative=50,
             actions_per_turn=2,
             is_boss=True,
+            fixed_avg_potency=6.4,
             author="Lusa, Sophie, Mara",
         )
