@@ -47,6 +47,8 @@ class FillingState(State):
         if not enemy.is_boss:
             leave_view.set_message(message)
 
+        await self.check_filled()
+
     async def handle(self, event: BotEvent) -> bool:
         update = False
         if not event.synchronized:
@@ -62,6 +64,7 @@ class FillingState(State):
                         await self.common.add_member_to_encounter(
                             encounter_event.member_id, self.context
                         )
+                        await self.check_filled()
                         update = True
                     case EncounterEventType.MEMBER_REQUEST_JOIN:
                         await self.common.add_member_join_request(
@@ -74,10 +77,18 @@ class FillingState(State):
                         actor = self.context.get_actor_by_id(event.member_id)
                         if actor is not None:
                             self.context.combatants.remove(actor)
+                        await self.check_filled()
                         update = True
         return update
 
     async def update(self):
+        pass
+
+    async def check_filled(self):
+        self.logger.log(
+            self.context.encounter.guild_id,
+            f"({self.context.encounter.id}) filling: {len(self.context.combatants)}/{self.min_participants}",
+        )
         if len(self.context.combatants) >= self.min_participants:
             self.done = True
 

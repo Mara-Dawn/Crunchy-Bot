@@ -45,14 +45,7 @@ class DiscordManager(Service):
         self.log_name = "Discord"
 
     async def listen_for_event(self, event: BotEvent):
-        match event.type:
-            case EventType.ENCOUNTER:
-                if not event.synchronized:
-                    return
-                encounter_event: EncounterEventType = event
-                match encounter_event.encounter_event_type:
-                    case EncounterEventType.END | EncounterEventType.SPAWN:
-                        await self.update_guild_status(event.guild_id)
+        pass
 
     async def create_encounter_thread(self, encounter: Encounter) -> discord.Thread:
         channel = self.bot.get_channel(encounter.channel_id)
