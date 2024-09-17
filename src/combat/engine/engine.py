@@ -120,10 +120,7 @@ class Engine:
 
     async def handle(self, event: BotEvent):
         if not self.done:
-            if (
-                self.context.encounter is None
-                or event.encounter_id != self.context.encounter.id
-            ):
+            if self.context.encounter is None:
                 return
 
             if await self.state.handle(event):
@@ -132,10 +129,8 @@ class Engine:
                 await self.update()
 
     async def run(self):
-        message = "Initializing combat engine"
-        self.logger.log(self.context.encounter.guild_id, message, self.log_name)
         await self.state.startup()
         if self.state.quit:
             self.done = True
         elif self.state.done:
-            await self.state_transition()
+            await self.update()

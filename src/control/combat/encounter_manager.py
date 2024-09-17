@@ -96,12 +96,21 @@ class EncounterManager(Service):
         ]:
             return
 
+        removing = []
         for engine in self.engine_cache:
             if engine.done:
-                self.engine_cache.remove(engine)
+                removing.append(engine)
                 continue
 
-            await engine.handle(event)
+            if event.encounter_id == engine.context.encounter.id:
+                await engine.handle(event)
+
+        for engine in removing:
+            self.engine_cache.remove(engine)
+            self.logger.log(
+                event.guild_id,
+                f"({engine.context.encounter.id}) removing engine from cache. {len(self.engine_cache)}",
+            )
 
         match event.type:
             case EventType.ENCOUNTER:
