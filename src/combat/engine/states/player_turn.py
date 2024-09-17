@@ -351,6 +351,8 @@ class PlayerTurn(State):
         context = self.context
 
         timeout_count = character.timeout_count
+        character.timeout_count += 1
+
         message = (
             f"{character.name} was inactive for too long, their turn will be skipped."
         )

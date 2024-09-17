@@ -18,6 +18,15 @@ class RoundStartState(State):
         self.next_state: StateType = StateType.TURN_START
 
     async def startup(self):
+        event = EncounterEvent(
+            datetime.datetime.now(),
+            self.context.encounter.guild_id,
+            self.context.encounter.id,
+            self.bot.user.id,
+            EncounterEventType.NEW_ROUND,
+        )
+        await self.controller.dispatch_event(event)
+
         outcomes = await self.status_effect_manager.handle_round_status_effects(
             self.context, StatusEffectTrigger.START_OF_ROUND
         )
@@ -67,15 +76,6 @@ class RoundStartState(State):
                 self.context.active_combatants.append(actor)
 
         self.context.refresh_initiative(reset=True)
-
-        event = EncounterEvent(
-            datetime.datetime.now(),
-            self.context.encounter.guild_id,
-            self.context.encounter.id,
-            self.bot.user.id,
-            EncounterEventType.NEW_ROUND,
-        )
-        await self.controller.dispatch_event(event)
 
         enemy_embed = await self.embed_manager.get_combat_embed(self.context)
 
