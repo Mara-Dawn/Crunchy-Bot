@@ -81,6 +81,7 @@ class Enemy:
         controller: str = "BasicEnemyController",
         author: str = None,
         random_loot: bool = True,
+        fixed_avg_potency: int = None,
     ):
         self.name = name
         self.type = type
@@ -109,6 +110,7 @@ class Enemy:
         self.is_boss = is_boss
         self.phases = phases
         self.random_loot = random_loot
+        self.fixed_avg_potency = fixed_avg_potency
 
         self.attribute_overrides = attribute_overrides
 

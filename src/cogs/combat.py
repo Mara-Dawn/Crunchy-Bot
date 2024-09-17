@@ -1,4 +1,5 @@
 import datetime
+from collections import Counter
 import random
 from typing import Literal
 
@@ -7,9 +8,11 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot import CrunchyBot
+from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
 from combat.gear.types import GearBaseType, Rarity
-from combat.skills.types import SkillType
+from combat.skills.skill import Skill
+from combat.skills.types import SkillEffect, SkillType
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_gear_manager import CombatGearManager
@@ -653,7 +656,7 @@ class Combat(commands.Cog):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def debug(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         output = ""
 
         guild_id = interaction.guild_id
@@ -665,6 +668,117 @@ class Combat(commands.Cog):
             output += f"Enemy Timer low lvl: <t:{int(self.enemy_timers_low_lvl[guild_id].timestamp())}:R>"
 
         await self.bot.command_response(self.__cog_name__, interaction, output)
+
+        output = "\n\nEnemy_potencies:"
+        for enemy_type in EnemyType:
+            enemy = await self.factory.get_enemy(enemy_type)
+            skills = []
+            for skill_type in enemy.skill_types:
+                skill = await self.factory.get_enemy_skill(skill_type)
+                skills.append(skill)
+
+            output += f"\n\n{enemy.name}"
+
+            avg_potency = self.get_potency_per_turn(enemy, skills, 1)
+            output += f"\ncurrent: {avg_potency}"
+
+            avg_potency = self.get_potency_per_turn(enemy, skills, 2)
+            output += f"\nbase health: {avg_potency}"
+
+            avg_potency = self.get_potency_per_turn(enemy, skills, 3)
+            output += f"\nhealth+1: {avg_potency}"
+
+            avg_potency = self.get_potency_per_turn(enemy, skills, 4)
+            output += f"\ndmg: {avg_potency}"
+
+            avg_potency = self.get_potency_per_turn(enemy, skills, 5)
+            output += f"\ndmg*2: {avg_potency}"
+
+        self.logger.log(guild_id, output)
+
+    def get_potency_per_turn(self, enemy: Enemy, skills: list[Skill], mode: int):
+        sorted_skills = sorted(
+            skills,
+            key=lambda x: (
+                x.base_skill.base_value
+                if x.base_skill.skill_effect != SkillEffect.HEALING
+                else 100
+            ),
+            reverse=True,
+        )
+        match mode:
+            case 1:
+                max_depth = enemy.health * 2
+            case 2:
+                max_depth = enemy.health
+            case 3:
+                max_depth = enemy.health + 1
+            case 4:
+                max_depth = enemy.damage_scaling
+            case 5:
+                max_depth = enemy.damage_scaling * 2
+
+        cooldowns: dict[SkillType, int] = {}
+        initial_state: dict[SkillType, int] = {}
+
+        for skill in sorted_skills:
+            cooldowns[skill.base_skill.type] = skill.base_skill.cooldown
+            initial_state[skill.base_skill.type] = 0
+            if skill.base_skill.initial_cooldown is not None:
+                initial_state[skill.base_skill.type] = skill.base_skill.initial_cooldown
+
+        state_list: list[dict[SkillType, int]] = []
+        skill_count = Counter()
+
+        def get_rotation(
+            state_list: list[dict[SkillType, int]],
+            skill_count: Counter,
+            state: dict[SkillType, int],
+            depth_check: int,
+        ) -> list[dict[SkillType, int]]:
+            if depth_check <= 0:
+                return
+
+            state_list.append(state)
+
+            next_state: dict[SkillType, int] = {}
+
+            skills_chosen = 0
+
+            for skill_type, cooldown in state.items():
+                if cooldown <= 0 and skills_chosen < enemy.actions_per_turn:
+                    next_state[skill_type] = cooldowns[skill_type]
+                    skill_count[skill_type] += 1
+                    skills_chosen += 1
+                    continue
+
+                next_state[skill_type] = max(0, cooldown - 1)
+
+            if skills_chosen == 0:
+                raise StopIteration("No available skill found.")
+
+            get_rotation(state_list, skill_count, next_state, (depth_check - 1))
+
+        get_rotation(state_list, skill_count, initial_state, max_depth)
+
+        rotation_length = len(state_list)
+        potency = 0
+
+        for skill in sorted_skills:
+            base_potency = 0
+            if skill.base_skill.skill_effect not in [
+                SkillEffect.BUFF,
+                SkillEffect.HEALING,
+            ]:
+                base_potency = skill.base_skill.base_value * skill.base_skill.hits
+            potency_per_turn = (
+                base_potency
+                * skill_count[skill.base_skill.skill_type]
+                / rotation_length
+            )
+            potency += potency_per_turn
+
+        return potency
 
     @group.command(
         name="settings",
