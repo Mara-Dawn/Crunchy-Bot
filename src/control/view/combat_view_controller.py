@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import datetime
 
 import discord
@@ -393,12 +394,13 @@ class CombatViewController(ViewController):
         event = UIEvent(UIEventType.STOP_INTERACTIONS, None, view_id)
         await self.controller.dispatch_ui_event(event)
 
-        message = await interaction.original_response()
-        await message.delete()
+        with contextlib.suppress(discord.NotFound):
+            message = await interaction.original_response()
+            await message.delete()
 
-        await self.encounter_manager.combatant_turn(context, character, skill_data)
+            await self.encounter_manager.combatant_turn(context, character, skill_data)
 
-        self.controller.detach_view_by_id(view_id)
+            self.controller.detach_view_by_id(view_id)
 
     async def player_timeout(
         self,

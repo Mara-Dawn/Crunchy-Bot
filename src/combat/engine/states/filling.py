@@ -74,17 +74,11 @@ class FillingState(State):
                         actor = self.context.get_actor_by_id(event.member_id)
                         if actor is not None:
                             self.context.combatants.remove(actor)
-                            self.context.active_combatants.remove(actor)
                         update = True
         return update
 
     async def update(self):
-        encounter = self.context.encounter
-
-        participants = await self.database.get_encounter_participants_by_encounter_id(
-            encounter.id
-        )
-        if len(participants) >= self.min_participants:
+        if len(self.context.combatants) >= self.min_participants:
             self.done = True
 
     async def initiate_encounter(self):
