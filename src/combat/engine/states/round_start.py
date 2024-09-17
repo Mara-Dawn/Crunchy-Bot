@@ -57,22 +57,15 @@ class RoundStartState(State):
                 )
                 await self.controller.dispatch_event(event)
 
-                if actor in self.context.active_combatants:
-                    self.context.active_combatants.remove(actor)
-
         await self.common.check_actor_defeat(self.context)
 
         encounter = self.context.encounter
         thread = self.context.thread
         self.context.round_number += 1
         self.context._current_actor = None
+        self.context.active_combatants = []
         for actor in self.context.combatants:
-            if (
-                not actor.defeated
-                and not actor.leaving
-                and not actor.is_out
-                and actor not in self.context.active_combatants
-            ):
+            if not actor.defeated and not actor.leaving and not actor.is_out:
                 self.context.active_combatants.append(actor)
 
         self.context.refresh_initiative(reset=True)

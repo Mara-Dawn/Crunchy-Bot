@@ -84,4 +84,8 @@ class TurnEndState(State):
         return update
 
     async def update(self):
-        pass
+        await self.discord.refresh_round_overview(self.context)
+        enemy_embed = await self.embed_manager.get_combat_embed(self.context)
+        message = await self.discord.get_previous_enemy_info(self.context.thread)
+        if message is not None:
+            await self.discord.edit_message(message, embed=enemy_embed)

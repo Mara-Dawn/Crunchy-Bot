@@ -71,6 +71,13 @@ class PlayerTurn(State):
                         update = True
                     case EncounterEventType.ENEMY_PHASE_CHANGE:
                         self.context.reset_initiative = True
+                    case EncounterEventType.MEMBER_OUT:
+                        actor = self.context.get_actor_by_id(
+                            encounter_event.member_id,
+                        )
+                        self.context.active_combatants.remove(actor)
+                        update = True
+
             case EventType.COMBAT:
                 combat_event: CombatEvent = event
                 if combat_event.encounter_id != self.context.encounter.id:
@@ -94,7 +101,11 @@ class PlayerTurn(State):
         return update
 
     async def update(self):
-        pass
+        await self.discord.refresh_round_overview(self.context)
+        enemy_embed = await self.embed_manager.get_combat_embed(self.context)
+        message = await self.discord.get_previous_enemy_info(self.context.thread)
+        if message is not None:
+            await self.discord.edit_message(message, embed=enemy_embed)
 
     async def combatant_turn(self, skill_type: SkillType, skill_id: int):
         character = self.context.current_actor

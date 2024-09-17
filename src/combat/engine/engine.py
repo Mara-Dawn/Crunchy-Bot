@@ -67,19 +67,13 @@ class Engine:
         if self.state.quit:
             self.done = True
         elif self.state.done:
-            await self.state_transition()
+            await self.update()
 
     async def update(self):
         if self.context.concluded:
             return
 
         if self.context.initiated:
-            await self.discord.refresh_round_overview(self.context)
-            enemy_embed = await self.embed_manager.get_combat_embed(self.context)
-            message = await self.discord.get_previous_enemy_info(self.context.thread)
-            if message is not None:
-                await self.discord.edit_message(message, embed=enemy_embed)
-
             await self.common.check_actor_defeat(self.context)
 
             if self.current_state not in [
@@ -89,12 +83,10 @@ class Engine:
                 StateType.POST_ENCOUNTER,
             ]:
                 if self.context.opponent.defeated:
-                    await self.discord.delete_previous_combat_info(self.context.thread)
                     self.state.done = True
                     self.state.next_state = StateType.END_SUCCESS
 
                 if self.context.initiated and len(self.context.active_combatants) <= 0:
-                    await self.discord.delete_previous_combat_info(self.context.thread)
                     self.state.done = True
                     self.state.next_state = StateType.END_FAILED
 
