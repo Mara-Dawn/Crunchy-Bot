@@ -197,6 +197,11 @@ class CombatViewController(ViewController):
                 )
                 continue
 
+            character = context.get_actor_by_id(member_id)
+
+            embed = self.embed_manager.get_member_out_embed(character, event_type, "")
+            await context.thread.send("", embed=embed)
+
             event = EncounterEvent(
                 datetime.datetime.now(),
                 guild_id,
@@ -205,11 +210,6 @@ class CombatViewController(ViewController):
                 event_type,
             )
             await self.controller.dispatch_event(event)
-
-            character = context.get_actor_by_id(member_id)
-
-            embed = self.embed_manager.get_member_out_embed(character, event_type, "")
-            await context.thread.send("", embed=embed)
 
             self.leave_queue.task_done()
 

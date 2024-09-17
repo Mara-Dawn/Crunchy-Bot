@@ -150,7 +150,7 @@ class EncounterContext:
             self._current_initiative.rotate(-(index))
 
     def get_actor_by_id(self, actor_id: int) -> Actor:
-        for actor in self.initiative:
+        for actor in self.combatants:
             if actor.id == actor_id:
                 return actor
         return None
