@@ -1,4 +1,5 @@
 import datetime
+import random
 
 import discord
 from discord.ext import commands
@@ -6,6 +7,7 @@ from discord.ext import commands
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import Encounter
 from combat.enemies.enemy import Enemy
+from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
 from combat.skills.status_effect import ActiveStatusEffect
@@ -366,6 +368,21 @@ class CombatActorManager(Service):
                     actor.current_hp = actor.max_hp
                     actor.enemy = new_enemy
                     actor.id -= phase + 10
+                    actor.skill_stacks_used = {}
+                    actor.status_effects = []
+
+                    skills = []
+                    for skill_type in new_enemy.skill_types:
+                        skill = await self.factory.get_enemy_skill(skill_type)
+                        skills.append(skill)
+
+                    actor.skills = skills
+                    actor.skill_cooldowns = self.get_skill_cooldowns(
+                        actor.id, skills, []
+                    )
+
+                    actor.average_skill_multi = actor.get_potency_per_turn()
+                    actor._initiative = new_enemy.initiative
 
         if event.member_id != actor.id:
             return
@@ -598,3 +615,27 @@ class CombatActorManager(Service):
                 flat_reduction = 0
 
         return int(max(0, ((incoming_damage - flat_reduction) * modifier)))
+
+    async def get_random_enemy(
+        self, encounter_level: int, exclude: list[EnemyType] = None
+    ) -> Enemy:
+        if exclude is None:
+            exclude = []
+
+        enemies = [await self.factory.get_enemy(enemy_type) for enemy_type in EnemyType]
+        possible_enemies = [
+            enemy
+            for enemy in enemies
+            if encounter_level >= enemy.min_level
+            and encounter_level <= enemy.max_level
+            and not enemy.is_boss
+            and enemy.type not in exclude
+        ]
+
+        spawn_weights = [enemy.weighting for enemy in possible_enemies]
+        # spawn_weights = [1.0 / w for w in spawn_weights]
+        sum_weights = sum(spawn_weights)
+        spawn_weights = [w / sum_weights for w in spawn_weights]
+
+        enemy = random.choices(possible_enemies, weights=spawn_weights)[0]
+        return enemy

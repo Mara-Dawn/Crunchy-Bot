@@ -1,5 +1,4 @@
 from collections import Counter
-from functools import lru_cache
 
 import discord
 
@@ -35,8 +34,8 @@ class Actor:
     ):
         self.id = id
         self.name = name
-        self.max_hp = max_hp
-        self.current_hp = max_hp
+        self.max_hp = int(max_hp)
+        self.current_hp = int(max_hp)
         self._initiative = initiative
         self.is_enemy = is_enemy
         self.skills = skills
@@ -147,7 +146,6 @@ class Opponent(Actor):
 
         self.average_skill_multi = self.get_potency_per_turn()
 
-    @lru_cache(maxsize=10)  # noqa: B019
     def get_potency_per_turn(self):
         sorted_skills = sorted(
             self.skills,

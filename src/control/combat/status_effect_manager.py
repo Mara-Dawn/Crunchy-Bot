@@ -30,7 +30,7 @@ from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.status_effect_event import StatusEffectEvent
-from events.types import CombatEventType, EncounterEventType, EventType
+from events.types import CombatEventType, EncounterEventType
 
 
 class CombatStatusEffectManager(Service):
@@ -57,14 +57,7 @@ class CombatStatusEffectManager(Service):
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
 
     async def listen_for_event(self, event: BotEvent):
-        match event.type:
-            case EventType.ENCOUNTER:
-                if not event.synchronized:
-                    return
-                encounter_event: EncounterEvent = event
-                match encounter_event.encounter_event_type:
-                    case EncounterEventType.NEW_ROUND:
-                        await self.trigger_effects(StatusEffectTrigger.START_OF_ROUND)
+        pass
 
     async def apply_status(
         self,
@@ -349,12 +342,13 @@ class CombatStatusEffectManager(Service):
                     miss_chance = Config.BLIND_MISS_CHANCE
 
                     if actor.is_enemy and actor.enemy.is_boss:
-                        blind_count = context.get_applied_status_count(
-                            actor.id, StatusEffectType.BLIND
-                        )
-                        miss_chance *= pow(
-                            Config.BLIND_DIMINISHING_RETURNS, max(0, blind_count - 1)
-                        )
+                        miss_chance = Config.BLIND_BOSS_MISS_CHANCE
+                    #     blind_count = context.get_applied_status_count(
+                    #         actor.id, StatusEffectType.BLIND
+                    #     )
+                    #     miss_chance *= pow(
+                    #         Config.BLIND_DIMINISHING_RETURNS, max(0, blind_count - 1)
+                    #     )
 
                     modifier = 0 if roll < miss_chance else 1
                 case StatusEffectType.EVASIVE:
@@ -769,6 +763,57 @@ class CombatStatusEffectManager(Service):
 
         return self.combine_outcomes(outcomes.values(), embed_data)
 
+    async def handle_round_status_effects(
+        self,
+        context: EncounterContext,
+        trigger: StatusEffectTrigger,
+    ) -> dict[int, StatusEffectOutcome]:
+        actor_outcomes = {}
+        for active_actor in context.current_initiative:
+
+            triggered_status_effects = await self.actor_trigger(
+                context, active_actor, trigger
+            )
+
+            if len(triggered_status_effects) <= 0:
+                continue
+
+            outcomes = await self.get_status_effect_outcomes(
+                context, active_actor, triggered_status_effects
+            )
+            embed_data = await self.get_status_effect_outcome_info(
+                context, active_actor, outcomes
+            )
+            actor_outcomes[active_actor.id] = self.combine_outcomes(
+                outcomes.values(), embed_data
+            )
+
+        return actor_outcomes
+
+    async def handle_turn_status_effects(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+        trigger: StatusEffectTrigger,
+    ) -> StatusEffectOutcome:
+        for active_actor in context.current_initiative:
+            if active_actor.id == actor.id:
+                actor = active_actor
+
+        if actor.defeated or actor.leaving or actor.is_out:
+            return StatusEffectOutcome.EMPTY()
+
+        triggered_status_effects = await self.actor_trigger(context, actor, trigger)
+
+        if len(triggered_status_effects) <= 0:
+            return StatusEffectOutcome.EMPTY()
+
+        outcomes = await self.get_status_effect_outcomes(
+            context, actor, triggered_status_effects
+        )
+        embed_data = await self.get_status_effect_outcome_info(context, actor, outcomes)
+        return self.combine_outcomes(outcomes.values(), embed_data)
+
     async def actor_trigger(
         self, context: EncounterContext, actor: Actor, trigger: StatusEffectTrigger
     ) -> list[ActiveStatusEffect]:
@@ -790,6 +835,3 @@ class CombatStatusEffectManager(Service):
             triggered, key=lambda item: item.status_effect.priority, reverse=True
         )
         return triggered
-
-    async def trigger_effects(self, trigger: StatusEffectTrigger):
-        pass

@@ -971,10 +971,10 @@ class BaseKey(Item):
             shop_category=ShopCategory.GEAR,
             description=(
                 "A magical key that allows you to open a portal to another dimension. "
-                f"Inside you will face an enemy of the {level}th level.\n"
+                f"Inside, you will face a level {level} enemy.\n"
                 "(Item can be used from your inventory. You will automatically join the spawned encounter.)"
             ),
-            information=(f"Spawns a random encounter of the {level}th level. "),
+            information=(f"Spawns a random level {level} encounter. "),
             emoji="🔑",
             cost=cost,
             useable=True,

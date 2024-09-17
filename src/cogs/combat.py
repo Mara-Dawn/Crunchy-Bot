@@ -1,6 +1,5 @@
 import datetime
 import random
-import secrets
 from typing import Literal
 
 import discord
@@ -14,6 +13,7 @@ from combat.skills.types import SkillType
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_gear_manager import CombatGearManager
+from control.combat.discord_manager import DiscordManager
 from control.combat.encounter_manager import EncounterManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
@@ -63,6 +63,7 @@ class Combat(commands.Cog):
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
+        self.discord: DiscordManager = self.controller.get_service(DiscordManager)
         self.imgur_manager: ImgurManager = self.controller.get_service(ImgurManager)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.enemy_timers = {}
@@ -152,7 +153,7 @@ class Combat(commands.Cog):
     @commands.Cog.listener("on_ready")
     async def on_ready_combat(self):
         for guild in self.bot.guilds:
-            await self.encounter_manager.refresh_combat_messages(guild.id, purge=True)
+            await self.discord.refresh_combat_messages(guild.id, purge=True)
         self.random_encounter_task.start()
         self.random_low_lvl_encounter_task.start()
         self.logger.log("init", "Combat loaded.", cog=self.__cog_name__)
@@ -219,9 +220,7 @@ class Combat(commands.Cog):
 
             encounter_level = await self.database.get_guild_level(guild.id)
 
-            await self.encounter_manager.spawn_encounter(
-                guild, secrets.choice(combat_channels), level=encounter_level
-            )
+            await self.encounter_manager.spawn_encounter(guild, level=encounter_level)
 
     @tasks.loop(minutes=1)
     async def random_low_lvl_encounter_task(self):
@@ -256,9 +255,7 @@ class Combat(commands.Cog):
 
             encounter_level = random.randint(1, max_encounter_level)
 
-            await self.encounter_manager.spawn_encounter(
-                guild, secrets.choice(combat_channels), level=encounter_level
-            )
+            await self.encounter_manager.spawn_encounter(guild, level=encounter_level)
 
     @random_encounter_task.before_loop
     async def random_encounter_task_before(self):
@@ -487,7 +484,7 @@ class Combat(commands.Cog):
             )
 
         await self.encounter_manager.spawn_encounter(
-            interaction.guild, secrets.choice(combat_channels), enemy_type, level
+            interaction.guild, enemy_type, level
         )
         await self.bot.command_response(
             self.__cog_name__,
@@ -643,9 +640,7 @@ class Combat(commands.Cog):
             return
 
         await interaction.response.defer()
-        await self.encounter_manager.refresh_combat_messages(
-            interaction.guild_id, purge=True
-        )
+        await self.discord.refresh_combat_messages(interaction.guild_id, purge=True)
 
         await self.bot.command_response(
             self.__cog_name__, interaction, "Successfully reloaded combats."
@@ -720,9 +715,7 @@ class Combat(commands.Cog):
             f"Added {channel.name} to combat channels.",
             args=[channel.name],
         )
-        await self.encounter_manager.refresh_combat_messages(
-            interaction.guild_id, purge=True
-        )
+        await self.discord.refresh_combat_messages(interaction.guild_id, purge=True)
 
     @group.command(
         name="remove_combat_channel",
@@ -759,7 +752,7 @@ class Combat(commands.Cog):
             self.__cog_name__,
             interaction.command.name,
             "Settings for Combat related Features",
-            callback=self.encounter_manager.refresh_combat_messages,
+            callback=self.discord.refresh_combat_messages,
             callback_arguments=[guild_id],
         )
 

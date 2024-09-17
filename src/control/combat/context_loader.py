@@ -1,10 +1,5 @@
-import asyncio
-from collections.abc import AsyncGenerator
-
-import discord
 from discord.ext import commands
 
-from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
@@ -22,8 +17,6 @@ from events.types import EncounterEventType, EventType
 
 
 class ContextLoader(Service):
-
-    RETRY_LIMIT = 5
 
     def __init__(
         self,
@@ -58,22 +51,11 @@ class ContextLoader(Service):
 
                 if encounter_id in self.context_cache:
                     context = self.context_cache[encounter_id]
-                    context.apply_event(event)
+                    context.add_event(event)
                     for actor in context.actors:
                         await self.actor_manager.apply_event(actor, event)
 
                     match encounter_event.encounter_event_type:
-                        case EncounterEventType.NEW_ROUND:
-                            for actor in context.initiative:
-                                actor.round_modifier = await self.status_effect_manager.handle_attribute_status_effects(
-                                    context, actor
-                                )
-
-                            context.refresh_initiative()
-                        case EncounterEventType.MEMBER_ENGAGE:
-                            await self.add_character_to_encounter(
-                                encounter_id, encounter_event.member_id
-                            )
                         case EncounterEventType.END:
                             del self.context_cache[encounter_id]
                             return
@@ -83,7 +65,7 @@ class ContextLoader(Service):
                 encounter_id = event.encounter_id
                 if encounter_id in self.context_cache:
                     context = self.context_cache[encounter_id]
-                    context.apply_event(event)
+                    context.add_event(event)
                     for actor in context.actors:
                         await self.actor_manager.apply_event(actor, event)
 
@@ -92,24 +74,30 @@ class ContextLoader(Service):
                 encounter_id = event.encounter_id
                 if encounter_id in self.context_cache:
                     context = self.context_cache[encounter_id]
-                    context.apply_event(event)
+                    context.add_event(event)
                     for actor in context.actors:
                         await self.actor_manager.apply_event(actor, event)
 
-    async def add_character_to_encounter(self, encounter_id: int, member_id: int):
-        encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
-        guild = self.bot.get_guild(encounter.guild_id)
-        member = guild.get_member(member_id)
-        context = self.context_cache[encounter_id]
-
-        combatant = await self.actor_manager.get_character(
-            member,
-            context.encounter_events,
-            context.combat_events,
-            context.status_effects,
+    async def init_encounter_context(self, encounter: Encounter) -> EncounterContext:
+        enemy = await self.factory.get_enemy(encounter.enemy_type)
+        opponent = await self.actor_manager.get_opponent(
+            enemy,
+            encounter,
+            [],
+            [],
+            {},
+        )
+        context = EncounterContext(
+            encounter=encounter,
+            opponent=opponent,
+            encounter_events=[],
+            combat_events=[],
+            status_effects={},
+            combatants=[],
+            thread=None,
         )
 
-        self.context_cache[encounter_id].add_combatant(combatant)
+        return context
 
     async def load_encounter_context(self, encounter_id) -> EncounterContext:
         if encounter_id in self.context_cache:
@@ -178,93 +166,3 @@ class ContextLoader(Service):
 
         self.context_cache[encounter_id] = context
         return self.context_cache[encounter_id]
-
-    async def get_previous_turn_message(self, thread: discord.Thread):
-        async for message in thread.history(limit=100):
-            if len(message.embeds) >= 1 and message.author.id == self.bot.user.id:
-                embed = message.embeds[0]
-                if embed.title == "New Round" or embed.title == "Round Continued..":
-                    return message
-        return None
-
-    async def append_embed_generator_to_round(
-        self, context: EncounterContext, generator: AsyncGenerator
-    ):
-        thread = context.thread
-        message = await self.get_previous_turn_message(thread)
-
-        if len(message.embeds) >= 10:
-            round_embed = await self.embed_manager.get_round_embed(context, cont=True)
-            message = await self.send_message(
-                context.thread, content="", embed=round_embed
-            )
-
-        previous_embeds = message.embeds
-
-        async for embed in generator:
-            current_embeds = previous_embeds + [embed]
-            await self.edit_message(message, embeds=current_embeds)
-
-    async def append_embed_to_round(
-        self, context: EncounterContext, embed: discord.Embed
-    ):
-        thread = context.thread
-        message = await self.get_previous_turn_message(thread)
-
-        if len(message.embeds) >= 10:
-            round_embed = await self.embed_manager.get_round_embed(context, cont=True)
-            message = await self.send_message(
-                context.thread, content="", embed=round_embed
-            )
-
-        previous_embeds = message.embeds
-        current_embeds = previous_embeds + [embed]
-        await self.edit_message(message, embeds=current_embeds)
-
-    async def append_embeds_to_round(
-        self, context: EncounterContext, actor: Actor, embed_data: dict[str, str]
-    ):
-        message = None
-        if len(embed_data) <= 0:
-            return message
-        status_effect_embed = self.embed_manager.get_status_effect_embed(
-            actor, embed_data
-        )
-        message = await self.append_embed_to_round(context, status_effect_embed)
-        return message
-
-    async def edit_message(self, message: discord.Message, **kwargs):
-        retries = 0
-        success = False
-        new_message = None
-        while not success and retries <= self.RETRY_LIMIT:
-            try:
-                new_message = await message.edit(**kwargs)
-                success = True
-            except (discord.HTTPException, discord.DiscordServerError) as e:
-                self.logger.log(message.guild.id, e.text, self.log_name)
-                retries += 1
-                await asyncio.sleep(5)
-
-        if not success:
-            self.logger.error(message.guild.id, "edit message timeout", self.log_name)
-
-        return new_message
-
-    async def send_message(self, channel: discord.channel.TextChannel, **kwargs):
-        retries = 0
-        success = False
-        message = None
-        while not success and retries <= self.RETRY_LIMIT:
-            try:
-                message = await channel.send(**kwargs)
-                success = True
-            except (discord.HTTPException, discord.DiscordServerError) as e:
-                self.logger.log(channel.guild.id, e.text, self.log_name)
-                retries += 1
-                await asyncio.sleep(5)
-
-        if not success:
-            self.logger.error(message.guild.id, "send message timeout", self.log_name)
-
-        return message

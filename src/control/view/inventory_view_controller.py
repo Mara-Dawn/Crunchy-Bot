@@ -354,13 +354,9 @@ class InventoryViewController(ViewController):
                     return
                 if not await self.inventory_check(interaction, item):
                     return
-                combat_channels = await self.settings_manager.get_combat_channels(
-                    interaction.guild_id
-                )
                 level_map = {v: k for k, v in BaseKey.TYPE_MAP.items()}
                 await self.encounter_manager.spawn_encounter(
                     interaction.guild,
-                    secrets.choice(combat_channels),
                     None,
                     level_map[item.type],
                     owner_id=user_id,
@@ -383,12 +379,8 @@ class InventoryViewController(ViewController):
             case ItemType.DADDY_KEY | ItemType.WEEB_KEY:
                 if not await self.encounter_check(interaction):
                     return
-                combat_channels = await self.settings_manager.get_combat_channels(
-                    interaction.guild_id
-                )
                 await self.encounter_manager.spawn_encounter(
                     interaction.guild,
-                    secrets.choice(combat_channels),
                     boss_key_map[item.type],
                     boss_lvl_map[item.type],
                     owner_id=user_id,
