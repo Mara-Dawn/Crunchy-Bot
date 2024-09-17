@@ -186,6 +186,7 @@ class UIEventType(str, Enum):
     GARDEN_REFRESH = "garden_plot_refresh"
     GARDEN_PLOT_BLOCK = "garden_plot_block"
 
+    COMBAT_LOADED = "combat_loaded"
     COMBAT_ENGAGE = "combat_engage"
     COMBAT_LEAVE = "combat_leave"
     COMBAT_APPROVE = "combat_approve"
