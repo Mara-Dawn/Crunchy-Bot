@@ -27,25 +27,47 @@ from events.bot_event import BotEvent
 class Engine:
     def __init__(self, controller: Controller, context: EncounterContext):
         self.controller = controller
-        self.states: dict[StateType:Callable] = {
-            StateType.INITIAL: InitialState,
-            StateType.WAITING: WaitingState,
-            StateType.FILLING: FillingState,
-            StateType.COUNTDOWN: CountdownState,
-            StateType.ROUND_START: RoundStartState,
-            StateType.ROUND_END: RoundEndState,
-            StateType.TURN_START: TurnStartState,
-            StateType.PLAYER_TURN: PlayerTurn,
-            StateType.OPPONENT_TURN: OpponentTurnState,
-            StateType.TURN_END: TurnEndState,
-            StateType.END_SUCCESS: EndSuccessState,
-            StateType.END_FAILED: EndFailedState,
-            StateType.LOOT_PAYOUT: LootPayoutState,
-            StateType.POST_ENCOUNTER: PostEncounterState,
+        self.state_init: list[Callable] = {
+            InitialState,
+            WaitingState,
+            FillingState,
+            CountdownState,
+            RoundStartState,
+            RoundEndState,
+            TurnStartState,
+            PlayerTurn,
+            OpponentTurnState,
+            TurnEndState,
+            EndSuccessState,
+            EndFailedState,
+            LootPayoutState,
+            PostEncounterState,
         }
+        # self.state_dict: dict[StateType:Callable] = {
+        #     StateType.INITIAL: InitialState,
+        #     StateType.WAITING: WaitingState,
+        #     StateType.FILLING: FillingState,
+        #     StateType.COUNTDOWN: CountdownState,
+        #     StateType.ROUND_START: RoundStartState,
+        #     StateType.ROUND_END: RoundEndState,
+        #     StateType.TURN_START: TurnStartState,
+        #     StateType.PLAYER_TURN: PlayerTurn,
+        #     StateType.OPPONENT_TURN: OpponentTurnState,
+        #     StateType.TURN_END: TurnEndState,
+        #     StateType.END_SUCCESS: EndSuccessState,
+        #     StateType.END_FAILED: EndFailedState,
+        #     StateType.LOOT_PAYOUT: LootPayoutState,
+        #     StateType.POST_ENCOUNTER: PostEncounterState,
+        # }
+        self.states: dict[StateType:Callable] = {}
+
+        for element in self.state_init:
+            state: State = element(controller, context)
+            self.states[state.state_type] = state
+
         self.done = False
         self.current_state: StateType = StateType.INITIAL
-        self.state: State = self.states[self.current_state](controller, context)
+        self.state: State = self.states[self.current_state]
         self.context = context
         self.common: CommonService = self.controller.get_service(CommonService)
         self.discord: DiscordManager = self.controller.get_service(DiscordManager)
@@ -62,7 +84,7 @@ class Engine:
         next_state = self.state.next_state
         self.state.done = False
         self.current_state = next_state
-        self.state = self.states[self.current_state](self.controller, self.context)
+        self.state = self.states[self.current_state]
         await self.state.startup()
         if self.state.quit:
             self.done = True
