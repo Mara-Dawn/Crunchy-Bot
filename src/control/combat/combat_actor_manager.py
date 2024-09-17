@@ -368,6 +368,21 @@ class CombatActorManager(Service):
                     actor.current_hp = actor.max_hp
                     actor.enemy = new_enemy
                     actor.id -= phase + 10
+                    actor.skill_stacks_used = {}
+                    actor.status_effects = []
+
+                    skills = []
+                    for skill_type in new_enemy.skill_types:
+                        skill = await self.factory.get_enemy_skill(skill_type)
+                        skills.append(skill)
+
+                    actor.skills = skills
+                    actor.skill_cooldowns = self.get_skill_cooldowns(
+                        actor.id, skills, []
+                    )
+
+                    actor.average_skill_multi = actor.get_potency_per_turn()
+                    actor._initiative = new_enemy.initiative
 
         if event.member_id != actor.id:
             return

@@ -111,9 +111,9 @@ class Engine:
             ):
                 return
 
-            # message = f"({self.context.encounter.id}) Handling {event.type.value} event in state {self.state.state_type.value}"
-            # self.logger.log(self.context.encounter.guild_id, message, self.log_name)
             if await self.state.handle(event):
+                # message = f"({self.context.encounter.id}) Handling {event.type.value} [{event.get_type_specific_args()}] event in state {self.state.state_type.value}"
+                # self.logger.log(self.context.encounter.guild_id, message, self.log_name)
                 await self.update()
 
     async def run(self):

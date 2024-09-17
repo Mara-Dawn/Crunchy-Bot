@@ -17,8 +17,6 @@ class TurnEndState(State):
         self.state_type: StateType = StateType.TURN_END
         self.next_state: StateType = None
 
-        self.reset_initiative = False
-
     async def startup(self):
         actor = self.context.current_actor
 
@@ -53,13 +51,13 @@ class TurnEndState(State):
         await self.common.check_actor_defeat(self.context)
 
         self.next_state = StateType.TURN_START
-        if self.context.initiative[-1] == actor or self.reset_initiative:
+        if self.context.initiative[-1] == actor or self.context.reset_initiative:
             self.next_state = StateType.ROUND_END
+            self.context.reset_initiative = False
 
         self.context._last_actor = self.context._current_actor
         self.context._current_initiative.rotate(-1)
         self.context._current_actor = self.context._current_initiative[0]
-        self.context._new_turn = True
 
         self.done = True
 
@@ -82,9 +80,6 @@ class TurnEndState(State):
                         await self.common.add_member_join_request(
                             encounter_event.member_id, self.context
                         )
-                    case EncounterEventType.ENEMY_PHASE_CHANGE:
-                        self.reset_initiative = True
-                        update = True
 
         return update
 

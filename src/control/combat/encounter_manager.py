@@ -143,10 +143,11 @@ class EncounterManager(Service):
             * Config.ENEMY_HEALTH_SCALING[effective_encounter_level]
             * Config.AVERAGE_PLAYER_POTENCY[effective_encounter_level]
         )
-        enemy_health *= pow(
-            Config.ENEMY_HEALTH_LVL_FALLOFF, (encounter_level - enemy.min_level)
-        )
-        enemy_health *= roll
+        if not enemy.is_boss:
+            enemy_health *= pow(
+                Config.ENEMY_HEALTH_LVL_FALLOFF, (encounter_level - enemy.min_level)
+            )
+            enemy_health *= roll
 
         return Encounter(guild_id, enemy.type, encounter_level, enemy_health)
 
@@ -197,5 +198,24 @@ class EncounterManager(Service):
             None,
             skill_data.skill.id,
             CombatEventType.MEMBER_TURN_ACTION,
+        )
+        await self.controller.dispatch_event(event)
+
+    async def combatant_timeout(
+        self,
+        context: EncounterContext,
+        character: Character,
+    ):
+        event = CombatEvent(
+            datetime.datetime.now(),
+            context.encounter.guild_id,
+            context.encounter.id,
+            character.id,
+            None,
+            None,
+            None,
+            None,
+            None,
+            CombatEventType.MEMBER_TURN_SKIP,
         )
         await self.controller.dispatch_event(event)

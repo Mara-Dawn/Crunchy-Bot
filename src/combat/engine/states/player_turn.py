@@ -69,6 +69,8 @@ class PlayerTurn(State):
                         if actor not in self.context.active_combatants:
                             self.context.active_combatants.append(actor)
                         update = True
+                    case EncounterEventType.ENEMY_PHASE_CHANGE:
+                        self.context.reset_initiative = True
             case EventType.COMBAT:
                 combat_event: CombatEvent = event
                 if combat_event.encounter_id != self.context.encounter.id:
@@ -87,6 +89,7 @@ class PlayerTurn(State):
                         )
                     case CombatEventType.MEMBER_TURN_SKIP:
                         await self.combatant_timeout()
+                        update = True
 
         return update
 
@@ -344,7 +347,7 @@ class PlayerTurn(State):
         return skill_value_data, embed_data
 
     async def combatant_timeout(self):
-        character = self.context.current_actor.id
+        character = self.context.current_actor
         context = self.context
 
         timeout_count = character.timeout_count

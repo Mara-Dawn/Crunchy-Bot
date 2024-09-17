@@ -56,7 +56,7 @@ class CombatGearManager(Service):
     MOB_LOOT_BONUS_SCALING = 1
     MOB_LOOT_UNIQUE_SCALING = 0.2
 
-    BOSS_PLUS_LEVEL_CHANCE = 0.25
+    BOSS_PLUS_LEVEL_CHANCE = 0.3
 
     MIN_RARITY_LVL = {
         Rarity.COMMON: 0,

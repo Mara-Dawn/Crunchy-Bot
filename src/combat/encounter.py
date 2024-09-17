@@ -106,6 +106,8 @@ class EncounterContext:
         self._initiated: bool = None
         self._concluded: bool = None
 
+        self.reset_initiative: bool = False
+
         self.refresh_initiative()
 
     def add_event(self, event: BotEvent):

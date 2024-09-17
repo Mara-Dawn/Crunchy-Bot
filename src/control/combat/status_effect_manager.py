@@ -342,12 +342,13 @@ class CombatStatusEffectManager(Service):
                     miss_chance = Config.BLIND_MISS_CHANCE
 
                     if actor.is_enemy and actor.enemy.is_boss:
-                        blind_count = context.get_applied_status_count(
-                            actor.id, StatusEffectType.BLIND
-                        )
-                        miss_chance *= pow(
-                            Config.BLIND_DIMINISHING_RETURNS, max(0, blind_count - 1)
-                        )
+                        miss_chance = Config.BLIND_BOSS_MISS_CHANCE
+                    #     blind_count = context.get_applied_status_count(
+                    #         actor.id, StatusEffectType.BLIND
+                    #     )
+                    #     miss_chance *= pow(
+                    #         Config.BLIND_DIMINISHING_RETURNS, max(0, blind_count - 1)
+                    #     )
 
                     modifier = 0 if roll < miss_chance else 1
                 case StatusEffectType.EVASIVE:
