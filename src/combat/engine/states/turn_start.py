@@ -39,7 +39,7 @@ class TurnStartState(State):
         elif actor.leaving:
             await self.skip_turn(
                 actor,
-                actor.context,
+                self.context,
                 f"{actor.name} has left the encounter and will be removed in the next round.",
             )
 
