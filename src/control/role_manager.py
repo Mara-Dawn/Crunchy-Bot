@@ -1,17 +1,17 @@
 import traceback
 
 import discord
-from datalayer.database import Database
 from discord.ext import commands
-from events.bot_event import BotEvent
-from events.inventory_event import InventoryEvent
-from events.types import EventType
-from items.types import ItemType
 
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
+from datalayer.database import Database
+from events.bot_event import BotEvent
+from events.inventory_event import InventoryEvent
+from events.types import EventType
+from items.types import ItemType
 
 
 class RoleManager(Service):
@@ -28,7 +28,9 @@ class RoleManager(Service):
     ):
         super().__init__(bot, logger, database)
         self.controller = controller
-        self.settings_manager = self.controller.get_service(SettingsManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
         self.log_name = "Roles"
 
     async def listen_for_event(self, event: BotEvent):
@@ -157,27 +159,27 @@ class RoleManager(Service):
         hex_value = int(custom_color, 16)
 
         color = discord.Color(hex_value)
-        user_items = await self.database.get_item_counts_by_user(guild_id, user_id)
+        name_token_count = None
 
-        name_token_count = 0
-
-        if ItemType.NAME_COLOR in user_items:
-            name_token_count = user_items[ItemType.NAME_COLOR]
+        if await self.settings_manager.get_beans_enabled(guild.id):
+            user_items = await self.database.get_item_counts_by_user(guild_id, user_id)
+            if ItemType.NAME_COLOR in user_items:
+                name_token_count = user_items[ItemType.NAME_COLOR]
 
         if custom_role_id is None:
-            if name_token_count <= 0:
+            if name_token_count is not None and name_token_count <= 0:
                 return
             custom_role = await self.create_custom_user_role(guild, member, color)
         else:
             custom_role = discord.utils.get(guild.roles, id=custom_role_id)
 
             if custom_role is None:
-                if name_token_count <= 0:
+                if name_token_count is not None and name_token_count <= 0:
                     return
                 await self.create_custom_user_role(guild, member, color)
                 return
 
-            if name_token_count <= 0:
+            if name_token_count is not None and name_token_count <= 0:
                 await custom_role.delete(reason="Member ran out of name color tokens.")
                 return
 

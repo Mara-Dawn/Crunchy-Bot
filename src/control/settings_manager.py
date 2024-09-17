@@ -81,6 +81,9 @@ class SettingsManager(Service):
     KARMA_SUBSETTINGS_KEY = "karma"
     KARMA_ENABLED_KEY = "karma_enabled"
 
+    MISC_SETTINGS_KEY = "misc"
+    MANUAL_NAME_COLOR_ENABLED_KEY = "manuial_name_color_enabled"
+
     def __init__(
         self,
         bot: commands.Bot,
@@ -307,6 +310,11 @@ class SettingsManager(Service):
         karma_settings = ModuleSettings(self.KARMA_SUBSETTINGS_KEY, "Karma")
         karma_settings.add_setting(self.KARMA_ENABLED_KEY, True, "Module Enabled")
 
+        misc_settings = ModuleSettings(self.MISC_SETTINGS_KEY, "Misc")
+        misc_settings.add_setting(
+            self.MANUAL_NAME_COLOR_ENABLED_KEY, False, "Manual Name Color Enabled"
+        )
+
         self.settings = GuildSettings()
         self.settings.add_module(general_settings)
         self.settings.add_module(police_settings)
@@ -317,6 +325,7 @@ class SettingsManager(Service):
         self.settings.add_module(prediction_settings)
         self.settings.add_module(combat_settings)
         self.settings.add_module(karma_settings)
+        self.settings.add_module(misc_settings)
 
     async def listen_for_event(self, event: BotEvent) -> None:
         pass
@@ -1225,5 +1234,20 @@ class SettingsManager(Service):
             guild_id,
             self.KARMA_SUBSETTINGS_KEY,
             self.KARMA_ENABLED_KEY,
+            enabled,
+        )
+
+    # Misc Settings
+
+    async def get_manual_name_color_enabled(self, guild_id: int) -> bool:
+        return await self.get_setting(
+            guild_id, self.MISC_SETTINGS_KEY, self.MANUAL_NAME_COLOR_ENABLED_KEY
+        )
+
+    async def set_manual_name_color_enabled(self, guild_id: int, enabled: bool) -> None:
+        await self.update_setting(
+            guild_id,
+            self.MISC_SETTINGS_KEY,
+            self.MANUAL_NAME_COLOR_ENABLED_KEY,
             enabled,
         )
