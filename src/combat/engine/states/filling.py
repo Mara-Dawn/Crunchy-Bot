@@ -62,6 +62,7 @@ class FillingState(State):
                         await self.common.add_member_to_encounter(
                             encounter_event.member_id, self.context
                         )
+                        update = True
                     case EncounterEventType.MEMBER_REQUEST_JOIN:
                         await self.common.add_member_join_request(
                             encounter_event.member_id, self.context
