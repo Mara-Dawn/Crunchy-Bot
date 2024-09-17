@@ -62,6 +62,7 @@ class FillingState(State):
                         await self.common.add_member_to_encounter(
                             encounter_event.member_id, self.context
                         )
+                        update = True
                     case EncounterEventType.MEMBER_REQUEST_JOIN:
                         await self.common.add_member_join_request(
                             encounter_event.member_id, self.context
@@ -73,6 +74,7 @@ class FillingState(State):
                         actor = self.context.get_actor_by_id(event.member_id)
                         if actor is not None:
                             self.context.combatants.remove(actor)
+                        update = True
         return update
 
     async def update(self):
@@ -83,8 +85,6 @@ class FillingState(State):
         )
         if len(participants) >= self.min_participants:
             self.done = True
-
-        self.done = True
 
     async def initiate_encounter(self):
         controller_type = self.context.opponent.enemy.controller

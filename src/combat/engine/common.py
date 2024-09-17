@@ -117,6 +117,14 @@ class CommonService(Service):
         embed.set_thumbnail(url=user.display_avatar.url)
         await self.discord.send_message(thread, content="", embed=embed)
 
+        combatant = await self.actor_manager.get_character(
+            user,
+            context.encounter_events,
+            context.combat_events,
+            context.status_effects,
+        )
+        context.combatants.append(combatant)
+
         encounters = await self.database.get_encounter_participants(encounter.guild_id)
         enemy = await self.factory.get_enemy(encounter.enemy_type)
         max_encounter_size = enemy.max_players
@@ -127,13 +135,6 @@ class CommonService(Service):
             event = UIEvent(UIEventType.COMBAT_FULL, encounter.id)
             await self.controller.dispatch_ui_event(event)
 
-        combatant = await self.actor_manager.get_character(
-            user,
-            context.encounter_events,
-            context.combat_events,
-            context.status_effects,
-        )
-        context.combatants.append(combatant)
         # context.refresh_initiative()
 
     async def add_member_join_request(self, member_id: int, context: EncounterContext):
