@@ -4,6 +4,9 @@ import traceback
 from typing import Literal  # noqa: UP035
 
 import discord
+from discord import ChannelType, app_commands
+from discord.ext import commands
+
 from bot import CrunchyBot
 from control.controller import Controller
 from control.event_manager import EventManager
@@ -13,8 +16,6 @@ from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.police_list import PoliceList
-from discord import ChannelType, app_commands
-from discord.ext import commands
 from events.jail_event import JailEvent
 from events.spam_event import SpamEvent
 from events.timeout_event import TimeoutEvent
@@ -48,6 +49,9 @@ class Police(commands.Cog):
         )
 
     async def __jail_check(self, guild_id: int, user: discord.Member):
+        if await self.settings_manager.get_jail_enabled(guild_id):
+            return None
+
         timeout_count = await self.database.get_timeout_tracker_count(guild_id, user.id)
         timeout_count_threshold = (
             await self.settings_manager.get_police_timeouts_before_jail(guild_id)

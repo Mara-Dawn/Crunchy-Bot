@@ -1,7 +1,8 @@
 import datetime
 import random
+import re
 import time
-from typing import Literal
+from typing import Callable, Literal
 
 import discord
 from discord import app_commands
@@ -21,6 +22,32 @@ from events.inventory_event import InventoryEvent
 from events.karma_event import KarmaEvent
 from items.types import ItemType
 from view.settings.view import UserSettingView
+
+
+class ColorInputModal(discord.ui.Modal):
+
+    def __init__(self, callback: Callable, default_color: str):
+        self.callback = callback
+        super().__init__(title="Choose a Name Color")
+        if default_color is not None:
+            default_color = f"#{default_color}"
+        self.hex_color = discord.ui.TextInput(
+            label="Hex Color Code", placeholder="#FFFFFF", default=default_color
+        )
+        self.add_item(self.hex_color)
+
+    # pylint: disable-next=arguments-differ
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        hex_string = self.hex_color.value
+        match = re.search(r"^#(?:[0-9a-fA-F]{3}){1,2}$", hex_string)
+        if not match:
+            await interaction.followup.send(
+                "Please enter a valid hex color value.", ephemeral=True
+            )
+            return
+
+        await self.callback(interaction, hex_string.lstrip("#"))
 
 
 class Chat(commands.Cog):
@@ -256,6 +283,62 @@ class Chat(commands.Cog):
             response,
             args=[user.display_name],
             ephemeral=False,
+        )
+
+    @app_commands.command(
+        name="name_color",
+        description="Set a custom name color for yourself.",
+    )
+    @app_commands.guild_only()
+    async def name_color(self, interaction: discord.Interaction):
+        guild_id = interaction.guild_id
+        member_id = interaction.user.id
+
+        log_message = (
+            f"{interaction.user.name} used command `{interaction.command.name}`."
+        )
+        self.logger.log(interaction.guild_id, log_message, cog=self.__cog_name__)
+
+        if not await self.settings_manager.get_manual_name_color_enabled(guild_id):
+            await interaction.response.send_message(
+                "Manual name color selection is disabled.", ephemeral=True
+            )
+            return
+
+        previous_color = await self.database.get_custom_color(guild_id, member_id)
+
+        modal = ColorInputModal(
+            self.apply_name_color,
+            previous_color,
+        )
+        await interaction.response.send_modal(modal)
+
+    async def apply_name_color(self, interaction: discord.Interaction, hex_color: str):
+        await self.database.log_custom_color(
+            interaction.guild_id, interaction.user.id, hex_color
+        )
+        await self.role_manager.update_username_color(
+            interaction.guild_id, interaction.user.id
+        )
+
+    @app_commands.command(
+        name="name_color_toggle",
+        description="Enable or disable manually selecting name color.",
+    )
+    @app_commands.describe(enabled="Turns the name color selection on or off.")
+    @app_commands.check(__has_permission)
+    @app_commands.guild_only()
+    async def name_color_toggle(
+        self, interaction: discord.Interaction, enabled: Literal["on", "off"]
+    ):
+        await self.settings_manager.set_manual_name_color_enabled(
+            interaction.guild_id, enabled == "on"
+        )
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"Name Color selection was turned {enabled}.",
+            args=[enabled],
         )
 
     @app_commands.command(
