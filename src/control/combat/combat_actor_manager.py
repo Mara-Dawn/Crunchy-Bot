@@ -367,6 +367,7 @@ class CombatActorManager(Service):
                     )
                     actor.current_hp = actor.max_hp
                     actor.enemy = new_enemy
+                    actor.image_url = new_enemy.image_url
                     actor.id -= phase + 10
                     actor.skill_stacks_used = {}
                     actor.status_effects = []
