@@ -22,7 +22,9 @@ class CountdownState(State):
         encounter = self.context.encounter
         thread = self.context.thread
         wait_time = Config.COMBAT_INITIAL_WAIT
-        round_embed = await self.embed_manager.get_initiation_embed(wait_time)
+        round_embed = await self.embed_manager.get_initiation_embed(
+            wait_time, self.context.opponent
+        )
         # will trigger the combat start on expiration
         view = GracePeriodView(self.controller, encounter, wait_time)
         message = await self.discord.send_message(

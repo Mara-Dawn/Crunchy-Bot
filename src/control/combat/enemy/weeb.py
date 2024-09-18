@@ -185,7 +185,7 @@ class WeebController(EnemyController):
             await self.defeat(context)
             encounter_event_type = EncounterEventType.ENEMY_DEFEAT
             embed = self.embed_manager.get_actor_defeated_embed(opponent)
-            await context.thread.send("", embed=embed)
+            await self.discord.append_embed_to_round(context, embed)
             guild_level = await self.database.get_guild_level(context.thread.guild.id)
             if guild_level == self.BOSS_LEVEL[opponent.enemy.type]:
                 guild_level += 1

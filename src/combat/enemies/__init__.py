@@ -271,7 +271,7 @@ class Scribbler(Enemy):
                 " It is extremely agressive, dangerous, and should be approached with caution."
             ),
             information="Dont say I didnt warn ya.",
-            image_url="https://i.imgur.com/E3ZCVU5.png",
+            image_url="",
             min_level=2,
             max_level=7,
             health=7,
@@ -752,7 +752,7 @@ class Daddy_P1(Enemy):
             min_level=3,
             max_level=3,
             health=7.3,
-            damage_scaling=11,
+            damage_scaling=12,
             max_players=6,
             min_encounter_scale=6,
             skill_types=[
@@ -788,7 +788,7 @@ class Daddy_P2(Enemy):
             min_level=3,
             max_level=3,
             health=7,
-            damage_scaling=11.5,
+            damage_scaling=12,
             max_players=6,
             min_encounter_scale=6,
             skill_types=[

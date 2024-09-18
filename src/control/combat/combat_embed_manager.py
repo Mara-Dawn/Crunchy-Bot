@@ -5,8 +5,9 @@ import datetime
 import discord
 from discord.ext import commands
 
-from combat.actors import Actor
+from combat.actors import Actor, Opponent
 from combat.encounter import Encounter, EncounterContext, TurnData
+from combat.enemies.enemy import Enemy
 from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect, SkillInstance
 from config import Config
@@ -239,7 +240,7 @@ class CombatEmbedManager(Service):
                     max_width=Config.ENEMY_MAX_WIDTH,
                 )
 
-        image_url = await self.get_custom_image(context.encounter)
+        image_url = context.opponent.image_url
         if image_url is None:
             image_url = enemy.image_url
         embed.set_image(url=image_url)
@@ -271,7 +272,7 @@ class CombatEmbedManager(Service):
 
         await self.encounter_statistics.add_to_embed(context, embed)
 
-        image_url = await self.get_custom_image(context.encounter)
+        image_url = context.opponent.image_url
         if image_url is None:
             image_url = enemy.image_url
         embed.set_image(url=image_url)
@@ -299,9 +300,7 @@ class CombatEmbedManager(Service):
         defeated_message = f"You were defeated by *{enemy.name}*."
         embed.add_field(name="Failure!", value=defeated_message, inline=False)
 
-        image_url = await self.get_custom_image(context.encounter)
-        if image_url is None:
-            image_url = enemy.image_url
+        image_url = context.opponent.image_url
         embed.set_image(url=image_url)
         if enemy.author is not None:
             embed.set_footer(text=f"by {enemy.author}")
@@ -678,7 +677,7 @@ class CombatEmbedManager(Service):
             embed.add_field(name="Reason", value=reason)
         return embed
 
-    async def get_waiting_for_party_embed(self, party_size: int):
+    async def get_waiting_for_party_embed(self, party_size: int, opponent: Opponent):
         embed = discord.Embed(
             title="Waiting for players to arrive.", color=discord.Colour.green()
         )
@@ -686,10 +685,10 @@ class CombatEmbedManager(Service):
         message = f"Combat will initiate after {party_size} players join."
         self.add_text_bar(embed, "", message)
 
-        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embed.set_thumbnail(url=opponent.image_url)
         return embed
 
-    async def get_initiation_embed(self, wait_time: float):
+    async def get_initiation_embed(self, wait_time: float, opponent: Opponent):
         embed = discord.Embed(title="Get Ready to Fight!", color=discord.Colour.green())
 
         now = datetime.datetime.now().timestamp()
@@ -701,7 +700,7 @@ class CombatEmbedManager(Service):
         text = "Waiting for players to join."
         self.add_text_bar(embed, "", text)
 
-        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embed.set_thumbnail(url=opponent.image_url)
         return embed
 
     async def get_round_embed(self, context: EncounterContext, cont: bool = False):
