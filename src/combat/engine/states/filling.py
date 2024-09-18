@@ -36,7 +36,7 @@ class FillingState(State):
             )
 
         wait_embed = await self.embed_manager.get_waiting_for_party_embed(
-            self.min_participants
+            self.min_participants, self.context.opponent
         )
         leave_view = None
         if not enemy.is_boss:

@@ -84,7 +84,7 @@ class CommonService(Service):
 
                 encounter_event_type = EncounterEventType.MEMBER_DEFEAT
                 embed = self.embed_manager.get_actor_defeated_embed(actor)
-                await self.discord.send_message(context.thread, content="", embed=embed)
+                await self.discord.append_embed_to_round(context, embed)
 
                 event = EncounterEvent(
                     datetime.datetime.now(),

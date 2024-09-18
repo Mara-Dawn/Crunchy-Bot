@@ -8,7 +8,7 @@ from combat.engine.types import StateType
 from control.controller import Controller
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
-from events.types import EncounterEventType, EventType
+from events.types import EncounterEventType
 from view.combat.engage_view import EnemyEngageView
 
 
@@ -53,6 +53,10 @@ class InitialState(State):
 
         view.set_message(message)
         encounter.id = encounter_id
+
+        self.context.opponent.image_url = await self.embed_manager.get_custom_image(
+            encounter
+        )
 
         self.context.encounter = encounter
         self.context_loader.context_cache[encounter_id] = self.context

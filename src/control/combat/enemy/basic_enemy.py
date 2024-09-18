@@ -21,7 +21,7 @@ class BasicEnemyController(EnemyController):
     async def on_defeat(self, context: EncounterContext, opponent: Opponent):
         encounter_event_type = EncounterEventType.ENEMY_DEFEAT
         embed = self.embed_manager.get_actor_defeated_embed(opponent)
-        await context.thread.send("", embed=embed)
+        await self.discord.append_embed_to_round(context, embed)
 
         event = EncounterEvent(
             datetime.datetime.now(),
