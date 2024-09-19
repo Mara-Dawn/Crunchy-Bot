@@ -308,3 +308,19 @@ class Stun(StatusEffect):
             display_status=True,
             override=True,
         )
+
+
+class PartyLeech(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.PARTY_LEECH,
+            name="Leech Seed",
+            description="You draw health from the enemy.",
+            trigger=[StatusEffectTrigger.END_OF_TURN],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="🌱",
+            damage_type=SkillEffect.HEALING,
+            display_status=True,
+            override=True,
+        )

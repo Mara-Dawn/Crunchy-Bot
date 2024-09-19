@@ -54,9 +54,9 @@ class InitialState(State):
         view.set_message(message)
         encounter.id = encounter_id
 
-        self.context.opponent.image_url = await self.embed_manager.get_custom_image(
-            encounter
-        )
+        custom_img = await self.embed_manager.get_custom_image(encounter)
+        if custom_img is not None:
+            self.context.opponent.image_url = custom_img
 
         self.context.encounter = encounter
         self.context_loader.context_cache[encounter_id] = self.context

@@ -1,3 +1,4 @@
+import datetime
 import importlib
 
 from combat.encounter import EncounterContext
@@ -31,6 +32,15 @@ class CountdownState(State):
             thread, content="", embed=round_embed, view=view
         )
         view.set_message(message)
+
+        # event = EncounterEvent(
+        #     datetime.datetime.now(),
+        #     encounter.guild_id,
+        #     encounter.id,
+        #     838500543546523678,
+        #     EncounterEventType.MEMBER_ENGAGE,
+        # )
+        # await self.controller.dispatch_event(event)
 
     async def handle(self, event: BotEvent) -> bool:
         update = False

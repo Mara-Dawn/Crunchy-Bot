@@ -601,6 +601,36 @@ class PhysicalMissile(BaseSkill):
         )
 
 
+class CoolCucumber(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Suspicious Cucumber",
+            skill_type=SkillType.COOL_CUCUMBER,
+            description=(
+                "A cucumber with a slight glazing of something along one of its ends. "
+                "It finds and inserts itself into the orifice of whatever it is aimed at with surprising ease. "
+                "It will implant a seed, that will siphon health from the enemy to all party members for a few turns."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=5,
+            base_value=3,
+            min_level=4,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.PARTY_LEECH,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            stacks=4,
+            reset_after_encounter=False,
+            image_url="https://i.imgur.com/eHO6xNE.jpeg",
+            author="Solris",
+        )
+
+
 class PocketSand(BaseSkill):
 
     def __init__(self):
@@ -2825,4 +2855,84 @@ class BratwurstBreak(BaseSkill):
             droppable=False,
             image_url="https://i.imgur.com/r9JxieA.png",
             author="Waldheld",
+        )
+
+
+class FurryHug(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="The Furry Hug",
+            skill_type=SkillType.FURRY_HUG,
+            description=(
+                "You feel your throat swelling up. The amount of fur that appeared "
+                "almost chokes you. Also your eyes start to tear. You can’t see shit anymore."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1,
+            aoe=True,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/9mhfVc1.jpeg",
+            author="Faye",
+        )
+
+
+class RoughLove(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Rough Love",
+            skill_type=SkillType.ROUGH_LOVE,
+            description=(
+                "Mango starts to shower you with her affection. "
+                "She starts to groom you and you can feel how your skin rips apart. "
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=1,
+            base_value=3,
+            aoe=False,
+            hits=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    3,
+                    StatusEffectApplication.ATTACK_VALUE,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/DIXSht4.jpeg",
+            author="Faye",
+        )
+
+
+class NoThankYou(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="No Thank You",
+            skill_type=SkillType.NO_THANK_YOU,
+            description=(
+                "You notice Mango rubbing around your legs when she suddenly stops. "
+                "She has had enough. The next thing you see is a polished claw aiming for your face."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            initial_cooldown=2,
+            cooldown=2,
+            base_value=4,
+            aoe=False,
+            hits=1,
+            droppable=False,
+            image_url="https://i.imgur.com/yhiC1w8.jpeg",
+            author="Faye",
         )
