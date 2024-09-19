@@ -5,6 +5,7 @@ from discord.ext import commands
 
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
+from combat.gear.types import CharacterAttribute
 from combat.skills.skill import Skill
 from combat.skills.status_effect import (
     ActiveStatusEffect,
@@ -120,6 +121,31 @@ class CombatStatusEffectManager(Service):
                     base_value = application_value * Config.BLEED_SCALING
 
                 damage = base_value
+            case StatusEffectType.PARTY_LEECH:
+                if source.is_enemy:
+                    opponent: Opponent = source
+                    level = opponent.level
+                    base_value = (
+                        Config.OPPONENT_DAMAGE_BASE[level]
+                        / opponent.enemy.damage_scaling
+                    )
+                    healing_modifier = opponent.enemy.attributes[
+                        CharacterAttribute.HEALING_BONUS
+                    ]
+                else:
+                    actor: Character = source
+                    level = actor.equipment.weapon.level
+                    base_value = Config.ENEMY_HEALTH_SCALING[level]
+                    healing_modifier = actor.equipment.attributes[
+                        CharacterAttribute.HEALING_BONUS
+                    ]
+
+                if application_value is not None:
+                    if application_value <= 0:
+                        return
+                    base_value = application_value * Config.LEECH_SCALING
+
+                damage = base_value * (1 + healing_modifier)
             case (
                 StatusEffectType.INSPIRED
                 | StatusEffectType.HEAL_OVER_TIME
@@ -315,6 +341,62 @@ class CombatStatusEffectManager(Service):
                         value = total_damage
                     else:
                         value = effect_data[effect_type].value + total_damage
+                case StatusEffectType.PARTY_LEECH:
+                    combatant_count = context.combat_scale
+                    healing = event.value
+                    total_healing = await self.actor_manager.get_damage_after_defense(
+                        actor, SkillEffect.HEALING, healing
+                    )
+
+                    scaled_healing = max(
+                        1, int(total_healing / len(context.active_combatants))
+                    )
+
+                    encounter_scaling = self.actor_manager.get_encounter_scaling(
+                        actor, combatant_count
+                    )
+                    scaled_damage = max(1, int(total_healing * encounter_scaling))
+
+                    bleed_event = CombatEvent(
+                        datetime.datetime.now(),
+                        context.encounter.guild_id,
+                        context.encounter.id,
+                        event.source_id,
+                        event.actor_id,
+                        StatusEffectType.BLEED,
+                        total_healing,
+                        scaled_damage,
+                        event.id,
+                        CombatEventType.STATUS_EFFECT_OUTCOME,
+                    )
+                    await self.controller.dispatch_event(bleed_event)
+
+                    for combatant in context.active_combatants:
+
+                        heal_event = CombatEvent(
+                            datetime.datetime.now(),
+                            context.encounter.guild_id,
+                            context.encounter.id,
+                            event.source_id,
+                            combatant.id,
+                            event.status_type,
+                            scaled_healing,
+                            scaled_healing,
+                            event.id,
+                            CombatEventType.STATUS_EFFECT_OUTCOME,
+                        )
+                        await self.controller.dispatch_event(heal_event)
+
+                    if effect_type not in effect_data:
+                        value = (total_healing, scaled_healing)
+                    else:
+                        combined_damage = (
+                            effect_data[effect_type].value[0] + total_healing
+                        )
+                        combined_healing = (
+                            effect_data[effect_type].value[1] + scaled_healing
+                        )
+                        value = (combined_damage, combined_healing)
                 case StatusEffectType.HEAL_OVER_TIME:
                     healing = int(event.value)
                     event = CombatEvent(
@@ -468,6 +550,8 @@ class CombatStatusEffectManager(Service):
                     )
                 case StatusEffectType.HEAL_OVER_TIME:
                     description = f"{actor.name} heals for {outcome.value} hp."
+                case StatusEffectType.PARTY_LEECH:
+                    description = f"{actor.name} suffers {outcome.value[0]} damage.\nEveryone heals for {outcome.value[1]} hp."
                 case StatusEffectType.POISON:
                     description = f"{actor.name} suffers {outcome.value} poison damage."
                 case StatusEffectType.BLIND:

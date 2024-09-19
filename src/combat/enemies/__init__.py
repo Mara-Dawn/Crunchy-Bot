@@ -737,6 +737,33 @@ class SausageButcher(Enemy):
         )
 
 
+class MangoTheCat(Enemy):
+    def __init__(self):
+        super().__init__(
+            name="Mango the Cat",
+            type=EnemyType.MANGO_THE_CAT,
+            description=("A small, cute, grey, fluffy Cat."),
+            information="",
+            image_url="https://i.imgur.com/BazMNtB.jpeg",
+            min_level=4,
+            max_level=6,
+            health=7,
+            damage_scaling=5.5,
+            max_players=5,
+            skill_types=[
+                SkillType.FURRY_HUG,
+                SkillType.ROUGH_LOVE,
+                SkillType.NO_THANK_YOU,
+            ],
+            item_loot_table=GENERAL_LOOT,
+            gear_loot_table=[],
+            skill_loot_table=[],
+            initiative=35,
+            actions_per_turn=1,
+            author="Faye",
+        )
+
+
 # Bosses
 
 

@@ -23,6 +23,8 @@ class StatusEffectType(str, Enum):
     HEAL_OVER_TIME = "HealOverTime"
     FROST = "Frost"
 
+    PARTY_LEECH = "PartyLeech"
+
     FROGGED = "Frogged"
     STUN = "Stun"
 
@@ -49,6 +51,7 @@ class SkillType(str, Enum):
     GIGA_BONK = "GigaBonk"
     GENERATIONAL_SLIPPER = "GenerationalSlipper"
     SLICE_N_DICE = "SliceAndDice"
+    COOL_CUCUMBER = "CoolCucumber"
 
     # Neutral
     POCKET_SAND = "PocketSand"
@@ -188,6 +191,11 @@ class SkillType(str, Enum):
     BIG_SALAMI = "BigSalami"
     WIENER_BOMB = "WienerBomb"
     BRATWURST_BREAK = "BratwurstBreak"
+
+    # Mango the Cat
+    FURRY_HUG = "FurryHug"
+    ROUGH_LOVE = "RoughLove"
+    NO_THANK_YOU = "NoThankYou"
 
     # Daddy
     HAIR_PULL = "HairPull"

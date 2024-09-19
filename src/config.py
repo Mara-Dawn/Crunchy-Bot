@@ -46,10 +46,10 @@ class Config:
         1: 2,
         2: 2.2,
         3: 2.4,
-        4: 2.65,
-        5: 2.9,
-        6: 3.15,
-        7: 3.5,
+        4: 2.6,
+        5: 2.8,
+        6: 3,
+        7: 3.2,
     }
 
     CHARACTER_BASE_INITIATIVE = 10
@@ -66,6 +66,7 @@ class Config:
 
     # Status Effects
     BLEED_SCALING = 0.25
+    LEECH_SCALING = 0.20
     POISON_SCALING = 0.15
     FROST_PENALTY = 5
     BLIND_MISS_CHANCE = 0.35
