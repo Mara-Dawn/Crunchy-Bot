@@ -158,6 +158,7 @@ class CatHead(HeadGear_T2, Unique):
             self,
             unique_modifiers={
                 GearModifierType.ARMOR: 0.5,
+                GearModifierType.CONSTITUTION: -0.5,
                 GearModifierType.EVASION: 1,
                 GearModifierType.MAGIC: 1.5,
                 GearModifierType.ATTACK: 1.5,
@@ -180,6 +181,7 @@ class CatLegs(LegGear_T2, Unique):
             self,
             unique_modifiers={
                 GearModifierType.ARMOR: 0.5,
+                GearModifierType.CONSTITUTION: -0.5,
                 GearModifierType.EVASION: 1,
                 GearModifierType.MAGIC: 1.5,
                 GearModifierType.ATTACK: 1.5,
@@ -202,6 +204,7 @@ class CatTail(Necklace_T2_1, Unique):
             self,
             unique_modifiers={
                 GearModifierType.DEXTERITY: 3,
+                GearModifierType.CONSTITUTION: -0.5,
                 GearModifierType.EVASION: 1,
                 GearModifierType.MAGIC: 1.5,
                 GearModifierType.ATTACK: 1.5,
@@ -224,6 +227,7 @@ class CatHands(Necklace_T2_2, Unique):
             self,
             unique_modifiers={
                 GearModifierType.DEXTERITY: 3,
+                GearModifierType.CONSTITUTION: -0.5,
                 GearModifierType.EVASION: 1,
                 GearModifierType.MAGIC: 1.5,
                 GearModifierType.ATTACK: 1.5,
