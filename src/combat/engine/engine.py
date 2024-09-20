@@ -116,7 +116,8 @@ class Engine:
             self.done = True
         elif self.state.done:
             await self.state_transition()
-        await self.state.update()
+        else:
+            await self.state.update()
 
     async def handle(self, event: BotEvent):
         if not self.done:
