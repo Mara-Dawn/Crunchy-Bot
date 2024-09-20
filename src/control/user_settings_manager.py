@@ -8,7 +8,7 @@ from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
 from control.settings_manager import SettingsManager
-from control.types import SkillRefreshOption, UserSettingType
+from control.types import SkillRefreshOption, UserSettingsToggle, UserSettingType
 from datalayer.database import Database
 from datalayer.settings import UserSetting
 from events.bot_event import BotEvent
@@ -41,6 +41,17 @@ class UserSettingsManager(Service):
             UserSettingType.get_title(UserSettingType.REFRESH_SKILLS),
             "Refresh skills automatically after depleting all uses.",
         ),
+        UserSettingType.DM_PING: UserSetting(
+            UserSettingType.DM_PING,
+            UserSettingsToggle,
+            {
+                "Enabled": UserSettingsToggle.ENABLED,
+                "Disabled": UserSettingsToggle.DISABLED,
+            },
+            UserSettingsToggle.DISABLED,
+            UserSettingType.get_title(UserSettingType.DM_PING),
+            "Recieve a notification dm after 30s of combat inactivity on your turn.",
+        ),
     }
 
     def __init__(
@@ -71,13 +82,17 @@ class UserSettingsManager(Service):
 
         setting = self.SETTINGS[setting_type]
         try:
-            value = setting.value_type(value)
+            cast_value = setting.value_type(value)
         except TypeError:
             return False
 
         match setting_type:
-            case UserSettingType.AUTO_SCRAP | UserSettingType.REFRESH_SKILLS:
-                return value in setting.options.values()
+            case (
+                UserSettingType.AUTO_SCRAP
+                | UserSettingType.REFRESH_SKILLS
+                | UserSettingType.DM_PING
+            ):
+                return cast_value in setting.options.values()
             case UserSettingType.GAMBA_DEFAULT:
                 beans_gamba_min = await self.settings_manager.get_beans_gamba_min(
                     guild_id
@@ -85,7 +100,7 @@ class UserSettingsManager(Service):
                 beans_gamba_max = await self.settings_manager.get_beans_gamba_max(
                     guild_id
                 )
-                return value >= beans_gamba_min and value <= beans_gamba_max
+                return cast_value >= beans_gamba_min and cast_value <= beans_gamba_max
 
     async def get(self, member_id: int, guild_id: int, setting_type: UserSettingType):
         setting = self.SETTINGS[setting_type]
@@ -93,7 +108,7 @@ class UserSettingsManager(Service):
             member_id, guild_id, setting_type
         )
         if user_value is None:
-            user_value = setting.default
+            return setting.default
 
         try:
             return setting.value_type(user_value)

@@ -16,6 +16,7 @@ from combat.skills.types import (
 )
 from config import Config
 from control.controller import Controller
+from control.types import UserSettingsToggle, UserSettingType
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
@@ -33,7 +34,16 @@ class PlayerTurn(State):
         actor = self.context.current_actor
         embeds = await self.embed_manager.get_character_turn_embeds(self.context)
 
-        view = await CombatTurnView.create(self.controller, actor, self.context)
+        dm_ping_enabled = (
+            await self.user_settings_manager.get(
+                actor.id, self.context.encounter.guild_id, UserSettingType.DM_PING
+            )
+            == UserSettingsToggle.ENABLED
+        )
+
+        view = await CombatTurnView.create(
+            self.controller, actor, self.context, dm_ping_enabled
+        )
 
         message = await self.discord.send_message(
             self.context.thread,

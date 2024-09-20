@@ -292,6 +292,10 @@ class CombatViewController(ViewController):
                 character = event.payload[0]
                 context = event.payload[1]
                 await self.player_timeout(character, context)
+            case UIEventType.COMBAT_DM_PING:
+                character = event.payload[0]
+                context = event.payload[1]
+                await self.player_dm_ping(character, context)
             case UIEventType.COMBAT_INITIATE:
                 encounter = event.payload
                 await self.initiate_encounter(encounter)
@@ -401,6 +405,18 @@ class CombatViewController(ViewController):
             await self.encounter_manager.combatant_turn(context, character, skill_data)
 
             self.controller.detach_view_by_id(view_id)
+
+    async def player_dm_ping(
+        self,
+        character: Character,
+        context: EncounterContext,
+    ):
+        message = (
+            f"It's your turn in the level {context.encounter.enemy_level} encounter "
+            f"**{context.opponent.enemy.name}** on **{character.member.guild.name}**. Don't miss it!\n"
+            f"<#{context.thread.id}>"
+        )
+        await character.member.send(message)
 
     async def player_timeout(
         self,

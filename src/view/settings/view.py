@@ -45,6 +45,11 @@ class UserSettingView(ViewMenu):
             UserSettingsManager
         )
 
+        self.definitions: list[UserSetting] = [
+            self.user_settings_manager.get_definition(setting_type)
+            for setting_type in UserSettingType
+        ]
+
         self.controller_type = ControllerType.USER_SETTING
         self.controller.register_view(self)
         self.refresh_elements()
@@ -84,7 +89,9 @@ class UserSettingView(ViewMenu):
 
     def refresh_elements(self, disabled: bool = False):
         self.clear_items()
-        self.add_item(SettingsDropdown(self.selected, disabled=disabled))
+        self.add_item(
+            SettingsDropdown(self.definitions, self.selected, disabled=disabled)
+        )
 
         match self.state:
             case UserSettingsViewState.EDIT:
@@ -259,20 +266,21 @@ class SettingsDropdown(discord.ui.Select):
 
     def __init__(
         self,
+        definitions: list[UserSetting],
         selected: UserSettingType | None,
         disabled: bool = False,
     ):
 
         options = []
 
-        for setting_type in UserSettingType:
-            name = UserSettingType.get_title(setting_type)
+        for setting in definitions:
+            name = setting.title
 
             option = discord.SelectOption(
                 label=name,
-                description="",
-                value=setting_type.value,
-                default=(setting_type == selected),
+                description=setting.description,
+                value=setting.setting_type.value,
+                default=(setting.setting_type == selected),
             )
             options.append(option)
 

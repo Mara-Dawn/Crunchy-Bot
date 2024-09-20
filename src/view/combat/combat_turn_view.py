@@ -1,4 +1,6 @@
+import asyncio
 import contextlib
+import datetime
 
 import discord
 
@@ -21,7 +23,19 @@ class CombatTurnView(ViewMenu):
         controller: Controller,
         character: Character,
         context: EncounterContext,
+        dm_pings_enabled: bool,
     ):
+        self.dm_pings_enabled = dm_pings_enabled
+
+        self.__timeout_task = None
+        if dm_pings_enabled:
+            dm_timeout = datetime.datetime.now() + datetime.timedelta(
+                seconds=Config.DM_PING_TIMEOUT
+            )
+            self.__timeout_task = asyncio.create_task(
+                self.__dm_ping_timeout_task(dm_timeout)
+            )
+
         if character.timeout_count == 0:
             timeout = Config.DEFAULT_TIMEOUT
         else:
@@ -33,6 +47,7 @@ class CombatTurnView(ViewMenu):
         self.context = context
         self.member_id = character.member.id
         self.blocked = False
+        self.done = False
 
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
@@ -47,13 +62,33 @@ class CombatTurnView(ViewMenu):
         controller: Controller,
         character: Character,
         context: EncounterContext,
+        dm_pings_enabled: bool,
     ):
-        view = cls(controller, character, context)
+        view = cls(controller, character, context, dm_pings_enabled)
         for skill in character.skills:
             skill_data = await view.skill_manager.get_skill_data(character, skill)
             view.add_item(SkillButton(skill_data))
 
         return view
+
+    async def __dm_ping_timeout_task(self, dm_timeout: datetime.datetime) -> None:
+        while True:
+            if self.done:
+                return
+
+            now = datetime.datetime.now()
+            if now >= dm_timeout:
+                event = UIEvent(
+                    UIEventType.COMBAT_DM_PING,
+                    (self.character, self.context),
+                    self.id,
+                )
+                await self.controller.dispatch_ui_event(event)
+                return
+
+            sleep = dm_timeout - now
+
+            await asyncio.sleep(sleep.total_seconds())
 
     async def listen_for_ui_event(self, event: UIEvent):
         if event.view_id != self.id:
@@ -72,6 +107,8 @@ class CombatTurnView(ViewMenu):
 
         if self.blocked:
             return
+
+        self.done = True
 
         event = UIEvent(
             UIEventType.COMBAT_USE_SKILL,
