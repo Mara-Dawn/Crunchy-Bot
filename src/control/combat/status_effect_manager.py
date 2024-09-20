@@ -824,7 +824,7 @@ class CombatStatusEffectManager(Service):
                         current_actor.id,
                         current_actor.id,
                         StatusEffectType.POISON,
-                        damage,
+                        damage_display,
                         damage_display,
                         None,
                         CombatEventType.STATUS_EFFECT_OUTCOME,
