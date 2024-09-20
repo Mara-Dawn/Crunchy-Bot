@@ -5,14 +5,21 @@ class UserSettingType(str, Enum):
     GAMBA_DEFAULT = "gamba_default"
     AUTO_SCRAP = "auto_scrap"
     REFRESH_SKILLS = "refresh_skills"
+    DM_PING = "dm_ping"
 
     def get_title(option: "UserSettingType") -> str:
         title_map = {
             UserSettingType.GAMBA_DEFAULT: "Default Gamba Amount",
             UserSettingType.AUTO_SCRAP: "Auto Scrap Level",
             UserSettingType.REFRESH_SKILLS: "Auto Replenish Skills of Same Type",
+            UserSettingType.DM_PING: "DM combat notifications",
         }
         return title_map[option]
+
+
+class UserSettingsToggle(str, Enum):
+    DISABLED = "disabled"
+    ENABLED = "enabled"
 
 
 class SkillRefreshOption(str, Enum):

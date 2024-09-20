@@ -4,6 +4,9 @@ import re
 import typing
 
 import discord
+from discord import NotFound, Webhook, app_commands
+from discord.ext import commands
+
 from bot import CrunchyBot
 from control.ai_manager import AIManager
 from control.controller import Controller
@@ -14,8 +17,6 @@ from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.types import ItemTrigger
-from discord import NotFound, Webhook, app_commands
-from discord.ext import commands
 from events.inventory_event import InventoryEvent
 from items.types import ItemGroup, ItemType
 
@@ -72,6 +73,16 @@ class Bully(commands.Cog):
         ):
             return
 
+        if message.channel.id in await self.settings_manager.get_haunt_channels(
+            guild_id
+        ):
+            active_jails = await self.database.get_active_jails_by_member(
+                guild_id, message.author.id
+            )
+            if len(active_jails) > 0:
+                await self.in_jail_message(message)
+                return
+
         user_items = await self.item_manager.get_guild_items_activated(
             guild_id, ItemTrigger.USER_MESSAGE
         )
@@ -121,6 +132,39 @@ class Bully(commands.Cog):
                     if roll < chance:
                         await self.modify_message(item.type, message)
                     return
+
+    async def in_jail_message(self, message: discord.Message):
+        content = message.content
+        original_message = content
+        channel = message.channel
+        author = message.author
+        attachments = message.attachments
+
+        new_content = f"\nThis user is currently in Jail. You may choose to still read their message.\n ||{original_message}||"
+
+        if channel.id not in self.webhooks:
+            webhooks = await message.channel.webhooks()
+            if webhooks is not None:
+                if len(webhooks) > 1:
+                    for webhook in webhooks:
+                        await webhook.delete()
+                elif len(webhooks) == 1:
+                    self.webhooks[channel.id] = webhooks[0]
+            if channel.id not in self.webhooks:
+                self.webhooks[channel.id] = await channel.create_webhook(
+                    name="Possession"
+                )
+
+        files = [await attachment.to_file() for attachment in attachments]
+
+        await self.webhooks[channel.id].send(
+            content=new_content,
+            username=author.display_name,
+            avatar_url=author.display_avatar,
+            files=files,
+        )
+
+        await message.delete()
 
     async def modify_message(self, item_type: ItemType, message: discord.Message):
         content = message.content

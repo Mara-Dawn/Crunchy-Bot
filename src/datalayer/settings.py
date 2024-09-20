@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Type
+from typing import Any, Type, TypeVar
 
 from control.types import UserSettingType
 
@@ -63,9 +63,10 @@ class GuildSettings:
 
 @dataclass
 class UserSetting:
+    T = TypeVar("T")
     setting_type: UserSettingType
-    value_type: type
-    options: dict[str, Any] | None
-    default: Any
+    value_type: T
+    options: dict[str, T] | None
+    default: T
     title: str
     description: str

@@ -192,6 +192,7 @@ class UIEventType(str, Enum):
     COMBAT_APPROVE = "combat_approve"
     COMBAT_INITIATE = "combat_initiate"
     COMBAT_USE_SKILL = "combat_use_skill"
+    COMBAT_DM_PING = "combat_dm_ping"
     COMBAT_TIMEOUT = "combat_timeout"
     COMBAT_FULL = "combat_full"
 
