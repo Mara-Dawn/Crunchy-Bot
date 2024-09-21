@@ -760,7 +760,7 @@ class MangoTheCat(Enemy):
             skill_loot_table=[],
             initiative=35,
             actions_per_turn=1,
-            author="Faye",
+            author="Feye",
         )
 
 

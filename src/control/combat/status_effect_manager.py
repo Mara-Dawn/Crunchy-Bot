@@ -80,7 +80,7 @@ class CombatStatusEffectManager(Service):
                 StatusEffectType.POISON,
             ]
 
-            chance_for_positive = 0.15
+            chance_for_positive = Config.RANDOM_POSITIVE_CHANCE
             if random.random() < chance_for_positive:
                 type = random.choice(random_positive_effect)
             else:
@@ -569,9 +569,7 @@ class CombatStatusEffectManager(Service):
                     description = f"{actor.name}'s attacks are half as effective!"
                 case StatusEffectType.FEAR:
                     if outcome.modifier is not None:
-                        description = (
-                            f"{actor.name}'s fear increases their damage taken."
-                        )
+                        description = "The consumed fear increases the damage taken."
                 case StatusEffectType.HIGH:
                     description = f"{actor.name} is blazed out of their mind causing unexpected skill outcomes."
                 case StatusEffectType.RAGE_QUIT:
@@ -667,10 +665,6 @@ class CombatStatusEffectManager(Service):
     ) -> StatusEffectOutcome:
         skill_effect = skill.base_skill.skill_effect
 
-        for active_actor in context.current_initiative:
-            if active_actor.id == actor.id:
-                actor = active_actor
-
         triggered_status_effects = await self.actor_trigger(
             context, actor, StatusEffectTrigger.ON_ATTACK
         )
@@ -690,7 +684,8 @@ class CombatStatusEffectManager(Service):
         combined = self.combine_outcomes(outcomes.values(), embed_data)
 
         if not skill.base_skill.modifiable:
-            combined.modifier = max(1, combined.modifier)
+            if combined.modifier is not None:
+                combined.modifier = max(1, combined.modifier)
             combined.crit_chance = None
             combined.crit_chance_modifier = None
 
@@ -703,10 +698,6 @@ class CombatStatusEffectManager(Service):
         skill: Skill,
     ) -> StatusEffectOutcome:
         skill_effect = skill.base_skill.skill_effect
-
-        for active_actor in context.current_initiative:
-            if active_actor.id == actor.id:
-                actor = active_actor
 
         if skill_effect in [
             SkillEffect.NOTHING,
