@@ -443,6 +443,8 @@ class Eli(Enemy):
             item_loot_table=GENERAL_LOOT,
             gear_loot_table=[],
             skill_loot_table=[],
+            min_gear_drop_count=5,
+            max_gear_drop_count=6,
             initiative=10,
             actions_per_turn=2,
             author="Lusa",
@@ -760,7 +762,7 @@ class MangoTheCat(Enemy):
             skill_loot_table=[],
             initiative=35,
             actions_per_turn=1,
-            author="Faye",
+            author="Feye",
         )
 
 

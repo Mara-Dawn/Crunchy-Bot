@@ -1,5 +1,8 @@
+import contextlib
 import datetime
 import importlib
+
+import discord
 
 from combat.encounter import EncounterContext
 from combat.engine.states.state import State
@@ -20,6 +23,7 @@ class CountdownState(State):
         self.next_state: StateType = StateType.ROUND_START
 
     async def startup(self):
+
         encounter = self.context.encounter
         thread = self.context.thread
         wait_time = Config.COMBAT_INITIAL_WAIT
@@ -32,6 +36,9 @@ class CountdownState(State):
             thread, content="", embed=round_embed, view=view
         )
         view.set_message(message)
+        self.message = message
+
+        await self.check_filled()
 
         # event = EncounterEvent(
         #     datetime.datetime.now(),
@@ -60,15 +67,32 @@ class CountdownState(State):
                         await self.common.add_member_to_encounter(
                             encounter_event.member_id, self.context
                         )
+                        await self.check_filled()
                     case EncounterEventType.MEMBER_REQUEST_JOIN:
                         await self.common.add_member_join_request(
                             encounter_event.member_id, self.context
                         )
+                    case EncounterEventType.MEMBER_DISENGAGE:
+                        actor = self.context.get_actor_by_id(event.member_id)
+                        if actor is not None:
+                            self.context.combatants.remove(actor)
+                        update = True
 
         return update
 
     async def update(self):
         pass
+
+    async def check_filled(self):
+        if len(self.context.combatants) >= self.context.opponent.enemy.max_players:
+            event = EncounterEvent(
+                datetime.datetime.now(),
+                self.context.encounter.guild_id,
+                self.context.encounter.id,
+                self.bot.user.id,
+                EncounterEventType.INITIATE,
+            )
+            await self.controller.dispatch_event(event)
 
     async def initiate_encounter(self):
         controller_type = self.context.opponent.enemy.controller
@@ -90,6 +114,9 @@ class CountdownState(State):
                 and actor not in self.context.active_combatants
             ):
                 self.context.active_combatants.append(actor)
+
+        with contextlib.suppress(discord.NotFound):
+            await self.message.delete()
 
         self.context._initiated = True
         self.done = True

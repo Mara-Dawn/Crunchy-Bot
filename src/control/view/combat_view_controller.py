@@ -306,6 +306,9 @@ class CombatViewController(ViewController):
                 await self.handle_special_drop_claim(
                     interaction, encounter_id, item, event.view_id
                 )
+            case UIEventType.COMBAT_DISAPPEAR:
+                context = event.payload
+                await self.combat_disappear(context)
 
     async def initiate_encounter(self, encounter: Encounter):
         context = await self.context_loader.load_encounter_context(encounter.id)
@@ -405,6 +408,23 @@ class CombatViewController(ViewController):
             await self.encounter_manager.combatant_turn(context, character, skill_data)
 
             self.controller.detach_view_by_id(view_id)
+
+    async def combat_disappear(
+        self,
+        context: EncounterContext,
+    ):
+        event = EncounterEvent(
+            datetime.datetime.now(),
+            context.encounter.guild_id,
+            context.encounter.id,
+            self.bot.user.id,
+            EncounterEventType.END,
+        )
+        await self.controller.dispatch_event(event)
+
+        if context.thread is not None:
+            embed = self.embed_manager.get_fight_disappear_embed(context)
+            await context.thread.send("", embed=embed)
 
     async def player_dm_ping(
         self,

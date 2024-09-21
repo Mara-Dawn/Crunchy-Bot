@@ -658,6 +658,20 @@ class CombatEmbedManager(Service):
             embed.add_field(name="Reason", value=reason)
         return embed
 
+    def get_fight_disappear_embed(self, context: EncounterContext) -> discord.Embed:
+        content = "This encounter timed out and is no longer available."
+
+        embed = discord.Embed(
+            title="", description="", color=discord.Colour.light_grey()
+        )
+        embed.set_author(
+            name=self.bot.user.display_name, icon_url=self.bot.user.display_avatar.url
+        )
+        self.add_text_bar(embed, "", content)
+
+        embed.set_thumbnail(url=context.opponent.image_url)
+        return embed
+
     def get_turn_skip_embed(
         self, actor: Actor, reason: str, context: EncounterContext
     ) -> discord.Embed:

@@ -43,22 +43,7 @@ class Engine:
             LootPayoutState,
             PostEncounterState,
         }
-        # self.state_dict: dict[StateType:Callable] = {
-        #     StateType.INITIAL: InitialState,
-        #     StateType.WAITING: WaitingState,
-        #     StateType.FILLING: FillingState,
-        #     StateType.COUNTDOWN: CountdownState,
-        #     StateType.ROUND_START: RoundStartState,
-        #     StateType.ROUND_END: RoundEndState,
-        #     StateType.TURN_START: TurnStartState,
-        #     StateType.PLAYER_TURN: PlayerTurn,
-        #     StateType.OPPONENT_TURN: OpponentTurnState,
-        #     StateType.TURN_END: TurnEndState,
-        #     StateType.END_SUCCESS: EndSuccessState,
-        #     StateType.END_FAILED: EndFailedState,
-        #     StateType.LOOT_PAYOUT: LootPayoutState,
-        #     StateType.POST_ENCOUNTER: PostEncounterState,
-        # }
+
         self.states: dict[StateType:Callable] = {}
 
         for element in self.state_init:
@@ -125,8 +110,6 @@ class Engine:
                 return
 
             if await self.state.handle(event):
-                # message = f"({self.context.encounter.id}) Handling {event.type.value} [{event.get_type_specific_args()}] event in state {self.state.state_type.value}"
-                # self.logger.log(self.context.encounter.guild_id, message, self.log_name)
                 await self.update()
 
     async def run(self):

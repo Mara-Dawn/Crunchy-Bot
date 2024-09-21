@@ -1,6 +1,6 @@
 import datetime
-from collections import Counter
 import random
+from collections import Counter
 from typing import Literal
 
 import discord
@@ -184,11 +184,11 @@ class Combat(commands.Cog):
             if guild.id not in self.enemy_timers:
                 continue
 
-            current_time = datetime.datetime.now()
-            if current_time < self.enemy_timers[guild.id]:
+            if not await self.settings_manager.get_combat_enabled(guild.id):
                 continue
 
-            if not await self.settings_manager.get_combat_enabled(guild.id):
+            current_time = datetime.datetime.now()
+            if current_time < self.enemy_timers[guild.id]:
                 continue
 
             start_hour = await self.settings_manager.get_combat_max_lvl_start(guild.id)

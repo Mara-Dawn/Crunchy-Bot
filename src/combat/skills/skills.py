@@ -1537,7 +1537,7 @@ class FatAss(BaseSkill):
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.BLIND,
-                    3,
+                    1,
                 )
             ],
             droppable=False,
@@ -2882,7 +2882,7 @@ class FurryHug(BaseSkill):
             ],
             droppable=False,
             image_url="https://i.imgur.com/9mhfVc1.jpeg",
-            author="Faye",
+            author="Feye",
         )
 
 
@@ -2911,7 +2911,7 @@ class RoughLove(BaseSkill):
             ],
             droppable=False,
             image_url="https://i.imgur.com/DIXSht4.jpeg",
-            author="Faye",
+            author="Feye",
         )
 
 
@@ -2934,5 +2934,5 @@ class NoThankYou(BaseSkill):
             hits=1,
             droppable=False,
             image_url="https://i.imgur.com/yhiC1w8.jpeg",
-            author="Faye",
+            author="Feye",
         )
