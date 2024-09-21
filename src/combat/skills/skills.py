@@ -708,8 +708,8 @@ class PartyDrugs(BaseSkill):
             skill_type=SkillType.PARTY_DRUGS,
             description=(
                 "This stuff will make you taste colours and see things you cant even imagine when sober! "
-                "You take a hit and immediately fire a purple-green beam of magical vomit at your enemy. "
-                "You are high for the next 3 turns."
+                "You take a pill and immediately fire a purple-green beam of magical vomit at your enemy. "
+                "You are high for the next 3 turns, ramdomly modifying your attacks."
             ),
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,

@@ -126,12 +126,13 @@ class EnemyEngageView(ViewMenu):
         return True
 
     async def on_timeout(self):
-        event = UIEvent(
-            UIEventType.COMBAT_DISAPPEAR,
-            self.context,
-            self.id,
-        )
-        await self.controller.dispatch_ui_event(event)
+        if not self.done:
+            event = UIEvent(
+                UIEventType.COMBAT_DISAPPEAR,
+                self.context,
+                self.id,
+            )
+            await self.controller.dispatch_ui_event(event)
         with contextlib.suppress(discord.NotFound):
             await self.message.delete()
         self.controller.detach_view(self)
