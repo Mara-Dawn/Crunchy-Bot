@@ -1537,7 +1537,7 @@ class FatAss(BaseSkill):
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.BLIND,
-                    3,
+                    1,
                 )
             ],
             droppable=False,
