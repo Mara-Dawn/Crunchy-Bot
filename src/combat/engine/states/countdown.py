@@ -64,6 +64,11 @@ class CountdownState(State):
                         await self.common.add_member_join_request(
                             encounter_event.member_id, self.context
                         )
+                    case EncounterEventType.MEMBER_DISENGAGE:
+                        actor = self.context.get_actor_by_id(event.member_id)
+                        if actor is not None:
+                            self.context.combatants.remove(actor)
+                        update = True
 
         return update
 
