@@ -194,7 +194,7 @@ class UIEventType(str, Enum):
     COMBAT_USE_SKILL = "combat_use_skill"
     COMBAT_DM_PING = "combat_dm_ping"
     COMBAT_TIMEOUT = "combat_timeout"
-    COMBAT_FULL = "combat_full"
+    COMBAT_DISAPPEAR = "combat_disappear"
 
     CLAIM_SPECIAL_DROP = "claim_special_drop"
 

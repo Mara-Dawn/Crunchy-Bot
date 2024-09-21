@@ -3,7 +3,7 @@ import datetime
 
 import discord
 
-from combat.enemies.enemy import Enemy
+from combat.encounter import EncounterContext
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -15,17 +15,17 @@ class EnemyEngageView(ViewMenu):
 
     DEFAULT_TIMEOUT = 60 * 60
 
-    def __init__(self, controller: Controller, enemy: Enemy):
+    def __init__(self, controller: Controller, context: EncounterContext):
         timeout = self.DEFAULT_TIMEOUT
-        if enemy.is_boss:
+        self.enemy = context.opponent.enemy
+        if self.enemy.is_boss:
             timeout = None
         super().__init__(timeout=timeout)
         self.controller = controller
 
-        self.enemy = enemy
+        self.context = context
         self.controller_type = ControllerType.COMBAT
         self.controller.register_view(self)
-        self.encounter_id = None
         self.done = False
         self.active = False
         self.timeout_timestamp = None
@@ -41,7 +41,7 @@ class EnemyEngageView(ViewMenu):
         match event.type:
             case UIEventType.COMBAT_ENGAGE_UPDATE:
                 encounter_id = event.payload[0]
-                if encounter_id != self.encounter_id:
+                if encounter_id != self.context.encounter.id:
                     return
                 embed = event.payload[1]
                 started = event.payload[2]
@@ -51,7 +51,7 @@ class EnemyEngageView(ViewMenu):
                 await self.refresh_ui(embed=embed, done=done)
             case UIEventType.COMBAT_LOADED:
                 encounter_id = event.payload
-                if encounter_id != self.encounter_id:
+                if encounter_id != self.context.encounter.id:
                     return
                 self.loaded = True
                 await self.refresh_ui()
@@ -84,14 +84,10 @@ class EnemyEngageView(ViewMenu):
     async def refresh_ui(
         self,
         embed: discord.Embed = None,
-        encounter_id: int = None,
         done: bool = None,
     ):
         if self.message is None:
             return
-
-        if encounter_id is not None:
-            self.encounter_id = encounter_id
 
         if done is not None and done:
             self.done = done
@@ -130,6 +126,12 @@ class EnemyEngageView(ViewMenu):
         return True
 
     async def on_timeout(self):
+        event = UIEvent(
+            UIEventType.COMBAT_DISAPPEAR,
+            self.context,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
         with contextlib.suppress(discord.NotFound):
             await self.message.delete()
         self.controller.detach_view(self)

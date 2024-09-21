@@ -20,7 +20,7 @@ class InitialState(State):
 
     async def startup(self):
         encounter = self.context.encounter
-        view = EnemyEngageView(self.controller, self.context.opponent.enemy)
+        view = EnemyEngageView(self.controller, self.context)
         guild = self.controller.bot.get_guild(encounter.guild_id)
         combat_channels = await self.settings_manager.get_combat_channels(
             self.context.encounter.guild_id
@@ -72,7 +72,7 @@ class InitialState(State):
         else:
             embed = await self.embed_manager.get_spawn_embed(encounter)
 
-        await view.refresh_ui(embed=embed, encounter_id=encounter_id)
+        await view.refresh_ui(embed=embed)
 
         event = EncounterEvent(
             datetime.datetime.now(),
