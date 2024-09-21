@@ -749,8 +749,8 @@ class MangoTheCat(Enemy):
             image_url="https://i.imgur.com/BazMNtB.jpeg",
             min_level=4,
             max_level=6,
-            health=7,
-            damage_scaling=5.5,
+            health=6,
+            damage_scaling=6,
             max_players=5,
             skill_types=[
                 SkillType.FURRY_HUG,
