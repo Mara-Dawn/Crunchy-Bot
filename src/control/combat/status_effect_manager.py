@@ -603,7 +603,7 @@ class CombatStatusEffectManager(Service):
         initiative = None
 
         for outcome in outcomes:
-            if outcome.value is not None:
+            if outcome.value is not None and isinstance(outcome.value, int | float):
                 if value is None:
                     value = outcome.value
                 else:
