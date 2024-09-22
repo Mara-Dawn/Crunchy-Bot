@@ -348,9 +348,7 @@ class CombatStatusEffectManager(Service):
                         actor, SkillEffect.HEALING, healing
                     )
 
-                    scaled_healing = max(
-                        1, int(total_healing / len(context.active_combatants))
-                    )
+                    scaled_healing = max(1, int(total_healing / 2))
 
                     encounter_scaling = self.actor_manager.get_encounter_scaling(
                         actor, combatant_count
@@ -364,8 +362,8 @@ class CombatStatusEffectManager(Service):
                         event.source_id,
                         event.actor_id,
                         StatusEffectType.BLEED,
-                        total_healing,
                         scaled_damage,
+                        total_healing,
                         event.id,
                         CombatEventType.STATUS_EFFECT_OUTCOME,
                     )
