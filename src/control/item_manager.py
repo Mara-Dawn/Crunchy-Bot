@@ -616,7 +616,7 @@ class ItemManager(Service):
                 notification_lusa = f"**{member.display_name}** has redeemed a shitty drawing on **{guild.name}**"
                 await lusa.send(notification_lusa)
 
-                notification = f"<@{user_id}> has redeemed a shitty drawing."
+                notification = f"<@{user_id}> has redeemed a shitty drawing. Lusa has been notified."
                 event = NotificationEvent(time_now, guild_id, notification)
                 await self.controller.dispatch_event(event)
 
