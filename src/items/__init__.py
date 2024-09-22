@@ -253,7 +253,7 @@ class SwapSlap(Item):
 class UltraSlap(Item):
 
     def __init__(self, cost: int | None):
-        defaultcost = 3000
+        defaultcost = 10000
 
         if cost is None:
             cost = defaultcost

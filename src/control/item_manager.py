@@ -613,7 +613,7 @@ class ItemManager(Service):
             case ItemType.CRAPPY_COUPON:
                 lusa = self.bot.get_user(269620844790153218)
                 member = self.bot.get_user(user_id)
-                notification_lusa = f"**{member.display_name}** has redeemed a shitty drawing on **{guild.name}**"
+                notification_lusa = f"<@{user_id}> ({member.display_name}) has redeemed a shitty drawing on **{guild.name}**"
                 await lusa.send(notification_lusa)
 
                 notification = f"<@{user_id}> has redeemed a shitty drawing. Lusa has been notified."
