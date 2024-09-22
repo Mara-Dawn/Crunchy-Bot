@@ -47,19 +47,22 @@ class ImgurManager(Service):
     async def get_random_encounter_image(self, encounter: Encounter):
         match encounter.enemy_type:
             case EnemyType.SCRIBBLER:
-                return await self.get_random_album_image("f4pqgvP", encounter.id)
+                return await self.get_random_album_image(
+                    ["f4pqgvP", "Wygs1pV"], encounter.id
+                )
         return None
 
-    async def get_random_album_image(self, album_id: str, seed: Any):
+    async def get_random_album_image(self, album_ids: list[str], seed: Any):
         if seed is None:
             return None
 
         if seed in self.image_cache:
             return self.image_cache[seed]
-
+        images = []
         try:
-            images = self.client.get_album_images(album_id)
-        except:
+            for album_id in album_ids:
+                images.extend(self.client.get_album_images(album_id))
+        except:  # noqa: E722
             return None
 
         if images is None or len(images) <= 0:
