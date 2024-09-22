@@ -52,6 +52,12 @@ class OpponentTurnState(State):
                         await self.common.add_member_join_request(
                             encounter_event.member_id, self.context
                         )
+                    case EncounterEventType.END:
+                        self.next_state = StateType.POST_ENCOUNTER
+                        self.done = True
+                        await self.common.force_end(self.context)
+                        update = True
+
             case EventType.COMBAT:
                 combat_event: CombatEvent = event
                 if combat_event.encounter_id != self.context.encounter.id:

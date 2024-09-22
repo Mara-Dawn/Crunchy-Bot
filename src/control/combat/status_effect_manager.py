@@ -418,6 +418,12 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.BLIND:
                     if skill is not None and not skill.base_skill.modifiable:
                         continue
+                    if skill.base_skill.skill_effect in [
+                        SkillEffect.BUFF,
+                        SkillEffect.NOTHING,
+                        SkillEffect.HEALING,
+                    ]:
+                        continue
                     roll = random.random()
                     miss_chance = Config.BLIND_MISS_CHANCE
 

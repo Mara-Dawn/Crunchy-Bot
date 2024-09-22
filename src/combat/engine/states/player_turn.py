@@ -87,6 +87,11 @@ class PlayerTurn(State):
                         )
                         self.context.active_combatants.remove(actor)
                         update = True
+                    case EncounterEventType.END:
+                        self.next_state = StateType.POST_ENCOUNTER
+                        self.done = True
+                        await self.common.force_end(self.context)
+                        update = True
 
             case EventType.COMBAT:
                 combat_event: CombatEvent = event

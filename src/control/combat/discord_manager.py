@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import datetime
 from collections.abc import AsyncGenerator
 
@@ -140,7 +141,8 @@ class DiscordManager(Service):
                             datetime.datetime.now(datetime.UTC) - message.created_at
                         )
                         if age_delta.total_seconds() > 60 * 60:
-                            await message.delete()
+                            with contextlib.suppress(discord.NotFound):
+                                await message.delete()
 
                     if len(message.embeds) <= 0:
                         continue
@@ -157,7 +159,8 @@ class DiscordManager(Service):
                     view = discord.ui.View.from_message(message)
                     if view is not None:
                         self.controller.detach_view_by_id(view.id)
-                    await message.delete()
+                    with contextlib.suppress(discord.NotFound):
+                        await message.delete()
                     break
 
     async def get_previous_enemy_info(self, thread: discord.Thread):

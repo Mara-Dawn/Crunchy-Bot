@@ -79,6 +79,11 @@ class FillingState(State):
                             self.context.combatants.remove(actor)
                         await self.check_filled()
                         update = True
+                    case EncounterEventType.END:
+                        self.next_state = StateType.POST_ENCOUNTER
+                        self.done = True
+                        await self.common.force_end(self.context)
+                        update = True
         return update
 
     async def update(self):

@@ -33,6 +33,11 @@ class WaitingState(State):
                     case EncounterEventType.MEMBER_ENGAGE:
                         await self.create_encounter_thread(encounter_event.member_id)
                         update = True
+                    case EncounterEventType.END:
+                        self.next_state = StateType.POST_ENCOUNTER
+                        self.done = True
+                        await self.common.force_end(self.context)
+                        update = True
         return update
 
     async def update(self):

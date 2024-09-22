@@ -48,6 +48,11 @@ class RoundEndState(State):
                         await self.common.add_member_join_request(
                             encounter_event.member_id, self.context
                         )
+                    case EncounterEventType.END:
+                        self.next_state = StateType.POST_ENCOUNTER
+                        self.done = True
+                        await self.common.force_end(self.context)
+                        update = True
 
         return update
 

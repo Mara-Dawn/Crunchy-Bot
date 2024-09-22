@@ -190,3 +190,8 @@ class CommonService(Service):
             await self.controller.dispatch_event(event)
 
         return additional_message
+
+    async def force_end(self, context: EncounterContext):
+        await self.discord.delete_previous_combat_info(context.thread)
+        embed = await self.embed_manager.get_combat_failed_embed(context)
+        await self.discord.send_message(context.thread, content="", embed=embed)
