@@ -62,8 +62,8 @@ class CombatGearManager(Service):
         Rarity.COMMON: 0,
         Rarity.UNCOMMON: 1,
         Rarity.RARE: 2,
-        Rarity.LEGENDARY: 4,
         Rarity.UNIQUE: 2,
+        Rarity.LEGENDARY: 4,
     }
     RARITY_WEIGHTS = {
         Rarity.COMMON: 100,
