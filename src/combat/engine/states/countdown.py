@@ -77,6 +77,11 @@ class CountdownState(State):
                         if actor is not None:
                             self.context.combatants.remove(actor)
                         update = True
+                    case EncounterEventType.END:
+                        self.next_state = StateType.POST_ENCOUNTER
+                        self.done = True
+                        await self.common.force_end(self.context)
+                        update = True
 
         return update
 

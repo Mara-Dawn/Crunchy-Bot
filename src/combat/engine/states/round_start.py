@@ -107,6 +107,11 @@ class RoundStartState(State):
                         )
                     case EncounterEventType.NEW_ROUND:
                         self.context._round_event_id_cutoff = event.id
+                    case EncounterEventType.END:
+                        self.next_state = StateType.POST_ENCOUNTER
+                        self.done = True
+                        await self.common.force_end(self.context)
+                        update = True
 
         return update
 

@@ -1,3 +1,5 @@
+import asyncio
+
 from combat.actors import Actor
 from combat.encounter import EncounterContext
 from combat.engine.states.state import State
@@ -27,6 +29,12 @@ class TurnStartState(State):
                 actor, outcome.embed_data
             )
             await self.discord.append_embed_to_round(self.context, status_effect_embed)
+
+        if self.done:
+            # status effects might end encounter early
+            self.next_state = StateType.POST_ENCOUNTER
+            await self.common.force_end(self.context)
+            return
 
         await self.common.check_actor_defeat(self.context)
 
@@ -72,6 +80,8 @@ class TurnStartState(State):
                         await self.common.add_member_join_request(
                             encounter_event.member_id, self.context
                         )
+                    case EncounterEventType.END:
+                        self.done = True
 
         return update
 
