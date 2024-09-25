@@ -399,10 +399,11 @@ class Dropdown(discord.ui.Select):
             name = item.name
             if name is None or name == "":
                 name = item.base.slot.value
-            elif item.id in equipped:
-                name += " [EQ]"
-            elif item.locked:
-                name += " [🔒]"
+            else:
+                if item.id in equipped:
+                    name += " [EQ]"
+                if item.locked:
+                    name += " [🔒]"
 
             description = [f"ILVL: {item.level}"]
 
