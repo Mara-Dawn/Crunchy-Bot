@@ -381,7 +381,7 @@ class CombatEmbedManager(Service):
         embed = discord.Embed(
             title=title, description=content, color=discord.Colour.green()
         )
-        message = "To change this, please use the command /combat auto_scrap <level>."
+        message = "To change this and other things, please use the command /personal_settings."
         self.add_text_bar(embed, "", message)
         embed.set_thumbnail(url=member.display_avatar.url)
         return embed
