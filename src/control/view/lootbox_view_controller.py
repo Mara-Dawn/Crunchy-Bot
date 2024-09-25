@@ -3,12 +3,20 @@ import random
 import secrets
 
 import discord
+from discord.ext import commands
+
 from bot_util import BotUtil
 from config import Config
+from control.controller import Controller
+from control.event_manager import EventManager
+from control.item_manager import ItemManager
+from control.jail_manager import JailManager
+from control.logger import BotLogger
+from control.settings_manager import SettingsManager
+from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.lootbox import LootBox
 from datalayer.types import ItemTrigger
-from discord.ext import commands
 from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
 from events.jail_event import JailEvent
@@ -18,14 +26,6 @@ from events.ui_event import UIEvent
 from items import Debuff
 from items.item import Item
 from items.types import ItemType
-
-from control.controller import Controller
-from control.event_manager import EventManager
-from control.item_manager import ItemManager
-from control.jail_manager import JailManager
-from control.logger import BotLogger
-from control.settings_manager import SettingsManager
-from control.view.view_controller import ViewController
 
 
 class MimicProtectedException(Exception):
@@ -102,15 +102,11 @@ class LootBoxViewController(ViewController):
         self,
         interaction: discord.Interaction,
         user_items: list[Item],
-        lootbox_size: int,
     ) -> bool:
         guild_id = interaction.guild_id
         member_id = interaction.user.id
 
-        if (
-            ItemType.MIMIC_DETECTOR in [item.type for item in user_items]
-            and lootbox_size == 1
-        ):
+        if ItemType.MIMIC_DETECTOR in [item.type for item in user_items]:
             message = (
                 "**Oh, wait a second!**\nYou feel something tugging on your leg. It's the Foxgirl you found and took care of until now. "
                 "She is signaling you **not to open that chest**, looks like its a **mimic**! Whew that was close. Before you get to thank her, "
@@ -248,9 +244,9 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
-        lootbox_size: int,
+        owner_id: None | int,
     ) -> int:
-        if await self.mimic_detector(interaction, user_items, lootbox_size):
+        if owner_id is None and await self.mimic_detector(interaction, user_items):
             raise MimicProtectedException
         beans = -random.randint(LootBox.SMALL_MIN_BEANS, LootBox.SMALL_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -272,10 +268,10 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
-        lootbox_size: int,
+        owner_id: None | int,
     ) -> tuple[int, int]:
         jailings = 0
-        if await self.mimic_detector(interaction, user_items, lootbox_size):
+        if owner_id is None and await self.mimic_detector(interaction, user_items):
             raise MimicProtectedException
         beans = -random.randint(LootBox.LARGE_MIN_BEANS, LootBox.LARGE_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -299,9 +295,9 @@ class LootBoxViewController(ViewController):
         user_items: list[Item],
         item: Item,
         embed: discord.Embed,
-        lootbox_size: int,
+        owner_id: None | int,
     ) -> int:
-        if await self.mimic_detector(interaction, user_items, lootbox_size):
+        if owner_id is None and await self.mimic_detector(interaction, user_items):
             raise MimicProtectedException
         beans = -random.randint(LootBox.SMALL_MIN_BEANS, LootBox.SMALL_MAX_BEANS)
         beans_taken = await self.balance_mimic_beans(interaction, beans)
@@ -320,7 +316,11 @@ class LootBoxViewController(ViewController):
         return beans_taken
 
     async def handle_lootbox_items(
-        self, interaction: discord.Interaction, loot_box: LootBox, embed: discord.Embed
+        self,
+        interaction: discord.Interaction,
+        loot_box: LootBox,
+        embed: discord.Embed,
+        owner_id: None | int,
     ):
         if len(list(LootBox.MIMICS & loot_box.items.keys())) > 0:
             embed.set_image(url="attachment://mimic.gif")
@@ -345,7 +345,6 @@ class LootBoxViewController(ViewController):
         haunts = 0
 
         if loot_box.items is not None and len(loot_box.items) > 0:
-            lootbox_size = len(loot_box.items)
             for item_type, amount in loot_box.items.items():
                 item = await self.item_manager.get_item(guild_id, item_type)
                 item_count = item.base_amount * amount
@@ -359,7 +358,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 total_beans += await self.handle_mimic_item(
-                                    interaction, user_items, item, embed, lootbox_size
+                                    interaction, user_items, item, embed, owner_id
                                 )
                             except MimicProtectedException:
                                 return False
@@ -367,7 +366,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 jailing, beans = await self.handle_large_mimic_item(
-                                    interaction, user_items, item, embed, lootbox_size
+                                    interaction, user_items, item, embed, owner_id
                                 )
                                 total_beans += beans
                                 jailings += jailing
@@ -377,7 +376,7 @@ class LootBoxViewController(ViewController):
                         for _ in range(item_count):
                             try:
                                 total_beans += await self.handle_spook_mimic_item(
-                                    interaction, user_items, item, embed, lootbox_size
+                                    interaction, user_items, item, embed, owner_id
                                 )
                                 haunts += 1
                             except MimicProtectedException:
@@ -447,7 +446,7 @@ class LootBoxViewController(ViewController):
             title=title, description=description, color=discord.Colour.purple()
         )
 
-        if not await self.handle_lootbox_items(interaction, loot_box, embed):
+        if not await self.handle_lootbox_items(interaction, loot_box, embed, owner_id):
             event = UIEvent(UIEventType.RESUME_INTERACTIONS, None, view_id)
             await self.controller.dispatch_ui_event(event)
             return
