@@ -349,7 +349,7 @@ class HolyGangSigns(BaseSkill):
             skill_effect=SkillEffect.HEALING,
             cooldown=5,
             min_level=5,
-            base_value=0.08,
+            base_value=0.13,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.HEAL_OVER_TIME,
