@@ -54,7 +54,7 @@ class ImgurManager(Service):
 
     async def get_random_album_image(self, album_ids: list[str], seed: Any):
         if seed is None:
-            return None
+            seed = random.randint(-9999, -1)
 
         if seed in self.image_cache:
             return self.image_cache[seed]

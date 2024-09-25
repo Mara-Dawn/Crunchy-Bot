@@ -152,6 +152,8 @@ class DiscordManager(Service):
                         await self.edit_message(message, embed=head_embed)
 
     async def delete_previous_combat_info(self, thread: discord.Thread):
+        if thread is None:
+            return
         async for message in thread.history(limit=100):
             if len(message.embeds) == 1 and message.author.id == self.bot.user.id:
                 embed = message.embeds[0]
