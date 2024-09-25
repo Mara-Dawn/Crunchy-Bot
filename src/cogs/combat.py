@@ -1,6 +1,7 @@
 import datetime
 import random
 from collections import Counter
+import traceback
 from typing import Literal
 
 import discord
@@ -180,50 +181,59 @@ class Combat(commands.Cog):
             "sys", "Random Encounter task started.", cog=self.__cog_name__
         )
 
-        for guild in self.bot.guilds:
-            if guild.id not in self.enemy_timers:
-                continue
-
-            if not await self.settings_manager.get_combat_enabled(guild.id):
-                continue
-
-            current_time = datetime.datetime.now()
-            if current_time < self.enemy_timers[guild.id]:
-                continue
-
-            start_hour = await self.settings_manager.get_combat_max_lvl_start(guild.id)
-            end_hour = await self.settings_manager.get_combat_max_lvl_end(guild.id)
-
-            current_hour = current_time.hour
-
-            post_start = start_hour <= current_hour
-            pre_end = current_hour < end_hour
-
-            if start_hour < end_hour:
-                if current_time.weekday() in [4, 5] and not pre_end:
-                    pre_end = True
-                if current_time.weekday() in [5, 6] and not post_start:
-                    post_start = True
-                if not (post_start and pre_end):
-                    continue
-            else:
-                if current_time.weekday() in [5, 6] and not pre_end:
-                    pre_end = True
-                if current_time.weekday() in [5, 6] and not post_start:
-                    post_start = True
-                if not (post_start or pre_end):
+        try:
+            for guild in self.bot.guilds:
+                if guild.id not in self.enemy_timers:
                     continue
 
-            self.logger.log("sys", "Enemy timeout reached.", cog=self.__cog_name__)
-            await self.__reevaluate_next_enemy(guild.id)
+                if not await self.settings_manager.get_combat_enabled(guild.id):
+                    continue
 
-            combat_channels = await self.settings_manager.get_combat_channels(guild.id)
-            if len(combat_channels) == 0:
-                continue
+                current_time = datetime.datetime.now()
+                if current_time < self.enemy_timers[guild.id]:
+                    continue
 
-            encounter_level = await self.database.get_guild_level(guild.id)
+                start_hour = await self.settings_manager.get_combat_max_lvl_start(
+                    guild.id
+                )
+                end_hour = await self.settings_manager.get_combat_max_lvl_end(guild.id)
 
-            await self.encounter_manager.spawn_encounter(guild, level=encounter_level)
+                current_hour = current_time.hour
+
+                post_start = start_hour <= current_hour
+                pre_end = current_hour < end_hour
+
+                if start_hour < end_hour:
+                    if current_time.weekday() in [4, 5] and not pre_end:
+                        pre_end = True
+                    if current_time.weekday() in [5, 6] and not post_start:
+                        post_start = True
+                    if not (post_start and pre_end):
+                        continue
+                else:
+                    if current_time.weekday() in [5, 6] and not pre_end:
+                        pre_end = True
+                    if current_time.weekday() in [5, 6] and not post_start:
+                        post_start = True
+                    if not (post_start or pre_end):
+                        continue
+
+                self.logger.log("sys", "Enemy timeout reached.", cog=self.__cog_name__)
+                await self.__reevaluate_next_enemy(guild.id)
+
+                combat_channels = await self.settings_manager.get_combat_channels(
+                    guild.id
+                )
+                if len(combat_channels) == 0:
+                    continue
+
+                encounter_level = await self.database.get_guild_level(guild.id)
+
+                await self.encounter_manager.spawn_encounter(
+                    guild, level=encounter_level
+                )
+        except Exception:
+            print(traceback.format_exc())
 
     @tasks.loop(minutes=1)
     async def random_low_lvl_encounter_task(self):
@@ -231,34 +241,41 @@ class Combat(commands.Cog):
             "sys", "Random low lvl Encounter task started.", cog=self.__cog_name__
         )
 
-        for guild in self.bot.guilds:
-            if guild.id not in self.enemy_timers_low_lvl:
-                continue
+        try:
+            for guild in self.bot.guilds:
+                if guild.id not in self.enemy_timers_low_lvl:
+                    continue
 
-            max_encounter_level = await self.database.get_guild_level(guild.id) - 1
-            max_encounter_level = max(1, max_encounter_level)
+                max_encounter_level = await self.database.get_guild_level(guild.id) - 1
+                max_encounter_level = max(1, max_encounter_level)
 
-            if max_encounter_level <= 0:
-                continue
+                if max_encounter_level <= 0:
+                    continue
 
-            if datetime.datetime.now() < self.enemy_timers_low_lvl[guild.id]:
-                continue
+                if datetime.datetime.now() < self.enemy_timers_low_lvl[guild.id]:
+                    continue
 
-            if not await self.settings_manager.get_combat_enabled(guild.id):
-                continue
+                if not await self.settings_manager.get_combat_enabled(guild.id):
+                    continue
 
-            self.logger.log(
-                "sys", "Low Lvl Enemy timeout reached.", cog=self.__cog_name__
-            )
-            await self.__reevaluate_next_low_lvl_enemy(guild.id)
+                self.logger.log(
+                    "sys", "Low Lvl Enemy timeout reached.", cog=self.__cog_name__
+                )
+                await self.__reevaluate_next_low_lvl_enemy(guild.id)
 
-            combat_channels = await self.settings_manager.get_combat_channels(guild.id)
-            if len(combat_channels) == 0:
-                continue
+                combat_channels = await self.settings_manager.get_combat_channels(
+                    guild.id
+                )
+                if len(combat_channels) == 0:
+                    continue
 
-            encounter_level = random.randint(1, max_encounter_level)
+                encounter_level = random.randint(1, max_encounter_level)
 
-            await self.encounter_manager.spawn_encounter(guild, level=encounter_level)
+                await self.encounter_manager.spawn_encounter(
+                    guild, level=encounter_level
+                )
+        except Exception:
+            print(traceback.format_exc())
 
     @random_encounter_task.before_loop
     async def random_encounter_task_before(self):
