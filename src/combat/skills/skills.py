@@ -313,7 +313,7 @@ class LooksMaxxing(BaseSkill):
             skill_effect=SkillEffect.HEALING,
             cooldown=5,
             min_level=4,
-            base_value=0.15,
+            base_value=0.2,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.HEAL_OVER_TIME,
