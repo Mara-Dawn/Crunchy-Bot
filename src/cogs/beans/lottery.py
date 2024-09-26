@@ -1,5 +1,6 @@
 import datetime
 import secrets
+import traceback
 
 import discord
 from discord import app_commands
@@ -7,6 +8,7 @@ from discord.ext import commands, tasks
 
 from bot_util import BotUtil
 from cogs.beans.beans_group import BeansGroup
+from error import ErrorHandler
 from events.beans_event import BeansEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType
@@ -113,17 +115,26 @@ class Lottery(BeansGroup):
     async def lottery_task(self) -> None:
         self.logger.log("sys", "Lottery task started.", cog=self.__cog_name__)
 
-        if datetime.datetime.today().weekday() != 5:
-            # only on saturdays
-            self.logger.log("sys", "Not saturday so skipping.", cog=self.__cog_name__)
-            return
-
-        for guild in self.bot.guilds:
-            if not await self.settings_manager.get_beans_enabled(guild.id):
-                self.logger.log("sys", "Beans module disabled.", cog=self.__cog_name__)
+        try:
+            if datetime.datetime.today().weekday() != 5:
+                # only on saturdays
+                self.logger.log(
+                    "sys", "Not saturday so skipping.", cog=self.__cog_name__
+                )
                 return
 
-            await self.__draw_lottery(guild)
+            for guild in self.bot.guilds:
+                if not await self.settings_manager.get_beans_enabled(guild.id):
+                    self.logger.log(
+                        "sys", "Beans module disabled.", cog=self.__cog_name__
+                    )
+                    return
+
+                await self.__draw_lottery(guild)
+        except Exception as e:
+            print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     @app_commands.command(
         name="lottery",

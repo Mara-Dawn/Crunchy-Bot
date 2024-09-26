@@ -5,6 +5,19 @@ from logging.handlers import TimedRotatingFileHandler
 from discord.ext import commands
 
 
+class RecordsListHandler(logging.Handler):
+
+    def __init__(self, records_list: list[str]):
+        self.records_list = records_list
+        super().__init__()
+
+    def emit(self, record: logging.LogRecord):
+        entry = self.formatter.format(record)
+        self.records_list.append(entry)
+        if len(self.records_list) > 10:
+            self.records_list.pop(0)
+
+
 class BotLogger:
 
     DEBUG_ENABLED = False
@@ -17,10 +30,17 @@ class BotLogger:
         pathlib.Path(file_name).parent.mkdir(parents=True, exist_ok=True)
 
         handler = TimedRotatingFileHandler(self.file_name, "midnight", 1, 5, "utf-8")
-        handler.setFormatter(
-            logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
-        )
+        formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+        handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+
+        self.cache: list[str] = []
+        cache_handler = RecordsListHandler(self.cache)
+        formatter = logging.Formatter(
+            "%(asctime)s\t%(levelname)s\t%(name)s\t %(message)s"
+        )
+        cache_handler.setFormatter(formatter)
+        self.logger.addHandler(cache_handler)
 
     def __build_log_msg(self, guild: int, message: str, cog=False) -> str:
         guild_obj = self.bot.get_guild(guild)

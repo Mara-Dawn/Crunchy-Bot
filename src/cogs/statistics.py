@@ -1,3 +1,4 @@
+import traceback
 from typing import Literal
 
 import discord
@@ -11,6 +12,7 @@ from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.patches.patch import DBPatcher
+from error import ErrorHandler
 from view.ranking.embed import RankingEmbed
 from view.ranking.view import RankingView
 from view.types import RankingType
@@ -37,27 +39,31 @@ class Statistics(commands.Cog):
 
     @tasks.loop(minutes=30)
     async def system_monitor(self):
+        try:
+            view_count = len(self.controller.views)
+            view_controller_count = len(self.controller.view_controllers)
+            service_count = len(self.controller.services)
 
-        view_count = len(self.controller.views)
-        view_controller_count = len(self.controller.view_controllers)
-        service_count = len(self.controller.services)
+            await self.controller.execute_garbage_collection()
 
-        await self.controller.execute_garbage_collection()
+            new_view_count = len(self.controller.views)
 
-        new_view_count = len(self.controller.views)
+            if view_count != new_view_count:
+                self.logger.log(
+                    "sys",
+                    f"Cleaned up {view_count-new_view_count} orphan views.",
+                    cog=self.__cog_name__,
+                )
 
-        if view_count != new_view_count:
             self.logger.log(
                 "sys",
-                f"Cleaned up {view_count-new_view_count} orphan views.",
+                f"Controller stats: {service_count} services, {view_controller_count} view controllers, {new_view_count} views",
                 cog=self.__cog_name__,
             )
-
-        self.logger.log(
-            "sys",
-            f"Controller stats: {service_count} services, {view_controller_count} view controllers, {new_view_count} views",
-            cog=self.__cog_name__,
-        )
+        except Exception as e:
+            print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     @commands.command()
     @commands.guild_only()

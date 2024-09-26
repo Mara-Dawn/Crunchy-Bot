@@ -1,8 +1,11 @@
+import sys
 from abc import ABC, abstractmethod
+from typing import Any
 
 import discord
 
 from control.types import ControllerType
+from error import ErrorHandler
 from events.ui_event import UIEvent
 
 
@@ -24,6 +27,17 @@ class ViewMenu(discord.ui.View, ABC):
 
     def set_message(self, message: discord.Message):
         self.message = message
+
+    async def on_error(
+        self,
+        interaction: discord.Interaction,
+        error: Exception,
+        item: discord.ui.Item[Any],
+        /,
+    ) -> None:
+        error_handler = ErrorHandler(interaction.client)
+        await error_handler.post_error(sys.exc_info()[1], interaction)
+        return await super().on_error(interaction, error, item)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id == self.member_id:

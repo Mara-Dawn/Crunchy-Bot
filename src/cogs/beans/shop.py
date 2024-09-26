@@ -1,4 +1,5 @@
 import datetime
+import traceback
 from typing import Literal
 
 import discord
@@ -13,6 +14,7 @@ from datalayer.database import Database
 from datalayer.types import ItemTrigger
 from discord import app_commands
 from discord.ext import commands, tasks
+from error import ErrorHandler
 from items.types import ItemType
 from view.catalogue.embed import CatalogEmbed
 from view.catalogue.view import CatalogView
@@ -116,12 +118,19 @@ class Shop(commands.Cog):
     async def daily_collection_task(self):
         self.logger.log("sys", "Daily Item Check started.", cog=self.__cog_name__)
 
-        for guild in self.bot.guilds:
-            if not await self.settings_manager.get_beans_enabled(guild.id):
-                self.logger.log("sys", "Beans module disabled.", cog=self.__cog_name__)
-                return
+        try:
+            for guild in self.bot.guilds:
+                if not await self.settings_manager.get_beans_enabled(guild.id):
+                    self.logger.log(
+                        "sys", "Beans module disabled.", cog=self.__cog_name__
+                    )
+                    return
 
-            await self.item_manager.consume_trigger_items(guild, ItemTrigger.DAILY)
+                await self.item_manager.consume_trigger_items(guild, ItemTrigger.DAILY)
+        except Exception as e:
+            print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     async def shop_autocomplete(
         self, interaction: discord.Interaction, current: str

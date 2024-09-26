@@ -1,4 +1,5 @@
 import datetime
+import traceback
 
 import discord
 from discord import app_commands
@@ -8,6 +9,7 @@ from bot import CrunchyBot
 from cogs.beans.beans_group import BeansGroup
 from control.ai_manager import AIManager
 from control.types import AIVersion
+from error import ErrorHandler
 from events.garden_event import GardenEvent
 from events.types import GardenEventType, UIEventType
 from events.ui_event import UIEvent
@@ -91,49 +93,52 @@ class Garden(BeansGroup):
         self.logger.debug(
             "sys", "Garden notification task started.", cog=self.__cog_name__
         )
+        try:
+            for guild in self.bot.guilds:
+                gardens = await self.database.get_guild_gardens(guild.id)
+                for garden in gardens:
+                    plots = garden.notification_pending_plots()
+                    if len(plots) > 0:
+                        user = self.bot.get_user(garden.member_id)
+                        for plot in plots:
+                            event = GardenEvent(
+                                datetime.datetime.now(),
+                                guild.id,
+                                plot.garden_id,
+                                plot.id,
+                                garden.member_id,
+                                GardenEventType.NOTIFICATION,
+                            )
+                            await self.controller.dispatch_event(event)
+                        if user is not None:
+                            self.logger.log(
+                                "sys",
+                                f"Sending garden notification to {user.display_name}",
+                                cog=self.__cog_name__,
+                            )
+                            # message = (
+                            #     f"Hey there, some of your plants on {guild.name} are ready to be harvested.\n"
+                            #     "Make sure to drop by and visit your */beans garden* to not miss out on your rewards!"
+                            # )
 
-        for guild in self.bot.guilds:
+                            prompt = (
+                                f"Please create a short notification message adressed to a user named {user.display_name}. "
+                                f"Inform them about their beans garden on server {guild.name} having some plants that are ready for harvest. "
+                                "Also mention that they should come visit their garden soon to take care of them so they wont miss out on the rewards. "
+                            )
 
-            gardens = await self.database.get_guild_gardens(guild.id)
-            for garden in gardens:
-                plots = garden.notification_pending_plots()
-                if len(plots) > 0:
-                    user = self.bot.get_user(garden.member_id)
-                    for plot in plots:
-                        event = GardenEvent(
-                            datetime.datetime.now(),
-                            guild.id,
-                            plot.garden_id,
-                            plot.id,
-                            garden.member_id,
-                            GardenEventType.NOTIFICATION,
-                        )
-                        await self.controller.dispatch_event(event)
-                    if user is not None:
-                        self.logger.log(
-                            "sys",
-                            f"Sending garden notification to {user.display_name}",
-                            cog=self.__cog_name__,
-                        )
-                        # message = (
-                        #     f"Hey there, some of your plants on {guild.name} are ready to be harvested.\n"
-                        #     "Make sure to drop by and visit your */beans garden* to not miss out on your rewards!"
-                        # )
+                            message = await self.ai_manager.prompt(
+                                guild_id=guild.id,
+                                name=user.display_name,
+                                text_prompt=prompt,
+                                ai_version=AIVersion.GPT4_O_MINI,
+                            )
 
-                        prompt = (
-                            f"Please create a short notification message adressed to a user named {user.display_name}. "
-                            f"Inform them about their beans garden on server {guild.name} having some plants that are ready for harvest. "
-                            "Also mention that they should come visit their garden soon to take care of them so they wont miss out on the rewards. "
-                        )
-
-                        message = await self.ai_manager.prompt(
-                            guild_id=guild.id,
-                            name=user.display_name,
-                            text_prompt=prompt,
-                            ai_version=AIVersion.GPT4_O_MINI,
-                        )
-
-                        await user.send(message)
+                            await user.send(message)
+        except Exception as e:
+            print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     @app_commands.command(name="garden", description="Plant beans in your garden.")
     @app_commands.guild_only()
