@@ -1,3 +1,4 @@
+import os
 import random
 from typing import Any
 
@@ -15,8 +16,8 @@ from events.bot_event import BotEvent
 
 class ImgurManager(Service):
 
-    KEY_FILE = "imgur.txt"
-    SECRET_FILE = "imgursecret.txt"
+    KEY = "IMGUR_API_KEY"
+    SECRET = "IMGUR_API_SECRET"
 
     def __init__(
         self,
@@ -29,13 +30,9 @@ class ImgurManager(Service):
         self.controller = controller
         self.log_name = "Imgur"
 
-        self.token = ""
-        with open(self.KEY_FILE) as file:
-            self.token = file.readline().rstrip("\n")
+        self.token = os.environ.get(self.KEY)
 
-        self.secret = ""
-        with open(self.SECRET_FILE) as file:
-            self.secret = file.readline().rstrip("\n")
+        self.secret = os.environ.get(self.SECRET)
 
         self.client = ImgurClient(self.token, self.secret)
 

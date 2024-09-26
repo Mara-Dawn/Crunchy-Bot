@@ -1,7 +1,12 @@
 import datetime
+import os
+import traceback
 from typing import Literal
 
 import discord
+from discord import app_commands
+from discord.ext import commands, tasks
+
 from bot import CrunchyBot
 from control.controller import Controller
 from control.event_manager import EventManager
@@ -11,8 +16,7 @@ from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.types import ItemTrigger
-from discord import app_commands
-from discord.ext import commands, tasks
+from error import ErrorHandler
 from items.types import ItemType
 from view.catalogue.embed import CatalogEmbed
 from view.catalogue.view import CatalogView
@@ -40,7 +44,7 @@ class Shop(commands.Cog):
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         return (
             interaction.user.id == author_id
             or interaction.user.guild_permissions.administrator
@@ -116,12 +120,19 @@ class Shop(commands.Cog):
     async def daily_collection_task(self):
         self.logger.log("sys", "Daily Item Check started.", cog=self.__cog_name__)
 
-        for guild in self.bot.guilds:
-            if not await self.settings_manager.get_beans_enabled(guild.id):
-                self.logger.log("sys", "Beans module disabled.", cog=self.__cog_name__)
-                return
+        try:
+            for guild in self.bot.guilds:
+                if not await self.settings_manager.get_beans_enabled(guild.id):
+                    self.logger.log(
+                        "sys", "Beans module disabled.", cog=self.__cog_name__
+                    )
+                    return
 
-            await self.item_manager.consume_trigger_items(guild, ItemTrigger.DAILY)
+                await self.item_manager.consume_trigger_items(guild, ItemTrigger.DAILY)
+        except Exception as e:
+            print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     async def shop_autocomplete(
         self, interaction: discord.Interaction, current: str

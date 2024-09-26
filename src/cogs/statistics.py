@@ -1,3 +1,5 @@
+import os
+import traceback
 from typing import Literal
 
 import discord
@@ -11,6 +13,7 @@ from control.logger import BotLogger
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from datalayer.patches.patch import DBPatcher
+from error import ErrorHandler
 from view.ranking.embed import RankingEmbed
 from view.ranking.view import RankingView
 from view.types import RankingType
@@ -37,27 +40,31 @@ class Statistics(commands.Cog):
 
     @tasks.loop(minutes=30)
     async def system_monitor(self):
+        try:
+            view_count = len(self.controller.views)
+            view_controller_count = len(self.controller.view_controllers)
+            service_count = len(self.controller.services)
 
-        view_count = len(self.controller.views)
-        view_controller_count = len(self.controller.view_controllers)
-        service_count = len(self.controller.services)
+            await self.controller.execute_garbage_collection()
 
-        await self.controller.execute_garbage_collection()
+            new_view_count = len(self.controller.views)
 
-        new_view_count = len(self.controller.views)
+            if view_count != new_view_count:
+                self.logger.log(
+                    "sys",
+                    f"Cleaned up {view_count-new_view_count} orphan views.",
+                    cog=self.__cog_name__,
+                )
 
-        if view_count != new_view_count:
             self.logger.log(
                 "sys",
-                f"Cleaned up {view_count-new_view_count} orphan views.",
+                f"Controller stats: {service_count} services, {view_controller_count} view controllers, {new_view_count} views",
                 cog=self.__cog_name__,
             )
-
-        self.logger.log(
-            "sys",
-            f"Controller stats: {service_count} services, {view_controller_count} view controllers, {new_view_count} views",
-            cog=self.__cog_name__,
-        )
+        except Exception as e:
+            print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     @commands.command()
     @commands.guild_only()
@@ -68,11 +75,10 @@ class Statistics(commands.Cog):
         spec: Literal["~", "*", "^"] | None = None,
     ) -> None:
 
-        maya = 95526988323753984
-        mara = 90043934247501824
-        fuzia = 106752187530481664
+        sync_permission_ids = os.environ.get(CrunchyBot.SYNC_PERMISSIONS).split(",")
+        sync_permission_ids.append(os.environ.get(CrunchyBot.ADMIN_ID))
 
-        if ctx.author.id not in [mara, fuzia, maya]:
+        if ctx.author.id not in [int(id) for id in sync_permission_ids]:
             raise commands.NotOwner("You do not own this bot.")
 
         if not guilds:
@@ -196,7 +202,7 @@ class Statistics(commands.Cog):
     )
     @app_commands.guild_only()
     async def new_season(self, interaction: discord.Interaction):
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         if interaction.user.id != author_id:
             raise app_commands.MissingPermissions(missing_permissions=[])
         await interaction.response.defer()
@@ -216,7 +222,7 @@ class Statistics(commands.Cog):
     )
     @app_commands.guild_only()
     async def apply_db_patch(self, interaction: discord.Interaction, patch_id: str):
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         if interaction.user.id != author_id:
             raise app_commands.MissingPermissions(missing_permissions=[])
         await interaction.response.defer()

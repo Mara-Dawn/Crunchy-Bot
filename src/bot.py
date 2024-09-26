@@ -1,3 +1,4 @@
+import sys
 from typing import Any
 
 import discord
@@ -6,13 +7,15 @@ from discord.ext import commands
 from control.controller import Controller
 from control.logger import BotLogger
 from datalayer.database import Database
+from error import ErrorHandler
 
 
 class CrunchyBot(commands.Bot):
 
     LOG_FILE = "./log/marabot.log"
-    TENOR_TOKEN_FILE = "tenor.txt"
     DB_FILE = "database.sqlite"
+    ADMIN_ID = "ADMIN_USER_ID"
+    SYNC_PERMISSIONS = "ADDITIONAL_SYNC_PERMISSIONS"
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -41,6 +44,11 @@ class CrunchyBot(commands.Bot):
 
     async def on_guild_remove(self, guild):
         self.logger.log(guild.id, "guild removed.")
+
+    async def on_error(self, event_method: str, /, *args: Any, **kwargs: Any) -> None:
+        error_handler = ErrorHandler(self)
+        await error_handler.post_error(sys.exc_info()[1])
+        return await super().on_error(event_method, *args, **kwargs)
 
     async def command_response(
         self,

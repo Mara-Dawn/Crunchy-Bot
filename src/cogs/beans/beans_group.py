@@ -1,3 +1,5 @@
+from discord.ext import commands
+
 from bot import CrunchyBot
 from control.ai_manager import AIManager
 from control.controller import Controller
@@ -8,7 +10,6 @@ from control.prediction_manager import PredictionManager
 from control.role_manager import RoleManager
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
-from discord.ext import commands
 
 
 class BeansGroup(commands.GroupCog):

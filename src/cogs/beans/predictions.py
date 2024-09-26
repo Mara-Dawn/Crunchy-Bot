@@ -1,13 +1,17 @@
 import datetime
+import os
+import traceback
 from typing import Literal
 
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+from bot import CrunchyBot
 from cogs.beans.beans_group import BeansGroup
 from control.settings_manager import SettingsManager
 from datalayer.types import PredictionState
+from error import ErrorHandler
 from events.prediction_event import PredictionEvent
 from events.types import PredictionEventType
 
@@ -16,14 +20,14 @@ class Predictions(BeansGroup):
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         return (
             interaction.user.id == author_id
             or interaction.user.guild_permissions.administrator
         )
 
     async def __has_mod_permission(self, interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         roles = await self.settings_manager.get_predictions_mod_roles(
             interaction.guild_id
         )
@@ -96,65 +100,70 @@ class Predictions(BeansGroup):
             "sys", "prediction timeout check task started", cog=self.__cog_name__
         )
 
-        for guild in self.bot.guilds:
-            guild_id = guild.id
-            self.logger.debug(
-                guild_id,
-                f"prediction timeout for guild {guild.name}.",
-                cog=self.__cog_name__,
-            )
-
-            active_predictions = await self.database.get_predictions_by_guild(
-                guild_id, [PredictionState.APPROVED]
-            )
-
-            if active_predictions is None:
-                continue
-
-            for prediction in active_predictions:
-                time_now = datetime.datetime.now()
-                lock_in_datetime = prediction.lock_datetime
-
-                if lock_in_datetime is None:
-                    continue
-
-                remainder = lock_in_datetime - time_now
-                remainder = int(max(remainder.total_seconds() / 60, 0))
-
+        try:
+            for guild in self.bot.guilds:
+                guild_id = guild.id
                 self.logger.debug(
                     guild_id,
-                    f"prediction timeout check for {prediction.content}. Remaining: {remainder}",
+                    f"prediction timeout for guild {guild.name}.",
                     cog=self.__cog_name__,
                 )
 
-                if time_now > lock_in_datetime:
+                active_predictions = await self.database.get_predictions_by_guild(
+                    guild_id, [PredictionState.APPROVED]
+                )
 
-                    prediction.state = PredictionState.LOCKED
-                    prediction.lock_datetime = None
-                    await self.database.update_prediction(prediction)
+                if active_predictions is None:
+                    continue
 
-                    event = PredictionEvent(
-                        datetime.datetime.now(),
+                for prediction in active_predictions:
+                    time_now = datetime.datetime.now()
+                    lock_in_datetime = prediction.lock_datetime
+
+                    if lock_in_datetime is None:
+                        continue
+
+                    remainder = lock_in_datetime - time_now
+                    remainder = int(max(remainder.total_seconds() / 60, 0))
+
+                    self.logger.debug(
                         guild_id,
-                        prediction.id,
-                        self.bot.user.id,
-                        PredictionEventType.LOCK,
+                        f"prediction timeout check for {prediction.content}. Remaining: {remainder}",
+                        cog=self.__cog_name__,
                     )
-                    await self.controller.dispatch_event(event)
 
-                    bean_channels = (
-                        await self.settings_manager.get_beans_notification_channels(
-                            guild_id
+                    if time_now > lock_in_datetime:
+
+                        prediction.state = PredictionState.LOCKED
+                        prediction.lock_datetime = None
+                        await self.database.update_prediction(prediction)
+
+                        event = PredictionEvent(
+                            datetime.datetime.now(),
+                            guild_id,
+                            prediction.id,
+                            self.bot.user.id,
+                            PredictionEventType.LOCK,
                         )
-                    )
-                    announcement = (
-                        f"**This prediction has been locked in!**\n> {prediction.content}\nNo more bets will be accepted. "
-                        "The winners will be paid out once an outcome is achieved. Good luck!\nYou can also submit your own "
-                        "prediction ideas in the overview channel or in the `/shop`."
-                    )
-                    for channel_id in bean_channels:
-                        channel = guild.get_channel(channel_id)
-                        await channel.send(announcement)
+                        await self.controller.dispatch_event(event)
+
+                        bean_channels = (
+                            await self.settings_manager.get_beans_notification_channels(
+                                guild_id
+                            )
+                        )
+                        announcement = (
+                            f"**This prediction has been locked in!**\n> {prediction.content}\nNo more bets will be accepted. "
+                            "The winners will be paid out once an outcome is achieved. Good luck!\nYou can also submit your own "
+                            "prediction ideas in the overview channel or in the `/shop`."
+                        )
+                        for channel_id in bean_channels:
+                            channel = guild.get_channel(channel_id)
+                            await channel.send(announcement)
+        except Exception as e:
+            print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     @app_commands.command(
         name="prediction", description="Bet your beans on various predictions."

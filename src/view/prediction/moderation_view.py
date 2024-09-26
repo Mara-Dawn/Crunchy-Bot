@@ -1,6 +1,7 @@
 import contextlib
 
 import discord
+
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.prediction_stats import PredictionStats

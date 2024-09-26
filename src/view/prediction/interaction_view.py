@@ -1,8 +1,10 @@
 import contextlib
+import os
 import datetime
 
 import discord
 
+from bot import CrunchyBot
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.prediction import Prediction
@@ -192,7 +194,7 @@ class PredictionInteractionView(ViewMenu):
                 self.add_comment_button = AddCommentButton(
                     self.prediction_stats.prediction
                 )
-                if self.member_id == 90043934247501824:
+                if self.member_id == int(os.environ.get(CrunchyBot.ADMIN_ID)):
                     self.edit_button = EditButton(self.prediction_stats.prediction)
             case PredictionState.LOCKED:
                 self.outcome_select = OutcomeSelect(
@@ -205,7 +207,7 @@ class PredictionInteractionView(ViewMenu):
                 self.add_comment_button = AddCommentButton(
                     self.prediction_stats.prediction
                 )
-                if self.member_id == 90043934247501824:
+                if self.member_id == int(os.environ.get(CrunchyBot.ADMIN_ID)):
                     self.edit_button = EditButton(self.prediction_stats.prediction)
             case PredictionState.DENIED:
                 self.edit_button = EditButton(self.prediction_stats.prediction)

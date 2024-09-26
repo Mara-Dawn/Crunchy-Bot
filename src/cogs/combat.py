@@ -1,7 +1,8 @@
 import datetime
+import os
 import random
-from collections import Counter
 import traceback
+from collections import Counter
 from typing import Literal
 
 import discord
@@ -27,6 +28,7 @@ from control.settings_manager import SettingsManager
 from control.types import UserSettingType
 from control.user_settings_manager import UserSettingsManager
 from datalayer.database import Database
+from error import ErrorHandler
 from events.encounter_event import EncounterEvent
 from events.types import EncounterEventType, UIEventType
 from events.ui_event import UIEvent
@@ -75,7 +77,7 @@ class Combat(commands.Cog):
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         return (
             interaction.user.id == author_id
             or interaction.user.guild_permissions.administrator
@@ -232,8 +234,10 @@ class Combat(commands.Cog):
                 await self.encounter_manager.spawn_encounter(
                     guild, level=encounter_level
                 )
-        except Exception:
+        except Exception as e:
             print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     @tasks.loop(minutes=1)
     async def random_low_lvl_encounter_task(self):
@@ -274,67 +278,73 @@ class Combat(commands.Cog):
                 await self.encounter_manager.spawn_encounter(
                     guild, level=encounter_level
                 )
-        except Exception:
+        except Exception as e:
             print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     @random_encounter_task.before_loop
     async def random_encounter_task_before(self):
-        self.logger.log(
-            "sys", "Random Encounter before loop started.", cog=self.__cog_name__
-        )
-
-        for guild in self.bot.guilds:
-            if not await self.settings_manager.get_combat_enabled(guild.id):
-                continue
-
-            if len(await self.settings_manager.get_combat_channels(guild.id)) <= 0:
-                continue
-
-            max_encounter_level = await self.database.get_guild_level(guild.id)
-            encounter_event = await self.database.get_last_encounter_spawn_event(
-                guild.id, min_lvl=max_encounter_level
+        try:
+            self.logger.log(
+                "sys", "Random Encounter before loop started.", cog=self.__cog_name__
             )
-            last_spawn = datetime.datetime.now()
+            for guild in self.bot.guilds:
+                if not await self.settings_manager.get_combat_enabled(guild.id):
+                    continue
 
-            if encounter_event is None:
+                if len(await self.settings_manager.get_combat_channels(guild.id)) <= 0:
+                    continue
+
+                max_encounter_level = await self.database.get_guild_level(guild.id)
+                encounter_event = await self.database.get_last_encounter_spawn_event(
+                    guild.id, min_lvl=max_encounter_level
+                )
+                last_spawn = datetime.datetime.now()
+
+                if encounter_event is None:
+                    self.logger.log(
+                        guild.id,
+                        "No previous spawns, next spawn imminent.",
+                        cog=self.__cog_name__,
+                    )
+                    self.enemy_timers[guild.id] = last_spawn
+                    continue
+
+                if encounter_event is not None:
+                    last_spawn = encounter_event.datetime
+
+                diff = datetime.datetime.now() - last_spawn
+                diff_minutes = int(diff.total_seconds() / 60)
                 self.logger.log(
                     guild.id,
-                    "No previous spawns, next spawn imminent.",
+                    f"Last spawn was {diff_minutes} minutes ago.",
                     cog=self.__cog_name__,
                 )
-                self.enemy_timers[guild.id] = last_spawn
-                continue
 
-            if encounter_event is not None:
-                last_spawn = encounter_event.datetime
+                min_wait = self.ENCOUNTER_MIN_WAIT
+                if diff_minutes < self.ENCOUNTER_MAX_WAIT:
+                    min_wait = max(self.ENCOUNTER_MIN_WAIT, diff_minutes)
 
-            diff = datetime.datetime.now() - last_spawn
-            diff_minutes = int(diff.total_seconds() / 60)
-            self.logger.log(
-                guild.id,
-                f"Last spawn was {diff_minutes} minutes ago.",
-                cog=self.__cog_name__,
-            )
+                next_drop_delay = random.randint(min_wait, self.ENCOUNTER_MAX_WAIT)
+                self.logger.log(
+                    guild.id,
+                    f"Random spawn delay: {next_drop_delay} minutes.",
+                    cog=self.__cog_name__,
+                )
+                next_spawn = last_spawn + datetime.timedelta(minutes=next_drop_delay)
+                diff = next_spawn - datetime.datetime.now()
+                self.logger.log(
+                    guild.id,
+                    f"Next spawn in {int(diff.total_seconds()/60)} minutes.",
+                    cog=self.__cog_name__,
+                )
 
-            min_wait = self.ENCOUNTER_MIN_WAIT
-            if diff_minutes < self.ENCOUNTER_MAX_WAIT:
-                min_wait = max(self.ENCOUNTER_MIN_WAIT, diff_minutes)
-
-            next_drop_delay = random.randint(min_wait, self.ENCOUNTER_MAX_WAIT)
-            self.logger.log(
-                guild.id,
-                f"Random spawn delay: {next_drop_delay} minutes.",
-                cog=self.__cog_name__,
-            )
-            next_spawn = last_spawn + datetime.timedelta(minutes=next_drop_delay)
-            diff = next_spawn - datetime.datetime.now()
-            self.logger.log(
-                guild.id,
-                f"Next spawn in {int(diff.total_seconds()/60)} minutes.",
-                cog=self.__cog_name__,
-            )
-
-            self.enemy_timers[guild.id] = next_spawn
+                self.enemy_timers[guild.id] = next_spawn
+        except Exception as e:
+            print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     @random_encounter_task.after_loop
     async def on_task_cancel(self):
@@ -361,64 +371,70 @@ class Combat(commands.Cog):
             "Random low lvl Encounter before loop started.",
             cog=self.__cog_name__,
         )
+        try:
+            for guild in self.bot.guilds:
+                if not await self.settings_manager.get_combat_enabled(guild.id):
+                    continue
 
-        for guild in self.bot.guilds:
-            if not await self.settings_manager.get_combat_enabled(guild.id):
-                continue
+                if len(await self.settings_manager.get_combat_channels(guild.id)) <= 0:
+                    continue
 
-            if len(await self.settings_manager.get_combat_channels(guild.id)) <= 0:
-                continue
+                max_encounter_level = await self.database.get_guild_level(guild.id) - 1
+                max_encounter_level = max(1, max_encounter_level)
 
-            max_encounter_level = await self.database.get_guild_level(guild.id) - 1
-            max_encounter_level = max(1, max_encounter_level)
+                if max_encounter_level <= 0:
+                    continue
 
-            if max_encounter_level <= 0:
-                continue
+                encounter_event = await self.database.get_last_encounter_spawn_event(
+                    guild.id, max_lvl=max_encounter_level
+                )
+                last_spawn = datetime.datetime.now()
 
-            encounter_event = await self.database.get_last_encounter_spawn_event(
-                guild.id, max_lvl=max_encounter_level
-            )
-            last_spawn = datetime.datetime.now()
+                if encounter_event is None:
+                    self.logger.log(
+                        guild.id,
+                        "No previous low lvl spawns, next spawn imminent.",
+                        cog=self.__cog_name__,
+                    )
+                    self.enemy_timers_low_lvl[guild.id] = last_spawn
+                    continue
 
-            if encounter_event is None:
+                if encounter_event is not None:
+                    last_spawn = encounter_event.datetime
+
+                diff = datetime.datetime.now() - last_spawn
+                diff_minutes = int(diff.total_seconds() / 60)
                 self.logger.log(
                     guild.id,
-                    "No previous low lvl spawns, next spawn imminent.",
+                    f"Last lwo lvl spawn was {diff_minutes} minutes ago.",
                     cog=self.__cog_name__,
                 )
-                self.enemy_timers_low_lvl[guild.id] = last_spawn
-                continue
 
-            if encounter_event is not None:
-                last_spawn = encounter_event.datetime
+                min_wait = self.LOW_LVL_ENCOUNTER_MIN_WAIT
+                if diff_minutes < self.LOW_LVL_ENCOUNTER_MAX_WAIT:
+                    min_wait = max(self.LOW_LVL_ENCOUNTER_MIN_WAIT, diff_minutes)
 
-            diff = datetime.datetime.now() - last_spawn
-            diff_minutes = int(diff.total_seconds() / 60)
-            self.logger.log(
-                guild.id,
-                f"Last lwo lvl spawn was {diff_minutes} minutes ago.",
-                cog=self.__cog_name__,
-            )
+                next_drop_delay = random.randint(
+                    min_wait, self.LOW_LVL_ENCOUNTER_MAX_WAIT
+                )
+                self.logger.log(
+                    guild.id,
+                    f"Random low lvl spawn delay: {next_drop_delay} minutes.",
+                    cog=self.__cog_name__,
+                )
+                next_spawn = last_spawn + datetime.timedelta(minutes=next_drop_delay)
+                diff = next_spawn - datetime.datetime.now()
+                self.logger.log(
+                    guild.id,
+                    f"Next low lvl spawn in {int(diff.total_seconds()/60)} minutes.",
+                    cog=self.__cog_name__,
+                )
 
-            min_wait = self.LOW_LVL_ENCOUNTER_MIN_WAIT
-            if diff_minutes < self.LOW_LVL_ENCOUNTER_MAX_WAIT:
-                min_wait = max(self.LOW_LVL_ENCOUNTER_MIN_WAIT, diff_minutes)
-
-            next_drop_delay = random.randint(min_wait, self.LOW_LVL_ENCOUNTER_MAX_WAIT)
-            self.logger.log(
-                guild.id,
-                f"Random low lvl spawn delay: {next_drop_delay} minutes.",
-                cog=self.__cog_name__,
-            )
-            next_spawn = last_spawn + datetime.timedelta(minutes=next_drop_delay)
-            diff = next_spawn - datetime.datetime.now()
-            self.logger.log(
-                guild.id,
-                f"Next low lvl spawn in {int(diff.total_seconds()/60)} minutes.",
-                cog=self.__cog_name__,
-            )
-
-            self.enemy_timers_low_lvl[guild.id] = next_spawn
+                self.enemy_timers_low_lvl[guild.id] = next_spawn
+        except Exception as e:
+            print(traceback.format_exc())
+            error_handler = ErrorHandler(self.bot)
+            await error_handler.post_error(e)
 
     async def enemy_autocomplete(
         self, interaction: discord.Interaction, current: str
