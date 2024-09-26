@@ -1,4 +1,5 @@
 import datetime
+import os
 import secrets
 import traceback
 
@@ -6,6 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+from bot import CrunchyBot
 from bot_util import BotUtil
 from cogs.beans.beans_group import BeansGroup
 from error import ErrorHandler
@@ -19,7 +21,7 @@ class Lottery(BeansGroup):
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         return (
             interaction.user.id == author_id
             or interaction.user.guild_permissions.administrator

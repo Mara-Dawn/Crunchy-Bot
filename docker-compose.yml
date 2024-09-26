@@ -6,12 +6,16 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - ./database.sqlite:/app/Crunchy-Bot/database.sqlite
-      - ./key.txt:/app/Crunchy-Bot/key.txt
-      - ./imgur.txt:/app/Crunchy-Bot/imgur.txt
-      - ./imgursecret.txt:/app/Crunchy-Bot/imgursecret.txt
-      - ./openai.txt:/app/Crunchy-Bot/openai.txt
-      - ./tenor.txt:/app/Crunchy-Bot/tenor.txt
       - ./log:/app/Crunchy-Bot/log
+    environment:
+      DISCORD_API_KEY: ${DISCORD_API_KEY}
+      IMGUR_API_KEY: ${IMGUR_API_KEY}
+      IMGUR_API_SECRET: ${IMGUR_API_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      TENOR_API_KEY: ${TENOR_API_KEY}
+      ADMIN_USER_ID: ${ADMIN_USER_ID}
+      ADDITIONAL_SYNC_PERMISSIONS: ${ADDITIONAL_SYNC_PERMISSIONS}
+      ERROR_LOG_CHANNEL_ID: ${ERROR_LOG_CHANNEL_ID}
     command: > 
       sh -cx "git pull
       && python src/main.py"

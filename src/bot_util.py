@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any
 
 import requests
@@ -87,8 +88,11 @@ class BotUtil:
 
 
 class Tenor:
-    def __init__(self, token) -> None:
-        self.api_key = token
+
+    KEY = "TENOR_API_KEY"
+
+    def __init__(self) -> None:
+        self.api_key = os.environ.get(self.KEY)
 
     def __get(self, **params):
         params["key"] = self.api_key

@@ -1,4 +1,5 @@
 import datetime
+import os
 from typing import Literal
 
 import discord
@@ -37,14 +38,14 @@ class Jail(commands.Cog):
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         return (
             interaction.user.id == author_id
             or interaction.user.guild_permissions.administrator
         )
 
     async def __has_mod_permission(self, interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         roles = await self.settings_manager.get_jail_mod_roles(interaction.guild_id)
         is_mod = (
             len(set([x.id for x in interaction.user.roles]).intersection(roles)) > 0

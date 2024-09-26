@@ -1,4 +1,5 @@
 import datetime
+import os
 import re
 from dataclasses import dataclass
 
@@ -27,7 +28,8 @@ class AIPersona:
 
 class AIManager(Service):
 
-    KEY_FILE = "openai.txt"
+    KEY = "OPENAI_API_KEY"
+
     TOKEN_SUMMARIZE_LIMIT = 2500
     TOKEN_SUMMARIZE_THRESHOLD = 2000
     DISCORD_MESSAGE_MAX_LENGTH = 1950
@@ -51,8 +53,7 @@ class AIManager(Service):
         self.jail_manager: JailManager = self.controller.get_service(JailManager)
 
         self.token = ""
-        with open(self.KEY_FILE) as file:
-            self.token = file.readline()
+        self.token = os.environ.get(self.KEY)
 
         mistress_crunch = AIPersona(
             name="Mistress Crunch",

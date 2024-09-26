@@ -1,4 +1,5 @@
 import datetime
+import os
 import traceback
 from typing import Literal
 
@@ -6,6 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+from bot import CrunchyBot
 from cogs.beans.beans_group import BeansGroup
 from control.settings_manager import SettingsManager
 from datalayer.types import PredictionState
@@ -18,14 +20,14 @@ class Predictions(BeansGroup):
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         return (
             interaction.user.id == author_id
             or interaction.user.guild_permissions.administrator
         )
 
     async def __has_mod_permission(self, interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         roles = await self.settings_manager.get_predictions_mod_roles(
             interaction.guild_id
         )

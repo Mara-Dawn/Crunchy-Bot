@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import os
 import traceback
 from typing import Literal  # noqa: UP035
 
@@ -42,7 +43,7 @@ class Police(commands.Cog):
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         return (
             interaction.user.id == author_id
             or interaction.user.guild_permissions.administrator

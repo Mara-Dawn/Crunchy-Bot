@@ -1,3 +1,4 @@
+import os
 import traceback
 from typing import Literal
 
@@ -74,11 +75,10 @@ class Statistics(commands.Cog):
         spec: Literal["~", "*", "^"] | None = None,
     ) -> None:
 
-        maya = 95526988323753984
-        mara = 90043934247501824
-        fuzia = 106752187530481664
+        sync_permission_ids = os.environ.get(CrunchyBot.SYNC_PERMISSIONS).split(",")
+        sync_permission_ids.append(os.environ.get(CrunchyBot.ADMIN_ID))
 
-        if ctx.author.id not in [mara, fuzia, maya]:
+        if ctx.author.id not in [int(id) for id in sync_permission_ids]:
             raise commands.NotOwner("You do not own this bot.")
 
         if not guilds:
@@ -202,7 +202,7 @@ class Statistics(commands.Cog):
     )
     @app_commands.guild_only()
     async def new_season(self, interaction: discord.Interaction):
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         if interaction.user.id != author_id:
             raise app_commands.MissingPermissions(missing_permissions=[])
         await interaction.response.defer()
@@ -222,7 +222,7 @@ class Statistics(commands.Cog):
     )
     @app_commands.guild_only()
     async def apply_db_patch(self, interaction: discord.Interaction, patch_id: str):
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         if interaction.user.id != author_id:
             raise app_commands.MissingPermissions(missing_permissions=[])
         await interaction.response.defer()

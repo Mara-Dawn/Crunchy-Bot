@@ -1,6 +1,9 @@
 import datetime
 
 import discord
+from discord import app_commands
+from discord.ext import commands
+
 from bot import CrunchyBot
 from bot_util import Tenor
 from control.ai_manager import AIManager
@@ -14,8 +17,6 @@ from control.settings_manager import SettingsManager
 from control.types import AIVersion
 from datalayer.database import Database
 from datalayer.types import UserInteraction
-from discord import app_commands
-from discord.ext import commands
 from events.interaction_event import InteractionEvent
 from events.inventory_event import InventoryEvent
 from items.types import ItemGroup, ItemType
@@ -190,9 +191,7 @@ class Interactions(commands.Cog):
             case UserInteraction.FART:
                 search = "fart"
         token = ""
-        with open(self.bot.TENOR_TOKEN_FILE) as file:
-            token = file.readline()
-        g = Tenor(token)
+        g = Tenor()
         gif = await g.random(tag=search)
         embed = discord.Embed(color=discord.Colour.purple())
         embed.set_image(url=gif)

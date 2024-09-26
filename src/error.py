@@ -1,5 +1,6 @@
-import traceback
 import io
+import os
+import traceback
 
 import discord
 from discord import app_commands
@@ -11,7 +12,7 @@ from control.logger import BotLogger
 class ErrorHandler:
 
     def __init__(self, bot: commands.Bot) -> None:
-        self.channel_id = 1288910317866319994
+        self.channel_id = os.environ.get("ERROR_LOG_CHANNEL_ID")
         self.bot = bot
 
     async def on_tree_error(
@@ -53,7 +54,7 @@ class ErrorHandler:
         else:
             webhook = await channel.create_webhook(name="Error")
 
-        content = f"<@{90043934247501824}>\n\n"
+        content = f"<@{os.environ.get(self.bot.ADMIN_ID)}>\n\n"
         if interaction is not None:
             content += f"Guild: **{interaction.guild.name}** ({interaction.guild.id})\n"
             content += (

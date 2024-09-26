@@ -1,18 +1,19 @@
 import datetime
+import os
 import random
 import secrets
 import traceback
 
 import discord
-from bot import CrunchyBot
-from control.settings_manager import SettingsManager
 from discord import app_commands
 from discord.ext import commands, tasks
+
+from bot import CrunchyBot
+from cogs.beans.beans_group import BeansGroup
+from control.settings_manager import SettingsManager
 from error import ErrorHandler
 from events.types import LootBoxEventType
 from view.settings_modal import SettingsModal
-
-from cogs.beans.beans_group import BeansGroup
 
 
 class RandomLoot(BeansGroup):
@@ -25,7 +26,7 @@ class RandomLoot(BeansGroup):
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         return (
             interaction.user.id == author_id
             or interaction.user.guild_permissions.administrator

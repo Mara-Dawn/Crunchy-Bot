@@ -1,10 +1,12 @@
+import os
+
 import discord
 from discord import app_commands
 
 from bot import CrunchyBot
 from error import ErrorHandler
 
-TOKEN_FILE = "key.txt"
+TOKEN = "DISCORD_API_KEY"
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -29,6 +31,5 @@ async def on_tree_error(
 
 bot.tree.on_error = on_tree_error
 
-with open(TOKEN_FILE) as file:
-    token = file.readline()
-    bot.run(token)
+token = os.environ.get(TOKEN)
+bot.run(token)

@@ -1,4 +1,5 @@
 import datetime
+import os
 import random
 import typing
 
@@ -6,6 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import CrunchyBot
 from cogs.beans.beans_group import BeansGroup
 from control.settings_manager import SettingsManager
 from events.beans_event import BeansEvent
@@ -20,7 +22,7 @@ class BeansBasics(BeansGroup):
 
     @staticmethod
     async def __has_permission(interaction: discord.Interaction) -> bool:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         return (
             interaction.user.id == author_id
             or interaction.user.guild_permissions.administrator
@@ -364,7 +366,7 @@ class BeansBasics(BeansGroup):
     @app_commands.check(__has_permission)
     @app_commands.guild_only()
     async def award_prestige(self, interaction: discord.Interaction) -> None:
-        author_id = 90043934247501824
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
         await interaction.response.defer()
         if interaction.user.id != author_id:
             raise app_commands.MissingPermissions

@@ -13,8 +13,9 @@ from error import ErrorHandler
 class CrunchyBot(commands.Bot):
 
     LOG_FILE = "./log/marabot.log"
-    TENOR_TOKEN_FILE = "tenor.txt"
     DB_FILE = "database.sqlite"
+    ADMIN_ID = "ADMIN_USER_ID"
+    SYNC_PERMISSIONS = "ADDITIONAL_SYNC_PERMISSIONS"
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
