@@ -168,7 +168,7 @@ class Bully(commands.Cog):
         await message.delete()
 
     async def modify_message(self, item_type: ItemType, message: discord.Message):
-        content = message.content
+        content = message.content.strip()
         original_message = content
         channel = message.channel
         author = message.author
@@ -182,6 +182,9 @@ class Bully(commands.Cog):
             return
 
         if len(re.sub(r"<a?:\w*:\d*>", "", content)) == 0:
+            return
+
+        if len(re.sub(r"(https?://[^\s]+)", "", content)) == 0:
             return
 
         filtered_message = ""
