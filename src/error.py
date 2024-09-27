@@ -51,10 +51,17 @@ class ErrorHandler:
     ):
         channel = self.bot.get_channel(self.channel_id)
         webhooks = await channel.webhooks()
+
+        hook_name = f"Error-{self.bot.user.name}"
+        webhook = None
+
         if webhooks is not None and len(webhooks) > 0:
-            webhook = webhooks[0]
-        else:
-            webhook = await channel.create_webhook(name="Error")
+            for hook in webhooks:
+                if hook.name == hook_name:
+                    webhook = webhooks[0]
+
+        if webhook is None:
+            webhook = await channel.create_webhook(name=hook_name)
 
         content = f"<@{os.environ.get(self.bot.ADMIN_ID)}>\n\n"
         if interaction is not None:
@@ -65,7 +72,6 @@ class ErrorHandler:
         trace = "".join(traceback.format_exception(error))
         textfile = io.StringIO(trace)
         file = discord.File(textfile, "trace.txt")
-        # content += f"```{trace}\n```"
 
         content += "\n**Previous Log**:\n"
         logger: BotLogger = self.bot.logger
