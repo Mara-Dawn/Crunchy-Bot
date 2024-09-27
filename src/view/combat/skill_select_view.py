@@ -400,12 +400,13 @@ class SkillSelectView(
                     disable_equip = self.selected[0].id in [
                         x.id for x in self.equipped_skills
                     ]
-                self.add_item(
-                    SkillTypeDropdown(
-                        self.skill_info,
-                        self.selected_filter_type,
+                if len(self.skill_info) > 0:
+                    self.add_item(
+                        SkillTypeDropdown(
+                            self.skill_info,
+                            self.selected_filter_type,
+                        )
                     )
-                )
                 if len(self.display_skills) > 0:
                     self.add_item(
                         Dropdown(
