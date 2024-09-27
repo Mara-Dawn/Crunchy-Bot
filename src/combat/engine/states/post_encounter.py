@@ -36,6 +36,8 @@ class PostEncounterState(State):
             spent_skill_types = set()
 
             for slot, skill in character.skill_slots.items():
+                if skill is None:
+                    continue
                 if skill.rarity == Rarity.UNIQUE:
                     continue
                 skill_data = await self.skill_manager.get_skill_data(character, skill)
