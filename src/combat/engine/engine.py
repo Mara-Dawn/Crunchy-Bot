@@ -93,7 +93,9 @@ class Engine:
                     self.state.done = True
                     self.state.next_state = StateType.END_SUCCESS
 
-                if self.context.initiated and len(self.context.active_combatants) <= 0:
+                elif (
+                    self.context.initiated and len(self.context.active_combatants) <= 0
+                ):
                     self.state.done = True
                     self.state.next_state = StateType.END_FAILED
 
