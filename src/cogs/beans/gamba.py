@@ -206,12 +206,12 @@ class Gamba(commands.Cog):
         interaction: discord.Interaction,
         amount: int | None = None,
     ):
+        await interaction.response.defer()
         if not await self.__check_enabled(interaction):
             return
         if not await self.__beans_role_check(interaction):
             return
 
-        await interaction.response.defer()
         guild_id = interaction.guild_id
         user_id = interaction.user.id
         beans_gamba_min = await self.settings_manager.get_beans_gamba_min(guild_id)

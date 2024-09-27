@@ -12,7 +12,7 @@ from control.logger import BotLogger
 class ErrorHandler:
 
     def __init__(self, bot: commands.Bot) -> None:
-        self.channel_id = os.environ.get("ERROR_LOG_CHANNEL_ID")
+        self.channel_id = int(os.environ.get("ERROR_LOG_CHANNEL_ID"))
         self.bot = bot
 
     async def on_tree_error(
@@ -42,7 +42,9 @@ class ErrorHandler:
                 await interaction.followup.send(error_msg, ephemeral=True)
 
             await self.post_error(error, interaction)
-            raise error
+            logger: BotLogger = self.bot.logger
+            trace = "".join(traceback.format_exception(error))
+            logger.error(interaction.guild_id, trace)
 
     async def post_error(
         self, error: Exception, interaction: discord.Interaction | None = None
