@@ -508,7 +508,7 @@ class CombatEmbedManager(Service):
     ):
         actor = turn_data.actor
 
-        fast_mode = len(turn_data.damage_data) > 3
+        fast_mode = len(turn_data.damage_data) > 1
 
         for damage_data in turn_data.damage_data:
             target = damage_data.target
@@ -525,15 +525,14 @@ class CombatEmbedManager(Service):
                 damage_data=damage_data,
             )
 
-            embed = copy.deepcopy(full_embed)
-            embed.add_field(name="Target", value=to_name, inline=True)
-            embed.add_field(name=outcome_title, value="", inline=True)
-            embed.add_field(name="Target Health", value="", inline=True)
-
-            yield embed
-
-            await asyncio.sleep(0.5)
             if not fast_mode:
+                embed = copy.deepcopy(full_embed)
+                embed.add_field(name="Target", value=to_name, inline=True)
+                embed.add_field(name=outcome_title, value="", inline=True)
+                embed.add_field(name="Target Health", value="", inline=True)
+                yield embed
+                await asyncio.sleep(0.5)
+
                 embed = copy.deepcopy(full_embed)
                 embed.add_field(name="Target", value=to_name, inline=True)
                 embed.add_field(name=outcome_title, value=damage_info, inline=True)
