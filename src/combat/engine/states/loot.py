@@ -116,7 +116,9 @@ class LootPayoutState(State):
             )
             view.set_message(message)
 
+        self.context._concluded = True
         self.done = True
+        self.quit = True
 
     async def handle(self, event: BotEvent) -> bool:
         return False
