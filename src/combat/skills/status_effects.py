@@ -85,7 +85,7 @@ class Frost(StatusEffect):
             effect_type=StatusEffectType.FROST,
             name="Frost",
             description="You are slowed.",
-            trigger=[StatusEffectTrigger.ATTRIBUTE],
+            trigger=[StatusEffectTrigger.ATTRIBUTE, StatusEffectTrigger.ON_ATTACK],
             consumed=[StatusEffectTrigger.END_OF_ROUND],
             emoji="🥶",
             display_status=True,
