@@ -7,12 +7,12 @@ import discord
 from discord.ext import commands
 
 from combat.actors import Actor, Opponent
-from combat.encounter import EncounterContext
+from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.skills.skill import Skill
 from combat.skills.types import (
     SkillEffect,
-    SkillInstance,
+    SkillTarget,
     StatusEffectApplication,
 )
 from control.combat.combat_actor_manager import CombatActorManager
@@ -73,10 +73,6 @@ class EnemyController(Service, ABC):
         pass
 
     @abstractmethod
-    async def calculate_opponent_turn(self, context: EncounterContext):
-        pass
-
-    @abstractmethod
     async def intro(self, encounter_id: int):
         pass
 
@@ -122,16 +118,16 @@ class EnemyController(Service, ABC):
         opponent = context.opponent
 
         for turn in turn_data:
-            await self.discord.append_embed_generator_to_round(
-                context, self.embed_manager.handle_actor_turn_embed(turn, context)
-            )
+
+            post_turn_embed_data: dict[str, str] = {}
 
             if turn.post_embed_data is not None:
-                await self.discord.append_embeds_to_round(
-                    context, opponent, turn.post_embed_data
-                )
+                post_turn_embed_data = post_turn_embed_data | turn.post_embed_data
 
-            for target, damage_instance, _ in turn.damage_data:
+            for turn_damage_data in turn.damage_data:
+                target = turn_damage_data.target
+                damage_instance = turn_damage_data.instance
+
                 total_damage = await self.actor_manager.get_skill_damage_after_defense(
                     target, turn.skill, damage_instance.scaled_value
                 )
@@ -145,9 +141,7 @@ class EnemyController(Service, ABC):
                     )
                 )
                 if outcome.embed_data is not None:
-                    await self.discord.append_embeds_to_round(
-                        context, opponent, outcome.embed_data
-                    )
+                    post_turn_embed_data = post_turn_embed_data | outcome.embed_data
 
                 for skill_status_effect in turn.skill.base_skill.status_effects:
                     application_value = None
@@ -174,7 +168,7 @@ class EnemyController(Service, ABC):
                         application_chance = min(1, application_chance * 2)
 
                     if random.random() < application_chance:
-                        await self.status_effect_manager.apply_status(
+                        success = await self.status_effect_manager.apply_status(
                             context,
                             opponent,
                             status_effect_target,
@@ -182,6 +176,13 @@ class EnemyController(Service, ABC):
                             skill_status_effect.stacks,
                             application_value,
                         )
+                        if success:
+                            turn_damage_data.applied_status_effects.append(
+                                (
+                                    skill_status_effect.status_effect_type,
+                                    skill_status_effect.stacks,
+                                )
+                            )
 
                 event = CombatEvent(
                     datetime.datetime.now(),
@@ -196,6 +197,17 @@ class EnemyController(Service, ABC):
                     CombatEventType.ENEMY_TURN_STEP,
                 )
                 await self.controller.dispatch_event(event)
+
+            await self.discord.append_embed_generator_to_round(
+                context, self.embed_manager.handle_actor_turn_embed(turn, context)
+            )
+
+            if post_turn_embed_data is not None:
+                await asyncio.sleep(0.5)
+                await self.discord.append_embeds_to_round(
+                    context, opponent, post_turn_embed_data
+                )
+
             event = CombatEvent(
                 datetime.datetime.now(),
                 context.encounter.guild_id,
@@ -216,8 +228,8 @@ class EnemyController(Service, ABC):
         skill: Skill,
         available_targets: list[Actor],
         hp_cache: dict[int, int],
-    ) -> tuple[list[tuple[Actor, SkillInstance, float], dict[str, str]]]:
-        damage_data = []
+    ) -> tuple[list[TurnDamageData], dict[str, str]]:
+        skill_value_data = []
         post_embed_data = {}
 
         for target in available_targets:
@@ -253,5 +265,168 @@ class EnemyController(Service, ABC):
             new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
             hp_cache[target.id] = new_target_hp
 
-            damage_data.append((target, instance, new_target_hp))
-        return damage_data, post_embed_data
+            damage_data = TurnDamageData(target, instance, new_target_hp)
+            skill_value_data.append(damage_data)
+
+        return skill_value_data, post_embed_data
+
+    async def calculate_opponent_turn_data(
+        self,
+        context: EncounterContext,
+        skill: Skill,
+        available_targets: list[Actor],
+        hp_cache: dict[int, int],
+        max_skill_targets: int | None = None,
+    ) -> TurnData:
+        skill_value_data = []
+
+        if skill.base_skill.default_target == SkillTarget.SELF:
+            available_targets = [context.opponent]
+
+        if skill.base_skill.aoe:
+            skill_value_data, post_embed_data = await self.calculate_aoe_skill(
+                context, skill, available_targets, hp_cache
+            )
+            return TurnData(
+                actor=context.opponent,
+                skill=skill,
+                damage_data=skill_value_data,
+                post_embed_data=post_embed_data,
+            )
+
+        damage_instances = await self.skill_manager.get_skill_effect(
+            context.opponent, skill, combatant_count=context.combat_scale
+        )
+        post_embed_data = {}
+
+        special_skill_modifier, description_override = (
+            await self.skill_manager.get_special_skill_modifier(
+                context,
+                skill,
+            )
+        )
+
+        skill_targets = []
+        skill_target_ids = []
+
+        for instance in damage_instances:
+            if len(available_targets) <= 0:
+                break
+
+            if (
+                skill.base_skill.max_targets is not None
+                and len(skill_targets) >= skill.base_skill.max_targets
+            ):
+                target = random.choice(skill_targets)
+            else:
+                target = random.choice(available_targets)
+
+            skill_target_ids.append(target.id)
+            if target not in skill_targets:
+                skill_targets.append(target)
+
+            current_hp = hp_cache.get(target.id, target.current_hp)
+
+            outcome = await self.status_effect_manager.handle_attack_status_effects(
+                context, context.opponent, skill
+            )
+            instance.apply_effect_outcome(outcome)
+            if outcome.embed_data is not None:
+                post_embed_data = post_embed_data | outcome.embed_data
+
+            outcome = (
+                await self.status_effect_manager.handle_on_damage_taken_status_effects(
+                    context,
+                    target,
+                    skill,
+                )
+            )
+            instance.apply_effect_outcome(outcome)
+            if outcome.embed_data is not None:
+                post_embed_data = post_embed_data | outcome.embed_data
+
+            if special_skill_modifier != 1:
+                instance.modifier *= special_skill_modifier
+
+            total_damage = await self.actor_manager.get_skill_damage_after_defense(
+                target, skill, instance.scaled_value
+            )
+
+            if skill.base_skill.skill_effect != SkillEffect.HEALING:
+                total_damage *= -1
+
+            new_target_hp = min(max(0, current_hp + total_damage), target.max_hp)
+
+            damage_data = TurnDamageData(target, instance, new_target_hp)
+            skill_value_data.append(damage_data)
+
+            hp_cache[target.id] = new_target_hp
+            available_targets = [
+                actor
+                for actor in available_targets
+                if actor.id not in hp_cache
+                or hp_cache[actor.id] > 0
+                and (
+                    max_skill_targets is None
+                    or skill_target_ids.count(actor.id) < max_skill_targets
+                )
+            ]
+
+        return TurnData(
+            actor=context.opponent,
+            skill=skill,
+            damage_data=skill_value_data,
+            post_embed_data=post_embed_data,
+            description_override=description_override,
+        )
+
+    async def calculate_opponent_turn(
+        self,
+        context: EncounterContext,
+    ) -> list[TurnData]:
+        opponent = context.opponent
+
+        available_skills = []
+
+        sorted_skills = sorted(
+            opponent.skills,
+            key=lambda x: (
+                x.base_skill.base_value
+                if x.base_skill.skill_effect
+                not in [SkillEffect.HEALING, SkillEffect.BUFF]
+                else 100
+            ),
+            reverse=True,
+        )
+        for skill in sorted_skills:
+            skill_data = await self.skill_manager.get_skill_data(opponent, skill)
+            if not skill_data.on_cooldown():
+                available_skills.append(skill)
+
+        skills_to_use = []
+
+        for skill in available_skills:
+            skills_to_use.append(skill)
+            if len(skills_to_use) >= opponent.enemy.actions_per_turn:
+                break
+
+        available_targets = context.active_combatants
+
+        hp_cache = {}
+        turn_data = []
+        for skill in skills_to_use:
+
+            turn_data.append(
+                await self.calculate_opponent_turn_data(
+                    context, skill, available_targets, hp_cache
+                )
+            )
+            available_targets = [
+                actor
+                for actor in available_targets
+                if actor.id not in hp_cache or hp_cache[actor.id] > 0
+            ]
+            if len(available_targets) <= 0:
+                break
+
+        return turn_data

@@ -189,6 +189,22 @@ class Inspired(StatusEffect):
         )
 
 
+class NeuronActive(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.NEURON_ACTIVE,
+            name="Neuron Active",
+            description="Increased Damage",
+            trigger=[StatusEffectTrigger.ON_ATTACK],
+            consumed=[StatusEffectTrigger.END_OF_TURN],
+            emoji="🧠",
+            display_status=True,
+            override=True,
+            apply_on_miss=True,
+        )
+
+
 class ZonedIn(StatusEffect):
 
     def __init__(self):

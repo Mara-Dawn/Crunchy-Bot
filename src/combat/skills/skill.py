@@ -549,7 +549,13 @@ class CharacterSkill:
         if max_width is None:
             max_width = Config.COMBAT_EMBED_MAX_WIDTH
 
-        title = f"> {self.skill.name} "
+        prefix = ""
+        if self.skill.rarity.value != Rarity.DEFAULT and not SkillType.is_weapon_skill(
+            self.skill.base_skill.base_skill_type
+        ):
+            prefix = self.skill.rarity.value
+
+        title = f"> {prefix} {self.skill.name} "
         description = f'"{self.skill.description}"'
         if description_override is not None:
             description = f'"{description_override}"'

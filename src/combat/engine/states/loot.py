@@ -83,6 +83,7 @@ class LootPayoutState(State):
                     member, total_scrap, auto_scrap
                 )
                 embeds.append(scrap_embed)
+                await asyncio.sleep(1)
                 await self.discord.edit_message(message, embeds=embeds)
 
             item = member_loot[2]

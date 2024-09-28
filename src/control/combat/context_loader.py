@@ -55,6 +55,11 @@ class ContextLoader(Service):
                 for actor in context.actors:
                     await self.actor_manager.apply_event(actor, event)
 
+                match encounter_event.encounter_event_type:
+                    case EncounterEventType.END:
+                        del self.context_cache[encounter_id]
+                        return
+
             case EventType.COMBAT:
                 event: CombatEvent = event
                 encounter_id = event.encounter_id
