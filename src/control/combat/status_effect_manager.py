@@ -568,7 +568,7 @@ class CombatStatusEffectManager(Service):
                     if outcome.modifier != 0:
                         continue
                     title = f"{status_effect.emoji} Miss"
-                    description = f"{actor.name} dodged the attack!"
+                    description = f"{actor.name} dodged an attack!"
                 case StatusEffectType.FLUSTERED:
                     description = f"{actor.name} cannot harm their opponent!"
                 case StatusEffectType.SIMP:

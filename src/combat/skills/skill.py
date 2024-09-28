@@ -549,14 +549,13 @@ class CharacterSkill:
         if max_width is None:
             max_width = Config.COMBAT_EMBED_MAX_WIDTH
 
-        name_block = "```ansi\n"
-        name = f"<- {self.skill.name} ->"
-        if self.skill.rarity.value != Rarity.DEFAULT:
-            name = f"{Droppable.RARITY_NAME_COLOR_MAP[self.skill.rarity]}{name}[0m"
-        else:
-            name = f"{Droppable.RARITY_NAME_COLOR_MAP[Rarity.COMMON]}{name}[0m"
-        name_block += f"{name}```"
+        prefix = ""
+        if self.skill.rarity.value != Rarity.DEFAULT and not SkillType.is_weapon_skill(
+            self.skill.base_skill.base_skill_type
+        ):
+            prefix = self.skill.rarity.value
 
+        title = f"> *{prefix}* **{self.skill.name}** "
         description = f'"{self.skill.description}"'
         if description_override is not None:
             description = f'"{description_override}"'
@@ -564,6 +563,6 @@ class CharacterSkill:
         if len(description) < max_width:
             description += " " + "\u00a0" * max_width
 
-        info_block = f"{name_block}```python\n{description}```"
+        info_block = f"```python\n{description}```"
 
-        embed.add_field(name="", value=info_block, inline=False)
+        embed.add_field(name=title, value=info_block, inline=False)

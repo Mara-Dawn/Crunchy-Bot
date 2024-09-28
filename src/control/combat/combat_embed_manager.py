@@ -490,14 +490,18 @@ class CombatEmbedManager(Service):
             applied_effect_display = ""
             for status_effect_type, stacks in damage_data.applied_status_effects:
                 status_effect = await self.factory.get_status_effect(status_effect_type)
-                applied_effect_display += f"{status_effect.emoji}{stacks}"
+                if status_effect.display_status:
+                    applied_effect_display += f"{status_effect.emoji}{stacks}"
 
+            full_isplay_hp = display_hp
             if applied_effect_display != "":
-                display_hp = f"{display_hp} | `{applied_effect_display}`"
+                full_isplay_hp += f" | `{applied_effect_display}`"
 
             full_embed.add_field(name="Target", value=to_name, inline=True)
             full_embed.add_field(name=outcome_title, value=damage_info, inline=True)
-            full_embed.add_field(name="Target Health", value=display_hp, inline=True)
+            full_embed.add_field(
+                name="Target Health", value=full_isplay_hp, inline=True
+            )
 
         yield full_embed
 
@@ -548,7 +552,8 @@ class CombatEmbedManager(Service):
             applied_effect_display = ""
             for status_effect_type, stacks in damage_data.applied_status_effects:
                 status_effect = await self.factory.get_status_effect(status_effect_type)
-                applied_effect_display += f"{status_effect.emoji}{stacks}"
+                if status_effect.display_status:
+                    applied_effect_display += f"{status_effect.emoji}{stacks}"
 
             if applied_effect_display != "":
                 display_hp = f"{display_hp} | `{applied_effect_display}`"
