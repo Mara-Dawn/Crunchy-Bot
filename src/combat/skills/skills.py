@@ -1710,6 +1710,7 @@ class StepOnYou(BaseSkill):
             initial_cooldown=0,
             base_value=5,
             hits=1,
+            max_hits=3,
             aoe=False,
             status_effects=[
                 SkillStatusEffect(
