@@ -49,34 +49,29 @@ class ContextLoader(Service):
                 encounter_event: EncounterEvent = event
                 encounter_id = encounter_event.encounter_id
 
-                if encounter_id in self.context_cache:
-                    context = self.context_cache[encounter_id]
-                    context.add_event(event)
-                    for actor in context.actors:
-                        await self.actor_manager.apply_event(actor, event)
-
-                    match encounter_event.encounter_event_type:
-                        case EncounterEventType.END:
-                            del self.context_cache[encounter_id]
-                            return
+                context = await self.load_encounter_context(encounter_id)
+                context = self.context_cache[encounter_id]
+                context.add_event(event)
+                for actor in context.actors:
+                    await self.actor_manager.apply_event(actor, event)
 
             case EventType.COMBAT:
                 event: CombatEvent = event
                 encounter_id = event.encounter_id
-                if encounter_id in self.context_cache:
-                    context = self.context_cache[encounter_id]
-                    context.add_event(event)
-                    for actor in context.actors:
-                        await self.actor_manager.apply_event(actor, event)
+                context = await self.load_encounter_context(encounter_id)
+                context = self.context_cache[encounter_id]
+                context.add_event(event)
+                for actor in context.actors:
+                    await self.actor_manager.apply_event(actor, event)
 
             case EventType.STATUS_EFFECT:
                 event: StatusEffectEvent = event
                 encounter_id = event.encounter_id
-                if encounter_id in self.context_cache:
-                    context = self.context_cache[encounter_id]
-                    context.add_event(event)
-                    for actor in context.actors:
-                        await self.actor_manager.apply_event(actor, event)
+                context = await self.load_encounter_context(encounter_id)
+                context = self.context_cache[encounter_id]
+                context.add_event(event)
+                for actor in context.actors:
+                    await self.actor_manager.apply_event(actor, event)
 
     async def init_encounter_context(self, encounter: Encounter) -> EncounterContext:
         enemy = await self.factory.get_enemy(encounter.enemy_type)

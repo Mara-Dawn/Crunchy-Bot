@@ -27,20 +27,18 @@ class PostEncounterState(State):
             if refresh_setting == SkillRefreshOption.DISABLED:
                 continue
 
-            character = await self.actor_manager.get_character(member)
-
             log_message = f"{member.display_name} auto refresh check started. {refresh_setting.value}"
             self.logger.log(member.guild.id, log_message, cog=self.log_name)
 
             spent_skills: dict[int, CharacterSkill] = {}
             spent_skill_types = set()
 
-            for slot, skill in character.skill_slots.items():
+            for slot, skill in combatant.skill_slots.items():
                 if skill is None:
                     continue
                 if skill.rarity == Rarity.UNIQUE:
                     continue
-                skill_data = await self.skill_manager.get_skill_data(character, skill)
+                skill_data = await self.skill_manager.get_skill_data(combatant, skill)
                 if (
                     skill_data.stacks_left() is not None
                     and skill_data.stacks_left() <= 0
@@ -74,7 +72,7 @@ class PostEncounterState(State):
             log_message = f"{member.display_name} auto refresh: {len(filtered_skills)} possible replacement skills found."
             self.logger.log(member.guild.id, log_message, cog=self.log_name)
 
-            character_equipped_skills = character.skill_slots
+            character_equipped_skills = combatant.skill_slots
             changes_made = False
             for slot, skill_data in spent_skills.items():
 
