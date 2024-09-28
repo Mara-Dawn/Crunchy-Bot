@@ -3940,9 +3940,10 @@ class Database:
             LEFT JOIN {self.USER_EQUIPPED_SKILLS_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_EQUIPPED_SKILLS_SKILL_ID_COL}
             WHERE {self.EVENT_GUILD_ID_COL} = ?
             AND {self.COMBAT_EVENT_MEMBER_ID} = ?
+            AND {self.COMBAT_EVENT_TYPE_COL} = ?
             ORDER BY {self.EVENT_ID_COL} DESC;
         """
-        task = (guild_id, member_id)
+        task = (guild_id, member_id, CombatEventType.MEMBER_TURN)
         rows = await self.__query_select(command, task)
         if not rows:
             return {}
@@ -3957,15 +3958,7 @@ class Database:
                 break
 
         stacks_used = {}
-        previous_skill = None
         for row in rows:
-            if row[self.COMBAT_EVENT_TYPE_COL] in [
-                CombatEventType.ENEMY_END_TURN,
-                CombatEventType.MEMBER_END_TURN,
-            ]:
-                previous_skill = None
-                continue
-
             if (
                 row[self.COMBAT_EVENT_SKILL_TYPE] is None
                 or row[self.COMBAT_EVENT_SKILL_TYPE] not in SkillType
@@ -3978,10 +3971,6 @@ class Database:
             if skill_id is None:
                 continue
 
-            if previous_skill is not None and previous_skill == skill_type:
-                continue
-
-            previous_skill = skill_type
             base_class = globals()[skill_type]
             base_skill: BaseSkill = base_class()  # noqa: F405
 
@@ -4062,10 +4051,12 @@ class Database:
     ):
         await self.clear_selected_user_skills(guild_id, member_id)
 
-        skill_ids = [skill.id for skill in skills.values()]
+        skill_ids = [skill.id for skill in skills.values() if skill is not None]
         await self.delete_gear_by_ids(skill_ids)
 
         for slot, skill in skills.items():
+            if skill is None:
+                continue
             command = f"""
                 INSERT INTO {self.USER_EQUIPPED_SKILLS_TABLE} (
                 {self.USER_EQUIPPED_SKILLS_GUILD_ID_COL}, 
