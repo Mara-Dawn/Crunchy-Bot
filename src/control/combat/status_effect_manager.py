@@ -9,6 +9,7 @@ from combat.gear.types import CharacterAttribute
 from combat.skills.skill import Skill
 from combat.skills.status_effect import (
     ActiveStatusEffect,
+    SkillStatusEffect,
 )
 from combat.skills.status_effects import *  # noqa: F403
 from combat.skills.types import (
@@ -68,7 +69,7 @@ class CombatStatusEffectManager(Service):
         type: StatusEffectType,
         stacks: int,
         application_value: float = None,
-    ) -> bool:
+    ) -> StatusEffectType | None:
         if type == StatusEffectType.RANDOM:
             random_positive_effect = [
                 StatusEffectType.HIGH,
@@ -93,7 +94,7 @@ class CombatStatusEffectManager(Service):
             and application_value == 0
             and not status_effect.apply_on_miss
         ):
-            return False
+            return None
 
         for active_actor in context.current_initiative:
             if active_actor.id == source.id:
@@ -117,7 +118,7 @@ class CombatStatusEffectManager(Service):
 
                 if application_value is not None:
                     if application_value <= 0:
-                        return False
+                        return None
                     base_value = application_value * Config.BLEED_SCALING
 
                 damage = base_value
@@ -142,7 +143,7 @@ class CombatStatusEffectManager(Service):
 
                 if application_value is not None:
                     if application_value <= 0:
-                        return False
+                        return None
                     base_value = application_value * Config.LEECH_SCALING
 
                 damage = base_value * (1 + healing_modifier)
@@ -202,7 +203,7 @@ class CombatStatusEffectManager(Service):
             damage,
         )
         await self.controller.dispatch_event(event)
-        return True
+        return type
 
     async def consume_status_stack(
         self,
@@ -765,13 +766,15 @@ class CombatStatusEffectManager(Service):
         target: Actor,
         skill: Skill,
         damage_instance: SkillInstance,
-    ) -> StatusEffectOutcome:
+    ) -> tuple[StatusEffectOutcome, list[tuple[StatusEffectType, int]]]:
         current_actor = context.get_actor_by_id(actor.id)
         current_target = context.get_actor_by_id(target.id)
         outcomes: dict[StatusEffectType, StatusEffectOutcome] = {}
         triggered_status_effects = await self.actor_trigger(
             context, current_actor, StatusEffectTrigger.POST_ATTACK
         )
+
+        applied_status_effects: list[tuple[StatusEffectType, int]] = []
 
         for triggered_status_effect in triggered_status_effects:
             effect_type = triggered_status_effect.status_effect.effect_type
@@ -796,6 +799,12 @@ class CombatStatusEffectManager(Service):
                         StatusEffectType.BLEED,
                         3,
                         damage,
+                    )
+                    applied_status_effects.append(
+                        (
+                            StatusEffectType.BLEED,
+                            3,
+                        )
                     )
                 case StatusEffectType.POISON:
                     if StatusEffectType.CLEANSE in [
@@ -842,7 +851,10 @@ class CombatStatusEffectManager(Service):
 
         embed_data = await self.get_status_effect_outcome_info(context, actor, outcomes)
 
-        return self.combine_outcomes(outcomes.values(), embed_data)
+        return (
+            self.combine_outcomes(outcomes.values(), embed_data),
+            applied_status_effects,
+        )
 
     async def handle_round_status_effects(
         self,

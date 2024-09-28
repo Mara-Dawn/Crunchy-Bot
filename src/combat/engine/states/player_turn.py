@@ -191,7 +191,7 @@ class PlayerTurn(State):
             display_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.value
             )
-            outcome = (
+            outcome, applied_status_effects = (
                 await self.status_effect_manager.handle_post_attack_status_effects(
                     context,
                     character,
@@ -200,6 +200,7 @@ class PlayerTurn(State):
                     damage_instance,
                 )
             )
+            turn_damage_data.applied_status_effects.extend(applied_status_effects)
             if outcome.embed_data is not None:
                 post_turn_embed_data = post_turn_embed_data | outcome.embed_data
 
@@ -223,7 +224,7 @@ class PlayerTurn(State):
                     status_effect_target = character
 
                 if random.random() < skill_status_effect.application_chance:
-                    success = await self.status_effect_manager.apply_status(
+                    applied_type = await self.status_effect_manager.apply_status(
                         context,
                         character,
                         status_effect_target,
@@ -231,10 +232,10 @@ class PlayerTurn(State):
                         skill_status_effect.stacks,
                         application_value,
                     )
-                    if success:
+                    if applied_type is not None:
                         turn_damage_data.applied_status_effects.append(
                             (
-                                skill_status_effect.status_effect_type,
+                                applied_type,
                                 skill_status_effect.stacks,
                             )
                         )
