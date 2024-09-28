@@ -472,13 +472,6 @@ class CombatEmbedManager(Service):
             embed.add_field(name=outcome_title, value=damage_info, inline=True)
             embed.add_field(name="Target Health", value="", inline=True)
 
-            remaiming_hp = damage_data.hp
-
-            percentage = f"{round(remaiming_hp/target.max_hp * 100, 1)}".rstrip(
-                "0"
-            ).rstrip(".")
-            display_hp = f"{percentage}%"
-
         yield embed
 
         await asyncio.sleep(0.5)
@@ -486,6 +479,12 @@ class CombatEmbedManager(Service):
         for damage_data in turn_data.damage_data:
             target = damage_data.target
             to_name, outcome_title, damage_info = content_map[target.id]
+
+            remaiming_hp = damage_data.hp
+            percentage = f"{round(remaiming_hp/target.max_hp * 100, 1)}".rstrip(
+                "0"
+            ).rstrip(".")
+            display_hp = f"{percentage}%"
 
             applied_effect_display = ""
             for status_effect_type, stacks in damage_data.applied_status_effects:
