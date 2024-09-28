@@ -513,7 +513,7 @@ class CombatEmbedManager(Service):
         for damage_data in turn_data.damage_data:
             target = damage_data.target
             remaiming_hp = damage_data.hp
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(1)
 
             to_name = f"<@{target.id}>"
             if target.is_enemy:
