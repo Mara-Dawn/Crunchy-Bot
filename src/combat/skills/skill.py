@@ -44,6 +44,7 @@ class BaseSkill(DroppableBase):
         uniques: list[SkillType] = None,
         base_skill_type: SkillType = None,
         author: str = None,
+        max_hits: int = None,
     ):
         super().__init__(
             name=name,
@@ -76,6 +77,7 @@ class BaseSkill(DroppableBase):
         self.custom_crit = custom_crit
         self.max_targets = max_targets
         self.no_scaling = no_scaling
+        self.max_hits = max_hits
         self.base_skill_type = base_skill_type
 
         if self.image_url is None:
