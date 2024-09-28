@@ -83,6 +83,7 @@ class LootPayoutState(State):
                     member, total_scrap, auto_scrap
                 )
                 embeds.append(scrap_embed)
+                await asyncio.sleep(1)
                 await self.discord.edit_message(message, embeds=embeds)
 
             item = member_loot[2]
@@ -115,7 +116,9 @@ class LootPayoutState(State):
             )
             view.set_message(message)
 
+        self.context._concluded = True
         self.done = True
+        self.quit = True
 
     async def handle(self, event: BotEvent) -> bool:
         return False

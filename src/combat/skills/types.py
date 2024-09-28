@@ -12,6 +12,7 @@ class StatusEffectType(str, Enum):
     FLUSTERED = "Flustered"
     SIMP = "Simp"
     INSPIRED = "Inspired"
+    NEURON_ACTIVE = "NeuronActive"
     ZONED_IN = "ZonedIn"
     RAGE = "Rage"
     FEAR = "Fear"

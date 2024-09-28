@@ -493,7 +493,7 @@ class NeuronActivation(BaseSkill):
             base_value=85,
             status_effects=[
                 SkillStatusEffect(
-                    StatusEffectType.INSPIRED,
+                    StatusEffectType.NEURON_ACTIVE,
                     1,
                     StatusEffectApplication.ATTACK_VALUE,
                 )

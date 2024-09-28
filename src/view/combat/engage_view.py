@@ -57,8 +57,6 @@ class EnemyEngageView(ViewMenu):
                 await self.refresh_ui()
 
     async def engage(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-
         event = UIEvent(
             UIEventType.COMBAT_ENGAGE,
             interaction,
@@ -67,8 +65,6 @@ class EnemyEngageView(ViewMenu):
         await self.controller.dispatch_ui_event(event)
 
     async def leave(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-
         event = UIEvent(
             UIEventType.COMBAT_LEAVE,
             interaction,
@@ -144,6 +140,7 @@ class LeaveButton(discord.ui.Button):
         super().__init__(label="Leave", style=discord.ButtonStyle.red)
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         view: EnemyEngageView = self.view
 
         await view.leave(interaction)
@@ -157,6 +154,7 @@ class EngageButton(discord.ui.Button):
         )
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         view: EnemyEngageView = self.view
 
         await view.engage(interaction)

@@ -1,10 +1,12 @@
 from collections import deque
+from dataclasses import dataclass
 from typing import Any
 
 import discord
 
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
+from combat.skills import status_effect
 from combat.skills.skill import Skill
 from combat.skills.types import SkillInstance, StatusEffectType
 from events.bot_event import BotEvent
@@ -278,18 +280,25 @@ class EncounterContext:
         return self._concluded
 
 
-class TurnData:
+@dataclass
+class TurnDamageData:
+    target: Actor
+    instance: SkillInstance
+    hp: int
+    _applied_status_effects: list[tuple[status_effect.StatusEffect, int]] | None = None
 
-    def __init__(
-        self,
-        actor: Actor,
-        skill: Skill,
-        damage_data: list[tuple[Actor, SkillInstance, int]],
-        post_embed_data: dict[str, str] = None,
-        description_override: str = None,
-    ):
-        self.actor = actor
-        self.skill = skill
-        self.damage_data = damage_data
-        self.post_embed_data = post_embed_data
-        self.description_override = description_override
+    @property
+    def applied_status_effects(self) -> list[tuple[status_effect.StatusEffect, int]]:
+        if self._applied_status_effects is None:
+            self._applied_status_effects = []
+
+        return self._applied_status_effects
+
+
+@dataclass
+class TurnData:
+    actor: Actor
+    skill: Skill
+    damage_data: list[TurnDamageData]
+    post_embed_data: dict[str, str] | None = None
+    description_override: str | None = None

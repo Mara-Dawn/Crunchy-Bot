@@ -1,10 +1,11 @@
+import asyncio
 import datetime
 import random
 
 import discord
 
 from combat.actors import Actor, Character
-from combat.encounter import EncounterContext, TurnData
+from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.engine.states.state import State
 from combat.engine.types import StateType
 from combat.skills.skill import Skill
@@ -175,16 +176,15 @@ class PlayerTurn(State):
                 post_embed_data={"No Target": "The Skill had no effect."},
             )
 
-        await self.discord.append_embed_generator_to_round(
-            context, self.embed_manager.handle_actor_turn_embed(turn, context)
-        )
+        post_turn_embed_data: dict[str, str] = {}
 
         if turn.post_embed_data is not None:
-            await self.discord.append_embeds_to_round(
-                context, character, turn.post_embed_data
-            )
+            post_turn_embed_data = post_turn_embed_data | turn.post_embed_data
 
-        for target, damage_instance, _ in turn.damage_data:
+        for turn_damage_data in turn.damage_data:
+            target = turn_damage_data.target
+            damage_instance = turn_damage_data.instance
+
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.scaled_value
             )
@@ -201,9 +201,7 @@ class PlayerTurn(State):
                 )
             )
             if outcome.embed_data is not None:
-                await self.discord.append_embeds_to_round(
-                    context, character, outcome.embed_data
-                )
+                post_turn_embed_data = post_turn_embed_data | outcome.embed_data
 
             status_effect_damage = display_damage
             for skill_status_effect in turn.skill.base_skill.status_effects:
@@ -225,7 +223,7 @@ class PlayerTurn(State):
                     status_effect_target = character
 
                 if random.random() < skill_status_effect.application_chance:
-                    await self.status_effect_manager.apply_status(
+                    success = await self.status_effect_manager.apply_status(
                         context,
                         character,
                         status_effect_target,
@@ -233,6 +231,13 @@ class PlayerTurn(State):
                         skill_status_effect.stacks,
                         application_value,
                     )
+                    if success:
+                        turn_damage_data.applied_status_effects.append(
+                            (
+                                skill_status_effect.status_effect_type,
+                                skill_status_effect.stacks,
+                            )
+                        )
 
             event = CombatEvent(
                 datetime.datetime.now(),
@@ -248,7 +253,18 @@ class PlayerTurn(State):
             )
             await self.controller.dispatch_event(event)
 
+        await self.discord.append_embed_generator_to_round(
+            context, self.embed_manager.handle_actor_turn_embed(turn, context)
+        )
+
+        if post_turn_embed_data is not None:
+            await asyncio.sleep(0.5)
+            await self.discord.append_embeds_to_round(
+                context, character, post_turn_embed_data
+            )
+
         self.done = True
+
         event = CombatEvent(
             datetime.datetime.now(),
             context.encounter.guild_id,
@@ -269,8 +285,8 @@ class PlayerTurn(State):
         skill: Skill,
         source: Character,
         available_targets: list[Actor],
-    ) -> tuple[list[tuple[Actor, SkillInstance, float], discord.Embed]]:
-        damage_data = []
+    ) -> tuple[list[TurnDamageData], list[discord.Embed]]:
+        skill_value_data = []
         embed_data = {}
         outcome = await self.status_effect_manager.handle_attack_status_effects(
             context, source, skill
@@ -309,8 +325,10 @@ class PlayerTurn(State):
 
             new_target_hp = min(max(0, current_hp - total_damage), target.max_hp)
 
-            damage_data.append((target, instance, new_target_hp))
-        return damage_data, embed_data
+            damage_data = TurnDamageData(target, instance, new_target_hp)
+            skill_value_data.append(damage_data)
+
+        return skill_value_data, embed_data
 
     async def calculate_character_skill(
         self,
@@ -318,7 +336,7 @@ class PlayerTurn(State):
         skill: Skill,
         source: Character,
         target: Actor,
-    ) -> tuple[list[tuple[Actor, SkillInstance, float], list[discord.Embed]]]:
+    ) -> tuple[list[TurnDamageData], list[discord.Embed]]:
         skill_instances = await self.skill_manager.get_skill_effect(
             source, skill, combatant_count=context.combat_scale
         )
@@ -368,7 +386,8 @@ class PlayerTurn(State):
             new_target_hp = min(max(0, current_hp + total_skill_value), target.max_hp)
             hp_cache[target_id] = new_target_hp
 
-            skill_value_data.append((target, instance, new_target_hp))
+            damage_data = TurnDamageData(target, instance, new_target_hp)
+            skill_value_data.append(damage_data)
 
         return skill_value_data, embed_data
 

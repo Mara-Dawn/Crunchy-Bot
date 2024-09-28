@@ -68,7 +68,7 @@ class CombatStatusEffectManager(Service):
         type: StatusEffectType,
         stacks: int,
         application_value: float = None,
-    ):
+    ) -> bool:
         if type == StatusEffectType.RANDOM:
             random_positive_effect = [
                 StatusEffectType.HIGH,
@@ -93,7 +93,7 @@ class CombatStatusEffectManager(Service):
             and application_value == 0
             and not status_effect.apply_on_miss
         ):
-            return
+            return False
 
         for active_actor in context.current_initiative:
             if active_actor.id == source.id:
@@ -117,7 +117,7 @@ class CombatStatusEffectManager(Service):
 
                 if application_value is not None:
                     if application_value <= 0:
-                        return
+                        return False
                     base_value = application_value * Config.BLEED_SCALING
 
                 damage = base_value
@@ -142,7 +142,7 @@ class CombatStatusEffectManager(Service):
 
                 if application_value is not None:
                     if application_value <= 0:
-                        return
+                        return False
                     base_value = application_value * Config.LEECH_SCALING
 
                 damage = base_value * (1 + healing_modifier)
@@ -151,6 +151,7 @@ class CombatStatusEffectManager(Service):
                 | StatusEffectType.HEAL_OVER_TIME
                 | StatusEffectType.EVASIVE
                 | StatusEffectType.PROTECTION
+                | StatusEffectType.NEURON_ACTIVE
             ):
                 damage = application_value
 
@@ -201,6 +202,7 @@ class CombatStatusEffectManager(Service):
             damage,
         )
         await self.controller.dispatch_event(event)
+        return True
 
     async def consume_status_stack(
         self,
@@ -476,7 +478,7 @@ class CombatStatusEffectManager(Service):
                             EncounterEventType.FORCE_SKIP,
                         )
                         await self.controller.dispatch_event(event)
-                case StatusEffectType.INSPIRED:
+                case StatusEffectType.INSPIRED | StatusEffectType.NEURON_ACTIVE:
                     modifier = 1 + (active_status_effect.event.value / 100)
                 case StatusEffectType.ZONED_IN:
                     crit_chance = 1

@@ -9,15 +9,19 @@ from events.encounter_event import EncounterEvent
 from events.types import EncounterEventType
 
 
-class EndSuccessState(State):
+class EndState(State):
     def __init__(self, controller: Controller, context: EncounterContext):
         super().__init__(controller, context)
-        self.state_type: StateType = StateType.END_SUCCESS
-        self.next_state: StateType = StateType.LOOT_PAYOUT
+        self.state_type: StateType = StateType.ENCOUNTER_END
+        self.next_state: StateType = StateType.POST_ENCOUNTER
 
     async def startup(self):
         await self.discord.delete_previous_combat_info(self.context.thread)
-        embed = await self.embed_manager.get_combat_success_embed(self.context)
+
+        if self.context.opponent.defeated:
+            embed = await self.embed_manager.get_combat_success_embed(self.context)
+        else:
+            embed = await self.embed_manager.get_combat_failed_embed(self.context)
 
         await self.discord.send_message(self.context.thread, content="", embed=embed)
 

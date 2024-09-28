@@ -12,7 +12,6 @@ class StateType(str, Enum):
     PLAYER_TURN = "PlayerTurn"
     OPPONENT_TURN = "OpponentTurn"
     TURN_END = "TurnEnd"
-    END_SUCCESS = "EndSuccess"
-    END_FAILED = "EndFailed"
+    ENCOUNTER_END = "EncounterEnd"
     LOOT_PAYOUT = "LootPayout"
     POST_ENCOUNTER = "PostEncounter"

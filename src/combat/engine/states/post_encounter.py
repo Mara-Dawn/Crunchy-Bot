@@ -130,9 +130,13 @@ class PostEncounterState(State):
                 member.guild.id, member.id, character_equipped_skills
             )
 
-        self.context._concluded = True
-        self.done = True
-        self.quit = True
+        if self.context.opponent.defeated:
+            self.next_state = StateType.LOOT_PAYOUT
+            self.done = True
+        else:
+            self.context._concluded = True
+            self.done = True
+            self.quit = True
 
     async def handle(self, event: BotEvent) -> bool:
         return False

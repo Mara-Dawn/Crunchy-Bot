@@ -3,8 +3,7 @@ from collections.abc import Callable
 from combat.encounter import EncounterContext
 from combat.engine.common import CommonService
 from combat.engine.states.countdown import CountdownState
-from combat.engine.states.end_failed import EndFailedState
-from combat.engine.states.end_success import EndSuccessState
+from combat.engine.states.end import EndState
 from combat.engine.states.filling import FillingState
 from combat.engine.states.initial import InitialState
 from combat.engine.states.loot import LootPayoutState
@@ -38,9 +37,8 @@ class Engine:
             PlayerTurn,
             OpponentTurnState,
             TurnEndState,
-            EndSuccessState,
-            EndFailedState,
             LootPayoutState,
+            EndState,
             PostEncounterState,
         }
 
@@ -84,20 +82,15 @@ class Engine:
             await self.common.check_actor_defeat(self.context)
 
             if self.current_state not in [
-                StateType.END_FAILED,
-                StateType.END_SUCCESS,
+                StateType.ENCOUNTER_END,
                 StateType.LOOT_PAYOUT,
                 StateType.POST_ENCOUNTER,
-            ]:
-                if self.context.opponent.defeated:
-                    self.state.done = True
-                    self.state.next_state = StateType.END_SUCCESS
-
-                elif (
-                    self.context.initiated and len(self.context.active_combatants) <= 0
-                ):
-                    self.state.done = True
-                    self.state.next_state = StateType.END_FAILED
+            ] and (
+                self.context.opponent.defeated
+                or len(self.context.active_combatants) <= 0
+            ):
+                self.state.done = True
+                self.state.next_state = StateType.ENCOUNTER_END
 
         if self.state.quit:
             self.done = True
