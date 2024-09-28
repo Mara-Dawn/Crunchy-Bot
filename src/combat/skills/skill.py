@@ -553,9 +553,9 @@ class CharacterSkill:
         if self.skill.rarity.value != Rarity.DEFAULT and not SkillType.is_weapon_skill(
             self.skill.base_skill.base_skill_type
         ):
-            prefix = self.skill.rarity.value
+            prefix = f"*{self.skill.rarity.value}* "
 
-        title = f"> *{prefix}* **{self.skill.name}** "
+        title = f"> {prefix}**{self.skill.name}** "
         description = f'"{self.skill.description}"'
         if description_override is not None:
             description = f'"{description_override}"'
