@@ -27,6 +27,8 @@ from items.item import Item
 
 class CombatEmbedManager(Service):
 
+    SYSTEM_MESSAGE_COLOR = discord.Colour.purple()
+
     def __init__(
         self,
         bot: commands.Bot,
@@ -64,7 +66,7 @@ class CombatEmbedManager(Service):
         else:
             title = "A random Enemy appeared!"
             enemy_name = f"> ~* {enemy.name} - Lvl. {encounter.enemy_level} *~"
-            color = discord.Colour.purple()
+            color = self.SYSTEM_MESSAGE_COLOR
 
         embed = discord.Embed(title=title, color=color)
 
@@ -205,7 +207,7 @@ class CombatEmbedManager(Service):
 
         content = f'```python\n"{enemy.description}"```'
         embed = discord.Embed(
-            title=title, description=content, color=discord.Colour.red()
+            title=title, description=content, color=discord.Color.red()
         )
 
         current_hp = context.opponent.current_hp
@@ -334,7 +336,7 @@ class CombatEmbedManager(Service):
         content += f"Skipping <t:{timeout}:R>."
 
         head_embed = discord.Embed(
-            title=title, description=content, color=discord.Colour.blurple()
+            title=title, description=content, color=self.SYSTEM_MESSAGE_COLOR
         )
 
         max_hp = int(actor.max_hp)
@@ -367,7 +369,7 @@ class CombatEmbedManager(Service):
 
     async def get_loot_embed(self, member: discord.Member, beans: int):
         title = f"{member.display_name}'s Loot"
-        embed = discord.Embed(title=title, color=discord.Colour.green())
+        embed = discord.Embed(title=title, color=self.SYSTEM_MESSAGE_COLOR)
         message = f"You gain 🅱️{beans} beans and the following items:"
         self.add_text_bar(embed, "", message)
         embed.set_thumbnail(url=member.display_avatar.url)
@@ -379,7 +381,7 @@ class CombatEmbedManager(Service):
         title = f"{member.display_name}'s Auto Scrap Results"
         content = f"You gain ⚙️{scrap} Scrap from scrapping all items up to and including level {level}."
         embed = discord.Embed(
-            title=title, description=content, color=discord.Colour.green()
+            title=title, description=content, color=self.SYSTEM_MESSAGE_COLOR
         )
         message = "To change this and other things, please use the command /personal_settings."
         self.add_text_bar(embed, "", message)
@@ -617,7 +619,7 @@ class CombatEmbedManager(Service):
     ) -> discord.Embed:
         actor_name = f"{actor.name}"
 
-        color = discord.Color.blurple()
+        color = self.SYSTEM_MESSAGE_COLOR
         if actor.is_enemy:
             color = discord.Color.red()
 
@@ -640,9 +642,7 @@ class CombatEmbedManager(Service):
         if event_type == EncounterEventType.MEMBER_LEAVING:
             content += " They will be removed at the start of the next round."
 
-        embed = discord.Embed(
-            title="", description="", color=discord.Colour.light_grey()
-        )
+        embed = discord.Embed(title="", description="", color=self.SYSTEM_MESSAGE_COLOR)
         embed.set_author(name=actor_name, icon_url=actor.image_url)
         self.add_text_bar(embed, "", content)
 
@@ -655,9 +655,7 @@ class CombatEmbedManager(Service):
     def get_fight_disappear_embed(self, context: EncounterContext) -> discord.Embed:
         content = "This encounter timed out and is no longer available."
 
-        embed = discord.Embed(
-            title="", description="", color=discord.Colour.light_grey()
-        )
+        embed = discord.Embed(title="", description="", color=self.SYSTEM_MESSAGE_COLOR)
         embed.set_author(
             name=self.bot.user.display_name, icon_url=self.bot.user.display_avatar.url
         )
@@ -673,9 +671,7 @@ class CombatEmbedManager(Service):
 
         content = f"{actor_name}'s turn is skipped."
 
-        embed = discord.Embed(
-            title="", description="", color=discord.Colour.light_grey()
-        )
+        embed = discord.Embed(title="", description="", color=self.SYSTEM_MESSAGE_COLOR)
         embed.set_author(name=actor_name, icon_url=actor.image_url)
         self.add_text_bar(embed, "", content)
 
@@ -687,7 +683,7 @@ class CombatEmbedManager(Service):
 
     async def get_waiting_for_party_embed(self, party_size: int, opponent: Opponent):
         embed = discord.Embed(
-            title="Waiting for players to arrive.", color=discord.Colour.green()
+            title="Waiting for players to arrive.", color=self.SYSTEM_MESSAGE_COLOR
         )
 
         message = f"Combat will initiate after {party_size} players join."
@@ -697,7 +693,9 @@ class CombatEmbedManager(Service):
         return embed
 
     async def get_initiation_embed(self, wait_time: float, opponent: Opponent):
-        embed = discord.Embed(title="Get Ready to Fight!", color=discord.Colour.green())
+        embed = discord.Embed(
+            title="Get Ready to Fight!", color=self.SYSTEM_MESSAGE_COLOR
+        )
 
         now = datetime.datetime.now().timestamp()
         timer = int(now + wait_time)
@@ -715,7 +713,7 @@ class CombatEmbedManager(Service):
         title = "New Round"
         if cont:
             title = "Round Continued.."
-        embed = discord.Embed(title=title, color=discord.Colour.green())
+        embed = discord.Embed(title=title, color=self.SYSTEM_MESSAGE_COLOR)
 
         round_count = context.round_number
         embed.add_field(name=f"Round {round_count}", value="", inline=False)
@@ -756,7 +754,7 @@ class CombatEmbedManager(Service):
     def get_notification_embed(
         self, title: str, message: str, actor: Actor = None
     ) -> discord.Embed:
-        embed = discord.Embed(title=title, color=discord.Colour.light_grey())
+        embed = discord.Embed(title=title, color=self.SYSTEM_MESSAGE_COLOR)
         self.add_text_bar(embed, "", message)
         if actor is not None:
             embed.set_thumbnail(url=actor.image_url)

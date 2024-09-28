@@ -518,7 +518,7 @@ class Mommy(Enemy):
             max_level=9,
             health=8,
             damage_scaling=4.5,
-            max_players=4,
+            max_players=6,
             skill_types=[
                 SkillType.TIME_TO_SLICE,
                 SkillType.STEP_ON_YOU,
@@ -733,7 +733,7 @@ class SausageButcher(Enemy):
             skill_loot_table=[],
             min_gear_drop_count=4,
             max_gear_drop_count=5,
-            initiative=35,
+            initiative=20,
             actions_per_turn=1,
             author="Waldheld",
         )

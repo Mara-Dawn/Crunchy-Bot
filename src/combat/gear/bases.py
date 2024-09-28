@@ -889,7 +889,7 @@ class BodyGear_T4(Tier4):
             name="Eepy Pillow Armor",
             type=GearBaseType.BODYGEAR_T4,
             description=(
-                "Someones very concerned mother once crafted this suit our of worry "
+                "Someones very concerned mother once crafted this suit out of worry "
                 "for her child when it wanted to play with its friends. "
                 "Now you use it to defend against monsters."
             ),
