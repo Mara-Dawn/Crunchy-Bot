@@ -45,13 +45,14 @@ class BotLogger:
     def __build_log_msg(self, guild: int, message: str, cog=False) -> str:
         guild_obj = self.bot.get_guild(guild)
         log_str = ""
-        if cog:
-            log_str += "[" + str(cog) + "]"
 
         if guild_obj:
-            log_str += "[" + str(guild_obj.name) + "] "
+            log_str += "[" + str(guild_obj.name) + "]\t"
         else:
-            log_str += "[" + str(guild) + "] "
+            log_str += "[" + str(guild) + "]\t"
+
+        if cog:
+            log_str += "[" + str(cog) + "] "
 
         log_str += str(message)
 
