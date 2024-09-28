@@ -338,4 +338,5 @@ class PartyLeech(StatusEffect):
             emoji="🌱",
             damage_type=SkillEffect.HEALING,
             display_status=True,
+            override=True,
         )
