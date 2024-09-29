@@ -159,6 +159,12 @@ class EnemyController(Service, ABC):
                         case StatusEffectApplication.DEFAULT:
                             if total_damage <= 0:
                                 application_value = total_damage
+                        case StatusEffectApplication.RAW_ATTACK_VALUE:
+                            application_value = (
+                                await self.actor_manager.get_skill_damage_after_defense(
+                                    target, turn.skill, damage_instance.raw_value
+                                )
+                            )
 
                     target = context.get_actor_by_id(target.id)
 

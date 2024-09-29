@@ -272,3 +272,4 @@ class StatusEffectApplication(Enum):
     DEFAULT = 0
     ATTACK_VALUE = 1
     MANUAL_VALUE = 2
+    RAW_ATTACK_VALUE = 3

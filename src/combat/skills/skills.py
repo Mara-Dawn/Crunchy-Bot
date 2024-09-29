@@ -318,7 +318,7 @@ class LooksMaxxing(BaseSkill):
                 SkillStatusEffect(
                     StatusEffectType.HEAL_OVER_TIME,
                     5,
-                    StatusEffectApplication.ATTACK_VALUE,
+                    StatusEffectApplication.RAW_ATTACK_VALUE,
                 ),
                 SkillStatusEffect(
                     StatusEffectType.CLEANSE,
@@ -354,7 +354,7 @@ class HolyGangSigns(BaseSkill):
                 SkillStatusEffect(
                     StatusEffectType.HEAL_OVER_TIME,
                     5,
-                    StatusEffectApplication.ATTACK_VALUE,
+                    StatusEffectApplication.RAW_ATTACK_VALUE,
                 ),
                 SkillStatusEffect(
                     StatusEffectType.CLEANSE,
