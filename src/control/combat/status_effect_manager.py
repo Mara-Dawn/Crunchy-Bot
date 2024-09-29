@@ -203,7 +203,41 @@ class CombatStatusEffectManager(Service):
             damage,
         )
         await self.controller.dispatch_event(event)
+
         return type
+
+    async def handle_on_application_status_effects(
+        self,
+        actor: Actor,
+        context: EncounterContext,
+        effect_type: StatusEffectType,
+    ) -> StatusEffectOutcome:
+        triggered_status_effects = await self.actor_trigger(
+            context, actor, StatusEffectTrigger.ON_APPLICATION
+        )
+
+        if len(triggered_status_effects) <= 0:
+            return StatusEffectOutcome.EMPTY()
+
+        filtered = []
+        for effect in triggered_status_effects:
+            if effect.status_effect.effect_type == effect_type:
+                filtered.append(effect)
+
+        outcomes = await self.get_status_effect_outcomes(
+            StatusEffectTrigger.ON_APPLICATION,
+            context,
+            actor,
+            filtered,
+        )
+
+        embed_data = await self.get_status_effect_outcome_info(
+            StatusEffectTrigger.ON_DAMAGE_TAKEN, context, actor, outcomes
+        )
+
+        combined = self.combine_outcomes(outcomes.values(), embed_data)
+
+        return combined
 
     async def consume_status_stack(
         self,
@@ -298,14 +332,14 @@ class CombatStatusEffectManager(Service):
                                 status,
                                 status.remaining_stacks,
                             )
-                            message = "Bleed was cleansed."
+                            message = f"Bleed was cleansed from {actor.name}."
                         if status.status_effect.effect_type == StatusEffectType.POISON:
                             await self.consume_status_stack(
                                 context,
                                 status,
                                 status.remaining_stacks,
                             )
-                            message = "Poison was cleansed."
+                            message = f"Poison was cleansed from {actor.name}."
                         if message != "" and message not in info:
                             info.append(message)
                     info = "\n".join(info) if len(info) > 0 else None

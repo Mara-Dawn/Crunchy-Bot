@@ -264,6 +264,7 @@ class StatusEffectTrigger(Enum):
     ON_ATTACK = 7
     POST_ATTACK = 8
     ATTRIBUTE = 9
+    ON_APPLICATION = 10
 
 
 class StatusEffectApplication(Enum):
