@@ -993,16 +993,26 @@ class CombatStatusEffectManager(Service):
 
         for active_actor in context.current_initiative:
 
-            no_consume = active_actor.id != actor.id
+            consumed_status_effects = await self.actor_trigger(
+                context,
+                active_actor,
+                StatusEffectTrigger.END_OF_APPLICANT_TURN,
+                return_consumed=True,
+            )
+
+            for effect in consumed_status_effects:
+                if effect.event.source_id == actor.id:
+                    await self.consume_status_stack(context, effect)
 
             triggered_status_effects = await self.actor_trigger(
                 context,
                 active_actor,
                 StatusEffectTrigger.END_OF_APPLICANT_TURN,
-                no_consume=no_consume,
+                no_consume=True,
             )
 
             filtered = []
+
             for effect in triggered_status_effects:
                 if effect.event.source_id == actor.id:
                     filtered.append(effect)
@@ -1033,10 +1043,11 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         actor: Actor,
         trigger: StatusEffectTrigger,
-        no_trigger: bool = False,
+        return_consumed: bool = False,
         no_consume: bool = False,
     ) -> list[ActiveStatusEffect]:
         triggered = []
+        consumed = []
 
         for active_status_effect in actor.status_effects:
             if active_status_effect.remaining_stacks <= 0:
@@ -1056,14 +1067,16 @@ class CombatStatusEffectManager(Service):
                 delay_consume = False
                 delay_trigger = False
 
-            delay_consume = delay_consume or no_consume
-            delay_trigger = delay_trigger or no_trigger
-
             if not delay_consume and trigger in status_effect.consumed:
-                await self.consume_status_stack(context, active_status_effect)
+                consumed.append(active_status_effect)
+                if not return_consumed or no_consume:
+                    await self.consume_status_stack(context, active_status_effect)
 
             if not delay_trigger and trigger in status_effect.trigger:
                 triggered.append(active_status_effect)
+
+        if return_consumed:
+            return consumed
 
         triggered = sorted(
             triggered, key=lambda item: item.status_effect.priority, reverse=True
