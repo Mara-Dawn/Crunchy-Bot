@@ -730,11 +730,17 @@ class CombatEmbedManager(Service):
             name = actor.name[:20]
             display_hp = f"[{percentage}%]"
             status_effects = ""
-            for effect in actor.status_effects:
-                if effect.status_effect.display_status and effect.remaining_stacks > 0:
-                    status_effects += (
-                        f"{effect.status_effect.emoji}{effect.remaining_stacks}"
-                    )
+            if actor.defeated:
+                status_effects = "💀"
+            else:
+                for effect in actor.status_effects:
+                    if (
+                        effect.status_effect.display_status
+                        and effect.remaining_stacks > 0
+                    ):
+                        status_effects += (
+                            f"{effect.status_effect.emoji}{effect.remaining_stacks}"
+                        )
             if actor.id == current_actor.id:
                 width = 45
                 text = f"{number}. >> {name} << {status_effects} {display_hp}"
