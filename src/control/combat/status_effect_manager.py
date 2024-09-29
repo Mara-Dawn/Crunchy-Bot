@@ -993,13 +993,13 @@ class CombatStatusEffectManager(Service):
 
         for active_actor in context.current_initiative:
 
-            prevent_consume = active_actor.id != actor.id
+            no_consume = active_actor.id != actor.id
 
             triggered_status_effects = await self.actor_trigger(
                 context,
                 active_actor,
                 StatusEffectTrigger.END_OF_APPLICANT_TURN,
-                no_consume=prevent_consume,
+                no_consume=no_consume,
             )
 
             filtered = []
@@ -1053,8 +1053,11 @@ class CombatStatusEffectManager(Service):
             actor_is_source = status_effect_event.source_id == actor.id
 
             if status_effect.delay_for_source_only and not actor_is_source:
-                delay_consume = no_consume
-                delay_trigger = no_trigger
+                delay_consume = False
+                delay_trigger = False
+
+            delay_consume = delay_consume or no_consume
+            delay_trigger = delay_trigger or no_trigger
 
             if not delay_consume and trigger in status_effect.consumed:
                 await self.consume_status_stack(context, active_status_effect)

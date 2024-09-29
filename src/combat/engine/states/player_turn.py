@@ -216,6 +216,12 @@ class PlayerTurn(State):
                     case StatusEffectApplication.DEFAULT:
                         if status_effect_damage <= 0:
                             application_value = status_effect_damage
+                    case StatusEffectApplication.RAW_ATTACK_VALUE:
+                        application_value = (
+                            await self.actor_manager.get_skill_damage_after_defense(
+                                target, turn.skill, damage_instance.raw_value
+                            )
+                        )
 
                 status_effect_target = target
                 if skill_status_effect.self_target:
