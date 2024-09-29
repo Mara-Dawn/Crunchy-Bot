@@ -77,7 +77,7 @@ class LootPayoutState(State):
 
             if len(gear_to_scrap) > 0:
                 total_scrap = await self.gear_manager.scrap_gear(
-                    member.id, context.encounter.guild_id, gear_to_scrap
+                    member, context.encounter.guild_id, gear_to_scrap
                 )
                 scrap_embed = await self.embed_manager.get_loot_scrap_embed(
                     member, total_scrap, auto_scrap
