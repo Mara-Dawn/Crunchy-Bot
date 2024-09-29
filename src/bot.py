@@ -1,4 +1,3 @@
-import sys
 from typing import Any
 
 import discord
@@ -7,7 +6,6 @@ from discord.ext import commands
 from control.controller import Controller
 from control.logger import BotLogger
 from datalayer.database import Database
-from error import ErrorHandler
 
 
 class CrunchyBot(commands.Bot):

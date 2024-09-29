@@ -10,6 +10,7 @@ from combat.actors import Actor, Opponent
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.skills.skill import Skill
+from combat.skills.status_effect import EmbedDataCollection
 from combat.skills.types import (
     SkillEffect,
     SkillTarget,
@@ -119,10 +120,10 @@ class EnemyController(Service, ABC):
 
         for turn in turn_data:
 
-            post_turn_embed_data: dict[str, str] = {}
+            post_turn_embed_data = EmbedDataCollection()
 
             if turn.post_embed_data is not None:
-                post_turn_embed_data = post_turn_embed_data | turn.post_embed_data
+                post_turn_embed_data.extend(turn.post_embed_data)
 
             for turn_damage_data in turn.damage_data:
                 target = turn_damage_data.target
@@ -143,7 +144,7 @@ class EnemyController(Service, ABC):
                 turn_damage_data.applied_status_effects.extend(applied_status_effects)
 
                 if outcome.embed_data is not None:
-                    post_turn_embed_data = post_turn_embed_data | outcome.embed_data
+                    post_turn_embed_data.extend(outcome.embed_data)
 
                 for skill_status_effect in turn.skill.base_skill.status_effects:
                     application_value = None
@@ -230,16 +231,16 @@ class EnemyController(Service, ABC):
         skill: Skill,
         available_targets: list[Actor],
         hp_cache: dict[int, int],
-    ) -> tuple[list[TurnDamageData], dict[str, str]]:
+    ) -> tuple[list[TurnDamageData], EmbedDataCollection]:
         skill_value_data = []
-        post_embed_data = {}
+        post_embed_data = EmbedDataCollection()
 
         for target in available_targets:
             outcome = await self.status_effect_manager.handle_attack_status_effects(
                 context, context.opponent, skill
             )
             if outcome.embed_data is not None:
-                post_embed_data = post_embed_data | outcome.embed_data
+                post_embed_data.extend(outcome.embed_data)
 
             instances = await self.skill_manager.get_skill_effect(
                 context.opponent, skill, combatant_count=context.combat_scale
@@ -257,7 +258,7 @@ class EnemyController(Service, ABC):
                 )
             )
             if outcome.embed_data is not None:
-                post_embed_data = post_embed_data | outcome.embed_data
+                post_embed_data.extend(outcome.embed_data)
 
             instance.apply_effect_outcome(outcome)
 
@@ -299,7 +300,7 @@ class EnemyController(Service, ABC):
         damage_instances = await self.skill_manager.get_skill_effect(
             context.opponent, skill, combatant_count=context.combat_scale
         )
-        post_embed_data = {}
+        post_embed_data = EmbedDataCollection()
 
         special_skill_modifier, description_override = (
             await self.skill_manager.get_special_skill_modifier(
@@ -334,7 +335,7 @@ class EnemyController(Service, ABC):
             )
             instance.apply_effect_outcome(outcome)
             if outcome.embed_data is not None:
-                post_embed_data = post_embed_data | outcome.embed_data
+                post_embed_data.extend(outcome.embed_data)
 
             outcome = (
                 await self.status_effect_manager.handle_on_damage_taken_status_effects(
@@ -345,7 +346,7 @@ class EnemyController(Service, ABC):
             )
             instance.apply_effect_outcome(outcome)
             if outcome.embed_data is not None:
-                post_embed_data = post_embed_data | outcome.embed_data
+                post_embed_data.extend(outcome.embed_data)
 
             if special_skill_modifier != 1:
                 instance.modifier *= special_skill_modifier

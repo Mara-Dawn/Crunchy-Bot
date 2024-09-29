@@ -2544,7 +2544,7 @@ class Database:
         return predictions
 
     async def get_prediction_bets(
-        self, predictions: list[Prediction]
+        self, predictions: list[Prediction] | None
     ) -> dict[int, int]:
         if predictions is None:
             return None
@@ -3537,7 +3537,7 @@ class Database:
 
         return insert_id
 
-    async def get_skill_by_id(self, skill_id: int) -> Skill:
+    async def get_skill_by_id(self, skill_id: int | None) -> Skill:
         if skill_id is None:
             return None
 
@@ -3566,7 +3566,7 @@ class Database:
             id=id,
         )
 
-    async def get_gear_by_id(self, gear_id: int) -> Gear:
+    async def get_gear_by_id(self, gear_id: int | None) -> Gear:
         if gear_id is None:
             return None
 
@@ -3633,7 +3633,7 @@ class Database:
         task = gear_ids
         await self.__query_insert(command, task)
 
-    async def update_lock_gear_by_id(self, gear_id: int, lock: bool):
+    async def update_lock_gear_by_id(self, gear_id: int | None, lock: bool):
 
         lock_value = 1 if lock else 0
 
@@ -3990,7 +3990,7 @@ class Database:
         return stacks_used
 
     async def get_opponent_skill_stacks_used(
-        self, encounter_id: int
+        self, encounter_id: int | None
     ) -> dict[SkillType, int]:
         if encounter_id is None:
             return {}

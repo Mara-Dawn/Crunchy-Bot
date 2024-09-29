@@ -6,17 +6,17 @@ from discord.ext import commands
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
 from combat.gear.types import CharacterAttribute
-from combat.skills.skill import Skill
+from combat.skills.skill import Skill, SkillInstance
 from combat.skills.status_effect import (
     ActiveStatusEffect,
-    SkillStatusEffect,
+    EmbedDataCollection,
+    StatusEffectEmbedData,
+    StatusEffectOutcome,
 )
 from combat.skills.status_effects import *  # noqa: F403
 from combat.skills.types import (
     SkillEffect,
-    SkillInstance,
     SkillType,
-    StatusEffectOutcome,
     StatusEffectTrigger,
     StatusEffectType,
 )
@@ -569,8 +569,8 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         actor: Actor,
         effect_data: dict[StatusEffectType, StatusEffectOutcome],
-    ) -> dict[str, str] | None:
-        outcome_info = {}
+    ) -> EmbedDataCollection:
+        embed_data_collection = EmbedDataCollection()
         for effect_type, outcome in effect_data.items():
             status_effect = await self.factory.get_status_effect(effect_type)
             title = f"{status_effect.emoji} {status_effect.name}"
@@ -627,14 +627,17 @@ class CombatStatusEffectManager(Service):
                         description = f"{actor.name} was spared from dying, surviving with 1 health."
 
             if description != "":
-                outcome_info[title] = description
+                embed_data = StatusEffectEmbedData(status_effect, title, description)
+                embed_data_collection.append(embed_data)
 
-        if len(outcome_info) <= 0:
+        if embed_data_collection.length <= 0:
             return None
-        return outcome_info
+        return embed_data_collection
 
     def combine_outcomes(
-        self, outcomes: list[StatusEffectOutcome], embed_data: list[str, str] | None
+        self,
+        outcomes: list[StatusEffectOutcome],
+        embed_data_collection: EmbedDataCollection | None,
     ) -> StatusEffectOutcome:
         value = None
         modifier = None
@@ -685,7 +688,7 @@ class CombatStatusEffectManager(Service):
             crit_chance_modifier,
             initiative,
             info,
-            embed_data,
+            embed_data_collection,
         )
 
     async def handle_attack_status_effects(
@@ -830,7 +833,7 @@ class CombatStatusEffectManager(Service):
                     if actor.is_enemy:
                         damage = damage_instance.scaled_value
 
-                    await self.apply_status(
+                    applied_status_type = await self.apply_status(
                         context,
                         current_actor,
                         current_target,
@@ -838,12 +841,13 @@ class CombatStatusEffectManager(Service):
                         3,
                         damage,
                     )
-                    applied_status_effects.append(
-                        (
-                            StatusEffectType.BLEED,
-                            3,
+                    if applied_status_type is not None:
+                        applied_status_effects.append(
+                            (
+                                StatusEffectType.BLEED,
+                                3,
+                            )
                         )
-                    )
                 case StatusEffectType.POISON:
                     if StatusEffectType.CLEANSE in [
                         x.status_effect.effect_type for x in triggered_status_effects
@@ -856,10 +860,15 @@ class CombatStatusEffectManager(Service):
                         continue
 
                     damage_base = damage_instance.value
-                    if actor.is_enemy:
-                        damage_base = damage_instance.scaled_value
+                    poison_damage = max(1, int(damage_base * Config.POISON_SCALING))
+                    damage_display = poison_damage
 
-                    damage_display = max(1, int(damage_base * Config.POISON_SCALING))
+                    if actor.is_enemy:
+                        encounter_scaling = self.actor_manager.get_encounter_scaling(
+                            actor, context.combat_scale
+                        )
+                        damage_base = damage_instance.value * encounter_scaling
+                        poison_damage = max(1, int(damage_base * Config.POISON_SCALING))
 
                     event = CombatEvent(
                         datetime.datetime.now(),
@@ -868,7 +877,7 @@ class CombatStatusEffectManager(Service):
                         current_actor.id,
                         current_actor.id,
                         StatusEffectType.POISON,
-                        damage_display,
+                        poison_damage,
                         damage_display,
                         None,
                         CombatEventType.STATUS_EFFECT_OUTCOME,

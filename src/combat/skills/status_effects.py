@@ -45,6 +45,7 @@ class Flustered(StatusEffect):
             emoji="😳",
             display_status=True,
             override=True,
+            single_description=True,
         )
 
 
@@ -60,6 +61,7 @@ class Simp(StatusEffect):
             emoji="😍",
             display_status=True,
             stack=True,
+            single_description=True,
         )
 
 
@@ -75,6 +77,7 @@ class Blind(StatusEffect):
             emoji="👁️",
             display_status=True,
             override=True,
+            single_description=True,
         )
 
 
@@ -90,6 +93,7 @@ class Frost(StatusEffect):
             emoji="🥶",
             display_status=True,
             delay=True,
+            single_description=True,
         )
 
 
@@ -106,6 +110,7 @@ class Evasive(StatusEffect):
             display_status=False,
             override=True,
             apply_on_miss=True,
+            single_description=True,
         )
 
 
@@ -169,6 +174,7 @@ class Protection(StatusEffect):
             display_status=True,
             override=True,
             apply_on_miss=True,
+            single_description=True,
         )
 
 
@@ -233,6 +239,7 @@ class High(StatusEffect):
             emoji="🤯",
             display_status=True,
             stack=True,
+            single_description=True,
         )
 
 
@@ -308,6 +315,7 @@ class Frogged(StatusEffect):
             emoji="🐸",
             display_status=True,
             override=True,
+            single_description=True,
         )
 
 
@@ -323,6 +331,7 @@ class Stun(StatusEffect):
             emoji="💤",
             display_status=True,
             override=True,
+            single_description=True,
         )
 
 

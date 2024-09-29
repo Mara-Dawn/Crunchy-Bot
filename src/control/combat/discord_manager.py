@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext
+from combat.skills.status_effect import EmbedDataCollection
 from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.context_loader import ContextLoader
@@ -18,7 +19,6 @@ from control.service import Service
 from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from events.bot_event import BotEvent
-from events.types import EncounterEventType, EventType
 from view.combat.embed import EnemyOverviewEmbed
 
 
@@ -151,7 +151,7 @@ class DiscordManager(Service):
                     if embed_title[:16] == "Combat Zone":
                         await self.edit_message(message, embed=head_embed)
 
-    async def delete_previous_combat_info(self, thread: discord.Thread):
+    async def delete_previous_combat_info(self, thread: discord.Thread | None):
         if thread is None:
             return
         async for message in thread.history(limit=100):
@@ -265,10 +265,10 @@ class DiscordManager(Service):
         await self.edit_message(message, embeds=current_embeds)
 
     async def append_embeds_to_round(
-        self, context: EncounterContext, actor: Actor, embed_data: dict[str, str]
+        self, context: EncounterContext, actor: Actor, embed_data: EmbedDataCollection
     ):
         message = None
-        if len(embed_data) <= 0:
+        if embed_data.length <= 0:
             return message
         status_effect_embed = self.embed_manager.get_status_effect_embed(
             actor, embed_data

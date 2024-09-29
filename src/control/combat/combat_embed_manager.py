@@ -7,9 +7,9 @@ from discord.ext import commands
 
 from combat.actors import Actor, Opponent
 from combat.encounter import Encounter, EncounterContext, TurnDamageData, TurnData
-from combat.enemies.enemy import Enemy
 from combat.skills.skill import Skill
-from combat.skills.types import SkillEffect, SkillInstance
+from combat.skills.status_effect import EmbedDataCollection
+from combat.skills.types import SkillEffect
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_skill_manager import CombatSkillManager
@@ -615,7 +615,7 @@ class CombatEmbedManager(Service):
                     yield embed
 
     def get_status_effect_embed(
-        self, actor: Actor, effect_data: dict[str, str]
+        self, actor: Actor, effect_data: EmbedDataCollection
     ) -> discord.Embed:
         actor_name = f"{actor.name}"
 
@@ -627,9 +627,8 @@ class CombatEmbedManager(Service):
         embed.set_author(name=actor_name, icon_url=actor.image_url)
         embed.set_thumbnail(url=actor.image_url)
 
-        for title, description in effect_data.items():
-            # embed.add_field(name=title, value=description)
-            self.add_text_bar(embed, title, description)
+        for embed_data in effect_data.values():
+            self.add_text_bar(embed, embed_data.title, embed_data.description)
 
         return embed
 

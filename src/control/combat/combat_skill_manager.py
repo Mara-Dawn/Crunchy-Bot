@@ -7,9 +7,9 @@ from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
 from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearModifierType
-from combat.skills.skill import CharacterSkill, Skill, SkillType
+from combat.skills.skill import CharacterSkill, Skill, SkillInstance, SkillType
 from combat.skills.skills import *  # noqa: F403
-from combat.skills.types import SkillEffect, SkillInstance, SkillTarget
+from combat.skills.types import SkillEffect, SkillTarget
 from config import Config
 from control.ai_manager import AIManager
 from control.controller import Controller

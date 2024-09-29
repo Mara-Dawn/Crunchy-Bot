@@ -137,7 +137,7 @@ class EquipmentViewController(ViewController):
                 interaction = event.payload[0]
                 level = event.payload[1]
                 slot = event.payload[2]
-                await self.use_forge(interaction, level, slot, event.view_id)
+                await self.use_forge(interaction, level, slot)
             case UIEventType.FORGE_OPEN_OVERVIEW:
                 interaction = event.payload
                 await self.open_gear_overview(interaction, event.view_id)
@@ -396,7 +396,7 @@ class EquipmentViewController(ViewController):
         self.controller.detach_view_by_id(view_id)
 
     async def buy_gear(
-        self, interaction: discord.Interaction, selected: Gear, view_id: int
+        self, interaction: discord.Interaction, selected: Gear | None, view_id: int
     ):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
@@ -683,7 +683,6 @@ class EquipmentViewController(ViewController):
         interaction: discord.Interaction,
         level: int,
         slot: EquipmentSlot,
-        view_id: int,
     ):
         if not await self.encounter_check(interaction):
             return
