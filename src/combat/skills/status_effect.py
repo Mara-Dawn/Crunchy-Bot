@@ -29,7 +29,9 @@ class StatusEffect:
         display_status: bool = False,
         apply_on_miss: bool = False,
         emoji: str = None,
-        delay: bool = False,
+        delay_trigger: bool = False,
+        delay_consume: bool = False,
+        delay_for_source_only: bool = False,
         single_description: bool = False,
     ):
         self.effect_type = effect_type
@@ -46,7 +48,9 @@ class StatusEffect:
         self.override_by_actor = override_by_actor
         self.stack = stack
         self.apply_on_miss = apply_on_miss
-        self.delay = delay
+        self.delay_trigger = delay_trigger
+        self.delay_consume = delay_consume
+        self.delay_for_source_only = delay_for_source_only
         self.single_description = single_description
 
         if self.damage_type is None:

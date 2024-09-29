@@ -46,6 +46,8 @@ class Flustered(StatusEffect):
             display_status=True,
             override=True,
             single_description=True,
+            delay_consume=True,
+            delay_for_source_only=True,
         )
 
 
@@ -62,6 +64,8 @@ class Simp(StatusEffect):
             display_status=True,
             stack=True,
             single_description=True,
+            delay_consume=True,
+            delay_for_source_only=True,
         )
 
 
@@ -78,6 +82,8 @@ class Blind(StatusEffect):
             display_status=True,
             override=True,
             single_description=True,
+            delay_consume=True,
+            delay_for_source_only=True,
         )
 
 
@@ -92,7 +98,7 @@ class Frost(StatusEffect):
             consumed=[StatusEffectTrigger.END_OF_ROUND],
             emoji="🥶",
             display_status=True,
-            delay=True,
+            delay_consume=True,
             single_description=True,
         )
 
@@ -169,12 +175,13 @@ class Protection(StatusEffect):
             name="Protection",
             description="Damage Reduction",
             trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
-            consumed=[StatusEffectTrigger.END_OF_TURN],
+            consumed=[StatusEffectTrigger.END_OF_APPLICANT_TURN],
             emoji="🛡️",
             display_status=True,
             override=True,
             apply_on_miss=True,
             single_description=True,
+            delay_consume=True,
         )
 
 
@@ -192,6 +199,9 @@ class Inspired(StatusEffect):
             display_status=True,
             override=True,
             apply_on_miss=True,
+            delay_consume=True,
+            delay_trigger=True,
+            delay_for_source_only=True,
         )
 
 
@@ -208,6 +218,9 @@ class NeuronActive(StatusEffect):
             display_status=True,
             override=True,
             apply_on_miss=True,
+            delay_consume=True,
+            delay_trigger=True,
+            delay_for_source_only=True,
         )
 
 
@@ -224,6 +237,9 @@ class ZonedIn(StatusEffect):
             display_status=True,
             override=True,
             apply_on_miss=True,
+            delay_consume=True,
+            delay_trigger=True,
+            delay_for_source_only=True,
         )
 
 
@@ -240,6 +256,9 @@ class High(StatusEffect):
             display_status=True,
             stack=True,
             single_description=True,
+            delay_consume=True,
+            delay_trigger=True,
+            delay_for_source_only=True,
         )
 
 
@@ -255,6 +274,9 @@ class Poison(StatusEffect):
             emoji="🤢",
             display_status=True,
             stack=True,
+            delay_consume=True,
+            delay_trigger=True,
+            delay_for_source_only=True,
         )
 
 
