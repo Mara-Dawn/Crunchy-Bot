@@ -2,16 +2,14 @@ import asyncio
 import datetime
 import random
 
-import discord
-
 from combat.actors import Actor, Character
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.engine.states.state import State
 from combat.engine.types import StateType
 from combat.skills.skill import Skill
+from combat.skills.status_effect import EmbedDataCollection
 from combat.skills.types import (
     SkillEffect,
-    SkillInstance,
     SkillType,
     StatusEffectApplication,
 )
@@ -176,10 +174,10 @@ class PlayerTurn(State):
                 post_embed_data={"No Target": "The Skill had no effect."},
             )
 
-        post_turn_embed_data: dict[str, str] = {}
+        post_turn_embed_data = EmbedDataCollection()
 
         if turn.post_embed_data is not None:
-            post_turn_embed_data = post_turn_embed_data | turn.post_embed_data
+            post_turn_embed_data.extend(turn.post_embed_data)
 
         for turn_damage_data in turn.damage_data:
             target = turn_damage_data.target
@@ -202,7 +200,7 @@ class PlayerTurn(State):
             )
             turn_damage_data.applied_status_effects.extend(applied_status_effects)
             if outcome.embed_data is not None:
-                post_turn_embed_data = post_turn_embed_data | outcome.embed_data
+                post_turn_embed_data.extend(outcome.embed_data)
 
             status_effect_damage = display_damage
             for skill_status_effect in turn.skill.base_skill.status_effects:
@@ -239,6 +237,11 @@ class PlayerTurn(State):
                                 skill_status_effect.stacks,
                             )
                         )
+                        outcome = await self.status_effect_manager.handle_on_application_status_effects(
+                            target, context, applied_type
+                        )
+                        if outcome.embed_data is not None:
+                            post_turn_embed_data.extend(outcome.embed_data)
 
             event = CombatEvent(
                 datetime.datetime.now(),
@@ -286,14 +289,14 @@ class PlayerTurn(State):
         skill: Skill,
         source: Character,
         available_targets: list[Actor],
-    ) -> tuple[list[TurnDamageData], list[discord.Embed]]:
+    ) -> tuple[list[TurnDamageData], EmbedDataCollection]:
         skill_value_data = []
-        embed_data = {}
+        embed_data = EmbedDataCollection()
         outcome = await self.status_effect_manager.handle_attack_status_effects(
             context, source, skill
         )
         if outcome.embed_data is not None:
-            embed_data = embed_data | outcome.embed_data
+            embed_data.extend(outcome.embed_data)
 
         for target in available_targets:
             instances = await self.skill_manager.get_skill_effect(
@@ -313,7 +316,7 @@ class PlayerTurn(State):
             )
 
             if outcome_on_dmg.embed_data is not None:
-                embed_data = embed_data | outcome_on_dmg.embed_data
+                embed_data.extend(outcome.embed_data)
 
             instance.apply_effect_outcome(outcome_on_dmg)
 
@@ -337,14 +340,14 @@ class PlayerTurn(State):
         skill: Skill,
         source: Character,
         target: Actor,
-    ) -> tuple[list[TurnDamageData], list[discord.Embed]]:
+    ) -> tuple[list[TurnDamageData], EmbedDataCollection]:
         skill_instances = await self.skill_manager.get_skill_effect(
             source, skill, combatant_count=context.combat_scale
         )
 
         skill_value_data = []
         hp_cache = {}
-        embed_data = {}
+        embed_data = EmbedDataCollection()
 
         for instance in skill_instances:
             outcome = await self.status_effect_manager.handle_attack_status_effects(
@@ -353,7 +356,7 @@ class PlayerTurn(State):
                 skill,
             )
             if outcome.embed_data is not None:
-                embed_data = embed_data | outcome.embed_data
+                embed_data.extend(outcome.embed_data)
             instance.apply_effect_outcome(outcome)
 
             outcome = (
@@ -365,7 +368,8 @@ class PlayerTurn(State):
             )
 
             if outcome.embed_data is not None:
-                embed_data = embed_data | outcome.embed_data
+                embed_data.extend(outcome.embed_data)
+
             instance.apply_effect_outcome(outcome)
 
             total_skill_value = await self.actor_manager.get_skill_damage_after_defense(

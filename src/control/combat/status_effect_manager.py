@@ -6,17 +6,17 @@ from discord.ext import commands
 from combat.actors import Actor, Character, Opponent
 from combat.encounter import EncounterContext
 from combat.gear.types import CharacterAttribute
-from combat.skills.skill import Skill
+from combat.skills.skill import Skill, SkillInstance
 from combat.skills.status_effect import (
     ActiveStatusEffect,
-    SkillStatusEffect,
+    EmbedDataCollection,
+    StatusEffectEmbedData,
+    StatusEffectOutcome,
 )
 from combat.skills.status_effects import *  # noqa: F403
 from combat.skills.types import (
     SkillEffect,
-    SkillInstance,
     SkillType,
-    StatusEffectOutcome,
     StatusEffectTrigger,
     StatusEffectType,
 )
@@ -157,13 +157,6 @@ class CombatStatusEffectManager(Service):
                 damage = application_value
 
         if (
-            StatusEffectTrigger.END_OF_TURN in status_effect.consumed
-            and source.id == target.id
-            # and status_effect.delay_to_next_turn
-        ):
-            stacks += 1
-
-        if (
             status_effect.override
             or status_effect.override_by_actor
             or status_effect.stack
@@ -187,7 +180,6 @@ class CombatStatusEffectManager(Service):
                         context,
                         active_effect,
                         active_effect.remaining_stacks,
-                        force=True,
                     )
 
         stacks = min(stacks, status_effect.max_stacks)
@@ -203,22 +195,49 @@ class CombatStatusEffectManager(Service):
             damage,
         )
         await self.controller.dispatch_event(event)
+
         return type
+
+    async def handle_on_application_status_effects(
+        self,
+        actor: Actor,
+        context: EncounterContext,
+        effect_type: StatusEffectType,
+    ) -> StatusEffectOutcome:
+        triggered_status_effects = await self.actor_trigger(
+            context, actor, StatusEffectTrigger.ON_APPLICATION
+        )
+
+        if len(triggered_status_effects) <= 0:
+            return StatusEffectOutcome.EMPTY()
+
+        filtered = []
+        for effect in triggered_status_effects:
+            if effect.status_effect.effect_type == effect_type:
+                filtered.append(effect)
+
+        outcomes = await self.get_status_effect_outcomes(
+            StatusEffectTrigger.ON_APPLICATION,
+            context,
+            actor,
+            filtered,
+        )
+
+        embed_data = await self.get_status_effect_outcome_info(
+            StatusEffectTrigger.ON_DAMAGE_TAKEN, context, actor, outcomes
+        )
+
+        combined = self.combine_outcomes(outcomes.values(), embed_data)
+
+        return combined
 
     async def consume_status_stack(
         self,
         context: EncounterContext,
         status_effect: ActiveStatusEffect,
         amount: int = 1,
-        force: bool = False,
     ):
         status_effect_event = status_effect.event
-        if (
-            not force
-            and status_effect.status_effect.delay
-            and status_effect_event.id > context.round_event_id_cutoff
-        ):
-            return
         event = CombatEvent(
             datetime.datetime.now(),
             context.encounter.guild_id,
@@ -247,7 +266,7 @@ class CombatStatusEffectManager(Service):
             status_effect = active_status_effect.status_effect
 
             if (
-                status_effect.delay
+                status_effect.delay_consume
                 and active_status_effect.event.id > context.round_event_id_cutoff
             ):
                 continue
@@ -298,14 +317,14 @@ class CombatStatusEffectManager(Service):
                                 status,
                                 status.remaining_stacks,
                             )
-                            message = "Bleed was cleansed."
+                            message = f"Bleed was cleansed from {actor.name}."
                         if status.status_effect.effect_type == StatusEffectType.POISON:
                             await self.consume_status_stack(
                                 context,
                                 status,
                                 status.remaining_stacks,
                             )
-                            message = "Poison was cleansed."
+                            message = f"Poison was cleansed from {actor.name}."
                         if message != "" and message not in info:
                             info.append(message)
                     info = "\n".join(info) if len(info) > 0 else None
@@ -513,6 +532,7 @@ class CombatStatusEffectManager(Service):
                     crit_chance = 1
                 case StatusEffectType.PROTECTION:
                     modifier = 1 - (active_status_effect.event.value / 100)
+                    info = "Attack damage was reduced."
                 case StatusEffectType.FEAR:
                     if skill is not None and skill.type == SkillType.FEASTING:
                         modifier = 1 + (active_status_effect.remaining_stacks * 0.2)
@@ -569,8 +589,8 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         actor: Actor,
         effect_data: dict[StatusEffectType, StatusEffectOutcome],
-    ) -> dict[str, str] | None:
-        outcome_info = {}
+    ) -> EmbedDataCollection:
+        embed_data_collection = EmbedDataCollection()
         for effect_type, outcome in effect_data.items():
             status_effect = await self.factory.get_status_effect(effect_type)
             title = f"{status_effect.emoji} {status_effect.name}"
@@ -594,6 +614,8 @@ class CombatStatusEffectManager(Service):
                     if outcome.modifier != 0:
                         continue
                     description = f"{actor.name} misses their attack!"
+                case StatusEffectType.PROTECTION:
+                    description = outcome.info
                 case StatusEffectType.FROST:
                     match trigger:
                         case StatusEffectTrigger.ON_ATTACK:
@@ -627,14 +649,17 @@ class CombatStatusEffectManager(Service):
                         description = f"{actor.name} was spared from dying, surviving with 1 health."
 
             if description != "":
-                outcome_info[title] = description
+                embed_data = StatusEffectEmbedData(status_effect, title, description)
+                embed_data_collection.append(embed_data)
 
-        if len(outcome_info) <= 0:
+        if embed_data_collection.length <= 0:
             return None
-        return outcome_info
+        return embed_data_collection
 
     def combine_outcomes(
-        self, outcomes: list[StatusEffectOutcome], embed_data: list[str, str] | None
+        self,
+        outcomes: list[StatusEffectOutcome],
+        embed_data_collection: EmbedDataCollection | None,
     ) -> StatusEffectOutcome:
         value = None
         modifier = None
@@ -685,7 +710,7 @@ class CombatStatusEffectManager(Service):
             crit_chance_modifier,
             initiative,
             info,
-            embed_data,
+            embed_data_collection,
         )
 
     async def handle_attack_status_effects(
@@ -830,7 +855,7 @@ class CombatStatusEffectManager(Service):
                     if actor.is_enemy:
                         damage = damage_instance.scaled_value
 
-                    await self.apply_status(
+                    applied_status_type = await self.apply_status(
                         context,
                         current_actor,
                         current_target,
@@ -838,12 +863,13 @@ class CombatStatusEffectManager(Service):
                         3,
                         damage,
                     )
-                    applied_status_effects.append(
-                        (
-                            StatusEffectType.BLEED,
-                            3,
+                    if applied_status_type is not None:
+                        applied_status_effects.append(
+                            (
+                                StatusEffectType.BLEED,
+                                3,
+                            )
                         )
-                    )
                 case StatusEffectType.POISON:
                     if StatusEffectType.CLEANSE in [
                         x.status_effect.effect_type for x in triggered_status_effects
@@ -856,10 +882,15 @@ class CombatStatusEffectManager(Service):
                         continue
 
                     damage_base = damage_instance.value
-                    if actor.is_enemy:
-                        damage_base = damage_instance.scaled_value
+                    poison_damage = max(1, int(damage_base * Config.POISON_SCALING))
+                    damage_display = poison_damage
 
-                    damage_display = max(1, int(damage_base * Config.POISON_SCALING))
+                    if actor.is_enemy:
+                        encounter_scaling = self.actor_manager.get_encounter_scaling(
+                            actor, context.combat_scale
+                        )
+                        damage_base = damage_instance.value * encounter_scaling
+                        poison_damage = max(1, int(damage_base * Config.POISON_SCALING))
 
                     event = CombatEvent(
                         datetime.datetime.now(),
@@ -868,7 +899,7 @@ class CombatStatusEffectManager(Service):
                         current_actor.id,
                         current_actor.id,
                         StatusEffectType.POISON,
-                        damage_display,
+                        poison_damage,
                         damage_display,
                         None,
                         CombatEventType.STATUS_EFFECT_OUTCOME,
@@ -947,10 +978,50 @@ class CombatStatusEffectManager(Service):
         embed_data = await self.get_status_effect_outcome_info(
             trigger, context, actor, outcomes
         )
+
         return self.combine_outcomes(outcomes.values(), embed_data)
 
+    async def handle_applicant_turn_status_effects(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+    ) -> dict[int, StatusEffectOutcome]:
+        actor_outcomes = {}
+
+        for active_actor in context.current_initiative:
+
+            triggered_status_effects = await self.actor_trigger(
+                context,
+                active_actor,
+                StatusEffectTrigger.END_OF_APPLICANT_TURN,
+            )
+
+            if len(triggered_status_effects) <= 0:
+                continue
+
+            outcomes = await self.get_status_effect_outcomes(
+                StatusEffectTrigger.END_OF_APPLICANT_TURN,
+                context,
+                active_actor,
+                triggered_status_effects,
+            )
+            embed_data = await self.get_status_effect_outcome_info(
+                StatusEffectTrigger.END_OF_APPLICANT_TURN,
+                context,
+                active_actor,
+                outcomes,
+            )
+            actor_outcomes[active_actor.id] = self.combine_outcomes(
+                outcomes.values(), embed_data
+            )
+
+        return actor_outcomes
+
     async def actor_trigger(
-        self, context: EncounterContext, actor: Actor, trigger: StatusEffectTrigger
+        self,
+        context: EncounterContext,
+        actor: Actor,
+        trigger: StatusEffectTrigger,
     ) -> list[ActiveStatusEffect]:
         triggered = []
 
@@ -959,11 +1030,23 @@ class CombatStatusEffectManager(Service):
                 continue
 
             status_effect = active_status_effect.status_effect
+            status_effect_event = active_status_effect.event
 
-            if trigger in status_effect.consumed:
+            next_round = status_effect_event.id <= context.round_event_id_cutoff
+
+            delay_consume = status_effect.delay_consume and not next_round
+            delay_trigger = status_effect.delay_trigger and not next_round
+
+            actor_is_source = status_effect_event.source_id == actor.id
+
+            if status_effect.delay_for_source_only and not actor_is_source:
+                delay_consume = False
+                delay_trigger = False
+
+            if not delay_consume and trigger in status_effect.consumed:
                 await self.consume_status_stack(context, active_status_effect)
 
-            if trigger in status_effect.trigger:
+            if not delay_trigger and trigger in status_effect.trigger:
                 triggered.append(active_status_effect)
 
         triggered = sorted(

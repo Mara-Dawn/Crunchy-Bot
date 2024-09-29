@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from combat.skills.types import (
     SkillEffect,
     StatusEffectApplication,
@@ -27,7 +29,10 @@ class StatusEffect:
         display_status: bool = False,
         apply_on_miss: bool = False,
         emoji: str = None,
-        delay: bool = False,
+        delay_trigger: bool = False,
+        delay_consume: bool = False,
+        delay_for_source_only: bool = False,
+        single_description: bool = False,
     ):
         self.effect_type = effect_type
         self.name = name
@@ -43,7 +48,10 @@ class StatusEffect:
         self.override_by_actor = override_by_actor
         self.stack = stack
         self.apply_on_miss = apply_on_miss
-        self.delay = delay
+        self.delay_trigger = delay_trigger
+        self.delay_consume = delay_consume
+        self.delay_for_source_only = delay_for_source_only
+        self.single_description = single_description
 
         if self.damage_type is None:
             self.damage_type = SkillEffect.STATUS_EFFECT_DAMAGE
@@ -79,3 +87,61 @@ class ActiveStatusEffect:
         self.status_effect = status_effect
         self.event = event
         self.remaining_stacks = remaining_stacks
+
+
+@dataclass
+class StatusEffectEmbedData:
+    status_effect: StatusEffect
+    title: str
+    description: str
+
+    @property
+    def effect_type(self):
+        return self.status_effect.effect_type
+
+    def append(self, description: str):
+        if not self.status_effect.single_description:
+            self.description += f"\n{description}"
+
+
+@dataclass
+class EmbedDataCollection:
+    _embed_data: dict[StatusEffectType, StatusEffectEmbedData] = None
+
+    @property
+    def embed_data(self):
+        if self._embed_data is None:
+            self._embed_data = {}
+        return self._embed_data
+
+    @property
+    def length(self):
+        return len(self.embed_data)
+
+    def values(self):
+        return self.embed_data.values()
+
+    def append(self, embed_data: StatusEffectEmbedData):
+        if embed_data.effect_type not in self.embed_data:
+            self.embed_data[embed_data.effect_type] = embed_data
+        else:
+            self.embed_data[embed_data.effect_type].append(embed_data.description)
+
+    def extend(self, collection: "EmbedDataCollection"):
+        for embed_data in collection.values():
+            self.append(embed_data)
+
+
+@dataclass
+class StatusEffectOutcome:
+    value: int | None = None
+    modifier: float | None = None
+    crit_chance: float | None = None
+    crit_chance_modifier: float | None = None
+    initiative: int | None = None
+    info: str | None = None
+    embed_data: EmbedDataCollection | None = None
+
+    @staticmethod
+    def EMPTY():
+        return StatusEffectOutcome()

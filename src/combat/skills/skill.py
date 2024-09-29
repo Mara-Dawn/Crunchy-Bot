@@ -1,8 +1,10 @@
+import random
+
 import discord
 
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
-from combat.skills.status_effect import SkillStatusEffect
+from combat.skills.status_effect import SkillStatusEffect, StatusEffectOutcome
 from combat.skills.types import SkillEffect, SkillTarget, SkillType
 from config import Config
 
@@ -568,3 +570,65 @@ class CharacterSkill:
         info_block = f"```python\n{description}```"
 
         embed.add_field(name=title, value=info_block, inline=False)
+
+
+class SkillInstance:
+
+    def __init__(
+        self,
+        weapon_roll: int,
+        skill_base: float,
+        modifier: float,
+        critical_modifier: float,
+        encounter_scaling: float,
+        crit_chance: float,
+        is_crit: bool | None = None,
+    ):
+        self.weapon_roll = weapon_roll
+        self.skill_base = skill_base
+        self.modifier = modifier
+        self.critical_modifier = critical_modifier
+        self.encounter_scaling = encounter_scaling
+        self.critical_chance = crit_chance
+        self.is_crit = is_crit
+
+    @property
+    def value(self):
+        if self.is_crit is None:
+            self.is_crit = random.random() < self.critical_chance
+
+        value = self.weapon_roll * self.skill_base * self.modifier
+
+        if self.is_crit:
+            value *= self.critical_modifier
+
+        return int(value)
+
+    @property
+    def raw_value(self):
+        value = self.weapon_roll * self.skill_base * self.modifier
+        return int(value)
+
+    @property
+    def scaled_value(self):
+        if self.is_crit is None:
+            self.is_crit = random.random() < self.critical_chance
+
+        value = self.weapon_roll * self.skill_base * self.modifier
+
+        if self.is_crit:
+            value *= self.critical_modifier
+
+        if value > 0:
+            value = max(1, value * self.encounter_scaling)
+
+        return int(value)
+
+    def apply_effect_outcome(self, outcome: StatusEffectOutcome):
+        if outcome.modifier is not None:
+            self.modifier *= outcome.modifier
+        if self.is_crit is None:
+            if outcome.crit_chance is not None:
+                self.critical_chance = outcome.crit_chance
+            if outcome.crit_chance_modifier is not None:
+                self.critical_chance *= outcome.crit_chance_modifier

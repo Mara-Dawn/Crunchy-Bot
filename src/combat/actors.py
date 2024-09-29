@@ -6,8 +6,8 @@ from combat.enemies.enemy import Enemy
 from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
-from combat.skills.status_effect import ActiveStatusEffect
-from combat.skills.types import SkillEffect, SkillType, StatusEffectOutcome
+from combat.skills.status_effect import ActiveStatusEffect, StatusEffectOutcome
+from combat.skills.types import SkillEffect, SkillType
 from config import Config
 
 

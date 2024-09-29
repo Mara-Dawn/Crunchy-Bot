@@ -6,9 +6,9 @@ import discord
 
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
-from combat.skills import status_effect
-from combat.skills.skill import Skill
-from combat.skills.types import SkillInstance, StatusEffectType
+from combat.skills.skill import Skill, SkillInstance
+from combat.skills.status_effect import EmbedDataCollection, StatusEffect
+from combat.skills.types import StatusEffectType
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
@@ -285,10 +285,10 @@ class TurnDamageData:
     target: Actor
     instance: SkillInstance
     hp: int
-    _applied_status_effects: list[tuple[status_effect.StatusEffect, int]] | None = None
+    _applied_status_effects: list[tuple[StatusEffect, int]] | None = None
 
     @property
-    def applied_status_effects(self) -> list[tuple[status_effect.StatusEffect, int]]:
+    def applied_status_effects(self) -> list[tuple[StatusEffect, int]]:
         if self._applied_status_effects is None:
             self._applied_status_effects = []
 
@@ -300,5 +300,5 @@ class TurnData:
     actor: Actor
     skill: Skill
     damage_data: list[TurnDamageData]
-    post_embed_data: dict[str, str] | None = None
+    post_embed_data: EmbedDataCollection | None = None
     description_override: str | None = None

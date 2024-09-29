@@ -1,6 +1,7 @@
 import datetime
 import random
 
+import discord
 from discord.ext import commands
 
 from combat.actors import Character
@@ -611,7 +612,7 @@ class CombatGearManager(Service):
         return 0
 
     async def scrap_gear(
-        self, member_id: int, guild_id: int, gear_to_scrap: list[Gear]
+        self, member: discord.Member, guild_id: int, gear_to_scrap: list[Gear]
     ) -> int:
         total_scraps = 0
         for gear in gear_to_scrap:
@@ -619,7 +620,7 @@ class CombatGearManager(Service):
 
             self.logger.log(
                 guild_id,
-                f"Gear piece was scrapped: lvl.{gear.level} {gear.rarity.value} {gear.name}",
+                f"Gear piece was scrapped by {member.display_name}: lvl.{gear.level} {gear.rarity.value} {gear.name}",
                 cog="Equipment",
             )
 
@@ -629,7 +630,7 @@ class CombatGearManager(Service):
             event = InventoryEvent(
                 datetime.datetime.now(),
                 guild_id,
-                member_id,
+                member.id,
                 ItemType.SCRAP,
                 total_scraps,
             )

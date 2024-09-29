@@ -57,6 +57,7 @@ class EquipmentViewController(ViewController):
         self.gear_manager: CombatGearManager = self.controller.get_service(
             CombatGearManager
         )
+        self.log_name = "Equipment"
 
     async def listen_for_event(self, event: BotEvent) -> None:
         member_id = None
@@ -136,7 +137,7 @@ class EquipmentViewController(ViewController):
                 interaction = event.payload[0]
                 level = event.payload[1]
                 slot = event.payload[2]
-                await self.use_forge(interaction, level, slot, event.view_id)
+                await self.use_forge(interaction, level, slot)
             case UIEventType.FORGE_OPEN_OVERVIEW:
                 interaction = event.payload
                 await self.open_gear_overview(interaction, event.view_id)
@@ -395,7 +396,7 @@ class EquipmentViewController(ViewController):
         self.controller.detach_view_by_id(view_id)
 
     async def buy_gear(
-        self, interaction: discord.Interaction, selected: Gear, view_id: int
+        self, interaction: discord.Interaction, selected: Gear | None, view_id: int
     ):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
@@ -450,6 +451,9 @@ class EquipmentViewController(ViewController):
             generator_version=CombatGearManager.GENERATOR_VERSION,
         )
 
+        message = f"{interaction.user.display_name} bought {selected.rarity.value} {selected.name} for {scrap_value} scrap."
+        self.logger.log(interaction.guild_id, message, self.log_name)
+
         await self.refresh_special_shop(interaction, view_id)
 
         await interaction.followup.send(
@@ -486,6 +490,10 @@ class EquipmentViewController(ViewController):
                 guild_id, member_id, selected[1], acc_slot_2=True
             )
 
+        for gear in selected:
+            message = f"{interaction.user.display_name} equipped {gear.rarity.value} {gear.name} ({gear.id}) in {gear.slot.name}."
+            self.logger.log(interaction.guild_id, message, self.log_name)
+
         await self.refresh_gear_select(interaction, selected[0].base.slot, view_id)
 
     async def update_gear_lock(
@@ -515,6 +523,11 @@ class EquipmentViewController(ViewController):
             await self.refresh_skill_view(interaction, SkillViewState.MANAGE, view_id)
             return
 
+        for gear in selected:
+            lock_str = "locked" if lock else "unlocked"
+            message = f"{interaction.user.display_name} {lock_str} {gear.rarity.value} {gear.name} ({gear.id})."
+            self.logger.log(interaction.guild_id, message, self.log_name)
+
         await self.refresh_gear_select(interaction, gear_slot, view_id)
 
     async def dismantle_gear(
@@ -542,7 +555,7 @@ class EquipmentViewController(ViewController):
                     guild_id, member_id
                 )
 
-        await self.gear_manager.scrap_gear(member_id, guild_id, gear_to_scrap)
+        await self.gear_manager.scrap_gear(interaction.user, guild_id, gear_to_scrap)
 
         if gear_slot is None:
             await self.open_gear_overview(interaction, view_id)
@@ -656,6 +669,10 @@ class EquipmentViewController(ViewController):
                 return
             dupe_check.append(skill.id)
 
+        for slot, skill in skills.items():
+            message = f"{interaction.user.display_name} equipped {skill.rarity.value} {skill.name} ({skill.id}) in slot {slot}."
+            self.logger.log(interaction.guild_id, message, self.log_name)
+
         await self.database.set_selected_user_skills(guild_id, member_id, skills)
         await self.open_gear_overview(
             interaction, view_id=view_id, state=EquipmentViewState.SKILLS
@@ -666,7 +683,6 @@ class EquipmentViewController(ViewController):
         interaction: discord.Interaction,
         level: int,
         slot: EquipmentSlot,
-        view_id: int,
     ):
         if not await self.encounter_check(interaction):
             return
@@ -704,5 +720,8 @@ class EquipmentViewController(ViewController):
             -scrap_value,
         )
         await self.controller.dispatch_event(event)
+
+        message = f"{interaction.user.display_name} Forge: [level {level}, slot {slot}] -> {drop.rarity.value} {drop.name} ({drop.id})"
+        self.logger.log(interaction.guild_id, message, self.log_name)
 
         await interaction.followup.send(embed=drop.get_embed(), ephemeral=True)
