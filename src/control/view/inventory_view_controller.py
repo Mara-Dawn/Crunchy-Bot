@@ -73,6 +73,25 @@ class InventorySellAction(InventoryInteraction):
         self.sell_until = sell_until
 
 
+class InventoryCombineAction(InventoryInteraction):
+    def __init__(
+        self,
+        interaction: discord.Interaction,
+        item_type: ItemType,
+        amount: int,
+        combine_until: bool,
+        view_id: int,
+    ):
+        super().__init__(
+            interaction=interaction,
+            event_type=UIEventType.INVENTORY_COMBINE,
+            view_id=view_id,
+        )
+        self.item_type = item_type
+        self.amount = amount
+        self.combine_until = combine_until
+
+
 class InventoryViewController(ViewController):
 
     def __init__(
@@ -106,6 +125,9 @@ class InventoryViewController(ViewController):
                 case UIEventType.INVENTORY_SELL:
                     sell_request: InventorySellAction = request
                     await self.sell(sell_request)
+                case UIEventType.INVENTORY_COMBINE:
+                    combine_request: InventoryCombineAction = request
+                    await self.combine(combine_request)
 
             self.request_queue.task_done()
 
@@ -157,10 +179,24 @@ class InventoryViewController(ViewController):
                 )
                 await self.request_queue.put(request)
 
+            case UIEventType.INVENTORY_COMBINE:
+                interaction = event.payload[0]
+                item_type = event.payload[1]
+                amount = event.payload[2]
+                combine_until = event.payload[3]
+
+                request = InventoryCombineAction(
+                    interaction=interaction,
+                    item_type=item_type,
+                    amount=amount,
+                    combine_until=combine_until,
+                    view_id=event.view_id,
+                )
+                await self.request_queue.put(request)
+
             case UIEventType.INVENTORY_RESPONSE_CONFIRM_SUBMIT:
                 interaction = event.payload[0]
-                shop_data = event.payload[1]
-                item = shop_data.item
+                item = event.payload[1]
                 await self.submit_confirm_view(interaction, item, event.view_id)
 
             case UIEventType.SHOP_RESPONSE_USER_SUBMIT:
@@ -226,6 +262,82 @@ class InventoryViewController(ViewController):
             beans,
         )
         await self.controller.dispatch_event(event)
+
+    async def combine(
+        self,
+        request: InventoryCombineAction,
+    ):
+        interaction = request.interaction
+        item_type = request.item_type
+        amount = request.amount
+        combine_until = request.combine_until
+
+        guild_id = interaction.guild_id
+        user_id = interaction.user.id
+        inventory = await self.item_manager.get_user_inventory(guild_id, user_id)
+
+        item_owned = inventory.get_item_count(item_type)
+
+        if not combine_until and item_owned < amount:
+            await interaction.followup.send(
+                "You dont have this many keys to combine.",
+                ephemeral=True,
+            )
+            return
+
+        combine_amount = amount
+
+        if combine_until:
+            combine_amount = max(0, item_owned - amount)
+
+        combine_amount -= combine_amount % 3
+
+        if combine_amount == 0:
+            await interaction.followup.send(
+                "No keys were combined.",
+                ephemeral=True,
+            )
+            return
+
+        guild_level = await self.database.get_guild_level(guild_id)
+
+        key_level = BaseKey.LVL_MAP[item_type]
+        combined_type = BaseKey.TYPE_MAP[key_level + 1]
+        return_amount = int(combine_amount / 3)
+
+        if key_level is None or guild_level <= key_level:
+            await interaction.followup.send(
+                "You cannot combine keys of this level.",
+                ephemeral=True,
+            )
+            return
+
+        self.controller.detach_view_by_id(request.view_id)
+        message = await interaction.original_response()
+        await message.delete()
+
+        event = InventoryEvent(
+            datetime.datetime.now(),
+            guild_id,
+            user_id,
+            item_type,
+            -combine_amount,
+        )
+        await self.controller.dispatch_event(event)
+
+        event = InventoryEvent(
+            datetime.datetime.now(),
+            guild_id,
+            user_id,
+            combined_type,
+            return_amount,
+        )
+        await self.controller.dispatch_event(event)
+
+        await interaction.followup.send(
+            f"You successfully combined **{combine_amount}** keys of **level {key_level}** into **{return_amount}** key(s) of **level {key_level + 1}**",
+            ephemeral=True,
+        )
 
     async def submit_user_view(
         self,
