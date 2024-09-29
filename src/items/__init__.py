@@ -957,7 +957,11 @@ class BaseKey(Item):
         4: ItemType.ENCOUNTER_KEY_4,
         5: ItemType.ENCOUNTER_KEY_5,
         6: ItemType.ENCOUNTER_KEY_6,
+        7: ItemType.ENCOUNTER_KEY_7,
+        8: None,
     }
+
+    LVL_MAP = {v: k for k, v in TYPE_MAP.items()}
 
     def __init__(self, cost: int | None = None, level: int = 1):
 
@@ -1018,6 +1022,12 @@ class KeyLvl6(BaseKey):
 
     def __init__(self, cost: int | None):
         super().__init__(level=6)
+
+
+class KeyLvl7(BaseKey):
+
+    def __init__(self, cost: int | None):
+        super().__init__(level=7)
 
 
 class DaddyKey(Item):

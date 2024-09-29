@@ -87,6 +87,7 @@ class ItemType(str, Enum):
     ENCOUNTER_KEY_4 = "KeyLvl4"
     ENCOUNTER_KEY_5 = "KeyLvl5"
     ENCOUNTER_KEY_6 = "KeyLvl6"
+    ENCOUNTER_KEY_7 = "KeyLvl7"
 
     DADDY_KEY = "DaddyKey"
     WEEB_KEY = "WeebKey"

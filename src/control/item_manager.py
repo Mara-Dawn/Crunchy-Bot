@@ -576,7 +576,6 @@ class ItemManager(Service):
                 embed = item.get_embed(self.bot, show_price=False)
 
                 view = InventoryConfirmView(self.controller, interaction, item, None)
-                await view.init()
 
                 message = await interaction.followup.send(
                     "", embed=embed, view=view, ephemeral=True

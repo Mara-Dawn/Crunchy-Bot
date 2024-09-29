@@ -174,6 +174,7 @@ class UIEventType(str, Enum):
     INVENTORY_USER_REFRESH = "inventory_user_refresh"
     INVENTORY_ITEM_ACTION = "inventory_item_action"
     INVENTORY_SELL = "inventory_sell"
+    INVENTORY_COMBINE = "inventory_combine"
 
     GARDEN_SELECT_PLOT = "garden_select_plot"
     GARDEN_DETACH = "garden_detach"

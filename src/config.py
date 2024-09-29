@@ -87,11 +87,11 @@ class Config:
     # Guild Level Requirements
     LEVEL_REQUIREMENTS = {
         1: 100,
-        2: 150,
-        3: 175,
-        4: 235,
-        5: 300,
-        6: 400,
+        2: 250,
+        3: 300,
+        4: 369,
+        5: 420,
+        6: 500,
         7: 9999999,
     }
     BOSS_LEVELS = [3, 6, 9, 12]

@@ -216,6 +216,9 @@ class CombatStatusEffectManager(Service):
             if effect.status_effect.effect_type == effect_type:
                 filtered.append(effect)
 
+        if len(filtered) <= 0:
+            return StatusEffectOutcome.EMPTY()
+
         outcomes = await self.get_status_effect_outcomes(
             StatusEffectTrigger.ON_APPLICATION,
             context,
@@ -990,20 +993,28 @@ class CombatStatusEffectManager(Service):
 
         for active_actor in context.current_initiative:
 
+            prevent_consume = active_actor.id != actor.id
+
             triggered_status_effects = await self.actor_trigger(
                 context,
                 active_actor,
                 StatusEffectTrigger.END_OF_APPLICANT_TURN,
+                no_consume=prevent_consume,
             )
 
-            if len(triggered_status_effects) <= 0:
+            filtered = []
+            for effect in triggered_status_effects:
+                if effect.event.source_id == actor.id:
+                    filtered.append(effect)
+
+            if len(filtered) <= 0:
                 continue
 
             outcomes = await self.get_status_effect_outcomes(
                 StatusEffectTrigger.END_OF_APPLICANT_TURN,
                 context,
                 active_actor,
-                triggered_status_effects,
+                filtered,
             )
             embed_data = await self.get_status_effect_outcome_info(
                 StatusEffectTrigger.END_OF_APPLICANT_TURN,
@@ -1022,6 +1033,8 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         actor: Actor,
         trigger: StatusEffectTrigger,
+        no_trigger: bool = False,
+        no_consume: bool = False,
     ) -> list[ActiveStatusEffect]:
         triggered = []
 
@@ -1040,8 +1053,8 @@ class CombatStatusEffectManager(Service):
             actor_is_source = status_effect_event.source_id == actor.id
 
             if status_effect.delay_for_source_only and not actor_is_source:
-                delay_consume = False
-                delay_trigger = False
+                delay_consume = no_consume
+                delay_trigger = no_trigger
 
             if not delay_consume and trigger in status_effect.consumed:
                 await self.consume_status_stack(context, active_status_effect)
