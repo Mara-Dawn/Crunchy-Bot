@@ -78,6 +78,7 @@ class DaggerStab(BaseSkill):
             base_value=1.8,
             droppable=False,
             image_url="https://i.imgur.com/NYwXT8C.png",
+            author="Kiwi",
         )
 
 
@@ -103,6 +104,7 @@ class DaggerBackstab(BaseSkill):
             ],
             droppable=False,
             image_url="https://i.imgur.com/kEgF39j.png",
+            author="Kiwi",
         )
 
 
@@ -125,6 +127,7 @@ class IcyTouch(BaseSkill):
             ],
             droppable=False,
             image_url="https://i.imgur.com/OOR06XT.png",
+            author="Kiwi",
         )
 
 
@@ -155,6 +158,7 @@ class GoForTheEyes(BaseSkill):
             ],
             droppable=False,
             image_url="https://i.imgur.com/nV5uWZ1.png",
+            author="Kiwi",
         )
 
 
@@ -180,6 +184,7 @@ class CrouchingMoron(BaseSkill):
             base_value=1.8,
             droppable=False,
             image_url="https://i.imgur.com/3UsbPVe.jpeg",
+            author="Shen",
         )
 
 
@@ -199,6 +204,7 @@ class HiddenBadass(BaseSkill):
             base_value=1.4,
             droppable=False,
             image_url="https://i.imgur.com/5RtFB2g.jpeg",
+            author="Shen",
         )
 
 
@@ -225,6 +231,7 @@ class SharkChomp(BaseSkill):
             ],
             droppable=False,
             image_url="https://i.imgur.com/ATZBzsU.jpeg",
+            author="Shen",
         )
 
 
@@ -250,6 +257,7 @@ class SharkBeam(BaseSkill):
             ],
             droppable=False,
             image_url="https://i.imgur.com/Q0cIGYP.jpeg",
+            author="Shen",
         )
 
 
