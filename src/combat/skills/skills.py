@@ -181,7 +181,7 @@ class CrouchingMoron(BaseSkill):
                     1,
                 ),
             ],
-            base_value=0.5,
+            base_value=0.3,
             droppable=False,
             image_url="https://i.imgur.com/3UsbPVe.jpeg",
             author="Shen",
