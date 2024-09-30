@@ -91,7 +91,7 @@ class CombatStatusEffectManager(Service):
                 type = random.choice(random_negative_effect)
 
             match type:
-                case StatusEffectType.RANDOM:
+                case StatusEffectType.PROTECTION:
                     application_value = 50
 
         status_effect = await self.factory.get_status_effect(type)
