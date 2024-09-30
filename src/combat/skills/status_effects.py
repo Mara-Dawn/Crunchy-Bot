@@ -168,6 +168,22 @@ class Fear(StatusEffect):
         )
 
 
+class Chuckle(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.CHUCKLE,
+            name="Chuckle",
+            description="You can barely contain your laughter.",
+            trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
+            consumed=[],
+            emoji="🤡",
+            display_status=True,
+            single_description=True,
+            stack=True,
+        )
+
+
 class Protection(StatusEffect):
 
     def __init__(self):
@@ -260,6 +276,54 @@ class High(StatusEffect):
             delay_consume=True,
             delay_trigger=True,
             delay_for_source_only=True,
+        )
+
+
+class Vulnerable(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.VULNERABLE,
+            name="Vulnerable",
+            description="Incoming damage is increased.",
+            trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
+            consumed=[StatusEffectTrigger.END_OF_APPLICANT_TURN],
+            emoji="💥",
+            display_status=True,
+            single_description=True,
+            delay_consume=True,
+        )
+
+
+class PhysVuln(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.PHYS_VULN,
+            name="Armor Crushed",
+            description="Incoming physical damage is increased.",
+            trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
+            consumed=[StatusEffectTrigger.END_OF_APPLICANT_TURN],
+            emoji="🎇",
+            display_status=True,
+            single_description=True,
+            delay_consume=True,
+        )
+
+
+class MagicVuln(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.MAGIC_VULN,
+            name="Mind Break",
+            description="Incoming magical damage is increased.",
+            trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
+            consumed=[StatusEffectTrigger.END_OF_APPLICANT_TURN],
+            emoji="🎆",
+            display_status=True,
+            single_description=True,
+            delay_consume=True,
         )
 
 

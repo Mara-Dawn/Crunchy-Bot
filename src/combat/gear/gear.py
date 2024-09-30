@@ -242,19 +242,9 @@ class Gear(Droppable):
             if self.base.slot == EquipmentSlot.WEAPON and len(self.base.skills) > 0:
                 damage_types = []
                 for skill_type in self.base.skills:
-                    if skill_type in [
-                        SkillType.MAGIC_ATTACK,
-                        SkillType.FROST_ATTACK,
-                        SkillType.FROZEN_DROPS,
-                    ]:
+                    if SkillType.is_magical_weapon_skill(skill_type):
                         effect = SkillEffect.MAGICAL_DAMAGE
-                    elif skill_type in [
-                        SkillType.NORMAL_ATTACK,
-                        SkillType.HEAVY_ATTACK,
-                        SkillType.TAPE_ATTACK,
-                        SkillType.DONER_KEBAB,
-                        SkillType.KEBAB_SMILE,
-                    ]:
+                    if SkillType.is_physical_weapon_skill(skill_type):
                         effect = SkillEffect.PHYSICAL_DAMAGE
                     if effect not in damage_types:
                         damage_types.append(effect)

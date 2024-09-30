@@ -660,6 +660,33 @@ class Stick_T3(Tier3):
         )
 
 
+class Icicle(Tier3):
+
+    def __init__(self):
+        super().__init__(
+            name="Icicle",
+            type=GearBaseType.ICICLE,
+            description=(
+                "It might look like a shiny blue carrot, but this icycle is "
+                "so much more than a nutritious treat (please don't eat it, "
+                "it is not nutricious at all). Don't forget to wear gloves when "
+                "handling this deadly, ice cold shiv!"
+            ),
+            information="",
+            slot=EquipmentSlot.WEAPON,
+            modifiers=[
+                GearModifierType.WEAPON_DAMAGE_MIN,
+                GearModifierType.WEAPON_DAMAGE_MAX,
+            ],
+            skills=[SkillType.ICY_TOUCH, SkillType.GO_FOR_THE_EYES],
+            uniques=[GearBaseType.KATANA],
+            image_url="https://i.imgur.com/LovPOVj.png",
+        )
+        self.scaling = 1.4
+        self.weight = 60
+        self.author = "Kiwi"
+
+
 class Wand_T3(Tier3):
 
     def __init__(self):
@@ -842,6 +869,52 @@ class Stick_T4(Tier4):
             skills=[SkillType.NORMAL_ATTACK, SkillType.HEAVY_ATTACK],
             image_url="https://i.imgur.com/quQ83yx.png",
         )
+
+
+class Dagger(Tier4):
+
+    def __init__(self):
+        super().__init__(
+            name="Dagger",
+            type=GearBaseType.DAGGER,
+            description="It's a dagger. It does daggery things.",
+            information="",
+            slot=EquipmentSlot.WEAPON,
+            modifiers=[
+                GearModifierType.WEAPON_DAMAGE_MIN,
+                GearModifierType.WEAPON_DAMAGE_MAX,
+            ],
+            uniques=[GearBaseType.KATANA],
+            skills=[SkillType.DAGGER_STAB, SkillType.DAGGER_BACKSTAB],
+            image_url="https://i.imgur.com/fQdjeVe.png",
+        )
+        self.scaling = 1.5
+        self.weight = 60
+        self.author = "Kiwi"
+
+
+class Blahaj(Tier4):
+
+    def __init__(self):
+        super().__init__(
+            name="Blåhaj",
+            type=GearBaseType.BLAHAJ,
+            description=(
+                "Your mom bought it as an emotional support plush. "
+                "Her words were „It will protect you from bullies“, and you took that literally.",
+            ),
+            information="",
+            slot=EquipmentSlot.WEAPON,
+            modifiers=[
+                GearModifierType.WEAPON_DAMAGE_MIN,
+                GearModifierType.WEAPON_DAMAGE_MAX,
+            ],
+            skills=[SkillType.SHARK_CHOMP, SkillType.SHARK_BEAM],
+            image_url="https://i.imgur.com/wnZmZbB.jpeg",
+        )
+        self.scaling = 1.55
+        self.weight = 60
+        self.author = "Shen"
 
 
 class Wand_T4(Tier4):

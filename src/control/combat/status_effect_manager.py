@@ -543,9 +543,25 @@ class CombatStatusEffectManager(Service):
                 case StatusEffectType.PROTECTION:
                     modifier = 1 - (active_status_effect.event.value / 100)
                     info = "Attack damage was reduced."
+                case StatusEffectType.VULNERABLE:
+                    modifier = Config.VULNERABLE_SCALING
+                case StatusEffectType.PHYS_VULN:
+                    if skill.base_skill.skill_effect == SkillEffect.PHYSICAL_DAMAGE:
+                        modifier = Config.PHYS_VULN_SCALING
+                case StatusEffectType.MAGIC_VULN:
+                    if skill.base_skill.skill_effect == SkillEffect.MAGICAL_DAMAGE:
+                        modifier = Config.MAGIC_VULN_SCALING
                 case StatusEffectType.FEAR:
                     if skill is not None and skill.type == SkillType.FEASTING:
                         modifier = 1 + (active_status_effect.remaining_stacks * 0.2)
+                        await self.consume_status_stack(
+                            context,
+                            active_status_effect,
+                            active_status_effect.remaining_stacks,
+                        )
+                case StatusEffectType.CHUCKLE:
+                    if skill is not None and skill.type == SkillType.HIDDEN_BADASS:
+                        modifier = 1 + (active_status_effect.remaining_stacks)
                         await self.consume_status_stack(
                             context,
                             active_status_effect,
@@ -640,9 +656,21 @@ class CombatStatusEffectManager(Service):
                     description = f"{actor.name} cannot harm their opponent!"
                 case StatusEffectType.SIMP:
                     description = f"{actor.name}'s attacks are half as effective!"
+                case (
+                    StatusEffectType.VULNERABLE
+                    | StatusEffectType.PHYS_VULN
+                    | StatusEffectType.MAGIC_VULN
+                ):
+                    if outcome.modifier is not None:
+                        description = status_effect.description
                 case StatusEffectType.FEAR:
                     if outcome.modifier is not None:
                         description = "The consumed fear increases the damage taken."
+                case StatusEffectType.CHUCKLE:
+                    if outcome.modifier is not None:
+                        description = (
+                            "They burst out in laughter and take increased damage."
+                        )
                 case StatusEffectType.HIGH:
                     description = f"{actor.name} is blazed out of their mind causing unexpected skill outcomes."
                 case StatusEffectType.RAGE_QUIT:

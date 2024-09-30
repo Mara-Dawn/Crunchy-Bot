@@ -14,6 +14,7 @@ class StatusEffectType(str, Enum):
     ZONED_IN = "ZonedIn"
     RAGE = "Rage"
     FEAR = "Fear"
+    CHUCKLE = "Chuckle"
     RAGE_QUIT = "RageQuit"
     HIGH = "High"
     POISON = "Poison"
@@ -21,6 +22,9 @@ class StatusEffectType(str, Enum):
     DEATH_PROTECTION = "DeathProtection"
     HEAL_OVER_TIME = "HealOverTime"
     FROST = "Frost"
+    VULNERABLE = "Vulnerable"
+    PHYS_VULN = "PhysVuln"
+    MAGIC_VULN = "MagicVuln"
 
     PARTY_LEECH = "PartyLeech"
 
@@ -39,6 +43,18 @@ class SkillType(str, Enum):
     TAPE_ATTACK = "TapeAttack"
     DONER_KEBAB = "DonerKebab"
     KEBAB_SMILE = "KebabSmile"
+
+    DAGGER_STAB = "DaggerStab"
+    DAGGER_BACKSTAB = "DaggerBackstab"
+
+    ICY_TOUCH = "IcyTouch"
+    GO_FOR_THE_EYES = "GoForTheEyes"
+
+    CROUCHING_MORON = "CrouchingMoron"
+    HIDDEN_BADASS = "HiddenBadass"
+
+    SHARK_BEAM = "SharkBeam"
+    SHARK_CHOMP = "SharkChomp"
 
     SECOND_WIND = "SecondWind"
     SECOND_HEART = "SecondHeart"
@@ -233,6 +249,38 @@ class SkillType(str, Enum):
             SkillType.TAPE_ATTACK,
             SkillType.DONER_KEBAB,
             SkillType.KEBAB_SMILE,
+            SkillType.DAGGER_BACKSTAB,
+            SkillType.DAGGER_STAB,
+            SkillType.ICY_TOUCH,
+            SkillType.GO_FOR_THE_EYES,
+            SkillType.CROUCHING_MORON,
+            SkillType.HIDDEN_BADASS,
+            SkillType.SHARK_CHOMP,
+            SkillType.SHARK_BEAM,
+        ]
+
+    def is_physical_weapon_skill(skill_type: "SkillType"):
+        return skill_type in [
+            SkillType.NORMAL_ATTACK,
+            SkillType.HEAVY_ATTACK,
+            SkillType.TAPE_ATTACK,
+            SkillType.DONER_KEBAB,
+            SkillType.DAGGER_BACKSTAB,
+            SkillType.DAGGER_STAB,
+            SkillType.ICY_TOUCH,
+            SkillType.GO_FOR_THE_EYES,
+        ]
+
+    def is_magical_weapon_skill(skill_type: "SkillType"):
+        return skill_type in [
+            SkillType.MAGIC_ATTACK,
+            SkillType.FROST_ATTACK,
+            SkillType.FROZEN_DROPS,
+            SkillType.KEBAB_SMILE,
+            SkillType.CROUCHING_MORON,
+            SkillType.HIDDEN_BADASS,
+            SkillType.SHARK_CHOMP,
+            SkillType.SHARK_BEAM,
         ]
 
 

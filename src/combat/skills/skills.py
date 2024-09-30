@@ -65,6 +65,194 @@ class HeavyAttack(BaseSkill):
         )
 
 
+class DaggerStab(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Stab",
+            skill_type=SkillType.DAGGER_STAB,
+            description="Stick 'em with the pointy end. It just works.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1.8,
+            droppable=False,
+            image_url="https://i.imgur.com/NYwXT8C.png",
+        )
+
+
+class DaggerBackstab(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Backstab",
+            skill_type=SkillType.DAGGER_BACKSTAB,
+            description=(
+                "Become one with the shadows and surprise the enemy with a quick and deadly attack.\n"
+                "The enemy becomes vulnerable to physical damage for one turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=5,
+            base_value=4,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.PHYS_VULN,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/kEgF39j.png",
+        )
+
+
+class IcyTouch(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Icy Touch",
+            skill_type=SkillType.ICY_TOUCH,
+            description="Poke 'em good and cool!",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=2.1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FROST,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/OOR06XT.png",
+        )
+
+
+class GoForTheEyes(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Go For The Eyes",
+            skill_type=SkillType.GO_FOR_THE_EYES,
+            description=(
+                "Oh god oh please oh no ... don't look while you poke your opponent's "
+                "eye with your icicle, it's super gross but also very effective.\n"
+                "Blinds for one turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            base_value=0.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.FROST,
+                    1,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/nV5uWZ1.png",
+        )
+
+
+class CrouchingMoron(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Crouching Moron",
+            skill_type=SkillType.CROUCHING_MORON,
+            description=(
+                "You hold Chunchunmaru upside down. Seriously, what are you doing?!\n"
+                "Applies a chuckle debuff on hit."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.CHUCKLE,
+                    1,
+                ),
+            ],
+            base_value=1.8,
+            droppable=False,
+            image_url="https://i.imgur.com/3UsbPVe.jpeg",
+        )
+
+
+class HiddenBadass(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Hidden Badass",
+            skill_type=SkillType.HIDDEN_BADASS,
+            description=(
+                "They are distracted with a laughing fit, bring Chunchunmaru down on a fool!\n"
+                "Consumes chuckle debuff, increasing it's damage for every stack."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1.4,
+            droppable=False,
+            image_url="https://i.imgur.com/5RtFB2g.jpeg",
+        )
+
+
+class SharkChomp(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Chomp",
+            skill_type=SkillType.SHARK_CHOMP,
+            description=(
+                "Death by a thousand cuts? More like nom-nom-nom. "
+                "Applies bleed for one turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=0,
+            base_value=1.8,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLEED,
+                    1,
+                    StatusEffectApplication.ATTACK_VALUE,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/ATZBzsU.jpeg",
+        )
+
+
+class SharkBeam(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Shark Beam",
+            skill_type=SkillType.SHARK_BEAM,
+            description=(
+                "Haj go brrrrrr! "
+                "The enemy becomes vulnerable to magical damage for one turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            cooldown=5,
+            base_value=3.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.MAGIC_VULN,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/Q0cIGYP.jpeg",
+        )
+
+
 class TapeAttack(BaseSkill):
 
     def __init__(self):
