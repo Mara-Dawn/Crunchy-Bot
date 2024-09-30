@@ -74,11 +74,14 @@ class CombatStatusEffectManager(Service):
             random_positive_effect = [
                 StatusEffectType.HIGH,
                 StatusEffectType.RAGE,
+                StatusEffectType.PROTECTION,
             ]
             random_negative_effect = [
                 StatusEffectType.BLEED,
                 StatusEffectType.BLIND,
                 StatusEffectType.POISON,
+                StatusEffectType.PARTY_LEECH,
+                StatusEffectType.FROST,
             ]
 
             chance_for_positive = Config.RANDOM_POSITIVE_CHANCE
@@ -86,6 +89,10 @@ class CombatStatusEffectManager(Service):
                 type = random.choice(random_positive_effect)
             else:
                 type = random.choice(random_negative_effect)
+
+            match type:
+                case StatusEffectType.RANDOM:
+                    application_value = 50
 
         status_effect = await self.factory.get_status_effect(type)
 

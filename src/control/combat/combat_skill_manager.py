@@ -229,6 +229,10 @@ class CombatSkillManager(Service):
                 1 / combatant_count * Config.CHARACTER_ENCOUNTER_SCALING_FACOTR
             )
 
+        critical_modifier = character.equipment.attributes[
+            CharacterAttribute.CRIT_DAMAGE
+        ]
+
         match skill.base_skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
                 modifier += character.equipment.attributes[
@@ -251,6 +255,7 @@ class CombatSkillManager(Service):
                 modifier += character.equipment.attributes[
                     CharacterAttribute.HEALING_BONUS
                 ]
+                critical_modifier = Config.HEAL_CRIT_MODIFIER
             case SkillEffect.NOTHING | SkillEffect.BUFF:
                 modifier = 0
 
@@ -268,10 +273,6 @@ class CombatSkillManager(Service):
             crit_rate = character.equipment.attributes[CharacterAttribute.CRIT_RATE]
             if skill.base_skill.custom_crit is not None:
                 crit_rate = skill.base_skill.custom_crit
-
-            critical_modifier = character.equipment.attributes[
-                CharacterAttribute.CRIT_DAMAGE
-            ]
 
             skill_instance = SkillInstance(
                 weapon_roll=weapon_roll,
@@ -317,6 +318,7 @@ class CombatSkillManager(Service):
         raw_attack_count = skill.base_skill.hits
         attack_count = raw_attack_count
         force_scaling = False
+        critical_modifier = opponent.enemy.attributes[CharacterAttribute.CRIT_DAMAGE]
 
         match skill.base_skill.skill_effect:
             case SkillEffect.PHYSICAL_DAMAGE:
@@ -335,6 +337,7 @@ class CombatSkillManager(Service):
                 base_roll = opponent.max_hp
                 weapon_min_roll = base_roll * (1 - Config.OPPONENT_DAMAGE_VARIANCE)
                 weapon_max_roll = base_roll * (1 + Config.OPPONENT_DAMAGE_VARIANCE)
+                critical_modifier = Config.HEAL_CRIT_MODIFIER
             case SkillEffect.NOTHING | SkillEffect.BUFF:
                 modifier = 0
 
@@ -343,7 +346,7 @@ class CombatSkillManager(Service):
             and not skill.base_skill.aoe
             and not force_scaling
         ):
-            max_hits = 8
+            max_hits = 15
             if skill.base_skill.max_hits is not None:
                 max_hits = skill.base_skill.max_hits
 
@@ -373,10 +376,6 @@ class CombatSkillManager(Service):
             crit_rate = opponent.enemy.attributes[CharacterAttribute.CRIT_RATE]
             if skill.base_skill.custom_crit is not None:
                 crit_rate = skill.base_skill.custom_crit
-
-            critical_modifier = opponent.enemy.attributes[
-                CharacterAttribute.CRIT_DAMAGE
-            ]
 
             damage_instance = SkillInstance(
                 weapon_roll=weapon_roll,

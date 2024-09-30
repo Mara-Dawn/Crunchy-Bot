@@ -23,24 +23,21 @@ class TurnEndState(State):
         outcome = await self.status_effect_manager.handle_turn_status_effects(
             self.context, actor, StatusEffectTrigger.END_OF_TURN
         )
+
         if outcome.embed_data is not None:
-            status_effect_embed = self.embed_manager.get_status_effect_embed(
-                actor, outcome.embed_data
+            await self.discord.update_current_turn_embed(
+                self.context, outcome.embed_data
             )
-            await self.discord.append_embed_to_round(self.context, status_effect_embed)
 
         outcomes = (
             await self.status_effect_manager.handle_applicant_turn_status_effects(
                 self.context, actor
             )
         )
-        for actor_id, outcome in outcomes.items():
+        for outcome in outcomes.values():
             if outcome.embed_data is not None:
-                status_effect_embed = self.embed_manager.get_status_effect_embed(
-                    self.context.get_actor_by_id(actor_id), outcome.embed_data
-                )
-                await self.discord.append_embed_to_round(
-                    self.context, status_effect_embed
+                await self.discord.update_current_turn_embed(
+                    self.context, outcome.embed_data
                 )
 
         if actor.is_enemy:
@@ -99,6 +96,18 @@ class TurnEndState(State):
                         self.done = True
                         await self.common.force_end(self.context)
                         update = True
+            case EventType.COMBAT:
+                combat_event: CombatEvent = event
+                if combat_event.encounter_id != self.context.encounter.id:
+                    return update
+                if combat_event.member_id != self.context.current_actor.id:
+                    return update
+
+                match combat_event.combat_event_type:
+                    case (
+                        CombatEventType.MEMBER_END_TURN | CombatEventType.ENEMY_END_TURN
+                    ):
+                        self.context.turn_event_id_cutoff = combat_event.id
 
         return update
 

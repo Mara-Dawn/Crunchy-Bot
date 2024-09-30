@@ -24,11 +24,14 @@ class TurnStartState(State):
         outcome = await self.status_effect_manager.handle_turn_status_effects(
             self.context, actor, StatusEffectTrigger.START_OF_TURN
         )
+
+        self.context.current_turn_embed = self.embed_manager.get_turn_embed(actor)
+
         if outcome.embed_data is not None:
-            status_effect_embed = self.embed_manager.get_status_effect_embed(
-                actor, outcome.embed_data
+            await self.discord.update_current_turn_embed(
+                self.context, outcome.embed_data
             )
-            await self.discord.append_embed_to_round(self.context, status_effect_embed)
+            self.embed_manager.add_spacer_to_embed(self.context.current_turn_embed)
 
         if self.done:
             # status effects might end encounter early
@@ -98,7 +101,9 @@ class TurnStartState(State):
         if not silent:
             if reason is None:
                 reason = ""
-            embed = self.embed_manager.get_turn_skip_embed(actor, reason, context)
-            await self.discord.append_embed_to_round(context, embed)
+            self.embed_manager.add_turn_skip_to_embed(
+                reason, actor, context.current_turn_embed
+            )
+            await self.discord.update_current_turn_embed(self.context)
 
         self.next_state = StateType.TURN_END

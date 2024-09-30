@@ -64,6 +64,8 @@ class Config:
     ENCOUNTER_MAX_LVL_SIZE_SCALING = 2 / 3
     ENEMY_HEALTH_LVL_FALLOFF = 0.95
 
+    HEAL_CRIT_MODIFIER = 1.5
+
     # Status Effects
     BLEED_SCALING = 0.25
     LEECH_SCALING = 0.20

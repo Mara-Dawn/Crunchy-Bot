@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import copy
 import datetime
 from collections.abc import AsyncGenerator
 
@@ -213,7 +214,7 @@ class DiscordManager(Service):
 
             await self.refresh_combat_messages(guild_id)
 
-    async def get_previous_turn_message(self, thread: discord.Thread):
+    async def get_previous_round_message(self, thread: discord.Thread):
         async for message in thread.history(limit=100):
             if len(message.embeds) >= 1 and message.author.id == self.bot.user.id:
                 embed = message.embeds[0]
@@ -222,7 +223,7 @@ class DiscordManager(Service):
         return None
 
     async def refresh_round_overview(self, context: EncounterContext):
-        round_message = await self.get_previous_turn_message(context.thread)
+        round_message = await self.get_previous_round_message(context.thread)
         if round_message is not None:
             round_embeds = round_message.embeds
             cont = round_embeds[0].title == "Round Continued.."
@@ -234,7 +235,7 @@ class DiscordManager(Service):
         self, context: EncounterContext, generator: AsyncGenerator
     ):
         thread = context.thread
-        message = await self.get_previous_turn_message(thread)
+        message = await self.get_previous_round_message(thread)
 
         if len(message.embeds) >= 10:
             round_embed = await self.embed_manager.get_round_embed(context, cont=True)
@@ -248,11 +249,120 @@ class DiscordManager(Service):
             current_embeds = previous_embeds + [embed]
             await self.edit_message(message, embeds=current_embeds)
 
+    async def update_current_turn_embed_by_generator(
+        self,
+        context: EncounterContext,
+        generator: AsyncGenerator,
+    ):
+        thread = context.thread
+        message = await self.get_previous_round_message(thread)
+        base_embed = context.current_turn_embed
+
+        embed_index = None
+        if not context.current_actor.is_enemy:
+            for index, message_embed in reversed(list(enumerate(message.embeds))):
+                if (
+                    message_embed.author is not None
+                    and message_embed.author.name == base_embed.author.name
+                ):
+                    embed_index = index
+                    break
+
+        embeds = message.embeds
+
+        previous_length = 0
+        current_start = 0
+
+        async for field_data in generator:
+            embed = copy.deepcopy(base_embed)
+
+            if embed_index is None:
+                for field in field_data[current_start:]:
+                    embed.add_field(
+                        name=field.name, value=field.value, inline=field.inline
+                    )
+                base_embed = embed
+                await self.append_embed_to_round(context, embed)
+                message = await self.get_previous_round_message(thread)
+                embed_index = len(message.embeds) - 1
+                embeds = message.embeds
+                previous_length = len(field_data)
+                continue
+
+            field_count = len(field_data) - current_start
+
+            if field_count + len(embed.fields) > 25:
+                new_embed = discord.Embed(color=embed.color)
+                new_embed.set_thumbnail(url=embed.thumbnail.url)
+                new_embed.set_author(name=embed.author.name)
+                new_embed.set_thumbnail(url=embed.thumbnail.url)
+                self.embed_manager.add_text_bar(new_embed, "", "Continued ...")
+                base_embed = new_embed
+
+                embed = copy.deepcopy(base_embed)
+                await self.append_embed_to_round(context, embed)
+
+                message = await self.get_previous_round_message(thread)
+                embed_index = len(message.embeds) - 1
+                embeds = message.embeds
+                current_start = previous_length
+
+            for field in field_data[current_start:]:
+                embed.add_field(name=field.name, value=field.value, inline=field.inline)
+
+            embeds[embed_index] = embed
+            await self.edit_message(message, embeds=embeds)
+
+            if previous_length == 0:
+                base_embed = embed
+
+            previous_length = len(field_data)
+
+        context.current_turn_embed = embed
+
+    async def update_current_turn_embed(
+        self, context: EncounterContext, embed_data: EmbedDataCollection | None = None
+    ):
+        self.embed_manager.add_spacer_to_embed(context.current_turn_embed)
+        thread = context.thread
+        message = await self.get_previous_round_message(thread)
+
+        embed_index = None
+
+        if (
+            embed_data is not None
+            and len(context.current_turn_embed.fields) + embed_data.length > 25
+        ):
+            context.current_turn_embed = self.embed_manager.get_turn_embed(
+                context.current_actor
+            )
+        else:
+            for index, message_embed in reversed(list(enumerate(message.embeds))):
+                if (
+                    message_embed.author is not None
+                    and message_embed.author.name
+                    == context.current_turn_embed.author.name
+                ):
+                    embed_index = index
+                    break
+
+        if embed_data is not None:
+            self.embed_manager.add_status_effect_to_embed(
+                context.current_turn_embed, embed_data
+            )
+
+        if embed_index is None:
+            return await self.append_embed_to_round(context, context.current_turn_embed)
+
+        embeds = message.embeds
+        embeds[embed_index] = context.current_turn_embed
+        await self.edit_message(message, embeds=embeds)
+
     async def append_embed_to_round(
         self, context: EncounterContext, embed: discord.Embed
     ):
         thread = context.thread
-        message = await self.get_previous_turn_message(thread)
+        message = await self.get_previous_round_message(thread)
 
         if len(message.embeds) >= 10:
             round_embed = await self.embed_manager.get_round_embed(context, cont=True)

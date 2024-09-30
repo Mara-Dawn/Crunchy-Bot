@@ -104,11 +104,14 @@ class EncounterContext:
         self._last_actor: Actor = None
         self._combat_scale: int = None
         self._current_initiative: deque[Actor] = None
-        self._round_event_id_cutoff: int = None
+        self.round_event_id_cutoff: int = 0
+        self.turn_event_id_cutoff: int = 0
         self._initiated: bool = None
         self._concluded: bool = None
 
         self.reset_initiative: bool = False
+
+        self.current_turn_embed: discord.Embed = None
 
         self.refresh_initiative()
 
@@ -248,18 +251,6 @@ class EncounterContext:
             self.refresh_initiative()
 
         return self._current_initiative
-
-    @property
-    def round_event_id_cutoff(self) -> int:
-        if self._round_event_id_cutoff is None:
-            for event in self.encounter_events:
-                if event.encounter_event_type in [
-                    EncounterEventType.NEW_ROUND,
-                ]:
-                    self._round_event_id_cutoff = event.id
-            self._round_event_id_cutoff = 0
-
-        return self._round_event_id_cutoff
 
     @property
     def initiated(self) -> bool:

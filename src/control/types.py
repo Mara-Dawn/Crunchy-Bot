@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 
 
@@ -86,3 +87,10 @@ class ControllerModuleMap(str, Enum):
         }
 
         return map[controller_type]
+
+
+@dataclass
+class FieldData:
+    name: str
+    value: str
+    inline: bool

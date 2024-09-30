@@ -19,6 +19,7 @@ from control.controller import Controller
 from control.imgur_manager import ImgurManager
 from control.logger import BotLogger
 from control.service import Service
+from control.types import FieldData
 from datalayer.database import Database
 from events.bot_event import BotEvent
 from events.types import EncounterEventType
@@ -614,6 +615,217 @@ class CombatEmbedManager(Service):
                 async for embed in self.display_regular_skill(turn_data, full_embed):
                     yield embed
 
+    async def apply_attack_data_to_embed(
+        self, embed: discord.Embed, turn_data: TurnData
+    ):
+        actor = turn_data.actor
+        skill_data = await self.skill_manager.get_skill_data(actor, turn_data.skill)
+        skill = skill_data.skill
+
+        if actor.is_enemy:
+            color = discord.Color.red()
+        else:
+            color = Skill.RARITY_COLOR_HEX_MAP[skill.rarity]
+
+        embed.set_thumbnail(url=skill.base_skill.image_url)
+        embed.color = color
+
+    async def get_actor_turn_embed_data(
+        self,
+        turn_data: TurnData,
+        context: EncounterContext,
+    ):
+
+        actor = turn_data.actor
+        skill_data = await self.skill_manager.get_skill_data(actor, turn_data.skill)
+        skill = skill_data.skill
+
+        field = skill_data.get_embed_field(
+            description_override=turn_data.description_override
+        )
+        fields = [field]
+        yield fields
+
+        if actor.is_enemy and skill.type not in self.actor_manager.get_used_skills(
+            actor.id, context
+        ):
+            wait = max(len(skill.description) * 0.06, 3)
+            await asyncio.sleep(wait)
+
+        if (
+            not skill.base_skill.base_value <= 0
+            and skill.base_skill.skill_effect
+            not in [
+                SkillEffect.NOTHING,
+                SkillEffect.BUFF,
+            ]
+        ):
+            if skill.base_skill.aoe:
+                async for field_data in self.get_aoe_skill_data(turn_data):
+                    yield field_data
+            else:
+                async for field_data in self.get_regular_skill_data(turn_data):
+                    yield field_data
+
+    async def get_regular_skill_data(
+        self,
+        turn_data: TurnData,
+    ):
+        actor = turn_data.actor
+
+        fast_mode = len(turn_data.damage_data) > 1
+
+        fields = []
+
+        for damage_data in turn_data.damage_data:
+            target = damage_data.target
+            remaiming_hp = damage_data.hp
+            await asyncio.sleep(1)
+
+            to_name = f"<@{target.id}>"
+            if target.is_enemy:
+                to_name = f"*{target.name}*"
+
+            outcome_title, damage_info = await self.get_embed_attack_data(
+                current_actor=actor,
+                skill=turn_data.skill,
+                damage_data=damage_data,
+            )
+
+            if not fast_mode:
+                fields = []
+                fields.append(FieldData(name="Target", value=to_name, inline=True))
+                fields.append(FieldData(name=outcome_title, value="", inline=True))
+                fields.append(FieldData(name="Target Health", value="", inline=True))
+                yield fields
+                await asyncio.sleep(0.5)
+
+                fields = []
+                fields.append(FieldData(name="Target", value=to_name, inline=True))
+                fields.append(
+                    FieldData(name=outcome_title, value=damage_info, inline=True)
+                )
+                fields.append(FieldData(name="Target Health", value="", inline=True))
+                yield fields
+                await asyncio.sleep(0.5)
+                fields = []
+
+            percentage = f"{round(remaiming_hp/target.max_hp * 100, 1)}".rstrip(
+                "0"
+            ).rstrip(".")
+            display_hp = f"{percentage}%"
+
+            applied_effect_display = ""
+            for status_effect_type, stacks in damage_data.applied_status_effects:
+                status_effect = await self.factory.get_status_effect(status_effect_type)
+                if status_effect.display_status:
+                    applied_effect_display += f"{status_effect.emoji}{stacks}"
+
+            if applied_effect_display != "":
+                display_hp = f"{display_hp} | `{applied_effect_display}`"
+
+            fields.append(FieldData(name="Target", value=to_name, inline=True))
+            fields.append(FieldData(name=outcome_title, value=damage_info, inline=True))
+            fields.append(
+                FieldData(name="Target Health", value=display_hp, inline=True)
+            )
+            yield fields
+
+    async def get_aoe_skill_data(
+        self,
+        turn_data: TurnData,
+    ):
+        actor = turn_data.actor
+
+        fields = []
+        await asyncio.sleep(0.5)
+
+        content_map = {}
+
+        for damage_data in turn_data.damage_data:
+            target = damage_data.target
+            to_name = f"<@{target.id}>"
+            if target.is_enemy:
+                to_name = f"*{target.name}*"
+
+            outcome_title, damage_info = await self.get_embed_attack_data(
+                current_actor=actor,
+                skill=turn_data.skill,
+                damage_data=damage_data,
+            )
+
+            content_map[target.id] = (to_name, outcome_title, damage_info)
+
+            fields.append(FieldData(name="Target", value=to_name, inline=True))
+            fields.append(FieldData(name=outcome_title, value="", inline=True))
+            fields.append(FieldData(name="Target Health", value="", inline=True))
+
+        yield fields
+
+        await asyncio.sleep(0.5)
+
+        fields = []
+        for damage_data in turn_data.damage_data:
+            target = damage_data.target
+
+            to_name, outcome_title, damage_info = content_map[target.id]
+
+            fields.append(FieldData(name="Target", value=to_name, inline=True))
+            fields.append(FieldData(name=outcome_title, value=damage_info, inline=True))
+            fields.append(FieldData(name="Target Health", value="", inline=True))
+
+        yield fields
+
+        await asyncio.sleep(0.5)
+
+        fields = []
+        for damage_data in turn_data.damage_data:
+            target = damage_data.target
+            to_name, outcome_title, damage_info = content_map[target.id]
+
+            remaiming_hp = damage_data.hp
+            percentage = f"{round(remaiming_hp/target.max_hp * 100, 1)}".rstrip(
+                "0"
+            ).rstrip(".")
+            display_hp = f"{percentage}%"
+
+            applied_effect_display = ""
+            for status_effect_type, stacks in damage_data.applied_status_effects:
+                status_effect = await self.factory.get_status_effect(status_effect_type)
+                if status_effect.display_status:
+                    applied_effect_display += f"{status_effect.emoji}{stacks}"
+
+            full_isplay_hp = display_hp
+            if applied_effect_display != "":
+                full_isplay_hp += f" | `{applied_effect_display}`"
+
+            fields.append(FieldData(name="Target", value=to_name, inline=True))
+            fields.append(FieldData(name=outcome_title, value=damage_info, inline=True))
+            fields.append(
+                FieldData(name="Target Health", value=full_isplay_hp, inline=True)
+            )
+
+        yield fields
+
+    def get_turn_embed(self, actor: Actor) -> discord.Embed:
+        actor_name = f"{actor.name}"
+
+        color = self.SYSTEM_MESSAGE_COLOR
+        if actor.is_enemy:
+            color = discord.Color.red()
+
+        embed = discord.Embed(title="", description="", color=color)
+        embed.set_author(name=actor_name, icon_url=actor.image_url)
+        embed.set_thumbnail(url=actor.image_url)
+
+        return embed
+
+    def add_status_effect_to_embed(
+        self, embed: discord.Embed, effect_data: EmbedDataCollection
+    ) -> discord.Embed:
+        for embed_data in effect_data.values():
+            self.add_text_bar(embed, f"\n{embed_data.title}", embed_data.description)
+
     def get_status_effect_embed(
         self, actor: Actor, effect_data: EmbedDataCollection
     ) -> discord.Embed:
@@ -663,9 +875,19 @@ class CombatEmbedManager(Service):
         embed.set_thumbnail(url=context.opponent.image_url)
         return embed
 
-    def get_turn_skip_embed(
-        self, actor: Actor, reason: str, context: EncounterContext
+    def add_spacer_to_embed(self, embed: discord.Embed) -> discord.Embed:
+        embed.add_field(name="", value="")
+
+    def add_turn_skip_to_embed(
+        self, reason: str, actor: Actor, embed: discord.Embed
     ) -> discord.Embed:
+
+        content = f"{actor.name}'s turn is skipped."
+        self.add_text_bar(embed, "", content)
+        if reason is not None and len(reason) > 0:
+            embed.add_field(name="Reason", value=reason)
+
+    def get_turn_skip_embed(self, actor: Actor, reason: str) -> discord.Embed:
         actor_name = f"{actor.name}"
 
         content = f"{actor_name}'s turn is skipped."
