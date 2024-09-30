@@ -1873,7 +1873,7 @@ class TimeToSlice(BaseSkill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=1,
-            initial_cooldown=2,
+            initial_cooldown=1,
             base_value=2,
             hits=3,
             aoe=False,

@@ -228,7 +228,11 @@ class PlayerTurn(State):
                 if skill_status_effect.self_target:
                     status_effect_target = character
 
-                if random.random() < skill_status_effect.application_chance:
+                application_chance = skill_status_effect.application_chance
+                if damage_instance.is_crit:
+                    application_chance = min(1, application_chance * 2)
+
+                if random.random() < application_chance:
                     applied_type = await self.status_effect_manager.apply_status(
                         context,
                         character,
