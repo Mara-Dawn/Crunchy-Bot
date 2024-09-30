@@ -667,7 +667,7 @@ class Icicle(Tier3):
             name="Icicle",
             type=GearBaseType.ICICLE,
             description=(
-                "It might look like a shiny blue carrot, but this icycle is "
+                "It might look like a shiny blue carrot, but this icicle is "
                 "so much more than a nutritious treat (please don't eat it, "
                 "it is not nutricious at all). Don't forget to wear gloves when "
                 "handling this deadly, ice cold shiv!"
