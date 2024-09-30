@@ -291,6 +291,7 @@ class Vulnerable(StatusEffect):
             display_status=True,
             single_description=True,
             delay_consume=True,
+            override=True,
         )
 
 
@@ -307,6 +308,7 @@ class PhysVuln(StatusEffect):
             display_status=True,
             single_description=True,
             delay_consume=True,
+            override=True,
         )
 
 
@@ -323,6 +325,7 @@ class MagicVuln(StatusEffect):
             display_status=True,
             single_description=True,
             delay_consume=True,
+            override=True,
         )
 
 
