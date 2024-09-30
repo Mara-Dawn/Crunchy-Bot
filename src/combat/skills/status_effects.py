@@ -116,7 +116,6 @@ class Evasive(StatusEffect):
             display_status=False,
             override=True,
             apply_on_miss=True,
-            single_description=True,
         )
 
 
@@ -285,7 +284,7 @@ class Vulnerable(StatusEffect):
         super().__init__(
             effect_type=StatusEffectType.VULNERABLE,
             name="Vulnerable",
-            description="Incoming damage is increased.",
+            description="Damage is increased.",
             trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
             consumed=[StatusEffectTrigger.END_OF_APPLICANT_TURN],
             emoji="💥",
@@ -301,7 +300,7 @@ class PhysVuln(StatusEffect):
         super().__init__(
             effect_type=StatusEffectType.PHYS_VULN,
             name="Armor Crushed",
-            description="Incoming physical damage is increased.",
+            description="Physical damage is increased.",
             trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
             consumed=[StatusEffectTrigger.END_OF_APPLICANT_TURN],
             emoji="🎇",
@@ -317,7 +316,7 @@ class MagicVuln(StatusEffect):
         super().__init__(
             effect_type=StatusEffectType.MAGIC_VULN,
             name="Mind Break",
-            description="Incoming magical damage is increased.",
+            description="Magical damage is increased.",
             trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
             consumed=[StatusEffectTrigger.END_OF_APPLICANT_TURN],
             emoji="🎆",
