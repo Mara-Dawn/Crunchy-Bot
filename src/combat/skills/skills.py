@@ -1326,6 +1326,7 @@ class Hold(BaseSkill):
             cooldown=0,
             base_value=0,
             hits=1,
+            max_hits=1,
             droppable=False,
             image_url="https://i.imgur.com/4S5sYFg.png",
             author="Lusa",

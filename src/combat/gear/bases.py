@@ -901,7 +901,7 @@ class Blahaj(Tier4):
             type=GearBaseType.BLAHAJ,
             description=(
                 "Your mom bought it as an emotional support plush. "
-                "Her words were „It will protect you from bullies“, and you took that literally.",
+                "Her words were 'It will protect you from bullies', and you took that literally."
             ),
             information="",
             slot=EquipmentSlot.WEAPON,
