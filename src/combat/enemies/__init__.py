@@ -607,7 +607,7 @@ class Bonterry(Enemy):
             damage_scaling=3,
             max_players=4,
             skill_types=[
-                SkillType.CHEFS_KNIVE,
+                SkillType.CHEFS_KNIFE,
             ],
             item_loot_table=GENERAL_LOOT,
             gear_loot_table=[],
@@ -635,7 +635,7 @@ class BonterryKing(Enemy):
             damage_scaling=6.5,
             max_players=5,
             skill_types=[
-                SkillType.CHEFS_KNIVE,
+                SkillType.CHEFS_KNIFE,
                 SkillType.KARMA,
                 SkillType.GLOOM,
             ],

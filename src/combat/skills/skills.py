@@ -380,7 +380,7 @@ class Foresight(BaseSkill):
             description=(
                 "The magic orb of space and time grants you a small glimpse of the future. "
                 "Most of the time it just shows you embarassing memories from your childhood though. "
-                "Your party will take reduced damage in the next turn. "
+                "Your party will take reduced damage in the next two turns. "
             ),
             information="",
             skill_effect=SkillEffect.BUFF,
@@ -390,7 +390,7 @@ class Foresight(BaseSkill):
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.PROTECTION,
-                    1,
+                    2,
                     StatusEffectApplication.ATTACK_VALUE,
                 ),
             ],
@@ -1952,14 +1952,14 @@ class HaHa(BaseSkill):
         )
 
 
-class ChefsKnive(BaseSkill):
+class ChefsKnife(BaseSkill):
 
     def __init__(self):
         super().__init__(
-            name="Chef's Knive",
-            skill_type=SkillType.CHEFS_KNIVE,
+            name="Chef's Knife",
+            skill_type=SkillType.CHEFS_KNIFE,
             description=(
-                "The Bonterry stabs you with its knive. "
+                "The Bonterry stabs you with its knife. "
                 "Its what it does best and it hurts a lot."
             ),
             information="",
@@ -1989,6 +1989,7 @@ class Karma(BaseSkill):
             cooldown=3,
             initial_cooldown=1,
             base_value=1,
+            custom_value=99,
             hits=1,
             aoe=False,
             droppable=False,

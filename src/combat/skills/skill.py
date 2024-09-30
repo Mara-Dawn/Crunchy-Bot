@@ -48,6 +48,7 @@ class BaseSkill(DroppableBase):
         base_skill_type: SkillType = None,
         author: str = None,
         max_hits: int = None,
+        custom_value: float = None,
     ):
         super().__init__(
             name=name,
@@ -82,6 +83,7 @@ class BaseSkill(DroppableBase):
         self.no_scaling = no_scaling
         self.max_hits = max_hits
         self.base_skill_type = base_skill_type
+        self.custom_value = custom_value
 
         if self.image_url is None:
             self.image_url = self.DEFAULT_IMAGE[self.skill_effect]
