@@ -255,16 +255,16 @@ class Gear(Droppable):
                 value = ""
                 value_colored = ""
 
-                for damage_type in damage_types:
-                    if value == "":
-                        value += f"{damage_type.value}"
-                        value_colored += f"[35m{damage_type.value}[0m"
+                for idx, damage_type in enumerate(damage_types):
+                    if idx == 0:
+                        value = f"{damage_type.value}"
+                        value_colored = f"[35m{damage_type.value}[0m"
                         spacing = " " * (max_len_pre - len(name))
                         damage_type_line = f"{spacing}{name}: {value}"
                         damage_type_line_colored = f"{spacing}{name}: {value_colored}"
                     else:
-                        value += f"{damage_type.value}"
-                        value_colored += f"[35m{damage_type.value}[0m"
+                        value = f"{damage_type.value}"
+                        value_colored = f"[35m{damage_type.value}[0m"
                         spacing = " " * (max_len_pre)
                         damage_type_line = f"{spacing}  {value}"
                         damage_type_line_colored = f"{spacing}  {value_colored}"

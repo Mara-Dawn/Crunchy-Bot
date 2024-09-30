@@ -361,7 +361,7 @@ class KebabSkewer(Stick_T4, Unique):
         self.name = "Kebab Skewer"
         self.type = GearBaseType.KEBAB_SKEWER
         self.description = (
-            "A fresh, beatiful kebab skewer. It is greasy, heavy and smells delicious."
+            "A fresh, beautiful kebab skewer. It is greasy, heavy and smells delicious."
         )
         self.image_url = "https://i.imgur.com/yarx7l2.png"
         self.author = "Lusa"

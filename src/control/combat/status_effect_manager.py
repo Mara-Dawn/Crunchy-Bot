@@ -561,7 +561,7 @@ class CombatStatusEffectManager(Service):
                         )
                 case StatusEffectType.CHUCKLE:
                     if skill is not None and skill.type == SkillType.HIDDEN_BADASS:
-                        modifier = 1 + (active_status_effect.remaining_stacks)
+                        modifier = active_status_effect.remaining_stacks * 2.5
                         await self.consume_status_stack(
                             context,
                             active_status_effect,
