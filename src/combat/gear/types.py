@@ -131,6 +131,9 @@ class GearBaseType(str, Enum):
     STICK_T4 = "Stick_T4"
     STICK_T5 = "Stick_T5"
 
+    DAGGER = "Dagger"
+    ICICLE = "Icicle"
+
     TAPE_MEASURE = "TapeMeasure"
     FROZEN_WAND = "FrozenWand"
 

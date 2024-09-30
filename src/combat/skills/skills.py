@@ -65,6 +65,99 @@ class HeavyAttack(BaseSkill):
         )
 
 
+class DaggerStab(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Stab",
+            skill_type=SkillType.DAGGER_STAB,
+            description="Stick 'em with the pointy end. It just works.",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=1.8,
+            droppable=False,
+            image_url="https://i.imgur.com/NYwXT8C.png",
+        )
+
+
+class DaggerBackstab(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Backstab",
+            skill_type=SkillType.DAGGER_BACKSTAB,
+            description=(
+                "Become one with the shadows and surprise the enemy with a quick and deadly attack. "
+                "The enemy becomes vulnerable to physical damage for one turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=5,
+            base_value=4,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.PHYS_VULN,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/kEgF39j.png",
+        )
+
+
+class IcyTouch(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Icy Touch",
+            skill_type=SkillType.ICY_TOUCH,
+            description="Poke 'em good and cool!",
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=0,
+            base_value=2.1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FROST,
+                    1,
+                )
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/OOR06XT.png",
+        )
+
+
+class GoForTheEyes(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Go For The Eyes",
+            skill_type=SkillType.GO_FOR_THE_EYES,
+            description=(
+                "Oh god oh please oh no ... don't look while you poke your opponent's "
+                "eye with your icicle, it's super gross but also very effective. "
+                "Blinds for one turn."
+            ),
+            information="",
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            cooldown=2,
+            base_value=0.5,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.BLIND,
+                    1,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.FROST,
+                    1,
+                ),
+            ],
+            droppable=False,
+            image_url="https://i.imgur.com/nV5uWZ1.png",
+        )
+
+
 class TapeAttack(BaseSkill):
 
     def __init__(self):
