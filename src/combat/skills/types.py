@@ -14,6 +14,7 @@ class StatusEffectType(str, Enum):
     ZONED_IN = "ZonedIn"
     RAGE = "Rage"
     FEAR = "Fear"
+    CHUCKLE = "Chuckle"
     RAGE_QUIT = "RageQuit"
     HIGH = "High"
     POISON = "Poison"
@@ -48,6 +49,12 @@ class SkillType(str, Enum):
 
     ICY_TOUCH = "IcyTouch"
     GO_FOR_THE_EYES = "GoForTheEyes"
+
+    CROUCHING_MORON = "CrouchingMoron"
+    HIDDEN_BADASS = "HiddenBadass"
+
+    SHARK_BEAM = "SharkBeam"
+    SHARK_CHOMP = "SharkChomp"
 
     SECOND_WIND = "SecondWind"
     SECOND_HEART = "SecondHeart"
@@ -246,6 +253,10 @@ class SkillType(str, Enum):
             SkillType.DAGGER_STAB,
             SkillType.ICY_TOUCH,
             SkillType.GO_FOR_THE_EYES,
+            SkillType.CROUCHING_MORON,
+            SkillType.HIDDEN_BADASS,
+            SkillType.SHARK_CHOMP,
+            SkillType.SHARK_BEAM,
         ]
 
     def is_physical_weapon_skill(skill_type: "SkillType"):
@@ -266,6 +277,10 @@ class SkillType(str, Enum):
             SkillType.FROST_ATTACK,
             SkillType.FROZEN_DROPS,
             SkillType.KEBAB_SMILE,
+            SkillType.CROUCHING_MORON,
+            SkillType.HIDDEN_BADASS,
+            SkillType.SHARK_CHOMP,
+            SkillType.SHARK_BEAM,
         ]
 
 

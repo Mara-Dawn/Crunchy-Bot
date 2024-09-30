@@ -6,6 +6,7 @@ from combat.gear.bases import (
     HeadGear_T2,
     HeadGear_T4,
     HeadGear_T5,
+    Icicle,
     LegGear_T0,
     LegGear_T2,
     LegGear_T4,
@@ -138,6 +139,30 @@ class FrozenWand(Wand_T2, Unique):
                 GearModifierType.MAGIC: 1,
                 GearModifierType.CRIT_RATE: 1,
                 GearModifierType.CRIT_DAMAGE: 0.5,
+            },
+        )
+
+
+class Katana(Icicle, Unique):
+
+    def __init__(self):
+        Icicle.__init__(self)
+        self.name = "Chunchunmaru"
+        self.type = GearBaseType.KATANA
+        self.description = "Chunchunmaru, the sword with the stupidest name."
+        self.image_url = "https://i.imgur.com/0LesZOe.jpeg"
+        self.author = "Shen"
+        self.skills = [SkillType.CROUCHING_MORON, SkillType.HIDDEN_BADASS]
+        self.scaling = 1.45
+        Unique.__init__(
+            self,
+            unique_modifiers={
+                GearModifierType.WEAPON_DAMAGE_MIN: 1,
+                GearModifierType.WEAPON_DAMAGE_MAX: 1,
+                GearModifierType.MAGIC: 1,
+                GearModifierType.DEXTERITY: 3,
+                GearModifierType.CRIT_RATE: 0.8,
+                GearModifierType.CRIT_DAMAGE: 1.2,
             },
         )
 

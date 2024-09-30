@@ -168,6 +168,22 @@ class Fear(StatusEffect):
         )
 
 
+class Chuckle(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.CHUCKLE,
+            name="Chuckle",
+            description="You can barely contain your laughter.",
+            trigger=[StatusEffectTrigger.ON_DAMAGE_TAKEN],
+            consumed=[],
+            emoji="🤡",
+            display_status=True,
+            single_description=True,
+            stack=True,
+        )
+
+
 class Protection(StatusEffect):
 
     def __init__(self):

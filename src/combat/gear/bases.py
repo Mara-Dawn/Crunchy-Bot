@@ -679,6 +679,7 @@ class Icicle(Tier3):
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
             skills=[SkillType.ICY_TOUCH, SkillType.GO_FOR_THE_EYES],
+            uniques=[GearBaseType.KATANA],
             image_url="https://i.imgur.com/LovPOVj.png",
         )
         self.scaling = 1.4
@@ -883,12 +884,37 @@ class Dagger(Tier4):
                 GearModifierType.WEAPON_DAMAGE_MIN,
                 GearModifierType.WEAPON_DAMAGE_MAX,
             ],
+            uniques=[GearBaseType.KATANA],
             skills=[SkillType.DAGGER_STAB, SkillType.DAGGER_BACKSTAB],
             image_url="https://i.imgur.com/fQdjeVe.png",
         )
         self.scaling = 1.5
         self.weight = 60
         self.author = "Kiwi"
+
+
+class Blahaj(Tier4):
+
+    def __init__(self):
+        super().__init__(
+            name="Blåhaj",
+            type=GearBaseType.BLAHAJ,
+            description=(
+                "Your mom bought it as an emotional support plush. "
+                "Her words were „It will protect you from bullies“, and you took that literally.",
+            ),
+            information="",
+            slot=EquipmentSlot.WEAPON,
+            modifiers=[
+                GearModifierType.WEAPON_DAMAGE_MIN,
+                GearModifierType.WEAPON_DAMAGE_MAX,
+            ],
+            skills=[SkillType.SHARK_CHOMP, SkillType.SHARK_BEAM],
+            image_url="https://i.imgur.com/wnZmZbB.jpeg",
+        )
+        self.scaling = 1.55
+        self.weight = 60
+        self.author = "Shen"
 
 
 class Wand_T4(Tier4):
