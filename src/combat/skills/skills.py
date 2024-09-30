@@ -94,7 +94,7 @@ class DaggerBackstab(BaseSkill):
             ),
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
-            cooldown=5,
+            cooldown=4,
             base_value=4,
             status_effects=[
                 SkillStatusEffect(
@@ -144,7 +144,7 @@ class GoForTheEyes(BaseSkill):
             ),
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
-            cooldown=2,
+            cooldown=1,
             base_value=0.5,
             status_effects=[
                 SkillStatusEffect(
@@ -181,7 +181,7 @@ class CrouchingMoron(BaseSkill):
                     1,
                 ),
             ],
-            base_value=0.3,
+            base_value=0.5,
             droppable=False,
             image_url="https://i.imgur.com/3UsbPVe.jpeg",
             author="Shen",
@@ -247,7 +247,7 @@ class SharkBeam(BaseSkill):
             ),
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
-            cooldown=5,
+            cooldown=4,
             base_value=3.5,
             status_effects=[
                 SkillStatusEffect(
@@ -393,7 +393,7 @@ class KebabSmile(BaseSkill):
             ),
             information="",
             skill_effect=SkillEffect.HEALING,
-            cooldown=3,
+            cooldown=2,
             base_value=0.1,
             status_effects=[
                 SkillStatusEffect(
@@ -479,7 +479,7 @@ class FamilyPizza(BaseSkill):
             skill_effect=SkillEffect.HEALING,
             cooldown=5,
             min_level=3,
-            base_value=0.35,
+            base_value=0.4,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.CLEANSE,
@@ -509,7 +509,7 @@ class LooksMaxxing(BaseSkill):
             skill_effect=SkillEffect.HEALING,
             cooldown=5,
             min_level=4,
-            base_value=0.17,
+            base_value=0.2,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.HEAL_OVER_TIME,
@@ -559,7 +559,6 @@ class HolyGangSigns(BaseSkill):
             ],
             stacks=2,
             aoe=True,
-            weight=40,
             reset_after_encounter=False,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/KoclK4q.png",
@@ -592,7 +591,7 @@ class Foresight(BaseSkill):
             ],
             stacks=3,
             aoe=True,
-            weight=30,
+            weight=60,
             reset_after_encounter=False,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/lgBwv4v.png",
@@ -696,7 +695,6 @@ class NeuronActivation(BaseSkill):
             ],
             stacks=2,
             aoe=False,
-            weight=25,
             reset_after_encounter=False,
             uniques=[],
             default_target=SkillTarget.SELF,
@@ -864,7 +862,7 @@ class FireBall(BaseSkill):
             cooldown=8,
             base_value=7.5,
             stacks=2,
-            weight=50,
+            weight=70,
             reset_after_encounter=False,
             image_url="https://i.imgur.com/tzbLY8h.png",
         )
