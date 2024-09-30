@@ -268,17 +268,15 @@ class EnemyController(Service, ABC):
 
             current_hp = hp_cache.get(target.id, target.current_hp)
 
-            outcome = (
-                await self.status_effect_manager.handle_on_damage_taken_status_effects(
+            if instance.value > 0:
+                outcome = await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
                     target,
                     skill,
                 )
-            )
-            if outcome.embed_data is not None:
-                post_embed_data.extend(outcome.embed_data)
-
-            instance.apply_effect_outcome(outcome)
+                if outcome.embed_data is not None:
+                    post_embed_data.extend(outcome.embed_data)
+                instance.apply_effect_outcome(outcome)
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
@@ -355,16 +353,15 @@ class EnemyController(Service, ABC):
             if outcome.embed_data is not None:
                 post_embed_data.extend(outcome.embed_data)
 
-            outcome = (
-                await self.status_effect_manager.handle_on_damage_taken_status_effects(
+            if instance.value > 0:
+                outcome = await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
                     target,
                     skill,
                 )
-            )
-            instance.apply_effect_outcome(outcome)
-            if outcome.embed_data is not None:
-                post_embed_data.extend(outcome.embed_data)
+                instance.apply_effect_outcome(outcome)
+                if outcome.embed_data is not None:
+                    post_embed_data.extend(outcome.embed_data)
 
             if special_skill_modifier != 1:
                 instance.modifier *= special_skill_modifier

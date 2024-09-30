@@ -323,18 +323,17 @@ class PlayerTurn(State):
 
             current_hp = target.current_hp
 
-            outcome_on_dmg = (
-                await self.status_effect_manager.handle_on_damage_taken_status_effects(
+            if instance.value > 0:
+                outcome_on_dmg = await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
                     target,
                     skill,
                 )
-            )
 
-            if outcome_on_dmg.embed_data is not None:
-                embed_data.extend(outcome.embed_data)
+                if outcome_on_dmg.embed_data is not None:
+                    embed_data.extend(outcome.embed_data)
 
-            instance.apply_effect_outcome(outcome_on_dmg)
+                instance.apply_effect_outcome(outcome_on_dmg)
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
@@ -375,18 +374,17 @@ class PlayerTurn(State):
                 embed_data.extend(outcome.embed_data)
             instance.apply_effect_outcome(outcome)
 
-            outcome = (
-                await self.status_effect_manager.handle_on_damage_taken_status_effects(
+            if instance.value > 0:
+                outcome = await self.status_effect_manager.handle_on_damage_taken_status_effects(
                     context,
                     target,
                     skill,
                 )
-            )
 
-            if outcome.embed_data is not None:
-                embed_data.extend(outcome.embed_data)
+                if outcome.embed_data is not None:
+                    embed_data.extend(outcome.embed_data)
 
-            instance.apply_effect_outcome(outcome)
+                instance.apply_effect_outcome(outcome)
 
             total_skill_value = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
