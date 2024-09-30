@@ -71,7 +71,7 @@ class DaggerStab(BaseSkill):
         super().__init__(
             name="Stab",
             skill_type=SkillType.DAGGER_STAB,
-            description="Stick 'em with the pointy end. It just works.",
+            description="Become one with the shadows and surprise the enemy with a quick and deadly attack.",
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=0,
@@ -89,7 +89,7 @@ class DaggerBackstab(BaseSkill):
             name="Backstab",
             skill_type=SkillType.DAGGER_BACKSTAB,
             description=(
-                "Become one with the shadows and surprise the enemy with a quick and deadly attack.\n"
+                "Stick 'em with the pointy end. It just works. "
                 "The enemy becomes vulnerable to physical damage for one turn."
             ),
             information="",
