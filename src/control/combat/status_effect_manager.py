@@ -552,7 +552,7 @@ class CombatStatusEffectManager(Service):
                             active_status_effect.remaining_stacks,
                         )
                 case StatusEffectType.HIGH:
-                    modifier = 0.5 + random.random() * 1.5
+                    modifier = random.random() * 2
                 case StatusEffectType.DEATH_PROTECTION:
                     value = 1
                     event = CombatEvent(
