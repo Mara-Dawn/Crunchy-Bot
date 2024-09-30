@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 
 import discord
 from discord.ext import commands
+from pydantic import NonNegativeFloat
 
 from combat.actors import Actor, Opponent
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
@@ -411,10 +412,14 @@ class EnemyController(Service, ABC):
         sorted_skills = sorted(
             opponent.skills,
             key=lambda x: (
-                x.base_skill.base_value
-                if x.base_skill.skill_effect
-                not in [SkillEffect.HEALING, SkillEffect.BUFF]
-                else 100
+                x.base_skill.custom_value
+                if x.base_skill.custom_value is not None
+                else (
+                    x.base_skill.base_value
+                    if x.base_skill.skill_effect
+                    not in [SkillEffect.HEALING, SkillEffect.BUFF]
+                    else 100
+                )
             ),
             reverse=True,
         )

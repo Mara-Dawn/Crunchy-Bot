@@ -169,7 +169,7 @@ class SkillType(str, Enum):
     HA_HA = "HaHa"
 
     # Bonterry
-    CHEFS_KNIVE = "ChefsKnive"
+    CHEFS_KNIFE = "ChefsKnife"
 
     # Bonterry King
     KARMA = "Karma"

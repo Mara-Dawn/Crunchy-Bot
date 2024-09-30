@@ -163,6 +163,7 @@ class Fear(StatusEffect):
             consumed=[],
             emoji="😨",
             display_status=True,
+            single_description=True,
             stack=True,
         )
 
