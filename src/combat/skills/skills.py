@@ -366,12 +366,12 @@ class DonerKebab(BaseSkill):
                 SkillStatusEffect(
                     StatusEffectType.POISON,
                     1,
-                    application_chance=0.2,
+                    application_chance=0.35,
                 ),
                 SkillStatusEffect(
                     StatusEffectType.BLIND,
                     1,
-                    application_chance=0.2,
+                    application_chance=0.35,
                 ),
             ],
             droppable=False,
@@ -394,7 +394,7 @@ class KebabSmile(BaseSkill):
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=2,
-            base_value=0.1,
+            base_value=0.135,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.CLEANSE,
