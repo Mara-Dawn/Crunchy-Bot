@@ -6,6 +6,7 @@ from combat.actors import Actor, Character
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.engine.states.state import State
 from combat.engine.types import StateType
+from combat.gear.types import CharacterAttribute
 from combat.skills.skill import Skill
 from combat.skills.status_effect import EmbedDataCollection
 from combat.skills.types import (
@@ -263,14 +264,19 @@ class PlayerTurn(State):
             )
             await self.controller.dispatch_event(event)
 
-        await self.discord.append_embed_generator_to_round(
-            context, self.embed_manager.handle_actor_turn_embed(turn, context)
+        await self.embed_manager.apply_attack_data_to_embed(
+            self.context.current_turn_embed, turn
         )
 
-        if post_turn_embed_data is not None:
+        await self.discord.update_current_turn_embed_by_generator(
+            self.context,
+            self.embed_manager.get_actor_turn_embed_data(turn, self.context),
+        )
+
+        if post_turn_embed_data.length > 0:
             await asyncio.sleep(0.5)
-            await self.discord.append_embeds_to_round(
-                context, character, post_turn_embed_data
+            await self.discord.update_current_turn_embed(
+                self.context, post_turn_embed_data
             )
 
         self.done = True
@@ -435,8 +441,10 @@ class PlayerTurn(State):
             jail_time += Config.KICK_JAIL_TIME
             jail_message = f"<@{character.member.id}> was jailed for repeatedly missing their turn in combat, leading to them getting kicked."
 
-        embed = self.embed_manager.get_turn_skip_embed(character, message, context)
-        await self.discord.append_embed_to_round(context, embed)
+        self.embed_manager.add_turn_skip_to_embed(
+            message, character, context.current_turn_embed
+        )
+        await self.discord.update_current_turn_embed(self.context)
         await self.jail_manager.jail_or_extend_user(
             context.encounter.guild_id,
             self.bot.user.id,

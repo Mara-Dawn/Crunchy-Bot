@@ -147,7 +147,7 @@ class Rage(StatusEffect):
             consumed=[StatusEffectTrigger.POST_ATTACK],
             emoji="😡",
             display_status=True,
-            override=True,
+            stack=True,
             apply_on_miss=True,
         )
 

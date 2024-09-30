@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from combat.actors import Actor, Character, Opponent
-from combat.encounter import Encounter
+from combat.encounter import Encounter, EncounterContext
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearModifierType
@@ -469,15 +469,19 @@ class CombatActorManager(Service):
         return [actor for actor in actors if not actor.defeated]
 
     def get_used_skills(
-        self, actor_id: int, combat_events: list[CombatEvent]
+        self, actor_id: int, context: EncounterContext
     ) -> list[SkillType]:
         used_skills = []
+        combat_events = context.combat_events
         for event in combat_events:
             if (
                 event.member_id == actor_id or (actor_id < 0 and event.member_id < 0)
             ) and event.skill_type is not None:
                 skill_type = event.skill_type
-                if skill_type not in used_skills:
+                if (
+                    skill_type not in used_skills
+                    and context.turn_event_id_cutoff > event.id
+                ):
                     used_skills.append(skill_type)
         return used_skills
 

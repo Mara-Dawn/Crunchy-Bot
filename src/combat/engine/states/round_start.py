@@ -106,7 +106,7 @@ class RoundStartState(State):
                             encounter_event.member_id, self.context
                         )
                     case EncounterEventType.NEW_ROUND:
-                        self.context._round_event_id_cutoff = event.id
+                        self.context.round_event_id_cutoff = event.id
                     case EncounterEventType.END:
                         self.next_state = StateType.POST_ENCOUNTER
                         self.done = True

@@ -7,6 +7,7 @@ from combat.gear.types import Base, EquipmentSlot, Rarity
 from combat.skills.status_effect import SkillStatusEffect, StatusEffectOutcome
 from combat.skills.types import SkillEffect, SkillTarget, SkillType
 from config import Config
+from control.types import FieldData
 
 
 class BaseSkill(DroppableBase):
@@ -550,6 +551,14 @@ class CharacterSkill:
         max_width: int = None,
         description_override: str = None,
     ) -> None:
+        data = self.get_embed_field(max_width, description_override)
+        embed.add_field(name=data.name, value=data.value, inline=data.inline)
+
+    def get_embed_field(
+        self,
+        max_width: int = None,
+        description_override: str = None,
+    ):
         if max_width is None:
             max_width = Config.COMBAT_EMBED_MAX_WIDTH
 
@@ -569,7 +578,7 @@ class CharacterSkill:
 
         info_block = f"```python\n{description}```"
 
-        embed.add_field(name=title, value=info_block, inline=False)
+        return FieldData(title, info_block, False)
 
 
 class SkillInstance:

@@ -313,7 +313,7 @@ class LooksMaxxing(BaseSkill):
             skill_effect=SkillEffect.HEALING,
             cooldown=5,
             min_level=4,
-            base_value=0.2,
+            base_value=0.17,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.HEAL_OVER_TIME,
@@ -349,7 +349,7 @@ class HolyGangSigns(BaseSkill):
             skill_effect=SkillEffect.HEALING,
             cooldown=5,
             min_level=5,
-            base_value=0.13,
+            base_value=0.10,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.HEAL_OVER_TIME,

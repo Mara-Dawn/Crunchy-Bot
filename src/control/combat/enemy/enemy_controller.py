@@ -212,14 +212,20 @@ class EnemyController(Service, ABC):
                 )
                 await self.controller.dispatch_event(event)
 
-            await self.discord.append_embed_generator_to_round(
-                context, self.embed_manager.handle_actor_turn_embed(turn, context)
+            context.current_turn_embed = self.embed_manager.get_turn_embed(opponent)
+            await self.embed_manager.apply_attack_data_to_embed(
+                context.current_turn_embed, turn
             )
 
-            if post_turn_embed_data is not None:
+            await self.discord.update_current_turn_embed_by_generator(
+                context,
+                self.embed_manager.get_actor_turn_embed_data(turn, context),
+            )
+
+            if post_turn_embed_data.length > 0:
                 await asyncio.sleep(0.5)
-                await self.discord.append_embeds_to_round(
-                    context, opponent, post_turn_embed_data
+                await self.discord.update_current_turn_embed(
+                    context, post_turn_embed_data
                 )
 
             event = CombatEvent(
