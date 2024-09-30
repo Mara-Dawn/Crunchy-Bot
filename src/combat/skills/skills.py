@@ -386,7 +386,7 @@ class Foresight(BaseSkill):
             skill_effect=SkillEffect.BUFF,
             cooldown=6,
             min_level=5,
-            base_value=45,
+            base_value=35,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.PROTECTION,

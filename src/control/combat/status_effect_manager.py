@@ -92,8 +92,7 @@ class CombatStatusEffectManager(Service):
 
             match type:
                 case StatusEffectType.PROTECTION:
-                    application_value = 50
-                    source = target
+                    application_value = 15
 
         status_effect = await self.factory.get_status_effect(type)
 
