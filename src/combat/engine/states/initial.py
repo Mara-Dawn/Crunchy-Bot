@@ -13,6 +13,7 @@ from view.combat.engage_view import EnemyEngageView
 
 
 class InitialState(State):
+
     def __init__(self, controller: Controller, context: EncounterContext):
         super().__init__(controller, context)
         self.state_type: StateType = StateType.INITIAL

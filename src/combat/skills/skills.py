@@ -1928,7 +1928,7 @@ class Choke(BaseSkill):
             description=(
                 "She grabs your throat and chokes you until you almost pass out. "
                 "You hear a crazy giggle as she watches you struggle for air. "
-                "Your mind will be foggy for one turn, randomly modifying your next action."
+                "Your mind will be foggy for one turn, and your vision becomes blurry."
             ),
             information="",
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
@@ -1939,7 +1939,7 @@ class Choke(BaseSkill):
             aoe=False,
             status_effects=[
                 SkillStatusEffect(
-                    StatusEffectType.HIGH,
+                    StatusEffectType.BLIND,
                     1,
                 )
             ],

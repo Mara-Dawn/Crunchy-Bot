@@ -24,6 +24,7 @@ from events.bot_event import BotEvent
 
 
 class Engine:
+
     def __init__(self, controller: Controller, context: EncounterContext):
         self.controller = controller
         self.state_init: list[Callable] = {
