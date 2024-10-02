@@ -346,16 +346,23 @@ class CombatSkillManager(Service):
             and not skill.base_skill.aoe
             and not force_scaling
         ):
-            max_hits = 15
+            max_hits = 10
             if skill.base_skill.max_hits is not None:
                 max_hits = skill.base_skill.max_hits
 
             encounter_scale = combatant_count - (opponent.enemy.min_encounter_scale - 1)
             if not skill.base_skill.no_scaling:
-                attack_count_scaling = max(1, encounter_scale * 0.75)
-                attack_count = min(
-                    max_hits, int(raw_attack_count * attack_count_scaling)
-                )
+                factor = raw_attack_count / max_hits
+                attack_count_scaling = pow(1 - factor, 7)
+
+                scaling = 1 + (encounter_scale * attack_count_scaling)
+                attack_count = raw_attack_count * scaling
+
+                # attack_count_scaling = max(1, encounter_scale * 0.75)
+                # attack_count = min(
+                #     max_hits, int(raw_attack_count * attack_count_scaling)
+                # )
+
             encounter_scaling += (
                 encounter_scale
                 * Config.OPPONENT_ENCOUNTER_SCALING_FACTOR

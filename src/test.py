@@ -1,22 +1,19 @@
-from combat.actors import Actor
-from config import Config
+import math
 
 if __name__ == "__main__":
 
-    levels = range(1, 13)
+    max_hits = 10
+    max_participants = 7
+    participants = range(1, max_participants + 1)
 
-    for count in levels:
-        print(f"\count: {count}")
-        modifier = 1
-        encounter_scaling = 1
-        attack_count = 1
-        if count > 1:
-            encounter_scaling = count * 0.7
-            print(encounter_scaling)
-            attack_count = max(1, int(encounter_scaling))
-            print(attack_count)
-            encounter_scaling = (
-                count / attack_count * Config.OPPONENT_ENCOUNTER_SCALING_FACTOR
+    for encounter_scale in participants:
+        print(f"participants: {encounter_scale}/{max_participants}")
+
+        for hits_init in range(1, 8):
+            factor = hits_init / max_hits
+            attack_count_scaling = pow(1 - factor, 7)
+            scaling = 1 + (encounter_scale * attack_count_scaling)
+            hits = hits_init * scaling
+            print(
+                f"{attack_count_scaling:.2f} | {scaling:.2f} | {hits_init} | {hits:.2f} "
             )
-            print(encounter_scaling)
-            print(attack_count * encounter_scaling)
