@@ -394,7 +394,7 @@ class KebabSmile(BaseSkill):
             information="",
             skill_effect=SkillEffect.HEALING,
             cooldown=2,
-            base_value=0.135,
+            base_value=0.15,
             status_effects=[
                 SkillStatusEffect(
                     StatusEffectType.CLEANSE,
@@ -490,6 +490,7 @@ class FamilyPizza(BaseSkill):
             aoe=True,
             reset_after_encounter=False,
             default_target=SkillTarget.SELF,
+            weight=140,
             image_url="https://i.imgur.com/2QbwSA4.png",
             author="Lusa",
         )
@@ -559,6 +560,7 @@ class HolyGangSigns(BaseSkill):
             ],
             stacks=2,
             aoe=True,
+            weight=120,
             reset_after_encounter=False,
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/KoclK4q.png",

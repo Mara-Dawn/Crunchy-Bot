@@ -121,12 +121,16 @@ class Opponent(Actor):
         defeated: bool,
         force_skip: bool = True,
         image_url: str = None,
+        additional_info: str = None,
     ):
         if image_url is None:
             image_url = enemy.image_url
+        name = enemy.name
+        if additional_info is not None:
+            name += f" ({additional_info})"
         super().__init__(
             id=None,
-            name=enemy.name,
+            name=name,
             max_hp=max_hp,
             initiative=enemy.initiative,
             is_enemy=True,

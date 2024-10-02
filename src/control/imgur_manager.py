@@ -4,6 +4,7 @@ from typing import Any
 
 from discord.ext import commands
 from imgurpython import ImgurClient
+from imgurpython.imgur.models.image import Image
 
 from combat.encounter import Encounter
 from combat.enemies.types import EnemyType
@@ -55,7 +56,7 @@ class ImgurManager(Service):
 
         if seed in self.image_cache:
             return self.image_cache[seed]
-        images = []
+        images: list[Image] = []
         try:
             for album_id in album_ids:
                 images.extend(self.client.get_album_images(album_id))
@@ -67,5 +68,5 @@ class ImgurManager(Service):
 
         choice = random.choice(images)
 
-        self.image_cache[seed] = choice.link
-        return choice.link
+        self.image_cache[seed] = choice
+        return choice

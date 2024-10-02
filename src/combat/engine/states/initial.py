@@ -57,7 +57,10 @@ class InitialState(State):
 
         custom_img = await self.embed_manager.get_custom_image(encounter)
         if custom_img is not None:
-            self.context.opponent.image_url = custom_img
+            self.context.opponent.image_url = custom_img.link
+            self.context.opponent.name = (
+                f"{self.context.opponent.enemy.name} ({custom_img.description})"
+            )
 
         self.context.encounter = encounter
         self.context_loader.context_cache[encounter_id] = self.context

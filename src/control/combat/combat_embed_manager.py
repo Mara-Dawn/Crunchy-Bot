@@ -59,14 +59,20 @@ class CombatEmbedManager(Service):
         self, encounter: Encounter, done: bool = False, show_info: bool = False
     ) -> discord.Embed:
         enemy = await self.factory.get_enemy(encounter.enemy_type)
+        enemy_name = enemy.name
+        image_url = enemy.image_url
+        image = await self.get_custom_image(encounter)
+        if image is not None:
+            image_url = image.link
+            enemy_name += f" ({image.description})"
 
         if enemy.is_boss:
             title = "A Boss Challenge Has Appeared!"
-            enemy_name = f"> ~* {enemy.name} *~"
+            enemy_name = f"> ~* {enemy_name} *~"
             color = discord.Colour.red()
         else:
             title = "A random Enemy appeared!"
-            enemy_name = f"> ~* {enemy.name} - Lvl. {encounter.enemy_level} *~"
+            enemy_name = f"> ~* {enemy_name} - Lvl. {encounter.enemy_level} *~"
             color = self.SYSTEM_MESSAGE_COLOR
 
         embed = discord.Embed(title=title, color=color)
@@ -108,9 +114,6 @@ class CombatEmbedManager(Service):
             participant_info = "This Encounter Has Concluded."
         embed.add_field(name=participant_info, value="", inline=False)
 
-        image_url = await self.get_custom_image(encounter)
-        if image_url is None:
-            image_url = enemy.image_url
         embed.set_image(url=image_url)
 
         if enemy.author is not None:
@@ -119,8 +122,8 @@ class CombatEmbedManager(Service):
         return embed
 
     async def get_custom_image(self, encounter: Encounter):
-        image_url = await self.imgur_manager.get_random_encounter_image(encounter)
-        return image_url
+        image = await self.imgur_manager.get_random_encounter_image(encounter)
+        return image
 
     def add_health_bar(
         self,
@@ -202,7 +205,7 @@ class CombatEmbedManager(Service):
     async def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
-        title = f"> ~* {enemy.name} - Lvl. {context.opponent.level} *~"
+        title = f"> ~* {context.opponent.name} - Lvl. {context.opponent.level} *~"
         if enemy.is_boss:
             title = f"> ~* {enemy.name} *~"
 

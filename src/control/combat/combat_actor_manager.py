@@ -202,7 +202,12 @@ class CombatActorManager(Service):
             id, status_effects, combat_events
         )
 
-        image_url = await self.imgur_manager.get_random_encounter_image(encounter)
+        image_url = None
+        additional_info = None
+        image = await self.imgur_manager.get_random_encounter_image(encounter)
+        if image is not None:
+            image_url = image.link
+            additional_info = image.description
 
         opponent = Opponent(
             id=id,
@@ -216,6 +221,7 @@ class CombatActorManager(Service):
             defeated=defeated,
             force_skip=force_skip,
             image_url=image_url,
+            additional_info=additional_info,
         )
 
         opponent.current_hp = await self.get_actor_current_hp(opponent, combat_events)
