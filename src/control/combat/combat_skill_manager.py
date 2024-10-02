@@ -359,9 +359,7 @@ class CombatSkillManager(Service):
                 attack_count = raw_attack_count * scaling
 
                 # attack_count_scaling = max(1, encounter_scale * 0.75)
-                # attack_count = min(
-                #     max_hits, int(raw_attack_count * attack_count_scaling)
-                # )
+                attack_count = min(max_hits, int(raw_attack_count * scaling))
 
             encounter_scaling += (
                 encounter_scale
