@@ -1392,7 +1392,7 @@ class BroArrows(BaseSkill):
             information="",
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             cooldown=2,
-            base_value=1,
+            base_value=3,
             initial_cooldown=0,
             status_effects=[
                 SkillStatusEffect(
@@ -1907,7 +1907,6 @@ class StepOnYou(BaseSkill):
             initial_cooldown=0,
             base_value=5,
             hits=1,
-            max_hits=3,
             aoe=False,
             status_effects=[
                 SkillStatusEffect(
