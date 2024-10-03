@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 from combat.skills.types import (
     SkillEffect,
@@ -132,6 +134,10 @@ class EmbedDataCollection:
             self.append(embed_data)
 
 
+class OutcomeFlag(Enum):
+    PREVENT_STATUS_APPLICATION = 1
+
+
 @dataclass
 class StatusEffectOutcome:
     value: int | None = None
@@ -139,6 +145,7 @@ class StatusEffectOutcome:
     crit_chance: float | None = None
     crit_chance_modifier: float | None = None
     initiative: int | None = None
+    flags: list[OutcomeFlag] | None = None
     info: str | None = None
     embed_data: EmbedDataCollection | None = None
 

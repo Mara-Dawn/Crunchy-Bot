@@ -23,13 +23,49 @@ class Cleanse(StatusEffect):
             effect_type=StatusEffectType.CLEANSE,
             name="Cleanse",
             description="Cleanses Bleeding.",
-            trigger=[StatusEffectTrigger.ON_APPLICATION],
-            consumed=[StatusEffectTrigger.ON_APPLICATION],
+            trigger=[StatusEffectTrigger.ON_SELF_APPLICATION],
+            consumed=[StatusEffectTrigger.ON_SELF_APPLICATION],
             priority=1,
             max_stacks=1,
             emoji="🩹",
             apply_on_miss=True,
             override=True,
+        )
+
+
+class FullCleanse(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.FULL_CLEANSE,
+            name="Full Cleanse",
+            description="Cleanses all ailments.",
+            trigger=[StatusEffectTrigger.ON_SELF_APPLICATION],
+            consumed=[StatusEffectTrigger.ON_SELF_APPLICATION],
+            priority=1,
+            max_stacks=1,
+            emoji="🩹",
+            apply_on_miss=True,
+            override=True,
+        )
+
+
+class StatusImmune(StatusEffect):
+
+    def __init__(self):
+        super().__init__(
+            effect_type=StatusEffectType.STATUS_IMMUNE,
+            name="Status Immunity",
+            description="Unaffected by harmful ailments.",
+            trigger=[StatusEffectTrigger.ON_APPLICATION],
+            consumed=[StatusEffectTrigger.END_OF_APPLICANT_TURN],
+            priority=1,
+            emoji="🛑",
+            apply_on_miss=True,
+            override=True,
+            display_status=True,
+            delay_consume=True,
+            delay_for_source_only=True,
         )
 
 

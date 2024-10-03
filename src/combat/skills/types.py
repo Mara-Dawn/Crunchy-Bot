@@ -4,6 +4,8 @@ from enum import Enum
 class StatusEffectType(str, Enum):
     BLEED = "Bleed"
     CLEANSE = "Cleanse"
+    FULL_CLEANSE = "FullCleanse"
+    STATUS_IMMUNE = "StatusImmune"
     PROTECTION = "Protection"
     BLIND = "Blind"
     EVASIVE = "Evasive"
@@ -30,6 +32,24 @@ class StatusEffectType(str, Enum):
 
     FROGGED = "Frogged"
     STUN = "Stun"
+
+    def is_cleansable(effect_type: "StatusEffectType"):
+        return effect_type in [
+            StatusEffectType.BLEED,
+            StatusEffectType.BLIND,
+            StatusEffectType.FLUSTERED,
+            StatusEffectType.SIMP,
+            StatusEffectType.FEAR,
+            StatusEffectType.HIGH,
+            StatusEffectType.POISON,
+            StatusEffectType.FROST,
+            StatusEffectType.VULNERABLE,
+            StatusEffectType.MAGIC_VULN,
+            StatusEffectType.PHYS_VULN,
+            StatusEffectType.PARTY_LEECH,
+            StatusEffectType.FROGGED,
+            StatusEffectType.STUN,
+        ]
 
 
 class SkillType(str, Enum):
@@ -58,6 +78,7 @@ class SkillType(str, Enum):
 
     SECOND_WIND = "SecondWind"
     SECOND_HEART = "SecondHeart"
+    DOPE_SHADES = "DopeShades"
     SMELLING_SALT = "SmellingSalt"
     FAMILY_PIZZA = "FamilyPizza"
     HOLY_GANG_SIGNS = "HolyGangSigns"
@@ -312,8 +333,9 @@ class StatusEffectTrigger(Enum):
     ON_ATTACK = 7
     POST_ATTACK = 8
     ATTRIBUTE = 9
-    ON_APPLICATION = 10
+    ON_SELF_APPLICATION = 10
     END_OF_APPLICANT_TURN = 11
+    ON_APPLICATION = 12
 
 
 class StatusEffectApplication(Enum):

@@ -233,14 +233,20 @@ class PlayerTurn(State):
                     application_chance = min(1, application_chance * 2)
 
                 if random.random() < application_chance:
-                    applied_type = await self.status_effect_manager.apply_status(
-                        context,
-                        character,
-                        status_effect_target,
-                        skill_status_effect.status_effect_type,
-                        skill_status_effect.stacks,
-                        application_value,
+                    applied_type, outcome = (
+                        await self.status_effect_manager.apply_status(
+                            context,
+                            character,
+                            status_effect_target,
+                            skill_status_effect.status_effect_type,
+                            skill_status_effect.stacks,
+                            application_value,
+                        )
                     )
+
+                    if outcome.embed_data is not None:
+                        post_turn_embed_data.extend(outcome.embed_data)
+
                     if applied_type is not None:
                         turn_damage_data.applied_status_effects.append(
                             (
@@ -248,7 +254,7 @@ class PlayerTurn(State):
                                 skill_status_effect.stacks,
                             )
                         )
-                        outcome = await self.status_effect_manager.handle_on_application_status_effects(
+                        outcome = await self.status_effect_manager.handle_on_self_application_status_effects(
                             target, context, applied_type
                         )
                         if outcome.embed_data is not None:

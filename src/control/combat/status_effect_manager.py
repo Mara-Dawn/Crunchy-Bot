@@ -10,6 +10,7 @@ from combat.skills.skill import Skill, SkillInstance
 from combat.skills.status_effect import (
     ActiveStatusEffect,
     EmbedDataCollection,
+    OutcomeFlag,
     StatusEffectEmbedData,
     StatusEffectOutcome,
 )
@@ -69,7 +70,16 @@ class CombatStatusEffectManager(Service):
         type: StatusEffectType,
         stacks: int,
         application_value: float = None,
-    ) -> StatusEffectType | None:
+    ) -> tuple[StatusEffectType | None, StatusEffectOutcome]:
+
+        outcome = await self.handle_on_application_status_effects(target, context, type)
+
+        if (
+            outcome.flags is not None
+            and OutcomeFlag.PREVENT_STATUS_APPLICATION in outcome.flags
+        ):
+            return None, outcome
+
         if type == StatusEffectType.RANDOM:
             random_positive_effect = [
                 StatusEffectType.HIGH,
@@ -101,13 +111,7 @@ class CombatStatusEffectManager(Service):
             and application_value == 0
             and not status_effect.apply_on_miss
         ):
-            return None
-
-        for active_actor in context.current_initiative:
-            if active_actor.id == source.id:
-                source = active_actor
-            if active_actor.id == target.id:
-                target = active_actor
+            return None, outcome
 
         damage = 0
         match type:
@@ -125,7 +129,7 @@ class CombatStatusEffectManager(Service):
 
                 if application_value is not None:
                     if application_value <= 0:
-                        return None
+                        return None, outcome
                     base_value = application_value * Config.BLEED_SCALING
 
                 damage = base_value
@@ -150,7 +154,7 @@ class CombatStatusEffectManager(Service):
 
                 if application_value is not None:
                     if application_value <= 0:
-                        return None
+                        return None, outcome
                     base_value = application_value * Config.LEECH_SCALING
 
                 damage = base_value * (1 + healing_modifier)
@@ -203,16 +207,16 @@ class CombatStatusEffectManager(Service):
         )
         await self.controller.dispatch_event(event)
 
-        return type
+        return type, outcome
 
-    async def handle_on_application_status_effects(
+    async def handle_on_self_application_status_effects(
         self,
         actor: Actor,
         context: EncounterContext,
         effect_type: StatusEffectType,
     ) -> StatusEffectOutcome:
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ON_APPLICATION
+            context, actor, StatusEffectTrigger.ON_SELF_APPLICATION
         )
 
         if len(triggered_status_effects) <= 0:
@@ -227,10 +231,39 @@ class CombatStatusEffectManager(Service):
             return StatusEffectOutcome.EMPTY()
 
         outcomes = await self.get_status_effect_outcomes(
-            StatusEffectTrigger.ON_APPLICATION,
+            StatusEffectTrigger.ON_SELF_APPLICATION,
             context,
             actor,
             filtered,
+        )
+
+        embed_data = await self.get_status_effect_outcome_info(
+            StatusEffectTrigger.ON_DAMAGE_TAKEN, context, actor, outcomes
+        )
+
+        combined = self.combine_outcomes(outcomes.values(), embed_data)
+
+        return combined
+
+    async def handle_on_application_status_effects(
+        self,
+        actor: Actor,
+        context: EncounterContext,
+        applied_effect_type: StatusEffectType,
+    ) -> StatusEffectOutcome:
+        triggered_status_effects = await self.actor_trigger(
+            context, actor, StatusEffectTrigger.ON_APPLICATION
+        )
+
+        if len(triggered_status_effects) <= 0:
+            return StatusEffectOutcome.EMPTY()
+
+        outcomes = await self.get_status_effect_outcomes(
+            StatusEffectTrigger.ON_APPLICATION,
+            context,
+            actor,
+            triggered_status_effects,
+            triggering_status_effect_type=applied_effect_type,
         )
 
         embed_data = await self.get_status_effect_outcome_info(
@@ -302,6 +335,7 @@ class CombatStatusEffectManager(Service):
         actor: Actor,
         status_effects: list[ActiveStatusEffect],
         skill: Skill = None,
+        triggering_status_effect_type: StatusEffectType = None,
     ) -> dict[StatusEffectType, StatusEffectOutcome]:
         effect_data: dict[StatusEffectType, StatusEffectOutcome] = {}
 
@@ -314,6 +348,7 @@ class CombatStatusEffectManager(Service):
             crit_chance = None
             crit_chance_modifier = None
             initiative = None
+            flags = None
             info = None
 
             match effect_type:
@@ -338,6 +373,23 @@ class CombatStatusEffectManager(Service):
                         if message != "" and message not in info:
                             info.append(message)
                     info = "\n".join(info) if len(info) > 0 else None
+                case StatusEffectType.FULL_CLEANSE:
+                    info = []
+                    for status in actor.status_effects:
+                        message = ""
+                        if StatusEffectType.is_cleansable(
+                            status.status_effect.effect_type
+                        ):
+                            await self.consume_status_stack(
+                                context,
+                                status,
+                                status.remaining_stacks,
+                            )
+                            message = f"{status.status_effect.name} was cleansed from {actor.name}."
+                        if message != "" and message not in info:
+                            info.append(message)
+                    info = "\n".join(info) if len(info) > 0 else None
+
                 case StatusEffectType.BLEED:
                     if StatusEffectType.CLEANSE in [
                         x.status_effect.effect_type for x in status_effects
@@ -569,6 +621,13 @@ class CombatStatusEffectManager(Service):
                         )
                 case StatusEffectType.HIGH:
                     modifier = 0.5 + random.random()
+                case StatusEffectType.STATUS_IMMUNE:
+                    if StatusEffectType.is_cleansable(triggering_status_effect_type):
+                        flags = [OutcomeFlag.PREVENT_STATUS_APPLICATION]
+                        triggering_status_effect = await self.factory.get_status_effect(
+                            triggering_status_effect_type
+                        )
+                        info = f"{triggering_status_effect.name} could not be applied."
                 case StatusEffectType.DEATH_PROTECTION:
                     value = 1
                     event = CombatEvent(
@@ -604,6 +663,7 @@ class CombatStatusEffectManager(Service):
                 crit_chance,
                 crit_chance_modifier,
                 initiative,
+                flags,
                 info,
                 None,
             )
@@ -624,6 +684,12 @@ class CombatStatusEffectManager(Service):
 
             match effect_type:
                 case StatusEffectType.CLEANSE:
+                    if outcome.info is not None:
+                        description = outcome.info
+                case StatusEffectType.FULL_CLEANSE:
+                    if outcome.info is not None:
+                        description = outcome.info
+                case StatusEffectType.STATUS_IMMUNE:
                     if outcome.info is not None:
                         description = outcome.info
                 case StatusEffectType.BLEED:
@@ -703,6 +769,7 @@ class CombatStatusEffectManager(Service):
         modifier = None
         crit_chance = None
         crit_chance_modifier = None
+        flags = None
         info = None
         initiative = None
 
@@ -735,11 +802,20 @@ class CombatStatusEffectManager(Service):
                 else:
                     initiative += outcome.initiative
 
+            if outcome.flags is not None:
+                if flags is None:
+                    flags = outcome.flags
+                else:
+                    flags.extend(outcome.flags)
+
             if outcome.info is not None:
                 if info is None:
                     info = outcome.info
                 else:
                     info += "\n" + outcome.info
+
+            if outcome.embed_data is not None and embed_data_collection is not None:
+                embed_data_collection.extend(outcome.embed_data)
 
         return StatusEffectOutcome(
             value,
@@ -747,6 +823,7 @@ class CombatStatusEffectManager(Service):
             crit_chance,
             crit_chance_modifier,
             initiative,
+            flags,
             info,
             embed_data_collection,
         )
@@ -871,6 +948,7 @@ class CombatStatusEffectManager(Service):
         current_actor = context.get_actor_by_id(actor.id)
         current_target = context.get_actor_by_id(target.id)
         outcomes: dict[StatusEffectType, StatusEffectOutcome] = {}
+        additional_outcomes: list[StatusEffectOutcome] = []
         triggered_status_effects = await self.actor_trigger(
             context, current_actor, StatusEffectTrigger.POST_ATTACK
         )
@@ -885,6 +963,7 @@ class CombatStatusEffectManager(Service):
             crit_chance = None
             crit_chance_modifier = None
             initiative = None
+            flags = None
             info = None
 
             match effect_type:
@@ -893,7 +972,7 @@ class CombatStatusEffectManager(Service):
                     if actor.is_enemy:
                         damage = damage_instance.scaled_value
 
-                    applied_status_type = await self.apply_status(
+                    applied_status_type, outcome = await self.apply_status(
                         context,
                         current_actor,
                         current_target,
@@ -901,6 +980,7 @@ class CombatStatusEffectManager(Service):
                         3,
                         damage,
                     )
+
                     if applied_status_type is not None:
                         applied_status_effects.append(
                             (
@@ -908,6 +988,9 @@ class CombatStatusEffectManager(Service):
                                 3,
                             )
                         )
+                    else:
+                        additional_outcomes.append(outcome)
+
                 case StatusEffectType.POISON:
                     if StatusEffectType.CLEANSE in [
                         x.status_effect.effect_type for x in triggered_status_effects
@@ -952,6 +1035,7 @@ class CombatStatusEffectManager(Service):
                 crit_chance,
                 crit_chance_modifier,
                 initiative,
+                flags,
                 info,
                 None,
             )
@@ -960,8 +1044,12 @@ class CombatStatusEffectManager(Service):
             StatusEffectTrigger.POST_ATTACK, context, actor, outcomes
         )
 
+        all_outcomes = additional_outcomes
+        for outcome in outcomes.values():
+            all_outcomes.append(outcome)
+
         return (
-            self.combine_outcomes(outcomes.values(), embed_data),
+            self.combine_outcomes(all_outcomes, embed_data),
             applied_status_effects,
         )
 
