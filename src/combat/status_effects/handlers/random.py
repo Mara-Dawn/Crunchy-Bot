@@ -1,0 +1,71 @@
+import random
+
+from combat.status_effects.status_effect import (
+    ActiveStatusEffect,
+    StatusEffectOutcome,
+)
+from combat.status_effects.status_effects import Random
+from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.status_effects.types import StatusEffectType
+from config import Config
+from control.combat.status_effect_manager import CombatStatusEffectManager
+from control.controller import Controller
+
+
+class RandomHandler(StatusEffectHandler):
+
+    def __init__(self, controller: Controller):
+        StatusEffectHandler.__init__(
+            self, controller=controller, status_effect=Random()
+        )
+        self.status_effect_manager: CombatStatusEffectManager = (
+            self.controller.get_service(CombatStatusEffectManager)
+        )
+
+    async def handle(
+        self, status_effect: ActiveStatusEffect, handler_context: HandlerContext
+    ) -> StatusEffectOutcome:
+        outcome = StatusEffectOutcome.EMPTY()
+        effect_type = status_effect.status_effect.effect_type
+        if effect_type != self.effect_type:
+            return outcome
+
+        random_positive_effect = [
+            StatusEffectType.HIGH,
+            StatusEffectType.RAGE,
+            StatusEffectType.PROTECTION,
+        ]
+        random_negative_effect = [
+            StatusEffectType.BLEED,
+            StatusEffectType.BLIND,
+            StatusEffectType.POISON,
+            StatusEffectType.PARTY_LEECH,
+            StatusEffectType.FROST,
+        ]
+
+        chance_for_positive = Config.RANDOM_POSITIVE_CHANCE
+        if random.random() < chance_for_positive:
+            type = random.choice(random_positive_effect)
+        else:
+            type = random.choice(random_negative_effect)
+
+        application_value = handler_context.application_value
+        match type:
+            case StatusEffectType.PROTECTION:
+                application_value = 15
+
+        application_outcome = await self.status_effect_manager.apply_status(
+            handler_context.context,
+            handler_context.source,
+            handler_context.target,
+            type,
+            1,
+            application_value,
+        )
+
+        return application_outcome
+
+    async def combine(
+        self, outcomes: list[StatusEffectOutcome], handler_context: HandlerContext
+    ) -> StatusEffectOutcome:
+        return self.combine_outcomes(outcomes)

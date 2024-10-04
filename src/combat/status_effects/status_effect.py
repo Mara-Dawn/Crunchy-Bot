@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from combat.skills.types import (
-    SkillEffect,
-    StatusEffectApplication,
+from combat.skills.skill import SkillInstance
+from combat.skills.types import SkillEffect
+from combat.status_effects.types import (
     StatusEffectTrigger,
     StatusEffectType,
 )
@@ -54,28 +54,14 @@ class StatusEffect:
         self.delay_consume = delay_consume
         self.delay_for_source_only = delay_for_source_only
         self.single_description = single_description
+        self.title = f"{self.emoji} {self.name}"
 
         if self.damage_type is None:
             self.damage_type = SkillEffect.STATUS_EFFECT_DAMAGE
 
 
-class SkillStatusEffect:
-
-    def __init__(
-        self,
-        status_effect_type: StatusEffectType,
-        stacks: int,
-        application: StatusEffectApplication = StatusEffectApplication.DEFAULT,
-        application_value: float = None,
-        application_chance: float = 1,
-        self_target: bool = False,
-    ):
-        self.status_effect_type = status_effect_type
-        self.stacks = stacks
-        self.application = application
-        self.application_value = application_value
-        self.application_chance = application_chance
-        self.self_target = self_target
+class OutcomeFlag(Enum):
+    PREVENT_STATUS_APPLICATION = 1
 
 
 class ActiveStatusEffect:
@@ -134,17 +120,14 @@ class EmbedDataCollection:
             self.append(embed_data)
 
 
-class OutcomeFlag(Enum):
-    PREVENT_STATUS_APPLICATION = 1
-
-
 @dataclass
 class StatusEffectOutcome:
-    value: int | None = None
+    value: Any | None = None
     modifier: float | None = None
     crit_chance: float | None = None
     crit_chance_modifier: float | None = None
     initiative: int | None = None
+    applied_effects: list[tuple[StatusEffectType, int]] | None = None
     flags: list[OutcomeFlag] | None = None
     info: str | None = None
     embed_data: EmbedDataCollection | None = None
@@ -152,3 +135,12 @@ class StatusEffectOutcome:
     @staticmethod
     def EMPTY():
         return StatusEffectOutcome()
+
+    def apply_to_instance(self, instance: SkillInstance):
+        if self.modifier is not None:
+            instance.modifier *= self.modifier
+        if instance.is_crit is None:
+            if self.crit_chance is not None:
+                instance.critical_chance = self.crit_chance
+            if self.crit_chance_modifier is not None:
+                instance.critical_chance *= self.crit_chance_modifier

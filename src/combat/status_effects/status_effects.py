@@ -1,5 +1,11 @@
-from combat.skills.status_effect import StatusEffect
-from combat.skills.types import SkillEffect, StatusEffectTrigger, StatusEffectType
+from combat.skills.types import SkillEffect
+from combat.status_effects.status_effect import (
+    StatusEffect,
+)
+from combat.status_effects.types import (
+    StatusEffectTrigger,
+    StatusEffectType,
+)
 
 
 class Bleed(StatusEffect):
@@ -57,10 +63,10 @@ class StatusImmune(StatusEffect):
             effect_type=StatusEffectType.STATUS_IMMUNE,
             name="Status Immunity",
             description="Unaffected by harmful ailments.",
-            trigger=[StatusEffectTrigger.ON_APPLICATION],
+            trigger=[StatusEffectTrigger.ON_STATUS_APPLICATION],
             consumed=[StatusEffectTrigger.END_OF_APPLICANT_TURN],
             priority=1,
-            emoji="🛑",
+            emoji="🕶️",
             apply_on_miss=True,
             override=True,
             display_status=True,
@@ -390,8 +396,8 @@ class Random(StatusEffect):
             effect_type=StatusEffectType.RANDOM,
             name="Random",
             description="You gain a random status effect.",
-            trigger=[StatusEffectTrigger.ON_ATTACK],
-            consumed=[StatusEffectTrigger.END_OF_TURN],
+            trigger=[StatusEffectTrigger.ON_SELF_APPLICATION],
+            consumed=[StatusEffectTrigger.ON_SELF_APPLICATION],
             emoji="",
             display_status=False,
         )

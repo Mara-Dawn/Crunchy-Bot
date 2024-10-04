@@ -10,8 +10,9 @@ from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
-from combat.skills.status_effect import ActiveStatusEffect
-from combat.skills.types import SkillEffect, SkillType, StatusEffectType
+from combat.skills.types import SkillEffect, SkillType
+from combat.status_effects.status_effect import ActiveStatusEffect
+from combat.status_effects.types import StatusEffectType
 from config import Config
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller

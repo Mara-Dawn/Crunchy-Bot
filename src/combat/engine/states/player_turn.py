@@ -6,14 +6,13 @@ from combat.actors import Actor, Character
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.engine.states.state import State
 from combat.engine.types import StateType
-from combat.gear.types import CharacterAttribute
 from combat.skills.skill import Skill
-from combat.skills.status_effect import EmbedDataCollection
 from combat.skills.types import (
     SkillEffect,
     SkillType,
-    StatusEffectApplication,
 )
+from combat.status_effects.status_effect import EmbedDataCollection
+from combat.status_effects.types import StatusEffectApplication
 from config import Config
 from control.controller import Controller
 from control.types import UserSettingsToggle, UserSettingType
@@ -190,7 +189,7 @@ class PlayerTurn(State):
             display_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.value
             )
-            outcome, applied_status_effects = (
+            outcome = (
                 await self.status_effect_manager.handle_post_attack_status_effects(
                     context,
                     character,
@@ -199,7 +198,8 @@ class PlayerTurn(State):
                     damage_instance,
                 )
             )
-            turn_damage_data.applied_status_effects.extend(applied_status_effects)
+            if outcome.applied_effects is not None:
+                turn_damage_data.applied_status_effects.extend(outcome.applied_effects)
             if outcome.embed_data is not None:
                 post_turn_embed_data.extend(outcome.embed_data)
 
@@ -233,32 +233,27 @@ class PlayerTurn(State):
                     application_chance = min(1, application_chance * 2)
 
                 if random.random() < application_chance:
-                    applied_type, outcome = (
-                        await self.status_effect_manager.apply_status(
-                            context,
-                            character,
-                            status_effect_target,
-                            skill_status_effect.status_effect_type,
-                            skill_status_effect.stacks,
-                            application_value,
-                        )
+                    outcome = await self.status_effect_manager.apply_status(
+                        context,
+                        character,
+                        status_effect_target,
+                        skill_status_effect.status_effect_type,
+                        skill_status_effect.stacks,
+                        application_value,
                     )
 
                     if outcome.embed_data is not None:
                         post_turn_embed_data.extend(outcome.embed_data)
 
-                    if applied_type is not None:
-                        turn_damage_data.applied_status_effects.append(
-                            (
-                                applied_type,
-                                skill_status_effect.stacks,
-                            )
+                    if outcome.applied_effects is not None:
+                        turn_damage_data.applied_status_effects.extend(
+                            outcome.applied_effects
                         )
-                        outcome = await self.status_effect_manager.handle_on_self_application_status_effects(
-                            target, context, applied_type
-                        )
-                        if outcome.embed_data is not None:
-                            post_turn_embed_data.extend(outcome.embed_data)
+                        # outcome = await self.status_effect_manager.handle_on_self_application_status_effects(
+                        #     target, context, applied_type
+                        # )
+                        # if outcome.embed_data is not None:
+                        #     post_turn_embed_data.extend(outcome.embed_data)
 
             event = CombatEvent(
                 datetime.datetime.now(),
@@ -325,7 +320,7 @@ class PlayerTurn(State):
                 source, skill, combatant_count=context.combat_scale
             )
             instance = instances[0]
-            instance.apply_effect_outcome(outcome)
+            outcome.apply_to_instance(instance)
 
             current_hp = target.current_hp
 
@@ -339,7 +334,7 @@ class PlayerTurn(State):
                 if outcome_on_dmg.embed_data is not None:
                     embed_data.extend(outcome.embed_data)
 
-                instance.apply_effect_outcome(outcome_on_dmg)
+                outcome.apply_to_instance(instance)
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
@@ -378,7 +373,7 @@ class PlayerTurn(State):
             )
             if outcome.embed_data is not None:
                 embed_data.extend(outcome.embed_data)
-            instance.apply_effect_outcome(outcome)
+            outcome.apply_to_instance(instance)
 
             if instance.value > 0:
                 outcome = await self.status_effect_manager.handle_on_damage_taken_status_effects(
@@ -390,7 +385,7 @@ class PlayerTurn(State):
                 if outcome.embed_data is not None:
                     embed_data.extend(outcome.embed_data)
 
-                instance.apply_effect_outcome(outcome)
+                outcome.apply_to_instance(instance)
 
             total_skill_value = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value

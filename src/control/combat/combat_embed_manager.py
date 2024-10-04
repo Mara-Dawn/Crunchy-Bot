@@ -8,8 +8,8 @@ from discord.ext import commands
 from combat.actors import Actor, Opponent
 from combat.encounter import Encounter, EncounterContext, TurnDamageData, TurnData
 from combat.skills.skill import Skill
-from combat.skills.status_effect import EmbedDataCollection
 from combat.skills.types import SkillEffect
+from combat.status_effects.status_effect import EmbedDataCollection
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_skill_manager import CombatSkillManager

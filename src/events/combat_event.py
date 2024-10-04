@@ -2,7 +2,8 @@ import contextlib
 import datetime
 from typing import Any
 
-from combat.skills.types import SkillType, StatusEffectType
+from combat.skills.types import SkillType
+from combat.status_effects.types import StatusEffectType
 from events.bot_event import BotEvent
 from events.types import CombatEventType, EventType
 

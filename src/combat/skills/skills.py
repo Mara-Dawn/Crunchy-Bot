@@ -1,9 +1,11 @@
 from combat.skills.skill import BaseSkill
-from combat.skills.status_effect import SkillStatusEffect
 from combat.skills.types import (
     SkillEffect,
     SkillTarget,
     SkillType,
+)
+from combat.status_effects.types import (
+    SkillStatusEffect,
     StatusEffectApplication,
     StatusEffectType,
 )

@@ -4,8 +4,8 @@ import discord
 
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
-from combat.skills.status_effect import SkillStatusEffect, StatusEffectOutcome
 from combat.skills.types import SkillEffect, SkillTarget, SkillType
+from combat.status_effects.types import SkillStatusEffect
 from config import Config
 from control.types import FieldData
 
@@ -634,12 +634,3 @@ class SkillInstance:
             value = max(1, value * self.encounter_scaling)
 
         return int(value)
-
-    def apply_effect_outcome(self, outcome: StatusEffectOutcome):
-        if outcome.modifier is not None:
-            self.modifier *= outcome.modifier
-        if self.is_crit is None:
-            if outcome.crit_chance is not None:
-                self.critical_chance = outcome.crit_chance
-            if outcome.crit_chance_modifier is not None:
-                self.critical_chance *= outcome.crit_chance_modifier

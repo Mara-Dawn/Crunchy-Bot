@@ -3,7 +3,7 @@ import datetime
 from combat.encounter import EncounterContext
 from combat.engine.states.state import State
 from combat.engine.types import StateType
-from combat.skills.types import StatusEffectTrigger
+from combat.status_effects.types import StatusEffectTrigger
 from control.controller import Controller
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
