@@ -36,7 +36,6 @@ class WaitingState(State):
                     case EncounterEventType.END:
                         self.next_state = StateType.POST_ENCOUNTER
                         self.done = True
-                        await self.common.force_end(self.context)
                         update = True
         return update
 
