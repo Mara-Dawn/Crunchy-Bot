@@ -902,6 +902,7 @@ class FireBall(BaseSkill):
             stacks=2,
             weight=70,
             reset_after_encounter=False,
+            uniques=[SkillType.GIGA_FIRE_BALL],
             image_url="https://i.imgur.com/tzbLY8h.png",
         )
 
