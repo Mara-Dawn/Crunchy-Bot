@@ -196,11 +196,6 @@ class EnemyController(Service, ABC):
                             turn_damage_data.applied_status_effects.extend(
                                 outcome.applied_effects
                             )
-                            # outcome = await self.status_effect_manager.handle_on_self_application_status_effects(
-                            #     target, context, applied_type
-                            # )
-                            # if outcome.embed_data is not None:
-                            #     post_turn_embed_data.extend(outcome.embed_data)
 
                 event = CombatEvent(
                     datetime.datetime.now(),
