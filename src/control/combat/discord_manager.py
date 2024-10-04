@@ -9,7 +9,7 @@ from discord.ext import commands
 
 from combat.actors import Actor
 from combat.encounter import Encounter, EncounterContext
-from combat.skills.status_effect import EmbedDataCollection
+from combat.status_effects.status_effect import EmbedDataCollection
 from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.context_loader import ContextLoader

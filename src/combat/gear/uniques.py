@@ -20,11 +20,13 @@ from combat.gear.bases import (
 )
 from combat.gear.types import GearBaseType, GearModifierType
 from combat.skills.skills import BloodRage, FineAss, GigaBonk, SecondWind
-from combat.skills.status_effect import SkillStatusEffect
 from combat.skills.types import (
     SkillEffect,
     SkillTarget,
     SkillType,
+)
+from combat.status_effects.types import (
+    SkillStatusEffect,
     StatusEffectApplication,
     StatusEffectType,
 )

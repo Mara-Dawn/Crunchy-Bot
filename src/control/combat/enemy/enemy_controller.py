@@ -5,18 +5,17 @@ from abc import ABC, abstractmethod
 
 import discord
 from discord.ext import commands
-from pydantic import NonNegativeFloat
 
 from combat.actors import Actor, Opponent
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.skills.skill import Skill
-from combat.skills.status_effect import EmbedDataCollection
 from combat.skills.types import (
     SkillEffect,
     SkillTarget,
-    StatusEffectApplication,
 )
+from combat.status_effects.status_effect import EmbedDataCollection
+from combat.status_effects.types import StatusEffectApplication
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_gear_manager import CombatGearManager
@@ -133,7 +132,7 @@ class EnemyController(Service, ABC):
                 total_damage = await self.actor_manager.get_skill_damage_after_defense(
                     target, turn.skill, damage_instance.scaled_value
                 )
-                outcome, applied_status_effects = (
+                outcome = (
                     await self.status_effect_manager.handle_post_attack_status_effects(
                         context,
                         opponent,
@@ -142,7 +141,10 @@ class EnemyController(Service, ABC):
                         damage_instance,
                     )
                 )
-                turn_damage_data.applied_status_effects.extend(applied_status_effects)
+                if outcome.applied_effects is not None:
+                    turn_damage_data.applied_status_effects.extend(
+                        outcome.applied_effects
+                    )
 
                 if outcome.embed_data is not None:
                     post_turn_embed_data.extend(outcome.embed_data)
@@ -178,7 +180,7 @@ class EnemyController(Service, ABC):
                         application_chance = min(1, application_chance * 2)
 
                     if random.random() < application_chance:
-                        applied_type = await self.status_effect_manager.apply_status(
+                        outcome = await self.status_effect_manager.apply_status(
                             context,
                             opponent,
                             status_effect_target,
@@ -186,18 +188,19 @@ class EnemyController(Service, ABC):
                             skill_status_effect.stacks,
                             application_value,
                         )
-                        if applied_type is not None:
-                            turn_damage_data.applied_status_effects.append(
-                                (
-                                    applied_type,
-                                    skill_status_effect.stacks,
-                                )
+
+                        if outcome.embed_data is not None:
+                            post_turn_embed_data.extend(outcome.embed_data)
+
+                        if outcome.applied_effects is not None:
+                            turn_damage_data.applied_status_effects.extend(
+                                outcome.applied_effects
                             )
-                            outcome = await self.status_effect_manager.handle_on_application_status_effects(
-                                target, context, applied_type
-                            )
-                            if outcome.embed_data is not None:
-                                post_turn_embed_data.extend(outcome.embed_data)
+                            # outcome = await self.status_effect_manager.handle_on_self_application_status_effects(
+                            #     target, context, applied_type
+                            # )
+                            # if outcome.embed_data is not None:
+                            #     post_turn_embed_data.extend(outcome.embed_data)
 
                 event = CombatEvent(
                     datetime.datetime.now(),
@@ -264,7 +267,7 @@ class EnemyController(Service, ABC):
                 context.opponent, skill, combatant_count=context.combat_scale
             )
             instance = instances[0]
-            instance.apply_effect_outcome(outcome)
+            outcome.apply_to_instance(instance)
 
             current_hp = hp_cache.get(target.id, target.current_hp)
 
@@ -276,7 +279,7 @@ class EnemyController(Service, ABC):
                 )
                 if outcome.embed_data is not None:
                     post_embed_data.extend(outcome.embed_data)
-                instance.apply_effect_outcome(outcome)
+                    outcome.apply_to_instance(instance)
 
             total_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, skill, instance.scaled_value
@@ -349,7 +352,7 @@ class EnemyController(Service, ABC):
             outcome = await self.status_effect_manager.handle_attack_status_effects(
                 context, context.opponent, skill
             )
-            instance.apply_effect_outcome(outcome)
+            outcome.apply_to_instance(instance)
             if outcome.embed_data is not None:
                 post_embed_data.extend(outcome.embed_data)
 
@@ -359,7 +362,7 @@ class EnemyController(Service, ABC):
                     target,
                     skill,
                 )
-                instance.apply_effect_outcome(outcome)
+                outcome.apply_to_instance(instance)
                 if outcome.embed_data is not None:
                     post_embed_data.extend(outcome.embed_data)
 

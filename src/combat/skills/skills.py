@@ -1,9 +1,11 @@
 from combat.skills.skill import BaseSkill
-from combat.skills.status_effect import SkillStatusEffect
 from combat.skills.types import (
     SkillEffect,
     SkillTarget,
     SkillType,
+)
+from combat.status_effects.types import (
+    SkillStatusEffect,
     StatusEffectApplication,
     StatusEffectType,
 )
@@ -465,6 +467,40 @@ class SecondHeart(BaseSkill):
             default_target=SkillTarget.SELF,
             image_url="https://i.imgur.com/LQvjQbL.png",
             author="Lusa",
+        )
+
+
+class DopeShades(BaseSkill):
+
+    def __init__(self):
+        super().__init__(
+            name="Really Dope Shades",
+            skill_type=SkillType.DOPE_SHADES,
+            description=(
+                "You are the coolest. The best. The sexiest. The Greatest. Of. All. Time. "
+                " And so very humble! Your excellence rubs off on your crew and you're flexing "
+                "on the haters in style. Granrs party wide immunity against debuffs for two turns."
+            ),
+            information="",
+            skill_effect=SkillEffect.BUFF,
+            cooldown=5,
+            min_level=6,
+            base_value=1,
+            status_effects=[
+                SkillStatusEffect(
+                    StatusEffectType.FULL_CLEANSE,
+                    1,
+                ),
+                SkillStatusEffect(
+                    StatusEffectType.STATUS_IMMUNE,
+                    2,
+                ),
+            ],
+            stacks=2,
+            aoe=True,
+            default_target=SkillTarget.SELF,
+            image_url="https://i.imgur.com/2Ec1hzZ.png",
+            author="Kiwi",
         )
 
 

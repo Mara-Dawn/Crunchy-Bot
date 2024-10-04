@@ -1,37 +1,6 @@
 from enum import Enum
 
 
-class StatusEffectType(str, Enum):
-    BLEED = "Bleed"
-    CLEANSE = "Cleanse"
-    PROTECTION = "Protection"
-    BLIND = "Blind"
-    EVASIVE = "Evasive"
-    FLUSTERED = "Flustered"
-    SIMP = "Simp"
-    INSPIRED = "Inspired"
-    NEURON_ACTIVE = "NeuronActive"
-    ZONED_IN = "ZonedIn"
-    RAGE = "Rage"
-    FEAR = "Fear"
-    CHUCKLE = "Chuckle"
-    RAGE_QUIT = "RageQuit"
-    HIGH = "High"
-    POISON = "Poison"
-    RANDOM = "Random"
-    DEATH_PROTECTION = "DeathProtection"
-    HEAL_OVER_TIME = "HealOverTime"
-    FROST = "Frost"
-    VULNERABLE = "Vulnerable"
-    PHYS_VULN = "PhysVuln"
-    MAGIC_VULN = "MagicVuln"
-
-    PARTY_LEECH = "PartyLeech"
-
-    FROGGED = "Frogged"
-    STUN = "Stun"
-
-
 class SkillType(str, Enum):
     EMPTY = "EmptySkill"
 
@@ -58,6 +27,7 @@ class SkillType(str, Enum):
 
     SECOND_WIND = "SecondWind"
     SECOND_HEART = "SecondHeart"
+    DOPE_SHADES = "DopeShades"
     SMELLING_SALT = "SmellingSalt"
     FAMILY_PIZZA = "FamilyPizza"
     HOLY_GANG_SIGNS = "HolyGangSigns"
@@ -300,24 +270,3 @@ class SkillTarget(Enum):
     PARTY = 2
     RANDOM_PARTY_MEMBER = 3
     RANDOM_DEFEATED_PARTY_MEMBER = 4
-
-
-class StatusEffectTrigger(Enum):
-    START_OF_TURN = 0
-    END_OF_TURN = 1
-    START_OF_ROUND = 2
-    END_OF_ROUND = 3
-    ON_DAMAGE_TAKEN = 4
-    ON_DEATH = 5
-    ON_ATTACK = 7
-    POST_ATTACK = 8
-    ATTRIBUTE = 9
-    ON_APPLICATION = 10
-    END_OF_APPLICANT_TURN = 11
-
-
-class StatusEffectApplication(Enum):
-    DEFAULT = 0
-    ATTACK_VALUE = 1
-    MANUAL_VALUE = 2
-    RAW_ATTACK_VALUE = 3

@@ -4,7 +4,8 @@ import discord
 from discord.ext import commands
 
 from combat.encounter import EncounterContext
-from combat.skills.types import SkillEffect, SkillType, StatusEffectType
+from combat.skills.types import SkillEffect, SkillType
+from combat.status_effects.types import StatusEffectType
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger

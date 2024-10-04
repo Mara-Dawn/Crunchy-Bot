@@ -7,8 +7,8 @@ import discord
 from combat.actors import Actor, Character, Opponent
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill, SkillInstance
-from combat.skills.status_effect import EmbedDataCollection, StatusEffect
-from combat.skills.types import StatusEffectType
+from combat.status_effects.status_effect import EmbedDataCollection, StatusEffect
+from combat.status_effects.types import StatusEffectType
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent

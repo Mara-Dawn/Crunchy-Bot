@@ -9,11 +9,10 @@ from combat.gear.types import Rarity
 from combat.gear.uniques import *  # noqa: F403
 from combat.skills.skill import BaseSkill, Skill
 from combat.skills.skills import *  # noqa: F403
-from combat.skills.status_effect import (
-    StatusEffect,
-)
-from combat.skills.status_effects import *  # noqa: F403
-from combat.skills.types import SkillType, StatusEffectType
+from combat.skills.types import SkillType
+from combat.status_effects.status_effect import StatusEffect
+from combat.status_effects.status_effects import *  # noqa: F403
+from combat.status_effects.types import StatusEffectType
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
