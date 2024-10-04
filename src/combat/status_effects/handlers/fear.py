@@ -7,6 +7,7 @@ from combat.status_effects.status_effect import (
 )
 from combat.status_effects.status_effects import Fear
 from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
 
 
@@ -14,6 +15,9 @@ class FearHandler(StatusEffectHandler):
 
     def __init__(self, controller: Controller):
         StatusEffectHandler.__init__(self, controller=controller, status_effect=Fear())
+        self.status_effect_manager: CombatStatusEffectManager = (
+            self.controller.get_service(CombatStatusEffectManager)
+        )
 
     async def handle(
         self, status_effect: ActiveStatusEffect, handler_context: HandlerContext
