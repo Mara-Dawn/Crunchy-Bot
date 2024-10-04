@@ -19,7 +19,7 @@ from combat.gear.bases import (
     Wand_T2,
 )
 from combat.gear.types import GearBaseType, GearModifierType
-from combat.skills.skills import BloodRage, FineAss, GigaBonk, SecondWind
+from combat.skills.skills import BloodRage, FineAss, FireBall, GigaBonk, SecondWind
 from combat.skills.types import (
     SkillEffect,
     SkillTarget,
@@ -541,6 +541,29 @@ class SmellingSalt(SecondWind, Unique):
         self.stacks = 1
         self.default_target = SkillTarget.RANDOM_DEFEATED_PARTY_MEMBER
         self.reset_after_encounter = False
+        self.author = "Lusa"
+        Unique.__init__(
+            self,
+            unique_modifiers={},
+        )
+
+
+class GigaFireBall(FireBall, Unique):
+
+    def __init__(self):
+        FireBall.__init__(self)
+        self.name = "Giga Fire Ball"
+        self.skill_type = SkillType.GIGA_FIRE_BALL
+        self.base_skill_type = SkillType.FIRE_BALL
+        self.description = (
+            "A crazy scientist once tried to combine a Giga Bonk with a Fire Ball, "
+            "turning himself into a screaming orb of flames. Now we can use him to "
+            "obliterate our enemies. Thanks, scientist!"
+        )
+        self.image_url = "https://i.imgur.com/QHWg3C1.png"
+        self.base_value = 15
+        self.cooldown = 0
+        self.stacks = 1
         self.author = "Lusa"
         Unique.__init__(
             self,

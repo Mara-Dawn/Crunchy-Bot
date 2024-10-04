@@ -51,6 +51,7 @@ class SkillType(str, Enum):
     # Magical
     MAGIC_ATTACK = "MagicAttack"
     FIRE_BALL = "FireBall"
+    GIGA_FIRE_BALL = "GigaFireBall"
     MAGIC_MISSILE = "MagicMissile"
     PARTY_DRUGS = "PartyDrugs"
     SPECTRAL_HAND = "SpectralHand"
