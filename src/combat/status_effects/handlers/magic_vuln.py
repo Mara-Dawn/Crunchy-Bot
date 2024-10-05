@@ -1,3 +1,4 @@
+from combat.skills.types import SkillEffect
 from combat.status_effects.status_effect import (
     ActiveStatusEffect,
     EmbedDataCollection,
@@ -23,6 +24,9 @@ class MagicVulnHandler(StatusEffectHandler):
         outcome = StatusEffectOutcome.EMPTY()
         effect_type = status_effect.status_effect.effect_type
         if effect_type != self.effect_type:
+            return outcome
+
+        if handler_context.skill.base_skill.skill_effect != SkillEffect.MAGICAL_DAMAGE:
             return outcome
 
         outcome.modifier = Config.MAGIC_VULN_SCALING
