@@ -514,7 +514,14 @@ class CombatGearManager(Service):
 
         if rarity == Rarity.UNIQUE:
             if len(base.uniques) <= 0:
-                rarity = Rarity.RARE
+                max_rarity = Rarity.COMMON
+                guild_level = await self.database.get_guild_level(guild_id)
+                for min_rarity, level in self.MIN_RARITY_LVL.items():
+                    if level <= guild_level:
+                        max_rarity = min_rarity
+                    else:
+                        break
+                rarity = max_rarity
             else:
                 if random_seed is not None:
                     random.seed(random_seed)
