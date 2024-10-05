@@ -45,12 +45,12 @@ class RandomHandler(StatusEffectHandler):
 
         chance_for_positive = Config.RANDOM_POSITIVE_CHANCE
         if random.random() < chance_for_positive:
-            type = random.choice(random_positive_effect)
+            random_type = random.choice(random_positive_effect)
         else:
-            type = random.choice(random_negative_effect)
+            random_type = random.choice(random_negative_effect)
 
         application_value = handler_context.application_value
-        match type:
+        match random_type:
             case StatusEffectType.PROTECTION:
                 application_value = 15
 
@@ -58,7 +58,7 @@ class RandomHandler(StatusEffectHandler):
             handler_context.context,
             handler_context.source,
             handler_context.target,
-            type,
+            random_type,
             1,
             application_value,
         )
