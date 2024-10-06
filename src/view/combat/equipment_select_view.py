@@ -4,7 +4,8 @@ import copy
 import discord
 
 from combat.gear.gear import Gear
-from combat.gear.types import EquipmentSlot, GearModifierType
+from combat.gear.types import EquipmentSlot, GearModifierType, Rarity
+from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
 from control.types import ControllerType
@@ -75,6 +76,9 @@ class EquipmentSelectView(
         self.refresh_elements()
         self.embed_manager: CombatEmbedManager = controller.get_service(
             CombatEmbedManager
+        )
+        self.actor_manager: CombatActorManager = self.controller.get_service(
+            CombatActorManager
         )
 
     async def listen_for_ui_event(self, event: UIEvent):
@@ -253,6 +257,10 @@ class EquipmentSelectView(
             if selected_gear.id in [gear.id for gear in self.current]:
                 disable_dismantle = True
 
+            if selected_gear.rarity == Rarity.UNIQUE:
+                # Default Gear
+                disable_craft = True
+
             if selected_gear.id < 0:
                 # Default Gear
                 disable_dismantle = True
@@ -371,7 +379,11 @@ class EquipmentSelectView(
             if gear.id in [gear.id for gear in self.current]:
                 equipped = True
 
-            embeds.append(gear.get_embed(equipped=equipped, show_locked_state=True))
+            character = await self.actor_manager.get_character(self.member)
+            embed = await self.embed_manager.get_gear_embed(
+                gear, character, equipped=equipped, show_locked_state=True
+            )
+            embeds.append(embed)
 
         await self.message.edit(embeds=embeds, view=self)
 

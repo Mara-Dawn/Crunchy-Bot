@@ -417,7 +417,10 @@ class EnchantmentView(
         embeds.append(EnchantmentHeadEmbed(self.member))
 
         if self.gear is not None:
-            embeds.append(self.gear.get_embed())
+            gear_embed = await self.embed_manager.get_gear_embed(
+                self.gear, self.character
+            )
+            embeds.append(gear_embed)
 
         embeds.append(EnchantmentSpacerEmbed(self.member, self.gear))
 

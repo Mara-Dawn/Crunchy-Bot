@@ -5,14 +5,15 @@ import datetime
 import discord
 from discord.ext import commands
 
-from combat.actors import Actor, Opponent
+from combat.actors import Actor, Character, Opponent
 from combat.effects.efffect import EmbedDataCollection
 from combat.encounter import Encounter, EncounterContext, TurnDamageData, TurnData
-from combat.gear.droppable import Droppable
+from combat.gear.gear import Gear
 from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
+from control.combat.combat_enchantment_manager import CombatEnchantmentManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.combat.encounter_statistics import EncounterStatistics
 from control.combat.object_factory import ObjectFactory
@@ -49,6 +50,9 @@ class CombatEmbedManager(Service):
         )
         self.encounter_statistics: EncounterStatistics = self.controller.get_service(
             EncounterStatistics
+        )
+        self.enchantment_manager: CombatEnchantmentManager = (
+            self.controller.get_service(CombatEnchantmentManager)
         )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "Combat Embeds"
@@ -1043,3 +1047,32 @@ class CombatEmbedManager(Service):
             embed.add_field(name="", value=f"Able to claim <t:{timer}:R>.")
 
         return embed
+
+    async def get_gear_embed(
+        self,
+        gear: Gear,
+        character: Character,
+        show_data: bool = True,
+        show_info: bool = False,
+        equipped: bool = False,
+        show_locked_state: bool = False,
+        scrap_value: int = None,
+        max_width: int = None,
+    ) -> discord.Embed:
+        enchantment_data = None
+        if len(gear.enchantments) > 0:
+            enchantment_data = []
+            for enchantment in gear.enchantments:
+                data = await self.enchantment_manager.get_gear_enchantment(
+                    character, enchantment
+                )
+                enchantment_data.append(data)
+        return gear.get_embed(
+            show_data=show_data,
+            show_info=show_info,
+            equipped=equipped,
+            show_locked_state=show_locked_state,
+            scrap_value=scrap_value,
+            max_width=max_width,
+            enchantment_data=enchantment_data,
+        )
