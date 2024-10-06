@@ -3,28 +3,18 @@ import datetime
 from discord.ext import commands
 
 from combat.actors import Actor
+from combat.effects.effect import EffectOutcome
+from combat.effects.effect_handler import HandlerContext
+from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
-from combat.skills.skill import Skill, SkillInstance
-from combat.skills.types import (
-    SkillEffect,
-)
-from combat.status_effects.status_effect import (
-    ActiveStatusEffect,
-    OutcomeFlag,
-    StatusEffectOutcome,
-)
+from combat.skills.types import SkillEffect
+from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import *  # noqa: F403
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
-from combat.status_effects.types import (
-    StatusEffectTrigger,
-    StatusEffectType,
-)
-from control.combat.combat_actor_manager import CombatActorManager
-from control.combat.combat_embed_manager import CombatEmbedManager
-from control.combat.object_factory import ObjectFactory
+from combat.status_effects.status_handler import StatusEffectHandler
+from combat.status_effects.types import StatusEffectType
+from control.combat.effect_manager_interface import EffectManager
 from control.controller import Controller
 from control.logger import BotLogger
-from control.service import Service
 from datalayer.database import Database
 from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
@@ -32,7 +22,7 @@ from events.status_effect_event import StatusEffectEvent
 from events.types import CombatEventType
 
 
-class CombatStatusEffectManager(Service):
+class CombatStatusEffectManager(EffectManager):
 
     def __init__(
         self,
@@ -41,21 +31,7 @@ class CombatStatusEffectManager(Service):
         database: Database,
         controller: Controller,
     ):
-        super().__init__(bot, logger, database)
-        self.controller = controller
-        self.log_name = "StatusEffects"
-        self.actor_manager: CombatActorManager = self.controller.get_service(
-            CombatActorManager
-        )
-        self.embed_manager: CombatEmbedManager = self.controller.get_service(
-            CombatEmbedManager
-        )
-        self.embed_manager: CombatEmbedManager = self.controller.get_service(
-            CombatEmbedManager
-        )
-        self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
-
-        self.handler_cache: dict[StatusEffectType, StatusEffectHandler] = {}
+        super().__init__(bot, logger, database, controller)
 
     async def listen_for_event(self, event: BotEvent):
         pass
@@ -74,26 +50,17 @@ class CombatStatusEffectManager(Service):
         type: StatusEffectType,
         stacks: int,
         application_value: float = None,
-    ) -> StatusEffectOutcome:
+    ) -> EffectOutcome:
 
         status_effect = await self.factory.get_status_effect(type)
-
-        outcome = await self.handle_on_status_application_status_effects(
-            target, context, type
-        )
-
-        if (
-            outcome.flags is not None
-            and OutcomeFlag.PREVENT_STATUS_APPLICATION in outcome.flags
-        ):
-            return outcome
+        outcome = EffectOutcome.EMPTY()
 
         if (
             application_value is not None
             and application_value == 0
             and not status_effect.apply_on_miss
         ):
-            return outcome
+            return outcome, None
 
         handler = await self.get_handler(type)
         handler_context = HandlerContext(
@@ -149,81 +116,47 @@ class CombatStatusEffectManager(Service):
         else:
             outcome.applied_effects.append((type, initial_stacks))
 
-        self_application_outcome = await self.handle_on_self_application_status_effects(
-            source, target, context, type, value
-        )
-
-        outcome = StatusEffectHandler.combine_outcomes(
-            [self_application_outcome, outcome]
-        )
+        outcome.value = value
 
         return outcome
 
-    async def handle_on_self_application_status_effects(
+    async def on_status_self_application(
         self,
-        source: Actor,
-        target: Actor,
-        context: EncounterContext,
-        effect_type: StatusEffectType,
-        application_value: float = None,
-    ) -> StatusEffectOutcome:
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
         triggered_status_effects = await self.actor_trigger(
-            context, target, StatusEffectTrigger.ON_SELF_APPLICATION
+            handler_context.context,
+            handler_context.target,
+            EffectTrigger.ON_SELF_APPLICATION,
         )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         filtered = []
         for effect in triggered_status_effects:
-            if effect.status_effect.effect_type == effect_type:
+            if effect.status_effect.effect_type == handler_context.status_effect_type:
                 filtered.append(effect)
 
         if len(filtered) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
-        handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ON_STATUS_APPLICATION,
-            context=context,
-            source=source,
-            target=target,
-            skill=None,
-            triggering_status_effect_type=effect_type,
-            application_value=application_value,
-            damage_instance=None,
-        )
+        return await self.get_outcome(triggered_status_effects, handler_context)
 
-        return await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
-
-    async def handle_on_status_application_status_effects(
+    async def on_status_application(
         self,
-        actor: Actor,
-        context: EncounterContext,
-        applied_effect_type: StatusEffectType,
-    ) -> StatusEffectOutcome:
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ON_STATUS_APPLICATION
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.ON_STATUS_APPLICATION,
         )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
-        handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ON_STATUS_APPLICATION,
-            context=context,
-            source=actor,
-            target=actor,
-            skill=None,
-            triggering_status_effect_type=applied_effect_type,
-            application_value=None,
-            damage_instance=None,
-        )
-
-        outcome = await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
+        outcome = await self.get_outcome(triggered_status_effects, handler_context)
 
         return outcome
 
@@ -248,40 +181,26 @@ class CombatStatusEffectManager(Service):
         )
         await self.controller.dispatch_event(event)
 
-    async def handle_attribute_status_effects(
+    async def on_attribute(
         self,
-        context: EncounterContext,
-        actor: Actor,
-    ) -> StatusEffectOutcome:
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
 
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ATTRIBUTE
+            handler_context.context, handler_context.source, EffectTrigger.ATTRIBUTE
         )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
-        handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ATTRIBUTE,
-            context=context,
-            source=actor,
-            target=actor,
-            skill=None,
-            triggering_status_effect_type=None,
-            application_value=None,
-            damage_instance=None,
-        )
+        return await self.get_outcome(triggered_status_effects, handler_context)
 
-        return await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
-
-    async def get_status_effects_outcome(
+    async def get_outcome(
         self,
         status_effects: list[ActiveStatusEffect],
         handler_context: HandlerContext,
-    ) -> StatusEffectOutcome:
-        outcome_data: dict[StatusEffectType, StatusEffectOutcome] = {}
+    ) -> EffectOutcome:
+        outcome_data: dict[StatusEffectType, EffectOutcome] = {}
 
         for status_effect in status_effects:
             effect_type = status_effect.status_effect.effect_type
@@ -301,40 +220,25 @@ class CombatStatusEffectManager(Service):
 
         return StatusEffectHandler.combine_outcomes(combined_outcomes)
 
-    async def handle_attack_status_effects(
+    async def on_attack(
         self,
-        context: EncounterContext,
-        actor: Actor,
-        skill: Skill,
-    ) -> StatusEffectOutcome:
-        skill_effect = skill.base_skill.skill_effect
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        skill_effect = handler_context.skill.base_skill.skill_effect
 
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ON_ATTACK
+            handler_context.context, handler_context.source, EffectTrigger.ON_ATTACK
         )
 
         if len(triggered_status_effects) <= 0 or skill_effect in [
             SkillEffect.NOTHING,
             SkillEffect.BUFF,
         ]:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
-        handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ON_ATTACK,
-            context=context,
-            source=actor,
-            target=actor,
-            skill=skill,
-            triggering_status_effect_type=None,
-            application_value=None,
-            damage_instance=None,
-        )
+        outcome = await self.get_outcome(triggered_status_effects, handler_context)
 
-        outcome = await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
-
-        if not skill.base_skill.modifiable:
+        if not handler_context.skill.base_skill.modifiable:
             if outcome.modifier is not None:
                 outcome.modifier = max(1, outcome.modifier)
             outcome.crit_chance = None
@@ -342,44 +246,31 @@ class CombatStatusEffectManager(Service):
 
         return outcome
 
-    async def handle_on_damage_taken_status_effects(
+    async def on_damage_taken(
         self,
-        context: EncounterContext,
-        actor: Actor,
-        skill: Skill,
-    ) -> StatusEffectOutcome:
-        skill_effect = skill.base_skill.skill_effect
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        skill_effect = handler_context.skill.base_skill.skill_effect
 
         if skill_effect in [
             SkillEffect.NOTHING,
             SkillEffect.HEALING,
             SkillEffect.BUFF,
         ]:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ON_DAMAGE_TAKEN
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.ON_DAMAGE_TAKEN,
         )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
-        handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ON_DAMAGE_TAKEN,
-            context=context,
-            source=actor,
-            target=actor,
-            skill=skill,
-            triggering_status_effect_type=None,
-            application_value=None,
-            damage_instance=None,
-        )
+        outcome = await self.get_outcome(triggered_status_effects, handler_context)
 
-        outcome = await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
-
-        if not skill.base_skill.modifiable:
+        if not handler_context.skill.base_skill.modifiable:
             if outcome.modifier is not None:
                 outcome.modifier = max(1, outcome.modifier)
             outcome.crit_chance = None
@@ -387,173 +278,117 @@ class CombatStatusEffectManager(Service):
 
         return outcome
 
-    async def handle_on_death_status_effects(
+    async def on_death(
         self,
-        context: EncounterContext,
-        actor: Actor,
-    ) -> StatusEffectOutcome:
-        for active_actor in context.current_initiative:
-            if active_actor.id == actor.id:
-                actor = active_actor
-
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ON_DEATH
+            handler_context.context, handler_context.source, EffectTrigger.ON_DEATH
         )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
-        handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ON_DEATH,
-            context=context,
-            source=actor,
-            target=actor,
-            skill=None,
-            triggering_status_effect_type=None,
-            application_value=None,
-            damage_instance=None,
-        )
+        return await self.get_outcome(triggered_status_effects, handler_context)
 
-        return await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
-
-    async def handle_post_attack_status_effects(
+    async def on_post_attack(
         self,
-        context: EncounterContext,
-        actor: Actor,
-        target: Actor,
-        skill: Skill,
-        damage_instance: SkillInstance,
-    ) -> StatusEffectOutcome:
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
 
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.POST_ATTACK
+            handler_context.context, handler_context.source, EffectTrigger.POST_ATTACK
         )
 
-        handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.POST_ATTACK,
-            context=context,
-            source=actor,
-            target=target,
-            skill=skill,
-            triggering_status_effect_type=None,
-            application_value=None,
-            damage_instance=damage_instance,
-        )
+        return await self.get_outcome(triggered_status_effects, handler_context)
 
-        return await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
-
-    async def handle_round_status_effects(
+    async def on_round_start(
         self,
-        context: EncounterContext,
-        trigger: StatusEffectTrigger,
-    ) -> dict[int, StatusEffectOutcome]:
-        actor_outcomes = {}
-        for active_actor in context.current_initiative:
-
-            triggered_status_effects = await self.actor_trigger(
-                context, active_actor, trigger
-            )
-
-            if len(triggered_status_effects) <= 0:
-                continue
-
-            handler_context = HandlerContext(
-                trigger=trigger,
-                context=context,
-                source=active_actor,
-                target=active_actor,
-                skill=None,
-                triggering_status_effect_type=None,
-                application_value=None,
-                damage_instance=None,
-            )
-
-            actor_outcomes[active_actor.id] = await self.get_status_effects_outcome(
-                triggered_status_effects, handler_context
-            )
-
-        return actor_outcomes
-
-    async def handle_turn_status_effects(
-        self,
-        context: EncounterContext,
-        actor: Actor,
-        trigger: StatusEffectTrigger,
-    ) -> StatusEffectOutcome:
-        if actor.defeated or actor.leaving or actor.is_out:
-            return StatusEffectOutcome.EMPTY()
-
-        triggered_status_effects = await self.actor_trigger(context, actor, trigger)
+        handler_context: HandlerContext,
+    ) -> dict[int, EffectOutcome]:
+        triggered_status_effects = await self.actor_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.START_OF_ROUND,
+        )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
-        handler_context = HandlerContext(
-            trigger=trigger,
-            context=context,
-            source=actor,
-            target=actor,
-            skill=None,
-            triggering_status_effect_type=None,
-            application_value=None,
-            damage_instance=None,
-        )
+        return await self.get_outcome(triggered_status_effects, handler_context)
 
-        return await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
-
-    async def handle_applicant_turn_status_effects(
+    async def on_round_end(
         self,
-        context: EncounterContext,
-        actor: Actor,
-    ) -> dict[int, StatusEffectOutcome]:
-        actor_outcomes = {}
+        handler_context: HandlerContext,
+    ) -> dict[int, EffectOutcome]:
+        triggered_status_effects = await self.actor_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.END_OF_ROUND,
+        )
 
-        for active_actor in context.current_initiative:
+        if len(triggered_status_effects) <= 0:
+            return EffectOutcome.EMPTY()
 
-            triggered_status_effects = await self.actor_trigger(
-                context,
-                active_actor,
-                StatusEffectTrigger.END_OF_APPLICANT_TURN,
-                match_source_id=actor.id,
-            )
+        return await self.get_outcome(triggered_status_effects, handler_context)
 
-            filtered = []
+    async def on_turn_start(
+        self,
+        handler_context: HandlerContext,
+    ) -> dict[int, EffectOutcome]:
+        triggered_status_effects = await self.actor_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.START_OF_TURN,
+        )
 
-            for effect in triggered_status_effects:
-                if effect.event.source_id == actor.id:
-                    filtered.append(effect)
+        if len(triggered_status_effects) <= 0:
+            return EffectOutcome.EMPTY()
 
-            if len(filtered) <= 0:
-                continue
+        return await self.get_outcome(triggered_status_effects, handler_context)
 
-            handler_context = HandlerContext(
-                trigger=StatusEffectTrigger.END_OF_APPLICANT_TURN,
-                context=context,
-                source=actor,
-                target=active_actor,
-                skill=None,
-                triggering_status_effect_type=None,
-                application_value=None,
-                damage_instance=None,
-            )
+    async def on_turn_end(
+        self,
+        handler_context: HandlerContext,
+    ) -> dict[int, EffectOutcome]:
+        triggered_status_effects = await self.actor_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.END_OF_TURN,
+        )
 
-            actor_outcomes[active_actor.id] = await self.get_status_effects_outcome(
-                triggered_status_effects, handler_context
-            )
+        if len(triggered_status_effects) <= 0:
+            return EffectOutcome.EMPTY()
 
-        return actor_outcomes
+        return await self.get_outcome(triggered_status_effects, handler_context)
+
+    async def on_applicant_turn_end(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        triggered_status_effects = await self.actor_trigger(
+            handler_context.context,
+            handler_context.target,
+            EffectTrigger.END_OF_APPLICANT_TURN,
+            match_source_id=handler_context.source.id,
+        )
+
+        filtered = []
+
+        for effect in triggered_status_effects:
+            if effect.event.source_id == handler_context.source.id:
+                filtered.append(effect)
+
+        if len(filtered) <= 0:
+            return EffectOutcome.EMPTY()
+
+        return await self.get_outcome(triggered_status_effects, handler_context)
 
     async def actor_trigger(
         self,
         context: EncounterContext,
         actor: Actor,
-        trigger: StatusEffectTrigger,
+        trigger: EffectTrigger,
         match_source_id: int | None = None,
     ) -> list[ActiveStatusEffect]:
         triggered = []

@@ -5,9 +5,16 @@ import discord
 from discord.ext import commands
 
 from combat.actors import Character
+from combat.enchantments.enchantment import (
+    BaseEnchantment,
+    EffectEnchantment,
+    Enchantment,
+)
+from combat.enchantments.types import EnchantmentEffect
 from combat.encounter import EncounterContext
 from combat.enemies.enemy import Enemy
-from combat.gear import (
+from combat.gear.bases import *  # noqa: F403
+from combat.gear.default_gear import (
     DefaultAccessory1,
     DefaultAccessory2,
     DefaultCap,
@@ -16,7 +23,6 @@ from combat.gear import (
     DefaultStick,
     DefaultWand,
 )
-from combat.gear.bases import *  # noqa: F403
 from combat.gear.droppable import Droppable
 from combat.gear.gear import DroppableBase, Gear, GearBase
 from combat.gear.types import (
@@ -53,6 +59,8 @@ class CombatGearManager(Service):
 
     ITEM_LEVEL_MIN_DROP = 0.6
     SKILL_DROP_CHANCE = 0.1
+    ENCHANTMENT_DROP_CHANCE = 0
+    # ENCHANTMENT_DROP_CHANCE = 0.05
     GEAR_LEVEL_SCALING = 1
     MOB_LOOT_BONUS_SCALING = 1
     MOB_LOOT_UNIQUE_SCALING = 0.2
@@ -238,6 +246,7 @@ class CombatGearManager(Service):
 
         skill_weight = 0
         gear_weight = 0
+        enchantment_weight = 0
 
         for base in bases:
             match base.base_type:
@@ -245,11 +254,22 @@ class CombatGearManager(Service):
                     skill_weight += base.weight
                 case Base.GEAR:
                     gear_weight += base.weight
+                case Base.ENCHANTMENT:
+                    enchantment_weight += base.weight
 
         skill_mod = 0
+        enchantment_mod = 0
         if not exclude_skills and skill_weight > 0:
             skill_mod = (
-                self.SKILL_DROP_CHANCE * (skill_weight + gear_weight) / skill_weight
+                self.SKILL_DROP_CHANCE
+                * (skill_weight + gear_weight + enchantment_weight)
+                / skill_weight
+            )
+        if enchantment_weight > 0:
+            enchantment_mod = (
+                self.ENCHANTMENT_DROP_CHANCE
+                * (skill_weight + gear_weight + enchantment_weight)
+                / enchantment_weight
             )
         # Forces chance of skill dropping to self.SKILL_DROP_CHANCE while keeping weights
 
@@ -269,8 +289,10 @@ class CombatGearManager(Service):
             match base.base_type:
                 case Base.SKILL:
                     weight *= skill_mod
+                case Base.ENCHANTMENT:
+                    weight *= enchantment_mod
                 case Base.GEAR:
-                    weight *= 1 - skill_mod
+                    weight *= 1 - (skill_mod + enchantment_mod)
             weights.append(weight)
 
         sum_weights = sum(weights)
@@ -363,24 +385,35 @@ class CombatGearManager(Service):
         modifier_types.extend(base.modifiers)
 
         for modifier_type in modifier_types:
-            min_roll, max_roll = await self.get_modifier_boundaries(
-                base, item_level, modifier_type
+            modifiers[modifier_type] = await self.roll_modifier_value(
+                base, item_level, modifier_type, random_seed
             )
 
-            if random_seed is not None:
-                random.seed(random_seed)
-
-            value = random.uniform(min_roll, max_roll)
-
-            if random_seed is not None:
-                random.seed(None)
-
-            if modifier_type in self.INT_MODIFIERS:
-                value = int(value)
-
-            modifiers[modifier_type] = value
-
         return modifiers
+
+    async def roll_modifier_value(
+        self,
+        base: GearBase,
+        item_level: int,
+        modifier_type: GearModifierType,
+        random_seed=None,
+    ) -> float:
+        min_roll, max_roll = await self.get_modifier_boundaries(
+            base, item_level, modifier_type
+        )
+
+        if random_seed is not None:
+            random.seed(random_seed)
+
+        value = random.uniform(min_roll, max_roll)
+
+        if random_seed is not None:
+            random.seed(None)
+
+        if modifier_type in self.INT_MODIFIERS:
+            value = int(value)
+
+        return value
 
     async def get_modifier_boundaries(
         self, base: GearBase, item_level: int, modifier_type: GearModifierType
@@ -553,6 +586,33 @@ class CombatGearManager(Service):
                     )
 
                 return skill
+
+            case Base.ENCHANTMENT:
+                base_enchantment: BaseEnchantment = base
+                if base_enchantment.fixed_rarity is not None:
+                    rarity = base_enchantment.fixed_rarity
+                if base_enchantment.enchantment_effect == EnchantmentEffect.EFFECT:
+                    enchantment = EffectEnchantment(
+                        base_enchantment=base_enchantment,
+                        rarity=rarity,
+                        level=item_level,
+                    )
+                else:
+                    enchantment = Enchantment(
+                        base_enchantment=base_enchantment,
+                        rarity=rarity,
+                        level=item_level,
+                    )
+
+                if member_id is not None:
+                    enchantment.id = await self.database.log_user_drop(
+                        guild_id=guild_id,
+                        member_id=member_id,
+                        drop=enchantment,
+                        generator_version=self.GENERATOR_VERSION,
+                    )
+
+                return enchantment
 
             case Base.GEAR:
                 gear_base: GearBase = base

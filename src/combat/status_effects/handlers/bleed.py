@@ -1,15 +1,16 @@
 import datetime
 
 from combat.actors import Character, Opponent
-from combat.skills.types import SkillEffect
-from combat.status_effects.status_effect import (
-    ActiveStatusEffect,
+from combat.effects.effect import (
+    EffectEmbedData,
+    EffectOutcome,
     EmbedDataCollection,
-    StatusEffectEmbedData,
-    StatusEffectOutcome,
 )
+from combat.effects.effect_handler import HandlerContext
+from combat.skills.types import SkillEffect
+from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import Bleed
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.status_effects.status_handler import StatusEffectHandler
 from config import Config
 from control.controller import Controller
 from events.combat_event import CombatEvent
@@ -23,8 +24,8 @@ class BleedHandler(StatusEffectHandler):
 
     async def handle(
         self, status_effect: ActiveStatusEffect, handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
-        outcome = StatusEffectOutcome.EMPTY()
+    ) -> EffectOutcome:
+        outcome = EffectOutcome.EMPTY()
 
         effect_type = status_effect.status_effect.effect_type
         if effect_type != self.effect_type:
@@ -40,7 +41,7 @@ class BleedHandler(StatusEffectHandler):
         )
         damage = event.value
         total_damage = await self.actor_manager.get_damage_after_defense(
-            handler_context.target, SkillEffect.STATUS_EFFECT_DAMAGE, damage
+            handler_context.target, SkillEffect.EFFECT_DAMAGE, damage
         )
 
         scaled_damage = max(1, int(total_damage * encounter_scaling))
@@ -81,14 +82,14 @@ class BleedHandler(StatusEffectHandler):
         return base_value
 
     async def combine(
-        self, outcomes: list[StatusEffectOutcome], handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
+        self, outcomes: list[EffectOutcome], handler_context: HandlerContext
+    ) -> EffectOutcome:
         combined = self.combine_outcomes(outcomes)
 
         if combined.value is not None:
             embed_data_collection = EmbedDataCollection()
             description = f"{handler_context.target.name} suffers {combined.value} bleeding damage."
-            embed_data = StatusEffectEmbedData(
+            embed_data = EffectEmbedData(
                 self.status_effect, self.status_effect.title, description
             )
             embed_data_collection.append(embed_data)

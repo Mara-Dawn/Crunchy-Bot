@@ -10,6 +10,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot import CrunchyBot
+from combat.enchantments.types import EnchantmentType
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
 from combat.gear.types import GearBaseType, Rarity
@@ -456,7 +457,8 @@ class Combat(commands.Cog):
     ) -> list[app_commands.Choice[str]]:
         gear_base_types = [base_type for base_type in GearBaseType]
         skill_base_types = [base_type for base_type in SkillType]
-        base_types = gear_base_types + skill_base_types
+        enchantment_base_types = [base_type for base_type in EnchantmentType]
+        base_types = gear_base_types + skill_base_types + enchantment_base_types
         bases = [await self.factory.get_base(enum) for enum in base_types]
 
         bases = [base for base in bases if base.droppable and base.name != ""]

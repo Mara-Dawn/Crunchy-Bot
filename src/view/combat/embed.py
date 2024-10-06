@@ -1,5 +1,6 @@
 import discord
 
+from combat.gear.gear import Gear
 from combat.gear.types import Rarity
 from config import Config
 
@@ -161,6 +162,71 @@ class SelectSkillHeadEmbed(discord.Embed):
 
         super().__init__(
             title="Skill Select",
+            color=discord.Colour.purple(),
+            description=description,
+        )
+        self.set_thumbnail(url=member.display_avatar.url)
+
+
+class EnchantmentHeadEmbed(discord.Embed):
+
+    ITEMS_PER_PAGE = 4
+
+    def __init__(
+        self,
+        member: discord.Member,
+        max_width: int = 45,
+    ):
+        description = "Manage your enchantments and apply them to your gear pieces.\n\n"
+        description += "Once you apply an enchantment it will be removed from your inventory. Applying a new enchantment [31mwill override the old one[0m.\n\n"
+        description += "[30m[!][0m - Damage penalty for using the wrong weapon type."
+
+        if len(description) < max_width:
+            spacing = max_width - len(description)
+            description += " " * spacing
+
+        description = f"```ansi\n{description}```"
+
+        super().__init__(
+            title="Enchantment Table",
+            color=discord.Colour.purple(),
+            description=description,
+        )
+        self.set_thumbnail(url=member.display_avatar.url)
+
+
+class EnchantmentSpacerEmbed(discord.Embed):
+
+    ITEMS_PER_PAGE = 4
+
+    def __init__(
+        self,
+        member: discord.Member,
+        gear: Gear | None,
+        max_width: int = 45,
+    ):
+        if gear is None:
+            description = (
+                "No gear has been selected. "
+                "Select a piece of equipment to apply Enchantments to it."
+            )
+            title = "Empty"
+        else:
+            description = (
+                "You are currently crafting using the item shown above. "
+                "Select one of the following enchantments to apply to "
+                "your selected piece of equipment."
+            )
+            title = f"Crafting with {gear.rarity.name} {gear.name}"
+
+        if len(description) < max_width:
+            spacing = max_width - len(description)
+            description += " " * spacing
+
+        description = f"```ansi\n{description}```"
+
+        super().__init__(
+            title=title,
             color=discord.Colour.purple(),
             description=description,
         )

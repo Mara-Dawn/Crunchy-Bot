@@ -83,7 +83,7 @@ class EncounterStatistics(Service):
                     SkillEffect.MAGICAL_DAMAGE,
                     SkillEffect.PHYSICAL_DAMAGE,
                     SkillEffect.NEUTRAL_DAMAGE,
-                    SkillEffect.STATUS_EFFECT_DAMAGE,
+                    SkillEffect.EFFECT_DAMAGE,
                 ]:
                     continue
 
@@ -118,7 +118,7 @@ class EncounterStatistics(Service):
                         SkillEffect.MAGICAL_DAMAGE,
                         SkillEffect.PHYSICAL_DAMAGE,
                         SkillEffect.NEUTRAL_DAMAGE,
-                        SkillEffect.STATUS_EFFECT_DAMAGE,
+                        SkillEffect.EFFECT_DAMAGE,
                     ]:
                         continue
                 if event.skill_type in StatusEffectType:
@@ -126,11 +126,11 @@ class EncounterStatistics(Service):
                         event.skill_type
                     )
 
-                    if status_effect.damage_type not in [
+                    if status_effect.skill_effect not in [
                         SkillEffect.MAGICAL_DAMAGE,
                         SkillEffect.PHYSICAL_DAMAGE,
                         SkillEffect.NEUTRAL_DAMAGE,
-                        SkillEffect.STATUS_EFFECT_DAMAGE,
+                        SkillEffect.EFFECT_DAMAGE,
                     ]:
                         continue
 
@@ -176,7 +176,7 @@ class EncounterStatistics(Service):
                         SkillEffect.MAGICAL_DAMAGE,
                         SkillEffect.PHYSICAL_DAMAGE,
                         SkillEffect.NEUTRAL_DAMAGE,
-                        SkillEffect.STATUS_EFFECT_DAMAGE,
+                        SkillEffect.EFFECT_DAMAGE,
                     ]:
                         continue
                 if event.skill_type in StatusEffectType:
@@ -184,11 +184,11 @@ class EncounterStatistics(Service):
                         event.skill_type
                     )
 
-                    if status_effect.damage_type not in [
+                    if status_effect.skill_effect not in [
                         SkillEffect.MAGICAL_DAMAGE,
                         SkillEffect.PHYSICAL_DAMAGE,
                         SkillEffect.NEUTRAL_DAMAGE,
-                        SkillEffect.STATUS_EFFECT_DAMAGE,
+                        SkillEffect.EFFECT_DAMAGE,
                     ]:
                         continue
 
@@ -236,7 +236,7 @@ class EncounterStatistics(Service):
                         event.skill_type
                     )
 
-                    if status_effect.damage_type not in [
+                    if status_effect.skill_effect not in [
                         SkillEffect.HEALING,
                     ]:
                         continue

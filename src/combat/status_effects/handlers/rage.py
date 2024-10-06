@@ -1,10 +1,9 @@
+from combat.effects.effect import EffectOutcome
+from combat.effects.effect_handler import HandlerContext
 from combat.skills.types import SkillEffect
-from combat.status_effects.status_effect import (
-    ActiveStatusEffect,
-    StatusEffectOutcome,
-)
+from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import Rage
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.status_effects.status_handler import StatusEffectHandler
 from combat.status_effects.types import StatusEffectType
 from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
@@ -20,8 +19,8 @@ class RageHandler(StatusEffectHandler):
 
     async def handle(
         self, status_effect: ActiveStatusEffect, handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
-        outcome = StatusEffectOutcome.EMPTY()
+    ) -> EffectOutcome:
+        outcome = EffectOutcome.EMPTY()
 
         effect_type = status_effect.status_effect.effect_type
         if effect_type != self.effect_type:
@@ -48,8 +47,3 @@ class RageHandler(StatusEffectHandler):
         )
 
         return application_outcome
-
-    async def combine(
-        self, outcomes: list[StatusEffectOutcome], handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
-        return self.combine_outcomes(outcomes)

@@ -3,6 +3,9 @@ import datetime
 import discord
 from discord.ext import commands
 
+from combat.enchantments.enchantment import Enchantment
+from combat.enchantments.enchantment_handler import EnchantmentCraftHandler
+from combat.enchantments.types import EnchantmentEffect
 from combat.gear.gear import Gear
 from combat.gear.types import Base, EquipmentSlot
 from combat.skills.skill import Skill
@@ -27,6 +30,7 @@ from view.combat.embed import (
     SelectGearHeadEmbed,
     SelectSkillHeadEmbed,
 )
+from view.combat.enchantment_view import EnchantmentView
 from view.combat.equipment_select_view import EquipmentSelectView
 from view.combat.equipment_view import EquipmentView, EquipmentViewState
 from view.combat.skill_select_view import SkillSelectView, SkillViewState
@@ -148,6 +152,17 @@ class EquipmentViewController(ViewController):
                 interaction = event.payload[0]
                 selected = event.payload[1]
                 await self.buy_gear(interaction, selected, event.view_id)
+            case UIEventType.ENCHANTMENTS_OPEN:
+                interaction = event.payload[0]
+                gear = event.payload[1]
+                await self.open_enchantment_view(interaction, gear, event.view_id)
+            case UIEventType.ENCHANTMENTS_APPLY:
+                interaction = event.payload[0]
+                gear = event.payload[1]
+                enchantments = event.payload[2]
+                await self.apply_gear_enchantment(
+                    interaction, gear, enchantments, event.view_id
+                )
 
     async def encounter_check(self, interaction: discord.Interaction):
         guild_id = interaction.guild.id
@@ -725,3 +740,99 @@ class EquipmentViewController(ViewController):
         self.logger.log(interaction.guild_id, message, self.log_name)
 
         await interaction.followup.send(embed=drop.get_embed(), ephemeral=True)
+
+    async def apply_gear_enchantment(
+        self,
+        interaction: discord.Interaction,
+        gear: Gear,
+        enchantments: list[Enchantment],
+        view_id: int,
+    ):
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+
+        if not await self.encounter_check(interaction):
+            return
+
+        effects = []
+        new_gear = gear
+        for enchantment in enchantments:
+            match enchantment.base_enchantment.enchantment_effect:
+                case EnchantmentEffect.EFFECT:
+                    effects.append(enchantment)
+                case EnchantmentEffect.CRAFTING:
+                    handler: EnchantmentCraftHandler = (
+                        EnchantmentCraftHandler.get_handler(
+                            self.controller,
+                            enchantment.base_enchantment.enchantment_type,
+                        )
+                    )
+                    new_gear = await handler.handle(enchantment, gear)
+
+        if len(effects) > 0:
+            new_gear = await self.database.log_user_gear_enchantment(new_gear, effects)
+
+        character = await self.actor_manager.get_character(interaction.user)
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        user_enchantments = await self.database.get_user_enchantment_inventory(
+            guild_id, member_id
+        )
+
+        view = EnchantmentView(
+            self.controller,
+            interaction,
+            character,
+            user_enchantments,
+            scrap_balance,
+            new_gear,
+        )
+
+        message = await interaction.original_response()
+        await message.edit(view=view, attachments=[])
+        view.set_message(message)
+        await view.refresh_ui()
+        self.controller.detach_view_by_id(view_id)
+
+    async def open_enchantment_view(
+        self, interaction: discord.Interaction, gear: Gear | None, view_id: int
+    ):
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+
+        if not await self.encounter_check(interaction):
+            return
+
+        character = await self.actor_manager.get_character(interaction.user)
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        user_enchantments = await self.database.get_user_enchantment_inventory(
+            guild_id, member_id
+        )
+
+        view = EnchantmentView(
+            self.controller,
+            interaction,
+            character,
+            user_enchantments,
+            scrap_balance,
+            gear,
+        )
+
+        message = await interaction.original_response()
+        await message.edit(view=view, attachments=[])
+        view.set_message(message)
+        await view.refresh_ui()
+        self.controller.detach_view_by_id(view_id)

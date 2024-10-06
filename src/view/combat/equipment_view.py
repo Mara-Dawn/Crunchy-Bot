@@ -8,6 +8,7 @@ from combat.gear.types import (
     Rarity,
 )
 from config import Config
+from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
@@ -64,6 +65,9 @@ class EquipmentView(ViewMenu):
         self.loaded = False
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
+        )
+        self.embed_manager: CombatEmbedManager = self.controller.get_service(
+            CombatEmbedManager
         )
 
         self.forge_level = forge_level
@@ -131,6 +135,7 @@ class EquipmentView(ViewMenu):
                     SelectGearSlot(EquipmentSlot.ACCESSORY, disabled=disabled)
                 )
                 self.add_item(ScrapAllButton(disabled=disabled))
+                # self.add_item(EnchantmentsButton(disabled=disabled))
             case EquipmentViewState.STATS:
                 stats_button_selected = True
             case EquipmentViewState.SKILLS:
@@ -176,12 +181,36 @@ class EquipmentView(ViewMenu):
                 embeds.append(
                     EquipmentHeadEmbed(self.character.member, is_owner=self.is_owner)
                 )
-                embeds.append(self.character.equipment.weapon.get_embed())
-                embeds.append(self.character.equipment.head_gear.get_embed())
-                embeds.append(self.character.equipment.body_gear.get_embed())
-                embeds.append(self.character.equipment.leg_gear.get_embed())
-                embeds.append(self.character.equipment.accessory_1.get_embed())
-                embeds.append(self.character.equipment.accessory_2.get_embed())
+                embeds.append(
+                    await self.embed_manager.get_gear_embed(
+                        self.character.equipment.weapon, self.character
+                    )
+                )
+                embeds.append(
+                    await self.embed_manager.get_gear_embed(
+                        self.character.equipment.head_gear, self.character
+                    )
+                )
+                embeds.append(
+                    await self.embed_manager.get_gear_embed(
+                        self.character.equipment.body_gear, self.character
+                    )
+                )
+                embeds.append(
+                    await self.embed_manager.get_gear_embed(
+                        self.character.equipment.leg_gear, self.character
+                    )
+                )
+                embeds.append(
+                    await self.embed_manager.get_gear_embed(
+                        self.character.equipment.accessory_1, self.character
+                    )
+                )
+                embeds.append(
+                    await self.embed_manager.get_gear_embed(
+                        self.character.equipment.accessory_2, self.character
+                    )
+                )
             case EquipmentViewState.STATS:
                 embeds.append(
                     AttributesHeadEmbed(self.character.member, is_owner=self.is_owner)
@@ -253,6 +282,15 @@ class EquipmentView(ViewMenu):
         event = UIEvent(
             UIEventType.FORGE_OPEN_SHOP,
             interaction,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def open_enchantments_view(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        event = UIEvent(
+            UIEventType.ENCHANTMENTS_OPEN,
+            (interaction, None),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -468,6 +506,26 @@ class ScrapAllButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.dismantle_gear(interaction, slot=self.slot)
+
+
+class EnchantmentsButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False):
+
+        label = "Enchantments"
+
+        super().__init__(
+            label=label,
+            style=discord.ButtonStyle.blurple,
+            row=2,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EquipmentView = self.view
+
+        if await view.interaction_check(interaction):
+            await view.open_enchantments_view(interaction)
 
 
 class ForgeDropdown(discord.ui.Select):

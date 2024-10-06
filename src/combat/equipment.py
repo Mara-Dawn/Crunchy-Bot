@@ -1,6 +1,6 @@
 import discord
 
-from combat.gear import (
+from combat.gear.default_gear import (
     DefaultAccessory1,
     DefaultAccessory2,
     DefaultCap,

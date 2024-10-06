@@ -1,9 +1,13 @@
 import discord
 
+from combat.enchantments.enchantment import (
+    EffectEnchantment,
+    Enchantment,
+    GearEnchantment,
+)
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import (
     Base,
-    EnchantmentType,
     EquipmentSlot,
     GearBaseType,
     GearModifierType,
@@ -11,25 +15,6 @@ from combat.gear.types import (
 )
 from combat.skills.types import SkillEffect, SkillType
 from config import Config
-
-
-class Enchantment:
-
-    def __init__(
-        self,
-        name: str,
-        type: EnchantmentType,
-        description: str,
-        information: str,
-        min_level: int,
-        max_level: int,
-    ):
-        self.name = name
-        self.type = type
-        self.description = description
-        self.information = information
-        self.min_level = min_level
-        self.max_level = max_level
 
 
 class GearBase(DroppableBase):
@@ -151,7 +136,7 @@ class Gear(Droppable):
         level: int,
         modifiers: dict[GearModifierType, float],
         skills: list[SkillType],
-        enchantments: list[Enchantment],
+        enchantments: list[EffectEnchantment],
         locked: bool = False,
         id: int = None,
     ):
@@ -192,6 +177,7 @@ class Gear(Droppable):
         show_locked_state: bool = False,
         scrap_value: int = None,
         max_width: int = None,
+        enchantment_data: list[GearEnchantment] = None,
     ) -> discord.Embed:
         if max_width is None:
             max_width = Config.COMBAT_EMBED_MAX_WIDTH
@@ -324,6 +310,13 @@ class Gear(Droppable):
             info_block += "```"
 
         info_block += f"```python\n{description}```"
+
+        if enchantment_data is None and len(self.enchantments) > 0:
+            for enchantment in self.enchantments:
+                info_block += enchantment.get_embed_field().value
+        elif enchantment_data is not None:
+            for enchantment in enchantment_data:
+                info_block += enchantment.get_embed_field().value
 
         if scrap_value is not None:
             stock_label = "Stock: 1"

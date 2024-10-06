@@ -1,7 +1,6 @@
 from combat.encounter import EncounterContext
 from combat.engine.states.state import State
 from combat.engine.types import StateType
-from combat.status_effects.types import StatusEffectTrigger
 from control.controller import Controller
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
@@ -15,9 +14,7 @@ class RoundEndState(State):
         self.next_state: StateType = StateType.ROUND_START
 
     async def startup(self):
-        outcomes = await self.status_effect_manager.handle_round_status_effects(
-            self.context, StatusEffectTrigger.END_OF_ROUND
-        )
+        outcomes = await self.effect_manager.on_round_end(self.context)
 
         for actor_id, outcome in outcomes.items():
             if outcome.embed_data is not None:

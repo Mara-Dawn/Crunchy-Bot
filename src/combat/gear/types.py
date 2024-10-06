@@ -8,6 +8,7 @@ class EquipmentSlot(str, Enum):
     WEAPON = "Weapon"
     ACCESSORY = "Accessory"
     SKILL = "Skill"
+    ANY = "Any"
 
 
 class Rarity(str, Enum):
@@ -17,10 +18,6 @@ class Rarity(str, Enum):
     RARE = "Rare"
     LEGENDARY = "Legendary"
     UNIQUE = "Unique"
-
-
-class EnchantmentType(str, Enum):
-    EXAMPLE = "example"
 
 
 class GearModifierType(str, Enum):
@@ -118,6 +115,7 @@ class GearModifierType(str, Enum):
 class Base(str, Enum):
     GEAR = "Gear"
     SKILL = "Skill"
+    ENCHANTMENT = "Enchant"
 
 
 class GearBaseType(str, Enum):

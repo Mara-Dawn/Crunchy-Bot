@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 
 from combat.actors import Actor, Character, Opponent
+from combat.enchantments.enchantment import Enchantment
 from combat.encounter import Encounter, EncounterContext
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType
@@ -72,11 +73,17 @@ class CombatActorManager(Service):
     async def get_event_health_delta(self, event: CombatEvent) -> int:
         if event.skill_type is None:
             return 0
-        if event.combat_event_type == CombatEventType.STATUS_EFFECT:
+        if event.combat_event_type in [
+            CombatEventType.ENCHANTMENT_EFFECT,
+            CombatEventType.STATUS_EFFECT,
+        ]:
             return 0
         if event.combat_event_type == CombatEventType.STATUS_EFFECT_OUTCOME:
             status_effect = await self.factory.get_status_effect(event.skill_type)
-            skill_effect = status_effect.damage_type
+            skill_effect = status_effect.skill_effect
+        elif event.combat_event_type == CombatEventType.ENCHANTMENT_EFFECT_OUTCOME:
+            enchantment = await self.database.get_enchantment_by_id(event.skill_id)
+            skill_effect = enchantment.base_enchantment.damage_type
         else:
             base_skill = await self.factory.get_base_skill(event.skill_type)
             skill_effect = base_skill.skill_effect
@@ -89,7 +96,7 @@ class CombatActorManager(Service):
                 SkillEffect.PHYSICAL_DAMAGE
                 | SkillEffect.MAGICAL_DAMAGE
                 | SkillEffect.NEUTRAL_DAMAGE
-                | SkillEffect.STATUS_EFFECT_DAMAGE
+                | SkillEffect.EFFECT_DAMAGE
             ):
                 health = -event.skill_value
             case SkillEffect.HEALING:
@@ -309,8 +316,19 @@ class CombatActorManager(Service):
 
         skills = [skill for skill in skill_slots.values() if skill is not None]
 
+        enchantments = await self.database.get_user_active_enchantments(
+            member.guild.id, member.id
+        )
+
         skill_cooldowns = self.get_skill_cooldowns(member.id, skills, combat_events)
+
+        enchantment_cooldowns = self.get_enchantment_cooldowns(
+            member.id, enchantments, combat_events
+        )
         skill_stacks_used = await self.database.get_user_skill_stacks_used(
+            member.guild.id, member.id
+        )
+        enchantment_stacks_used = await self.database.get_user_enchantment_stacks_used(
             member.guild.id, member.id
         )
 
@@ -331,6 +349,9 @@ class CombatActorManager(Service):
             skill_slots=skill_slots,
             skill_cooldowns=skill_cooldowns,
             skill_stacks_used=skill_stacks_used,
+            active_enchantments=enchantments,
+            enchantment_cooldowns=enchantment_cooldowns,
+            enchantment_stacks_used=enchantment_stacks_used,
             status_effects=active_status_effects,
             equipment=equipment,
             defeated=defeated,
@@ -459,6 +480,15 @@ class CombatActorManager(Service):
                     actor.skill_stacks_used[skill_id] = 1
                 else:
                     actor.skill_stacks_used[skill_id] += 1
+            case CombatEventType.ENCHANTMENT_EFFECT:
+                if actor.is_enemy:
+                    return
+                actor: Character = actor
+                enchantment_id = event.skill_id
+                for enchantment in actor.active_enchantments:
+                    if enchantment.id == enchantment_id:
+                        enchantment.stacks_used += event.skill_value
+                        break
             case CombatEventType.ENEMY_TURN_STEP | CombatEventType.MEMBER_TURN_STEP:
                 pass
             case CombatEventType.MEMBER_END_TURN | CombatEventType.ENEMY_END_TURN:
@@ -491,6 +521,48 @@ class CombatActorManager(Service):
                 ):
                     used_skills.append(skill_type)
         return used_skills
+
+    def get_enchantment_cooldowns(
+        self,
+        actor_id: int,
+        enchantments: list[Enchantment],
+        combat_events: list[CombatEvent],
+    ) -> dict[SkillType, int]:
+        cooldowns = {}
+        last_used = 0
+        for event in combat_events:
+            if event.member_id == actor_id:
+                if event.skill_id is not None:
+                    enchantment_id = event.skill_id
+                    if enchantment_id not in cooldowns:
+                        cooldowns[enchantment_id] = max(0, last_used - 1)
+                if event.combat_event_type in [
+                    CombatEventType.ENEMY_END_TURN,
+                    CombatEventType.MEMBER_END_TURN,
+                ]:
+                    last_used += 1
+
+        round_count = last_used
+
+        enchantment_data = {}
+
+        for enchantment in enchantments:
+            last_used = None
+            enchantment_id = enchantment.id
+            if enchantment_id in cooldowns:
+                last_used = cooldowns[enchantment_id]
+            elif (
+                enchantment.base_enchantment.initial_cooldown is not None
+                and enchantment.base_enchantment.initial_cooldown > 0
+            ):
+                last_used = (
+                    -enchantment.base_enchantment.initial_cooldown
+                    + round_count
+                    + enchantment.base_enchantment.cooldown
+                )
+
+            enchantment_data[enchantment_id] = last_used
+        return enchantment_data
 
     def get_skill_cooldowns(
         self, actor_id: int, skills: list[Skill], combat_events: list[CombatEvent]
@@ -583,7 +655,7 @@ class CombatActorManager(Service):
                 modifier -= character.equipment.attributes[
                     CharacterAttribute.DAMAGE_REDUCTION
                 ]
-            case SkillEffect.STATUS_EFFECT_DAMAGE:
+            case SkillEffect.EFFECT_DAMAGE:
                 modifier -= character.equipment.attributes[
                     CharacterAttribute.DAMAGE_REDUCTION
                 ]
@@ -614,7 +686,7 @@ class CombatActorManager(Service):
                 modifier -= opponent.enemy.attributes[
                     CharacterAttribute.DAMAGE_REDUCTION
                 ]
-            case SkillEffect.STATUS_EFFECT_DAMAGE:
+            case SkillEffect.EFFECT_DAMAGE:
                 modifier -= opponent.enemy.attributes[
                     CharacterAttribute.DAMAGE_REDUCTION
                 ]

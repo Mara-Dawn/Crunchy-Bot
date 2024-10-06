@@ -3,6 +3,7 @@ import datetime
 import random
 
 from combat.actors import Actor, Character
+from combat.effects.effect import EmbedDataCollection
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.engine.states.state import State
 from combat.engine.types import StateType
@@ -11,7 +12,6 @@ from combat.skills.types import (
     SkillEffect,
     SkillType,
 )
-from combat.status_effects.status_effect import EmbedDataCollection
 from combat.status_effects.types import StatusEffectApplication
 from config import Config
 from control.controller import Controller
@@ -189,14 +189,12 @@ class PlayerTurn(State):
             display_damage = await self.actor_manager.get_skill_damage_after_defense(
                 target, turn.skill, damage_instance.value
             )
-            outcome = (
-                await self.status_effect_manager.handle_post_attack_status_effects(
-                    context,
-                    character,
-                    target,
-                    skill_data.skill,
-                    damage_instance,
-                )
+            outcome = await self.effect_manager.on_post_attack(
+                context,
+                character,
+                target,
+                skill_data.skill,
+                damage_instance,
             )
             if outcome.applied_effects is not None:
                 turn_damage_data.applied_status_effects.extend(outcome.applied_effects)
@@ -233,7 +231,7 @@ class PlayerTurn(State):
                     application_chance = min(1, application_chance * 2)
 
                 if random.random() < application_chance:
-                    outcome = await self.status_effect_manager.apply_status(
+                    outcome = await self.effect_manager.apply_status(
                         context,
                         character,
                         status_effect_target,
@@ -304,9 +302,7 @@ class PlayerTurn(State):
     ) -> tuple[list[TurnDamageData], EmbedDataCollection]:
         skill_value_data = []
         embed_data = EmbedDataCollection()
-        outcome = await self.status_effect_manager.handle_attack_status_effects(
-            context, source, skill
-        )
+        outcome = await self.effect_manager.on_attack(context, source, skill)
         if outcome.embed_data is not None:
             embed_data.extend(outcome.embed_data)
 
@@ -320,7 +316,7 @@ class PlayerTurn(State):
             current_hp = target.current_hp
 
             if instance.value > 0:
-                outcome_on_dmg = await self.status_effect_manager.handle_on_damage_taken_status_effects(
+                outcome_on_dmg = await self.effect_manager.on_damage_taken(
                     context,
                     target,
                     skill,
@@ -361,7 +357,7 @@ class PlayerTurn(State):
         embed_data = EmbedDataCollection()
 
         for instance in skill_instances:
-            outcome = await self.status_effect_manager.handle_attack_status_effects(
+            outcome = await self.effect_manager.on_attack(
                 context,
                 source,
                 skill,
@@ -371,7 +367,7 @@ class PlayerTurn(State):
             outcome.apply_to_instance(instance)
 
             if instance.value > 0:
-                outcome = await self.status_effect_manager.handle_on_damage_taken_status_effects(
+                outcome = await self.effect_manager.on_damage_taken(
                     context,
                     target,
                     skill,

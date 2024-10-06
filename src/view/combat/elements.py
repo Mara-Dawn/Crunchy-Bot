@@ -56,6 +56,16 @@ class ImplementsScrapping(ABC):
         pass
 
 
+class ImplementsCrafting(ABC):
+
+    @abstractmethod
+    async def craft_selected(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+
 class PageButton(discord.ui.Button):
 
     def __init__(self, label: str, right: bool, disabled: bool = False, row: int = 2):
@@ -256,3 +266,21 @@ class ScrapAllButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.scrap_selected(interaction, scrap_all=True)
+
+
+class CraftSelectedButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = True):
+
+        super().__init__(
+            label="Craft",
+            style=discord.ButtonStyle.blurple,
+            row=3,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ImplementsCrafting = self.view
+
+        if await view.interaction_check(interaction):
+            await view.craft_selected(interaction)

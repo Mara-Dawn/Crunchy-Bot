@@ -4,7 +4,8 @@ import copy
 import discord
 
 from combat.gear.gear import Gear
-from combat.gear.types import EquipmentSlot, GearModifierType
+from combat.gear.types import EquipmentSlot, GearModifierType, Rarity
+from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
 from control.types import ControllerType
@@ -12,8 +13,10 @@ from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.combat.elements import (
     BackButton,
+    CraftSelectedButton,
     CurrentPageButton,
     ImplementsBack,
+    ImplementsCrafting,
     ImplementsLocking,
     ImplementsPages,
     ImplementsScrapping,
@@ -29,7 +32,12 @@ from view.view_menu import ViewMenu
 
 
 class EquipmentSelectView(
-    ViewMenu, ImplementsPages, ImplementsBack, ImplementsLocking, ImplementsScrapping
+    ViewMenu,
+    ImplementsPages,
+    ImplementsBack,
+    ImplementsLocking,
+    ImplementsScrapping,
+    ImplementsCrafting,
 ):
 
     def __init__(
@@ -68,6 +76,9 @@ class EquipmentSelectView(
         self.refresh_elements()
         self.embed_manager: CombatEmbedManager = controller.get_service(
             CombatEmbedManager
+        )
+        self.actor_manager: CombatActorManager = self.controller.get_service(
+            CombatActorManager
         )
 
     async def listen_for_ui_event(self, event: UIEvent):
@@ -203,6 +214,20 @@ class EquipmentSelectView(
         )
         await self.controller.dispatch_ui_event(event)
 
+    async def craft_selected(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        if len(self.selected) != 1:
+            return
+
+        selected_piece = self.selected[0]
+
+        event = UIEvent(
+            UIEventType.ENCHANTMENTS_OPEN,
+            (interaction, selected_piece),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     def refresh_elements(self, disabled: bool = False):
         page_display = f"Page {self.current_page + 1}/{self.page_count}"
 
@@ -216,6 +241,7 @@ class EquipmentSelectView(
         disable_equip = disabled
         disable_dismantle = disabled
         disable_lock = disabled
+        disable_craft = disabled
 
         if len(self.selected) <= 0:
             disable_equip = True
@@ -224,9 +250,16 @@ class EquipmentSelectView(
         elif len(self.selected) > max_values:
             disable_equip = True
 
+        if len(self.selected) != 1:
+            disable_craft = True
+
         for selected_gear in self.selected:
             if selected_gear.id in [gear.id for gear in self.current]:
                 disable_dismantle = True
+
+            if selected_gear.rarity == Rarity.UNIQUE:
+                # Default Gear
+                disable_craft = True
 
             if selected_gear.id < 0:
                 # Default Gear
@@ -245,6 +278,7 @@ class EquipmentSelectView(
         self.add_item(CurrentPageButton(page_display))
         self.add_item(ScrapBalanceButton(self.scrap_balance))
         self.add_item(ScrapSelectedButton(disabled=disable_dismantle))
+        # self.add_item(CraftSelectedButton(disabled=disable_craft))
         self.add_item(LockButton(disabled=disable_lock))
         self.add_item(UnlockButton(disabled=disable_lock))
         self.add_item(BackButton(disabled=disabled))
@@ -345,7 +379,11 @@ class EquipmentSelectView(
             if gear.id in [gear.id for gear in self.current]:
                 equipped = True
 
-            embeds.append(gear.get_embed(equipped=equipped, show_locked_state=True))
+            character = await self.actor_manager.get_character(self.member)
+            embed = await self.embed_manager.get_gear_embed(
+                gear, character, equipped=equipped, show_locked_state=True
+            )
+            embeds.append(embed)
 
         await self.message.edit(embeds=embeds, view=self)
 

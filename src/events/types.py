@@ -102,6 +102,8 @@ class EncounterEventType(str, Enum):
 class CombatEventType(str, Enum):
     STATUS_EFFECT = "status_effect"
     STATUS_EFFECT_OUTCOME = "status_effect_outcome"
+    ENCHANTMENT_EFFECT = "enchantment_effect"
+    ENCHANTMENT_EFFECT_OUTCOME = "enchantment_effect_outcome"
     MEMBER_TURN_SKIP = "member_turn_skip"
     MEMBER_TURN_ACTION = "member_turn_action"
     MEMBER_TURN = "member_turn"
@@ -217,6 +219,9 @@ class UIEventType(str, Enum):
     FORGE_OPEN_SHOP = "forge_open_select"
     FORGE_OPEN_OVERVIEW = "forge_open_overview"
     FORGE_SHOP_BUY = "forge_shop_buy"
+
+    ENCHANTMENTS_OPEN = "enchantments_open"
+    ENCHANTMENTS_APPLY = "enchantments_apply"
 
     SCRAP_BALANCE_CHANGED = "scrap_balance_changed"
 

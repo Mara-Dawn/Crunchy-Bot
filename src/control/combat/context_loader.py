@@ -3,8 +3,8 @@ from discord.ext import commands
 from combat.encounter import Encounter, EncounterContext
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.effect_manager import CombatEffectManager
 from control.combat.object_factory import ObjectFactory
-from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -33,8 +33,8 @@ class ContextLoader(Service):
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
         )
-        self.status_effect_manager: CombatStatusEffectManager = (
-            self.controller.get_service(CombatStatusEffectManager)
+        self.effect_manager: CombatEffectManager = self.controller.get_service(
+            CombatEffectManager
         )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.log_name = "ContextLoader"
@@ -153,15 +153,11 @@ class ContextLoader(Service):
             thread=thread,
         )
 
-        outcome = await self.status_effect_manager.handle_attribute_status_effects(
-            context, context.opponent
-        )
+        outcome = await self.effect_manager.on_attribute(context, context.opponent)
         context.opponent.round_modifier = outcome
 
         for combatant in context.combatants:
-            outcome = await self.status_effect_manager.handle_attribute_status_effects(
-                context, combatant
-            )
+            outcome = await self.effect_manager.on_attribute(context, combatant)
             combatant.round_modifier = outcome
 
         self.context_cache[encounter_id] = context

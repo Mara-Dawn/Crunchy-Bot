@@ -1,16 +1,17 @@
 import datetime
 
 from combat.actors import Character, Opponent
+from combat.effects.effect import (
+    EffectEmbedData,
+    EffectOutcome,
+    EmbedDataCollection,
+)
+from combat.effects.effect_handler import HandlerContext
 from combat.gear.types import CharacterAttribute
 from combat.skills.types import SkillEffect
-from combat.status_effects.status_effect import (
-    ActiveStatusEffect,
-    EmbedDataCollection,
-    StatusEffectEmbedData,
-    StatusEffectOutcome,
-)
+from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import PartyLeech
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.status_effects.status_handler import StatusEffectHandler
 from combat.status_effects.types import StatusEffectType
 from config import Config
 from control.controller import Controller
@@ -27,8 +28,8 @@ class PartyLeechHandler(StatusEffectHandler):
 
     async def handle(
         self, status_effect: ActiveStatusEffect, handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
-        outcome = StatusEffectOutcome.EMPTY()
+    ) -> EffectOutcome:
+        outcome = EffectOutcome.EMPTY()
         effect_type = status_effect.status_effect.effect_type
         if effect_type != self.effect_type:
             return outcome
@@ -110,9 +111,9 @@ class PartyLeechHandler(StatusEffectHandler):
         return base_value * (1 + healing_modifier)
 
     async def combine(
-        self, outcomes: list[StatusEffectOutcome], handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
-        combined = StatusEffectOutcome.EMPTY()
+        self, outcomes: list[EffectOutcome], handler_context: HandlerContext
+    ) -> EffectOutcome:
+        combined = EffectOutcome.EMPTY()
         combined.value = (0, 0)
 
         for outcome in outcomes:
@@ -122,7 +123,7 @@ class PartyLeechHandler(StatusEffectHandler):
 
         embed_data_collection = EmbedDataCollection()
         description = f"{handler_context.target.name} suffers {combined.value[0]} damage.\nEveryone heals for {combined.value[1]} hp."
-        embed_data = StatusEffectEmbedData(
+        embed_data = EffectEmbedData(
             self.status_effect, self.status_effect.title, description
         )
         embed_data_collection.append(embed_data)
