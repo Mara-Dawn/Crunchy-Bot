@@ -9,8 +9,8 @@ from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.combat.context_loader import ContextLoader
 from control.combat.discord_manager import DiscordManager
+from control.combat.effect_manager import CombatEffectManager
 from control.combat.object_factory import ObjectFactory
-from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
 from control.item_manager import ItemManager
 from control.jail_manager import JailManager
@@ -50,8 +50,8 @@ class State(ABC):
         self.gear_manager: CombatGearManager = self.controller.get_service(
             CombatGearManager
         )
-        self.status_effect_manager: CombatStatusEffectManager = (
-            self.controller.get_service(CombatStatusEffectManager)
+        self.effect_manager: CombatEffectManager = self.controller.get_service(
+            CombatEffectManager
         )
         self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
         self.discord: DiscordManager = self.controller.get_service(DiscordManager)

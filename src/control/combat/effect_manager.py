@@ -1,20 +1,18 @@
-import datetime
-
 from discord.ext import commands
 
 from combat.actors import Actor
 from combat.effects.effect import EffectOutcome, OutcomeFlag
-from combat.effects.effect_handler import HandlerContext
+from combat.effects.effect_handler import EffectHandler, HandlerContext
 from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
 from combat.skills.skill import Skill, SkillInstance
-from combat.skills.types import SkillEffect
-from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import *  # noqa: F403
 from combat.status_effects.status_handler import StatusEffectHandler
 from combat.status_effects.types import StatusEffectType
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.combat_enchantment_manager import CombatEnchantmentManager
+from control.combat.effect_manager_interface import EffectManager
 from control.combat.object_factory import ObjectFactory
 from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
@@ -22,9 +20,6 @@ from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
 from events.bot_event import BotEvent
-from events.combat_event import CombatEvent
-from events.status_effect_event import StatusEffectEvent
-from events.types import CombatEventType
 
 
 class CombatEffectManager(Service):
@@ -54,6 +49,14 @@ class CombatEffectManager(Service):
         self.status_effect_manager: CombatStatusEffectManager = (
             self.controller.get_service(CombatStatusEffectManager)
         )
+        self.enchantment_manager: CombatEnchantmentManager = (
+            self.controller.get_service(CombatEnchantmentManager)
+        )
+
+        self.managers: list[EffectManager] = [
+            self.status_effect_manager,
+            # self.enchantment_manager,
+        ]
 
     async def listen_for_event(self, event: BotEvent):
         pass
@@ -67,30 +70,28 @@ class CombatEffectManager(Service):
         stacks: int,
         application_value: float = None,
     ) -> EffectOutcome:
-        outcome = await self.handle_on_status_application_status_effects(
-            target, context, type
-        )
+        outcome = await self.on_status_application(target, context, type)
         if (
             outcome.flags is not None
             and OutcomeFlag.PREVENT_STATUS_APPLICATION in outcome.flags
         ):
             return outcome
 
-        outcome = await self.status_effect_manager.apply_status(
+        status_outcome = await self.status_effect_manager.apply_status(
             context, source, target, type, stacks, application_value
         )
 
-        self_application_outcome = await self.handle_on_self_application_status_effects(
-            source, target, context, type, value
+        self_application_outcome = await self.on_status_self_application(
+            source, target, context, type, status_outcome.value
         )
 
-        outcome = StatusEffectHandler.combine_outcomes(
-            [self_application_outcome, outcome]
+        outcome = EffectHandler.combine_outcomes(
+            [self_application_outcome, status_outcome, outcome]
         )
 
         return outcome
 
-    async def handle_on_self_application_status_effects(
+    async def on_status_self_application(
         self,
         source: Actor,
         target: Actor,
@@ -98,20 +99,6 @@ class CombatEffectManager(Service):
         effect_type: StatusEffectType,
         application_value: float = None,
     ) -> EffectOutcome:
-        triggered_status_effects = await self.actor_trigger(
-            context, target, EffectTrigger.ON_SELF_APPLICATION
-        )
-
-        if len(triggered_status_effects) <= 0:
-            return EffectOutcome.EMPTY()
-
-        filtered = []
-        for effect in triggered_status_effects:
-            if effect.status_effect.effect_type == effect_type:
-                filtered.append(effect)
-
-        if len(filtered) <= 0:
-            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
             trigger=EffectTrigger.ON_STATUS_APPLICATION,
@@ -119,27 +106,22 @@ class CombatEffectManager(Service):
             source=source,
             target=target,
             skill=None,
-            triggering_status_effect_type=effect_type,
+            status_effect_type=effect_type,
             application_value=application_value,
             damage_instance=None,
         )
 
-        return await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_status_self_application(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)
 
-    async def handle_on_status_application_status_effects(
+    async def on_status_application(
         self,
         actor: Actor,
         context: EncounterContext,
         applied_effect_type: StatusEffectType,
     ) -> EffectOutcome:
-        triggered_status_effects = await self.actor_trigger(
-            context, actor, EffectTrigger.ON_STATUS_APPLICATION
-        )
-
-        if len(triggered_status_effects) <= 0:
-            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
             trigger=EffectTrigger.ON_STATUS_APPLICATION,
@@ -147,50 +129,21 @@ class CombatEffectManager(Service):
             source=actor,
             target=actor,
             skill=None,
-            triggering_status_effect_type=applied_effect_type,
+            status_effect_type=applied_effect_type,
             application_value=None,
             damage_instance=None,
         )
 
-        outcome = await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_status_application(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)
 
-        return outcome
-
-    async def consume_status_stack(
-        self,
-        context: EncounterContext,
-        status_effect: ActiveStatusEffect,
-        amount: int = 1,
-    ):
-        status_effect_event = status_effect.event
-        event = CombatEvent(
-            datetime.datetime.now(),
-            context.encounter.guild_id,
-            context.encounter.id,
-            status_effect_event.actor_id,
-            status_effect_event.actor_id,
-            status_effect_event.status_type,
-            -amount,
-            -amount,
-            status_effect_event.id,
-            CombatEventType.STATUS_EFFECT,
-        )
-        await self.controller.dispatch_event(event)
-
-    async def handle_attribute_status_effects(
+    async def on_attribute(
         self,
         context: EncounterContext,
         actor: Actor,
     ) -> EffectOutcome:
-
-        triggered_status_effects = await self.actor_trigger(
-            context, actor, EffectTrigger.ATTRIBUTE
-        )
-
-        if len(triggered_status_effects) <= 0:
-            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
             trigger=EffectTrigger.ATTRIBUTE,
@@ -198,57 +151,22 @@ class CombatEffectManager(Service):
             source=actor,
             target=actor,
             skill=None,
-            triggering_status_effect_type=None,
+            status_effect_type=None,
             application_value=None,
             damage_instance=None,
         )
 
-        return await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_attribute(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)
 
-    async def get_status_effects_outcome(
-        self,
-        status_effects: list[ActiveStatusEffect],
-        handler_context: HandlerContext,
-    ) -> EffectOutcome:
-        outcome_data: dict[StatusEffectType, EffectOutcome] = {}
-
-        for status_effect in status_effects:
-            effect_type = status_effect.status_effect.effect_type
-            handler = await self.get_handler(effect_type)
-            outcome = await handler.handle(status_effect, handler_context)
-
-            if effect_type not in outcome_data:
-                outcome_data[effect_type] = [outcome]
-            else:
-                outcome_data[effect_type].append(outcome)
-
-        combined_outcomes = []
-        for effect_type, outcomes in outcome_data.items():
-            handler = await self.get_handler(effect_type)
-            combined = await handler.combine(outcomes, handler_context)
-            combined_outcomes.append(combined)
-
-        return StatusEffectHandler.combine_outcomes(combined_outcomes)
-
-    async def handle_attack_status_effects(
+    async def on_attack(
         self,
         context: EncounterContext,
         actor: Actor,
         skill: Skill,
     ) -> EffectOutcome:
-        skill_effect = skill.base_skill.skill_effect
-
-        triggered_status_effects = await self.actor_trigger(
-            context, actor, EffectTrigger.ON_ATTACK
-        )
-
-        if len(triggered_status_effects) <= 0 or skill_effect in [
-            SkillEffect.NOTHING,
-            SkillEffect.BUFF,
-        ]:
-            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
             trigger=EffectTrigger.ON_ATTACK,
@@ -256,100 +174,60 @@ class CombatEffectManager(Service):
             source=actor,
             target=actor,
             skill=skill,
-            triggering_status_effect_type=None,
+            status_effect_type=None,
             application_value=None,
             damage_instance=None,
         )
 
-        outcome = await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_attack(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)
 
-        if not skill.base_skill.modifiable:
-            if outcome.modifier is not None:
-                outcome.modifier = max(1, outcome.modifier)
-            outcome.crit_chance = None
-            outcome.crit_chance_modifier = None
-
-        return outcome
-
-    async def handle_on_damage_taken_status_effects(
+    async def on_damage_taken(
         self,
         context: EncounterContext,
         actor: Actor,
         skill: Skill,
     ) -> EffectOutcome:
-        skill_effect = skill.base_skill.skill_effect
-
-        if skill_effect in [
-            SkillEffect.NOTHING,
-            SkillEffect.HEALING,
-            SkillEffect.BUFF,
-        ]:
-            return EffectOutcome.EMPTY()
-
-        triggered_status_effects = await self.actor_trigger(
-            context, actor, EffectTrigger.ON_DAMAGE_TAKEN
-        )
-
-        if len(triggered_status_effects) <= 0:
-            return EffectOutcome.EMPTY()
-
         handler_context = HandlerContext(
             trigger=EffectTrigger.ON_DAMAGE_TAKEN,
             context=context,
             source=actor,
             target=actor,
             skill=skill,
-            triggering_status_effect_type=None,
+            status_effect_type=None,
             application_value=None,
             damage_instance=None,
         )
 
-        outcome = await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_damage_taken(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)
 
-        if not skill.base_skill.modifiable:
-            if outcome.modifier is not None:
-                outcome.modifier = max(1, outcome.modifier)
-            outcome.crit_chance = None
-            outcome.crit_chance_modifier = None
-
-        return outcome
-
-    async def handle_on_death_status_effects(
+    async def on_death(
         self,
         context: EncounterContext,
         actor: Actor,
     ) -> EffectOutcome:
-        for active_actor in context.current_initiative:
-            if active_actor.id == actor.id:
-                actor = active_actor
-
-        triggered_status_effects = await self.actor_trigger(
-            context, actor, EffectTrigger.ON_DEATH
-        )
-
-        if len(triggered_status_effects) <= 0:
-            return EffectOutcome.EMPTY()
-
         handler_context = HandlerContext(
             trigger=EffectTrigger.ON_DEATH,
             context=context,
             source=actor,
             target=actor,
             skill=None,
-            triggering_status_effect_type=None,
+            status_effect_type=None,
             application_value=None,
             damage_instance=None,
         )
 
-        return await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_death(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)
 
-    async def handle_post_attack_status_effects(
+    async def on_post_attack(
         self,
         context: EncounterContext,
         actor: Actor,
@@ -357,88 +235,117 @@ class CombatEffectManager(Service):
         skill: Skill,
         damage_instance: SkillInstance,
     ) -> EffectOutcome:
-
-        triggered_status_effects = await self.actor_trigger(
-            context, actor, EffectTrigger.POST_ATTACK
-        )
-
         handler_context = HandlerContext(
             trigger=EffectTrigger.POST_ATTACK,
             context=context,
             source=actor,
             target=target,
             skill=skill,
-            triggering_status_effect_type=None,
+            status_effect_type=None,
             application_value=None,
             damage_instance=damage_instance,
         )
 
-        return await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
-        )
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_post_attack(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)
 
-    async def handle_round_status_effects(
+    async def on_round_start(
         self,
         context: EncounterContext,
-        trigger: EffectTrigger,
     ) -> dict[int, EffectOutcome]:
         actor_outcomes = {}
         for active_actor in context.current_initiative:
 
-            triggered_status_effects = await self.actor_trigger(
-                context, active_actor, trigger
-            )
-
-            if len(triggered_status_effects) <= 0:
-                continue
-
             handler_context = HandlerContext(
-                trigger=trigger,
+                trigger=EffectTrigger.START_OF_ROUND,
                 context=context,
                 source=active_actor,
                 target=active_actor,
                 skill=None,
-                triggering_status_effect_type=None,
+                status_effect_type=None,
                 application_value=None,
                 damage_instance=None,
             )
 
-            actor_outcomes[active_actor.id] = await self.get_status_effects_outcome(
-                triggered_status_effects, handler_context
-            )
+            outcomes: list[EffectOutcome] = []
+            for manager in self.managers:
+                outcomes.append(await manager.on_round_start(handler_context))
+            actor_outcomes[active_actor.id] = EffectHandler.combine_outcomes(outcomes)
 
         return actor_outcomes
 
-    async def handle_turn_status_effects(
+    async def on_round_end(
+        self,
+        context: EncounterContext,
+    ) -> dict[int, EffectOutcome]:
+        actor_outcomes = {}
+        for active_actor in context.current_initiative:
+
+            handler_context = HandlerContext(
+                trigger=EffectTrigger.END_OF_ROUND,
+                context=context,
+                source=active_actor,
+                target=active_actor,
+                skill=None,
+                status_effect_type=None,
+                application_value=None,
+                damage_instance=None,
+            )
+
+            outcomes: list[EffectOutcome] = []
+            for manager in self.managers:
+                outcomes.append(await manager.on_round_end(handler_context))
+            actor_outcomes[active_actor.id] = EffectHandler.combine_outcomes(outcomes)
+
+        return actor_outcomes
+
+    async def on_turn_start(
         self,
         context: EncounterContext,
         actor: Actor,
-        trigger: EffectTrigger,
     ) -> EffectOutcome:
-        if actor.defeated or actor.leaving or actor.is_out:
-            return EffectOutcome.EMPTY()
-
-        triggered_status_effects = await self.actor_trigger(context, actor, trigger)
-
-        if len(triggered_status_effects) <= 0:
-            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
-            trigger=trigger,
+            trigger=EffectTrigger.START_OF_TURN,
             context=context,
             source=actor,
             target=actor,
             skill=None,
-            triggering_status_effect_type=None,
+            status_effect_type=None,
             application_value=None,
             damage_instance=None,
         )
 
-        return await self.get_status_effects_outcome(
-            triggered_status_effects, handler_context
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_turn_start(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)
+
+    async def on_turn_end(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+    ) -> EffectOutcome:
+
+        handler_context = HandlerContext(
+            trigger=EffectTrigger.END_OF_TURN,
+            context=context,
+            source=actor,
+            target=actor,
+            skill=None,
+            status_effect_type=None,
+            application_value=None,
+            damage_instance=None,
         )
 
-    async def handle_applicant_turn_status_effects(
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_turn_end(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)
+
+    async def on_applicant_turn_end(
         self,
         context: EncounterContext,
         actor: Actor,
@@ -446,22 +353,6 @@ class CombatEffectManager(Service):
         actor_outcomes = {}
 
         for active_actor in context.current_initiative:
-
-            triggered_status_effects = await self.actor_trigger(
-                context,
-                active_actor,
-                EffectTrigger.END_OF_APPLICANT_TURN,
-                match_source_id=actor.id,
-            )
-
-            filtered = []
-
-            for effect in triggered_status_effects:
-                if effect.event.source_id == actor.id:
-                    filtered.append(effect)
-
-            if len(filtered) <= 0:
-                continue
 
             handler_context = HandlerContext(
                 trigger=EffectTrigger.END_OF_APPLICANT_TURN,
@@ -469,54 +360,14 @@ class CombatEffectManager(Service):
                 source=actor,
                 target=active_actor,
                 skill=None,
-                triggering_status_effect_type=None,
+                status_effect_type=None,
                 application_value=None,
                 damage_instance=None,
             )
 
-            actor_outcomes[active_actor.id] = await self.get_status_effects_outcome(
-                triggered_status_effects, handler_context
-            )
+            outcomes: list[EffectOutcome] = []
+            for manager in self.managers:
+                outcomes.append(await manager.on_applicant_turn_end(handler_context))
+            actor_outcomes[active_actor.id] = EffectHandler.combine_outcomes(outcomes)
 
         return actor_outcomes
-
-    async def actor_trigger(
-        self,
-        context: EncounterContext,
-        actor: Actor,
-        trigger: EffectTrigger,
-        match_source_id: int | None = None,
-    ) -> list[ActiveStatusEffect]:
-        triggered = []
-
-        for active_status_effect in actor.status_effects:
-            if active_status_effect.remaining_stacks <= 0:
-                continue
-
-            status_effect = active_status_effect.status_effect
-            status_effect_event = active_status_effect.event
-
-            next_round = status_effect_event.id <= context.round_event_id_cutoff
-
-            delay_consume = status_effect.delay_consume and not next_round
-            delay_trigger = status_effect.delay_trigger and not next_round
-
-            actor_is_source = status_effect_event.source_id == actor.id
-
-            if status_effect.delay_for_source_only and not actor_is_source:
-                delay_consume = False
-                delay_trigger = False
-
-            if not delay_consume and trigger in status_effect.consumed:  # noqa: SIM102
-                if match_source_id is None or (
-                    status_effect_event.source_id == match_source_id
-                ):
-                    await self.consume_status_stack(context, active_status_effect)
-
-            if not delay_trigger and trigger in status_effect.trigger:
-                triggered.append(active_status_effect)
-
-        triggered = sorted(
-            triggered, key=lambda item: item.status_effect.priority, reverse=True
-        )
-        return triggered

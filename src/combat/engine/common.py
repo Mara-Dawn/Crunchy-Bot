@@ -7,8 +7,8 @@ from combat.encounter import EncounterContext
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.discord_manager import DiscordManager
+from control.combat.effect_manager import CombatEffectManager
 from control.combat.object_factory import ObjectFactory
-from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -38,8 +38,8 @@ class CommonService(Service):
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
         )
-        self.status_effect_manager: CombatStatusEffectManager = (
-            self.controller.get_service(CombatStatusEffectManager)
+        self.effect_manager: CombatEffectManager = self.controller.get_service(
+            CombatEffectManager
         )
         self.discord: DiscordManager = self.controller.get_service(DiscordManager)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
@@ -70,11 +70,7 @@ class CommonService(Service):
                     await enemy_controller.on_defeat(context, actor)
                     continue
 
-                outcome = (
-                    await self.status_effect_manager.handle_on_death_status_effects(
-                        context, actor
-                    )
-                )
+                outcome = await self.effect_manager.on_death(context, actor)
                 if outcome.embed_data is not None:
                     await self.discord.append_embeds_to_round(
                         context, actor, outcome.embed_data

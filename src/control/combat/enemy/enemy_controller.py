@@ -22,8 +22,8 @@ from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.combat.context_loader import ContextLoader
 from control.combat.discord_manager import DiscordManager
+from control.combat.effect_manager import CombatEffectManager
 from control.combat.object_factory import ObjectFactory
-from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
@@ -62,8 +62,8 @@ class EnemyController(Service, ABC):
         self.gear_manager: CombatGearManager = self.controller.get_service(
             CombatGearManager
         )
-        self.status_effect_manager: CombatStatusEffectManager = (
-            self.controller.get_service(CombatStatusEffectManager)
+        self.effect_manager: CombatEffectManager = self.controller.get_service(
+            CombatEffectManager
         )
         self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
@@ -132,14 +132,12 @@ class EnemyController(Service, ABC):
                 total_damage = await self.actor_manager.get_skill_damage_after_defense(
                     target, turn.skill, damage_instance.scaled_value
                 )
-                outcome = (
-                    await self.status_effect_manager.handle_post_attack_status_effects(
-                        context,
-                        opponent,
-                        target,
-                        turn.skill,
-                        damage_instance,
-                    )
+                outcome = await self.effect_manager.on_post_attack(
+                    context,
+                    opponent,
+                    target,
+                    turn.skill,
+                    damage_instance,
                 )
                 if outcome.applied_effects is not None:
                     turn_damage_data.applied_status_effects.extend(
@@ -180,7 +178,7 @@ class EnemyController(Service, ABC):
                         application_chance = min(1, application_chance * 2)
 
                     if random.random() < application_chance:
-                        outcome = await self.status_effect_manager.apply_status(
+                        outcome = await self.effect_manager.apply_status(
                             context,
                             opponent,
                             status_effect_target,
@@ -252,7 +250,7 @@ class EnemyController(Service, ABC):
         post_embed_data = EmbedDataCollection()
 
         for target in available_targets:
-            outcome = await self.status_effect_manager.handle_attack_status_effects(
+            outcome = await self.effect_manager.on_attack(
                 context, context.opponent, skill
             )
             if outcome.embed_data is not None:
@@ -267,7 +265,7 @@ class EnemyController(Service, ABC):
             current_hp = hp_cache.get(target.id, target.current_hp)
 
             if instance.value > 0:
-                outcome = await self.status_effect_manager.handle_on_damage_taken_status_effects(
+                outcome = await self.effect_manager.on_damage_taken(
                     context,
                     target,
                     skill,
@@ -344,7 +342,7 @@ class EnemyController(Service, ABC):
 
             current_hp = hp_cache.get(target.id, target.current_hp)
 
-            outcome = await self.status_effect_manager.handle_attack_status_effects(
+            outcome = await self.effect_manager.on_attack(
                 context, context.opponent, skill
             )
             outcome.apply_to_instance(instance)
@@ -352,7 +350,7 @@ class EnemyController(Service, ABC):
                 post_embed_data.extend(outcome.embed_data)
 
             if instance.value > 0:
-                outcome = await self.status_effect_manager.handle_on_damage_taken_status_effects(
+                outcome = await self.effect_manager.on_damage_taken(
                     context,
                     target,
                     skill,

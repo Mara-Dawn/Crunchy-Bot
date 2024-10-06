@@ -6,6 +6,7 @@ from combat.effects.effect import EffectOutcome
 from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
 from combat.skills.skill import Skill, SkillInstance
+from combat.status_effects.types import StatusEffectType
 from control.controller import Controller
 
 
@@ -16,8 +17,9 @@ class HandlerContext:
     source: Actor = None
     target: Actor = None
     skill: Skill = None
-    trigger_value: float = None
+    application_value: float = None
     damage_instance: SkillInstance = None
+    status_effect_type: StatusEffectType = None
 
 
 class EffectHandler(ABC):

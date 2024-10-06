@@ -5,7 +5,7 @@ from combat.effects.types import EffectTrigger
 from combat.enchantments.types import EnchantmentEffect, EnchantmentType
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
-from combat.skills.types import SkillEffect, SkillType
+from combat.skills.types import SkillEffect
 from config import Config
 from control.types import FieldData
 

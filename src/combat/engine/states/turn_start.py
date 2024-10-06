@@ -1,5 +1,4 @@
 from combat.actors import Actor
-from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
 from combat.engine.states.state import State
 from combat.engine.types import StateType
@@ -19,9 +18,7 @@ class TurnStartState(State):
         await self.discord.refresh_round_overview(self.context)
 
         actor = self.context.current_actor
-        outcome = await self.status_effect_manager.handle_turn_status_effects(
-            self.context, actor, EffectTrigger.START_OF_TURN
-        )
+        outcome = await self.effect_manager.on_turn_start(self.context, actor)
 
         self.context.current_turn_embed = self.embed_manager.get_turn_embed(actor)
 

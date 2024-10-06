@@ -5,7 +5,6 @@ import discord
 
 from combat.actors import Character
 from combat.enchantments.enchantment import Enchantment, GearEnchantment
-from combat.enchantments.enchantments import Empty
 from combat.enchantments.types import EnchantmentEffect, EnchantmentType
 from combat.gear.gear import Gear
 from combat.gear.types import EquipmentSlot, Rarity

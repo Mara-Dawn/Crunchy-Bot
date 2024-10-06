@@ -1,6 +1,5 @@
 import datetime
 
-from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
 from combat.engine.states.state import State
 from combat.engine.types import StateType
@@ -27,9 +26,7 @@ class RoundStartState(State):
         )
         await self.controller.dispatch_event(event)
 
-        outcomes = await self.status_effect_manager.handle_round_status_effects(
-            self.context, EffectTrigger.START_OF_ROUND
-        )
+        outcomes = await self.effect_manager.on_round_start(self.context)
 
         for actor_id, outcome in outcomes.items():
             if outcome.embed_data is not None:
@@ -41,10 +38,8 @@ class RoundStartState(State):
                 )
 
         for actor in self.context.initiative:
-            actor.round_modifier = (
-                await self.status_effect_manager.handle_attribute_status_effects(
-                    self.context, actor
-                )
+            actor.round_modifier = await self.effect_manager.on_attribute(
+                self.context, actor
             )
 
             if actor.leaving:

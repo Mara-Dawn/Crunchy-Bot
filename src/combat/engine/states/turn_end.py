@@ -1,6 +1,5 @@
 import datetime
 
-from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
 from combat.engine.states.state import State
 from combat.engine.types import StateType
@@ -20,20 +19,14 @@ class TurnEndState(State):
     async def startup(self):
         actor = self.context.current_actor
 
-        outcome = await self.status_effect_manager.handle_turn_status_effects(
-            self.context, actor, EffectTrigger.END_OF_TURN
-        )
+        outcome = await self.effect_manager.on_turn_end(self.context, actor)
 
         if outcome.embed_data is not None:
             await self.discord.update_current_turn_embed(
                 self.context, outcome.embed_data
             )
 
-        outcomes = (
-            await self.status_effect_manager.handle_applicant_turn_status_effects(
-                self.context, actor
-            )
-        )
+        outcomes = await self.effect_manager.on_applicant_turn_end(self.context, actor)
         for outcome in outcomes.values():
             if outcome.embed_data is not None:
                 await self.discord.update_current_turn_embed(
