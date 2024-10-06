@@ -37,7 +37,7 @@ class FrostHandler(StatusEffectHandler):
                     embed_data_collection = EmbedDataCollection()
                     description = "Healing effectiveness was reduced by frost."
                     embed_data = EffectEmbedData(
-                        self.status_effect, self.status_effec.title, description
+                        self.status_effect, self.status_effect.title, description
                     )
                     embed_data_collection.append(embed_data)
                     outcome.embed_data = embed_data_collection
