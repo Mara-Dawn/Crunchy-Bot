@@ -1,5 +1,6 @@
 from discord.ext import commands
 
+from combat.enchantments.enchantments import *  # noqa: F403
 from combat.enemies import *  # noqa: F403
 from combat.enemies.enemy import Enemy
 from combat.enemies.types import EnemyType

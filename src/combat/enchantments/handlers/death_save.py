@@ -1,27 +1,37 @@
 import datetime
 
 from combat.effects.efffect import EffectEmbedData, EffectOutcome, EmbedDataCollection
-from combat.status_effects.status_effect import ActiveStatusEffect
-from combat.status_effects.status_effects import DeathProtection
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.enchantments.enchantment import EffectEnchantment
+from combat.enchantments.enchantment_handler import (
+    EnchantmentEffectHandler,
+    HandlerContext,
+)
+from combat.enchantments.enchantments import DeathSave
+from combat.skills.types import SkillEffect
+from control.combat.combat_enchantment_manager import CombatEnchantmentManager
 from control.controller import Controller
 from events.combat_event import CombatEvent
 from events.types import CombatEventType
 
 
-class DeathProtectionHandler(StatusEffectHandler):
+class DeathSaveHandler(EnchantmentEffectHandler):
 
     def __init__(self, controller: Controller):
-        StatusEffectHandler.__init__(
-            self, controller=controller, status_effect=DeathProtection()
+        EnchantmentEffectHandler.__init__(
+            self, controller=controller, enchantment=DeathSave()
+        )
+        self.enchantment_manager: CombatEnchantmentManager = (
+            self.controller.get_service(CombatEnchantmentManager)
         )
 
     async def handle(
-        self, status_effect: ActiveStatusEffect, handler_context: HandlerContext
+        self,
+        enchantment: EffectEnchantment,
+        handler_context: HandlerContext,
     ) -> EffectOutcome:
         outcome = EffectOutcome.EMPTY()
-        effect_type = status_effect.status_effect.effect_type
-        if effect_type != self.effect_type:
+        enchantment_type = enchantment.enchantment.base_enchantment.enchantment_type
+        if enchantment_type != self.base_enchantment.enchantment_type:
             return outcome
 
         outcome.value = 1
@@ -29,13 +39,13 @@ class DeathProtectionHandler(StatusEffectHandler):
             datetime.datetime.now(),
             handler_context.context.encounter.guild_id,
             handler_context.context.encounter.id,
-            status_effect.event.source_id,
-            status_effect.event.actor_id,
-            status_effect.event.status_type,
+            handler_context.source.id,
+            handler_context.source.id,
+            enchantment.base_enchantment.enchantment_type,
             1,
             1,
-            status_effect.event.id,
-            CombatEventType.STATUS_EFFECT_OUTCOME,
+            enchantment.id,
+            CombatEventType.ENCHANTMENT_EFFECT_OUTCOME,
         )
         await self.controller.dispatch_event(event)
 
@@ -53,3 +63,9 @@ class DeathProtectionHandler(StatusEffectHandler):
         self, outcomes: list[EffectOutcome], handler_context: HandlerContext
     ) -> EffectOutcome:
         return self.combine_outcomes(outcomes)
+
+    async def is_penalty(
+        self,
+        skill_effect: SkillEffect,
+    ) -> bool:
+        return False

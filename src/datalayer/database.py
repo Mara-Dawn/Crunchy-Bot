@@ -8,10 +8,14 @@ import discord
 from discord.ext import commands
 
 from bot_util import BotUtil
+from combat.enchantments.enchantment import EffectEnchantment, Enchantment
+from combat.enchantments.enchantments import *  # noqa: F403
+from combat.enchantments.types import EnchantmentType
 from combat.encounter import Encounter
 from combat.enemies.types import EnemyType
 from combat.equipment import CharacterEquipment
-from combat.gear import (
+from combat.gear.bases import *  # noqa: F403
+from combat.gear.default_gear import (
     DefaultAccessory1,
     DefaultAccessory2,
     DefaultCap,
@@ -21,7 +25,6 @@ from combat.gear import (
     DefaultWand,
     Gear,
 )
-from combat.gear.bases import *  # noqa: F403
 from combat.gear.gear import Droppable
 from combat.gear.types import (
     Base,
@@ -564,6 +567,16 @@ class Database:
         PRIMARY KEY ({USER_GEAR_MODIFIER_GEAR_ID_COL}, {USER_GEAR_MODIFIER_TYPE_COL})
     );"""
 
+    USER_GEAR_ENCHANTMENTS_TABLE = "usergearentchantments"
+    USER_GEAR_ENCHANTMENTS_GEAR_ID_COL = "ugen_gear_id"
+    USER_GEAR_ENCHANTMENTS_ID_COL = "ugen_id"
+    CREATE_USER_GEAR_ENCHANTMENTS_TABLE = f"""
+    CREATE TABLE if not exists {USER_GEAR_ENCHANTMENTS_TABLE } (
+        {USER_GEAR_ENCHANTMENTS_GEAR_ID_COL} INTEGER REFERENCES {USER_GEAR_TABLE} ({USER_GEAR_ID_COL}),
+        {USER_GEAR_ENCHANTMENTS_ID_COL} INTEGER,
+        PRIMARY KEY ({USER_GEAR_ENCHANTMENTS_GEAR_ID_COL}, {USER_GEAR_ENCHANTMENTS_ID_COL})
+    );"""
+
     USER_GEAR_SKILL_TABLE = "usergearskills"
     USER_GEAR_SKILL_GEAR_ID_COL = "usk_gear_id"
     USER_GEAR_SKILL_TYPE_COL = "ugsk_type"
@@ -771,6 +784,7 @@ class Database:
             await db.execute(self.CREATE_ENCOUNTER_THREAD_TABLE)
             await db.execute(self.CREATE_USER_GEAR_TABLE)
             await db.execute(self.CREATE_USER_GEAR_MODIFIER_TABLE)
+            await db.execute(self.CREATE_USER_GEAR_ENCHANTMENTS_TABLE)
             await db.execute(self.CREATE_USER_GEAR_SKILL_TABLE)
             await db.execute(self.CREATE_USER_EQUIPMENT_TABLE)
             await db.execute(self.CREATE_USER_EQUIPPED_SKILLS_TABLE)
@@ -3105,9 +3119,16 @@ class Database:
         start_id = 0
         requirement = Config.LEVEL_REQUIREMENTS[guild_level]
 
+        boss_types = {
+            3: EnemyType.DADDY_P1,
+            6: EnemyType.WEEB_BALL,
+            # 9: None,
+            # 12: None,
+        }
+
         if guild_level in Config.BOSS_LEVELS:
             last_fight_event = await self.get_guild_last_boss_attempt(
-                guild_id, Config.BOSS_TYPE[guild_level]
+                guild_id, boss_types[guild_level]
             )
             if last_fight_event is not None:
                 start_id = last_fight_event.id
@@ -3485,6 +3506,14 @@ class Database:
             )
             await self.__query_insert(command, task)
 
+    async def delete_user_gear_modifiers(self, gear_id: int):
+        command = f"""
+            DELETE FROM {self.USER_GEAR_MODIFIER_TABLE}
+            WHERE {self.USER_GEAR_MODIFIER_GEAR_ID_COL} = {int(gear_id)}
+        """
+
+        return await self.__query_insert(command)
+
     async def log_user_gear_skills(self, gear_id: int, gear: Gear):
         command = f"""
             INSERT INTO {self.USER_GEAR_SKILL_TABLE} (
@@ -3566,6 +3595,74 @@ class Database:
             id=id,
         )
 
+    async def get_enchantment_by_id(self, enchantment_id: int | None) -> Enchantment:
+        if enchantment_id is None:
+            return None
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            WHERE {self.USER_GEAR_ID_COL} = {int(enchantment_id)}
+            ;
+        """
+        rows = await self.__query_select(command)
+        if not rows:
+            return None
+
+        id = rows[0][self.USER_GEAR_ID_COL]
+        enchantment_type = EnchantmentType(rows[0][self.USER_GEAR_TYPE_COL])
+        base_class = globals()[enchantment_type]
+        base_enchantment: BaseEnchantment = base_class()  # noqa: F405
+        rarity = Rarity(rows[0][self.USER_GEAR_RARITY_COL])
+        level = rows[0][self.USER_GEAR_LEVEL_COL]
+        locked = int(rows[0][self.USER_GEAR_IS_LOCKED_COL]) == 1
+
+        if base_enchantment.enchantment_effect == EnchantmentEffect.EFFECT:
+            return EffectEnchantment(
+                base_enchantment=base_enchantment,
+                rarity=rarity,
+                level=level,
+                locked=locked,
+                id=id,
+            )
+        else:
+            return Enchantment(
+                base_enchantment=base_enchantment,
+                rarity=rarity,
+                level=level,
+                locked=locked,
+                id=id,
+            )
+
+    async def clear_user_gear_enchantment(self, gear_id: int):
+        command = f"""
+            DELETE FROM {self.USER_GEAR_ENCHANTMENTS_TABLE} 
+            WHERE {self.USER_GEAR_ENCHANTMENTS_GEAR_ID_COL} = {int(gear_id)}
+        """
+
+        return await self.__query_insert(command)
+
+    async def log_user_gear_enchantment(
+        self, gear: Gear, enchantments: list[Enchantment]
+    ) -> Gear:
+        await self.clear_user_gear_enchantment(gear.id)
+        await self.delete_gear_by_ids([enchantment.id for enchantment in enchantments])
+
+        command = f"""
+            INSERT INTO {self.USER_GEAR_ENCHANTMENTS_TABLE} (
+            {self.USER_GEAR_ENCHANTMENTS_GEAR_ID_COL},
+            {self.USER_GEAR_ENCHANTMENTS_ID_COL})
+            VALUES (?, ?);
+        """
+
+        for enchantment in enchantments:
+            task = (
+                gear.id,
+                enchantment.id,
+            )
+            await self.__query_insert(command, task)
+
+        return await self.get_gear_by_id(gear.id)
+
     async def get_gear_by_id(self, gear_id: int | None) -> Gear:
         if gear_id is None:
             return None
@@ -3574,6 +3671,7 @@ class Database:
             SELECT * FROM {self.USER_GEAR_TABLE} 
             LEFT JOIN {self.USER_GEAR_MODIFIER_TABLE} ON {self.USER_GEAR_MODIFIER_GEAR_ID_COL} = {self.USER_GEAR_ID_COL}
             LEFT JOIN {self.USER_GEAR_SKILL_TABLE} ON {self.USER_GEAR_SKILL_GEAR_ID_COL} = {self.USER_GEAR_ID_COL}
+            LEFT JOIN {self.USER_GEAR_ENCHANTMENTS_TABLE} ON {self.USER_GEAR_ENCHANTMENTS_GEAR_ID_COL} = {self.USER_GEAR_ID_COL}
             WHERE {self.USER_GEAR_ID_COL} = {int(gear_id)}
             AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
             ;
@@ -3592,20 +3690,27 @@ class Database:
         locked = int(rows[0][self.USER_GEAR_IS_LOCKED_COL]) == 1
 
         modifiers = {}
+        enchantments = {}
         skills = []
 
         for row in rows:
             skill_name = row[self.USER_GEAR_SKILL_TYPE_COL]
             if skill_name is not None:
                 skill_type = SkillType(skill_name)
-                skills.append(skill_type)
+                if skill_type not in skills:
+                    skills.append(skill_type)
 
             modifier_name = row[self.USER_GEAR_MODIFIER_TYPE_COL]
-            if modifier_name is None:
-                continue
-            modifier_type = GearModifierType(modifier_name)
-            if modifier_type not in modifiers:
-                modifiers[modifier_type] = row[self.USER_GEAR_MODIFIER_VALUE_COL]
+            if modifier_name is not None:
+                modifier_type = GearModifierType(modifier_name)
+                if modifier_type not in modifiers:
+                    modifiers[modifier_type] = row[self.USER_GEAR_MODIFIER_VALUE_COL]
+
+            enchantment_id = row[self.USER_GEAR_ENCHANTMENTS_ID_COL]
+            if enchantment_id is not None and enchantment_id not in enchantments:
+                enchantment = await self.get_enchantment_by_id(enchantment_id)
+                enchantment = await self.get_enchantment_by_id(enchantment_id)
+                enchantments[enchantment_id] = enchantment
 
         return Gear(
             name=name,
@@ -3614,7 +3719,7 @@ class Database:
             level=level,
             modifiers=modifiers,
             skills=skills,
-            enchantments=[],
+            enchantments=list(enchantments.values()),
             locked=locked,
             id=id,
         )
@@ -3659,6 +3764,33 @@ class Database:
         insert_id = await self.__query_insert(command, task)
 
         return insert_id
+
+    async def get_user_active_enchantments(
+        self, guild_id: int, member_id: int
+    ) -> list[Enchantment]:
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_ENCHANTMENTS_TABLE} 
+            INNER JOIN {self.USER_GEAR_TABLE} on {self.USER_GEAR_ID_COL} = {self.USER_GEAR_ENCHANTMENTS_GEAR_ID_COL}
+            WHERE {self.USER_GEAR_GUILD_ID_COL} = ?
+            AND {self.USER_GEAR_MEMBER_ID_COL} = ?
+            ;
+        """
+
+        task = (guild_id, member_id)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+
+        enchantments = []
+
+        for row in rows:
+            enchantment_id = row[self.USER_GEAR_ENCHANTMENTS_ID_COL]
+            enchantment = await self.get_enchantment_by_id(enchantment_id)
+            if enchantment is not None:
+                enchantments.append(enchantment)
+
+        return enchantments
 
     async def get_user_equipped_skills(
         self, guild_id: int, member_id: int
@@ -3883,6 +4015,29 @@ class Database:
 
         return equipment
 
+    async def get_user_enchantment_inventory(
+        self, guild_id: int, member_id: int
+    ) -> list[Enchantment]:
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            WHERE {self.USER_GEAR_GUILD_ID_COL} = ?
+            AND {self.USER_GEAR_MEMBER_ID_COL} = ?
+            AND {self.USER_GEAR_BASE_TYPE_COL} = ?
+            AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
+            ;
+        """
+        task = (guild_id, member_id, Base.ENCHANTMENT)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+        enchantments = []
+        for row in rows:
+            enchantment = await self.get_enchantment_by_id(row[self.USER_GEAR_ID_COL])
+            enchantments.append(enchantment)
+
+        return enchantments
+
     async def get_user_skill_inventory(
         self, guild_id: int, member_id: int
     ) -> list[Skill]:
@@ -3929,6 +4084,64 @@ class Database:
             armory.append(gear_piece)
 
         return armory
+
+    async def get_user_enchantment_stacks_used(
+        self, guild_id: int, member_id: int
+    ) -> dict[int, int]:
+        command = f"""
+            SELECT * FROM {self.COMBAT_EVENT_TABLE}
+            INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.COMBAT_EVENT_TABLE}.{self.COMBAT_EVENT_ID_COL}
+            LEFT JOIN {self.USER_GEAR_TABLE} ON {self.COMBAT_EVENT_SKILL_ID} = {self.USER_GEAR_ID_COL}
+            WHERE {self.EVENT_GUILD_ID_COL} = ?
+            AND {self.COMBAT_EVENT_MEMBER_ID} = ?
+            AND {self.COMBAT_EVENT_TYPE_COL} = ?
+            ORDER BY {self.EVENT_ID_COL} DESC;
+        """
+        task = (guild_id, member_id, CombatEventType.ENCHANTMENT_EFFECT)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return {}
+
+        active_encounters = await self.get_encounter_participants(guild_id)
+
+        current_encounter_id = None
+
+        for encounter_id, members in active_encounters.items():
+            if member_id in members:
+                current_encounter_id = encounter_id
+                break
+
+        stacks_used = {}
+        for row in rows:
+            if (
+                row[self.COMBAT_EVENT_SKILL_TYPE] is None
+                or row[self.COMBAT_EVENT_SKILL_TYPE] not in EnchantmentType
+            ):
+                continue
+
+            enchantment_type = EnchantmentType(row[self.COMBAT_EVENT_SKILL_TYPE])
+
+            enchantment_id = row[self.COMBAT_EVENT_SKILL_ID]
+            if enchantment_id is None:
+                continue
+
+            base_class = globals()[enchantment_type]
+            base_enchantment: BaseEnchantment = base_class()  # noqa: F405
+
+            if base_enchantment.reset_after_encounter:
+                if current_encounter_id is None:
+                    continue
+
+                encounter_id = row[self.COMBAT_EVENT_ENCOUNTER_ID_COL]
+                if current_encounter_id != encounter_id:
+                    continue
+
+            if enchantment_id not in stacks_used:
+                stacks_used[enchantment_id] = 1
+            else:
+                stacks_used[enchantment_id] += 1
+
+        return stacks_used
 
     async def get_user_skill_stacks_used(
         self, guild_id: int, member_id: int

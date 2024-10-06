@@ -8,8 +8,9 @@ import discord
 from discord.ext import commands
 
 from combat.actors import Actor
+from combat.effects.efffect import EmbedDataCollection
 from combat.encounter import Encounter, EncounterContext
-from combat.status_effects.status_effect import EmbedDataCollection
+from combat.enemies.types import EnemyType
 from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.context_loader import ContextLoader
@@ -117,9 +118,17 @@ class DiscordManager(Service):
                 )
 
             fresh_prog = True
+
+            boss_type = {
+                3: EnemyType.DADDY_P1,
+                6: EnemyType.WEEB_BALL,
+                # 9: None,
+                # 12: None,
+            }
+
             if guild_level in Config.BOSS_LEVELS:
                 last_fight_event = await self.database.get_guild_last_boss_attempt(
-                    guild_id, Config.BOSS_TYPE[guild_level]
+                    guild_id, boss_type[guild_level]
                 )
                 fresh_prog = last_fight_event is None
 

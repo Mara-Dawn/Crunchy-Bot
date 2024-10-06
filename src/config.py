@@ -1,6 +1,3 @@
-from combat.enemies.types import EnemyType
-
-
 class Config:
 
     # Lootbox Settings
@@ -103,15 +100,6 @@ class Config:
     BOSS_LEVELS = [3, 6, 9, 12]
     BOSS_RETRY_REQUIREMENT = 15
     BOSS_KEY_CLAIM_DELAY = 180
-
-    BOSS_TYPE = {
-        3: EnemyType.DADDY_P1,
-        6: EnemyType.WEEB_BALL,
-        # 9: None,
-        # 12: None,
-    }
-
-    BOSS_LEVEL = {v: k for k, v in BOSS_TYPE.items()}
 
     FORGE_UNLOCK_REQUIREMENT = 15
 

@@ -1,10 +1,6 @@
+from combat.effects.efffect import EffectEmbedData, EffectOutcome, EmbedDataCollection
 from combat.skills.types import SkillEffect
-from combat.status_effects.status_effect import (
-    ActiveStatusEffect,
-    EmbedDataCollection,
-    StatusEffectEmbedData,
-    StatusEffectOutcome,
-)
+from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import Simp
 from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
 from control.controller import Controller
@@ -17,8 +13,8 @@ class SimpHandler(StatusEffectHandler):
 
     async def handle(
         self, status_effect: ActiveStatusEffect, handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
-        outcome = StatusEffectOutcome.EMPTY()
+    ) -> EffectOutcome:
+        outcome = EffectOutcome.EMPTY()
         effect_type = status_effect.status_effect.effect_type
         if effect_type != self.effect_type:
             return outcome
@@ -33,7 +29,7 @@ class SimpHandler(StatusEffectHandler):
 
         embed_data_collection = EmbedDataCollection()
         description = f"{handler_context.target.name}'s attacks are half as effective!"
-        embed_data = StatusEffectEmbedData(
+        embed_data = EffectEmbedData(
             self.status_effect, self.status_effect.title, description
         )
         embed_data_collection.append(embed_data)
@@ -42,6 +38,6 @@ class SimpHandler(StatusEffectHandler):
         return outcome
 
     async def combine(
-        self, outcomes: list[StatusEffectOutcome], handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
+        self, outcomes: list[EffectOutcome], handler_context: HandlerContext
+    ) -> EffectOutcome:
         return self.combine_outcomes(outcomes)

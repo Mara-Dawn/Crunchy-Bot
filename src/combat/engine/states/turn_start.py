@@ -1,10 +1,8 @@
-import asyncio
-
 from combat.actors import Actor
+from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
 from combat.engine.states.state import State
 from combat.engine.types import StateType
-from combat.status_effects.types import StatusEffectTrigger
 from control.controller import Controller
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
@@ -22,7 +20,7 @@ class TurnStartState(State):
 
         actor = self.context.current_actor
         outcome = await self.status_effect_manager.handle_turn_status_effects(
-            self.context, actor, StatusEffectTrigger.START_OF_TURN
+            self.context, actor, EffectTrigger.START_OF_TURN
         )
 
         self.context.current_turn_embed = self.embed_manager.get_turn_embed(actor)

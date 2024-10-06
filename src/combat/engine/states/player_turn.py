@@ -3,6 +3,7 @@ import datetime
 import random
 
 from combat.actors import Actor, Character
+from combat.effects.efffect import EmbedDataCollection
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.engine.states.state import State
 from combat.engine.types import StateType
@@ -11,7 +12,6 @@ from combat.skills.types import (
     SkillEffect,
     SkillType,
 )
-from combat.status_effects.status_effect import EmbedDataCollection
 from combat.status_effects.types import StatusEffectApplication
 from config import Config
 from control.controller import Controller

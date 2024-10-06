@@ -119,7 +119,7 @@ class Skill(Droppable):
         SkillEffect.PHYSICAL_DAMAGE: 0,
         SkillEffect.MAGICAL_DAMAGE: 1,
         SkillEffect.NEUTRAL_DAMAGE: 2,
-        SkillEffect.STATUS_EFFECT_DAMAGE: 3,
+        SkillEffect.EFFECT_DAMAGE: 3,
         SkillEffect.HEALING: 4,
         SkillEffect.BUFF: 5,
         SkillEffect.NOTHING: 6,
@@ -282,7 +282,7 @@ class Skill(Droppable):
             if max_stacks is not None and max_stacks > 0:
                 name = "Uses"
                 spacing = " " * (max_len_pre - len(name))
-                stacks_text = f"{spacing}{name}: {max_stacks} Turn(s)"
+                stacks_text = f"{spacing}{name}: {max_stacks}"
                 stacks_text_colored = f"{spacing}{name}: [35m{max_stacks}[0m"
 
                 if self.base_skill.reset_after_encounter:
@@ -534,7 +534,7 @@ class CharacterSkill:
             amount_text = f"amount: {amount}"
             spacing_width = max_width - max(11, len(amount_text))
             spacing = " " * spacing_width
-            description += f"\n\n{spacing}{amount_text}"
+            description += f"\n{spacing}{amount_text}"
 
         info_block += f"```python\n{description}```"
 

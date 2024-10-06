@@ -1,9 +1,9 @@
 import discord
 
+from combat.enchantments.enchantment import Enchantment
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import (
     Base,
-    EnchantmentType,
     EquipmentSlot,
     GearBaseType,
     GearModifierType,
@@ -11,25 +11,6 @@ from combat.gear.types import (
 )
 from combat.skills.types import SkillEffect, SkillType
 from config import Config
-
-
-class Enchantment:
-
-    def __init__(
-        self,
-        name: str,
-        type: EnchantmentType,
-        description: str,
-        information: str,
-        min_level: int,
-        max_level: int,
-    ):
-        self.name = name
-        self.type = type
-        self.description = description
-        self.information = information
-        self.min_level = min_level
-        self.max_level = max_level
 
 
 class GearBase(DroppableBase):

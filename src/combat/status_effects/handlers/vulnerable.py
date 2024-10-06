@@ -1,9 +1,5 @@
-from combat.status_effects.status_effect import (
-    ActiveStatusEffect,
-    EmbedDataCollection,
-    StatusEffectEmbedData,
-    StatusEffectOutcome,
-)
+from combat.effects.efffect import EffectEmbedData, EffectOutcome, EmbedDataCollection
+from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import Vulnerable
 from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
 from config import Config
@@ -19,8 +15,8 @@ class VulnerableHandler(StatusEffectHandler):
 
     async def handle(
         self, status_effect: ActiveStatusEffect, handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
-        outcome = StatusEffectOutcome.EMPTY()
+    ) -> EffectOutcome:
+        outcome = EffectOutcome.EMPTY()
         effect_type = status_effect.status_effect.effect_type
         if effect_type != self.effect_type:
             return outcome
@@ -29,7 +25,7 @@ class VulnerableHandler(StatusEffectHandler):
 
         embed_data_collection = EmbedDataCollection()
         description = self.status_effect.description
-        embed_data = StatusEffectEmbedData(
+        embed_data = EffectEmbedData(
             self.status_effect, self.status_effect.title, description
         )
         embed_data_collection.append(embed_data)
@@ -38,6 +34,6 @@ class VulnerableHandler(StatusEffectHandler):
         return outcome
 
     async def combine(
-        self, outcomes: list[StatusEffectOutcome], handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
+        self, outcomes: list[EffectOutcome], handler_context: HandlerContext
+    ) -> EffectOutcome:
         return self.combine_outcomes(outcomes)

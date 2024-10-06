@@ -7,6 +7,7 @@ import discord
 from discord.ext import commands
 
 from combat.actors import Actor, Opponent
+from combat.effects.efffect import EmbedDataCollection
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.skills.skill import Skill
@@ -14,7 +15,6 @@ from combat.skills.types import (
     SkillEffect,
     SkillTarget,
 )
-from combat.status_effects.status_effect import EmbedDataCollection
 from combat.status_effects.types import StatusEffectApplication
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager

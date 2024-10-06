@@ -1,5 +1,6 @@
 import discord
 
+from combat.enchantments.types import EnchantmentType
 from combat.gear.types import Base, EquipmentSlot, GearBaseType, Rarity
 from combat.skills.types import SkillType
 
@@ -11,12 +12,12 @@ class DroppableBase:
         name: str,
         base_type: Base,
         slot: EquipmentSlot,
-        type: GearBaseType | SkillType,  # noqa: F821
+        type: GearBaseType | SkillType | EnchantmentType,  # noqa: F821
         min_level: int,
         max_level: int,
         weight: int = None,
         droppable: bool = True,
-        uniques: list[GearBaseType | SkillType] = None,
+        uniques: list[GearBaseType | SkillType | EnchantmentType] = None,
         author: str = None,
     ):
         self.name = name

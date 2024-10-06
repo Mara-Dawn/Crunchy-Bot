@@ -1,9 +1,9 @@
 import datetime
 
+from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
 from combat.engine.states.state import State
 from combat.engine.types import StateType
-from combat.status_effects.types import StatusEffectTrigger
 from control.controller import Controller
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
@@ -28,7 +28,7 @@ class RoundStartState(State):
         await self.controller.dispatch_event(event)
 
         outcomes = await self.status_effect_manager.handle_round_status_effects(
-            self.context, StatusEffectTrigger.START_OF_ROUND
+            self.context, EffectTrigger.START_OF_ROUND
         )
 
         for actor_id, outcome in outcomes.items():

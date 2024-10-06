@@ -2,12 +2,14 @@ from collections import Counter
 
 import discord
 
+from combat.effects.efffect import EffectOutcome
+from combat.enchantments.enchantment import GearEnchantment
 from combat.enemies.enemy import Enemy
 from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect, SkillType
-from combat.status_effects.status_effect import ActiveStatusEffect, StatusEffectOutcome
+from combat.status_effects.status_effect import ActiveStatusEffect
 from config import Config
 
 
@@ -49,7 +51,7 @@ class Actor:
         self.image_url = image_url
         self.ready = ready
         self.timeout_count = timeout_count
-        self.round_modifier = StatusEffectOutcome.EMPTY()
+        self.round_modifier = EffectOutcome.EMPTY()
 
     @property
     def initiative(self):
@@ -67,6 +69,9 @@ class Character(Actor):
         skill_slots: dict[int, Skill],
         skill_cooldowns: dict[SkillType, int],
         skill_stacks_used: dict[int, int],
+        active_enchantments: list[GearEnchantment],
+        enchantment_cooldowns: dict[int, int],
+        enchantment_stacks_used: dict[int, int],
         status_effects: list[ActiveStatusEffect],
         equipment: CharacterEquipment,
         defeated: bool,
@@ -86,6 +91,10 @@ class Character(Actor):
         )
 
         self.skill_slots = skill_slots
+        self.active_enchantments = active_enchantments
+        self.enchantment_stacks_used = enchantment_stacks_used
+        self.enchantment_cooldowns = enchantment_cooldowns
+
         super().__init__(
             id=member.id,
             name=member.display_name,

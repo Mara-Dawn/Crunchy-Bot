@@ -3,15 +3,15 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from combat.actors import Actor
+from combat.effects.efffect import EffectOutcome
+from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
 from combat.skills.skill import Skill, SkillInstance
 from combat.status_effects.status_effect import (
     ActiveStatusEffect,
     StatusEffect,
-    StatusEffectOutcome,
 )
 from combat.status_effects.types import (
-    StatusEffectTrigger,
     StatusEffectType,
 )
 from control.combat.combat_actor_manager import CombatActorManager
@@ -21,7 +21,7 @@ from control.controller import Controller
 
 @dataclass
 class HandlerContext:
-    trigger: StatusEffectTrigger = None
+    trigger: EffectTrigger = None
     context: EncounterContext = None
     source: Actor = None
     target: Actor = None
@@ -61,13 +61,13 @@ class StatusEffectHandler(ABC):
     @abstractmethod
     async def handle(
         self, status_effect: ActiveStatusEffect, handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
+    ) -> EffectOutcome:
         pass
 
     @abstractmethod
     async def combine(
-        self, outcomes: list[StatusEffectOutcome], handler_context: HandlerContext
-    ) -> StatusEffectOutcome:
+        self, outcomes: list[EffectOutcome], handler_context: HandlerContext
+    ) -> EffectOutcome:
         pass
 
     async def get_application_value(
@@ -78,9 +78,9 @@ class StatusEffectHandler(ABC):
 
     @staticmethod
     def combine_outcomes(
-        outcomes: list[StatusEffectOutcome],
-    ) -> StatusEffectOutcome:
-        combined = StatusEffectOutcome.EMPTY()
+        outcomes: list[EffectOutcome],
+    ) -> EffectOutcome:
+        combined = EffectOutcome.EMPTY()
 
         for outcome in outcomes:
             if outcome.value is not None and isinstance(outcome.value, int | float):

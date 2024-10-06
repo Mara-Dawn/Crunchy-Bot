@@ -258,7 +258,7 @@ class SkillType(str, Enum):
 class SkillEffect(str, Enum):
     PHYSICAL_DAMAGE = "Physical"
     MAGICAL_DAMAGE = "Magical"
-    STATUS_EFFECT_DAMAGE = "Status"
+    EFFECT_DAMAGE = "Status"
     NEUTRAL_DAMAGE = "Neutral"
     NOTHING = "Nothing"
     BUFF = "Buff"

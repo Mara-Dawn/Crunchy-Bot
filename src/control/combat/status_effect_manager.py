@@ -3,22 +3,15 @@ import datetime
 from discord.ext import commands
 
 from combat.actors import Actor
+from combat.effects.efffect import EffectOutcome, OutcomeFlag
+from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
 from combat.skills.skill import Skill, SkillInstance
-from combat.skills.types import (
-    SkillEffect,
-)
-from combat.status_effects.status_effect import (
-    ActiveStatusEffect,
-    OutcomeFlag,
-    StatusEffectOutcome,
-)
+from combat.skills.types import SkillEffect
+from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import *  # noqa: F403
 from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
-from combat.status_effects.types import (
-    StatusEffectTrigger,
-    StatusEffectType,
-)
+from combat.status_effects.types import StatusEffectType
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.object_factory import ObjectFactory
@@ -74,7 +67,7 @@ class CombatStatusEffectManager(Service):
         type: StatusEffectType,
         stacks: int,
         application_value: float = None,
-    ) -> StatusEffectOutcome:
+    ) -> EffectOutcome:
 
         status_effect = await self.factory.get_status_effect(type)
 
@@ -166,13 +159,13 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         effect_type: StatusEffectType,
         application_value: float = None,
-    ) -> StatusEffectOutcome:
+    ) -> EffectOutcome:
         triggered_status_effects = await self.actor_trigger(
-            context, target, StatusEffectTrigger.ON_SELF_APPLICATION
+            context, target, EffectTrigger.ON_SELF_APPLICATION
         )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         filtered = []
         for effect in triggered_status_effects:
@@ -180,10 +173,10 @@ class CombatStatusEffectManager(Service):
                 filtered.append(effect)
 
         if len(filtered) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ON_STATUS_APPLICATION,
+            trigger=EffectTrigger.ON_STATUS_APPLICATION,
             context=context,
             source=source,
             target=target,
@@ -202,16 +195,16 @@ class CombatStatusEffectManager(Service):
         actor: Actor,
         context: EncounterContext,
         applied_effect_type: StatusEffectType,
-    ) -> StatusEffectOutcome:
+    ) -> EffectOutcome:
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ON_STATUS_APPLICATION
+            context, actor, EffectTrigger.ON_STATUS_APPLICATION
         )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ON_STATUS_APPLICATION,
+            trigger=EffectTrigger.ON_STATUS_APPLICATION,
             context=context,
             source=actor,
             target=actor,
@@ -252,17 +245,17 @@ class CombatStatusEffectManager(Service):
         self,
         context: EncounterContext,
         actor: Actor,
-    ) -> StatusEffectOutcome:
+    ) -> EffectOutcome:
 
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ATTRIBUTE
+            context, actor, EffectTrigger.ATTRIBUTE
         )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ATTRIBUTE,
+            trigger=EffectTrigger.ATTRIBUTE,
             context=context,
             source=actor,
             target=actor,
@@ -280,8 +273,8 @@ class CombatStatusEffectManager(Service):
         self,
         status_effects: list[ActiveStatusEffect],
         handler_context: HandlerContext,
-    ) -> StatusEffectOutcome:
-        outcome_data: dict[StatusEffectType, StatusEffectOutcome] = {}
+    ) -> EffectOutcome:
+        outcome_data: dict[StatusEffectType, EffectOutcome] = {}
 
         for status_effect in status_effects:
             effect_type = status_effect.status_effect.effect_type
@@ -306,21 +299,21 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         actor: Actor,
         skill: Skill,
-    ) -> StatusEffectOutcome:
+    ) -> EffectOutcome:
         skill_effect = skill.base_skill.skill_effect
 
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ON_ATTACK
+            context, actor, EffectTrigger.ON_ATTACK
         )
 
         if len(triggered_status_effects) <= 0 or skill_effect in [
             SkillEffect.NOTHING,
             SkillEffect.BUFF,
         ]:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ON_ATTACK,
+            trigger=EffectTrigger.ON_ATTACK,
             context=context,
             source=actor,
             target=actor,
@@ -347,7 +340,7 @@ class CombatStatusEffectManager(Service):
         context: EncounterContext,
         actor: Actor,
         skill: Skill,
-    ) -> StatusEffectOutcome:
+    ) -> EffectOutcome:
         skill_effect = skill.base_skill.skill_effect
 
         if skill_effect in [
@@ -355,17 +348,17 @@ class CombatStatusEffectManager(Service):
             SkillEffect.HEALING,
             SkillEffect.BUFF,
         ]:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ON_DAMAGE_TAKEN
+            context, actor, EffectTrigger.ON_DAMAGE_TAKEN
         )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ON_DAMAGE_TAKEN,
+            trigger=EffectTrigger.ON_DAMAGE_TAKEN,
             context=context,
             source=actor,
             target=actor,
@@ -391,20 +384,20 @@ class CombatStatusEffectManager(Service):
         self,
         context: EncounterContext,
         actor: Actor,
-    ) -> StatusEffectOutcome:
+    ) -> EffectOutcome:
         for active_actor in context.current_initiative:
             if active_actor.id == actor.id:
                 actor = active_actor
 
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.ON_DEATH
+            context, actor, EffectTrigger.ON_DEATH
         )
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.ON_DEATH,
+            trigger=EffectTrigger.ON_DEATH,
             context=context,
             source=actor,
             target=actor,
@@ -425,14 +418,14 @@ class CombatStatusEffectManager(Service):
         target: Actor,
         skill: Skill,
         damage_instance: SkillInstance,
-    ) -> StatusEffectOutcome:
+    ) -> EffectOutcome:
 
         triggered_status_effects = await self.actor_trigger(
-            context, actor, StatusEffectTrigger.POST_ATTACK
+            context, actor, EffectTrigger.POST_ATTACK
         )
 
         handler_context = HandlerContext(
-            trigger=StatusEffectTrigger.POST_ATTACK,
+            trigger=EffectTrigger.POST_ATTACK,
             context=context,
             source=actor,
             target=target,
@@ -449,8 +442,8 @@ class CombatStatusEffectManager(Service):
     async def handle_round_status_effects(
         self,
         context: EncounterContext,
-        trigger: StatusEffectTrigger,
-    ) -> dict[int, StatusEffectOutcome]:
+        trigger: EffectTrigger,
+    ) -> dict[int, EffectOutcome]:
         actor_outcomes = {}
         for active_actor in context.current_initiative:
 
@@ -482,15 +475,15 @@ class CombatStatusEffectManager(Service):
         self,
         context: EncounterContext,
         actor: Actor,
-        trigger: StatusEffectTrigger,
-    ) -> StatusEffectOutcome:
+        trigger: EffectTrigger,
+    ) -> EffectOutcome:
         if actor.defeated or actor.leaving or actor.is_out:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         triggered_status_effects = await self.actor_trigger(context, actor, trigger)
 
         if len(triggered_status_effects) <= 0:
-            return StatusEffectOutcome.EMPTY()
+            return EffectOutcome.EMPTY()
 
         handler_context = HandlerContext(
             trigger=trigger,
@@ -511,7 +504,7 @@ class CombatStatusEffectManager(Service):
         self,
         context: EncounterContext,
         actor: Actor,
-    ) -> dict[int, StatusEffectOutcome]:
+    ) -> dict[int, EffectOutcome]:
         actor_outcomes = {}
 
         for active_actor in context.current_initiative:
@@ -519,7 +512,7 @@ class CombatStatusEffectManager(Service):
             triggered_status_effects = await self.actor_trigger(
                 context,
                 active_actor,
-                StatusEffectTrigger.END_OF_APPLICANT_TURN,
+                EffectTrigger.END_OF_APPLICANT_TURN,
                 match_source_id=actor.id,
             )
 
@@ -533,7 +526,7 @@ class CombatStatusEffectManager(Service):
                 continue
 
             handler_context = HandlerContext(
-                trigger=StatusEffectTrigger.END_OF_APPLICANT_TURN,
+                trigger=EffectTrigger.END_OF_APPLICANT_TURN,
                 context=context,
                 source=actor,
                 target=active_actor,
@@ -553,7 +546,7 @@ class CombatStatusEffectManager(Service):
         self,
         context: EncounterContext,
         actor: Actor,
-        trigger: StatusEffectTrigger,
+        trigger: EffectTrigger,
         match_source_id: int | None = None,
     ) -> list[ActiveStatusEffect]:
         triggered = []
