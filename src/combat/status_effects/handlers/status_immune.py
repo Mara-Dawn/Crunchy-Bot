@@ -2,9 +2,9 @@ from combat.effects.effect import (
     EffectEmbedData,
     EffectOutcome,
     EmbedDataCollection,
-    HandlerContext,
     OutcomeFlag,
 )
+from combat.effects.effect_handler import HandlerContext
 from combat.status_effects.status_effect import (
     ActiveStatusEffect,
 )

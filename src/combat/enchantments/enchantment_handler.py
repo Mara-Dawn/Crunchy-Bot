@@ -1,7 +1,8 @@
 import importlib
 from abc import ABC, abstractmethod
 
-from combat.effects.effect import EffectHandler, EffectOutcome, HandlerContext
+from combat.effects.effect import EffectOutcome
+from combat.effects.effect_handler import EffectHandler, HandlerContext
 from combat.enchantments.enchantment import (
     BaseEnchantment,
     EffectEnchantment,

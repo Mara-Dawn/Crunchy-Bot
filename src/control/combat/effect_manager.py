@@ -4,13 +4,14 @@ from discord.ext import commands
 
 from combat.actors import Actor
 from combat.effects.effect import EffectOutcome, OutcomeFlag
+from combat.effects.effect_handler import HandlerContext
 from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
 from combat.skills.skill import Skill, SkillInstance
 from combat.skills.types import SkillEffect
 from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import *  # noqa: F403
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.status_effects.status_handler import StatusEffectHandler
 from combat.status_effects.types import StatusEffectType
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager

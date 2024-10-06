@@ -5,8 +5,8 @@ from combat.effects.effect import (
     EffectEmbedData,
     EffectOutcome,
     EmbedDataCollection,
-    HandlerContext,
 )
+from combat.effects.effect_handler import HandlerContext
 from combat.gear.types import CharacterAttribute
 from combat.skills.types import SkillEffect
 from combat.status_effects.status_effect import ActiveStatusEffect

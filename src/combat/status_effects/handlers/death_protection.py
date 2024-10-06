@@ -4,8 +4,8 @@ from combat.effects.effect import (
     EffectEmbedData,
     EffectOutcome,
     EmbedDataCollection,
-    HandlerContext,
 )
+from combat.effects.effect_handler import HandlerContext
 from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import DeathProtection
 from combat.status_effects.status_handler import StatusEffectHandler

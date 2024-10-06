@@ -1,4 +1,5 @@
-from combat.effects.effect import EffectOutcome, HandlerContext
+from combat.effects.effect import EffectOutcome
+from combat.effects.effect_handler import HandlerContext
 from combat.skills.types import SkillEffect
 from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import Inspired

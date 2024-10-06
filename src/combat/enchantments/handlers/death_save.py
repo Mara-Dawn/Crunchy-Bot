@@ -4,8 +4,8 @@ from combat.effects.effect import (
     EffectEmbedData,
     EffectOutcome,
     EmbedDataCollection,
-    HandlerContext,
 )
+from combat.effects.effect_handler import HandlerContext
 from combat.enchantments.enchantment import EffectEnchantment
 from combat.enchantments.enchantment_handler import EnchantmentEffectHandler
 from combat.enchantments.enchantments import DeathSave
