@@ -1,14 +1,15 @@
-from combat.effects.efffect import (
+from combat.effects.effect import (
     EffectEmbedData,
     EffectOutcome,
     EmbedDataCollection,
+    HandlerContext,
     OutcomeFlag,
 )
 from combat.status_effects.status_effect import (
     ActiveStatusEffect,
 )
 from combat.status_effects.status_effects import StatusImmune
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.status_effects.status_handler import StatusEffectHandler
 from combat.status_effects.types import StatusEffectType
 from control.controller import Controller
 

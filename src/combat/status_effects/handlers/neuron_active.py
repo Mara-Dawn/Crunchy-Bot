@@ -1,8 +1,8 @@
-from combat.effects.efffect import EffectOutcome
+from combat.effects.effect import EffectOutcome, HandlerContext
 from combat.skills.types import SkillEffect
 from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import NeuronActive
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.status_effects.status_handler import StatusEffectHandler
 from control.controller import Controller
 
 

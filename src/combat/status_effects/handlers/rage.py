@@ -1,8 +1,8 @@
-from combat.effects.efffect import EffectOutcome
+from combat.effects.effect import EffectOutcome, HandlerContext
 from combat.skills.types import SkillEffect
 from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import Rage
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.status_effects.status_handler import StatusEffectHandler
 from combat.status_effects.types import StatusEffectType
 from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller

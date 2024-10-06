@@ -1,9 +1,14 @@
 import datetime
 
-from combat.effects.efffect import EffectEmbedData, EffectOutcome, EmbedDataCollection
+from combat.effects.effect import (
+    EffectEmbedData,
+    EffectOutcome,
+    EmbedDataCollection,
+    HandlerContext,
+)
 from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import Stun
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.status_effects.status_handler import StatusEffectHandler
 from control.controller import Controller
 from events.encounter_event import EncounterEvent
 from events.types import EncounterEventType

@@ -3,7 +3,7 @@ import datetime
 import random
 
 from combat.actors import Actor, Character
-from combat.effects.efffect import EmbedDataCollection
+from combat.effects.effect import EmbedDataCollection
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.engine.states.state import State
 from combat.engine.types import StateType

@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 
 from combat.actors import Actor, Opponent
-from combat.effects.efffect import EmbedDataCollection
+from combat.effects.effect import EmbedDataCollection
 from combat.encounter import EncounterContext, TurnDamageData, TurnData
 from combat.enemies import *  # noqa: F403
 from combat.skills.skill import Skill

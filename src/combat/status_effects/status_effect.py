@@ -1,4 +1,4 @@
-from combat.effects.efffect import Effect
+from combat.effects.effect import Effect
 from combat.effects.types import EffectTrigger
 from combat.skills.types import SkillEffect
 from combat.status_effects.types import StatusEffectType

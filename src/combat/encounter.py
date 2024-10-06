@@ -5,7 +5,7 @@ from typing import Any
 import discord
 
 from combat.actors import Actor, Character, Opponent
-from combat.effects.efffect import EmbedDataCollection
+from combat.effects.effect import EmbedDataCollection
 from combat.enemies.types import EnemyType
 from combat.skills.skill import Skill, SkillInstance
 from combat.status_effects.status_effect import StatusEffect

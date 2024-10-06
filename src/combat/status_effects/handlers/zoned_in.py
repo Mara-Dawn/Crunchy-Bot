@@ -1,7 +1,7 @@
-from combat.effects.efffect import EffectOutcome
+from combat.effects.effect import EffectOutcome, HandlerContext
 from combat.status_effects.status_effect import ActiveStatusEffect
 from combat.status_effects.status_effects import ZonedIn
-from combat.status_effects.status_handler import HandlerContext, StatusEffectHandler
+from combat.status_effects.status_handler import StatusEffectHandler
 from control.controller import Controller
 
 

@@ -15,6 +15,7 @@ from combat.status_effects.types import StatusEffectType
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.object_factory import ObjectFactory
+from control.combat.status_effect_manager import CombatStatusEffectManager
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -25,7 +26,7 @@ from events.status_effect_event import StatusEffectEvent
 from events.types import CombatEventType
 
 
-class CombatStatusEffectManager(Service):
+class CombatEffectManager(Service):
 
     def __init__(
         self,
@@ -43,18 +44,18 @@ class CombatStatusEffectManager(Service):
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
         )
+        self.embed_manager: CombatEmbedManager = self.controller.get_service(
+            CombatEmbedManager
+        )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
 
         self.handler_cache: dict[StatusEffectType, StatusEffectHandler] = {}
+        self.status_effect_manager: CombatStatusEffectManager = (
+            self.controller.get_service(CombatStatusEffectManager)
+        )
 
     async def listen_for_event(self, event: BotEvent):
         pass
-
-    async def get_handler(self, effect_type: StatusEffectType):
-        if effect_type not in self.handler_cache:
-            handler = StatusEffectHandler.get_handler(self.controller, effect_type)
-            self.handler_cache[effect_type] = handler
-        return self.handler_cache[effect_type]
 
     async def apply_status(
         self,
@@ -65,79 +66,18 @@ class CombatStatusEffectManager(Service):
         stacks: int,
         application_value: float = None,
     ) -> EffectOutcome:
-
-        status_effect = await self.factory.get_status_effect(type)
-
         outcome = await self.handle_on_status_application_status_effects(
             target, context, type
         )
-
         if (
             outcome.flags is not None
             and OutcomeFlag.PREVENT_STATUS_APPLICATION in outcome.flags
         ):
             return outcome
 
-        if (
-            application_value is not None
-            and application_value == 0
-            and not status_effect.apply_on_miss
-        ):
-            return outcome
-
-        handler = await self.get_handler(type)
-        handler_context = HandlerContext(
-            context=context,
-            source=source,
-            target=target,
-            application_value=application_value,
+        outcome = await self.status_effect_manager.apply_status(
+            context, source, target, type, stacks, application_value
         )
-        value = await handler.get_application_value(handler_context)
-        initial_stacks = stacks
-        if (
-            status_effect.override
-            or status_effect.override_by_actor
-            or status_effect.stack
-        ):
-            for active_effect in target.status_effects:
-                override = False
-                if active_effect.status_effect.effect_type != type:
-                    continue
-                if status_effect.override and active_effect.remaining_stacks > 0:
-                    override = True
-                if (
-                    status_effect.override_by_actor
-                    and active_effect.event.get_causing_user_id == source.id
-                ):
-                    override = True
-                if status_effect.stack and active_effect.remaining_stacks > 0:
-                    override = True
-                    stacks += active_effect.remaining_stacks
-                if override:
-                    await self.consume_status_stack(
-                        context,
-                        active_effect,
-                        active_effect.remaining_stacks,
-                    )
-
-        stacks = min(stacks, status_effect.max_stacks)
-
-        event = StatusEffectEvent(
-            datetime.datetime.now(),
-            context.encounter.guild_id,
-            context.encounter.id,
-            source.id,
-            target.id,
-            type,
-            stacks,
-            value,
-        )
-        await self.controller.dispatch_event(event)
-
-        if outcome.applied_effects is None:
-            outcome.applied_effects = [(type, initial_stacks)]
-        else:
-            outcome.applied_effects.append((type, initial_stacks))
 
         self_application_outcome = await self.handle_on_self_application_status_effects(
             source, target, context, type, value

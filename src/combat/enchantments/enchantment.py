@@ -1,6 +1,6 @@
 import discord
 
-from combat.effects.efffect import Effect
+from combat.effects.effect import Effect
 from combat.effects.types import EffectTrigger
 from combat.enchantments.types import EnchantmentEffect, EnchantmentType
 from combat.gear.droppable import Droppable, DroppableBase
@@ -608,8 +608,6 @@ class EffectEnchantment(Enchantment):
     ):
         if max_width is None:
             max_width = Config.COMBAT_EMBED_MAX_WIDTH
-
-        color = self.RARITY_COLOR_HEX_MAP[self.rarity]
 
         name = f"<~ {self.name} ~>"
         suffix = ""
