@@ -135,7 +135,7 @@ class EquipmentView(ViewMenu):
                     SelectGearSlot(EquipmentSlot.ACCESSORY, disabled=disabled)
                 )
                 self.add_item(ScrapAllButton(disabled=disabled))
-                self.add_item(EnchantmentsButton(disabled=disabled))
+                # self.add_item(EnchantmentsButton(disabled=disabled))
             case EquipmentViewState.STATS:
                 stats_button_selected = True
             case EquipmentViewState.SKILLS:
