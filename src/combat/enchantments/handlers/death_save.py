@@ -61,11 +61,6 @@ class DeathSaveHandler(EnchantmentEffectHandler):
 
         return outcome
 
-    async def combine(
-        self, outcomes: list[EffectOutcome], handler_context: HandlerContext
-    ) -> EffectOutcome:
-        return self.combine_outcomes(outcomes)
-
     async def is_penalty(
         self,
         skill_effect: SkillEffect,

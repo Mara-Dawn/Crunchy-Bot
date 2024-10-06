@@ -45,8 +45,3 @@ class StatusImmuneHandler(StatusEffectHandler):
             outcome.embed_data = embed_data_collection
 
         return outcome
-
-    async def combine(
-        self, outcomes: list[EffectOutcome], handler_context: HandlerContext
-    ) -> EffectOutcome:
-        return self.combine_outcomes(outcomes)

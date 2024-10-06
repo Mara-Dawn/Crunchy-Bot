@@ -24,8 +24,3 @@ class ZonedInHandler(StatusEffectHandler):
         outcome.crit_chance = 1
 
         return outcome
-
-    async def combine(
-        self, outcomes: list[EffectOutcome], handler_context: HandlerContext
-    ) -> EffectOutcome:
-        return self.combine_outcomes(outcomes)

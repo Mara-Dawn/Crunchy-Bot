@@ -32,8 +32,3 @@ class InspiredHandler(StatusEffectHandler):
         outcome.modifier = 1 + (status_effect.event.value / 100)
 
         return outcome
-
-    async def combine(
-        self, outcomes: list[EffectOutcome], handler_context: HandlerContext
-    ) -> EffectOutcome:
-        return self.combine_outcomes(outcomes)
