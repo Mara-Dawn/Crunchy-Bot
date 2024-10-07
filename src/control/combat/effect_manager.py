@@ -138,7 +138,10 @@ class CombatEffectManager(Service):
         for manager in self.managers:
             outcome = await manager.on_status_application(handler_context)
             outcomes.append(outcome)
-            if OutcomeFlag.PREVENT_STATUS_APPLICATION in outcome.flags:
+            if (
+                outcome.flags is not None
+                and OutcomeFlag.PREVENT_STATUS_APPLICATION in outcome.flags
+            ):
                 break
         return EffectHandler.combine_outcomes(outcomes)
 
@@ -229,7 +232,7 @@ class CombatEffectManager(Service):
         for manager in self.managers:
             outcome = await manager.on_death(handler_context)
             outcomes.append(outcome)
-            if OutcomeFlag.PREVENT_DEATH in outcome.flags:
+            if outcome.flags is not None and OutcomeFlag.PREVENT_DEATH in outcome.flags:
                 break
         return EffectHandler.combine_outcomes(outcomes)
 
