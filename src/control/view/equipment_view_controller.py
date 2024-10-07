@@ -768,6 +768,7 @@ class EquipmentViewController(ViewController):
                         )
                     )
                     new_gear = await handler.handle(enchantment, gear)
+                    await self.database.delete_gear_by_ids([enchantment.id])
 
         if len(effects) > 0:
             new_gear = await self.database.log_user_gear_enchantment(new_gear, effects)

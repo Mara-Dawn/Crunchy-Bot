@@ -4,6 +4,7 @@ from combat.effects.effect import (
     EffectEmbedData,
     EffectOutcome,
     EmbedDataCollection,
+    OutcomeFlag,
 )
 from combat.effects.effect_handler import HandlerContext
 from combat.enchantments.enchantment import EffectEnchantment
@@ -58,6 +59,7 @@ class DeathSaveHandler(EnchantmentEffectHandler):
         )
         embed_data_collection.append(embed_data)
         outcome.embed_data = embed_data_collection
+        outcome.flags = [OutcomeFlag.PREVENT_DEATH]
 
         return outcome
 
