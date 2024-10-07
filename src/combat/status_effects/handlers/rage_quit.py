@@ -39,7 +39,7 @@ class RageQuitHandler(StatusEffectHandler):
                 datetime.datetime.now(),
                 handler_context.context.encounter.guild_id,
                 handler_context.context.encounter.id,
-                self.bot.user.id,
+                self.controller.bot.user.id,
                 EncounterEventType.END,
             )
             await self.controller.dispatch_event(event)
