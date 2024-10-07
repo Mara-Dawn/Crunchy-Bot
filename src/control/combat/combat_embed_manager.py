@@ -212,6 +212,49 @@ class CombatEmbedManager(Service):
         embed_content = "```\n" + value + "```"
         embed.add_field(name=name, value=embed_content, inline=False)
 
+    async def add_active_enchantments(
+        self,
+        embed: discord.Embed,
+        character: Character,
+        max_width: int = None,
+    ) -> str:
+        if len(character.active_enchantments) <= 0:
+            return ""
+
+        if max_width is None:
+            max_width = Config.COMBAT_EMBED_MAX_WIDTH
+
+        info_block = "```ansi\n"
+        info_data = []
+        for enchantment in character.active_enchantments:
+            cooldown_remaining = None
+            if (
+                enchantment.base_enchantment.cooldown is not None
+                and enchantment.id in character.enchantment_cooldowns
+                and character.enchantment_cooldowns[enchantment.id] is not None
+            ):
+                cooldown_remaining = (
+                    enchantment.base_enchantment.cooldown
+                    - character.enchantment_cooldowns[enchantment.id]
+                )
+
+            uses = None
+            if enchantment.base_enchantment.stacks is not None:
+                total = enchantment.base_enchantment.stacks
+                remaining = total
+                if enchantment.id in character.enchantment_stacks_used:
+                    remaining = (
+                        total - character.enchantment_stacks_used[enchantment.id]
+                    )
+                uses = (remaining, total)
+            info_data.append(
+                enchantment.get_info_text(cooldown=cooldown_remaining, uses=uses)
+            )
+        info_block += "\n".join(info_data)
+        info_block += "```"
+
+        embed.add_field(name="Active Enchantments", value=info_block, inline=False)
+
     async def get_combat_embed(self, context: EncounterContext) -> discord.Embed:
         enemy = context.opponent.enemy
 
@@ -365,6 +408,8 @@ class CombatEmbedManager(Service):
         self.add_active_status_effect_bar(
             head_embed, actor, max_width=Config.COMBAT_EMBED_MAX_WIDTH
         )
+
+        await self.add_active_enchantments(head_embed, actor)
 
         if actor.image_url is not None:
             head_embed.set_thumbnail(url=actor.image_url)

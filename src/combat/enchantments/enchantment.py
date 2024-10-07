@@ -603,6 +603,31 @@ class EffectEnchantment(Enchantment):
         data = self.get_embed_field(max_width, description_override)
         embed.add_field(name=data.name, value=data.value, inline=data.inline)
 
+    def get_info_text(self, cooldown: int = None, uses: tuple[int, int] = None):
+
+        name = f"<~ {self.name} ~>"
+        color = f"{Droppable.RARITY_NAME_COLOR_MAP[self.rarity]}"
+
+        if uses is not None and uses[0] <= 0:
+            color = "[30m"
+
+            info_block = f"{color}{name}"
+            info_block += f" [{uses[0]}/{uses[1]}]"
+            info_block += "[0m"
+            return info_block
+        else:
+            color = f"{Droppable.RARITY_NAME_COLOR_MAP[self.rarity]}"
+            info_block = f"{color}{name}"
+            info_block += "[0m"
+
+        if uses is not None:
+            info_block += f" [{uses[0]}/{uses[1]}]"
+
+        if cooldown is not None and cooldown > 0:
+            info_block += f" (in {cooldown} turns)"
+
+        return info_block
+
     def get_embed_field(
         self,
         max_width: int = None,
@@ -757,7 +782,7 @@ class GearEnchantment:
     def on_cooldown(self):
         if self.last_used is None or self.enchantment.base_enchantment.cooldown is None:
             return False
-        return self.last_used < self.enchantment.base_enchantment.cooldown
+        return self.last_used <= self.enchantment.base_enchantment.cooldown
 
     def stacks_left(self):
         if self.enchantment.base_enchantment.stacks is None or self.stacks_used is None:

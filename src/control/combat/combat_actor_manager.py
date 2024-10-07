@@ -472,9 +472,8 @@ class CombatActorManager(Service):
                 if not actor.is_enemy:
                     actor: Character = actor
                     for enchantment_id in actor.enchantment_cooldowns:
-                        if event.skill_id == enchantment_id:
+                        if actor.enchantment_cooldowns[enchantment_id] is not None:
                             actor.enchantment_cooldowns[enchantment_id] += 1
-                            break
 
                 skill_id = event.skill_type if actor.is_enemy else event.skill_id
 

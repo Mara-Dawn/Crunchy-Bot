@@ -441,8 +441,10 @@ class CombatEnchantmentManager(Service):
         context: EncounterContext,
         character: Character,
         trigger: EffectTrigger,
+        multi: bool = False,
     ) -> list[GearEnchantment]:
         triggered: list[GearEnchantment] = []
+        triggered_types: list[EnchantmentType] = []
 
         if character.is_enemy:
             return []
@@ -457,6 +459,11 @@ class CombatEnchantmentManager(Service):
 
             gear_enchantment = await self.get_gear_enchantment(character, enchantment)
 
+            enchantment_type = enchantment.base_enchantment.enchantment_type
+
+            if not multi and enchantment_type in triggered_types:
+                continue
+
             stacks_left = gear_enchantment.stacks_left()
 
             if stacks_left is not None and stacks_left <= 0:
@@ -470,6 +477,7 @@ class CombatEnchantmentManager(Service):
 
             if is_triggered:
                 triggered.append(gear_enchantment)
+                triggered_types.append(enchantment_type)
 
         triggered = sorted(
             triggered, key=lambda item: item.enchantment.priority, reverse=True
