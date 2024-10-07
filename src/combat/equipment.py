@@ -1,5 +1,6 @@
 import discord
 
+from combat.enchantments.enchantment import EffectEnchantment
 from combat.gear.default_gear import (
     DefaultAccessory1,
     DefaultAccessory2,
@@ -60,6 +61,11 @@ class CharacterEquipment:
             self.accessory_1,
             self.accessory_2,
         ]
+
+        self.enchantments: list[EffectEnchantment] = []
+        for gear in self.gear:
+            if gear.enchantments is not None:
+                self.enchantments.extend(gear.enchantments)
 
         self.attributes: dict[CharacterAttribute, float] = {
             CharacterAttribute.PHYS_DAMAGE_INCREASE: 0,

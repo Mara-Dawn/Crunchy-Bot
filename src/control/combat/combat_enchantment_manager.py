@@ -48,6 +48,8 @@ class CombatEnchantmentManager(Service):
         self.ai_manager: AIManager = self.controller.get_service(AIManager)
         self.log_name = "Combat Enchantments"
 
+        self.handler_cache: dict[EnchantmentType, EnchantmentEffectHandler] = {}
+
     async def listen_for_event(self, event: BotEvent):
         pass
 
@@ -442,21 +444,29 @@ class CombatEnchantmentManager(Service):
     ) -> list[GearEnchantment]:
         triggered: list[GearEnchantment] = []
 
+        if character.is_enemy:
+            return []
+
         for enchantment in character.active_enchantments:
 
             is_triggered = trigger in enchantment.base_enchantment.trigger
             is_consumed = trigger in enchantment.base_enchantment.consumed
 
-            if not is_triggered or is_consumed:
+            if not (is_triggered or is_consumed):
                 continue
 
             gear_enchantment = await self.get_gear_enchantment(character, enchantment)
 
-            if gear_enchantment.stacks_left <= 0:
+            stacks_left = gear_enchantment.stacks_left()
+
+            if stacks_left is not None and stacks_left <= 0:
+                continue
+
+            if gear_enchantment.on_cooldown():
                 continue
 
             if is_consumed:
-                await self.consume_enchantment_stack(context, enchantment)
+                await self.consume_enchantment_stack(context, character, enchantment)
 
             if is_triggered:
                 triggered.append(gear_enchantment)

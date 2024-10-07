@@ -10,7 +10,7 @@ from discord.ext import commands
 from bot_util import BotUtil
 from combat.enchantments.enchantment import EffectEnchantment, Enchantment
 from combat.enchantments.enchantments import *  # noqa: F403
-from combat.enchantments.types import EnchantmentType
+from combat.enchantments.types import EnchantmentEffect, EnchantmentType
 from combat.encounter import Encounter
 from combat.enemies.types import EnemyType
 from combat.equipment import CharacterEquipment
@@ -3595,7 +3595,9 @@ class Database:
             id=id,
         )
 
-    async def get_enchantment_by_id(self, enchantment_id: int | None) -> Enchantment:
+    async def get_enchantment_by_id(
+        self, enchantment_id: int | None
+    ) -> Enchantment | EffectEnchantment:
         if enchantment_id is None:
             return None
 

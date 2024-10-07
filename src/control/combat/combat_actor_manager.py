@@ -83,7 +83,7 @@ class CombatActorManager(Service):
             skill_effect = status_effect.skill_effect
         elif event.combat_event_type == CombatEventType.ENCHANTMENT_EFFECT_OUTCOME:
             enchantment = await self.database.get_enchantment_by_id(event.skill_id)
-            skill_effect = enchantment.base_enchantment.damage_type
+            skill_effect = enchantment.base_enchantment.skill_effect
         else:
             base_skill = await self.factory.get_base_skill(event.skill_type)
             skill_effect = base_skill.skill_effect
@@ -316,9 +316,7 @@ class CombatActorManager(Service):
 
         skills = [skill for skill in skill_slots.values() if skill is not None]
 
-        enchantments = await self.database.get_user_active_enchantments(
-            member.guild.id, member.id
-        )
+        enchantments = equipment.enchantments
 
         skill_cooldowns = self.get_skill_cooldowns(member.id, skills, combat_events)
 
@@ -471,6 +469,13 @@ class CombatActorManager(Service):
                             continue
                         actor.skill_cooldowns[skill_type] += 1
 
+                if not actor.is_enemy:
+                    actor: Character = actor
+                    for enchantment_id in actor.enchantment_cooldowns:
+                        if event.skill_id == enchantment_id:
+                            actor.enchantment_cooldowns[enchantment_id] += 1
+                            break
+
                 skill_id = event.skill_type if actor.is_enemy else event.skill_id
 
                 if (
@@ -487,7 +492,14 @@ class CombatActorManager(Service):
                 enchantment_id = event.skill_id
                 for enchantment in actor.active_enchantments:
                     if enchantment.id == enchantment_id:
-                        enchantment.stacks_used += event.skill_value
+                        if (
+                            enchantment_id not in actor.enchantment_stacks_used
+                            or actor.enchantment_stacks_used[enchantment_id] is None
+                        ):
+                            actor.enchantment_stacks_used[enchantment_id] = 1
+                        else:
+                            actor.enchantment_stacks_used[enchantment.id] += 1
+                        actor.enchantment_cooldowns[enchantment.id] = 0
                         break
             case CombatEventType.ENEMY_TURN_STEP | CombatEventType.MEMBER_TURN_STEP:
                 pass

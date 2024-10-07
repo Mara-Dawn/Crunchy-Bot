@@ -33,9 +33,14 @@ class DeathSaveHandler(EnchantmentEffectHandler):
         handler_context: HandlerContext,
     ) -> EffectOutcome:
         outcome = EffectOutcome.EMPTY()
-        enchantment_type = enchantment.enchantment.base_enchantment.enchantment_type
+        enchantment_type = enchantment.base_enchantment.enchantment_type
         if enchantment_type != self.base_enchantment.enchantment_type:
             return outcome
+
+        instances = await self.enchantment_manager.get_enchantment_effect(
+            handler_context.source, enchantment, handler_context.context.combat_scale
+        )
+        heal = instances[0].value
 
         outcome.value = 1
         event = CombatEvent(
@@ -45,17 +50,19 @@ class DeathSaveHandler(EnchantmentEffectHandler):
             handler_context.source.id,
             handler_context.source.id,
             enchantment.base_enchantment.enchantment_type,
-            1,
-            1,
+            heal,
+            heal,
             enchantment.id,
             CombatEventType.ENCHANTMENT_EFFECT_OUTCOME,
         )
         await self.controller.dispatch_event(event)
 
         embed_data_collection = EmbedDataCollection()
-        description = f"{handler_context.target.name} was spared from dying, surviving with 1 health."
+        description = f"{handler_context.target.name} was spared from dying, surviving with {heal} health."
         embed_data = EffectEmbedData(
-            self.status_effect, self.status_effect.title, description
+            enchantment.base_enchantment,
+            enchantment.base_enchantment.title,
+            description,
         )
         embed_data_collection.append(embed_data)
         outcome.embed_data = embed_data_collection

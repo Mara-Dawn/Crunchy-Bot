@@ -55,7 +55,7 @@ class CombatEffectManager(Service):
 
         self.managers: list[EffectManager] = [
             self.status_effect_manager,
-            # self.enchantment_manager,
+            self.enchantment_manager,
         ]
 
     async def listen_for_event(self, event: BotEvent):

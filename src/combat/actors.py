@@ -84,6 +84,7 @@ class Character(Actor):
         self.member = member
         self.equipment = equipment
         max_hp = self.equipment.attributes[CharacterAttribute.MAX_HEALTH]
+        max_hp = 10
 
         initiative = (
             Config.CHARACTER_BASE_INITIATIVE

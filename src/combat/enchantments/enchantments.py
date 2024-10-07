@@ -88,6 +88,7 @@ class DeathSave(BaseEffectEnchantment):
             stacks=1,
             droppable=True,
             value=0.2,
+            cooldown=2,
             skill_effect=SkillEffect.HEALING,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.ON_DEATH],
