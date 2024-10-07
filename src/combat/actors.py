@@ -3,7 +3,7 @@ from collections import Counter
 import discord
 
 from combat.effects.effect import EffectOutcome
-from combat.enchantments.enchantment import GearEnchantment
+from combat.enchantments.enchantment import EffectEnchantment, GearEnchantment
 from combat.enemies.enemy import Enemy
 from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType
@@ -69,7 +69,7 @@ class Character(Actor):
         skill_slots: dict[int, Skill],
         skill_cooldowns: dict[SkillType, int],
         skill_stacks_used: dict[int, int],
-        active_enchantments: list[GearEnchantment],
+        active_enchantments: list[EffectEnchantment],
         enchantment_cooldowns: dict[int, int],
         enchantment_stacks_used: dict[int, int],
         status_effects: list[ActiveStatusEffect],

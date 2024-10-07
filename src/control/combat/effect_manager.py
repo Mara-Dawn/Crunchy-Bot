@@ -136,7 +136,10 @@ class CombatEffectManager(Service):
 
         outcomes: list[EffectOutcome] = []
         for manager in self.managers:
-            outcomes.append(await manager.on_status_application(handler_context))
+            outcome = await manager.on_status_application(handler_context)
+            outcomes.append(outcome)
+            if OutcomeFlag.PREVENT_STATUS_APPLICATION in outcome.flags:
+                break
         return EffectHandler.combine_outcomes(outcomes)
 
     async def on_attribute(
@@ -224,7 +227,10 @@ class CombatEffectManager(Service):
 
         outcomes: list[EffectOutcome] = []
         for manager in self.managers:
-            outcomes.append(await manager.on_death(handler_context))
+            outcome = await manager.on_death(handler_context)
+            outcomes.append(outcome)
+            if OutcomeFlag.PREVENT_DEATH in outcome.flags:
+                break
         return EffectHandler.combine_outcomes(outcomes)
 
     async def on_post_attack(

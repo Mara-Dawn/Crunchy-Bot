@@ -1,8 +1,12 @@
+import datetime
 import random
 
 from discord.ext import commands
 
 from combat.actors import Character
+from combat.effects.effect import EffectOutcome
+from combat.effects.effect_handler import HandlerContext
+from combat.effects.types import EffectTrigger
 from combat.enchantments.enchantment import (
     CraftDisplayWrapper,
     EffectEnchantment,
@@ -12,7 +16,8 @@ from combat.enchantments.enchantment_handler import (
     EnchantmentEffectHandler,
     EnchantmentHandler,
 )
-from combat.enchantments.types import EnchantmentEffect
+from combat.enchantments.types import EnchantmentEffect, EnchantmentType
+from combat.encounter import EncounterContext
 from combat.gear.gear import Enchantment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import SkillInstance
@@ -25,6 +30,8 @@ from control.logger import BotLogger
 from control.service import Service
 from datalayer.database import Database
 from events.bot_event import BotEvent
+from events.combat_event import CombatEvent
+from events.types import CombatEventType
 
 
 class CombatEnchantmentManager(Service):
@@ -43,6 +50,16 @@ class CombatEnchantmentManager(Service):
 
     async def listen_for_event(self, event: BotEvent):
         pass
+
+    async def get_handler(
+        self, enchantment_type: EnchantmentType
+    ) -> EnchantmentEffectHandler:
+        if enchantment_type not in self.handler_cache:
+            handler = EnchantmentEffectHandler.get_handler(
+                self.controller, enchantment_type
+            )
+            self.handler_cache[enchantment_type] = handler
+        return self.handler_cache[enchantment_type]
 
     async def get_gear_enchantment(
         self, character: Character, enchantment: Enchantment
@@ -175,3 +192,276 @@ class CombatEnchantmentManager(Service):
             skill_instances.append(skill_instance)
 
         return skill_instances
+
+    async def on_status_self_application(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        return EffectOutcome.EMPTY()
+
+    async def on_status_application(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context,
+            handler_context.target,
+            EffectTrigger.ON_STATUS_APPLICATION,
+        )
+
+        if len(triggered_enchantments) <= 0:
+            return EffectOutcome.EMPTY()
+
+        outcome = await self.get_outcome(triggered_enchantments, handler_context)
+
+        return outcome
+
+    async def on_attribute(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context, handler_context.source, EffectTrigger.ATTRIBUTE
+        )
+
+        if len(triggered_enchantments) <= 0:
+            return EffectOutcome.EMPTY()
+
+        return await self.get_outcome(triggered_enchantments, handler_context)
+
+    async def on_attack(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+
+        skill_effect = handler_context.skill.base_skill.skill_effect
+
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context, handler_context.source, EffectTrigger.ON_ATTACK
+        )
+
+        if len(triggered_enchantments) <= 0 or skill_effect in [
+            SkillEffect.NOTHING,
+            SkillEffect.BUFF,
+        ]:
+            return EffectOutcome.EMPTY()
+
+        outcome = await self.get_outcome(triggered_enchantments, handler_context)
+
+        if not handler_context.skill.base_skill.modifiable:
+            if outcome.modifier is not None:
+                outcome.modifier = max(1, outcome.modifier)
+            outcome.crit_chance = None
+            outcome.crit_chance_modifier = None
+
+        return outcome
+
+    async def on_damage_taken(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+
+        skill_effect = handler_context.skill.base_skill.skill_effect
+
+        if skill_effect in [
+            SkillEffect.NOTHING,
+            SkillEffect.HEALING,
+            SkillEffect.BUFF,
+        ]:
+            return EffectOutcome.EMPTY()
+
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.ON_DAMAGE_TAKEN,
+        )
+
+        if len(triggered_enchantments) <= 0:
+            return EffectOutcome.EMPTY()
+
+        outcome = await self.get_outcome(triggered_enchantments, handler_context)
+
+        if not handler_context.skill.base_skill.modifiable:
+            if outcome.modifier is not None:
+                outcome.modifier = max(1, outcome.modifier)
+            outcome.crit_chance = None
+            outcome.crit_chance_modifier = None
+
+        return outcome
+
+    async def on_death(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context, handler_context.source, EffectTrigger.ON_DEATH
+        )
+
+        if len(triggered_enchantments) <= 0:
+            return EffectOutcome.EMPTY()
+
+        return await self.get_outcome(triggered_enchantments, handler_context)
+
+    async def on_post_attack(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context, handler_context.source, EffectTrigger.POST_ATTACK
+        )
+
+        return await self.get_outcome(triggered_enchantments, handler_context)
+
+    async def on_round_start(
+        self,
+        handler_context: HandlerContext,
+    ) -> dict[int, EffectOutcome]:
+
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.START_OF_ROUND,
+        )
+
+        if len(triggered_enchantments) <= 0:
+            return EffectOutcome.EMPTY()
+
+        return await self.get_outcome(triggered_enchantments, handler_context)
+
+    async def on_round_end(
+        self,
+        handler_context: HandlerContext,
+    ) -> dict[int, EffectOutcome]:
+
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.END_OF_ROUND,
+        )
+
+        if len(triggered_enchantments) <= 0:
+            return EffectOutcome.EMPTY()
+
+        return await self.get_outcome(triggered_enchantments, handler_context)
+
+    async def on_turn_start(
+        self,
+        handler_context: HandlerContext,
+    ) -> dict[int, EffectOutcome]:
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.START_OF_TURN,
+        )
+
+        if len(triggered_enchantments) <= 0:
+            return EffectOutcome.EMPTY()
+
+        return await self.get_outcome(triggered_enchantments, handler_context)
+
+    async def on_turn_end(
+        self,
+        handler_context: HandlerContext,
+    ) -> dict[int, EffectOutcome]:
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.END_OF_TURN,
+        )
+
+        if len(triggered_enchantments) <= 0:
+            return EffectOutcome.EMPTY()
+
+        return await self.get_outcome(triggered_enchantments, handler_context)
+
+    async def on_applicant_turn_end(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        return EffectOutcome.EMPTY()
+
+    async def get_outcome(
+        self,
+        gear_enchantments: list[GearEnchantment],
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        outcome_data: dict[EnchantmentType, EffectOutcome] = {}
+
+        for gear_enchantment in gear_enchantments:
+            enchantment_type = (
+                gear_enchantment.enchantment.base_enchantment.enchantment_type
+            )
+            handler = await self.get_handler(enchantment_type)
+            outcome = await handler.handle(
+                gear_enchantment.enchantment, handler_context
+            )
+
+            if enchantment_type not in outcome_data:
+                outcome_data[enchantment_type] = [outcome]
+            else:
+                outcome_data[enchantment_type].append(outcome)
+
+        combined_outcomes = []
+        for enchantment_type, outcomes in outcome_data.items():
+            handler = await self.get_handler(enchantment_type)
+            combined = await handler.combine(outcomes, handler_context)
+            combined_outcomes.append(combined)
+
+        return EnchantmentEffectHandler.combine_outcomes(combined_outcomes)
+
+    async def consume_enchantment_stack(
+        self,
+        context: EncounterContext,
+        character: Character,
+        enchantment: EffectEnchantment,
+        amount: int = 1,
+    ):
+        event = CombatEvent(
+            datetime.datetime.now(),
+            context.encounter.guild_id,
+            context.encounter.id,
+            character.id,
+            character.id,
+            enchantment.base_enchantment.enchantment_type,
+            -amount,
+            -amount,
+            enchantment.id,
+            CombatEventType.ENCHANTMENT_EFFECT,
+        )
+        await self.controller.dispatch_event(event)
+
+    async def enchantment_trigger(
+        self,
+        context: EncounterContext,
+        character: Character,
+        trigger: EffectTrigger,
+    ) -> list[GearEnchantment]:
+        triggered: list[GearEnchantment] = []
+
+        for enchantment in character.active_enchantments:
+
+            is_triggered = trigger in enchantment.base_enchantment.trigger
+            is_consumed = trigger in enchantment.base_enchantment.consumed
+
+            if not is_triggered or is_consumed:
+                continue
+
+            gear_enchantment = await self.get_gear_enchantment(character, enchantment)
+
+            if gear_enchantment.stacks_left <= 0:
+                continue
+
+            if is_consumed:
+                await self.consume_enchantment_stack(context, enchantment)
+
+            if is_triggered:
+                triggered.append(gear_enchantment)
+
+        triggered = sorted(
+            triggered, key=lambda item: item.enchantment.priority, reverse=True
+        )
+        return triggered

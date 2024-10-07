@@ -392,12 +392,9 @@ class EffectEnchantment(Enchantment):
         rarity: Rarity,
         level: int,
         locked: bool = False,
+        priority: int = 100,
         id: int = None,
     ):
-        if base_enchantment.stacks is not None:
-            base_enchantment.stacks = int(
-                base_enchantment.stacks * self.RARITY_STACKS_SCALING[rarity]
-            )
         super().__init__(
             base_enchantment=base_enchantment,
             rarity=rarity,
@@ -405,6 +402,12 @@ class EffectEnchantment(Enchantment):
             locked=locked,
             id=id,
         )
+        if base_enchantment.stacks is not None:
+            base_enchantment.stacks = int(
+                base_enchantment.stacks * self.RARITY_STACKS_SCALING[rarity]
+            )
+        self.base_enchantment: BaseEffectEnchantment = base_enchantment
+        self.priority = priority
 
     def get_embed(
         self,

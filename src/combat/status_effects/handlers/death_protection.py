@@ -4,6 +4,7 @@ from combat.effects.effect import (
     EffectEmbedData,
     EffectOutcome,
     EmbedDataCollection,
+    OutcomeFlag,
 )
 from combat.effects.effect_handler import HandlerContext
 from combat.status_effects.status_effect import ActiveStatusEffect
@@ -51,5 +52,6 @@ class DeathProtectionHandler(StatusEffectHandler):
         )
         embed_data_collection.append(embed_data)
         outcome.embed_data = embed_data_collection
+        outcome.flags = [OutcomeFlag.PREVENT_DEATH]
 
         return outcome
