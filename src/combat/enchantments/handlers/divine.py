@@ -28,7 +28,7 @@ class DivineHandler(EnchantmentCraftHandler):
         gear.modifiers = modifiers
 
         await self.database.delete_user_gear_modifiers(gear.id)
-        await self.database.log_user_gear_modifiers(gear.id)
+        await self.database.log_user_gear_modifiers(gear.id, gear)
 
         new_gear = await self.database.get_gear_by_id(gear.id)
 

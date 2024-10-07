@@ -361,8 +361,7 @@ class Enchantment(Droppable):
             spacing = " " * spacing_width
             description += f"\n{spacing}{amount_text}"
 
-            info_block += "```"
-
+        info_block += "```"
         info_block += f"```python\n{description}```"
 
         if scrap_value is not None:
@@ -573,9 +572,9 @@ class EffectEnchantment(Enchantment):
             spacing = " " * spacing_width
             description += f"\n{spacing}{amount_text}"
 
-            info_block += "```"
+        info_block += "```"
 
-        info_block += f"```python\n{description}```"
+        info_block += f" ```python\n{description}```"
 
         if scrap_value is not None:
             stock_label = "Stock: 1"

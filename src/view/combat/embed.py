@@ -213,11 +213,10 @@ class EnchantmentSpacerEmbed(discord.Embed):
             title = "Empty"
         else:
             description = (
-                "You are currently crafting using the item shown above. "
                 "Select one of the following enchantments to apply to "
                 "your selected piece of equipment."
             )
-            title = f"Crafting with {gear.rarity.name} {gear.name}"
+            title = f"Crafting with {gear.rarity.value} {gear.name}"
 
         if len(description) < max_width:
             spacing = max_width - len(description)

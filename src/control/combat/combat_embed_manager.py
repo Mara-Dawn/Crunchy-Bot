@@ -9,11 +9,13 @@ from combat.actors import Actor, Character, Opponent
 from combat.effects.effect import EmbedDataCollection
 from combat.encounter import Encounter, EncounterContext, TurnDamageData, TurnData
 from combat.gear.gear import Gear
+from combat.gear.types import GearModifierType
 from combat.skills.skill import Skill
 from combat.skills.types import SkillEffect
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_enchantment_manager import CombatEnchantmentManager
+from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.combat.encounter_statistics import EncounterStatistics
 from control.combat.object_factory import ObjectFactory
@@ -50,6 +52,9 @@ class CombatEmbedManager(Service):
         )
         self.encounter_statistics: EncounterStatistics = self.controller.get_service(
             EncounterStatistics
+        )
+        self.gear_manager: CombatGearManager = self.controller.get_service(
+            CombatGearManager
         )
         self.enchantment_manager: CombatEnchantmentManager = (
             self.controller.get_service(CombatEnchantmentManager)
@@ -1058,6 +1063,7 @@ class CombatEmbedManager(Service):
         show_locked_state: bool = False,
         scrap_value: int = None,
         max_width: int = None,
+        show_boundaries: bool = False,
     ) -> discord.Embed:
         enchantment_data = None
         if len(gear.enchantments) > 0:
@@ -1067,6 +1073,17 @@ class CombatEmbedManager(Service):
                     character, enchantment
                 )
                 enchantment_data.append(data)
+
+        modifier_boundaries: dict[GearModifierType, tuple[float, float]] = None
+        if show_boundaries:
+            modifier_boundaries = {}
+            for modifier_type, _ in gear.modifiers.items():
+                modifier_boundaries[modifier_type] = (
+                    await self.gear_manager.get_modifier_boundaries(
+                        gear.base, gear.level, modifier_type
+                    )
+                )
+
         return gear.get_embed(
             show_data=show_data,
             show_info=show_info,
@@ -1075,4 +1092,5 @@ class CombatEmbedManager(Service):
             scrap_value=scrap_value,
             max_width=max_width,
             enchantment_data=enchantment_data,
+            modifier_boundaries=modifier_boundaries,
         )
