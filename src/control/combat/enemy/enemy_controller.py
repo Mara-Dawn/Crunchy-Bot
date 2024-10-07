@@ -16,6 +16,7 @@ from combat.skills.types import (
     SkillTarget,
 )
 from combat.status_effects.types import StatusEffectApplication
+from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_gear_manager import CombatGearManager
@@ -334,7 +335,14 @@ class EnemyController(Service, ABC):
             ):
                 target = random.choice(skill_targets)
             else:
-                target = random.choice(available_targets)
+                weights = []
+                for actor in available_targets:
+                    actor_weigt = 100
+                    if actor in skill_targets:
+                        actor_weigt = Config.ENEMY_RETARGET_WEIGHT
+                    weights.append(actor_weigt)
+
+                target = random.choices(available_targets, weights=weights)[0]
 
             skill_target_ids.append(target.id)
             if target not in skill_targets:

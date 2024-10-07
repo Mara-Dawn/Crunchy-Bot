@@ -893,7 +893,7 @@ class CombatEmbedManager(Service):
         content = f"{actor.name}'s turn is skipped."
         self.add_text_bar(embed, "", content)
         if reason is not None and len(reason) > 0:
-            embed.add_field(name="Reason", value=reason)
+            embed.add_field(name="Reason", value=reason, inline=False)
 
     def get_turn_skip_embed(self, actor: Actor, reason: str) -> discord.Embed:
         actor_name = f"{actor.name}"
@@ -907,7 +907,7 @@ class CombatEmbedManager(Service):
         if actor.image_url is not None:
             embed.set_thumbnail(url=actor.image_url)
         if reason is not None and len(reason) > 0:
-            embed.add_field(name="Reason", value=reason)
+            embed.add_field(name="Reason", value=reason, inline=False)
         return embed
 
     async def get_waiting_for_party_embed(self, party_size: int, opponent: Opponent):
