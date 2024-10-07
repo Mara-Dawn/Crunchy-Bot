@@ -31,6 +31,9 @@ class BleedHandler(StatusEffectHandler):
         if effect_type != self.effect_type:
             return outcome
 
+        if handler_context.target.defeated:
+            return outcome
+
         event = status_effect.event
 
         damage = event.value
