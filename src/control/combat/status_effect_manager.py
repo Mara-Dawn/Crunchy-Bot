@@ -60,7 +60,7 @@ class CombatStatusEffectManager(EffectManager):
             and application_value == 0
             and not status_effect.apply_on_miss
         ):
-            return outcome, None
+            return outcome
 
         handler = await self.get_handler(type)
         handler_context = HandlerContext(
