@@ -83,6 +83,7 @@ class GardenEventType(str, Enum):
 class EncounterEventType(str, Enum):
     SPAWN = "spawn"
     INITIATE = "initiate"
+    COUNTDOWN = "countdown"
     NEW_ROUND = "new_round"
     MEMBER_REQUEST_JOIN = "member_request_join"
     MEMBER_ENGAGE = "member_engage"
