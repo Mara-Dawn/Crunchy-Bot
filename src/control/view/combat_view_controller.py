@@ -238,9 +238,13 @@ class CombatViewController(ViewController):
             EncounterEventType.MEMBER_DISENGAGE,
             EncounterEventType.END,
             EncounterEventType.INITIATE,
+            EncounterEventType.COUNTDOWN,
         ]:
             done = event.encounter_event_type == EncounterEventType.END
-            started = event.encounter_event_type == EncounterEventType.INITIATE
+            started = event.encounter_event_type in [
+                EncounterEventType.INITIATE,
+                EncounterEventType.COUNTDOWN,
+            ]
             await self.update_encounter_message(encounter_id, started, done)
 
     async def listen_for_ui_event(self, event: UIEvent):

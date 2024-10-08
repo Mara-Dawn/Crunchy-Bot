@@ -26,6 +26,16 @@ class CountdownState(State):
 
         encounter = self.context.encounter
         thread = self.context.thread
+
+        event = EncounterEvent(
+            datetime.datetime.now(),
+            self.context.encounter.guild_id,
+            self.context.encounter.id,
+            self.bot.user.id,
+            EncounterEventType.COUNTDOWN,
+        )
+        await self.controller.dispatch_event(event)
+
         wait_time = Config.COMBAT_INITIAL_WAIT
         round_embed = await self.embed_manager.get_initiation_embed(
             wait_time, self.context.opponent
