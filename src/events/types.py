@@ -98,6 +98,7 @@ class EncounterEventType(str, Enum):
     END = "end"
     PENALTY50 = "penalty_50"
     PENALTY75 = "penalty_75"
+    REMOVE_RESTRICTION = "remove_restriction"
 
 
 class CombatEventType(str, Enum):
@@ -192,6 +193,7 @@ class UIEventType(str, Enum):
 
     COMBAT_LOADED = "combat_loaded"
     COMBAT_ENGAGE = "combat_engage"
+    COMBAT_REMOVE_RESTRICTION = "combat_remove_restriction"
     COMBAT_LEAVE = "combat_leave"
     COMBAT_APPROVE = "combat_approve"
     COMBAT_INITIATE = "combat_initiate"

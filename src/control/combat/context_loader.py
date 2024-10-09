@@ -1,6 +1,7 @@
 from discord.ext import commands
 
 from combat.encounter import Encounter, EncounterContext
+from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.effect_manager import CombatEffectManager
@@ -96,6 +97,18 @@ class ContextLoader(Service):
             combatants=[],
             thread=None,
         )
+
+        guild_level = await self.database.get_guild_level(encounter.guild_id)
+
+        min_encounter_size = enemy.min_encounter_scale
+        if encounter.enemy_level > 1 and encounter.enemy_level == guild_level:
+            min_encounter_size = max(
+                min_encounter_size,
+                int(enemy.max_players * Config.ENCOUNTER_MAX_LVL_SIZE_SCALING),
+            )
+            context.max_lvl = True
+
+        context.min_participants = min_encounter_size
 
         return context
 
