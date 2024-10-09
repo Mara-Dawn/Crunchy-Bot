@@ -113,6 +113,26 @@ class Chance(BaseCraftingEnchantment):
         )
 
 
+class Crangle(BaseCraftingEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            name="Crangle Bean",
+            enchantment_type=EnchantmentType.CRANGLE,
+            description=(
+                "Crangles an item, rerolling its modifiers with unexpected outcomes. "
+                "New modifiers include ones the base item could'nt normally roll. "
+                "New modifiers can roll higher than normal. "
+                "New modifiers can be negative. "
+                "Crangled items can not be modifed any further. "
+            ),
+            information="",
+            rarities=[Rarity.UNIQUE],
+            droppable=True,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+        )
+
+
 # Effect Enchantments
 
 

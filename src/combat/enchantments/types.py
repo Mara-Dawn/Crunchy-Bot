@@ -10,6 +10,7 @@ class EnchantmentType(str, Enum):
     DIVINE = "Divine"
     EXALTED = "Exalted"
     CHANCE = "Chance"
+    CRANGLE = "Crangle"
 
     # ENCHANTMENTS
     DEATH_SAVE = "DeathSave"

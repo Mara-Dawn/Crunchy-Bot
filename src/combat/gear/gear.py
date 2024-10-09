@@ -267,14 +267,24 @@ class Gear(Droppable):
                 ]:
                     flat_damage_modifiers[modifier_type] = value
                     continue
-                name = modifier_type.value
-                display_value = GearModifierType.display_value(modifier_type, value)
-                spacing = " " * (max_len_pre - len(name))
-                line = f"{spacing}{name}: {display_value}"
-                line_colored = f"{spacing}{name}: [35m{display_value}[0m"
-                prefixes.append((line_colored, len(line)))
 
-                if modifier_boundaries is not None:
+                name = modifier_type.value
+
+                if GearModifierType.no_value(modifier_type):
+                    spacing = " " * (max_len_pre + 2)
+                    line = f"{spacing}{name}"
+                    line_colored = f"{spacing}[31m{name}[0m"
+                    prefixes.append((line_colored, len(line)))
+                else:
+                    spacing = " " * (max_len_pre - len(name))
+                    display_value = GearModifierType.display_value(modifier_type, value)
+                    line = f"{spacing}{name}: {display_value}"
+                    line_colored = f"{spacing}{name}: [35m{display_value}[0m"
+                    prefixes.append((line_colored, len(line)))
+
+                if modifier_boundaries is not None and not GearModifierType.no_value(
+                    modifier_type
+                ):
                     min_value, max_value = modifier_boundaries[modifier_type]
                     min_value = GearModifierType.display_value(modifier_type, min_value)
                     max_value = GearModifierType.display_value(modifier_type, max_value)

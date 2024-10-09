@@ -34,6 +34,7 @@ class GearModifierType(str, Enum):
     EVASION = "Evasion"
     DEXTERITY = "Dexterity"
     CONSTITUTION = "Constitution"
+    CRANGLED = "Crangled"
 
     @staticmethod
     def max_name_len():
@@ -46,6 +47,13 @@ class GearModifierType(str, Enum):
     def is_unique_modifier(modifier_type: "GearModifierType"):
         unique_modifiers = [GearModifierType.EVASION]
         return modifier_type in unique_modifiers
+
+    @staticmethod
+    def no_value(modifier_type: "GearModifierType"):
+        modifiers = [
+            GearModifierType.CRANGLED,
+        ]
+        return modifier_type in modifiers
 
     @staticmethod
     def short_label(modifier_type: "GearModifierType"):
@@ -62,6 +70,7 @@ class GearModifierType(str, Enum):
             GearModifierType.HEALING: "HLG",
             GearModifierType.CRIT_RATE: "CRT %",
             GearModifierType.CRIT_DAMAGE: "CRT DMG",
+            GearModifierType.CRANGLED: "CRG",
         }
 
         return label_map[modifier_type]
@@ -109,6 +118,7 @@ class GearModifierType(str, Enum):
             GearModifierType.HEALING,
             GearModifierType.CRIT_RATE,
             GearModifierType.CRIT_DAMAGE,
+            GearModifierType.CRANGLED,
         ]
 
 

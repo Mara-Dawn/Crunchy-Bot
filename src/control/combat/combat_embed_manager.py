@@ -1117,6 +1117,8 @@ class CombatEmbedManager(Service):
         if show_boundaries:
             modifier_boundaries = {}
             for modifier_type, _ in gear.modifiers.items():
+                if modifier_type == GearModifierType.CRANGLED:
+                    continue
                 modifier_boundaries[modifier_type] = (
                     await self.gear_manager.get_modifier_boundaries(
                         gear.base, gear.level, modifier_type
