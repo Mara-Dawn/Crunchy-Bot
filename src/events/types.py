@@ -96,6 +96,7 @@ class EncounterEventType(str, Enum):
     ENEMY_DEFEAT = "enemy_defeat"
     ENEMY_PHASE_CHANGE = "enemy_phase_change"
     END = "end"
+    CLEANUP = "cleanup"
     PENALTY50 = "penalty_50"
     PENALTY75 = "penalty_75"
     REMOVE_RESTRICTION = "remove_restriction"

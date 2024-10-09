@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import datetime
 
 from combat.encounter import EncounterContext
 from combat.engine.common import CommonService
@@ -21,6 +22,8 @@ from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.discord_manager import DiscordManager
 from control.controller import Controller
 from events.bot_event import BotEvent
+from events.encounter_event import EncounterEvent
+from events.types import EncounterEventType
 
 
 class Engine:
@@ -76,9 +79,6 @@ class Engine:
             await self.update()
 
     async def update(self):
-        if self.context.concluded:
-            return
-
         if self.context.initiated:
             await self.common.check_actor_defeat(self.context)
 
@@ -94,6 +94,14 @@ class Engine:
                 self.state.next_state = StateType.ENCOUNTER_END
 
         if self.state.quit:
+            event = EncounterEvent(
+                datetime.datetime.now(),
+                self.context.encounter.guild_id,
+                self.context.encounter.id,
+                self.bot.user.id,
+                EncounterEventType.CLEANUP,
+            )
+            await self.controller.dispatch_event(event)
             self.done = True
         elif self.state.done:
             await self.state_transition()
