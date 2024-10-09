@@ -114,6 +114,9 @@ class EncounterContext:
 
         self.current_turn_embed: discord.Embed = None
 
+        self.min_participants: int = 1
+        self.max_lvl: bool = False
+
         self.refresh_initiative()
 
     def add_event(self, event: BotEvent):

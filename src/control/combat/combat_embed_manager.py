@@ -61,8 +61,9 @@ class CombatEmbedManager(Service):
         pass
 
     async def get_spawn_embed(
-        self, encounter: Encounter, done: bool = False, show_info: bool = False
+        self, context: EncounterContext, show_info: bool = False
     ) -> discord.Embed:
+        encounter = context.encounter
         enemy = await self.factory.get_enemy(encounter.enemy_type)
         enemy_name = enemy.name
         image_url = enemy.image_url
@@ -89,14 +90,7 @@ class CombatEmbedManager(Service):
             enemy_info = f"```ansi\n[33m{enemy.information}```"
             embed.add_field(name="", value=enemy_info, inline=False)
 
-        min_encounter_size = enemy.min_encounter_scale
-        guild_level = await self.database.get_guild_level(encounter.guild_id)
-
-        if encounter.enemy_level > 1 and encounter.enemy_level == guild_level:
-            min_encounter_size = max(
-                min_encounter_size,
-                int(enemy.max_players * Config.ENCOUNTER_MAX_LVL_SIZE_SCALING),
-            )
+        min_encounter_size = context.min_participants
 
         max_encounter_size = enemy.max_players
         participants = await self.database.get_encounter_participants_by_encounter_id(
@@ -108,7 +102,7 @@ class CombatEmbedManager(Service):
             )
         )
         active_participants = len(participants) - len(out_participants)
-        if not done:
+        if not context.concluded:
             if min_encounter_size > 1 and active_participants < min_encounter_size:
                 participant_info = f"\nCombatants Needed to Start: {active_participants}/{min_encounter_size}"
             else:

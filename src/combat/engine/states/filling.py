@@ -1,10 +1,8 @@
-import datetime
 import importlib
 
 from combat.encounter import EncounterContext
 from combat.engine.states.state import State
 from combat.engine.types import StateType
-from config import Config
 from control.controller import Controller
 from control.types import ControllerModuleMap
 from events.bot_event import BotEvent
@@ -19,24 +17,13 @@ class FillingState(State):
         self.state_type: StateType = StateType.FILLING
         self.next_state: StateType = StateType.COUNTDOWN
 
-        self.min_participants = 1
-
     async def startup(self):
         encounter = self.context.encounter
         thread = self.context.thread
         enemy = await self.factory.get_enemy(encounter.enemy_type)
 
-        self.min_participants = enemy.min_encounter_scale
-        guild_level = await self.database.get_guild_level(encounter.guild_id)
-
-        if encounter.enemy_level == guild_level:
-            self.min_participants = max(
-                self.min_participants,
-                int(enemy.max_players * Config.ENCOUNTER_MAX_LVL_SIZE_SCALING),
-            )
-
         wait_embed = await self.embed_manager.get_waiting_for_party_embed(
-            self.min_participants, self.context.opponent
+            self.context.min_participants, self.context.opponent
         )
         leave_view = None
         if not enemy.is_boss:
@@ -84,6 +71,9 @@ class FillingState(State):
                         self.done = True
                         await self.common.force_end(self.context)
                         update = True
+                    case EncounterEventType.REMOVE_RESTRICTION:
+                        await self.check_filled()
+                        update = True
         return update
 
     async def update(self):
@@ -92,9 +82,9 @@ class FillingState(State):
     async def check_filled(self):
         self.logger.log(
             self.context.encounter.guild_id,
-            f"({self.context.encounter.id}) filling: {len(self.context.combatants)}/{self.min_participants}",
+            f"({self.context.encounter.id}) filling: {len(self.context.combatants)}/{self.context.min_participants}",
         )
-        if len(self.context.combatants) >= self.min_participants:
+        if len(self.context.combatants) >= self.context.min_participants:
             self.done = True
 
     async def initiate_encounter(self):

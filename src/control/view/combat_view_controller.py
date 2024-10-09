@@ -239,6 +239,7 @@ class CombatViewController(ViewController):
             EncounterEventType.END,
             EncounterEventType.INITIATE,
             EncounterEventType.COUNTDOWN,
+            EncounterEventType.REMOVE_RESTRICTION,
         ]:
             done = event.encounter_event_type == EncounterEventType.END
             started = event.encounter_event_type in [
@@ -313,6 +314,9 @@ class CombatViewController(ViewController):
             case UIEventType.COMBAT_DISAPPEAR:
                 context = event.payload
                 await self.combat_disappear(context)
+            case UIEventType.COMBAT_REMOVE_RESTRICTION:
+                context = event.payload
+                await self.combat_remove_restriction(context)
 
     async def initiate_encounter(self, encounter: Encounter):
         context = await self.context_loader.load_encounter_context(encounter.id)
@@ -330,8 +334,8 @@ class CombatViewController(ViewController):
     async def update_encounter_message(
         self, encounter_id: int, started: bool, done: bool
     ):
-        encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
-        embed = await self.embed_manager.get_spawn_embed(encounter, done=done)
+        context = await self.context_loader.load_encounter_context(encounter_id)
+        embed = await self.embed_manager.get_spawn_embed(context)
         event = UIEvent(
             UIEventType.COMBAT_ENGAGE_UPDATE, (encounter_id, embed, started, done)
         )
@@ -429,6 +433,20 @@ class CombatViewController(ViewController):
         if context.thread is not None:
             embed = self.embed_manager.get_fight_disappear_embed(context)
             await context.thread.send("", embed=embed)
+
+    async def combat_remove_restriction(
+        self,
+        context: EncounterContext,
+    ):
+        context.min_participants = context.opponent.enemy.min_encounter_scale
+        event = EncounterEvent(
+            datetime.datetime.now(),
+            context.encounter.guild_id,
+            context.encounter.id,
+            self.bot.user.id,
+            EncounterEventType.REMOVE_RESTRICTION,
+        )
+        await self.controller.dispatch_event(event)
 
     async def player_dm_ping(
         self,

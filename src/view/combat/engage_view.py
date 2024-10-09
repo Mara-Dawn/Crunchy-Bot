@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import datetime
 
@@ -11,9 +12,25 @@ from events.ui_event import UIEvent
 from view.view_menu import ViewMenu
 
 
+class Timer:
+    def __init__(self, timeout, callback):
+        self._timeout = timeout
+        self._callback = callback
+        self._task = asyncio.ensure_future(self._job())
+
+    async def _job(self):
+        await asyncio.sleep(self._timeout)
+        await self._callback()
+
+    def cancel(self):
+        if not self._task.cancelled() and not self._task.done():
+            self._task.cancel()
+
+
 class EnemyEngageView(ViewMenu):
 
     DEFAULT_TIMEOUT = 60 * 60
+    DEFAULT_RESTRICTION_TIMEOUT = 45 * 60
 
     def __init__(self, controller: Controller, context: EncounterContext):
         timeout = self.DEFAULT_TIMEOUT
@@ -30,6 +47,11 @@ class EnemyEngageView(ViewMenu):
         self.active = False
         self.timeout_timestamp = None
         self.loaded = False
+        self.timer = None
+        if self.context.min_participants > 1 and self.context.max_lvl:
+            self.timer = Timer(
+                self.DEFAULT_RESTRICTION_TIMEOUT, self.remove_restriction
+            )
 
         if timeout is not None:
             now = datetime.datetime.now().timestamp()
@@ -63,6 +85,15 @@ class EnemyEngageView(ViewMenu):
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
+
+    async def remove_restriction(self):
+        if not self.active and not self.done:
+            event = UIEvent(
+                UIEventType.COMBAT_REMOVE_RESTRICTION,
+                (self.context),
+                self.id,
+            )
+            await self.controller.dispatch_ui_event(event)
 
     async def leave(self, interaction: discord.Interaction):
         event = UIEvent(
