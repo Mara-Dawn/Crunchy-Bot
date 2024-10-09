@@ -72,9 +72,12 @@ class InitialState(State):
             mock_encounter = Encounter(
                 guild.id, mock_enemy.type, encounter.enemy_level, encounter.max_hp
             )
-            embed = await self.embed_manager.get_spawn_embed(mock_encounter)
+            mock_context = await self.context_loader.init_encounter_context(
+                mock_encounter
+            )
+            embed = await self.embed_manager.get_spawn_embed(mock_context)
         else:
-            embed = await self.embed_manager.get_spawn_embed(encounter)
+            embed = await self.embed_manager.get_spawn_embed(self.context)
 
         await view.refresh_ui(embed=embed)
 
