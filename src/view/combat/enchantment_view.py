@@ -192,6 +192,10 @@ class EnchantmentView(
                             if self.gear.rarity != enchantment_group.rarity:
                                 flag_hit = True
                                 break
+                        case EnchantmentFilterFlags.MATCH_COMMON_RARITY:
+                            if self.gear.rarity != Rarity.COMMON:
+                                flag_hit = True
+                                break
                         case EnchantmentFilterFlags.LESS_OR_EQUAL_RARITY:
                             gear_rarity_weight = CombatGearManager.RARITY_WEIGHTS[
                                 self.gear.rarity

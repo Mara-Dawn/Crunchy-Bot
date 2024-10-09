@@ -95,6 +95,24 @@ class Exalted(BaseCraftingEnchantment):
         )
 
 
+class Chance(BaseCraftingEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            name="Chance Bean",
+            enchantment_type=EnchantmentType.CHANCE,
+            description=(
+                "Upgrades a common item to a random rarity and rerolls "
+                "its modifiers."
+            ),
+            information="",
+            rarities=[Rarity.UNIQUE],
+            filter_flags=[EnchantmentFilterFlags.MATCH_COMMON_RARITY],
+            droppable=True,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+        )
+
+
 # Effect Enchantments
 
 

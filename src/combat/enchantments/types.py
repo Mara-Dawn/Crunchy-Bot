@@ -9,6 +9,7 @@ class EnchantmentType(str, Enum):
     CHAOS = "Chaos"
     DIVINE = "Divine"
     EXALTED = "Exalted"
+    CHANCE = "Chance"
 
     # ENCHANTMENTS
     DEATH_SAVE = "DeathSave"
@@ -37,3 +38,4 @@ class EnchantmentEffect(str, Enum):
 class EnchantmentFilterFlags(Enum):
     MATCH_RARITY = 1
     LESS_OR_EQUAL_RARITY = 2
+    MATCH_COMMON_RARITY = 3

@@ -2,7 +2,7 @@ import random
 
 from combat.enchantments.enchantment import Enchantment
 from combat.enchantments.enchantment_handler import EnchantmentCraftHandler
-from combat.enchantments.enchantments import Divine
+from combat.enchantments.enchantments import Exalted
 from combat.gear.gear import Gear
 from combat.gear.types import GearModifierType, Rarity
 from control.combat.combat_gear_manager import CombatGearManager
@@ -19,7 +19,7 @@ class ExaltedHandler(EnchantmentCraftHandler):
 
     def __init__(self, controller: Controller):
         EnchantmentCraftHandler.__init__(
-            self, controller=controller, enchantment=Divine()
+            self, controller=controller, enchantment=Exalted()
         )
         self.gear_manager: CombatGearManager = self.controller.get_service(
             CombatGearManager
