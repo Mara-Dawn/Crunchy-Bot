@@ -589,8 +589,19 @@ class CombatGearManager(Service):
 
             case Base.ENCHANTMENT:
                 base_enchantment: BaseEnchantment = base
-                if base_enchantment.fixed_rarity is not None:
-                    rarity = base_enchantment.fixed_rarity
+                if rarity not in base_enchantment.rarities:
+                    min_weight = self.RARITY_WEIGHTS[rarity]
+                    matched_rarity = None
+                    for comparison_rarity, weight in self.RARITY_WEIGHTS.items():
+                        if comparison_rarity not in base_enchantment.rarities:
+                            continue
+
+                        matched_rarity = comparison_rarity
+
+                        if weight <= min_weight:
+                            break
+
+                    rarity = matched_rarity
                 if base_enchantment.enchantment_effect == EnchantmentEffect.EFFECT:
                     enchantment = EffectEnchantment(
                         base_enchantment=base_enchantment,

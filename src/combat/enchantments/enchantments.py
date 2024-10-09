@@ -4,7 +4,11 @@ from combat.enchantments.enchantment import (
     BaseEffectEnchantment,
     BaseEnchantment,
 )
-from combat.enchantments.types import EnchantmentEffect, EnchantmentType
+from combat.enchantments.types import (
+    EnchantmentEffect,
+    EnchantmentFilterFlags,
+    EnchantmentType,
+)
 from combat.gear.types import EquipmentSlot, Rarity
 from combat.skills.types import SkillEffect
 
@@ -50,7 +54,7 @@ class Chaos(BaseCraftingEnchantment):
             enchantment_type=EnchantmentType.CHAOS,
             description="Randomly rerolls all modifiers on a gear piece of any rarity.",
             information="",
-            fixed_rarity=Rarity.UNIQUE,
+            rarities=[Rarity.UNIQUE],
             droppable=True,
             image_url="https://i.imgur.com/B6TuHg3.png",
         )
@@ -67,7 +71,25 @@ class Divine(BaseCraftingEnchantment):
                 "The modifiers themselves will stay the same."
             ),
             information="",
-            fixed_rarity=Rarity.UNIQUE,
+            rarities=[Rarity.UNIQUE],
+            droppable=True,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+        )
+
+
+class Exalted(BaseCraftingEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            name="Exalted Bean",
+            enchantment_type=EnchantmentType.EXALTED,
+            description=(
+                "Adds a random modifier to the item and upgrades it to the next rarity. "
+                "Only works on gear of the same rarity as this item."
+            ),
+            information="",
+            rarities=[Rarity.COMMON, Rarity.UNCOMMON, Rarity.RARE],
+            filter_flags=[EnchantmentFilterFlags.MATCH_RARITY],
             droppable=True,
             image_url="https://i.imgur.com/B6TuHg3.png",
         )

@@ -3755,6 +3755,18 @@ class Database:
 
         await self.__query_insert(command, task)
 
+    async def update_gear_rarity(self, gear_id: int, rarity: Rarity):
+        if gear_id is None:
+            return
+        command = f"""
+            UPDATE {self.USER_GEAR_TABLE} SET
+            {self.USER_GEAR_RARITY_COL} = ?
+            WHERE {self.USER_GEAR_ID_COL} = ?;
+        """
+        task = (rarity.value, gear_id)
+
+        await self.__query_insert(command, task)
+
     async def create_user_equipment(self, guild_id: int, user_id: int) -> int:
         command = f"""
             INSERT OR IGNORE INTO {self.USER_EQUIPMENT_TABLE}

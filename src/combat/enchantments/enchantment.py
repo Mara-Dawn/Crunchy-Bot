@@ -2,7 +2,11 @@ import discord
 
 from combat.effects.effect import Effect
 from combat.effects.types import EffectTrigger
-from combat.enchantments.types import EnchantmentEffect, EnchantmentType
+from combat.enchantments.types import (
+    EnchantmentEffect,
+    EnchantmentFilterFlags,
+    EnchantmentType,
+)
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
 from combat.skills.types import SkillEffect
@@ -30,11 +34,12 @@ class BaseEnchantment(DroppableBase):
         max_level: int = 99,
         droppable: bool = True,
         weight: int = 100,
-        fixed_rarity: Rarity = None,
+        rarities: list[Rarity] = None,
         image_url: str = None,
         uniques: list[EnchantmentType] = None,
         base_enchantment_type: EnchantmentType = None,
         author: str = None,
+        filter_flags: list[EnchantmentFilterFlags] = None,
     ):
         super().__init__(
             name=name,
@@ -48,6 +53,7 @@ class BaseEnchantment(DroppableBase):
             uniques=uniques,
             author=author,
         )
+        self.filter_flags = filter_flags
         self.name = name
         self.value = value
         self.enchantment_type = enchantment_type
@@ -56,7 +62,18 @@ class BaseEnchantment(DroppableBase):
         self.enchantment_effect = enchantment_effect
         self.image_url = image_url
         self.base_enchantment_type = base_enchantment_type
-        self.fixed_rarity = fixed_rarity
+        self.rarities = rarities
+
+        if self.rarities is None:
+            self.rarities = [
+                Rarity.COMMON,
+                Rarity.UNCOMMON,
+                Rarity.RARE,
+                Rarity.LEGENDARY,
+            ]
+
+        if self.filter_flags is None:
+            self.filter_flags = []
 
         if self.image_url is None:
             self.image_url = self.DEFAULT_IMAGE[self.enchantment_effect]
@@ -79,10 +96,11 @@ class BaseCraftingEnchantment(BaseEnchantment):
         max_level: int = 99,
         droppable: bool = True,
         weight: int = 100,
-        fixed_rarity: Rarity = None,
+        rarities: list[Rarity] = None,
         image_url: str = None,
         uniques: list[EnchantmentType] = None,
         base_enchantment_type: EnchantmentType = None,
+        filter_flags: list[EnchantmentFilterFlags] = None,
         author: str = None,
     ):
         super().__init__(
@@ -97,10 +115,11 @@ class BaseCraftingEnchantment(BaseEnchantment):
             max_level=max_level,
             droppable=droppable,
             weight=weight,
-            fixed_rarity=fixed_rarity,
+            rarities=rarities,
             image_url=image_url,
             uniques=uniques,
             base_enchantment_type=base_enchantment_type,
+            filter_flags=filter_flags,
             author=author,
         )
 
@@ -136,8 +155,11 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
         delay_trigger: bool = False,
         delay_consume: bool = False,
         delay_for_source_only: bool = False,
+        filter_flags: list[EnchantmentFilterFlags] = None,
         single_description: bool = False,
     ):
+        if filter_flags is None:
+            filter_flags = [EnchantmentFilterFlags.LESS_OR_EQUAL_RARITY]
         BaseEnchantment.__init__(
             self,
             name=name,
@@ -151,10 +173,11 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
             max_level=max_level,
             droppable=droppable,
             weight=weight,
-            fixed_rarity=fixed_rarity,
+            rarities=fixed_rarity,
             image_url=image_url,
             uniques=uniques,
             base_enchantment_type=base_enchantment_type,
+            filter_flags=filter_flags,
             author=author,
         )
         Effect.__init__(

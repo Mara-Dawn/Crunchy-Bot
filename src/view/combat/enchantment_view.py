@@ -5,11 +5,16 @@ import discord
 
 from combat.actors import Character
 from combat.enchantments.enchantment import Enchantment, GearEnchantment
-from combat.enchantments.types import EnchantmentEffect, EnchantmentType
+from combat.enchantments.types import (
+    EnchantmentEffect,
+    EnchantmentFilterFlags,
+    EnchantmentType,
+)
 from combat.gear.gear import Gear
 from combat.gear.types import EquipmentSlot, Rarity
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_enchantment_manager import CombatEnchantmentManager
+from control.combat.combat_gear_manager import CombatGearManager
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -172,11 +177,54 @@ class EnchantmentView(
         self.group_enchantments()
 
         if self.gear is not None:
-            self.filtered_items = [
-                x
-                for x in self.filtered_items
-                if x.enchantment.slot in [EquipmentSlot.ANY, self.gear.slot]
-            ]
+            filtered = []
+            enchantment_info = {}
+            for enchantment_group in self.filtered_items:
+                if enchantment_group.enchantment.slot not in [
+                    EquipmentSlot.ANY,
+                    self.gear.slot,
+                ]:
+                    continue
+                flag_hit = False
+                for flag in enchantment_group.enchantment.base_enchantment.filter_flags:
+                    match flag:
+                        case EnchantmentFilterFlags.MATCH_RARITY:
+                            if self.gear.rarity != enchantment_group.rarity:
+                                flag_hit = True
+                                break
+                        case EnchantmentFilterFlags.LESS_OR_EQUAL_RARITY:
+                            gear_rarity_weight = CombatGearManager.RARITY_WEIGHTS[
+                                self.gear.rarity
+                            ]
+                            enchantment_rarity_weight = (
+                                CombatGearManager.RARITY_WEIGHTS[
+                                    enchantment_group.rarity
+                                ]
+                            )
+                            if gear_rarity_weight > enchantment_rarity_weight:
+                                flag_hit = True
+                                break
+                if not flag_hit:
+                    filtered.append(enchantment_group)
+                    enchantment = enchantment_group.enchantment
+                    if (
+                        enchantment.base_enchantment.base_enchantment_type
+                        not in enchantment_info
+                        and enchantment.base_enchantment.enchantment_effect
+                        == EnchantmentEffect.EFFECT
+                    ):
+                        enchantment_info[
+                            enchantment.base_enchantment.base_enchantment_type
+                        ] = enchantment.name
+
+                    if (
+                        EnchantmentType.CRAFTING not in enchantment_info
+                        and enchantment.base_enchantment.enchantment_effect
+                        == EnchantmentEffect.CRAFTING
+                    ):
+                        enchantment_info[EnchantmentType.CRAFTING] = "Crafting"
+            self.enchantment_info = enchantment_info
+            self.filtered_items = filtered
 
         if self.selected_filter_type is not None:
             filtered = []
