@@ -25,6 +25,8 @@ class EndState(State):
 
         await self.discord.send_message(self.context.thread, content="", embed=embed)
 
+        self.context._concluded = True
+
         event = EncounterEvent(
             datetime.datetime.now(),
             self.context.encounter.guild_id,
@@ -33,6 +35,7 @@ class EndState(State):
             EncounterEventType.END,
         )
         await self.controller.dispatch_event(event)
+
         self.done = True
 
     async def handle(self, event: BotEvent) -> bool:
