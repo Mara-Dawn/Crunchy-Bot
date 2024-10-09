@@ -57,7 +57,7 @@ class ContextLoader(Service):
                     await self.actor_manager.apply_event(actor, event)
 
                 match encounter_event.encounter_event_type:
-                    case EncounterEventType.END:
+                    case EncounterEventType.CLEANUP:
                         del self.context_cache[encounter_id]
                         return
 
