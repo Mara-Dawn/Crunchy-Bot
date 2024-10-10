@@ -340,7 +340,7 @@ class EnchantmentView(
 
         event = UIEvent(
             UIEventType.GEAR_DISMANTLE,
-            (interaction, scrappable, False, self.filter),
+            (interaction, scrappable, False, EquipmentSlot.ANY),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)

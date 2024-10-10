@@ -572,6 +572,10 @@ class EquipmentViewController(ViewController):
 
         await self.gear_manager.scrap_gear(interaction.user, guild_id, gear_to_scrap)
 
+        if gear_slot == EquipmentSlot.ANY:
+            await self.refresh_enchantment_view(interaction, view_id)
+            return
+
         if gear_slot is None:
             await self.open_gear_overview(interaction, view_id)
             return
@@ -837,3 +841,29 @@ class EquipmentViewController(ViewController):
         view.set_message(message)
         await view.refresh_ui()
         self.controller.detach_view_by_id(view_id)
+
+    async def refresh_enchantment_view(
+        self, interaction: discord.Interaction, view_id: int
+    ):
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+
+        character = await self.actor_manager.get_character(interaction.user)
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        user_enchantments = await self.database.get_user_enchantment_inventory(
+            guild_id, member_id
+        )
+
+        view: EnchantmentView = self.controller.get_view(view_id)
+        await view.refresh_ui(
+            character=character,
+            enchantment_inventory=user_enchantments,
+            scrap_balance=scrap_balance,
+        )

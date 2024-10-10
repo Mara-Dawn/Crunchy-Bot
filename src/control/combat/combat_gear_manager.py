@@ -99,6 +99,7 @@ class CombatGearManager(Service):
         Rarity.UNIQUE: 0,
     }
 
+    ENCHANTMENT_SCALING = 2.5
     SLOT_SCALING = {
         EquipmentSlot.WEAPON: 3,
         EquipmentSlot.HEAD: 1,
@@ -797,9 +798,12 @@ class CombatGearManager(Service):
         }
         gear_score = gear.level * item_level_weight
         gear_score *= rarity_weight[gear.rarity]
-        gear_score *= self.SLOT_SCALING[gear.slot]
+        if gear.base.base_type == Base.ENCHANTMENT:
+            gear_score *= self.ENCHANTMENT_SCALING
+        else:
+            gear_score *= self.SLOT_SCALING[gear.slot]
 
-        return gear_score
+        return int(gear_score)
 
     async def test_generation(self):
         for _ in range(10):
