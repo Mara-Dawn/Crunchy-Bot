@@ -14,9 +14,7 @@ class EnchantmentType(str, Enum):
 
     # ENCHANTMENTS
     DEATH_SAVE = "DeathSave"
-
-    # Player Skills
-    # Physical
+    SKILL_STACKS = "SkillStacksProxy"
 
     @staticmethod
     def adds_enchantment(enchantment_type: "EnchantmentType"):

@@ -540,6 +540,7 @@ class Database:
     USER_GEAR_GENERATOR_VERSION_COL = "usgr_generator_version"
     USER_GEAR_IS_SCRAPPED_COL = "usgr_is_scrapped"
     USER_GEAR_IS_LOCKED_COL = "usgr_is_locked"
+    USER_GEAR_SPECIAL_VALUE_COL = "usgr_special"
     CREATE_USER_GEAR_TABLE = f"""
     CREATE TABLE if not exists {USER_GEAR_TABLE} (
         {USER_GEAR_ID_COL} INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -552,7 +553,8 @@ class Database:
         {USER_GEAR_RARITY_COL} TEXT,
         {USER_GEAR_GENERATOR_VERSION_COL} TEXT,
         {USER_GEAR_IS_SCRAPPED_COL} INTEGER,
-        {USER_GEAR_IS_LOCKED_COL} INTEGER
+        {USER_GEAR_IS_LOCKED_COL} INTEGER,
+        {USER_GEAR_SPECIAL_VALUE_COL} TEXT
     );"""
 
     USER_GEAR_MODIFIER_TABLE = "usergearmodifiers"
@@ -3530,7 +3532,11 @@ class Database:
             await self.__query_insert(command, task)
 
     async def log_user_drop(
-        self, guild_id: int, member_id: int, drop: Droppable, generator_version: str
+        self,
+        guild_id: int,
+        member_id: int,
+        drop: Droppable,
+        generator_version: str,
     ):
         command = f"""
             INSERT INTO {self.USER_GEAR_TABLE} (
@@ -3542,8 +3548,9 @@ class Database:
             {self.USER_GEAR_RARITY_COL},
             {self.USER_GEAR_GENERATOR_VERSION_COL},
             {self.USER_GEAR_IS_SCRAPPED_COL},
-            {self.USER_GEAR_IS_LOCKED_COL})
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+            {self.USER_GEAR_IS_LOCKED_COL},
+            {self.USER_GEAR_SPECIAL_VALUE_COL})
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
         task = (
             guild_id,
@@ -3555,6 +3562,7 @@ class Database:
             generator_version,
             0,
             0,
+            drop.base.special,
         )
 
         insert_id = await self.__query_insert(command, task)
@@ -3618,7 +3626,15 @@ class Database:
         level = rows[0][self.USER_GEAR_LEVEL_COL]
         locked = int(rows[0][self.USER_GEAR_IS_LOCKED_COL]) == 1
 
+        special = rows[0][self.USER_GEAR_SPECIAL_VALUE_COL]
+
         if base_enchantment.enchantment_effect == EnchantmentEffect.EFFECT:
+            if special is not None:
+                match enchantment_type:
+                    case EnchantmentType.SKILL_STACKS:
+                        skill_type = SkillType(special)
+                        base_enchantment = SkillStacks(level, skill_type)  # noqa: F405
+
             return EffectEnchantment(
                 base_enchantment=base_enchantment,
                 rarity=rarity,

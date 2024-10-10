@@ -28,7 +28,11 @@ class EnchantmentHandler(EffectHandler):
         controller: Controller, enchantment_type: EnchantmentType
     ) -> "EnchantmentHandler":
         handler_module = f"combat.enchantments.handlers.{enchantment_type.name.lower()}"
-        handler_name = f"{enchantment_type.value}Handler"
+        match enchantment_type:
+            case EnchantmentType.SKILL_STACKS:
+                handler_name = "SkillStacksHandler"
+            case _:
+                handler_name = f"{enchantment_type.value}Handler"
         handler_class = getattr(
             importlib.import_module(handler_module),
             handler_name,

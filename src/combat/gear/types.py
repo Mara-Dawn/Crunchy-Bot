@@ -9,6 +9,15 @@ class EquipmentSlot(str, Enum):
     ACCESSORY = "Accessory"
     SKILL = "Skill"
     ANY = "Any"
+    ARMOR = "Armor"
+
+    @staticmethod
+    def is_armor(slot: "EquipmentSlot"):
+        return slot in [
+            EquipmentSlot.HEAD,
+            EquipmentSlot.BODY,
+            EquipmentSlot.LEGS,
+        ]
 
 
 class Rarity(str, Enum):

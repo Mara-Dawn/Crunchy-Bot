@@ -384,6 +384,12 @@ class CombatStatusEffectManager(EffectManager):
 
         return await self.get_outcome(triggered_status_effects, handler_context)
 
+    async def on_skill_charges(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        return EffectOutcome.EMPTY()
+
     async def actor_trigger(
         self,
         context: EncounterContext,

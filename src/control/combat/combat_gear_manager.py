@@ -10,7 +10,8 @@ from combat.enchantments.enchantment import (
     EffectEnchantment,
     Enchantment,
 )
-from combat.enchantments.types import EnchantmentEffect
+from combat.enchantments.enchantments import *  # noqa: F403
+from combat.enchantments.types import EnchantmentEffect, EnchantmentType
 from combat.encounter import EncounterContext
 from combat.enemies.enemy import Enemy
 from combat.gear.bases import *  # noqa: F403
@@ -74,6 +75,7 @@ class CombatGearManager(Service):
         Rarity.UNIQUE: 2,
         Rarity.LEGENDARY: 4,
     }
+
     RARITY_WEIGHTS = {
         Rarity.COMMON: 100,
         Rarity.UNCOMMON: 50,
@@ -189,12 +191,13 @@ class CombatGearManager(Service):
         matching_bases = []
 
         gear_base_types = [base_type for base_type in GearBaseType]
+        enchantment_base_types = [base_type for base_type in EnchantmentType]
 
         if not exclude_skills:
             skill_base_types = [base_type for base_type in SkillType]
-            base_types = gear_base_types + skill_base_types
+            base_types = gear_base_types + skill_base_types + enchantment_base_types
         else:
-            base_types = gear_base_types
+            base_types = gear_base_types + enchantment_base_types
 
         for base_type in base_types:
             base_class = globals()[base_type]
@@ -589,6 +592,9 @@ class CombatGearManager(Service):
 
             case Base.ENCHANTMENT:
                 base_enchantment: BaseEnchantment = base
+                match base_enchantment.enchantment_type:
+                    case EnchantmentType.SKILL_STACKS:
+                        base_enchantment = SkillStacks(item_level)  # noqa: F405
                 if rarity not in base_enchantment.rarities:
                     min_weight = self.RARITY_WEIGHTS[rarity]
                     matched_rarity = None

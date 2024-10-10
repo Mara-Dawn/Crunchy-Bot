@@ -386,6 +386,19 @@ class CombatEnchantmentManager(Service):
     ) -> EffectOutcome:
         return EffectOutcome.EMPTY()
 
+    async def on_skill_charges(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context, handler_context.source, EffectTrigger.SKILL_CHARGE
+        )
+
+        if len(triggered_enchantments) <= 0:
+            return EffectOutcome.EMPTY()
+
+        return await self.get_outcome(triggered_enchantments, handler_context)
+
     async def get_outcome(
         self,
         gear_enchantments: list[GearEnchantment],

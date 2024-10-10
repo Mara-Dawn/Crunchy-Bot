@@ -584,7 +584,7 @@ class SlotDropdown(discord.ui.Select):
         options = [option]
 
         for slot in EquipmentSlot:
-            if slot == EquipmentSlot.ANY:
+            if slot in [EquipmentSlot.ANY, EquipmentSlot.ARMOR]:
                 continue
             label = slot.value
             description = f"Gain a random {slot.value}."

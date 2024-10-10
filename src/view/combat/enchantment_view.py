@@ -42,6 +42,7 @@ from view.view_menu import ViewMenu
 @dataclass
 class EnchantmentGroup:
     enchantment_type: EnchantmentType
+    label: str
     rarity: Rarity
     enchantments: list[Enchantment]
     enchantment_data: GearEnchantment = None
@@ -126,7 +127,7 @@ class EnchantmentView(
             return
 
     def group_enchantments(self):
-        enchantment_stock: dict[EnchantmentType, dict[Rarity, list[Enchantment]]] = {}
+        enchantment_stock: dict[str, dict[Rarity, list[Enchantment]]] = {}
         sorted_enchantments: list[Enchantment] = sorted(
             self.enchantments, key=lambda x: x.id
         )
@@ -135,6 +136,7 @@ class EnchantmentView(
 
         for enchantment in sorted_enchantments:
             enchantment_type = enchantment.base_enchantment.enchantment_type
+            enchantment_label = enchantment.base_enchantment.name
             rarity = enchantment.rarity
 
             if (
@@ -143,9 +145,15 @@ class EnchantmentView(
                 and enchantment.base_enchantment.enchantment_effect
                 == EnchantmentEffect.EFFECT
             ):
-                enchantment_info[enchantment.base_enchantment.base_enchantment_type] = (
-                    enchantment.name
-                )
+                match enchantment.base_enchantment.base_enchantment_type:
+                    case EnchantmentType.SKILL_STACKS:
+                        enchantment_info[
+                            enchantment.base_enchantment.base_enchantment_type
+                        ] = "Skill Stacks"
+                    case _:
+                        enchantment_info[
+                            enchantment.base_enchantment.base_enchantment_type
+                        ] = enchantment.name
 
             if (
                 EnchantmentType.CRAFTING not in enchantment_info
@@ -154,21 +162,24 @@ class EnchantmentView(
             ):
                 enchantment_info[EnchantmentType.CRAFTING] = "Crafting"
 
-            if enchantment_type not in enchantment_stock:
-                enchantment_stock[enchantment_type] = {}
+            if enchantment_label not in enchantment_stock:
+                enchantment_stock[enchantment_label] = {}
 
-            if rarity not in enchantment_stock[enchantment_type]:
-                enchantment_stock[enchantment_type][rarity] = []
+            if rarity not in enchantment_stock[enchantment_label]:
+                enchantment_stock[enchantment_label][rarity] = []
 
-            enchantment_stock[enchantment_type][rarity].append(enchantment)
+            enchantment_stock[enchantment_label][rarity].append(enchantment)
 
         self.enchantment_info = enchantment_info
 
         enchantment_groups = []
-        for enchantment_type, stock in enchantment_stock.items():
+        for enchantment_label, stock in enchantment_stock.items():
             for rarity, enchantments in stock.items():
+                enchantment_type = enchantments[0].base_enchantment.enchantment_type
                 enchantment_groups.append(
-                    EnchantmentGroup(enchantment_type, rarity, enchantments)
+                    EnchantmentGroup(
+                        enchantment_type, enchantment_label, rarity, enchantments
+                    )
                 )
 
         self.filtered_items = enchantment_groups
@@ -183,7 +194,10 @@ class EnchantmentView(
                 if enchantment_group.enchantment.slot not in [
                     EquipmentSlot.ANY,
                     self.gear.slot,
-                ]:
+                ] and (
+                    EquipmentSlot.is_armor(self.gear.slot)
+                    and enchantment_group.enchantment.slot != EquipmentSlot.ARMOR
+                ):
                     continue
                 flag_hit = False
                 for flag in enchantment_group.enchantment.base_enchantment.filter_flags:
@@ -217,9 +231,15 @@ class EnchantmentView(
                         and enchantment.base_enchantment.enchantment_effect
                         == EnchantmentEffect.EFFECT
                     ):
-                        enchantment_info[
-                            enchantment.base_enchantment.base_enchantment_type
-                        ] = enchantment.name
+                        match enchantment.base_enchantment.base_enchantment_type:
+                            case EnchantmentType.SKILL_STACKS:
+                                enchantment_info[
+                                    enchantment.base_enchantment.base_enchantment_type
+                                ] = "Skill Stacks"
+                            case _:
+                                enchantment_info[
+                                    enchantment.base_enchantment.base_enchantment_type
+                                ] = enchantment.name
 
                     if (
                         EnchantmentType.CRAFTING not in enchantment_info

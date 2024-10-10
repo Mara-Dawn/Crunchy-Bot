@@ -1,3 +1,5 @@
+import random
+
 from combat.effects.types import EffectTrigger
 from combat.enchantments.enchantment import (
     BaseCraftingEnchantment,
@@ -10,7 +12,9 @@ from combat.enchantments.types import (
     EnchantmentType,
 )
 from combat.gear.types import EquipmentSlot, Rarity
-from combat.skills.types import SkillEffect
+from combat.skills.skill import BaseSkill
+from combat.skills.skills import *  # noqa: F403
+from combat.skills.types import SkillEffect, SkillType
 
 # Enchantments used for internal logic only
 
@@ -56,6 +60,7 @@ class Chaos(BaseCraftingEnchantment):
             information="",
             rarities=[Rarity.UNIQUE],
             droppable=True,
+            weight=80,
             image_url="https://i.imgur.com/B6TuHg3.png",
         )
 
@@ -73,6 +78,7 @@ class Divine(BaseCraftingEnchantment):
             information="",
             rarities=[Rarity.UNIQUE],
             droppable=True,
+            weight=20,
             image_url="https://i.imgur.com/B6TuHg3.png",
         )
 
@@ -91,6 +97,7 @@ class Exalted(BaseCraftingEnchantment):
             rarities=[Rarity.COMMON, Rarity.UNCOMMON, Rarity.RARE],
             filter_flags=[EnchantmentFilterFlags.MATCH_RARITY],
             droppable=True,
+            weight=30,
             image_url="https://i.imgur.com/B6TuHg3.png",
         )
 
@@ -129,6 +136,7 @@ class Crangle(BaseCraftingEnchantment):
             information="",
             rarities=[Rarity.UNIQUE],
             droppable=True,
+            weight=50,
             image_url="https://i.imgur.com/B6TuHg3.png",
         )
 
@@ -155,3 +163,112 @@ class DeathSave(BaseEffectEnchantment):
             consumed=[EffectTrigger.ON_DEATH],
             emoji="",
         )
+
+
+class SkillStacksProxy(BaseEffectEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            name="Skill Stacks",
+            enchantment_type=EnchantmentType.SKILL_STACKS,
+            description="",
+            information="",
+            slot=EquipmentSlot.ARMOR,
+            stacks=None,
+            droppable=True,
+            value=1,
+            cooldown=0,
+            skill_effect=SkillEffect.NOTHING,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+            trigger=[EffectTrigger.SKILL_CHARGE],
+            consumed=[],
+            emoji="",
+            value_label="Charges",
+            int_value=True,
+        )
+
+
+class SkillStacks(SkillStacksProxy):
+
+    SKILLS = [
+        SkillType.SECOND_HEART,
+        SkillType.FAMILY_PIZZA,
+        SkillType.DOPE_SHADES,
+        SkillType.FORESIGHT,
+        SkillType.LOOKSMAXXING,
+        SkillType.GIGA_BONK,
+        SkillType.SLICE_N_DICE,
+        SkillType.COOL_CUCUMBER,
+        SkillType.POCKET_SAND,
+        SkillType.BLOOD_RAGE,
+        SkillType.PHYSICAL_MISSILE,
+        SkillType.FINE_ASS,
+        SkillType.COLORFUL_VASE,
+        SkillType.NEURON_ACTIVATION,
+        SkillType.FIRE_BALL,
+        SkillType.MAGIC_MISSILE,
+        SkillType.PARTY_DRUGS,
+        SkillType.SPECTRAL_HAND,
+        SkillType.ICE_BALL,
+    ]
+
+    RARITY_VALUE_SCALING = {
+        Rarity.DEFAULT: 1,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 1.5,
+        Rarity.RARE: 2,
+        Rarity.LEGENDARY: 2.5,
+    }
+
+    MIN_RARITY_LVL = {
+        Rarity.DEFAULT: 0,
+        Rarity.COMMON: 0,
+        Rarity.UNCOMMON: 1,
+        Rarity.RARE: 2,
+        Rarity.LEGENDARY: 4,
+        Rarity.UNIQUE: 2,
+    }
+
+    def __init__(
+        self,
+        level: int,
+        skill_type: SkillType | None = None,
+    ):
+        super().__init__()
+
+        if skill_type is None:
+            available: list[BaseSkill] = []
+            for skill_type in SkillStacks.SKILLS:
+                base_class = globals()[skill_type]
+                base: BaseSkill = base_class()
+
+                if not base.droppable:
+                    continue
+
+                if level >= base.min_level and level <= base.max_level:
+                    available.append(base)
+
+            base_skill = random.choice(available)
+        else:
+            base_class = globals()[skill_type]
+            base_skill: BaseSkill = base_class()
+
+        additional_charges = max(1, int(base_skill.stacks * 0.3))
+
+        rarity_map = {1: Rarity.COMMON}
+        for rarity in self.RARITY_VALUE_SCALING:
+            if self.MIN_RARITY_LVL[rarity] > level:
+                continue
+            value = int(additional_charges * self.RARITY_VALUE_SCALING[rarity])
+            rarity_map[value] = rarity
+
+        self.base_skill = base_skill
+        self.skill_type = base_skill.skill_type
+        self.value = additional_charges
+        self.name = f"{self.base_skill.name} Charges"
+        self.description = f"{self.base_skill.name} has additional charge(s)."
+        self.special = self.skill_type.value
+        self.image_url = self.base_skill.image_url
+
+        self.rarities = rarity_map.values()
+        self.custom_scaling = self.RARITY_VALUE_SCALING
