@@ -55,6 +55,7 @@ class CombatTurnView(ViewMenu):
 
         self.controller_type = ControllerType.COMBAT
         self.controller.register_view(self)
+        self.skill_data = []
 
     @classmethod
     async def create(
@@ -68,6 +69,7 @@ class CombatTurnView(ViewMenu):
         for skill in character.skills:
             skill_data = await view.skill_manager.get_skill_data(character, skill)
             view.add_item(SkillButton(skill_data))
+            view.skill_data.append(skill_data)
 
         return view
 
@@ -91,6 +93,15 @@ class CombatTurnView(ViewMenu):
             await asyncio.sleep(sleep.total_seconds())
 
     async def listen_for_ui_event(self, event: UIEvent):
+        match event.type:
+            case UIEventType.COMBAT_FORCE_USE:
+                interaction = event.payload[0]
+                slot = event.payload[1]
+                with contextlib.suppress(discord.HTTPException):
+                    await self.message.delete()
+                    self.controller.detach_view(self)
+                await self.use_skill(interaction, self.skill_data[slot])
+
         if event.view_id != self.id:
             return
 
