@@ -55,6 +55,7 @@ class Chaos(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Chaos Bean",
+            min_level=3,
             enchantment_type=EnchantmentType.CHAOS,
             description="Randomly rerolls all modifiers on a gear piece of any rarity.",
             information="",
@@ -70,6 +71,7 @@ class Divine(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Divine Bean",
+            min_level=4,
             enchantment_type=EnchantmentType.DIVINE,
             description=(
                 "Rerolls all modifier values on a gear piece of any rarity. "
@@ -88,6 +90,7 @@ class Exalted(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Exalted Bean",
+            min_level=3,
             enchantment_type=EnchantmentType.EXALTED,
             description=(
                 "Adds a random modifier to the item and upgrades it to the next rarity. "
@@ -107,6 +110,7 @@ class Chance(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Chance Bean",
+            min_level=3,
             enchantment_type=EnchantmentType.CHANCE,
             description=(
                 "Upgrades a common item to a random rarity and rerolls "
@@ -124,6 +128,7 @@ class Crangle(BaseCraftingEnchantment):
 
     def __init__(self):
         super().__init__(
+            min_level=4,
             name="Crangle Bean",
             enchantment_type=EnchantmentType.CRANGLE,
             description=(
@@ -148,6 +153,7 @@ class DeathSave(BaseEffectEnchantment):
 
     def __init__(self):
         super().__init__(
+            min_level=3,
             name="Cheat Death",
             enchantment_type=EnchantmentType.DEATH_SAVE,
             description="Allows you to survive lethal damage.",
@@ -169,6 +175,7 @@ class SkillStacksProxy(BaseEffectEnchantment):
 
     def __init__(self):
         super().__init__(
+            min_level=3,
             name="Skill Stacks",
             enchantment_type=EnchantmentType.SKILL_STACKS,
             description="",
@@ -279,6 +286,7 @@ class PhysDamageProc(BaseEffectEnchantment):
     def __init__(self):
         super().__init__(
             name="Bloody Murder",
+            min_level=4,
             enchantment_type=EnchantmentType.PHYS_DAMAGE_PROC,
             description="Has a chance to deal additional physical damage on hit.",
             information="",
@@ -302,6 +310,7 @@ class MagDamageProc(BaseEffectEnchantment):
     def __init__(self):
         super().__init__(
             name="Overload",
+            min_level=4,
             enchantment_type=EnchantmentType.MAG_DAMAGE_PROC,
             description="Has a chance to deal additional magical damage on hit.",
             information="",
@@ -325,6 +334,7 @@ class CleansingHeal(BaseEffectEnchantment):
     def __init__(self):
         super().__init__(
             name="Inner Peace",
+            min_level=4,
             enchantment_type=EnchantmentType.CLEANSING_HEAL,
             description="Your heals are stronger and remove all negative status effects.",
             information="",
