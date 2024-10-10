@@ -457,6 +457,8 @@ class CombatActorManager(Service):
                     break
             case CombatEventType.STATUS_EFFECT_OUTCOME:
                 pass
+            case CombatEventType.ENCHANTMENT_EFFECT_OUTCOME:
+                pass
             case CombatEventType.MEMBER_TURN | CombatEventType.ENEMY_TURN:
                 for skill_type in actor.skill_cooldowns:
                     if event.skill_type == skill_type:

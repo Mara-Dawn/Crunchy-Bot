@@ -1,3 +1,4 @@
+import random
 import discord
 
 from combat.effects.effect import Effect
@@ -151,6 +152,7 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
         droppable: bool = True,
         stacks: int = None,
         hits: int = 1,
+        proc_chance: float = 1,
         cooldown: int = 0,
         initial_cooldown: int = None,
         reset_after_encounter: bool = False,
@@ -214,6 +216,7 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
         )
         self.stacks = stacks
         self.cooldown = cooldown
+        self.proc_chance = proc_chance
         self.initial_cooldown = initial_cooldown
         self.reset_after_encounter = reset_after_encounter
         self.hits = hits
@@ -582,6 +585,16 @@ class EffectEnchantment(Enchantment):
             )
             suffixes.append((type_text_colored, len(type_text)))
 
+            # Proc
+            proc_chance = self.base_enchantment.proc_chance
+            if proc_chance is not None and proc_chance < 1:
+                name = "Chance"
+                proc_chance *= 100
+                spacing = " " * (max_len_pre - len(name))
+                type_text = f"{spacing}{name}: {proc_chance:.1f}%"
+                type_text_colored = f"{spacing}{name}: [35m{proc_chance:.1f}%[0m"
+                prefixes.append((type_text_colored, len(type_text)))
+
             # Cooldown
             if self.base_enchantment.cooldown > 0:
                 name = "Cooldown"
@@ -860,6 +873,12 @@ class GearEnchantment:
             return False
         return self.last_used <= self.enchantment.base_enchantment.cooldown
 
+    def proc(self):
+        chance = self.enchantment.base_enchantment.proc_chance
+        if chance is None or chance == 1:
+            return True
+        return random.random() < chance
+
     def stacks_left(self):
         if self.enchantment.base_enchantment.stacks is None or self.stacks_used is None:
             return None
@@ -972,6 +991,16 @@ class GearEnchantment:
                 spacing = " " * (max_len_pre - len(name))
                 type_text = f"{spacing}{name}: {effect_value}"
                 type_text_colored = f"{spacing}{name}: [35m{effect_value}[0m"
+                prefixes.append((type_text_colored, len(type_text)))
+
+            # Proc
+            proc_chance = self.enchantment.base_enchantment.proc_chance
+            if proc_chance is not None and proc_chance < 1:
+                name = "Chance"
+                proc_chance *= 100
+                spacing = " " * (max_len_pre - len(name))
+                type_text = f"{spacing}{name}: {proc_chance:.1f}%"
+                type_text_colored = f"{spacing}{name}: [35m{proc_chance:.1f}%[0m"
                 prefixes.append((type_text_colored, len(type_text)))
 
             # Slot
@@ -1153,6 +1182,16 @@ class GearEnchantment:
             spacing = " " * (max_len_pre - len(name))
             type_text = f"{spacing}{name}: {effect_value}"
             type_text_colored = f"{spacing}{name}: [35m{effect_value}[0m"
+            prefixes.append((type_text_colored, len(type_text)))
+
+        # Proc
+        proc_chance = self.enchantment.base_enchantment.proc_chance
+        if proc_chance is not None and proc_chance < 1:
+            name = "Chance"
+            proc_chance *= 100
+            spacing = " " * (max_len_pre - len(name))
+            type_text = f"{spacing}{name}: {proc_chance:.1f}%"
+            type_text_colored = f"{spacing}{name}: [35m{proc_chance:.1f}%[0m"
             prefixes.append((type_text_colored, len(type_text)))
 
         # Cooldown

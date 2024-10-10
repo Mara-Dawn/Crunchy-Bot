@@ -107,6 +107,7 @@ class EncounterStatistics(Service):
             if event.combat_event_type in [
                 CombatEventType.MEMBER_TURN_STEP,
                 CombatEventType.STATUS_EFFECT_OUTCOME,
+                CombatEventType.ENCHANTMENT_EFFECT_OUTCOME,
             ]:
                 if event.skill_value is None or event.skill_value <= 0:
                     continue
@@ -162,6 +163,7 @@ class EncounterStatistics(Service):
             if event.combat_event_type in [
                 CombatEventType.ENEMY_TURN_STEP,
                 CombatEventType.STATUS_EFFECT_OUTCOME,
+                CombatEventType.ENCHANTMENT_EFFECT_OUTCOME,
             ]:
                 if event.skill_value is None or event.skill_value <= 0:
                     continue
@@ -220,6 +222,7 @@ class EncounterStatistics(Service):
             if event.combat_event_type in [
                 CombatEventType.MEMBER_TURN_STEP,
                 CombatEventType.STATUS_EFFECT_OUTCOME,
+                CombatEventType.ENCHANTMENT_EFFECT_OUTCOME,
             ]:
                 if event.skill_value is None or event.skill_value <= 0:
                     continue

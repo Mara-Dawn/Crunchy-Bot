@@ -156,15 +156,16 @@ class CombatEffectManager(Service):
     async def on_attack(
         self,
         context: EncounterContext,
-        actor: Actor,
+        source: Actor,
+        target: Actor,
         skill: Skill,
     ) -> EffectOutcome:
 
         handler_context = HandlerContext(
             trigger=EffectTrigger.ON_ATTACK,
             context=context,
-            source=actor,
-            target=actor,
+            source=source,
+            target=target,
             skill=skill,
             status_effect_type=None,
             application_value=None,

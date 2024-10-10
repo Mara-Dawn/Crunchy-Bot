@@ -302,11 +302,14 @@ class PlayerTurn(State):
     ) -> tuple[list[TurnDamageData], EmbedDataCollection]:
         skill_value_data = []
         embed_data = EmbedDataCollection()
-        outcome = await self.effect_manager.on_attack(context, source, skill)
-        if outcome.embed_data is not None:
-            embed_data.extend(outcome.embed_data)
 
         for target in available_targets:
+            outcome = await self.effect_manager.on_attack(
+                context, source, target, skill
+            )
+            if outcome.embed_data is not None:
+                embed_data.extend(outcome.embed_data)
+
             instances = await self.skill_manager.get_skill_effect(
                 source, skill, combatant_count=context.combat_scale
             )
@@ -360,6 +363,7 @@ class PlayerTurn(State):
             outcome = await self.effect_manager.on_attack(
                 context,
                 source,
+                target,
                 skill,
             )
             if outcome.embed_data is not None:

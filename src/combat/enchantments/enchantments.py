@@ -161,7 +161,7 @@ class DeathSave(BaseEffectEnchantment):
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.ON_DEATH],
             consumed=[EffectTrigger.ON_DEATH],
-            emoji="",
+            emoji="💞",
         )
 
 
@@ -272,3 +272,49 @@ class SkillStacks(SkillStacksProxy):
 
         self.rarities = rarity_map.values()
         self.custom_scaling = self.RARITY_VALUE_SCALING
+
+
+class PhysDamageProc(BaseEffectEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            name="Bloody Murder",
+            enchantment_type=EnchantmentType.PHYS_DAMAGE_PROC,
+            description="Has a chance to deal additional physical damage on hit.",
+            information="",
+            slot=EquipmentSlot.WEAPON,
+            stacks=20,
+            droppable=True,
+            value=1,
+            proc_chance=0.3,
+            cooldown=0,
+            weight=20,
+            skill_effect=SkillEffect.PHYSICAL_DAMAGE,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+            trigger=[EffectTrigger.ON_ATTACK],
+            consumed=[EffectTrigger.ON_ATTACK],
+            emoji="💢",
+        )
+
+
+class MagDamageProc(BaseEffectEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            name="Overload",
+            enchantment_type=EnchantmentType.MAG_DAMAGE_PROC,
+            description="Has a chance to deal additional magical damage on hit.",
+            information="",
+            slot=EquipmentSlot.WEAPON,
+            stacks=10,
+            droppable=True,
+            value=2,
+            proc_chance=0.15,
+            cooldown=0,
+            weight=20,
+            skill_effect=SkillEffect.MAGICAL_DAMAGE,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+            trigger=[EffectTrigger.ON_ATTACK],
+            consumed=[EffectTrigger.ON_ATTACK],
+            emoji="💫",
+        )

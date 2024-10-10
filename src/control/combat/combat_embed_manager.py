@@ -480,6 +480,8 @@ class CombatEmbedManager(Service):
 
         if damage_instance.is_crit:
             damage_info = "CRIT! " + damage_info
+        if damage_instance.bonus_damage is not None:
+            damage_info = damage_info + f"\n+ **{damage_instance.bonus_damage}**"
 
         return outcome_title, damage_info
 

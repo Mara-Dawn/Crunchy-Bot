@@ -149,13 +149,13 @@ class CombatEnchantmentManager(Service):
                 modifier += character.equipment.attributes[
                     CharacterAttribute.PHYS_DAMAGE_INCREASE
                 ]
-                if base_dmg_type != enchantment.base_skill.skill_effect:
+                if base_dmg_type != enchantment.base_enchantment.skill_effect:
                     modifier *= Config.SKILL_TYPE_PENALTY
             case SkillEffect.MAGICAL_DAMAGE:
                 modifier += character.equipment.attributes[
                     CharacterAttribute.MAGIC_DAMAGE_INCREASE
                 ]
-                if base_dmg_type != enchantment.base_skill.skill_effect:
+                if base_dmg_type != enchantment.base_enchantment.skill_effect:
                     modifier *= Config.SKILL_TYPE_PENALTY
             case SkillEffect.HEALING:
                 encounter_scaling = 1
@@ -483,6 +483,9 @@ class CombatEnchantmentManager(Service):
                 continue
 
             if gear_enchantment.on_cooldown():
+                continue
+
+            if not gear_enchantment.proc():
                 continue
 
             if is_consumed:

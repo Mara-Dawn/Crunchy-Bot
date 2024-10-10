@@ -252,7 +252,7 @@ class EnemyController(Service, ABC):
 
         for target in available_targets:
             outcome = await self.effect_manager.on_attack(
-                context, context.opponent, skill
+                context, context.opponent, target, skill
             )
             if outcome.embed_data is not None:
                 post_embed_data.extend(outcome.embed_data)
@@ -351,7 +351,7 @@ class EnemyController(Service, ABC):
             current_hp = hp_cache.get(target.id, target.current_hp)
 
             outcome = await self.effect_manager.on_attack(
-                context, context.opponent, skill
+                context, context.opponent, target, skill
             )
             outcome.apply_to_instance(instance)
             if outcome.embed_data is not None:

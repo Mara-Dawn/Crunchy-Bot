@@ -610,6 +610,7 @@ class SkillInstance:
         self.encounter_scaling = encounter_scaling
         self.critical_chance = crit_chance
         self.is_crit = is_crit
+        self.bonus_damage = None
 
     @property
     def value(self):

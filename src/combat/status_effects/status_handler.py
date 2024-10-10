@@ -25,9 +25,6 @@ class StatusEffectHandler(EffectHandler, ABC):
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
-        self.actor_manager: CombatActorManager = self.controller.get_service(
-            CombatActorManager
-        )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
 
     @staticmethod

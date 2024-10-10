@@ -92,6 +92,12 @@ class EffectHandler(ABC):
                 else:
                     combined.info += "\n" + outcome.info
 
+            if outcome.bonus_damage is not None:
+                if combined.bonus_damage is None:
+                    combined.bonus_damage = outcome.bonus_damage
+                else:
+                    combined.bonus_damage += outcome.bonus_damage
+
             if outcome.embed_data is not None:
                 if combined.embed_data is None:
                     combined.embed_data = outcome.embed_data

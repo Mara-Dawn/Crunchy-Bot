@@ -100,6 +100,7 @@ class EffectOutcome:
     applied_effects: list[tuple[StatusEffectType, int]] | None = None
     flags: list[OutcomeFlag] | None = None
     info: str | None = None
+    bonus_damage: int | None = None
     embed_data: EmbedDataCollection | None = None
 
     @staticmethod
@@ -109,6 +110,8 @@ class EffectOutcome:
     def apply_to_instance(self, instance: SkillInstance):
         if self.modifier is not None:
             instance.modifier *= self.modifier
+        if self.bonus_damage is not None:
+            instance.bonus_damage = self.bonus_damage
         if instance.is_crit is None:
             if self.crit_chance is not None:
                 instance.critical_chance = self.crit_chance
