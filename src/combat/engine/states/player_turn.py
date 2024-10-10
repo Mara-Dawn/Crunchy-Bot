@@ -307,6 +307,7 @@ class PlayerTurn(State):
             outcome = await self.effect_manager.on_attack(
                 context, source, target, skill
             )
+
             if outcome.embed_data is not None:
                 embed_data.extend(outcome.embed_data)
 

@@ -41,6 +41,10 @@ class MagDamageProcHandler(EnchantmentEffectHandler):
         if enchantment_type != self.base_enchantment.enchantment_type:
             return outcome
 
+        if handler_context.skill.base_skill.skill_effect not in SkillEffect.damaging:
+            outcome.flags = [OutcomeFlag.NO_TRIGGER]
+            return outcome
+
         instances = await self.enchantment_manager.get_enchantment_effect(
             handler_context.source, enchantment, handler_context.context.combat_scale
         )

@@ -4,7 +4,7 @@ import random
 from discord.ext import commands
 
 from combat.actors import Character
-from combat.effects.effect import EffectOutcome
+from combat.effects.effect import EffectOutcome, OutcomeFlag
 from combat.effects.effect_handler import HandlerContext
 from combat.effects.types import EffectTrigger
 from combat.enchantments.enchantment import (
@@ -419,6 +419,19 @@ class CombatEnchantmentManager(Service):
                 outcome_data[enchantment_type] = [outcome]
             else:
                 outcome_data[enchantment_type].append(outcome)
+
+            if (
+                EffectTrigger.ON_TRIGGER_SUCCESS
+                in gear_enchantment.enchantment.base_enchantment.consumed
+                and (
+                    outcome.flags is None or OutcomeFlag.NO_TRIGGER not in outcome.flags
+                )
+            ):
+                await self.consume_enchantment_stack(
+                    handler_context.context,
+                    handler_context.source,
+                    gear_enchantment.enchantment,
+                )
 
         combined_outcomes = []
         for enchantment_type, outcomes in outcome_data.items():

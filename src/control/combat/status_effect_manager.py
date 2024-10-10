@@ -3,7 +3,7 @@ import datetime
 from discord.ext import commands
 
 from combat.actors import Actor
-from combat.effects.effect import EffectOutcome
+from combat.effects.effect import EffectOutcome, OutcomeFlag
 from combat.effects.effect_handler import HandlerContext
 from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
@@ -211,6 +211,13 @@ class CombatStatusEffectManager(EffectManager):
                 outcome_data[effect_type] = [outcome]
             else:
                 outcome_data[effect_type].append(outcome)
+            if (
+                EffectTrigger.ON_TRIGGER_SUCCESS in status_effect.status_effect.consumed
+                and (
+                    outcome.flags is None or OutcomeFlag.NO_TRIGGER not in outcome.flags
+                )
+            ):
+                await self.consume_status_stack(handler_context.context, status_effect)
 
         combined_outcomes = []
         for effect_type, outcomes in outcome_data.items():

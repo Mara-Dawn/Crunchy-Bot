@@ -949,8 +949,8 @@ class GearEnchantment:
                     penalty_colored = f"[30m{penalty}[0m "
                 match self.enchantment.base_enchantment.skill_effect:
                     case SkillEffect.BUFF:
-                        damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.base_value:.1f}%"
-                        damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.base_value:.1f}%[0m"
+                        damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.value:.1f}%"
+                        damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.value:.1f}%[0m"
                     case SkillEffect.NOTHING:
                         if self.enchantment.base_enchantment.int_value:
                             damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.value}"

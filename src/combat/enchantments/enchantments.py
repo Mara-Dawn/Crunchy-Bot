@@ -292,7 +292,7 @@ class PhysDamageProc(BaseEffectEnchantment):
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.ON_ATTACK],
-            consumed=[EffectTrigger.ON_ATTACK],
+            consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
             emoji="💢",
         )
 
@@ -315,6 +315,28 @@ class MagDamageProc(BaseEffectEnchantment):
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.ON_ATTACK],
-            consumed=[EffectTrigger.ON_ATTACK],
+            consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
             emoji="💫",
+        )
+
+
+class CleansingHeal(BaseEffectEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            name="Inner Peace",
+            enchantment_type=EnchantmentType.CLEANSING_HEAL,
+            description="Your heals are stronger and remove all negative status effects.",
+            information="",
+            slot=EquipmentSlot.ARMOR,
+            stacks=5,
+            droppable=True,
+            value=10,
+            cooldown=0,
+            weight=15,
+            skill_effect=SkillEffect.BUFF,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+            trigger=[EffectTrigger.ON_ATTACK],
+            consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
+            emoji="🩹",
         )

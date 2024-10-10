@@ -17,12 +17,7 @@ class EnchantmentType(str, Enum):
     SKILL_STACKS = "SkillStacksProxy"
     PHYS_DAMAGE_PROC = "PhysDamageProc"
     MAG_DAMAGE_PROC = "MagDamageProc"
-
-    @staticmethod
-    def adds_enchantment(enchantment_type: "EnchantmentType"):
-        return enchantment_type in [
-            EnchantmentType.DEATH_SAVE,
-        ]
+    CLEANSING_HEAL = "CleansingHeal"
 
     @staticmethod
     def is_crafting(enchantment_type: "EnchantmentType"):
