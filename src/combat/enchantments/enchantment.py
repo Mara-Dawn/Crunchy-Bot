@@ -1,4 +1,5 @@
 import random
+
 import discord
 
 from combat.effects.effect import Effect
@@ -157,7 +158,7 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
         initial_cooldown: int = None,
         reset_after_encounter: bool = False,
         weight: int = 100,
-        fixed_rarity: Rarity = None,
+        rarities: list[Rarity] = None,
         image_url: str = None,
         uniques: list[EnchantmentType] = None,
         base_enchantment_type: EnchantmentType = None,
@@ -190,7 +191,7 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
             max_level=max_level,
             droppable=droppable,
             weight=weight,
-            rarities=fixed_rarity,
+            rarities=rarities,
             image_url=image_url,
             uniques=uniques,
             base_enchantment_type=base_enchantment_type,
@@ -461,9 +462,14 @@ class EffectEnchantment(Enchantment):
         )
 
         if base_enchantment.stacks is not None:
-            base_enchantment.stacks = int(
-                base_enchantment.stacks * self.RARITY_STACKS_SCALING[rarity]
-            )
+            if base_enchantment.custom_scaling is not None:
+                base_enchantment.stacks = int(
+                    base_enchantment.stacks * base_enchantment.custom_scaling[rarity]
+                )
+            else:
+                base_enchantment.stacks = int(
+                    base_enchantment.stacks * self.RARITY_STACKS_SCALING[rarity]
+                )
 
         self.base_enchantment: BaseEffectEnchantment = base_enchantment
         self.priority = priority

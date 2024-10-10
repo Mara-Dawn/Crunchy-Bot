@@ -55,7 +55,7 @@ class Chaos(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Chaos Bean",
-            min_level=3,
+            min_level=4,
             enchantment_type=EnchantmentType.CHAOS,
             description="Randomly rerolls all modifiers on a gear piece of any rarity.",
             information="",
@@ -71,7 +71,7 @@ class Divine(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Divine Bean",
-            min_level=4,
+            min_level=5,
             enchantment_type=EnchantmentType.DIVINE,
             description=(
                 "Rerolls all modifier values on a gear piece of any rarity. "
@@ -90,7 +90,7 @@ class Exalted(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Exalted Bean",
-            min_level=3,
+            min_level=4,
             enchantment_type=EnchantmentType.EXALTED,
             description=(
                 "Adds a random modifier to the item and upgrades it to the next rarity. "
@@ -110,7 +110,7 @@ class Chance(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Chance Bean",
-            min_level=3,
+            min_level=4,
             enchantment_type=EnchantmentType.CHANCE,
             description=(
                 "Upgrades a common item to a random rarity and rerolls "
@@ -128,7 +128,7 @@ class Crangle(BaseCraftingEnchantment):
 
     def __init__(self):
         super().__init__(
-            min_level=4,
+            min_level=5,
             name="Crangle Bean",
             enchantment_type=EnchantmentType.CRANGLE,
             description=(
@@ -153,7 +153,7 @@ class DeathSave(BaseEffectEnchantment):
 
     def __init__(self):
         super().__init__(
-            min_level=3,
+            min_level=4,
             name="Cheat Death",
             enchantment_type=EnchantmentType.DEATH_SAVE,
             description="Allows you to survive lethal damage.",
@@ -175,7 +175,7 @@ class SkillStacksProxy(BaseEffectEnchantment):
 
     def __init__(self):
         super().__init__(
-            min_level=3,
+            min_level=4,
             name="Skill Stacks",
             enchantment_type=EnchantmentType.SKILL_STACKS,
             description="",
@@ -286,15 +286,15 @@ class PhysDamageProc(BaseEffectEnchantment):
     def __init__(self):
         super().__init__(
             name="Bloody Murder",
-            min_level=4,
+            min_level=5,
             enchantment_type=EnchantmentType.PHYS_DAMAGE_PROC,
             description="Has a chance to deal additional physical damage on hit.",
             information="",
             slot=EquipmentSlot.WEAPON,
             stacks=20,
             droppable=True,
-            value=1,
-            proc_chance=0.3,
+            value=0.75,
+            proc_chance=0.5,
             cooldown=0,
             weight=20,
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
@@ -310,15 +310,15 @@ class MagDamageProc(BaseEffectEnchantment):
     def __init__(self):
         super().__init__(
             name="Overload",
-            min_level=4,
+            min_level=5,
             enchantment_type=EnchantmentType.MAG_DAMAGE_PROC,
             description="Has a chance to deal additional magical damage on hit.",
             information="",
             slot=EquipmentSlot.WEAPON,
             stacks=10,
             droppable=True,
-            value=2,
-            proc_chance=0.15,
+            value=1.5,
+            proc_chance=0.25,
             cooldown=0,
             weight=20,
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
@@ -334,7 +334,7 @@ class CleansingHeal(BaseEffectEnchantment):
     def __init__(self):
         super().__init__(
             name="Inner Peace",
-            min_level=4,
+            min_level=5,
             enchantment_type=EnchantmentType.CLEANSING_HEAL,
             description="Your heals are stronger and remove all negative status effects.",
             information="",
@@ -349,4 +349,39 @@ class CleansingHeal(BaseEffectEnchantment):
             trigger=[EffectTrigger.ON_ATTACK],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
             emoji="🩹",
+        )
+
+
+class ExtraMissile(BaseEffectEnchantment):
+
+    RARITY_VALUE_SCALING = {
+        Rarity.DEFAULT: 1,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 1,
+        Rarity.RARE: 1,
+        Rarity.LEGENDARY: 1,
+    }
+
+    def __init__(self):
+        super().__init__(
+            name="Bigger Magazine",
+            min_level=4,
+            enchantment_type=EnchantmentType.EXTRA_MISSILE,
+            description="With these bad boys your Magical and Physical Missile will fire one extra shot!",
+            information="",
+            slot=EquipmentSlot.WEAPON,
+            stacks=10,
+            droppable=True,
+            value=1,
+            cooldown=0,
+            weight=10,
+            value_label="Missiles:",
+            rarities=[Rarity.LEGENDARY],
+            skill_effect=SkillEffect.NOTHING,
+            int_value=True,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+            trigger=[EffectTrigger.ON_ATTACK, EffectTrigger.SKILL_HITS],
+            consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
+            custom_scaling=self.RARITY_VALUE_SCALING,
+            emoji="",
         )

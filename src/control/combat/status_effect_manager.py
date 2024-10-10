@@ -214,7 +214,7 @@ class CombatStatusEffectManager(EffectManager):
             if (
                 EffectTrigger.ON_TRIGGER_SUCCESS in status_effect.status_effect.consumed
                 and (
-                    outcome.flags is None or OutcomeFlag.NO_TRIGGER not in outcome.flags
+                    outcome.flags is None or OutcomeFlag.NO_CONSUME not in outcome.flags
                 )
             ):
                 await self.consume_status_stack(handler_context.context, status_effect)
@@ -392,6 +392,12 @@ class CombatStatusEffectManager(EffectManager):
         return await self.get_outcome(triggered_status_effects, handler_context)
 
     async def on_skill_charges(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        return EffectOutcome.EMPTY()
+
+    async def on_skill_hits(
         self,
         handler_context: HandlerContext,
     ) -> EffectOutcome:

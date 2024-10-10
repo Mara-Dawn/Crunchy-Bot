@@ -389,3 +389,25 @@ class CombatEffectManager(Service):
         for manager in self.managers:
             outcomes.append(await manager.on_skill_charges(handler_context))
         return EffectHandler.combine_outcomes(outcomes)
+
+    async def on_skill_hits(
+        self,
+        actor: Actor,
+        skill: Skill,
+    ) -> EffectOutcome:
+
+        handler_context = HandlerContext(
+            trigger=EffectTrigger.SKILL_HITS,
+            context=None,
+            source=actor,
+            target=None,
+            skill=skill,
+            status_effect_type=None,
+            application_value=None,
+            damage_instance=None,
+        )
+
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_skill_hits(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)

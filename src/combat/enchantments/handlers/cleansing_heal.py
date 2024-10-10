@@ -43,12 +43,12 @@ class CleansingHealHandler(EnchantmentEffectHandler):
             return outcome
 
         if handler_context.skill.base_skill.skill_effect != SkillEffect.HEALING:
-            outcome.flags = [OutcomeFlag.NO_TRIGGER]
+            outcome.flags = [OutcomeFlag.NO_CONSUME]
             return outcome
 
         if handler_context.skill.base_skill.aoe:  # noqa: SIM102
             if handler_context.target.id != handler_context.source.id:
-                outcome.flags = [OutcomeFlag.NO_TRIGGER]
+                outcome.flags = [OutcomeFlag.NO_CONSUME]
 
         outcome.modifier = 1 + (enchantment.base_enchantment.value / 100)
 

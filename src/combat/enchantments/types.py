@@ -18,6 +18,7 @@ class EnchantmentType(str, Enum):
     PHYS_DAMAGE_PROC = "PhysDamageProc"
     MAG_DAMAGE_PROC = "MagDamageProc"
     CLEANSING_HEAL = "CleansingHeal"
+    EXTRA_MISSILE = "ExtraMissile"
 
     @staticmethod
     def is_crafting(enchantment_type: "EnchantmentType"):

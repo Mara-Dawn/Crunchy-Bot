@@ -45,7 +45,7 @@ class Effect:
 class OutcomeFlag(Enum):
     PREVENT_STATUS_APPLICATION = 1
     PREVENT_DEATH = 2
-    NO_TRIGGER = 3
+    NO_CONSUME = 3
 
 
 @dataclass

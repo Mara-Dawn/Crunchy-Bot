@@ -123,3 +123,10 @@ class EffectManager(Service, ABC):
         handler_context: HandlerContext,
     ) -> EffectOutcome:
         pass
+
+    @abstractmethod
+    async def on_skill_hits(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        pass

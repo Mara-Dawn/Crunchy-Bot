@@ -349,6 +349,7 @@ class CharacterSkill:
         max_roll: int,
         penalty: bool = False,
         additional_stacks: int = None,
+        additional_hits: int = None,
     ):
         self.skill = skill
         self.last_used = last_used
@@ -357,6 +358,7 @@ class CharacterSkill:
         self.max_roll = max_roll
         self.penalty = penalty
         self.additional_stacks = additional_stacks
+        self.additional_hits = additional_hits
 
     def on_cooldown(self):
         if self.last_used is None or self.skill.base_skill.cooldown is None:
@@ -372,6 +374,12 @@ class CharacterSkill:
         total = self.skill.base_skill.stacks
         if self.additional_stacks is not None:
             total += self.additional_stacks
+        return total
+
+    def hits(self):
+        total = self.skill.base_skill.hits
+        if self.additional_hits is not None:
+            total += self.additional_hits
         return total
 
     def get_embed(
@@ -460,13 +468,11 @@ class CharacterSkill:
             prefixes.append((damage_text_colored, len(damage_text)))
 
             # Hits
-            if self.skill.base_skill.hits > 1:
+            if self.hits() > 1:
                 name = "Hits"
                 spacing = " " * (max_len_pre - len(name))
-                type_text = f"{spacing}{name}: {self.skill.base_skill.hits}"
-                type_text_colored = (
-                    f"{spacing}{name}: [35m{self.skill.base_skill.hits}[0m"
-                )
+                type_text = f"{spacing}{name}: {self.hits()}"
+                type_text_colored = f"{spacing}{name}: [35m{self.hits()}[0m"
                 prefixes.append((type_text_colored, len(type_text)))
 
             # Type

@@ -89,7 +89,8 @@ class CombatSkillManager(Service):
             SkillEffect.NEUTRAL_DAMAGE,
         ]
 
-        outcome = await self.effect_manager.on_skill_charges(character, skill)
+        charges_outcome = await self.effect_manager.on_skill_charges(character, skill)
+        hits_outcome = await self.effect_manager.on_skill_hits(character, skill)
 
         return CharacterSkill(
             skill=skill,
@@ -102,7 +103,8 @@ class CombatSkillManager(Service):
                 0
             ].raw_value,
             penalty=penalty,
-            additional_stacks=outcome.value,
+            additional_stacks=charges_outcome.value,
+            additional_hits=hits_outcome.value,
         )
 
     async def get_opponent_skill_data(
@@ -267,6 +269,9 @@ class CombatSkillManager(Service):
                 modifier = 0
 
         attack_count = skill.base_skill.hits
+        hit_outcome = await self.effect_manager.on_skill_hits(character, skill)
+        if hit_outcome.value is not None:
+            attack_count += hit_outcome.value
         skill_instances = []
         for _ in range(attack_count):
 

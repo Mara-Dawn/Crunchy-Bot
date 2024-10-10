@@ -399,6 +399,19 @@ class CombatEnchantmentManager(Service):
 
         return await self.get_outcome(triggered_enchantments, handler_context)
 
+    async def on_skill_hits(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        triggered_enchantments = await self.enchantment_trigger(
+            handler_context.context, handler_context.source, EffectTrigger.SKILL_HITS
+        )
+
+        if len(triggered_enchantments) <= 0:
+            return EffectOutcome.EMPTY()
+
+        return await self.get_outcome(triggered_enchantments, handler_context)
+
     async def get_outcome(
         self,
         gear_enchantments: list[GearEnchantment],
@@ -424,7 +437,7 @@ class CombatEnchantmentManager(Service):
                 EffectTrigger.ON_TRIGGER_SUCCESS
                 in gear_enchantment.enchantment.base_enchantment.consumed
                 and (
-                    outcome.flags is None or OutcomeFlag.NO_TRIGGER not in outcome.flags
+                    outcome.flags is None or OutcomeFlag.NO_CONSUME not in outcome.flags
                 )
             ):
                 await self.consume_enchantment_stack(
