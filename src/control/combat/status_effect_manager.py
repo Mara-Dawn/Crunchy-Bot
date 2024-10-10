@@ -309,6 +309,17 @@ class CombatStatusEffectManager(EffectManager):
 
         return await self.get_outcome(triggered_status_effects, handler_context)
 
+    async def on_post_skill(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+
+        triggered_status_effects = await self.actor_trigger(
+            handler_context.context, handler_context.source, EffectTrigger.POST_SKILL
+        )
+
+        return await self.get_outcome(triggered_status_effects, handler_context)
+
     async def on_round_start(
         self,
         handler_context: HandlerContext,

@@ -237,6 +237,7 @@ class Enchantment(Droppable):
         SkillEffect.EFFECT_DAMAGE: "Damage",
         SkillEffect.NOTHING: "",
         SkillEffect.BUFF: "Effect",
+        SkillEffect.CHANCE: "Chance",
         SkillEffect.HEALING: "Healing",
     }
 
@@ -247,6 +248,7 @@ class Enchantment(Droppable):
         SkillEffect.EFFECT_DAMAGE: "Neutral Dmg.",
         SkillEffect.NOTHING: "Special",
         SkillEffect.BUFF: "Buff",
+        SkillEffect.CHANCE: "Special",
         SkillEffect.HEALING: "Healing",
     }
 
@@ -532,7 +534,8 @@ class EffectEnchantment(Enchantment):
                 suffix_sign = ""
                 if (
                     self.base_enchantment.skill_effect is not None
-                    and self.base_enchantment.skill_effect == SkillEffect.BUFF
+                    and self.base_enchantment.skill_effect
+                    in [SkillEffect.CHANCE, SkillEffect.BUFF]
                 ):
                     suffix_sign = "%"
                 spacing = " " * (max_len_pre - len(name))
@@ -765,7 +768,8 @@ class EffectEnchantment(Enchantment):
             suffix_sign = ""
             if (
                 self.base_enchantment.skill_effect is not None
-                and self.base_enchantment.skill_effect == SkillEffect.BUFF
+                and self.base_enchantment.skill_effect
+                in [SkillEffect.CHANCE, SkillEffect.BUFF]
             ):
                 suffix_sign = "%"
             spacing = " " * (max_len_pre - len(name))
@@ -954,7 +958,7 @@ class GearEnchantment:
                     penalty = " [!]"
                     penalty_colored = f"[30m{penalty}[0m "
                 match self.enchantment.base_enchantment.skill_effect:
-                    case SkillEffect.BUFF:
+                    case SkillEffect.BUFF | SkillEffect.CHANCE:
                         damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.value:.1f}%"
                         damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.value:.1f}%[0m"
                     case SkillEffect.NOTHING:
@@ -1153,7 +1157,7 @@ class GearEnchantment:
                 penalty = " [!]"
                 penalty_colored = f"[30m{penalty}[0m "
             match self.enchantment.base_enchantment.skill_effect:
-                case SkillEffect.BUFF:
+                case SkillEffect.BUFF | SkillEffect.CHANCE:
                     damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.value:.1f}%"
                     damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.value:.1f}%[0m"
                 case SkillEffect.NOTHING:

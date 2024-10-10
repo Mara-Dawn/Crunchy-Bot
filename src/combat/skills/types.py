@@ -263,6 +263,7 @@ class SkillEffect(str, Enum):
     NOTHING = "Nothing"
     BUFF = "Buff"
     HEALING = "Healing"
+    CHANCE = "Chance"
 
     @property
     def damaging(self):

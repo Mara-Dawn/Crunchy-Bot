@@ -247,6 +247,29 @@ class CombatEffectManager(Service):
             outcomes.append(await manager.on_post_attack(handler_context))
         return EffectHandler.combine_outcomes(outcomes)
 
+    async def on_post_skill(
+        self,
+        context: EncounterContext,
+        actor: Actor,
+        target: Actor,
+        skill: Skill,
+    ) -> EffectOutcome:
+        handler_context = HandlerContext(
+            trigger=EffectTrigger.POST_SKILL,
+            context=context,
+            source=actor,
+            target=target,
+            skill=skill,
+            status_effect_type=None,
+            application_value=None,
+            damage_instance=None,
+        )
+
+        outcomes: list[EffectOutcome] = []
+        for manager in self.managers:
+            outcomes.append(await manager.on_post_skill(handler_context))
+        return EffectHandler.combine_outcomes(outcomes)
+
     async def on_round_start(
         self,
         context: EncounterContext,

@@ -17,3 +17,4 @@ class EffectTrigger(Enum):
     SKILL_CHARGE = 13
     ON_TRIGGER_SUCCESS = 14
     SKILL_HITS = 15
+    POST_SKILL = 16

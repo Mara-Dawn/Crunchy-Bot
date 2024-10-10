@@ -83,6 +83,13 @@ class EffectManager(Service, ABC):
         pass
 
     @abstractmethod
+    async def on_post_skill(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        pass
+
+    @abstractmethod
     async def on_round_start(
         self,
         handler_context: HandlerContext,

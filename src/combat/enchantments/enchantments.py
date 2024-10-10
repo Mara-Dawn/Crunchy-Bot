@@ -352,6 +352,29 @@ class CleansingHeal(BaseEffectEnchantment):
         )
 
 
+class BallReset(BaseEffectEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            name="Bouncy Balls",
+            min_level=4,
+            enchantment_type=EnchantmentType.BALL_RESET,
+            description="Your Ice and Fire Balls have a random chance to bounce back, resetting their cooldown immediately.",
+            information="",
+            slot=EquipmentSlot.WEAPON,
+            stacks=10,
+            droppable=True,
+            value=10,
+            cooldown=0,
+            weight=15,
+            skill_effect=SkillEffect.CHANCE,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+            trigger=[EffectTrigger.POST_SKILL],
+            consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
+            emoji="🏐",
+        )
+
+
 class ExtraMissile(BaseEffectEnchantment):
 
     RARITY_VALUE_SCALING = {
