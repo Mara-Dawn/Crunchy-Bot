@@ -203,6 +203,7 @@ class UIEventType(str, Enum):
     COMBAT_TIMEOUT = "combat_timeout"
     COMBAT_FULL = "combat_full"
     COMBAT_DISAPPEAR = "combat_disappear"
+    COMBAT_FORCE_USE = "combat_force_use"
 
     CLAIM_SPECIAL_DROP = "claim_special_drop"
 

@@ -1094,6 +1094,41 @@ class Combat(commands.Cog):
             ephemeral=True,
         )
 
+    @group.command(
+        name="force_skip",
+        description="Foces a encounter to start even when the participant requirements are not met.",
+    )
+    @app_commands.check(__has_permission)
+    async def force_action(self, interaction: discord.Interaction, action: int):
+        channel_id = interaction.channel_id
+        guild_id = interaction.guild_id
+
+        if channel_id is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Please use this command inside an encounter thread.",
+                ephemeral=True,
+            )
+            return
+
+        encounter = await self.database.get_encounter_by_thread_id(guild_id, channel_id)
+
+        if encounter is None:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "No encounter found for this thread.",
+                ephemeral=True,
+            )
+            return
+
+        event = UIEvent(
+            UIEventType.COMBAT_FORCE_USE,
+            (interaction, action),
+        )
+        await self.controller.dispatch_ui_event(event)
+
 
 async def setup(bot):
     await bot.add_cog(Combat(bot))
