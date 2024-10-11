@@ -21,13 +21,14 @@ from view.combat.elements import (
     ImplementsPages,
     ImplementsScrapping,
     LockButton,
+    MenuState,
     PageButton,
     ScrapBalanceButton,
     ScrapSelectedButton,
     UnlockButton,
 )
 from view.combat.embed import SelectGearHeadEmbed
-from view.combat.equipment_view import EquipmentViewState, SelectGearSlot
+from view.combat.gear_menu_view import SelectGearSlot
 from view.view_menu import ViewMenu
 
 
@@ -190,8 +191,8 @@ class EquipmentSelectView(
     ):
         await interaction.response.defer()
         event = UIEvent(
-            UIEventType.GEAR_OPEN_OVERVIEW,
-            (interaction, EquipmentViewState.GEAR),
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.GEAR, False),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -199,7 +200,7 @@ class EquipmentSelectView(
     async def change_gear(self, interaction: discord.Interaction, slot: EquipmentSlot):
         await interaction.response.defer()
         event = UIEvent(
-            UIEventType.GEAR_OPEN_SECELT,
+            UIEventType.GEAR_OPEN_SELECT,
             (interaction, slot),
             self.id,
         )
@@ -279,7 +280,7 @@ class EquipmentSelectView(
         self.add_item(SelectButton(disabled=disable_equip))
         self.add_item(PageButton(">", True, disabled=disabled))
         self.add_item(CurrentPageButton(page_display))
-        self.add_item(ScrapBalanceButton(self.scrap_balance))
+        self.add_item(ScrapBalanceButton(self.scrap_balance, row=2))
         self.add_item(ScrapSelectedButton(disabled=disable_dismantle))
         self.add_item(CraftSelectedButton(disabled=disable_craft))
         self.add_item(LockButton(disabled=disable_lock))

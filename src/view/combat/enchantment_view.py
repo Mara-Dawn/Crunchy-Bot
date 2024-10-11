@@ -26,6 +26,7 @@ from view.combat.elements import (
     ImplementsLocking,
     ImplementsPages,
     ImplementsScrapping,
+    MenuState,
     PageButton,
     ScrapAllButton,
     ScrapAmountButton,
@@ -35,7 +36,6 @@ from view.combat.embed import (
     EnchantmentHeadEmbed,
     EnchantmentSpacerEmbed,
 )
-from view.combat.equipment_view import EquipmentViewState
 from view.view_menu import ViewMenu
 
 
@@ -379,8 +379,8 @@ class EnchantmentView(
     ):
         await interaction.response.defer()
         event = UIEvent(
-            UIEventType.GEAR_OPEN_OVERVIEW,
-            (interaction, EquipmentViewState.GEAR),
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.GEAR, False),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -443,7 +443,7 @@ class EnchantmentView(
         self.add_item(ApplyButton(disabled=disable_apply))
         self.add_item(PageButton(">", True))
         self.add_item(CurrentPageButton(page_display))
-        self.add_item(ScrapBalanceButton(self.scrap_balance))
+        self.add_item(ScrapBalanceButton(self.scrap_balance, row=2))
         self.add_item(ScrapAllButton(disabled=disable_dismantle))
         self.add_item(ScrapAmountButton(disabled=disable_dismantle))
         self.add_item(BackButton())

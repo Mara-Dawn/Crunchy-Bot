@@ -12,6 +12,7 @@ from events.ui_event import UIEvent
 from view.combat.elements import (
     BackButton,
     ImplementsBack,
+    MenuState,
     ScrapBalanceButton,
 )
 from view.combat.special_shop_embed import SpecialShopHeadEmbed
@@ -83,8 +84,8 @@ class SpecialShopView(ViewMenu, ImplementsBack):
     ):
         await interaction.response.defer()
         event = UIEvent(
-            UIEventType.FORGE_OPEN_OVERVIEW,
-            interaction,
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.FORGE, False),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -106,7 +107,7 @@ class SpecialShopView(ViewMenu, ImplementsBack):
 
         self.add_item(BackButton(disabled=disabled, row=2))
         self.add_item(SelectButton(current_value=selected_value, disabled=disable_buy))
-        self.add_item(ScrapBalanceButton(self.scrap_balance))
+        self.add_item(ScrapBalanceButton(self.scrap_balance, row=2))
 
     async def refresh_ui(
         self,

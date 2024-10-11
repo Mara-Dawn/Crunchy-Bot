@@ -22,6 +22,8 @@ from events.ui_event import UIEvent
 from items import BaseKey, Debuff
 from items.item import Item
 from items.types import ItemState, ItemType
+from view.shop.embed import ShopEmbed
+from view.shop.view import ShopView
 from view.types import ActionType
 
 
@@ -209,6 +211,9 @@ class InventoryViewController(ViewController):
                 await self.submit_user_view(
                     interaction, selected_user, item, event.view_id
                 )
+            case UIEventType.SHOW_SHOP:
+                interaction = event.payload
+                await self.open_shop(interaction, event.view_id)
 
     async def sell(
         self,
@@ -543,3 +548,28 @@ class InventoryViewController(ViewController):
 
         event = UIEvent(UIEventType.INVENTORY_REFRESH, inventory, view_id)
         await self.controller.dispatch_ui_event(event)
+
+    async def open_shop(
+        self,
+        interaction: discord.Interaction,
+        view_id: int,
+    ):
+        items = await self.item_manager.get_shop_items(interaction.guild_id)
+
+        embed = ShopEmbed(self.bot, interaction.guild.name, items)
+        view = ShopView(self.controller, interaction, items)
+
+        user_balance = await self.database.get_member_beans(
+            interaction.guild.id, interaction.user.id
+        )
+        user_items = await self.database.get_item_counts_by_user(
+            interaction.guild.id, interaction.user.id
+        )
+
+        shop_img = discord.File("./img/shop.png", "shop.png")
+
+        message = await interaction.original_response()
+        await message.edit(embed=embed, view=view, attachments=[shop_img])
+        view.set_message(message)
+        await view.refresh_ui(user_balance=user_balance, user_items=user_items)
+        self.controller.detach_view_by_id(view_id)

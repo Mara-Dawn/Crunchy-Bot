@@ -1,8 +1,50 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 
 import discord
 
 from view.view_menu import ViewMenu
+
+
+class MenuState(str, Enum):
+    GEAR = "Gear"
+    SKILLS = "Skills"
+    FORGE = "Forge"
+    INVENTORY = "Inventory"
+
+
+class ImplementsMainMenu(ABC):
+
+    @abstractmethod
+    async def set_state(self, state: MenuState, interaction: discord.Interaction):
+        pass
+
+    def add_menu(
+        self, current: MenuState, limited: bool = False, disabled: bool = False
+    ):
+        for state in MenuState:
+            if limited and state in [MenuState.FORGE, MenuState.INVENTORY]:
+                continue
+            selected = current == state
+            self.add_item(MenuButton(state=state, selected=selected, disabled=disabled))
+
+
+class MenuButton(discord.ui.Button):
+
+    def __init__(self, state: MenuState, selected: bool, disabled: bool = True):
+        color = discord.ButtonStyle.grey
+
+        label = state.value
+        self.state = state
+        if selected:
+            label = f">{label}<"
+            disabled = True
+
+        super().__init__(label=label, style=color, disabled=disabled, row=0)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ImplementsMainMenu = self.view
+        await view.set_state(self.state, interaction)
 
 
 class ImplementsPages(ABC):
@@ -10,6 +52,9 @@ class ImplementsPages(ABC):
     @abstractmethod
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         pass
+
+
+class ImplementsBalance(ABC):
 
     @abstractmethod
     async def open_shop(self, interaction: discord.Interaction):
@@ -91,14 +136,29 @@ class CurrentPageButton(discord.ui.Button):
 
 class ScrapBalanceButton(discord.ui.Button):
 
-    def __init__(self, balance: int, row: int = 2):
+    def __init__(self, balance: int, row: int = 0):
         self.balance = balance
         super().__init__(
             label=f"⚙️{balance}", style=discord.ButtonStyle.blurple, row=row
         )
 
     async def callback(self, interaction: discord.Interaction):
-        view: ImplementsPages = self.view
+        view: ImplementsBalance = self.view
+
+        if await view.interaction_check(interaction):
+            await view.open_shop(interaction)
+
+
+class BeansBalanceButton(discord.ui.Button):
+
+    def __init__(self, balance: int, row: int = 0):
+        self.balance = balance
+        super().__init__(
+            label=f"🅱️{balance}", style=discord.ButtonStyle.blurple, row=row
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ImplementsBalance = self.view
 
         if await view.interaction_check(interaction):
             await view.open_shop(interaction)

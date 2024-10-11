@@ -30,6 +30,10 @@ class Controller:
         self.view_controllers: list[ViewController] = []
         self.views: list[ViewMenu] = []
 
+        from control.view.main_menu_controller import MainMenuViewController
+
+        self.add_view_controller(MainMenuViewController)
+
     def register_view(self, view: ViewMenu):
         controller_type = view.controller_type.value
 

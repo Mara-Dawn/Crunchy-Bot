@@ -8,6 +8,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot import CrunchyBot
+from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.interaction_manager import InteractionManager
@@ -20,8 +21,7 @@ from error import ErrorHandler
 from items.types import ItemType
 from view.catalogue.embed import CatalogEmbed
 from view.catalogue.view import CatalogView
-from view.inventory.embed import InventoryEmbed
-from view.inventory.view import InventoryView
+from view.inventory.inventory_menu_view import InventoryMenuView
 from view.shop.embed import ShopEmbed
 from view.shop.view import ShopView
 
@@ -40,6 +40,9 @@ class Shop(commands.Cog):
         )
         self.item_handler: InteractionManager = self.controller.get_service(
             InteractionManager
+        )
+        self.embed_manager: CombatEmbedManager = self.controller.get_service(
+            CombatEmbedManager
         )
 
     @staticmethod
@@ -236,11 +239,19 @@ class Shop(commands.Cog):
         guild_id = interaction.guild_id
 
         inventory = await self.item_manager.get_user_inventory(guild_id, member_id)
-        embed = InventoryEmbed(self.bot, inventory)
-        view = InventoryView(self.controller, interaction, inventory)
 
-        message = await interaction.followup.send("", embed=embed, view=view)
+        view = InventoryMenuView(self.controller, interaction, inventory)
 
+        embeds = []
+        loading_embed = discord.Embed(
+            title="Loading Inventory", color=discord.Colour.light_grey()
+        )
+        self.embed_manager.add_text_bar(loading_embed, "", "Please Wait...")
+        loading_embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embeds.append(loading_embed)
+
+        message = await interaction.original_response()
+        await message.edit(embeds=embeds, view=view, attachments=[])
         view.set_message(message)
         await view.refresh_ui()
 

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import discord
+
 from events.ui_event import UIEvent
 from items.types import ShopCategory
 

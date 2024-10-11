@@ -22,13 +22,13 @@ from view.combat.elements import (
     ImplementsLocking,
     ImplementsPages,
     ImplementsScrapping,
+    MenuState,
     PageButton,
     ScrapAllButton,
     ScrapAmountButton,
     ScrapBalanceButton,
 )
 from view.combat.embed import ManageSkillHeadEmbed, SelectSkillHeadEmbed
-from view.combat.equipment_view import EquipmentViewState
 from view.view_menu import ViewMenu
 
 
@@ -313,8 +313,8 @@ class SkillSelectView(
     ):
         await interaction.response.defer()
         event = UIEvent(
-            UIEventType.GEAR_OPEN_OVERVIEW,
-            (interaction, EquipmentViewState.SKILLS),
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.SKILLS, False),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -322,7 +322,7 @@ class SkillSelectView(
     async def change_skill(self, interaction: discord.Interaction, slot: EquipmentSlot):
         await interaction.response.defer()
         event = UIEvent(
-            UIEventType.GEAR_OPEN_SECELT,
+            UIEventType.GEAR_OPEN_SELECT,
             (interaction, slot),
             self.id,
         )
@@ -424,7 +424,7 @@ class SkillSelectView(
                 self.add_item(SelectSingleButton(disabled=disable_equip))
                 self.add_item(PageButton(">", True))
                 self.add_item(CurrentPageButton(page_display))
-                self.add_item(ScrapBalanceButton(self.scrap_balance))
+                self.add_item(ScrapBalanceButton(self.scrap_balance, row=2))
                 self.add_item(ScrapAllButton(disabled=disable_dismantle))
                 self.add_item(ScrapAmountButton(disabled=disable_dismantle))
                 self.add_item(BackButton())

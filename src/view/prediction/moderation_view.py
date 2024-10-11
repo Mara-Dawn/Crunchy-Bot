@@ -245,7 +245,7 @@ class BalanceButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await interaction.response.defer(ephemeral=True)
-            event = UIEvent(UIEventType.SHOW_INVENTORY, interaction)
+            event = UIEvent(UIEventType.SHOW_INVENTORY, interaction, view.id)
             await view.controller.dispatch_ui_event(event)
 
 

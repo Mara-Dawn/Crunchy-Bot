@@ -1,6 +1,8 @@
 import contextlib
 
 import discord
+
+from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.inventory import UserInventory
@@ -8,13 +10,24 @@ from events.types import UIEventType
 from events.ui_event import UIEvent
 from items.item import Item
 from items.types import ItemState, ItemType, ShopCategory
-from view.elements import CategoryFilter, ImplementsCategoryFilter
+from view.combat.elements import (
+    BeansBalanceButton,
+    CurrentPageButton,
+    ImplementsBalance,
+    ImplementsMainMenu,
+    ImplementsPages,
+    MenuState,
+    PageButton,
+)
+from view.elements import CategoryFilter
 from view.inventory.embed import InventoryEmbed
 from view.types import ActionType
 from view.view_menu import ViewMenu
 
 
-class InventoryView(ViewMenu, ImplementsCategoryFilter):
+class InventoryMenuView(
+    ViewMenu, ImplementsMainMenu, ImplementsPages, ImplementsBalance
+):
 
     def __init__(
         self,
@@ -22,22 +35,28 @@ class InventoryView(ViewMenu, ImplementsCategoryFilter):
         interaction: discord.Interaction,
         inventory: UserInventory,
     ):
-        super().__init__(timeout=300)
+        super().__init__(timeout=None)
         self.controller = controller
-        self.inventory = inventory
-        self.guild_name = interaction.guild.name
         self.member_id = interaction.user.id
-        self.guild_id = interaction.guild_id
+        self.guild_id = interaction.guild.id
+        self.member = interaction.user
+        self.state = MenuState.INVENTORY
+        self.loaded = False
+
+        self.embed_manager: CombatEmbedManager = self.controller.get_service(
+            CombatEmbedManager
+        )
+
+        self.inventory = inventory
+
         self.current_page = 0
         self.selected: ItemType = None
-
         self.filter: list[ShopCategory] = []
         self.filtered_items = []
         self.display_items = []
         self.item_count = 0
         self.page_count = 1
         self.filter_items()
-        self.message = None
 
         self.controller_type = ControllerType.INVENTORY_VIEW
         self.controller.register_view(self)
@@ -63,60 +82,13 @@ class InventoryView(ViewMenu, ImplementsCategoryFilter):
                 inventory = event.payload
                 await self.refresh_ui(inventory=inventory)
 
-    def filter_items(self):
-        category_filer = self.filter
-        if len(category_filer) == 0:
-            category_filer = [category for category in ShopCategory]
-        self.filtered_items = [
-            item
-            for item in self.inventory.items
-            if item.shop_category in category_filer
-        ]
-        self.item_count = len(self.filtered_items)
-        self.page_count = int(self.item_count / InventoryEmbed.ITEMS_PER_PAGE) + (
-            self.item_count % InventoryEmbed.ITEMS_PER_PAGE > 0
-        )
-
-    async def set_filter(
-        self, interaction: discord.Interaction, filter: list[ShopCategory]
-    ):
-        await interaction.response.defer()
-        self.filter = filter
-        self.current_page = 0
-        await self.refresh_ui()
-
-    async def flip_page(self, interaction: discord.Interaction, right: bool = False):
-        await interaction.response.defer()
-        self.current_page = (self.current_page + (1 if right else -1)) % self.page_count
-        self.selected = None
-        await self.refresh_ui()
-
-    async def selected_item_action(
-        self, interaction: discord.Interaction, action_type: ActionType
-    ):
-        await interaction.response.defer()
-        event = UIEvent(
-            UIEventType.INVENTORY_ITEM_ACTION,
-            (interaction, self.selected, action_type),
-            self.id,
-        )
-        await self.controller.dispatch_ui_event(event)
-
-    async def sell_selected_item(
-        self,
-        interaction: discord.Interaction,
-        amount: int = 1,
-        sell_until: bool = False,
-    ):
-        event = UIEvent(
-            UIEventType.INVENTORY_SELL,
-            (interaction, self.selected, amount, sell_until),
-            self.id,
-        )
-        await self.controller.dispatch_ui_event(event)
-
     def refresh_elements(self, disabled: bool = False):
         selected_state = self.inventory.get_item_state(self.selected)
+
+        self.clear_items()
+
+        self.add_menu(self.state, False, False)
+        self.add_item(BeansBalanceButton(self.inventory.balance))
 
         match selected_state:
             case ItemState.ENABLED:
@@ -135,20 +107,25 @@ class InventoryView(ViewMenu, ImplementsCategoryFilter):
             item for item in self.display_items if item.controllable or item.useable
         ]
 
-        self.clear_items()
-        self.add_item(CategoryFilter(self.filter))
+        self.add_item(CategoryFilter(self.filter, row=1))
         if len(controllable_items) > 0:
             self.add_item(Dropdown(controllable_items, self.selected))
-        self.add_item(PageButton("<", False))
+        self.add_item(PageButton("<", False, row=3))
         self.add_item(ActionButton(button_action, disabled))
-        self.add_item(PageButton(">", True))
-        self.add_item(CurrentPageButton(page_display))
-        self.add_item(BalanceButton(self.inventory.balance))
+        self.add_item(PageButton(">", True, row=3))
+        self.add_item(CurrentPageButton(page_display, row=3))
         self.add_item(SellButton(disabled))
         self.add_item(SellAmountButton(disabled))
         self.add_item(SellAllButton(disabled))
 
-    async def refresh_ui(self, inventory: UserInventory = None, disabled: bool = False):
+    async def refresh_ui(
+        self,
+        inventory: UserInventory = None,
+        disabled: bool = False,
+    ):
+        if self.message is None:
+            return
+
         if inventory is not None:
             self.inventory = inventory
             self.item_count = len(self.inventory.items)
@@ -183,6 +160,72 @@ class InventoryView(ViewMenu, ImplementsCategoryFilter):
         except (discord.NotFound, discord.HTTPException):
             self.controller.detach_view(self)
 
+    async def set_state(self, state: MenuState, interaction: discord.Interaction):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, state, False),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    def filter_items(self):
+        category_filer = self.filter
+        if len(category_filer) == 0:
+            category_filer = [category for category in ShopCategory]
+        self.filtered_items = [
+            item
+            for item in self.inventory.items
+            if item.shop_category in category_filer
+        ]
+        self.item_count = len(self.filtered_items)
+        self.page_count = int(self.item_count / InventoryEmbed.ITEMS_PER_PAGE) + (
+            self.item_count % InventoryEmbed.ITEMS_PER_PAGE > 0
+        )
+
+    async def set_filter(
+        self, interaction: discord.Interaction, filter: list[ShopCategory]
+    ):
+        await interaction.response.defer()
+        self.filter = filter
+        self.current_page = 0
+        await self.refresh_ui()
+
+    async def flip_page(self, interaction: discord.Interaction, right: bool = False):
+        await interaction.response.defer()
+        self.current_page = (self.current_page + (1 if right else -1)) % self.page_count
+        self.selected = None
+        await self.refresh_ui()
+
+    async def open_shop(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        event = UIEvent(UIEventType.SHOW_SHOP, interaction, self.id)
+        await self.controller.dispatch_ui_event(event)
+
+    async def selected_item_action(
+        self, interaction: discord.Interaction, action_type: ActionType
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.INVENTORY_ITEM_ACTION,
+            (interaction, self.selected, action_type),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def sell_selected_item(
+        self,
+        interaction: discord.Interaction,
+        amount: int = 1,
+        sell_until: bool = False,
+    ):
+        event = UIEvent(
+            UIEventType.INVENTORY_SELL,
+            (interaction, self.selected, amount, sell_until),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     async def set_selected(self, interaction: discord.Interaction, item_type: ItemType):
         if item_type is not None:
             item_type = ItemType(item_type)
@@ -216,12 +259,12 @@ class ActionButton(discord.ui.Button):
         super().__init__(
             label=action_type.value,
             style=color,
-            row=2,
+            row=3,
             disabled=disabled,
         )
 
     async def callback(self, interaction: discord.Interaction):
-        view: InventoryView = self.view
+        view: InventoryMenuView = self.view
 
         if await view.interaction_check(interaction):
             await view.selected_item_action(interaction, self.action_type)
@@ -233,12 +276,12 @@ class SellButton(discord.ui.Button):
         super().__init__(
             label="Sell Single",
             style=discord.ButtonStyle.grey,
-            row=3,
+            row=4,
             disabled=disabled,
         )
 
     async def callback(self, interaction: discord.Interaction):
-        view: InventoryView = self.view
+        view: InventoryMenuView = self.view
 
         if await view.interaction_check(interaction):
             await interaction.response.defer()
@@ -251,12 +294,12 @@ class SellAmountButton(discord.ui.Button):
         super().__init__(
             label="Sell Amount",
             style=discord.ButtonStyle.grey,
-            row=3,
+            row=4,
             disabled=disabled,
         )
 
     async def callback(self, interaction: discord.Interaction):
-        view: InventoryView = self.view
+        view: InventoryMenuView = self.view
 
         if await view.interaction_check(interaction):
             await interaction.response.send_modal(SellAmountModal(self.view))
@@ -264,7 +307,7 @@ class SellAmountButton(discord.ui.Button):
 
 class SellAmountModal(discord.ui.Modal):
 
-    def __init__(self, view: InventoryView):
+    def __init__(self, view: InventoryMenuView):
         super().__init__(title="Specify how much you want to sell.")
         self.view = view
 
@@ -331,29 +374,16 @@ class SellAllButton(discord.ui.Button):
         super().__init__(
             label="Sell All",
             style=discord.ButtonStyle.grey,
-            row=3,
+            row=4,
             disabled=disabled,
         )
 
     async def callback(self, interaction: discord.Interaction):
-        view: InventoryView = self.view
+        view: InventoryMenuView = self.view
 
         if await view.interaction_check(interaction):
             await interaction.response.defer()
             await view.sell_selected_item(interaction, amount=0, sell_until=True)
-
-
-class BalanceButton(discord.ui.Button):
-
-    def __init__(self, balance: int):
-        self.balance = balance
-        super().__init__(label=f"🅱️{balance}", style=discord.ButtonStyle.blurple, row=2)
-
-    async def callback(self, interaction: discord.Interaction):
-        view: InventoryView = self.view
-
-        if await view.interaction_check(interaction):
-            await interaction.response.defer(ephemeral=True)
 
 
 class Dropdown(discord.ui.Select):
@@ -386,35 +416,12 @@ class Dropdown(discord.ui.Select):
             min_values=1,
             max_values=1,
             options=options,
-            row=1,
+            row=2,
             disabled=disabled,
         )
 
     async def callback(self, interaction: discord.Interaction):
-        view: InventoryView = self.view
+        view: InventoryMenuView = self.view
 
         if await view.interaction_check(interaction):
             await view.set_selected(interaction, self.values[0])
-
-
-class PageButton(discord.ui.Button):
-
-    def __init__(self, label: str, right: bool, disabled: bool = False):
-        self.right = right
-        super().__init__(
-            label=label, style=discord.ButtonStyle.grey, row=2, disabled=disabled
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: InventoryView = self.view
-
-        if await view.interaction_check(interaction):
-            await view.flip_page(interaction, self.right)
-
-
-class CurrentPageButton(discord.ui.Button):
-
-    def __init__(self, label: str):
-        super().__init__(
-            label=label, style=discord.ButtonStyle.grey, row=2, disabled=True
-        )

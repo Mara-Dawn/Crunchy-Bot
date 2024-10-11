@@ -35,7 +35,7 @@ from events.types import EncounterEventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemType
 from view.combat.embed import EquipmentHeadEmbed
-from view.combat.equipment_view import EquipmentView
+from view.combat.gear_menu_view import GearMenuView
 from view.settings_modal import SettingsModal
 
 
@@ -558,7 +558,6 @@ class Combat(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         scrap_balance = 0
-        forge_level = await self.controller.database.get_forge_level(guild_id)
 
         if user is None:
             user = interaction.user
@@ -570,13 +569,12 @@ class Combat(commands.Cog):
 
         character = await self.actor_manager.get_character(user)
 
-        view = EquipmentView(
+        view = GearMenuView(
             self.controller,
             interaction,
             character,
             scrap_balance,
-            forge_level,
-            is_owner=(user.id == interaction.user.id),
+            limited=(user.id != interaction.user.id),
         )
 
         embeds = []
