@@ -5,7 +5,7 @@ from discord.ext import commands
 
 from combat.actors import Character
 from combat.effects.effect import EffectOutcome, OutcomeFlag
-from combat.effects.effect_handler import HandlerContext
+from combat.effects.effect_handler import EffectHandler, HandlerContext
 from combat.effects.types import EffectTrigger
 from combat.enchantments.enchantment import (
     CraftDisplayWrapper,
@@ -206,10 +206,19 @@ class CombatEnchantmentManager(Service):
         handler_context: HandlerContext,
     ) -> EffectOutcome:
 
-        triggered_enchantments = await self.enchantment_trigger(
+        triggered_source_enchantments = await self.enchantment_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.ON_STATUS_APPLICATION,
+        )
+
+        triggered_target_enchantments = await self.enchantment_trigger(
             handler_context.context,
             handler_context.target,
             EffectTrigger.ON_STATUS_APPLICATION,
+        )
+        triggered_enchantments = (
+            triggered_source_enchantments + triggered_target_enchantments
         )
 
         if len(triggered_enchantments) <= 0:

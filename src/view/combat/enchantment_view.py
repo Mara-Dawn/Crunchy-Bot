@@ -482,6 +482,7 @@ class EnchantmentView(
             for group in self.filtered_items
             if group.enchantment_type
             in [selected.enchantment_type for selected in self.selected]
+            and group.rarity in [selected.rarity for selected in self.selected]
         ]
 
         if no_embeds:
@@ -556,6 +557,7 @@ class EnchantmentView(
     ):
         await interaction.response.defer()
         self.selected_filter_type = selected_type
+        self.selected = []
         self.filter_items()
         self.current_page = min(self.current_page, (self.page_count - 1))
         await self.refresh_ui()

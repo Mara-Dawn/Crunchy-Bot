@@ -184,7 +184,6 @@ class SkillStacksProxy(BaseEffectEnchantment):
             stacks=None,
             droppable=True,
             value=1,
-            cooldown=0,
             skill_effect=SkillEffect.NOTHING,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.SKILL_CHARGE],
@@ -319,7 +318,6 @@ class MagDamageProc(BaseEffectEnchantment):
             droppable=True,
             value=1.5,
             proc_chance=0.25,
-            cooldown=0,
             weight=20,
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             image_url="https://i.imgur.com/B6TuHg3.png",
@@ -377,14 +375,6 @@ class BallReset(BaseEffectEnchantment):
 
 class ExtraMissile(BaseEffectEnchantment):
 
-    RARITY_VALUE_SCALING = {
-        Rarity.DEFAULT: 1,
-        Rarity.COMMON: 1,
-        Rarity.UNCOMMON: 1,
-        Rarity.RARE: 1,
-        Rarity.LEGENDARY: 1,
-    }
-
     def __init__(self):
         super().__init__(
             name="Bigger Magazine",
@@ -396,15 +386,38 @@ class ExtraMissile(BaseEffectEnchantment):
             stacks=10,
             droppable=True,
             value=1,
-            cooldown=0,
             weight=10,
             value_label="Missiles:",
-            rarities=[Rarity.LEGENDARY],
             skill_effect=SkillEffect.NOTHING,
             int_value=True,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.ON_ATTACK, EffectTrigger.SKILL_HITS],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
-            custom_scaling=self.RARITY_VALUE_SCALING,
+            custom_value_scaling=self.NO_SCALING,
             emoji="",
+        )
+
+
+class ExtraGore(BaseEffectEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            name="Extra Gore",
+            min_level=4,
+            enchantment_type=EnchantmentType.EXTRA_GORE,
+            description="Bleeds you inflict will apply an extra stack.",
+            information="",
+            slot=EquipmentSlot.WEAPON,
+            stacks=10,
+            droppable=True,
+            value=1,
+            weight=25,
+            skill_effect=SkillEffect.NOTHING,
+            value_label="Stacks",
+            int_value=True,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+            trigger=[EffectTrigger.ON_STATUS_APPLICATION],
+            consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
+            custom_value_scaling=self.NO_SCALING,
+            emoji="🩸",
         )

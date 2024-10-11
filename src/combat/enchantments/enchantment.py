@@ -44,7 +44,8 @@ class BaseEnchantment(DroppableBase):
         filter_flags: list[EnchantmentFilterFlags] = None,
         special: str | None = None,
         value_label: str | None = None,
-        custom_scaling: dict[Rarity, float] | None = None,
+        custom_value_scaling: dict[Rarity, float] | None = None,
+        custom_stack_scaling: dict[Rarity, float] | None = None,
         int_value: bool = False,
     ):
         super().__init__(
@@ -71,7 +72,8 @@ class BaseEnchantment(DroppableBase):
         self.rarities = rarities
         self.special = special
         self.value_label = value_label
-        self.custom_scaling = custom_scaling
+        self.custom_value_scaling = custom_value_scaling
+        self.custom_stack_scaling = custom_stack_scaling
         self.int_value = int_value
 
         if self.rarities is None:
@@ -112,7 +114,8 @@ class BaseCraftingEnchantment(BaseEnchantment):
         base_enchantment_type: EnchantmentType = None,
         filter_flags: list[EnchantmentFilterFlags] = None,
         value_label: str | None = None,
-        custom_scaling: str | None = None,
+        custom_value_scaling: str | None = None,
+        custom_stack_scaling: str | None = None,
         author: str = None,
     ):
         super().__init__(
@@ -133,12 +136,21 @@ class BaseCraftingEnchantment(BaseEnchantment):
             base_enchantment_type=base_enchantment_type,
             filter_flags=filter_flags,
             value_label=value_label,
-            custom_scaling=custom_scaling,
+            custom_value_scaling=custom_value_scaling,
+            custom_stack_scaling=custom_stack_scaling,
             author=author,
         )
 
 
 class BaseEffectEnchantment(BaseEnchantment, Effect):
+
+    NO_SCALING = {
+        Rarity.DEFAULT: 1,
+        Rarity.COMMON: 1,
+        Rarity.UNCOMMON: 1,
+        Rarity.RARE: 1,
+        Rarity.LEGENDARY: 1,
+    }
 
     def __init__(
         self,
@@ -154,7 +166,7 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
         stacks: int = None,
         hits: int = 1,
         proc_chance: float = 1,
-        cooldown: int = 0,
+        cooldown: int = None,
         initial_cooldown: int = None,
         reset_after_encounter: bool = False,
         weight: int = 100,
@@ -174,7 +186,8 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
         single_description: bool = False,
         int_value: bool = False,
         value_label: str | None = None,
-        custom_scaling: str | None = None,
+        custom_value_scaling: str | None = None,
+        custom_stack_scaling: str | None = None,
     ):
         if filter_flags is None:
             filter_flags = [EnchantmentFilterFlags.LESS_OR_EQUAL_RARITY]
@@ -197,7 +210,8 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
             base_enchantment_type=base_enchantment_type,
             filter_flags=filter_flags,
             value_label=value_label,
-            custom_scaling=custom_scaling,
+            custom_value_scaling=custom_value_scaling,
+            custom_stack_scaling=custom_stack_scaling,
             int_value=int_value,
             author=author,
         )
@@ -292,10 +306,10 @@ class Enchantment(Droppable):
         locked: bool = False,
         id: int = None,
     ):
-        if base_enchantment.custom_scaling is None:
+        if base_enchantment.custom_value_scaling is None:
             base_enchantment.value *= self.RARITY_VALUE_SCALING[rarity]
         else:
-            base_enchantment.value *= base_enchantment.custom_scaling[rarity]
+            base_enchantment.value *= base_enchantment.custom_value_scaling[rarity]
 
         if base_enchantment.int_value:
             base_enchantment.value = int(base_enchantment.value)
@@ -464,9 +478,10 @@ class EffectEnchantment(Enchantment):
         )
 
         if base_enchantment.stacks is not None:
-            if base_enchantment.custom_scaling is not None:
+            if base_enchantment.custom_stack_scaling is not None:
                 base_enchantment.stacks = int(
-                    base_enchantment.stacks * base_enchantment.custom_scaling[rarity]
+                    base_enchantment.stacks
+                    * base_enchantment.custom_stack_scaling[rarity]
                 )
             else:
                 base_enchantment.stacks = int(

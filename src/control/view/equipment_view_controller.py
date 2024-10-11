@@ -632,7 +632,7 @@ class EquipmentViewController(ViewController):
 
         event = UIEvent(
             UIEventType.MAIN_MENU_STATE_CHANGE,
-            (interaction, MenuState.FORGE, False),
+            (interaction, MenuState.SKILLS, False),
             view_id,
         )
         await self.controller.dispatch_ui_event(event)

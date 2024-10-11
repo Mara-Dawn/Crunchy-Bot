@@ -20,6 +20,7 @@ class EnchantmentType(str, Enum):
     CLEANSING_HEAL = "CleansingHeal"
     EXTRA_MISSILE = "ExtraMissile"
     BALL_RESET = "BallReset"
+    EXTRA_GORE = "ExtraGore"
 
     @staticmethod
     def is_crafting(enchantment_type: "EnchantmentType"):

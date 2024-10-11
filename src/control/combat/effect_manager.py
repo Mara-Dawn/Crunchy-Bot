@@ -56,12 +56,17 @@ class CombatEffectManager(Service):
         stacks: int,
         application_value: float = None,
     ) -> EffectOutcome:
-        outcome = await self.on_status_application(target, context, type)
-        if (
-            outcome.flags is not None
-            and OutcomeFlag.PREVENT_STATUS_APPLICATION in outcome.flags
-        ):
-            return outcome
+        outcome = await self.on_status_application(
+            source, target, context, type, application_value
+        )
+
+        if outcome.flags is not None:
+            for flag in outcome.flags:
+                match flag:
+                    case OutcomeFlag.PREVENT_STATUS_APPLICATION:
+                        return outcome
+                    case OutcomeFlag.ADDITIONAL_STACK_VALUE:
+                        stacks = stacks + outcome.value
 
         status_outcome = await self.status_effect_manager.apply_status(
             context, source, target, type, stacks, application_value
@@ -104,19 +109,21 @@ class CombatEffectManager(Service):
 
     async def on_status_application(
         self,
-        actor: Actor,
+        source: Actor,
+        target: Actor,
         context: EncounterContext,
         applied_effect_type: StatusEffectType,
+        application_value: float = None,
     ) -> EffectOutcome:
 
         handler_context = HandlerContext(
             trigger=EffectTrigger.ON_STATUS_APPLICATION,
             context=context,
-            source=actor,
-            target=actor,
+            source=source,
+            target=target,
             skill=None,
             status_effect_type=applied_effect_type,
-            application_value=None,
+            application_value=application_value,
             damage_instance=None,
         )
 

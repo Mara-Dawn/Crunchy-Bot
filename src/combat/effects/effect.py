@@ -46,6 +46,7 @@ class OutcomeFlag(Enum):
     PREVENT_STATUS_APPLICATION = 1
     PREVENT_DEATH = 2
     NO_CONSUME = 3
+    ADDITIONAL_STACK_VALUE = 4
 
 
 @dataclass
