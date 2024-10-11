@@ -108,6 +108,7 @@ class PlayerTurn(State):
                         await self.combatant_turn(
                             combat_event.skill_type, combat_event.skill_id
                         )
+                        update = True
                     case CombatEventType.MEMBER_TURN_SKIP:
                         await self.combatant_timeout()
                         update = True
@@ -271,14 +272,6 @@ class PlayerTurn(State):
             self.embed_manager.get_actor_turn_embed_data(turn, self.context),
         )
 
-        if post_turn_embed_data.length > 0:
-            await asyncio.sleep(0.5)
-            await self.discord.update_current_turn_embed(
-                self.context, post_turn_embed_data
-            )
-
-        self.done = True
-
         event = CombatEvent(
             datetime.datetime.now(),
             context.encounter.guild_id,
@@ -293,6 +286,23 @@ class PlayerTurn(State):
         )
         await self.controller.dispatch_event(event)
 
+        outcome = await self.effect_manager.on_post_skill(
+            context,
+            character,
+            target,
+            skill_data.skill,
+        )
+        if outcome.embed_data is not None:
+            post_turn_embed_data.extend(outcome.embed_data)
+
+        if post_turn_embed_data.length > 0:
+            await asyncio.sleep(0.5)
+            await self.discord.update_current_turn_embed(
+                self.context, post_turn_embed_data
+            )
+
+        self.done = True
+
     async def calculate_character_aoe_skill(
         self,
         context: EncounterContext,
@@ -302,11 +312,15 @@ class PlayerTurn(State):
     ) -> tuple[list[TurnDamageData], EmbedDataCollection]:
         skill_value_data = []
         embed_data = EmbedDataCollection()
-        outcome = await self.effect_manager.on_attack(context, source, skill)
-        if outcome.embed_data is not None:
-            embed_data.extend(outcome.embed_data)
 
         for target in available_targets:
+            outcome = await self.effect_manager.on_attack(
+                context, source, target, skill
+            )
+
+            if outcome.embed_data is not None:
+                embed_data.extend(outcome.embed_data)
+
             instances = await self.skill_manager.get_skill_effect(
                 source, skill, combatant_count=context.combat_scale
             )
@@ -360,6 +374,7 @@ class PlayerTurn(State):
             outcome = await self.effect_manager.on_attack(
                 context,
                 source,
+                target,
                 skill,
             )
             if outcome.embed_data is not None:

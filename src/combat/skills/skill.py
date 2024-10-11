@@ -348,6 +348,8 @@ class CharacterSkill:
         min_roll: int,
         max_roll: int,
         penalty: bool = False,
+        additional_stacks: int = None,
+        additional_hits: int = None,
     ):
         self.skill = skill
         self.last_used = last_used
@@ -355,6 +357,8 @@ class CharacterSkill:
         self.min_roll = min_roll
         self.max_roll = max_roll
         self.penalty = penalty
+        self.additional_stacks = additional_stacks
+        self.additional_hits = additional_hits
 
     def on_cooldown(self):
         if self.last_used is None or self.skill.base_skill.cooldown is None:
@@ -362,9 +366,21 @@ class CharacterSkill:
         return self.last_used < self.skill.base_skill.cooldown
 
     def stacks_left(self):
-        if self.skill.base_skill.stacks is None or self.stacks_used is None:
+        if self.max_stacks() is None or self.stacks_used is None:
             return None
-        return self.skill.base_skill.stacks - self.stacks_used
+        return self.max_stacks() - self.stacks_used
+
+    def max_stacks(self):
+        total = self.skill.base_skill.stacks
+        if self.additional_stacks is not None:
+            total += self.additional_stacks
+        return total
+
+    def hits(self):
+        total = self.skill.base_skill.hits
+        if self.additional_hits is not None:
+            total += self.additional_hits
+        return total
 
     def get_embed(
         self,
@@ -452,13 +468,11 @@ class CharacterSkill:
             prefixes.append((damage_text_colored, len(damage_text)))
 
             # Hits
-            if self.skill.base_skill.hits > 1:
+            if self.hits() > 1:
                 name = "Hits"
                 spacing = " " * (max_len_pre - len(name))
-                type_text = f"{spacing}{name}: {self.skill.base_skill.hits}"
-                type_text_colored = (
-                    f"{spacing}{name}: [35m{self.skill.base_skill.hits}[0m"
-                )
+                type_text = f"{spacing}{name}: {self.hits()}"
+                type_text_colored = f"{spacing}{name}: [35m{self.hits()}[0m"
                 prefixes.append((type_text_colored, len(type_text)))
 
             # Type
@@ -485,7 +499,7 @@ class CharacterSkill:
                 suffixes.append((cooldown_text_colored, len(cooldown_text)))
 
             # Stacks
-            max_stacks = self.skill.base_skill.stacks
+            max_stacks = self.max_stacks()
             if max_stacks is not None and max_stacks > 0:
                 name = "Uses"
                 spacing = " " * (max_len_pre - len(name))
@@ -602,6 +616,7 @@ class SkillInstance:
         self.encounter_scaling = encounter_scaling
         self.critical_chance = crit_chance
         self.is_crit = is_crit
+        self.bonus_damage = None
 
     @property
     def value(self):

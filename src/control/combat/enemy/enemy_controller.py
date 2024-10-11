@@ -220,12 +220,6 @@ class EnemyController(Service, ABC):
                 self.embed_manager.get_actor_turn_embed_data(turn, context),
             )
 
-            if post_turn_embed_data.length > 0:
-                await asyncio.sleep(0.5)
-                await self.discord.update_current_turn_embed(
-                    context, post_turn_embed_data
-                )
-
             event = CombatEvent(
                 datetime.datetime.now(),
                 context.encounter.guild_id,
@@ -240,6 +234,21 @@ class EnemyController(Service, ABC):
             )
             await self.controller.dispatch_event(event)
 
+            outcome = await self.effect_manager.on_post_skill(
+                context,
+                opponent,
+                target,
+                turn.skill,
+            )
+            if outcome.embed_data is not None:
+                post_turn_embed_data.extend(outcome.embed_data)
+
+            if post_turn_embed_data.length > 0:
+                await asyncio.sleep(0.5)
+                await self.discord.update_current_turn_embed(
+                    self.context, post_turn_embed_data
+                )
+
     async def calculate_aoe_skill(
         self,
         context: EncounterContext,
@@ -252,7 +261,7 @@ class EnemyController(Service, ABC):
 
         for target in available_targets:
             outcome = await self.effect_manager.on_attack(
-                context, context.opponent, skill
+                context, context.opponent, target, skill
             )
             if outcome.embed_data is not None:
                 post_embed_data.extend(outcome.embed_data)
@@ -351,7 +360,7 @@ class EnemyController(Service, ABC):
             current_hp = hp_cache.get(target.id, target.current_hp)
 
             outcome = await self.effect_manager.on_attack(
-                context, context.opponent, skill
+                context, context.opponent, target, skill
             )
             outcome.apply_to_instance(instance)
             if outcome.embed_data is not None:

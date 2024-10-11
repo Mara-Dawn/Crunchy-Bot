@@ -41,6 +41,17 @@ class DBPatcher:
             )
         )
 
+        self.patches.append(
+            Patch(
+                command=f"""
+                ALTER TABLE {self.database.USER_GEAR_TABLE}
+                ADD {self.database.USER_GEAR_SPECIAL_VALUE_COL} TEXT;
+            """,
+                timestamp=datetime.datetime(day=10, month=10, year=2024),
+                id="gear_special_value",
+            )
+        )
+
     def get_patch(self, patch_id: str) -> Patch | None:
         for patch in self.patches:
             if patch.id == patch_id:

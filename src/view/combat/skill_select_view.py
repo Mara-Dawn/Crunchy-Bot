@@ -678,7 +678,7 @@ class SkillSlotButton(discord.ui.Button):
         if current is not None:
             label = f"{current.skill.name}"
             if current.stacks_left() is not None:
-                label += f" ({current.stacks_left()}/{current.skill.base_skill.stacks})"
+                label += f" ({current.stacks_left()}/{current.max_stacks()})"
             if current.skill.id is None:
                 disabled = True
 
@@ -823,9 +823,7 @@ class Dropdown(discord.ui.Select):
 
             if skill.id is not None:
                 # description.append(f"ILVL: {skill.level}")
-                description.append(
-                    f"USE: {data.stacks_left()}/{skill.base_skill.stacks}"
-                )
+                description.append(f"USE: {data.stacks_left()}/{data.max_stacks()}")
             description.append(f"MIN: {data.min_roll}")
             description.append(f"MAX: {data.max_roll}")
             description.append(f"CNT: {group.amount}")

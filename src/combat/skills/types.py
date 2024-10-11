@@ -263,6 +263,16 @@ class SkillEffect(str, Enum):
     NOTHING = "Nothing"
     BUFF = "Buff"
     HEALING = "Healing"
+    CHANCE = "Chance"
+
+    @property
+    def damaging(self):
+        return [
+            SkillEffect.PHYSICAL_DAMAGE,
+            SkillEffect.MAGICAL_DAMAGE,
+            SkillEffect.EFFECT_DAMAGE,
+            SkillEffect.NEUTRAL_DAMAGE,
+        ]
 
 
 class SkillTarget(Enum):

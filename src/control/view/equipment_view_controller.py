@@ -572,6 +572,10 @@ class EquipmentViewController(ViewController):
 
         await self.gear_manager.scrap_gear(interaction.user, guild_id, gear_to_scrap)
 
+        if gear_slot == EquipmentSlot.ANY:
+            await self.refresh_enchantment_view(interaction, view_id)
+            return
+
         if gear_slot is None:
             await self.open_gear_overview(interaction, view_id)
             return
@@ -748,9 +752,6 @@ class EquipmentViewController(ViewController):
         enchantments: list[Enchantment],
         view_id: int,
     ):
-        guild_id = interaction.guild.id
-        member_id = interaction.user.id
-
         if not await self.encounter_check(interaction):
             return
 
@@ -773,33 +774,11 @@ class EquipmentViewController(ViewController):
         if len(effects) > 0:
             new_gear = await self.database.log_user_gear_enchantment(new_gear, effects)
 
-        character = await self.actor_manager.get_character(interaction.user)
+        message = f"{interaction.user.display_name} Enchanted {gear.rarity.value} {gear.name} ({gear.id}) "
+        message += f"with {", ".join([f"{enchantment.rarity.value} {enchantment.name}" for enchantment in enchantments])}."
+        self.logger.log(interaction.guild_id, message, self.log_name)
 
-        user_items = await self.database.get_item_counts_by_user(
-            guild_id, member_id, item_types=[ItemType.SCRAP]
-        )
-        scrap_balance = 0
-        if ItemType.SCRAP in user_items:
-            scrap_balance = user_items[ItemType.SCRAP]
-
-        user_enchantments = await self.database.get_user_enchantment_inventory(
-            guild_id, member_id
-        )
-
-        view = EnchantmentView(
-            self.controller,
-            interaction,
-            character,
-            user_enchantments,
-            scrap_balance,
-            new_gear,
-        )
-
-        message = await interaction.original_response()
-        await message.edit(view=view, attachments=[])
-        view.set_message(message)
-        await view.refresh_ui()
-        self.controller.detach_view_by_id(view_id)
+        await self.refresh_enchantment_view(interaction, view_id, new_gear)
 
     async def open_enchantment_view(
         self, interaction: discord.Interaction, gear: Gear | None, view_id: int
@@ -837,3 +816,30 @@ class EquipmentViewController(ViewController):
         view.set_message(message)
         await view.refresh_ui()
         self.controller.detach_view_by_id(view_id)
+
+    async def refresh_enchantment_view(
+        self, interaction: discord.Interaction, view_id: int, gear: Gear | None = None
+    ):
+        guild_id = interaction.guild.id
+        member_id = interaction.user.id
+
+        character = await self.actor_manager.get_character(interaction.user)
+
+        user_items = await self.database.get_item_counts_by_user(
+            guild_id, member_id, item_types=[ItemType.SCRAP]
+        )
+        scrap_balance = 0
+        if ItemType.SCRAP in user_items:
+            scrap_balance = user_items[ItemType.SCRAP]
+
+        user_enchantments = await self.database.get_user_enchantment_inventory(
+            guild_id, member_id
+        )
+
+        view: EnchantmentView = self.controller.get_view(view_id)
+        await view.refresh_ui(
+            character=character,
+            enchantment_inventory=user_enchantments,
+            scrap_balance=scrap_balance,
+            gear=gear,
+        )

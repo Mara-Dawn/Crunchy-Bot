@@ -6,8 +6,6 @@ from combat.effects.effect import EffectOutcome
 from combat.effects.effect_handler import HandlerContext
 from combat.status_effects.status_handler import StatusEffectHandler
 from combat.status_effects.types import StatusEffectType
-from control.combat.combat_actor_manager import CombatActorManager
-from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
@@ -28,15 +26,6 @@ class EffectManager(Service, ABC):
         Service.__init__(self, bot, logger, database)
         self.controller = controller
         self.log_name = "StatusEffects"
-        self.actor_manager: CombatActorManager = self.controller.get_service(
-            CombatActorManager
-        )
-        self.embed_manager: CombatEmbedManager = self.controller.get_service(
-            CombatEmbedManager
-        )
-        self.embed_manager: CombatEmbedManager = self.controller.get_service(
-            CombatEmbedManager
-        )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
 
         self.handler_cache: dict[StatusEffectType, StatusEffectHandler] = {}
@@ -94,6 +83,13 @@ class EffectManager(Service, ABC):
         pass
 
     @abstractmethod
+    async def on_post_skill(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        pass
+
+    @abstractmethod
     async def on_round_start(
         self,
         handler_context: HandlerContext,
@@ -123,6 +119,20 @@ class EffectManager(Service, ABC):
 
     @abstractmethod
     async def on_applicant_turn_end(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        pass
+
+    @abstractmethod
+    async def on_skill_charges(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        pass
+
+    @abstractmethod
+    async def on_skill_hits(
         self,
         handler_context: HandlerContext,
     ) -> EffectOutcome:

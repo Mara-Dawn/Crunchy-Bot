@@ -12,6 +12,7 @@ from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillEffect, SkillTarget
 from config import Config
 from control.ai_manager import AIManager
+from control.combat.effect_manager import CombatEffectManager
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -34,6 +35,9 @@ class CombatSkillManager(Service):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.ai_manager: AIManager = self.controller.get_service(AIManager)
+        self.effect_manager: CombatEffectManager = self.controller.get_service(
+            CombatEffectManager
+        )
         self.log_name = "Combat Skills"
 
     async def listen_for_event(self, event: BotEvent):
@@ -85,6 +89,9 @@ class CombatSkillManager(Service):
             SkillEffect.NEUTRAL_DAMAGE,
         ]
 
+        charges_outcome = await self.effect_manager.on_skill_charges(character, skill)
+        hits_outcome = await self.effect_manager.on_skill_hits(character, skill)
+
         return CharacterSkill(
             skill=skill,
             last_used=last_used,
@@ -96,6 +103,8 @@ class CombatSkillManager(Service):
                 0
             ].raw_value,
             penalty=penalty,
+            additional_stacks=charges_outcome.value,
+            additional_hits=hits_outcome.value,
         )
 
     async def get_opponent_skill_data(
@@ -260,6 +269,9 @@ class CombatSkillManager(Service):
                 modifier = 0
 
         attack_count = skill.base_skill.hits
+        hit_outcome = await self.effect_manager.on_skill_hits(character, skill)
+        if hit_outcome.value is not None:
+            attack_count += hit_outcome.value
         skill_instances = []
         for _ in range(attack_count):
 

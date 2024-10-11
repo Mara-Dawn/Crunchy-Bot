@@ -2,6 +2,7 @@ import contextlib
 import datetime
 from typing import Any
 
+from combat.enchantments.types import EnchantmentType
 from combat.skills.types import SkillType
 from combat.status_effects.types import StatusEffectType
 from events.bot_event import BotEvent
@@ -65,6 +66,9 @@ class CombatEvent(BotEvent):
             if skill_type is None:
                 with contextlib.suppress(Exception):
                     skill_type = StatusEffectType(skill_db_value)
+            if skill_type is None:
+                with contextlib.suppress(Exception):
+                    skill_type = EnchantmentType(skill_db_value)
 
         return CombatEvent(
             timestamp=datetime.datetime.fromtimestamp(

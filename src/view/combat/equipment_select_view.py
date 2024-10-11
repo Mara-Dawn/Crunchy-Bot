@@ -257,7 +257,10 @@ class EquipmentSelectView(
             if selected_gear.id in [gear.id for gear in self.current]:
                 disable_dismantle = True
 
-            if selected_gear.rarity == Rarity.UNIQUE:
+            if (
+                selected_gear.rarity == Rarity.UNIQUE
+                or GearModifierType.CRANGLED in selected_gear.modifiers
+            ):
                 # Default Gear
                 disable_craft = True
 

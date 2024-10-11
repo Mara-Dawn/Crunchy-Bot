@@ -178,6 +178,7 @@ class Gear(Droppable):
         scrap_value: int = None,
         max_width: int = None,
         enchantment_data: list[GearEnchantment] = None,
+        modifier_boundaries: dict[GearModifierType, tuple[float, float]] = None,
     ) -> discord.Embed:
         if max_width is None:
             max_width = Config.COMBAT_EMBED_MAX_WIDTH
@@ -210,7 +211,7 @@ class Gear(Droppable):
 
         if show_data and len(self.modifiers) > 0:
             max_len_pre = GearModifierType.max_name_len()
-            max_len_suf = 8
+            max_len_suf = 9
 
             name = "Rarity"
             spacing = " " * (max_len_suf - len(self.rarity.value))
@@ -266,12 +267,33 @@ class Gear(Droppable):
                 ]:
                     flat_damage_modifiers[modifier_type] = value
                     continue
+
                 name = modifier_type.value
-                display_value = GearModifierType.display_value(modifier_type, value)
-                spacing = " " * (max_len_pre - len(name))
-                line = f"{spacing}{name}: {display_value}"
-                line_colored = f"{spacing}{name}: [35m{display_value}[0m"
-                prefixes.append((line_colored, len(line)))
+
+                if GearModifierType.no_value(modifier_type):
+                    spacing = " " * (max_len_pre + 2)
+                    line = f"{spacing}{name}"
+                    line_colored = f"{spacing}[31m{name}[0m"
+                    prefixes.append((line_colored, len(line)))
+                else:
+                    spacing = " " * (max_len_pre - len(name))
+                    display_value = GearModifierType.display_value(modifier_type, value)
+                    line = f"{spacing}{name}: {display_value}"
+                    line_colored = f"{spacing}{name}: [35m{display_value}[0m"
+                    prefixes.append((line_colored, len(line)))
+
+                if modifier_boundaries is not None and not GearModifierType.no_value(
+                    modifier_type
+                ):
+                    min_value, max_value = modifier_boundaries[modifier_type]
+                    min_value = GearModifierType.display_value(modifier_type, min_value)
+                    max_value = GearModifierType.display_value(modifier_type, max_value)
+
+                    spacing = " " * max_len_pre
+
+                    line = f"{spacing}  [{min_value}-{max_value}]"
+                    line_colored = f"{spacing}  [30m[{min_value}-{max_value}][0m"
+                    prefixes.append((line_colored, len(line)))
 
             if len(flat_damage_modifiers) == 2:
                 name = "Hit Damage"
@@ -287,6 +309,34 @@ class Gear(Droppable):
                 line = f"{spacing}{name}: {display_value_min} - {display_value_max}"
                 line_colored = f"{spacing}{name}: [35m{display_value_min}[0m - [35m{display_value_max}[0m"
                 prefixes.insert(0, (line_colored, len(line)))
+
+                if modifier_boundaries is not None:
+                    min_value_min, max_value_min = modifier_boundaries[
+                        GearModifierType.WEAPON_DAMAGE_MIN
+                    ]
+                    min_value_min = GearModifierType.display_value(
+                        GearModifierType.WEAPON_DAMAGE_MIN, min_value_min
+                    )
+                    max_value_min = GearModifierType.display_value(
+                        GearModifierType.WEAPON_DAMAGE_MIN, max_value_min
+                    )
+
+                    min_value_max, max_value_max = modifier_boundaries[
+                        GearModifierType.WEAPON_DAMAGE_MAX
+                    ]
+                    min_value_max = GearModifierType.display_value(
+                        GearModifierType.WEAPON_DAMAGE_MAX, min_value_max
+                    )
+                    max_value_max = GearModifierType.display_value(
+                        GearModifierType.WEAPON_DAMAGE_MAX, max_value_max
+                    )
+
+                    spacing = " " * max_len_pre
+
+                    line = f"{spacing}  [{min_value_min}-{max_value_min}] - [{min_value_max}-{max_value_max}]"
+                    line_colored = f"{spacing}  [30m[{min_value_min}-{max_value_min}] - [{min_value_max}-{max_value_max}][0m"
+                    prefixes.insert(1, (line_colored, len(line)))
+                    suffixes.insert(1, ("", 1))
 
             info_block += "```ansi\n"
             lines = max(len(suffixes), len(prefixes))

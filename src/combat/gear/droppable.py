@@ -19,6 +19,7 @@ class DroppableBase:
         droppable: bool = True,
         uniques: list[GearBaseType | SkillType | EnchantmentType] = None,
         author: str = None,
+        special: str | None = None,
     ):
         self.name = name
         self.base_type = base_type
@@ -34,6 +35,8 @@ class DroppableBase:
         self.uniques = uniques
         if self.uniques is None:
             self.uniques = []
+
+        self.special = special
 
         self.author = author
         if self.author is None:

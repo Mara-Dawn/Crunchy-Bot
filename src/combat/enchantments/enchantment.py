@@ -1,8 +1,14 @@
+import random
+
 import discord
 
 from combat.effects.effect import Effect
 from combat.effects.types import EffectTrigger
-from combat.enchantments.types import EnchantmentEffect, EnchantmentType
+from combat.enchantments.types import (
+    EnchantmentEffect,
+    EnchantmentFilterFlags,
+    EnchantmentType,
+)
 from combat.gear.droppable import Droppable, DroppableBase
 from combat.gear.types import Base, EquipmentSlot, Rarity
 from combat.skills.types import SkillEffect
@@ -30,11 +36,16 @@ class BaseEnchantment(DroppableBase):
         max_level: int = 99,
         droppable: bool = True,
         weight: int = 100,
-        fixed_rarity: Rarity = None,
+        rarities: list[Rarity] = None,
         image_url: str = None,
         uniques: list[EnchantmentType] = None,
         base_enchantment_type: EnchantmentType = None,
         author: str = None,
+        filter_flags: list[EnchantmentFilterFlags] = None,
+        special: str | None = None,
+        value_label: str | None = None,
+        custom_scaling: dict[Rarity, float] | None = None,
+        int_value: bool = False,
     ):
         super().__init__(
             name=name,
@@ -48,6 +59,7 @@ class BaseEnchantment(DroppableBase):
             uniques=uniques,
             author=author,
         )
+        self.filter_flags = filter_flags
         self.name = name
         self.value = value
         self.enchantment_type = enchantment_type
@@ -56,7 +68,22 @@ class BaseEnchantment(DroppableBase):
         self.enchantment_effect = enchantment_effect
         self.image_url = image_url
         self.base_enchantment_type = base_enchantment_type
-        self.fixed_rarity = fixed_rarity
+        self.rarities = rarities
+        self.special = special
+        self.value_label = value_label
+        self.custom_scaling = custom_scaling
+        self.int_value = int_value
+
+        if self.rarities is None:
+            self.rarities = [
+                Rarity.COMMON,
+                Rarity.UNCOMMON,
+                Rarity.RARE,
+                Rarity.LEGENDARY,
+            ]
+
+        if self.filter_flags is None:
+            self.filter_flags = []
 
         if self.image_url is None:
             self.image_url = self.DEFAULT_IMAGE[self.enchantment_effect]
@@ -79,10 +106,13 @@ class BaseCraftingEnchantment(BaseEnchantment):
         max_level: int = 99,
         droppable: bool = True,
         weight: int = 100,
-        fixed_rarity: Rarity = None,
+        rarities: list[Rarity] = None,
         image_url: str = None,
         uniques: list[EnchantmentType] = None,
         base_enchantment_type: EnchantmentType = None,
+        filter_flags: list[EnchantmentFilterFlags] = None,
+        value_label: str | None = None,
+        custom_scaling: str | None = None,
         author: str = None,
     ):
         super().__init__(
@@ -97,10 +127,13 @@ class BaseCraftingEnchantment(BaseEnchantment):
             max_level=max_level,
             droppable=droppable,
             weight=weight,
-            fixed_rarity=fixed_rarity,
+            rarities=rarities,
             image_url=image_url,
             uniques=uniques,
             base_enchantment_type=base_enchantment_type,
+            filter_flags=filter_flags,
+            value_label=value_label,
+            custom_scaling=custom_scaling,
             author=author,
         )
 
@@ -120,11 +153,12 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
         droppable: bool = True,
         stacks: int = None,
         hits: int = 1,
+        proc_chance: float = 1,
         cooldown: int = 0,
         initial_cooldown: int = None,
         reset_after_encounter: bool = False,
         weight: int = 100,
-        fixed_rarity: Rarity = None,
+        rarities: list[Rarity] = None,
         image_url: str = None,
         uniques: list[EnchantmentType] = None,
         base_enchantment_type: EnchantmentType = None,
@@ -136,8 +170,14 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
         delay_trigger: bool = False,
         delay_consume: bool = False,
         delay_for_source_only: bool = False,
+        filter_flags: list[EnchantmentFilterFlags] = None,
         single_description: bool = False,
+        int_value: bool = False,
+        value_label: str | None = None,
+        custom_scaling: str | None = None,
     ):
+        if filter_flags is None:
+            filter_flags = [EnchantmentFilterFlags.LESS_OR_EQUAL_RARITY]
         BaseEnchantment.__init__(
             self,
             name=name,
@@ -151,10 +191,14 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
             max_level=max_level,
             droppable=droppable,
             weight=weight,
-            fixed_rarity=fixed_rarity,
+            rarities=rarities,
             image_url=image_url,
             uniques=uniques,
             base_enchantment_type=base_enchantment_type,
+            filter_flags=filter_flags,
+            value_label=value_label,
+            custom_scaling=custom_scaling,
+            int_value=int_value,
             author=author,
         )
         Effect.__init__(
@@ -173,6 +217,7 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
         )
         self.stacks = stacks
         self.cooldown = cooldown
+        self.proc_chance = proc_chance
         self.initial_cooldown = initial_cooldown
         self.reset_after_encounter = reset_after_encounter
         self.hits = hits
@@ -192,6 +237,7 @@ class Enchantment(Droppable):
         SkillEffect.EFFECT_DAMAGE: "Damage",
         SkillEffect.NOTHING: "",
         SkillEffect.BUFF: "Effect",
+        SkillEffect.CHANCE: "Chance",
         SkillEffect.HEALING: "Healing",
     }
 
@@ -202,6 +248,7 @@ class Enchantment(Droppable):
         SkillEffect.EFFECT_DAMAGE: "Neutral Dmg.",
         SkillEffect.NOTHING: "Special",
         SkillEffect.BUFF: "Buff",
+        SkillEffect.CHANCE: "Special",
         SkillEffect.HEALING: "Healing",
     }
 
@@ -245,7 +292,13 @@ class Enchantment(Droppable):
         locked: bool = False,
         id: int = None,
     ):
-        base_enchantment.value *= self.RARITY_VALUE_SCALING[rarity]
+        if base_enchantment.custom_scaling is None:
+            base_enchantment.value *= self.RARITY_VALUE_SCALING[rarity]
+        else:
+            base_enchantment.value *= base_enchantment.custom_scaling[rarity]
+
+        if base_enchantment.int_value:
+            base_enchantment.value = int(base_enchantment.value)
 
         super().__init__(
             name=base_enchantment.name,
@@ -327,12 +380,20 @@ class Enchantment(Droppable):
             value = self.base_enchantment.value
             if value > 0:
                 name = "Value"
+                if self.base_enchantment.value_label is not None:
+                    name = self.base_enchantment.value_label
                 suffix_sign = ""
                 spacing = " " * (max_len_pre - len(name))
-                base_value_text = f"{spacing}{name}: {value:.1f}{suffix_sign}"
-                base_value_text_colored = (
-                    f"{spacing}{name}: [35m{value:.1f}{suffix_sign}[0m"
-                )
+                if self.base_enchantment.int_value:
+                    base_value_text = f"{spacing}{name}: {value}{suffix_sign}"
+                    base_value_text_colored = (
+                        f"{spacing}{name}: [35m{value}{suffix_sign}[0m"
+                    )
+                else:
+                    base_value_text = f"{spacing}{name}: {value:.1f}{suffix_sign}"
+                    base_value_text_colored = (
+                        f"{spacing}{name}: [35m{value:.1f}{suffix_sign}[0m"
+                    )
                 prefixes.append((base_value_text_colored, len(base_value_text)))
 
             info_block += "```ansi\n"
@@ -361,8 +422,7 @@ class Enchantment(Droppable):
             spacing = " " * spacing_width
             description += f"\n{spacing}{amount_text}"
 
-            info_block += "```"
-
+        info_block += "```"
         info_block += f"```python\n{description}```"
 
         if scrap_value is not None:
@@ -402,10 +462,17 @@ class EffectEnchantment(Enchantment):
             locked=locked,
             id=id,
         )
+
         if base_enchantment.stacks is not None:
-            base_enchantment.stacks = int(
-                base_enchantment.stacks * self.RARITY_STACKS_SCALING[rarity]
-            )
+            if base_enchantment.custom_scaling is not None:
+                base_enchantment.stacks = int(
+                    base_enchantment.stacks * base_enchantment.custom_scaling[rarity]
+                )
+            else:
+                base_enchantment.stacks = int(
+                    base_enchantment.stacks * self.RARITY_STACKS_SCALING[rarity]
+                )
+
         self.base_enchantment: BaseEffectEnchantment = base_enchantment
         self.priority = priority
 
@@ -462,17 +529,29 @@ class EffectEnchantment(Enchantment):
             # Base Value
             if self.scaling > 0:
                 name = "Power"
+                if self.base_enchantment.value_label is not None:
+                    name = self.base_enchantment.value_label
                 suffix_sign = ""
                 if (
                     self.base_enchantment.skill_effect is not None
-                    and self.base_enchantment.skill_effect == SkillEffect.BUFF
+                    and self.base_enchantment.skill_effect
+                    in [SkillEffect.CHANCE, SkillEffect.BUFF]
                 ):
                     suffix_sign = "%"
                 spacing = " " * (max_len_pre - len(name))
-                base_value_text = f"{spacing}{name}: {self.scaling:.1f}{suffix_sign}"
-                base_value_text_colored = (
-                    f"{spacing}{name}: [35m{self.scaling:.1f}{suffix_sign}[0m"
-                )
+
+                if self.base_enchantment.int_value:
+                    base_value_text = f"{spacing}{name}: {self.scaling}{suffix_sign}"
+                    base_value_text_colored = (
+                        f"{spacing}{name}: [35m{self.scaling}{suffix_sign}[0m"
+                    )
+                else:
+                    base_value_text = (
+                        f"{spacing}{name}: {self.scaling:.1f}{suffix_sign}"
+                    )
+                    base_value_text_colored = (
+                        f"{spacing}{name}: [35m{self.scaling:.1f}{suffix_sign}[0m"
+                    )
                 prefixes.append((base_value_text_colored, len(base_value_text)))
 
             # Hits
@@ -514,6 +593,16 @@ class EffectEnchantment(Enchantment):
                 f"{name}: [35m{self.base_enchantment.slot.value}[0m{spacing}"
             )
             suffixes.append((type_text_colored, len(type_text)))
+
+            # Proc
+            proc_chance = self.base_enchantment.proc_chance
+            if proc_chance is not None and proc_chance < 1:
+                name = "Chance"
+                proc_chance *= 100
+                spacing = " " * (max_len_pre - len(name))
+                type_text = f"{spacing}{name}: {proc_chance:.1f}%"
+                type_text_colored = f"{spacing}{name}: [35m{proc_chance:.1f}%[0m"
+                prefixes.append((type_text_colored, len(type_text)))
 
             # Cooldown
             if self.base_enchantment.cooldown > 0:
@@ -573,9 +662,9 @@ class EffectEnchantment(Enchantment):
             spacing = " " * spacing_width
             description += f"\n{spacing}{amount_text}"
 
-            info_block += "```"
+        info_block += "```"
 
-        info_block += f"```python\n{description}```"
+        info_block += f" ```python\n{description}```"
 
         if scrap_value is not None:
             stock_label = "Stock: 1"
@@ -603,6 +692,31 @@ class EffectEnchantment(Enchantment):
     ) -> None:
         data = self.get_embed_field(max_width, description_override)
         embed.add_field(name=data.name, value=data.value, inline=data.inline)
+
+    def get_info_text(self, cooldown: int = None, uses: tuple[int, int] = None):
+
+        name = f"<~ {self.name} ~>"
+        color = f"{Droppable.RARITY_NAME_COLOR_MAP[self.rarity]}"
+
+        if uses is not None and uses[0] <= 0:
+            color = "[30m"
+
+            info_block = f"{color}{name}"
+            info_block += f" [{uses[0]}/{uses[1]}]"
+            info_block += "[0m"
+            return info_block
+        else:
+            color = f"{Droppable.RARITY_NAME_COLOR_MAP[self.rarity]}"
+            info_block = f"{color}{name}"
+            info_block += "[0m"
+
+        if uses is not None:
+            info_block += f" [{uses[0]}/{uses[1]}]"
+
+        if cooldown is not None and cooldown > 0:
+            info_block += f" (in {cooldown} turns)"
+
+        return info_block
 
     def get_embed_field(
         self,
@@ -649,17 +763,26 @@ class EffectEnchantment(Enchantment):
         # Base Value
         if self.scaling > 0:
             name = "Power"
+            if self.base_enchantment.value_label is not None:
+                name = self.base_enchantment.value_label
             suffix_sign = ""
             if (
                 self.base_enchantment.skill_effect is not None
-                and self.base_enchantment.skill_effect == SkillEffect.BUFF
+                and self.base_enchantment.skill_effect
+                in [SkillEffect.CHANCE, SkillEffect.BUFF]
             ):
                 suffix_sign = "%"
             spacing = " " * (max_len_pre - len(name))
-            base_value_text = f"{spacing}{name}: {self.scaling:.1f}{suffix_sign}"
-            base_value_text_colored = (
-                f"{spacing}{name}: [35m{self.scaling:.1f}{suffix_sign}[0m"
-            )
+            if self.base_enchantment.int_value:
+                base_value_text = f"{spacing}{name}: {self.scaling}{suffix_sign}"
+                base_value_text_colored = (
+                    f"{spacing}{name}: [35m{self.scaling}{suffix_sign}[0m"
+                )
+            else:
+                base_value_text = f"{spacing}{name}: {self.scaling:.1f}{suffix_sign}"
+                base_value_text_colored = (
+                    f"{spacing}{name}: [35m{self.scaling:.1f}{suffix_sign}[0m"
+                )
             prefixes.append((base_value_text_colored, len(base_value_text)))
 
         # Hits
@@ -758,7 +881,13 @@ class GearEnchantment:
     def on_cooldown(self):
         if self.last_used is None or self.enchantment.base_enchantment.cooldown is None:
             return False
-        return self.last_used < self.enchantment.base_enchantment.cooldown
+        return self.last_used <= self.enchantment.base_enchantment.cooldown
+
+    def proc(self):
+        chance = self.enchantment.base_enchantment.proc_chance
+        if chance is None or chance == 1:
+            return True
+        return random.random() < chance
 
     def stacks_left(self):
         if self.enchantment.base_enchantment.stacks is None or self.stacks_used is None:
@@ -821,15 +950,24 @@ class GearEnchantment:
                 caption = self.enchantment.EFFECT_LABEL_MAP[
                     self.enchantment.base_enchantment.skill_effect
                 ]
+                if self.enchantment.base_enchantment.value_label is not None:
+                    caption = self.enchantment.base_enchantment.value_label
                 spacing = " " * (max_len_pre - len(caption))
                 penalty = penalty_colored = ""
                 if self.penalty:
                     penalty = " [!]"
                     penalty_colored = f"[30m{penalty}[0m "
                 match self.enchantment.base_enchantment.skill_effect:
-                    case SkillEffect.BUFF:
-                        damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.base_value:.1f}%"
-                        damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.base_value:.1f}%[0m"
+                    case SkillEffect.BUFF | SkillEffect.CHANCE:
+                        damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.value:.1f}%"
+                        damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.value:.1f}%[0m"
+                    case SkillEffect.NOTHING:
+                        if self.enchantment.base_enchantment.int_value:
+                            damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.value}"
+                            damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.value}[0m"
+                        else:
+                            damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.value:.1f}"
+                            damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.value:.1f}[0m"
                     case _:
                         damage_text = f"{spacing}{caption}: {self.min_roll} - {self.max_roll}{penalty}"
                         damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m{penalty_colored}"
@@ -863,6 +1001,16 @@ class GearEnchantment:
                 spacing = " " * (max_len_pre - len(name))
                 type_text = f"{spacing}{name}: {effect_value}"
                 type_text_colored = f"{spacing}{name}: [35m{effect_value}[0m"
+                prefixes.append((type_text_colored, len(type_text)))
+
+            # Proc
+            proc_chance = self.enchantment.base_enchantment.proc_chance
+            if proc_chance is not None and proc_chance < 1:
+                name = "Chance"
+                proc_chance *= 100
+                spacing = " " * (max_len_pre - len(name))
+                type_text = f"{spacing}{name}: {proc_chance:.1f}%"
+                type_text_colored = f"{spacing}{name}: [35m{proc_chance:.1f}%[0m"
                 prefixes.append((type_text_colored, len(type_text)))
 
             # Slot
@@ -1001,15 +1149,24 @@ class GearEnchantment:
             caption = self.enchantment.EFFECT_LABEL_MAP[
                 self.enchantment.base_enchantment.skill_effect
             ]
+            if self.enchantment.base_enchantment.value_label is not None:
+                caption = self.enchantment.base_enchantment.value_label
             spacing = " " * (max_len_pre - len(caption))
             penalty = penalty_colored = ""
             if self.penalty:
                 penalty = " [!]"
                 penalty_colored = f"[30m{penalty}[0m "
             match self.enchantment.base_enchantment.skill_effect:
-                case SkillEffect.BUFF:
+                case SkillEffect.BUFF | SkillEffect.CHANCE:
                     damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.value:.1f}%"
                     damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.value:.1f}%[0m"
+                case SkillEffect.NOTHING:
+                    if self.enchantment.base_enchantment.int_value:
+                        damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.value}"
+                        damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.value}[0m"
+                    else:
+                        damage_text = f"{spacing}{caption}: {self.enchantment.base_enchantment.value:.1f}"
+                        damage_text_colored = f"{spacing}{caption}: [35m{self.enchantment.base_enchantment.value:.1f}[0m"
                 case _:
                     damage_text = f"{spacing}{caption}: {self.min_roll} - {self.max_roll}{penalty}"
                     damage_text_colored = f"{spacing}{caption}: [35m{self.min_roll}[0m - [35m{self.max_roll}[0m{penalty_colored}"
@@ -1035,6 +1192,16 @@ class GearEnchantment:
             spacing = " " * (max_len_pre - len(name))
             type_text = f"{spacing}{name}: {effect_value}"
             type_text_colored = f"{spacing}{name}: [35m{effect_value}[0m"
+            prefixes.append((type_text_colored, len(type_text)))
+
+        # Proc
+        proc_chance = self.enchantment.base_enchantment.proc_chance
+        if proc_chance is not None and proc_chance < 1:
+            name = "Chance"
+            proc_chance *= 100
+            spacing = " " * (max_len_pre - len(name))
+            type_text = f"{spacing}{name}: {proc_chance:.1f}%"
+            type_text_colored = f"{spacing}{name}: [35m{proc_chance:.1f}%[0m"
             prefixes.append((type_text_colored, len(type_text)))
 
         # Cooldown

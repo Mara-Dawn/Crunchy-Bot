@@ -3,7 +3,7 @@ from collections import Counter
 import discord
 
 from combat.effects.effect import EffectOutcome
-from combat.enchantments.enchantment import EffectEnchantment, GearEnchantment
+from combat.enchantments.enchantment import EffectEnchantment
 from combat.enemies.enemy import Enemy
 from combat.equipment import CharacterEquipment
 from combat.gear.types import CharacterAttribute, GearModifierType

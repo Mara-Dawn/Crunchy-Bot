@@ -3,7 +3,7 @@ import datetime
 from discord.ext import commands
 
 from combat.actors import Actor
-from combat.effects.effect import EffectOutcome
+from combat.effects.effect import EffectOutcome, OutcomeFlag
 from combat.effects.effect_handler import HandlerContext
 from combat.effects.types import EffectTrigger
 from combat.encounter import EncounterContext
@@ -211,6 +211,13 @@ class CombatStatusEffectManager(EffectManager):
                 outcome_data[effect_type] = [outcome]
             else:
                 outcome_data[effect_type].append(outcome)
+            if (
+                EffectTrigger.ON_TRIGGER_SUCCESS in status_effect.status_effect.consumed
+                and (
+                    outcome.flags is None or OutcomeFlag.NO_CONSUME not in outcome.flags
+                )
+            ):
+                await self.consume_status_stack(handler_context.context, status_effect)
 
         combined_outcomes = []
         for effect_type, outcomes in outcome_data.items():
@@ -302,6 +309,17 @@ class CombatStatusEffectManager(EffectManager):
 
         return await self.get_outcome(triggered_status_effects, handler_context)
 
+    async def on_post_skill(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+
+        triggered_status_effects = await self.actor_trigger(
+            handler_context.context, handler_context.source, EffectTrigger.POST_SKILL
+        )
+
+        return await self.get_outcome(triggered_status_effects, handler_context)
+
     async def on_round_start(
         self,
         handler_context: HandlerContext,
@@ -383,6 +401,18 @@ class CombatStatusEffectManager(EffectManager):
             return EffectOutcome.EMPTY()
 
         return await self.get_outcome(triggered_status_effects, handler_context)
+
+    async def on_skill_charges(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        return EffectOutcome.EMPTY()
+
+    async def on_skill_hits(
+        self,
+        handler_context: HandlerContext,
+    ) -> EffectOutcome:
+        return EffectOutcome.EMPTY()
 
     async def actor_trigger(
         self,
