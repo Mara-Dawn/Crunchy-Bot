@@ -74,20 +74,15 @@ class Engine:
         self.current_state = next_state
         self.state = self.states[self.current_state]
         await self.state.startup()
-        if self.state.quit:
-            event = EncounterEvent(
-                datetime.datetime.now(),
-                self.context.encounter.guild_id,
-                self.context.encounter.id,
-                self.bot.user.id,
-                EncounterEventType.CLEANUP,
-            )
-            await self.controller.dispatch_event(event)
-            self.done = True
-        elif self.state.done:
+        if self.state.done:
             await self.update()
+        elif self.state.quit:
+            await self.end()
 
     async def update(self):
+        if self.done:
+            return
+
         if self.context.initiated:
             await self.common.check_actor_defeat(self.context)
 
@@ -103,19 +98,22 @@ class Engine:
                 self.state.next_state = StateType.ENCOUNTER_END
 
         if self.state.quit:
-            event = EncounterEvent(
-                datetime.datetime.now(),
-                self.context.encounter.guild_id,
-                self.context.encounter.id,
-                self.bot.user.id,
-                EncounterEventType.CLEANUP,
-            )
-            await self.controller.dispatch_event(event)
-            self.done = True
+            await self.end()
         elif self.state.done:
             await self.state_transition()
         else:
             await self.state.update()
+
+    async def end(self):
+        self.done = True
+        event = EncounterEvent(
+            datetime.datetime.now(),
+            self.context.encounter.guild_id,
+            self.context.encounter.id,
+            self.bot.user.id,
+            EncounterEventType.CLEANUP,
+        )
+        await self.controller.dispatch_event(event)
 
     async def handle(self, event: BotEvent):
         if not self.done:

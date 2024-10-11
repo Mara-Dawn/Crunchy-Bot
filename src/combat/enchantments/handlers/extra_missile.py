@@ -36,16 +36,19 @@ class ExtraMissileHandler(EnchantmentEffectHandler):
         if enchantment_type != self.base_enchantment.enchantment_type:
             return outcome
 
+        if handler_context.skill.base_skill.skill_type not in [
+            SkillType.PHYSICAL_MISSILE,
+            SkillType.MAGIC_MISSILE,
+        ]:
+            outcome.flags = [OutcomeFlag.NO_CONSUME]
+            return outcome
+
         match handler_context.trigger:
             case EffectTrigger.SKILL_HITS:
                 outcome.flags = [OutcomeFlag.NO_CONSUME]
                 outcome.value = enchantment.base_enchantment.value
             case EffectTrigger.ON_ATTACK:
-                if (
-                    handler_context.skill.base_skill.skill_type
-                    != SkillType.MAGIC_MISSILE
-                ):
-                    outcome.flags = [OutcomeFlag.NO_CONSUME]
+                pass
         return outcome
 
     async def is_penalty(

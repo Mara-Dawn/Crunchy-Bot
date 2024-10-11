@@ -26,7 +26,7 @@ class LootPayoutState(State):
     def __init__(self, controller: Controller, context: EncounterContext):
         super().__init__(controller, context)
         self.state_type: StateType = StateType.LOOT_PAYOUT
-        self.next_state: StateType = StateType.POST_ENCOUNTER
+        self.next_state: StateType = None
 
     async def startup(self):
         context = self.context
@@ -116,7 +116,6 @@ class LootPayoutState(State):
             )
             view.set_message(message)
 
-        self.context._concluded = True
         self.done = True
         self.quit = True
 

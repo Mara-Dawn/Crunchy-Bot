@@ -132,12 +132,16 @@ class EnemyEngageView(ViewMenu):
                 self.controller.detach_view(self)
             return
 
+        now = datetime.datetime.now().timestamp()
+
+        if self.timeout is not None:
+            self.timeout = self.timeout_timestamp - now
+
         if self.active and self.timeout is not None:
             self.timeout = None
 
         if self.done and self.timeout is None:
             self.timeout = self.DEFAULT_TIMEOUT / 5
-            now = datetime.datetime.now().timestamp()
             self.timeout_timestamp = int(now + self.timeout)
 
         if (not self.active or self.done) and self.timeout_timestamp is not None:
