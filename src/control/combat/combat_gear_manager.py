@@ -164,6 +164,16 @@ class CombatGearManager(Service):
         GearModifierType.DEXTERITY,
     ]
 
+    UNIQE_BASE_UPSCALE = {
+        1: Stick_T0(),  # noqa: F405
+        2: Stick_T1(),  # noqa: F405
+        3: Stick_T2(),  # noqa: F405
+        4: Stick_T3(),  # noqa: F405
+        5: Stick_T4(),  # noqa: F405
+        6: Stick_T5(),  # noqa: F405
+        7: Stick_T5(),  # noqa: F405
+    }
+
     def __init__(
         self,
         bot: commands.Bot,
@@ -345,8 +355,16 @@ class CombatGearManager(Service):
         modifiers = {}
         unique: Unique = base
         for modifier_type, scaling in unique.unique_modifiers.items():
+
+            effective_base = base
+            if base.slot == EquipmentSlot.WEAPON and modifier_type in [
+                GearModifierType.WEAPON_DAMAGE_MIN,
+                GearModifierType.WEAPON_DAMAGE_MAX,
+            ]:
+                effective_base = self.UNIQE_BASE_UPSCALE[item_level]
+
             min_roll, max_roll = await self.get_modifier_boundaries(
-                base, item_level, modifier_type
+                effective_base, item_level, modifier_type
             )
 
             min_roll *= 0.9
