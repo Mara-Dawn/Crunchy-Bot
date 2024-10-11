@@ -160,7 +160,7 @@ class EnchantmentView(
                 and enchantment.base_enchantment.enchantment_effect
                 == EnchantmentEffect.CRAFTING
             ):
-                enchantment_info[EnchantmentType.CRAFTING] = "Crafting"
+                enchantment_info[EnchantmentType.CRAFTING] = "*Crafting*"
 
             if enchantment_label not in enchantment_stock:
                 enchantment_stock[enchantment_label] = {}
@@ -406,12 +406,12 @@ class EnchantmentView(
 
         if self.gear is None:
             disable_apply = True
+        else:
+            if self.gear.rarity == Rarity.UNIQUE:
+                disable_apply = True
 
-        if self.gear.rarity == Rarity.UNIQUE:
-            disable_apply = True
-
-        if GearModifierType.CRANGLED in self.gear.modifiers:
-            disable_apply = True
+            if GearModifierType.CRANGLED in self.gear.modifiers:
+                disable_apply = True
 
         if len(self.selected) <= 0:
             disable_apply = True
@@ -684,8 +684,16 @@ class Dropdown(discord.ui.Select):
                 enchantment.base_enchantment.enchantment_effect
                 == EnchantmentEffect.EFFECT
             ):
-                description.append(f"MIN: {data.min_roll}")
-                description.append(f"MAX: {data.max_roll}")
+                if data.min_roll != 0 or data.max_roll != 0:
+                    description.append(f"MIN: {data.min_roll}")
+                    description.append(f"MAX: {data.max_roll}")
+                if (
+                    data.enchantment.base_enchantment.stacks is not None
+                    and data.enchantment.base_enchantment.stacks > 0
+                ):
+                    description.append(
+                        f"USE: {data.enchantment.base_enchantment.stacks}"
+                    )
             description.append(f"CNT: {group.amount}")
             description = " | ".join(description)
             description = (

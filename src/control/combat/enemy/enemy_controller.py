@@ -246,7 +246,7 @@ class EnemyController(Service, ABC):
             if post_turn_embed_data.length > 0:
                 await asyncio.sleep(0.5)
                 await self.discord.update_current_turn_embed(
-                    self.context, post_turn_embed_data
+                    context, post_turn_embed_data
                 )
 
     async def calculate_aoe_skill(
