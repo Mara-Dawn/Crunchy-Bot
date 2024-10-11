@@ -60,8 +60,7 @@ class CombatGearManager(Service):
 
     ITEM_LEVEL_MIN_DROP = 0.6
     SKILL_DROP_CHANCE = 0.1
-    ENCHANTMENT_DROP_CHANCE = 0
-    # ENCHANTMENT_DROP_CHANCE = 0.05
+    ENCHANTMENT_DROP_CHANCE = 0.05
     GEAR_LEVEL_SCALING = 1
     MOB_LOOT_BONUS_SCALING = 1
     MOB_LOOT_UNIQUE_SCALING = 0.2
@@ -192,8 +191,7 @@ class CombatGearManager(Service):
         matching_bases = []
 
         gear_base_types = [base_type for base_type in GearBaseType]
-        # enchantment_base_types = [base_type for base_type in EnchantmentType]
-        enchantment_base_types = []
+        enchantment_base_types = [base_type for base_type in EnchantmentType]
 
         if not exclude_skills:
             skill_base_types = [base_type for base_type in SkillType]

@@ -281,7 +281,7 @@ class EquipmentSelectView(
         self.add_item(CurrentPageButton(page_display))
         self.add_item(ScrapBalanceButton(self.scrap_balance))
         self.add_item(ScrapSelectedButton(disabled=disable_dismantle))
-        # self.add_item(CraftSelectedButton(disabled=disable_craft))
+        self.add_item(CraftSelectedButton(disabled=disable_craft))
         self.add_item(LockButton(disabled=disable_lock))
         self.add_item(UnlockButton(disabled=disable_lock))
         self.add_item(BackButton(disabled=disabled))
