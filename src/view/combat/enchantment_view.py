@@ -11,7 +11,7 @@ from combat.enchantments.types import (
     EnchantmentType,
 )
 from combat.gear.gear import Gear
-from combat.gear.types import EquipmentSlot, Rarity
+from combat.gear.types import EquipmentSlot, GearModifierType, Rarity
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_enchantment_manager import CombatEnchantmentManager
 from control.combat.combat_gear_manager import CombatGearManager
@@ -407,6 +407,12 @@ class EnchantmentView(
         if self.gear is None:
             disable_apply = True
 
+        if self.gear.rarity == Rarity.UNIQUE:
+            disable_apply = True
+
+        if GearModifierType.CRANGLED in self.gear.modifiers:
+            disable_apply = True
+
         if len(self.selected) <= 0:
             disable_apply = True
             disable_dismantle = True
@@ -447,6 +453,7 @@ class EnchantmentView(
         character: Character = None,
         enchantment_inventory: list[Enchantment] = None,
         scrap_balance: int = None,
+        gear: Gear = None,
         disabled: bool = False,
         no_embeds: bool = False,
     ):
@@ -455,6 +462,9 @@ class EnchantmentView(
 
         if character is not None:
             self.character = character
+
+        if gear is not None:
+            self.gear = gear
 
         if enchantment_inventory is not None:
             self.enchantments = enchantment_inventory
@@ -466,6 +476,13 @@ class EnchantmentView(
 
         if self.selected is None or len(self.selected) <= 0:
             disabled = True
+
+        self.selected = [
+            group
+            for group in self.filtered_items
+            if group.enchantment_type
+            in [selected.enchantment_type for selected in self.selected]
+        ]
 
         if no_embeds:
             await self.refresh_elements(disabled)

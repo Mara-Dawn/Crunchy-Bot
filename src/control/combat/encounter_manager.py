@@ -135,11 +135,8 @@ class EncounterManager(Service):
 
         if enemy_type is not None:
             enemy = await self.factory.get_enemy(enemy_type)
-            if not (
-                encounter_level >= enemy.min_level
-                and encounter_level <= enemy.max_level
-            ):
-                raise TypeError
+            encounter_level = min(enemy.max_level, encounter_level)
+            encounter_level = max(enemy.min_level, encounter_level)
         else:
             enemy = await self.actor_manager.get_random_enemy(encounter_level)
 

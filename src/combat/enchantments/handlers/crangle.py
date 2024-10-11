@@ -24,7 +24,7 @@ class CrangleHandler(EnchantmentCraftHandler):
         GearModifierType.CRIT_DAMAGE,
     ]
 
-    NEGATIVE_CHANCE = 0.2
+    NEGATIVE_CHANCE = 0.15
     CRANGLE_SCALING = 1.3
 
     def __init__(self, controller: Controller):
