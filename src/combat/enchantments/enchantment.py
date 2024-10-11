@@ -14,6 +14,7 @@ from combat.gear.types import Base, EquipmentSlot, Rarity
 from combat.skills.types import SkillEffect
 from config import Config
 from control.types import FieldData
+from forge.forgable import Forgeable
 
 
 class BaseEnchantment(DroppableBase):
@@ -237,7 +238,7 @@ class BaseEffectEnchantment(BaseEnchantment, Effect):
         self.hits = hits
 
 
-class Enchantment(Droppable):
+class Enchantment(Droppable, Forgeable):
 
     TYPE_LABEL_MAP = {
         EnchantmentEffect.CRAFTING: "Crafting",
@@ -314,7 +315,8 @@ class Enchantment(Droppable):
         if base_enchantment.int_value:
             base_enchantment.value = int(base_enchantment.value)
 
-        super().__init__(
+        Droppable.__init__(
+            self,
             name=base_enchantment.name,
             base=base_enchantment,
             type=base_enchantment.enchantment_type,
@@ -324,6 +326,14 @@ class Enchantment(Droppable):
             level=level,
             rarity=rarity,
             base_value=base_enchantment.value,
+            image_url=base_enchantment.image_url,
+        )
+        Forgeable.__init__(
+            self,
+            name=base_enchantment.name,
+            id=id,
+            forge_type=base_enchantment.enchantment_type,
+            value=base_enchantment.value,
             image_url=base_enchantment.image_url,
         )
         self.locked = locked
@@ -620,17 +630,12 @@ class EffectEnchantment(Enchantment):
                 prefixes.append((type_text_colored, len(type_text)))
 
             # Cooldown
-            if self.base_enchantment.cooldown > 0:
+            cooldown = self.base_enchantment.cooldown
+            if cooldown is not None and cooldown > 0:
                 name = "Cooldown"
-                spacing = " " * (
-                    max_len_suf - len(f"{self.base_enchantment.cooldown} Turns")
-                )
-                cooldown_text = (
-                    f"{name}: {self.base_enchantment.cooldown} Turns{spacing}"
-                )
-                cooldown_text_colored = (
-                    f"{name}: [35m{self.base_enchantment.cooldown}[0m Turns{spacing}"
-                )
+                spacing = " " * (max_len_suf - len(f"{cooldown} Turns"))
+                cooldown_text = f"{name}: {cooldown} Turns{spacing}"
+                cooldown_text_colored = f"{name}: [35m{cooldown}[0m Turns{spacing}"
                 suffixes.append((cooldown_text_colored, len(cooldown_text)))
 
             # Stacks
@@ -822,15 +827,12 @@ class EffectEnchantment(Enchantment):
             prefixes.append((type_text_colored, len(type_text)))
 
         # Cooldown
-        if self.base_enchantment.cooldown > 0:
+        cooldown = self.base_enchantment.cooldown
+        if cooldown is not None and cooldown > 0:
             name = "Cooldown"
-            spacing = " " * (
-                max_len_suf - len(f"{self.base_enchantment.cooldown} Turns")
-            )
-            cooldown_text = f"{name}: {self.base_enchantment.cooldown} Turns{spacing}"
-            cooldown_text_colored = (
-                f"{name}: [35m{self.base_enchantment.cooldown}[0m Turns{spacing}"
-            )
+            spacing = " " * (max_len_suf - len(f"{cooldown} Turns"))
+            cooldown_text = f"{name}: {cooldown} Turns{spacing}"
+            cooldown_text_colored = f"{name}: [35m{cooldown}[0m Turns{spacing}"
             suffixes.append((cooldown_text_colored, len(cooldown_text)))
 
         # Stacks
@@ -1040,14 +1042,12 @@ class GearEnchantment:
             suffixes.append((type_text_colored, len(type_text)))
 
             # Cooldown
-            if self.enchantment.base_enchantment.cooldown > 0:
+            cooldown = self.enchantment.base_enchantment.cooldown
+            if cooldown is not None and cooldown > 0:
                 name = "Cooldown"
-                spacing = " " * (
-                    max_len_suf
-                    - len(f"{self.enchantment.base_enchantment.cooldown} Turns")
-                )
-                cooldown_text = f"{name}: {self.enchantment.base_enchantment.cooldown} Turns{spacing}"
-                cooldown_text_colored = f"{name}: [35m{self.enchantment.base_enchantment.cooldown}[0m Turns{spacing}"
+                spacing = " " * (max_len_suf - len(f"{cooldown} Turns"))
+                cooldown_text = f"{name}: {cooldown} Turns{spacing}"
+                cooldown_text_colored = f"{name}: [35m{cooldown}[0m Turns{spacing}"
                 suffixes.append((cooldown_text_colored, len(cooldown_text)))
 
             # Stacks
@@ -1090,7 +1090,7 @@ class GearEnchantment:
                 info_block += f"{prefix}{spacing}{suffix}\n"
 
             cooldown_info = ""
-            if self.enchantment.base_enchantment.cooldown > 0 and self.on_cooldown():
+            if self.on_cooldown() and self.enchantment.base_enchantment.cooldown > 0:
                 cooldown_remaining = (
                     self.enchantment.base_enchantment.cooldown - self.last_used
                 )
@@ -1220,15 +1220,12 @@ class GearEnchantment:
             prefixes.append((type_text_colored, len(type_text)))
 
         # Cooldown
-        if self.enchantment.base_enchantment.cooldown > 0:
+        cooldown = self.enchantment.base_enchantment.cooldown
+        if cooldown is not None and cooldown > 0:
             name = "Cooldown"
-            spacing = " " * (
-                max_len_suf - len(f"{self.enchantment.base_enchantment.cooldown} Turns")
-            )
-            cooldown_text = (
-                f"{name}: {self.enchantment.base_enchantment.cooldown} Turns{spacing}"
-            )
-            cooldown_text_colored = f"{name}: [35m{self.enchantment.base_enchantment.cooldown}[0m Turns{spacing}"
+            spacing = " " * (max_len_suf - len(f"{cooldown} Turns"))
+            cooldown_text = f"{name}: {cooldown} Turns{spacing}"
+            cooldown_text_colored = f"{name}: [35m{cooldown}[0m Turns{spacing}"
             suffixes.append((cooldown_text_colored, len(cooldown_text)))
 
         # Stacks
@@ -1271,7 +1268,7 @@ class GearEnchantment:
             info_block += f"{prefix}{spacing}{suffix}\n"
 
         cooldown_info = ""
-        if self.enchantment.base_enchantment.cooldown > 0 and self.on_cooldown():
+        if self.on_cooldown() and self.enchantment.base_enchantment.cooldown > 0:
             cooldown_remaining = (
                 self.enchantment.base_enchantment.cooldown - self.last_used
             )

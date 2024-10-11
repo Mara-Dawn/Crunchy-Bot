@@ -8,6 +8,7 @@ from combat.skills.types import SkillEffect, SkillTarget, SkillType
 from combat.status_effects.types import SkillStatusEffect
 from config import Config
 from control.types import FieldData
+from forge.forgable import Forgeable
 
 
 class BaseSkill(DroppableBase):
@@ -95,7 +96,7 @@ class BaseSkill(DroppableBase):
             self.base_skill_type = self.skill_type
 
 
-class Skill(Droppable):
+class Skill(Droppable, Forgeable):
 
     EFFECT_LABEL_MAP = {
         SkillEffect.NEUTRAL_DAMAGE: "Damage",
@@ -160,7 +161,8 @@ class Skill(Droppable):
                 base_skill.stacks * self.RARITY_STACKS_SCALING[rarity]
             )
 
-        super().__init__(
+        Droppable.__init__(
+            self,
             name=base_skill.name,
             base=base_skill,
             type=base_skill.skill_type,
@@ -170,6 +172,14 @@ class Skill(Droppable):
             level=level,
             rarity=rarity,
             base_value=base_skill.base_value,
+            image_url=base_skill.image_url,
+        )
+        Forgeable.__init__(
+            self,
+            name=base_skill.name,
+            id=id,
+            forge_type=base_skill.skill_type,
+            value=base_skill.base_value,
             image_url=base_skill.image_url,
         )
         self.locked = locked

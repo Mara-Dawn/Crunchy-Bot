@@ -16,6 +16,7 @@ from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
 from control.event_manager import EventManager
+from control.forge_manager import ForgeManager
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
 from datalayer.database import Database
@@ -24,6 +25,7 @@ from events.equipment_event import EquipmentEvent
 from events.inventory_event import InventoryEvent
 from events.types import EquipmentEventType, EventType, UIEventType
 from events.ui_event import UIEvent
+from forge.forgable import Forgeable
 from items.types import ItemType
 from view.combat.elements import MenuState
 from view.combat.embed import (
@@ -32,7 +34,6 @@ from view.combat.embed import (
 )
 from view.combat.enchantment_view import EnchantmentView
 from view.combat.equipment_select_view import EquipmentSelectView
-from view.combat.forge_menu_view import ForgeMenuView
 from view.combat.skill_select_view import SkillSelectView, SkillViewState
 from view.combat.special_shop_view import SpecialShopView
 
@@ -61,6 +62,7 @@ class EquipmentViewController(ViewController):
         self.gear_manager: CombatGearManager = self.controller.get_service(
             CombatGearManager
         )
+        self.forge_manager: ForgeManager = self.controller.get_service(ForgeManager)
         self.log_name = "Equipment"
 
     async def listen_for_event(self, event: BotEvent) -> None:
@@ -145,6 +147,13 @@ class EquipmentViewController(ViewController):
                 interaction = event.payload[0]
                 selected = event.payload[1]
                 await self.buy_gear(interaction, selected, event.view_id)
+            case UIEventType.FORGE_ADD_ITEM:
+                interaction = event.payload[0]
+                forgeable = event.payload[1]
+                await self.add_to_forge(interaction, forgeable, event.view_id)
+            case UIEventType.FORGE_CLEAR:
+                interaction = event.payload
+                await self.clear_forge_inventory(interaction, event.view_id)
             case UIEventType.ENCHANTMENTS_OPEN:
                 interaction = event.payload[0]
                 gear = event.payload[1]
@@ -645,45 +654,38 @@ class EquipmentViewController(ViewController):
     ):
         if not await self.encounter_check(interaction):
             return
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
+        drop = await self.forge_manager.use_scrap(interaction.user, slot, level)
 
-        scaling = 1
-        if slot is not None:
-            scaling = CombatGearManager.SLOT_SCALING[slot] * Config.SCRAP_FORGE_MULTI
-        scrap_value = int(ForgeMenuView.SCRAP_ILVL_MAP[level] * scaling)
-
-        user_items = await self.database.get_item_counts_by_user(
-            guild_id, member_id, item_types=[ItemType.SCRAP]
-        )
-        scrap_balance = 0
-        if ItemType.SCRAP in user_items:
-            scrap_balance = user_items[ItemType.SCRAP]
-
-        if scrap_balance < scrap_value:
+        if drop is None:
             await interaction.followup.send(
                 "You don't have enough scrap for this. Go and scrap some equipment you no longer need and come back.",
                 ephemeral=True,
             )
             return
 
-        drop = await self.gear_manager.generate_drop(
-            member_id, guild_id, level, gear_slot=slot
-        )
-
-        event = InventoryEvent(
-            datetime.datetime.now(),
-            guild_id,
-            member_id,
-            ItemType.SCRAP,
-            -scrap_value,
-        )
-        await self.controller.dispatch_event(event)
-
-        message = f"{interaction.user.display_name} Forge: [level {level}, slot {slot}] -> {drop.rarity.value} {drop.name} ({drop.id})"
-        self.logger.log(interaction.guild_id, message, self.log_name)
-
         await interaction.followup.send(embed=drop.get_embed(), ephemeral=True)
+
+    async def add_to_forge(
+        self, interaction: discord.Interaction, forgeable: Forgeable, view_id: int
+    ):
+        if not await self.encounter_check(interaction):
+            return
+
+        await self.forge_manager.add_to_forge(interaction.user, forgeable)
+
+        view: EnchantmentView = self.controller.get_view(view_id)
+        await view.refresh_ui()
+
+    async def clear_forge_inventory(
+        self, interaction: discord.Interaction, view_id: int
+    ):
+        if not await self.encounter_check(interaction):
+            return
+
+        await self.forge_manager.clear_forge_inventory(interaction.user)
+
+        view: EnchantmentView = self.controller.get_view(view_id)
+        await view.refresh_ui()
 
     async def apply_gear_enchantment(
         self,

@@ -1,7 +1,9 @@
 from enum import Enum
 
+from forge.types import ForgeableType
 
-class EnchantmentType(str, Enum):
+
+class EnchantmentType(ForgeableType, str, Enum):
     EMPTY = "Empty"
     CRAFTING = "Crafting"
 

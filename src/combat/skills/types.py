@@ -1,7 +1,9 @@
 from enum import Enum
 
+from forge.types import ForgeableType
 
-class SkillType(str, Enum):
+
+class SkillType(ForgeableType, str, Enum):
     EMPTY = "EmptySkill"
 
     # Player Skills

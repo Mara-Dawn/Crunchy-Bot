@@ -15,6 +15,7 @@ from combat.gear.types import (
 )
 from combat.skills.types import SkillEffect, SkillType
 from config import Config
+from forge.forgable import Forgeable
 
 
 class GearBase(DroppableBase):
@@ -126,7 +127,7 @@ class GearBase(DroppableBase):
                 ]
 
 
-class Gear(Droppable):
+class Gear(Droppable, Forgeable):
 
     def __init__(
         self,
@@ -140,7 +141,11 @@ class Gear(Droppable):
         locked: bool = False,
         id: int = None,
     ):
-        super().__init__(
+        if name == "" or name is None:
+            name = base.name
+        self.name = name
+        Droppable.__init__(
+            self,
             name=name,
             base=base,
             type=base.type,
@@ -152,8 +157,6 @@ class Gear(Droppable):
             base_value=base.scaling,
             image_url=base.image_url,
         )
-        if self.name == "" or self.name is None:
-            self.name = base.name
         self.base = base
         self.rarity = rarity
         self.level = level
@@ -168,6 +171,15 @@ class Gear(Droppable):
         self.enchantments = enchantments
         self.locked = locked
         self.id = id
+
+        Forgeable.__init__(
+            self,
+            name=self.name,
+            id=id,
+            forge_type=base.type,
+            value=base.scaling,
+            image_url=base.image_url,
+        )
 
     def get_embed(
         self,

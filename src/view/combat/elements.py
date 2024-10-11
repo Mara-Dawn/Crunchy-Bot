@@ -3,6 +3,7 @@ from enum import Enum
 
 import discord
 
+from forge.forgable import ForgeInventory, Forgeable
 from view.view_menu import ViewMenu
 
 
@@ -111,6 +112,93 @@ class ImplementsCrafting(ABC):
         pass
 
 
+class ImplementsForging(ABC):
+
+    @abstractmethod
+    async def add_to_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+    @abstractmethod
+    async def open_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+    @abstractmethod
+    async def clear_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+
+class AddToForgeButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False, row: int = 4):
+        super().__init__(
+            label="Add to Forge",
+            style=discord.ButtonStyle.gray,
+            row=row,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ImplementsBack = self.view
+
+        if await view.interaction_check(interaction):
+            await view.add_to_forge(interaction)
+
+
+class ClearForgeButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False, row: int = 4):
+        super().__init__(
+            label="Clear Forge",
+            style=discord.ButtonStyle.gray,
+            row=row,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ImplementsBack = self.view
+
+        if await view.interaction_check(interaction):
+            await view.clear_forge(interaction)
+
+
+class ForgeStatusButton(discord.ui.Button):
+
+    def __init__(
+        self,
+        current: ForgeInventory,
+        row: int = 4,
+        disabled: bool = False,
+    ):
+        forgeables = []
+        for forgeable in current.items:
+            if forgeable is not None:
+                forgeables.append(forgeable.name)
+
+        label = "/".join(forgeables)
+
+        super().__init__(
+            label=f"Forge: {label}",
+            style=discord.ButtonStyle.grey,
+            row=row,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ImplementsBalance = self.view
+
+        if await view.interaction_check(interaction):
+            await view.open_forge(interaction)
+
+
 class PageButton(discord.ui.Button):
 
     def __init__(self, label: str, right: bool, disabled: bool = False, row: int = 2):
@@ -185,7 +273,7 @@ class LockButton(discord.ui.Button):
 
     def __init__(self, row: int = 3, disabled: bool = False):
         super().__init__(
-            label="Lock Selected",
+            label="Lock",
             style=discord.ButtonStyle.gray,
             row=row,
             disabled=disabled,
@@ -202,7 +290,7 @@ class UnlockButton(discord.ui.Button):
 
     def __init__(self, row: int = 3, disabled: bool = False):
         super().__init__(
-            label="Unlock Selected",
+            label="Unlock",
             style=discord.ButtonStyle.gray,
             row=row,
             disabled=disabled,
@@ -219,7 +307,7 @@ class ScrapSelectedButton(discord.ui.Button):
 
     def __init__(self, row: int = 3, disabled: bool = False):
         super().__init__(
-            label="Scrap Selected",
+            label="Scrap",
             style=discord.ButtonStyle.red,
             row=row,
             disabled=disabled,
@@ -236,7 +324,7 @@ class ScrapAmountButton(discord.ui.Button):
 
     def __init__(self, row: int = 3, disabled: bool = False):
         super().__init__(
-            label="Scrap Selected Amount",
+            label="Scrap Amount",
             style=discord.ButtonStyle.red,
             row=row,
             disabled=disabled,
@@ -315,7 +403,7 @@ class ScrapAllButton(discord.ui.Button):
 
     def __init__(self, disabled: bool = False):
         super().__init__(
-            label="Scrap All Selected",
+            label="Scrap All",
             style=discord.ButtonStyle.red,
             row=3,
             disabled=disabled,
@@ -334,7 +422,7 @@ class CraftSelectedButton(discord.ui.Button):
 
         super().__init__(
             label="Craft",
-            style=discord.ButtonStyle.blurple,
+            style=discord.ButtonStyle.gray,
             row=3,
             disabled=disabled,
         )

@@ -225,6 +225,8 @@ class UIEventType(str, Enum):
     FORGE_USE = "forge_use"
     FORGE_OPEN_SHOP = "forge_open_select"
     FORGE_SHOP_BUY = "forge_shop_buy"
+    FORGE_ADD_ITEM = "forge_add_item"
+    FORGE_CLEAR = "forge_clear"
 
     ENCHANTMENTS_OPEN = "enchantments_open"
     ENCHANTMENTS_APPLY = "enchantments_apply"

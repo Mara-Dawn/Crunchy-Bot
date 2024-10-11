@@ -4,16 +4,23 @@ import discord
 
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
+from control.forge_manager import ForgeManager
+from control.item_manager import ItemManager
 from control.types import ControllerType
 from datalayer.inventory import UserInventory
 from events.types import UIEventType
 from events.ui_event import UIEvent
+from forge.forgable import ForgeInventory
 from items.item import Item
 from items.types import ItemState, ItemType, ShopCategory
 from view.combat.elements import (
+    AddToForgeButton,
     BeansBalanceButton,
+    ClearForgeButton,
     CurrentPageButton,
+    ForgeStatusButton,
     ImplementsBalance,
+    ImplementsForging,
     ImplementsMainMenu,
     ImplementsPages,
     MenuState,
@@ -26,7 +33,7 @@ from view.view_menu import ViewMenu
 
 
 class InventoryMenuView(
-    ViewMenu, ImplementsMainMenu, ImplementsPages, ImplementsBalance
+    ViewMenu, ImplementsMainMenu, ImplementsPages, ImplementsBalance, ImplementsForging
 ):
 
     def __init__(
@@ -46,6 +53,8 @@ class InventoryMenuView(
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
             CombatEmbedManager
         )
+        self.forge_manager: ForgeManager = self.controller.get_service(ForgeManager)
+        self.item_manager: ItemManager = controller.get_service(ItemManager)
 
         self.inventory = inventory
 
@@ -56,6 +65,7 @@ class InventoryMenuView(
         self.display_items = []
         self.item_count = 0
         self.page_count = 1
+        self.forge_inventory: ForgeInventory = None
         self.filter_items()
 
         self.controller_type = ControllerType.INVENTORY_VIEW
@@ -89,6 +99,7 @@ class InventoryMenuView(
 
         self.add_menu(self.state, False, False)
         self.add_item(BeansBalanceButton(self.inventory.balance))
+        disable_forge = disabled
 
         match selected_state:
             case ItemState.ENABLED:
@@ -100,6 +111,7 @@ class InventoryMenuView(
 
         if self.selected is None:
             button_action = ActionType.DEFAULT_ACTION
+            disable_forge = True
 
         page_display = f"Page {self.current_page + 1}/{self.page_count}"
 
@@ -117,6 +129,14 @@ class InventoryMenuView(
         self.add_item(SellButton(disabled))
         self.add_item(SellAmountButton(disabled))
         self.add_item(SellAllButton(disabled))
+        self.add_item(AddToForgeButton(disabled=disable_forge, row=4))
+        if self.forge_inventory is not None and not self.forge_inventory.empty:
+            self.add_item(
+                ForgeStatusButton(
+                    current=self.forge_inventory, row=3, disabled=disabled
+                )
+            )
+            self.add_item(ClearForgeButton(disabled=disabled))
 
     async def refresh_ui(
         self,
@@ -145,6 +165,8 @@ class InventoryMenuView(
             (start_offset + InventoryEmbed.ITEMS_PER_PAGE), len(self.filtered_items)
         )
         self.display_items = self.filtered_items[start_offset:end_offset]
+
+        self.forge_inventory = await self.forge_manager.get_forge_inventory(self.member)
 
         self.refresh_elements(disabled)
 
@@ -232,6 +254,60 @@ class InventoryMenuView(
         self.selected = item_type
         await interaction.response.defer()
         await self.refresh_ui()
+
+    async def add_to_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer(ephemeral=True)
+        if self.selected is None:
+            return
+        selected = self.selected
+        item = await self.item_manager.get_item(self.guild_id, selected)
+        amount = self.inventory.get_item_count(selected)
+
+        if item.id <= 0:
+            return
+
+        if item.permanent:
+            return
+
+        for id in range(amount):
+            item.id = item.id + id
+            if self.forge_inventory is None or item.id not in [
+                x.id for x in self.forge_inventory.items if x is not None
+            ]:
+                event = UIEvent(
+                    UIEventType.FORGE_ADD_ITEM,
+                    (interaction, item),
+                    self.id,
+                )
+                await self.controller.dispatch_ui_event(event)
+                return
+
+    async def open_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.FORGE, False),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def clear_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.FORGE_CLEAR,
+            interaction,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
 
     async def on_timeout(self):
         with contextlib.suppress(discord.HTTPException):

@@ -309,7 +309,7 @@ class EnchantmentsButton(discord.ui.Button):
 
         super().__init__(
             label=label,
-            style=discord.ButtonStyle.blurple,
+            style=discord.ButtonStyle.grey,
             row=2,
             disabled=disabled,
         )

@@ -3,10 +3,11 @@ from discord.ext import commands
 
 from config import Config
 from datalayer.types import ItemTrigger
+from forge.forgable import Forgeable
 from items.types import ItemGroup, ItemType, ShopCategory
 
 
-class Item:
+class Item(Forgeable):
 
     def __init__(
         self,
@@ -55,6 +56,19 @@ class Item:
         self.permanent = permanent
         self.secret = secret
         self.image_url = image_url
+
+        if self.type is None:
+            int_id = -1
+        else:
+            int_id = int.from_bytes(self.type.name.encode(), "little")
+
+        super().__init__(
+            name=name,
+            id=int_id,
+            forge_type=type,
+            value=weight,
+            emoji=emoji,
+        )
 
     def activated(self, action: ItemTrigger):
         if self.trigger is None:

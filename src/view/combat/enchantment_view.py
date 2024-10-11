@@ -16,13 +16,19 @@ from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_enchantment_manager import CombatEnchantmentManager
 from control.combat.combat_gear_manager import CombatGearManager
 from control.controller import Controller
+from control.forge_manager import ForgeManager
 from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
+from forge.forgable import ForgeInventory
 from view.combat.elements import (
+    AddToForgeButton,
     BackButton,
+    ClearForgeButton,
     CurrentPageButton,
+    ForgeStatusButton,
     ImplementsBack,
+    ImplementsForging,
     ImplementsLocking,
     ImplementsPages,
     ImplementsScrapping,
@@ -64,7 +70,12 @@ class EnchantmentGroup:
 
 
 class EnchantmentView(
-    ViewMenu, ImplementsPages, ImplementsBack, ImplementsLocking, ImplementsScrapping
+    ViewMenu,
+    ImplementsPages,
+    ImplementsBack,
+    ImplementsLocking,
+    ImplementsScrapping,
+    ImplementsForging,
 ):
 
     def __init__(
@@ -105,12 +116,14 @@ class EnchantmentView(
         self.filter_items()
         self.message = None
         self.loaded = False
+        self.forge_inventory: ForgeInventory = None
 
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
         self.embed_manager: CombatEmbedManager = controller.get_service(
             CombatEmbedManager
         )
+        self.forge_manager: ForgeManager = self.controller.get_service(ForgeManager)
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -393,6 +406,7 @@ class EnchantmentView(
 
         disable_apply = disabled
         disable_dismantle = disabled
+        disable_forge = disabled
         for enchantment_group in self.selected:
             if enchantment_group is None:
                 continue
@@ -402,6 +416,7 @@ class EnchantmentView(
             ):
                 # Default Gear
                 disable_dismantle = True
+                disable_forge = True
                 break
 
         if self.gear is None:
@@ -416,6 +431,7 @@ class EnchantmentView(
         if len(self.selected) <= 0:
             disable_apply = True
             disable_dismantle = True
+            disable_forge = True
 
         self.clear_items()
 
@@ -446,7 +462,13 @@ class EnchantmentView(
         self.add_item(ScrapBalanceButton(self.scrap_balance, row=2))
         self.add_item(ScrapAllButton(disabled=disable_dismantle))
         self.add_item(ScrapAmountButton(disabled=disable_dismantle))
+        self.add_item(AddToForgeButton(disabled=disable_forge, row=3))
         self.add_item(BackButton())
+        if self.forge_inventory is not None and not self.forge_inventory.empty:
+            self.add_item(
+                ForgeStatusButton(current=self.forge_inventory, disabled=disable_forge)
+            )
+            self.add_item(ClearForgeButton(disabled=disable_forge))
 
     async def refresh_ui(
         self,
@@ -484,6 +506,8 @@ class EnchantmentView(
             in [selected.enchantment_type for selected in self.selected]
             and group.rarity in [selected.rarity for selected in self.selected]
         ]
+
+        self.forge_inventory = await self.forge_manager.get_forge_inventory(self.member)
 
         if no_embeds:
             await self.refresh_elements(disabled)
@@ -574,6 +598,50 @@ class EnchantmentView(
         ]
 
         await self.refresh_ui()
+
+    async def add_to_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer(ephemeral=True)
+        if len(self.selected) != 1:
+            return
+        selected = self.selected[0]
+        for enchantment in selected.enchantments:
+            if self.forge_inventory is None or enchantment.id not in [
+                x.id for x in self.forge_inventory.items if x is not None
+            ]:
+                event = UIEvent(
+                    UIEventType.FORGE_ADD_ITEM,
+                    (interaction, enchantment),
+                    self.id,
+                )
+                await self.controller.dispatch_ui_event(event)
+                return
+
+    async def open_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.FORGE, False),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def clear_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.FORGE_CLEAR,
+            interaction,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
 
     async def on_timeout(self):
         with contextlib.suppress(discord.HTTPException):

@@ -8,15 +8,21 @@ from combat.gear.types import EquipmentSlot, GearModifierType, Rarity
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
+from control.forge_manager import ForgeManager
 from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
+from forge.forgable import ForgeInventory
 from view.combat.elements import (
+    AddToForgeButton,
     BackButton,
+    ClearForgeButton,
     CraftSelectedButton,
     CurrentPageButton,
+    ForgeStatusButton,
     ImplementsBack,
     ImplementsCrafting,
+    ImplementsForging,
     ImplementsLocking,
     ImplementsPages,
     ImplementsScrapping,
@@ -39,6 +45,7 @@ class EquipmentSelectView(
     ImplementsLocking,
     ImplementsScrapping,
     ImplementsCrafting,
+    ImplementsForging,
 ):
 
     def __init__(
@@ -71,6 +78,7 @@ class EquipmentSelectView(
         self.filter_items()
         self.message = None
         self.loaded = False
+        self.forge_inventory: ForgeInventory = None
 
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
@@ -81,6 +89,7 @@ class EquipmentSelectView(
         self.actor_manager: CombatActorManager = self.controller.get_service(
             CombatActorManager
         )
+        self.forge_manager: ForgeManager = self.controller.get_service(ForgeManager)
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -243,6 +252,7 @@ class EquipmentSelectView(
         disable_dismantle = disabled
         disable_lock = disabled
         disable_craft = disabled
+        disable_forge = disabled
 
         if len(self.selected) <= 0:
             disable_equip = True
@@ -253,6 +263,7 @@ class EquipmentSelectView(
 
         if len(self.selected) != 1:
             disable_craft = True
+            disable_forge = True
 
         for selected_gear in self.selected:
             if selected_gear.id in [gear.id for gear in self.current]:
@@ -262,12 +273,13 @@ class EquipmentSelectView(
                 selected_gear.rarity == Rarity.UNIQUE
                 or GearModifierType.CRANGLED in selected_gear.modifiers
             ):
-                # Default Gear
                 disable_craft = True
 
             if selected_gear.id < 0:
                 # Default Gear
                 disable_dismantle = True
+                disable_craft = True
+                disable_forge = True
 
         equipped = [gear.id for gear in self.current if gear.base.slot == self.filter]
 
@@ -285,7 +297,13 @@ class EquipmentSelectView(
         self.add_item(CraftSelectedButton(disabled=disable_craft))
         self.add_item(LockButton(disabled=disable_lock))
         self.add_item(UnlockButton(disabled=disable_lock))
+        self.add_item(AddToForgeButton(disabled=disable_forge, row=3))
         self.add_item(BackButton(disabled=disabled))
+        if self.forge_inventory is not None and not self.forge_inventory.empty:
+            self.add_item(
+                ForgeStatusButton(current=self.forge_inventory, disabled=disable_forge)
+            )
+            self.add_item(ClearForgeButton(disabled=disable_forge))
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.WEAPON,
@@ -363,6 +381,8 @@ class EquipmentSelectView(
             gear for gear in self.gear if gear.id in [x.id for x in self.selected]
         ]
 
+        self.forge_inventory = await self.forge_manager.get_forge_inventory(self.member)
+
         self.refresh_elements(disabled)
 
         embeds = []
@@ -395,6 +415,45 @@ class EquipmentSelectView(
         await interaction.response.defer()
         self.selected = [gear for gear in self.gear if gear.id in gear_ids]
         await self.refresh_ui()
+
+    async def add_to_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer(ephemeral=True)
+        if len(self.selected) != 1:
+            return
+        selected = self.selected[0]
+        event = UIEvent(
+            UIEventType.FORGE_ADD_ITEM,
+            (interaction, selected),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def open_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.FORGE, False),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def clear_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.FORGE_CLEAR,
+            interaction,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
 
     async def on_timeout(self):
         with contextlib.suppress(discord.HTTPException):
