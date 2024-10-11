@@ -12,6 +12,9 @@ class Forgeable:
     emoji: str = None
     image_url: str = None
 
+    def get_embed():
+        pass
+
 
 @dataclass
 class ForgeInventory:

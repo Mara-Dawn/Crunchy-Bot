@@ -1,3 +1,5 @@
+from typing import Any
+
 import discord
 from discord.ext import commands
 
@@ -17,7 +19,7 @@ from view.combat.embed import (
     EquipmentHeadEmbed,
     SelectSkillHeadEmbed,
 )
-from view.combat.forge_menu_view import ForgeMenuView
+from view.combat.forge_menu_view import ForgeMenuState, ForgeMenuView
 from view.combat.gear_menu_view import GearMenuView
 from view.combat.skill_menu_view import SkillMenuView
 from view.inventory.inventory_menu_view import InventoryMenuView
@@ -53,13 +55,19 @@ class MainMenuViewController(ViewController):
                 interaction = event.payload[0]
                 state = event.payload[1]
                 limited = event.payload[2]
-                await self.main_menu_select(interaction, state, limited, event.view_id)
+                extra = None
+                if len(event.payload) == 4:
+                    extra = event.payload[3]
+                await self.main_menu_select(
+                    interaction, state, limited, extra, event.view_id
+                )
 
     async def main_menu_select(
         self,
         interaction: discord.Interaction,
         state: MenuState,
         limited: bool,
+        extra: Any,
         view_id: int,
     ):
         match state:
@@ -68,7 +76,7 @@ class MainMenuViewController(ViewController):
             case MenuState.SKILLS:
                 await self.open_skill_menu(interaction, limited, view_id)
             case MenuState.FORGE:
-                await self.open_forge_menu(interaction, view_id)
+                await self.open_forge_menu(interaction, view_id, extra)
             case MenuState.INVENTORY:
                 await self.open_inventory_menu(interaction, view_id)
 
@@ -178,9 +186,13 @@ class MainMenuViewController(ViewController):
         self,
         interaction: discord.Interaction,
         view_id: int,
+        state: ForgeMenuState = None,
     ):
         guild_id = interaction.guild_id
         member_id = interaction.user.id
+
+        if state is None:
+            state = ForgeMenuState.OVERVIEW
 
         character = await self.actor_manager.get_character(interaction.user)
 
@@ -194,7 +206,7 @@ class MainMenuViewController(ViewController):
         forge_level = await self.controller.database.get_forge_level(guild_id)
 
         view = ForgeMenuView(
-            self.controller, interaction, character, scrap_balance, forge_level
+            self.controller, interaction, character, scrap_balance, forge_level, state
         )
 
         message = await interaction.original_response()

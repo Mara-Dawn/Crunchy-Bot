@@ -223,6 +223,7 @@ class UIEventType(str, Enum):
 
     FORGE_VIEW = "forge_view"
     FORGE_USE = "forge_use"
+    FORGE_COMBINE = "forge_combine"
     FORGE_OPEN_SHOP = "forge_open_select"
     FORGE_SHOP_BUY = "forge_shop_buy"
     FORGE_ADD_ITEM = "forge_add_item"

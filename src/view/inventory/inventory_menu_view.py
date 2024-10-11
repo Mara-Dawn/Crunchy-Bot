@@ -26,6 +26,7 @@ from view.combat.elements import (
     MenuState,
     PageButton,
 )
+from view.combat.forge_menu_view import ForgeMenuState
 from view.elements import CategoryFilter
 from view.inventory.embed import InventoryEmbed
 from view.types import ActionType
@@ -292,7 +293,7 @@ class InventoryMenuView(
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.MAIN_MENU_STATE_CHANGE,
-            (interaction, MenuState.FORGE, False),
+            (interaction, MenuState.FORGE, False, ForgeMenuState.COMBINE),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)

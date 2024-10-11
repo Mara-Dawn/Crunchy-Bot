@@ -35,6 +35,7 @@ from view.combat.elements import (
     ScrapBalanceButton,
 )
 from view.combat.embed import ManageSkillHeadEmbed, SelectSkillHeadEmbed
+from view.combat.forge_menu_view import ForgeMenuState
 from view.view_menu import ViewMenu
 
 
@@ -378,7 +379,7 @@ class SkillSelectView(
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.MAIN_MENU_STATE_CHANGE,
-            (interaction, MenuState.FORGE, False),
+            (interaction, MenuState.FORGE, False, ForgeMenuState.COMBINE),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -488,7 +489,6 @@ class SkillSelectView(
                 self.add_item(ScrapAllButton(disabled=disable_dismantle))
                 self.add_item(ScrapAmountButton(disabled=disable_dismantle))
                 self.add_item(AddToForgeButton(disabled=disable_forge, row=3))
-                self.add_item(BackButton())
                 self.add_item(BackButton())
                 if self.forge_inventory is not None and not self.forge_inventory.empty:
                     self.add_item(

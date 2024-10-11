@@ -15,10 +15,19 @@ from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from forge.forgable import Forgeable, ForgeInventory
 from items.types import ItemType
-from view.combat.forge_menu_view import ForgeMenuView
 
 
 class ForgeManager(Service):
+
+    SCRAP_ILVL_MAP = {
+        1: 15,
+        2: 30,
+        3: 60,
+        4: 100,
+        5: 150,
+        6: 200,
+        7: 250,
+    }
 
     def __init__(
         self,
@@ -86,7 +95,7 @@ class ForgeManager(Service):
         scaling = 1
         if slot is not None:
             scaling = CombatGearManager.SLOT_SCALING[slot] * Config.SCRAP_FORGE_MULTI
-        scrap_value = int(ForgeMenuView.SCRAP_ILVL_MAP[level] * scaling)
+        scrap_value = int(self.SCRAP_ILVL_MAP[level] * scaling)
 
         user_items = await self.database.get_item_counts_by_user(
             guild_id, member_id, item_types=[ItemType.SCRAP]

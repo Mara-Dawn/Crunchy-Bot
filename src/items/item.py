@@ -77,15 +77,15 @@ class Item(Forgeable):
 
     def get_embed(
         self,
-        bot: commands.Bot,
+        bot: commands.Bot = None,
         color=None,
         amount_in_cart: int = 1,
-        show_price=True,
+        show_price=False,
         show_info: bool = False,
     ) -> discord.Embed:
         emoji = self.emoji
-        if isinstance(self.emoji, int):
-            emoji = str(bot.get_emoji(self.emoji))
+        # if isinstance(self.emoji, int):
+        #     emoji = str(bot.get_emoji(self.emoji))
 
         if color is None:
             color = discord.Colour.purple()

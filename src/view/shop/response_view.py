@@ -102,7 +102,10 @@ class ShopResponseView(ViewMenu):
         embed = force_embed
         if embed is None:
             embed = self.item.get_embed(
-                self.controller.bot, color=color, amount_in_cart=self.selected_amount
+                self.controller.bot,
+                show_price=True,
+                color=color,
+                amount_in_cart=self.selected_amount,
             )
 
         emoji = self.item.emoji

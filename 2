@@ -80,7 +80,7 @@ class ForgeMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance, ImplementsB
         self.max_forge_level = max(self.forge_options.keys())
         self.selected: int = self.max_forge_level
         self.selected_slot: EquipmentSlot = None
-
+        j
         if state is None:
             self.forge_state: ForgeMenuState = ForgeMenuState.OVERVIEW
         else:

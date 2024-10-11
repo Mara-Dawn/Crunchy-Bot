@@ -42,6 +42,7 @@ from view.combat.embed import (
     EnchantmentHeadEmbed,
     EnchantmentSpacerEmbed,
 )
+from view.combat.forge_menu_view import ForgeMenuState
 from view.view_menu import ViewMenu
 
 
@@ -77,6 +78,16 @@ class EnchantmentView(
     ImplementsScrapping,
     ImplementsForging,
 ):
+
+    SCRAP_ILVL_MAP = {
+        1: 15,
+        2: 30,
+        3: 60,
+        4: 100,
+        5: 150,
+        6: 200,
+        7: 250,
+    }
 
     def __init__(
         self,
@@ -626,7 +637,7 @@ class EnchantmentView(
         await interaction.response.defer()
         event = UIEvent(
             UIEventType.MAIN_MENU_STATE_CHANGE,
-            (interaction, MenuState.FORGE, False),
+            (interaction, MenuState.FORGE, False, ForgeMenuState.COMBINE),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)

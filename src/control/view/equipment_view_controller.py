@@ -25,7 +25,7 @@ from events.equipment_event import EquipmentEvent
 from events.inventory_event import InventoryEvent
 from events.types import EquipmentEventType, EventType, UIEventType
 from events.ui_event import UIEvent
-from forge.forgable import Forgeable
+from forge.forgable import ForgeInventory, Forgeable
 from items.types import ItemType
 from view.combat.elements import MenuState
 from view.combat.embed import (
@@ -154,6 +154,12 @@ class EquipmentViewController(ViewController):
             case UIEventType.FORGE_CLEAR:
                 interaction = event.payload
                 await self.clear_forge_inventory(interaction, event.view_id)
+            case UIEventType.FORGE_COMBINE:
+                interaction = event.payload[0]
+                forge_inventory = event.payload[1]
+                await self.combine_forge_inventory(
+                    interaction, forge_inventory, event.view_id
+                )
             case UIEventType.ENCHANTMENTS_OPEN:
                 interaction = event.payload[0]
                 gear = event.payload[1]
@@ -683,6 +689,19 @@ class EquipmentViewController(ViewController):
             return
 
         await self.forge_manager.clear_forge_inventory(interaction.user)
+
+        view: EnchantmentView = self.controller.get_view(view_id)
+        await view.refresh_ui()
+
+    async def combine_forge_inventory(
+        self, interaction: discord.Interaction, inventory: ForgeInventory, view_id: int
+    ):
+        if not await self.encounter_check(interaction):
+            return
+
+        await self.forge_manager.clear_forge_inventory(interaction.user)
+
+        await interaction.followup.send("poof", ephemeral=True)
 
         view: EnchantmentView = self.controller.get_view(view_id)
         await view.refresh_ui()

@@ -243,6 +243,8 @@ class ForgeEmbed(discord.Embed):
     ):
         description = (
             "Toss your scrap into this gaping hole and it will spit out random items for you.\n\n"
+            "Alternatively you can combine any three items in here to forge them into a new one. "
+            "Try to find all the possible combinations!\n\n"
             f"Max item level: [35m{forge_level}[0m\n"
             f"Max item rarity: [35m{max_rarity.value}[0m"
         )
