@@ -192,7 +192,8 @@ class CombatGearManager(Service):
         matching_bases = []
 
         gear_base_types = [base_type for base_type in GearBaseType]
-        enchantment_base_types = [base_type for base_type in EnchantmentType]
+        # enchantment_base_types = [base_type for base_type in EnchantmentType]
+        enchantment_base_types = []
 
         if not exclude_skills:
             skill_base_types = [base_type for base_type in SkillType]
