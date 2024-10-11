@@ -1,5 +1,5 @@
-from collections.abc import Callable
 import datetime
+from collections.abc import Callable
 
 from combat.encounter import EncounterContext
 from combat.engine.common import CommonService
@@ -30,6 +30,7 @@ class Engine:
 
     def __init__(self, controller: Controller, context: EncounterContext):
         self.controller = controller
+        self.bot = self.controller.bot
         self.state_init: list[Callable] = {
             InitialState,
             WaitingState,
@@ -74,6 +75,14 @@ class Engine:
         self.state = self.states[self.current_state]
         await self.state.startup()
         if self.state.quit:
+            event = EncounterEvent(
+                datetime.datetime.now(),
+                self.context.encounter.guild_id,
+                self.context.encounter.id,
+                self.bot.user.id,
+                EncounterEventType.CLEANUP,
+            )
+            await self.controller.dispatch_event(event)
             self.done = True
         elif self.state.done:
             await self.update()
