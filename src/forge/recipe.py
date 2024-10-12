@@ -48,7 +48,47 @@ class RecipeHandler:
                 ),
                 result_object_type=ObjectType.ITEM,
                 result_type=ItemType.ENCOUNTER_KEY_2,
-            )
+            ),
+            ForgeRecipe(
+                name="Level 2 Key Upgrade",
+                ingredients=(
+                    ItemType.ENCOUNTER_KEY_2,
+                    ItemType.ENCOUNTER_KEY_2,
+                    ItemType.ENCOUNTER_KEY_2,
+                ),
+                result_object_type=ObjectType.ITEM,
+                result_type=ItemType.ENCOUNTER_KEY_3,
+            ),
+            ForgeRecipe(
+                name="Level 3 Key Upgrade",
+                ingredients=(
+                    ItemType.ENCOUNTER_KEY_3,
+                    ItemType.ENCOUNTER_KEY_3,
+                    ItemType.ENCOUNTER_KEY_3,
+                ),
+                result_object_type=ObjectType.ITEM,
+                result_type=ItemType.ENCOUNTER_KEY_4,
+            ),
+            ForgeRecipe(
+                name="Level 4 Key Upgrade",
+                ingredients=(
+                    ItemType.ENCOUNTER_KEY_4,
+                    ItemType.ENCOUNTER_KEY_4,
+                    ItemType.ENCOUNTER_KEY_4,
+                ),
+                result_object_type=ObjectType.ITEM,
+                result_type=ItemType.ENCOUNTER_KEY_5,
+            ),
+            ForgeRecipe(
+                name="Level 5 Key Upgrade",
+                ingredients=(
+                    ItemType.ENCOUNTER_KEY_5,
+                    ItemType.ENCOUNTER_KEY_5,
+                    ItemType.ENCOUNTER_KEY_5,
+                ),
+                result_object_type=ObjectType.ITEM,
+                result_type=ItemType.ENCOUNTER_KEY_6,
+            ),
         ]
 
     def handle(self, inventory: ForgeInventory):

@@ -60,15 +60,15 @@ class ObjectParameters:
 
     TITLE_PREFIX_MAP = {
         ObjectType.ITEM: "~*",
-        ObjectType.GEAR: "~*",
+        ObjectType.GEAR: "-*",
         ObjectType.SKILL: "<-",
-        ObjectType.ENCHANTMENT: "<~",
+        ObjectType.ENCHANTMENT: "*#",
     }
     TITLE_SUFFIX_MAP = {
         ObjectType.ITEM: "*~",
-        ObjectType.GEAR: "*~",
+        ObjectType.GEAR: "*-",
         ObjectType.SKILL: "->",
-        ObjectType.ENCHANTMENT: "~>",
+        ObjectType.ENCHANTMENT: "#*",
     }
     DEFAULT_WIDTH = {
         ObjectType.ITEM: Config.ITEM_MAX_WIDTH,
@@ -523,7 +523,7 @@ class ObjectDisplay:
     def get_embed(
         self,
         show_info: bool = False,
-        show_title: bool = False,
+        show_title: bool = True,
         color: discord.Color = None,
     ) -> discord.Embed:
         content = self.get_embed_content(show_info=show_info, show_title=show_title)
