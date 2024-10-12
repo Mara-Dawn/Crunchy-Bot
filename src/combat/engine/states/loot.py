@@ -92,7 +92,9 @@ class LootPayoutState(State):
                 item = await self.item_manager.give_item(
                     member.guild.id, member.id, item
                 )
-                embeds.append(item.get_embed(self.bot, show_price=False))
+                embeds.append(
+                    item.get_embed(self.bot, show_title=False, show_price=False)
+                )
                 await asyncio.sleep(1)
 
                 await self.discord.edit_message(message, embeds=embeds)

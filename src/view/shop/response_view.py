@@ -106,6 +106,7 @@ class ShopResponseView(ViewMenu):
                 show_price=True,
                 color=color,
                 count=self.selected_amount,
+                show_title=False,
             )
 
         emoji = self.item.emoji

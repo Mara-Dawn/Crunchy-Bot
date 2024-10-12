@@ -184,8 +184,11 @@ class Gear(Droppable, Forgeable):
             self,
             name=self.name,
             id=id,
+            object_type=ObjectType.GEAR,
             forge_type=base.type,
             value=base.scaling,
+            level=level,
+            rarity=rarity,
             image_url=base.image_url,
         )
 

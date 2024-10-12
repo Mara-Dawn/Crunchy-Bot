@@ -90,7 +90,12 @@ class CatalogView(ViewMenu, ImplementsCategoryFilter):
 
         for item in display:
             embeds.append(
-                item.get_embed(self.controller.bot, show_price=False, show_info=True)
+                item.get_embed(
+                    self.controller.bot,
+                    show_title=False,
+                    show_price=False,
+                    show_info=True,
+                )
             )
 
         with contextlib.suppress(discord.NotFound, discord.HTTPException):

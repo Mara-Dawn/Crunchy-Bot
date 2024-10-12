@@ -1,4 +1,3 @@
-import traceback
 import discord
 from discord.ext import commands
 
@@ -83,6 +82,7 @@ class Item(Forgeable):
             id=int_id,
             forge_type=type,
             value=weight,
+            object_type=ObjectType.ITEM,
             emoji=emoji,
         )
 
@@ -159,8 +159,9 @@ class Item(Forgeable):
     def get_embed(
         self,
         bot: commands.Bot = None,
-        show_price: bool = True,
+        show_price: bool = False,
         show_info: bool = False,
+        show_title: bool = True,
         color: discord.Color = None,
         count: int = None,
         name_suffix: str = None,
@@ -173,7 +174,9 @@ class Item(Forgeable):
             name_suffix=name_suffix,
             disabled=disabled,
         )
-        return display.get_embed(show_title=False, show_info=show_info, color=color)
+        return display.get_embed(
+            show_title=show_title, show_info=show_info, color=color
+        )
 
     def add_to_embed(
         self,

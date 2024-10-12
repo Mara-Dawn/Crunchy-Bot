@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
+from combat.gear.types import Rarity
 from forge.types import ForgeableType
+from view.object.types import ObjectType
 
 
 @dataclass
@@ -8,7 +10,10 @@ class Forgeable:
     name: str
     id: int
     forge_type: ForgeableType
+    object_type: ObjectType
     value: int
+    level: int = None
+    rarity: Rarity = None
     emoji: str = None
     image_url: str = None
 

@@ -6,6 +6,7 @@ from discord.ext import commands
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
+from control.forge_manager import ForgeManager
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
@@ -13,12 +14,14 @@ from datalayer.database import Database
 from events.bot_event import BotEvent
 from events.types import UIEventType
 from events.ui_event import UIEvent
+from forge.forgable import Forgeable
 from items.types import ItemType
 from view.combat.elements import MenuState
 from view.combat.embed import (
     EquipmentHeadEmbed,
     SelectSkillHeadEmbed,
 )
+from view.combat.enchantment_view import EnchantmentView
 from view.combat.forge_menu_view import ForgeMenuState, ForgeMenuView
 from view.combat.gear_menu_view import GearMenuView
 from view.combat.skill_menu_view import SkillMenuView
@@ -43,6 +46,7 @@ class MainMenuViewController(ViewController):
             CombatEmbedManager
         )
         self.item_manager: ItemManager = controller.get_service(ItemManager)
+        self.forge_manager: ForgeManager = self.controller.get_service(ForgeManager)
 
         self.log_name = "MainMenu"
 
@@ -61,6 +65,10 @@ class MainMenuViewController(ViewController):
                 await self.main_menu_select(
                     interaction, state, limited, extra, event.view_id
                 )
+            case UIEventType.FORGE_ADD_ITEM:
+                interaction = event.payload[0]
+                forgeable = event.payload[1]
+                await self.add_to_forge(interaction, forgeable, event.view_id)
 
     async def main_menu_select(
         self,
@@ -214,3 +222,11 @@ class MainMenuViewController(ViewController):
         view.set_message(message)
         await view.refresh_ui()
         self.controller.detach_view_by_id(view_id)
+
+    async def add_to_forge(
+        self, interaction: discord.Interaction, forgeable: Forgeable, view_id: int
+    ):
+        await self.forge_manager.add_to_forge(interaction.user, forgeable)
+
+        view: EnchantmentView = self.controller.get_view(view_id)
+        await view.refresh_ui()

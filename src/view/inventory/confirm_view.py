@@ -90,7 +90,7 @@ class InventoryConfirmView(ViewMenu):
         embed = force_embed
         if embed is None:
             embed = self.item.get_embed(
-                self.controller.bot, color=color, show_price=True
+                self.controller.bot, color=color, show_title=False, show_price=True
             )
 
         emoji = self.item.emoji

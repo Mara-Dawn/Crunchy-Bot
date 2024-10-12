@@ -16,6 +16,7 @@ from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from forge.forgable import ForgeInventory
+from forge.recipe import RecipeHandler
 from view.combat.elements import (
     BackButton,
     ClearForgeButton,
@@ -58,6 +59,7 @@ class ForgeMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance, ImplementsB
         self.scrap_balance = scrap_balance
         self.loaded = False
         self.forge_inventory: ForgeInventory = None
+        self.recipe_handler = RecipeHandler()
 
         self.forge_manager: ForgeManager = self.controller.get_service(ForgeManager)
         self.embed_manager: CombatEmbedManager = self.controller.get_service(
@@ -114,6 +116,9 @@ class ForgeMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance, ImplementsB
                     disable_combine = True
         else:
             disable_combine = True
+
+        if not disable_combine:
+            disable_combine = not self.recipe_handler.handle(self.forge_inventory)
 
         self.clear_items()
 

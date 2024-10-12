@@ -188,8 +188,11 @@ class Skill(Droppable, Forgeable):
             self,
             name=base_skill.name,
             id=id,
+            object_type=ObjectType.SKILL,
             forge_type=base_skill.skill_type,
             value=base_skill.base_value,
+            level=level,
+            rarity=rarity,
             image_url=base_skill.image_url,
         )
         self.locked = locked

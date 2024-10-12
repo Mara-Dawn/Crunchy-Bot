@@ -340,8 +340,11 @@ class Enchantment(Droppable, Forgeable):
             self,
             name=base_enchantment.name,
             id=id,
+            object_type=ObjectType.ENCHANTMENT,
             forge_type=base_enchantment.enchantment_type,
             value=base_enchantment.value,
+            level=level,
+            rarity=rarity,
             image_url=base_enchantment.image_url,
         )
         self.locked = locked

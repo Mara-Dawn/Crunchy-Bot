@@ -25,7 +25,8 @@ from events.equipment_event import EquipmentEvent
 from events.inventory_event import InventoryEvent
 from events.types import EquipmentEventType, EventType, UIEventType
 from events.ui_event import UIEvent
-from forge.forgable import ForgeInventory, Forgeable
+from forge.forgable import ForgeInventory
+from forge.recipe import RecipeHandler
 from items.types import ItemType
 from view.combat.elements import MenuState
 from view.combat.embed import (
@@ -147,10 +148,6 @@ class EquipmentViewController(ViewController):
                 interaction = event.payload[0]
                 selected = event.payload[1]
                 await self.buy_gear(interaction, selected, event.view_id)
-            case UIEventType.FORGE_ADD_ITEM:
-                interaction = event.payload[0]
-                forgeable = event.payload[1]
-                await self.add_to_forge(interaction, forgeable, event.view_id)
             case UIEventType.FORGE_CLEAR:
                 interaction = event.payload
                 await self.clear_forge_inventory(interaction, event.view_id)
@@ -671,17 +668,6 @@ class EquipmentViewController(ViewController):
 
         await interaction.followup.send(embed=drop.get_embed(), ephemeral=True)
 
-    async def add_to_forge(
-        self, interaction: discord.Interaction, forgeable: Forgeable, view_id: int
-    ):
-        if not await self.encounter_check(interaction):
-            return
-
-        await self.forge_manager.add_to_forge(interaction.user, forgeable)
-
-        view: EnchantmentView = self.controller.get_view(view_id)
-        await view.refresh_ui()
-
     async def clear_forge_inventory(
         self, interaction: discord.Interaction, view_id: int
     ):
@@ -699,9 +685,13 @@ class EquipmentViewController(ViewController):
         if not await self.encounter_check(interaction):
             return
 
-        await self.forge_manager.clear_forge_inventory(interaction.user)
+        result = await self.forge_manager.combine(interaction.user)
 
-        await interaction.followup.send("poof", ephemeral=True)
+        if result is None:
+            await interaction.followup.send("Not a valid recipe!", ephemeral=True)
+            return
+
+        await interaction.followup.send(embed=result.get_embed(), ephemeral=True)
 
         view: EnchantmentView = self.controller.get_view(view_id)
         await view.refresh_ui()

@@ -107,7 +107,7 @@ class ShopViewController(ViewController):
                     event = UIEvent(UIEventType.SHOP_DISABLE, True, view_id)
                     await self.controller.dispatch_ui_event(event)
 
-                    embed = item.get_embed(self.bot, show_price=True)
+                    embed = item.get_embed(self.bot, show_title=False, show_price=True)
                     view_class_name = item.view_class
 
                     view_class = globals()[view_class_name]
