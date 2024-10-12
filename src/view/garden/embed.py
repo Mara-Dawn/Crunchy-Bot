@@ -1,6 +1,7 @@
 import discord
-from datalayer.garden import UserGarden
 from discord.ext import commands
+
+from datalayer.garden import UserGarden
 
 
 class GardenEmbed(discord.Embed):

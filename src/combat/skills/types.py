@@ -269,7 +269,7 @@ class SkillEffect(str, Enum):
 
     @property
     def damaging(self):
-        return [
+        return self in [
             SkillEffect.PHYSICAL_DAMAGE,
             SkillEffect.MAGICAL_DAMAGE,
             SkillEffect.EFFECT_DAMAGE,

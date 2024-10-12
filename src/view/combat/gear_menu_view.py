@@ -171,10 +171,11 @@ class GearMenuView(ViewMenu, ImplementsMainMenu, ImplementsBack, ImplementsBalan
                 title = f"{self.character.member.display_name}'s Attributes"
                 embeds.append(self.character.equipment.get_embed(title=title))
 
-        try:
-            await self.message.edit(embeds=embeds, view=self)
-        except (discord.NotFound, discord.HTTPException):
-            self.controller.detach_view(self)
+        await self.message.edit(embeds=embeds, view=self)
+        # try:
+        #     await self.message.edit(embeds=embeds, view=self)
+        # except (discord.NotFound, discord.HTTPException):
+        #     self.controller.detach_view(self)
 
     async def set_state(self, state: MenuState, interaction: discord.Interaction):
         await interaction.response.defer()

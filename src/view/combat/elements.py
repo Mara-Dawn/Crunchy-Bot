@@ -3,7 +3,7 @@ from enum import Enum
 
 import discord
 
-from forge.forgable import ForgeInventory, Forgeable
+from forge.forgable import ForgeInventory
 from view.view_menu import ViewMenu
 
 
@@ -421,7 +421,7 @@ class CraftSelectedButton(discord.ui.Button):
     def __init__(self, disabled: bool = True):
 
         super().__init__(
-            label="Craft",
+            label="Enchant",
             style=discord.ButtonStyle.gray,
             row=3,
             disabled=disabled,

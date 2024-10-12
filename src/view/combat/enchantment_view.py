@@ -558,7 +558,6 @@ class EnchantmentView(
             self.display_enchantments.append(enchantment_group)
 
             enchantment_embed = enchantment_data.get_embed(
-                show_full_data=True,
                 amount=enchantment_group.amount,
             )
             embeds.append(enchantment_embed)

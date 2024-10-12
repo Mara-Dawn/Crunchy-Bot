@@ -2,7 +2,6 @@ import discord
 
 from combat.enchantments.enchantment import (
     EffectEnchantment,
-    Enchantment,
     GearEnchantment,
 )
 from combat.gear.droppable import Droppable, DroppableBase
@@ -14,8 +13,17 @@ from combat.gear.types import (
     Rarity,
 )
 from combat.skills.types import SkillEffect, SkillType
-from config import Config
 from forge.forgable import Forgeable
+from view.object.embed import (
+    AffixBlock,
+    DisplayBlock,
+    MultiPrefix,
+    ObjectDisplay,
+    ObjectParameters,
+    Prefix,
+    Suffix,
+)
+from view.object.types import ObjectType, ValueColor, ValueType
 
 
 class GearBase(DroppableBase):
@@ -181,6 +189,165 @@ class Gear(Droppable, Forgeable):
             image_url=base.image_url,
         )
 
+    def display(
+        self,
+        equipped: bool = False,
+        show_locked_state: bool = False,
+        scrap_value: int = None,
+        enchantment_data: list[GearEnchantment] = None,
+        modifier_boundaries: dict[GearModifierType, tuple[float, float]] = None,
+    ) -> ObjectDisplay:
+        parameters = ObjectParameters(
+            object_type=ObjectType.GEAR,
+            name=self.name,
+            group=self.base.slot.value,
+            description=self.description,
+            rarity=self.rarity,
+            equipped=equipped,
+            locked=(self.locked and show_locked_state),
+            information=self.information,
+        )
+
+        prefixes: list[Prefix] = []
+        suffixes: list[Suffix] = []
+
+        suffixes.append(Suffix("Rarity", self.rarity.value, ValueType.STRING))
+        suffixes.append(Suffix("Level", self.level, ValueType.INT))
+
+        if self.base.slot == EquipmentSlot.WEAPON and len(self.base.skills) > 0:
+
+            damage_types = []
+            for skill_type in self.base.skills:
+                if SkillType.is_magical_weapon_skill(skill_type):
+                    effect = SkillEffect.MAGICAL_DAMAGE
+                if SkillType.is_physical_weapon_skill(skill_type):
+                    effect = SkillEffect.PHYSICAL_DAMAGE
+                if effect not in damage_types:
+                    damage_types.append(effect)
+
+            name = "Damage Type"
+            if len(damage_types) > 1:
+                name += "s"
+
+            for idx, damage_type in enumerate(damage_types):
+                if idx == 0:
+                    prefixes.append(Prefix(name, damage_type.value, ValueType.STRING))
+                else:
+                    prefixes.append(Prefix(None, damage_type.value, ValueType.STRING))
+
+        flat_damage_modifiers = {}
+
+        for modifier_type, value in self.modifiers.items():
+            if modifier_type in [
+                GearModifierType.WEAPON_DAMAGE_MIN,
+                GearModifierType.WEAPON_DAMAGE_MAX,
+            ]:
+                flat_damage_modifiers[modifier_type] = value
+                continue
+
+            name = modifier_type.value
+
+            if GearModifierType.no_value(modifier_type):
+                prefixes.append(Prefix(name, None, ValueType.NONE))
+            else:
+                display_value = GearModifierType.display_value(modifier_type, value)
+                prefixes.append(Prefix(name, display_value, ValueType.STRING))
+
+            if modifier_boundaries is not None and not GearModifierType.no_value(
+                modifier_type
+            ):
+                min_value, max_value = modifier_boundaries[modifier_type]
+                min_value = GearModifierType.display_value(modifier_type, min_value)
+                max_value = GearModifierType.display_value(modifier_type, max_value)
+
+                prefixes.append(
+                    Prefix(
+                        None,
+                        f"[{min_value}-{max_value}]",
+                        ValueType.STRING,
+                        value_color=ValueColor.GREY,
+                    )
+                )
+
+        if len(flat_damage_modifiers) == 2:
+            name = "Hit Damage"
+            display_value_min = GearModifierType.display_value(
+                GearModifierType.WEAPON_DAMAGE_MIN,
+                flat_damage_modifiers[GearModifierType.WEAPON_DAMAGE_MIN],
+            )
+            display_value_max = GearModifierType.display_value(
+                GearModifierType.WEAPON_DAMAGE_MAX,
+                flat_damage_modifiers[GearModifierType.WEAPON_DAMAGE_MAX],
+            )
+            prefixes.insert(
+                0,
+                MultiPrefix(
+                    name,
+                    values=[display_value_min, display_value_max],
+                    value_separator=" - ",
+                    value_type=ValueType.INT,
+                ),
+            )
+
+            if modifier_boundaries is not None:
+                min_value_min, max_value_min = modifier_boundaries[
+                    GearModifierType.WEAPON_DAMAGE_MIN
+                ]
+                min_value_min = GearModifierType.display_value(
+                    GearModifierType.WEAPON_DAMAGE_MIN, min_value_min
+                )
+                max_value_min = GearModifierType.display_value(
+                    GearModifierType.WEAPON_DAMAGE_MIN, max_value_min
+                )
+
+                min_value_max, max_value_max = modifier_boundaries[
+                    GearModifierType.WEAPON_DAMAGE_MAX
+                ]
+                min_value_max = GearModifierType.display_value(
+                    GearModifierType.WEAPON_DAMAGE_MAX, min_value_max
+                )
+                max_value_max = GearModifierType.display_value(
+                    GearModifierType.WEAPON_DAMAGE_MAX, max_value_max
+                )
+
+                line = f"[{min_value_min}-{max_value_min}] - [{min_value_max}-{max_value_max}]"
+                prefixes.insert(
+                    1,
+                    Prefix(
+                        None,
+                        line,
+                        ValueType.STRING,
+                        value_color=ValueColor.GREY,
+                    ),
+                )
+                suffixes.insert(1, Suffix.EMPTY())
+
+        extra_displays: list[ObjectDisplay] = []
+
+        if enchantment_data is None and len(self.enchantments) > 0:
+            for enchantment in self.enchantments:
+                extra_displays.append(enchantment.display())
+        elif enchantment_data is not None:
+            for gear_enchantment in enchantment_data:
+                extra_displays.append(gear_enchantment.display())
+
+        extra_blocks: list[DisplayBlock] = []
+
+        if scrap_value is not None:
+            prefix = Prefix("Stock", 1, ValueType.INT)
+            suffix = Suffix("Cost", f"⚙️{scrap_value}", ValueType.STRING)
+            extra_blocks.append(AffixBlock([prefix], [suffix], parameters.max_width))
+
+        return ObjectDisplay(
+            parameters=parameters,
+            prefixes=prefixes,
+            suffixes=suffixes,
+            extra_displays=extra_displays,
+            extra_blocks=extra_blocks,
+            thumbnail_url=self.image_url,
+            author=self.base.author,
+        )
+
     def get_embed(
         self,
         show_data: bool = True,
@@ -192,208 +359,11 @@ class Gear(Droppable, Forgeable):
         enchantment_data: list[GearEnchantment] = None,
         modifier_boundaries: dict[GearModifierType, tuple[float, float]] = None,
     ) -> discord.Embed:
-        if max_width is None:
-            max_width = Config.COMBAT_EMBED_MAX_WIDTH
-
-        color = self.RARITY_COLOR_HEX_MAP[self.rarity]
-
-        name = f"~* {self.name} *~"
-        suffix = ""
-        if equipped:
-            color = discord.Color.purple()
-            suffix += " [EQ]"
-        if self.locked and show_locked_state:
-            suffix += " [🔒]"
-
-        description = f'"{self.description}"'
-
-        if len(description) < max_width:
-            description += " " + "\u00a0" * max_width
-
-        info_block = "```ansi\n"
-        info_block += f"{self.RARITY_NAME_COLOR_MAP[self.rarity]}{name}[0m{suffix}"
-        spacing = " " * (
-            max_width - len(name) - len(self.base.slot.value) - len(suffix) - 2
+        display = self.display(
+            equipped=equipped,
+            show_locked_state=show_locked_state,
+            scrap_value=scrap_value,
+            enchantment_data=enchantment_data,
+            modifier_boundaries=modifier_boundaries,
         )
-        info_block += f"{spacing}[{self.base.slot.value}]"
-        info_block += "```"
-
-        prefixes = []
-        suffixes = []
-
-        if show_data and len(self.modifiers) > 0:
-            max_len_pre = GearModifierType.max_name_len()
-            max_len_suf = 9
-
-            name = "Rarity"
-            spacing = " " * (max_len_suf - len(self.rarity.value))
-            rarity_line = f"{name}: {self.rarity.value}{spacing}"
-            rarity_line_colored = f"{name}: {self.RARITY_COLOR_MAP[self.rarity]}{self.rarity.value}[0m{spacing}"
-            suffixes.append((rarity_line_colored, len(rarity_line)))
-
-            name = "Level"
-            value = str(self.level)
-            spacing = " " * (max_len_suf - len(value))
-            level_line = f"{name}: {self.level}{spacing}"
-            level_line_colored = f"{name}: [32m{self.level}[0m{spacing}"
-            suffixes.append((level_line_colored, len(level_line)))
-
-            if self.base.slot == EquipmentSlot.WEAPON and len(self.base.skills) > 0:
-                damage_types = []
-                for skill_type in self.base.skills:
-                    if SkillType.is_magical_weapon_skill(skill_type):
-                        effect = SkillEffect.MAGICAL_DAMAGE
-                    if SkillType.is_physical_weapon_skill(skill_type):
-                        effect = SkillEffect.PHYSICAL_DAMAGE
-                    if effect not in damage_types:
-                        damage_types.append(effect)
-
-                name = "Damage Type"
-                if len(damage_types) > 1:
-                    name += "s"
-                value = ""
-                value_colored = ""
-
-                for idx, damage_type in enumerate(damage_types):
-                    if idx == 0:
-                        value = f"{damage_type.value}"
-                        value_colored = f"[35m{damage_type.value}[0m"
-                        spacing = " " * (max_len_pre - len(name))
-                        damage_type_line = f"{spacing}{name}: {value}"
-                        damage_type_line_colored = f"{spacing}{name}: {value_colored}"
-                    else:
-                        value = f"{damage_type.value}"
-                        value_colored = f"[35m{damage_type.value}[0m"
-                        spacing = " " * (max_len_pre)
-                        damage_type_line = f"{spacing}  {value}"
-                        damage_type_line_colored = f"{spacing}  {value_colored}"
-
-                    prefixes.append((damage_type_line_colored, len(damage_type_line)))
-
-            flat_damage_modifiers = {}
-
-            for modifier_type, value in self.modifiers.items():
-                if modifier_type in [
-                    GearModifierType.WEAPON_DAMAGE_MIN,
-                    GearModifierType.WEAPON_DAMAGE_MAX,
-                ]:
-                    flat_damage_modifiers[modifier_type] = value
-                    continue
-
-                name = modifier_type.value
-
-                if GearModifierType.no_value(modifier_type):
-                    spacing = " " * (max_len_pre + 2)
-                    line = f"{spacing}{name}"
-                    line_colored = f"{spacing}[31m{name}[0m"
-                    prefixes.append((line_colored, len(line)))
-                else:
-                    spacing = " " * (max_len_pre - len(name))
-                    display_value = GearModifierType.display_value(modifier_type, value)
-                    line = f"{spacing}{name}: {display_value}"
-                    line_colored = f"{spacing}{name}: [35m{display_value}[0m"
-                    prefixes.append((line_colored, len(line)))
-
-                if modifier_boundaries is not None and not GearModifierType.no_value(
-                    modifier_type
-                ):
-                    min_value, max_value = modifier_boundaries[modifier_type]
-                    min_value = GearModifierType.display_value(modifier_type, min_value)
-                    max_value = GearModifierType.display_value(modifier_type, max_value)
-
-                    spacing = " " * max_len_pre
-
-                    line = f"{spacing}  [{min_value}-{max_value}]"
-                    line_colored = f"{spacing}  [30m[{min_value}-{max_value}][0m"
-                    prefixes.append((line_colored, len(line)))
-
-            if len(flat_damage_modifiers) == 2:
-                name = "Hit Damage"
-                display_value_min = GearModifierType.display_value(
-                    GearModifierType.WEAPON_DAMAGE_MIN,
-                    flat_damage_modifiers[GearModifierType.WEAPON_DAMAGE_MIN],
-                )
-                display_value_max = GearModifierType.display_value(
-                    GearModifierType.WEAPON_DAMAGE_MAX,
-                    flat_damage_modifiers[GearModifierType.WEAPON_DAMAGE_MAX],
-                )
-                spacing = " " * (max_len_pre - len(name))
-                line = f"{spacing}{name}: {display_value_min} - {display_value_max}"
-                line_colored = f"{spacing}{name}: [35m{display_value_min}[0m - [35m{display_value_max}[0m"
-                prefixes.insert(0, (line_colored, len(line)))
-
-                if modifier_boundaries is not None:
-                    min_value_min, max_value_min = modifier_boundaries[
-                        GearModifierType.WEAPON_DAMAGE_MIN
-                    ]
-                    min_value_min = GearModifierType.display_value(
-                        GearModifierType.WEAPON_DAMAGE_MIN, min_value_min
-                    )
-                    max_value_min = GearModifierType.display_value(
-                        GearModifierType.WEAPON_DAMAGE_MIN, max_value_min
-                    )
-
-                    min_value_max, max_value_max = modifier_boundaries[
-                        GearModifierType.WEAPON_DAMAGE_MAX
-                    ]
-                    min_value_max = GearModifierType.display_value(
-                        GearModifierType.WEAPON_DAMAGE_MAX, min_value_max
-                    )
-                    max_value_max = GearModifierType.display_value(
-                        GearModifierType.WEAPON_DAMAGE_MAX, max_value_max
-                    )
-
-                    spacing = " " * max_len_pre
-
-                    line = f"{spacing}  [{min_value_min}-{max_value_min}] - [{min_value_max}-{max_value_max}]"
-                    line_colored = f"{spacing}  [30m[{min_value_min}-{max_value_min}] - [{min_value_max}-{max_value_max}][0m"
-                    prefixes.insert(1, (line_colored, len(line)))
-                    suffixes.insert(1, ("", 1))
-
-            info_block += "```ansi\n"
-            lines = max(len(suffixes), len(prefixes))
-
-            for line in range(lines):
-                prefix = ""
-                suffix = ""
-                len_prefix = 0
-                len_suffix = 0
-                if len(prefixes) > line:
-                    len_prefix = prefixes[line][1]
-                    prefix = prefixes[line][0]
-                if len(suffixes) > line:
-                    len_suffix = suffixes[line][1]
-                    suffix = suffixes[line][0]
-
-                spacing_width = max_width - len_prefix - len_suffix
-                spacing = " " * spacing_width
-                info_block += f"{prefix}{spacing}{suffix}\n"
-
-            info_block += "```"
-
-        info_block += f"```python\n{description}```"
-
-        if enchantment_data is None and len(self.enchantments) > 0:
-            for enchantment in self.enchantments:
-                info_block += enchantment.get_embed_field().value
-        elif enchantment_data is not None:
-            for enchantment in enchantment_data:
-                info_block += enchantment.get_embed_field().value
-
-        if scrap_value is not None:
-            stock_label = "Stock: 1"
-            scrap_label = f"Cost: ⚙️{scrap_value}"
-            spacing_width = max_width - len(scrap_label) - len(stock_label)
-            spacing = " " * spacing_width
-
-            scrap_text = f"{stock_label}{spacing}{scrap_label}"
-            info_block += f"```python\n{scrap_text}```"
-
-        if show_info and len(self.information) > 0:
-            info_block += f"```ansi\n[37m{self.information}```"
-
-        embed = discord.Embed(title="", description=info_block, color=color)
-        embed.set_thumbnail(url=self.image_url)
-        if self.base.author is not None:
-            embed.set_footer(text=f"by {self.base.author}")
-        return embed
+        return display.get_embed(show_info)

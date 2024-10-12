@@ -99,7 +99,7 @@ class SkillMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance):
         for skill in self.character.skills:
             skill_embed = (
                 await self.skill_manager.get_skill_data(self.character, skill)
-            ).get_embed(show_data=True, show_full_data=True)
+            ).get_embed()
             embeds.append(skill_embed)
 
         try:

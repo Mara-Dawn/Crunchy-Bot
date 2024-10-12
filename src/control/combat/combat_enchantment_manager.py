@@ -5,11 +5,12 @@ from discord.ext import commands
 
 from combat.actors import Character
 from combat.effects.effect import EffectOutcome, OutcomeFlag
-from combat.effects.effect_handler import EffectHandler, HandlerContext
+from combat.effects.effect_handler import HandlerContext
 from combat.effects.types import EffectTrigger
 from combat.enchantments.enchantment import (
     CraftDisplayWrapper,
     EffectEnchantment,
+    Enchantment,
     GearEnchantment,
 )
 from combat.enchantments.enchantment_handler import (
@@ -18,7 +19,6 @@ from combat.enchantments.enchantment_handler import (
 )
 from combat.enchantments.types import EnchantmentEffect, EnchantmentType
 from combat.encounter import EncounterContext
-from combat.gear.gear import Enchantment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import SkillInstance
 from combat.skills.skills import *  # noqa: F403

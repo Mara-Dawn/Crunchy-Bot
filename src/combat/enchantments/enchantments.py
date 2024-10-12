@@ -15,6 +15,7 @@ from combat.gear.types import EquipmentSlot, Rarity
 from combat.skills.skill import BaseSkill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillEffect, SkillType
+from view.object.types import ValueType
 
 # Enchantments used for internal logic only
 
@@ -190,7 +191,7 @@ class SkillStacksProxy(BaseEffectEnchantment):
             consumed=[],
             emoji="",
             value_label="Charges",
-            int_value=True,
+            value_type=ValueType.INT,
         )
 
 
@@ -342,6 +343,7 @@ class CleansingHeal(BaseEffectEnchantment):
             value=10,
             cooldown=0,
             weight=15,
+            value_type=ValueType.PERCENTAGE,
             skill_effect=SkillEffect.BUFF,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.ON_ATTACK],
@@ -365,6 +367,7 @@ class BallReset(BaseEffectEnchantment):
             value=10,
             cooldown=0,
             weight=15,
+            value_type=ValueType.NONE,
             skill_effect=SkillEffect.CHANCE,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.POST_SKILL],
@@ -389,7 +392,7 @@ class ExtraMissile(BaseEffectEnchantment):
             weight=10,
             value_label="Missiles:",
             skill_effect=SkillEffect.NOTHING,
-            int_value=True,
+            value_type=ValueType.INT,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.ON_ATTACK, EffectTrigger.SKILL_HITS],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
@@ -414,7 +417,7 @@ class ExtraGore(BaseEffectEnchantment):
             weight=25,
             skill_effect=SkillEffect.NOTHING,
             value_label="Stacks",
-            int_value=True,
+            value_type=ValueType.INT,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.ON_STATUS_APPLICATION],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],

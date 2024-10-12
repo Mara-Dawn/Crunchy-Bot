@@ -597,7 +597,6 @@ class SkillSelectView(
 
             skill_embed = skill_data.get_embed(
                 equipped=equipped,
-                show_full_data=True,
                 amount=skill_group.amount,
             )
             embeds.append(skill_embed)

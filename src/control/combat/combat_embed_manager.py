@@ -413,9 +413,7 @@ class CombatEmbedManager(Service):
 
         for skill in actor.skills:
             embeds.append(
-                (await self.skill_manager.get_skill_data(actor, skill)).get_embed(
-                    show_data=True
-                )
+                (await self.skill_manager.get_skill_data(actor, skill)).get_embed()
             )
 
         return embeds
