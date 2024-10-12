@@ -1,3 +1,4 @@
+import traceback
 import discord
 from discord.ext import commands
 
@@ -5,6 +6,21 @@ from config import Config
 from datalayer.types import ItemTrigger
 from forge.forgable import Forgeable
 from items.types import ItemGroup, ItemType, ShopCategory
+from view.object.embed import (
+    AffixBlock,
+    DisplayBlock,
+    ObjectDisplay,
+    ObjectParameters,
+    Prefix,
+    Suffix,
+)
+from view.object.types import (
+    BlockType,
+    ObjectType,
+    ValueColor,
+    ValueColorBold,
+    ValueType,
+)
 
 
 class Item(Forgeable):
@@ -75,58 +91,89 @@ class Item(Forgeable):
             return False
         return action in self.trigger
 
+    def display(
+        self,
+        bot: commands.Bot = None,
+        show_price: bool = False,
+        count: int = None,
+        name_suffix: str = None,
+        disabled: bool = False,
+    ) -> ObjectDisplay:
+        emoji = self.emoji
+        if isinstance(self.emoji, int):
+            emoji = str(bot.get_emoji(self.emoji))
+
+        parameters = ObjectParameters(
+            object_type=ObjectType.ITEM,
+            name=self.name,
+            group="Item",
+            description=self.description,
+            emoji=emoji,
+            information=self.information,
+            permanent=self.permanent,
+            suffix=name_suffix,
+        )
+        extra_blocks: list[DisplayBlock] = []
+
+        if show_price:
+            if count is not None:
+                prefix = Prefix("In Cart", count, ValueType.INT)
+                suffix = Suffix("Total", f"🅱️{self.cost * count}", ValueType.STRING)
+                extra_blocks.append(
+                    AffixBlock([prefix], [suffix], parameters.max_width)
+                )
+            else:
+                cost = f"🅱️{ValueColorBold.PINK.value}{self.cost}{ValueColor.NONE.value}"
+                spacing = parameters.max_width - len(f" {self.cost}") - 1
+                content = f"\n~{" "*spacing}{cost}"
+                extra_blocks.append(DisplayBlock(BlockType.ANSI, content))
+        else:
+            if count:
+                if disabled:
+                    prefix = Prefix(
+                        "State",
+                        "ENABLED",
+                        ValueType.STRING,
+                        value_color=ValueColor.GREEN,
+                    )
+                else:
+                    prefix = Prefix(
+                        "State",
+                        "DISABLED",
+                        ValueType.STRING,
+                        value_color=ValueColor.RED,
+                    )
+                suffix = Suffix("Amount", count, ValueType.INT)
+                extra_blocks.append(
+                    AffixBlock([prefix], [suffix], parameters.max_width)
+                )
+
+        return ObjectDisplay(
+            parameters=parameters,
+            prefixes=[],
+            suffixes=[],
+            extra_blocks=extra_blocks,
+            thumbnail_url=self.image_url,
+        )
+
     def get_embed(
         self,
         bot: commands.Bot = None,
-        color=None,
-        amount_in_cart: int = 1,
-        show_price=False,
+        show_price: bool = True,
         show_info: bool = False,
+        color: discord.Color = None,
+        count: int = None,
+        name_suffix: str = None,
+        disabled: bool = False,
     ) -> discord.Embed:
-        emoji = self.emoji
-        # if isinstance(self.emoji, int):
-        #     emoji = str(bot.get_emoji(self.emoji))
-
-        if color is None:
-            color = discord.Colour.purple()
-
-        title = f"> ~* {emoji} {self.name} {emoji}  *~"
-
-        if self.permanent:
-            title = f"> ~* {emoji} *{self.name}* {emoji} *~"
-
-        description = self.description
-        max_width = Config.ITEM_MAX_WIDTH
-        if len(description) < max_width:
-            spacing = max_width - len(description)
-            description += " " * spacing
-
-        suffix = ""
-        spacing = 0
-        if show_price:
-            if self.permanent:
-                suffix = f"🅱️[34m{self.cost*amount_in_cart}"
-                suffix_len = len(suffix) - 5
-            else:
-                suffix = f"🅱️{self.cost*amount_in_cart}"
-                suffix_len = len(suffix)
-            spacing = max_width - suffix_len
-        info_block = f'```python\n"{description}"\n\n{' '*spacing}{suffix}```'
-
-        if self.permanent:
-            info_block = (
-                f'```ansi\n[33m"{description}"[0m\n\n{' '*spacing}{suffix}```'
-            )
-
-        if show_info:
-            info_block += f"```ansi\n[37m{self.information}```"
-
-        embed = discord.Embed(title=title, description=info_block, color=color)
-
-        if self.image_url is not None:
-            embed.set_thumbnail(url=self.image_url)
-
-        return embed
+        display = self.display(
+            bot=bot,
+            show_price=show_price,
+            count=count,
+            name_suffix=name_suffix,
+            disabled=disabled,
+        )
+        return display.get_embed(show_title=False, show_info=show_info, color=color)
 
     def add_to_embed(
         self,

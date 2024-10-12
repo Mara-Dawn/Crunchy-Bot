@@ -51,9 +51,10 @@ class ObjectParameters:
     rarity: Rarity = None
     equipped: bool = False
     locked: bool = False
-    disabled: bool = False
     information: str = None
     emoji: str = None
+    suffix: str = None
+    permanent: bool = False
 
     _max_width: int = None
 
@@ -125,6 +126,8 @@ class ObjectParameters:
             suffix += " [EQ]"
         if self.locked:
             suffix += " [🔒]"
+        if self.suffix is not None:
+            suffix += f" - {self.suffix}"
         return suffix
 
     @property
@@ -161,8 +164,12 @@ class ObjectParameters:
 
     @property
     def description_block(self) -> DisplayBlock:
-        content = f'"{self.description}"'
-        return DisplayBlock(BlockType.PYTHON, content)
+        if self.permanent:
+            content = f'"{ValueColorBold.YELLOW.value}{self.description}{ValueColor.NONE.value}"'
+            return DisplayBlock(BlockType.ANSI, content)
+        else:
+            content = f'"{self.description}"'
+            return DisplayBlock(BlockType.PYTHON, content)
 
     @property
     def information_block(self) -> DisplayBlock:
@@ -500,9 +507,12 @@ class ObjectDisplay:
             self.prefixes, self.suffixes, self.parameters.max_width
         )
 
-    def get_embed_content(self, show_info: bool = False, show_data: bool = True) -> str:
+    def get_embed_content(
+        self, show_info: bool = False, show_title: bool = True, show_data: bool = True
+    ) -> str:
         content = ""
-        content += self.parameters.title_block.text
+        if show_title:
+            content += self.parameters.title_block.text
         if show_data:
             content += self.affix_block.text
         content += self.parameters.description_block.text
@@ -510,8 +520,13 @@ class ObjectDisplay:
             content += self.parameters.information_block.text
         return content
 
-    def get_embed(self, show_info: bool = False) -> discord.Embed:
-        content = self.get_embed_content(show_info)
+    def get_embed(
+        self,
+        show_info: bool = False,
+        show_title: bool = False,
+        color: discord.Color = None,
+    ) -> discord.Embed:
+        content = self.get_embed_content(show_info=show_info, show_title=show_title)
 
         for block in self.extra_blocks:
             content += block.text
@@ -519,7 +534,9 @@ class ObjectDisplay:
         for object_data in self.extra_displays:
             content += object_data.get_embed_content(show_info=show_info)
 
-        color = discord.Colour.purple()
+        if color is None:
+            color = discord.Colour.purple()
+
         if self.parameters.rarity is not None:
             color = ObjectParameters.RARITY_COLOR_HEX_MAP[self.parameters.rarity]
 

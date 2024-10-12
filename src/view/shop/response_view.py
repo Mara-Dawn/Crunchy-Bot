@@ -105,7 +105,7 @@ class ShopResponseView(ViewMenu):
                 self.controller.bot,
                 show_price=True,
                 color=color,
-                amount_in_cart=self.selected_amount,
+                count=self.selected_amount,
             )
 
         emoji = self.item.emoji

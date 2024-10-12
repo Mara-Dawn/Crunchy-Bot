@@ -200,7 +200,7 @@ class Skill(Droppable, Forgeable):
         self,
         equipped: bool = False,
         scrap_value: int = None,
-    ) -> discord.Embed:
+    ) -> ObjectDisplay:
         slot = self.base.slot.value
         if SkillType.is_weapon_skill(self.base_skill.skill_type):
             slot = "Weapon Skill"
