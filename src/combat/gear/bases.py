@@ -1038,7 +1038,7 @@ class Tier5(GearBase):
             description=description,
             information=information,
             slot=slot,
-            min_level=6,
+            min_level=7,
             max_level=8,
             modifiers=modifiers,
             skills=skills,

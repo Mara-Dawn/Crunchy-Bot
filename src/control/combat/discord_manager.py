@@ -189,6 +189,9 @@ class DiscordManager(Service):
 
         guild_level = await self.database.get_guild_level(guild.id)
 
+        if guild_level >= Config.MAX_LVL:
+            return
+
         progress, requirement = await self.database.get_guild_level_progress(
             guild.id, guild_level
         )
