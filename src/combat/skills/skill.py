@@ -277,11 +277,11 @@ class Skill(Droppable, Forgeable):
         self,
         show_info: bool = False,
         equipped: bool = False,
-        amount: int = None,
+        scrap_value: int = None,
     ) -> discord.Embed:
         display = self.display(
             equipped=equipped,
-            amount=amount,
+            scrap_value=scrap_value,
         )
         return display.get_embed(show_info)
 
