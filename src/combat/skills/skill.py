@@ -388,7 +388,7 @@ class CharacterSkill:
         if cooldown is not None and self.on_cooldown():
             cooldown_remaining = cooldown - self.last_used
             content = f"available in {ValueColor.PINK.value}{cooldown_remaining}{ValueColor.NONE.value} turn(s)"
-            extra_blocks = extra_blocks + [DisplayBlock(BlockType.PYTHON, content)]
+            extra_blocks = extra_blocks + [DisplayBlock(BlockType.ANSI, content)]
 
         if amount is not None and amount > 1:
             suffix = Suffix("Amount", amount, ValueType.INT)
