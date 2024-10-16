@@ -7,6 +7,7 @@ from combat.gear.types import (
     EquipmentSlot,
     Rarity,
 )
+from combat.types import CombatFeature
 from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_gear_manager import CombatGearManager
@@ -18,13 +19,11 @@ from events.ui_event import UIEvent
 from forge.forgable import ForgeInventory
 from forge.recipe import RecipeHandler
 from view.combat.elements import (
-    BackButton,
     ClearForgeButton,
     ImplementsBack,
     ImplementsBalance,
     ImplementsMainMenu,
     MenuState,
-    ScrapBalanceButton,
 )
 from view.combat.embed import (
     ForgeEmbed,
@@ -123,13 +122,19 @@ class ForgeMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance, ImplementsB
         self.clear_items()
 
         self.add_menu(self.state, False, disabled)
-        self.add_item(ScrapBalanceButton(self.scrap_balance))
+        self.add_scrap_balance_button(self.scrap_balance)
 
         match self.forge_state:
             case ForgeMenuState.OVERVIEW:
-                self.add_item(ForgeStateButton(ForgeMenuState.SCRAP))
-                self.add_item(ForgeStateButton(ForgeMenuState.COMBINE))
-                self.add_item(ForgeShopButton(row=2))
+                if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_SCRAP]:
+                    self.add_item(ForgeStateButton(ForgeMenuState.SCRAP))
+                if (
+                    self.guild_level
+                    >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_RECIPES]
+                ):
+                    self.add_item(ForgeStateButton(ForgeMenuState.COMBINE))
+                if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_SHOP]:
+                    self.add_item(ForgeShopButton(row=2))
             case ForgeMenuState.SCRAP:
                 self.add_item(ForgeDropdown(self.forge_options, self.selected))
                 self.add_item(SlotDropdown(self.selected_slot, disabled=disabled))
@@ -141,10 +146,11 @@ class ForgeMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance, ImplementsB
                     )
                 total = int(ForgeManager.SCRAP_ILVL_MAP[self.selected] * scaling)
                 self.add_item(ForgeUseButton(total))
-                self.add_item(ForgeShopButton())
-                self.add_item(BackButton())
+                if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_SHOP]:
+                    self.add_item(ForgeShopButton())
+                self.add_back_button()
             case ForgeMenuState.COMBINE:
-                self.add_item(BackButton(row=1))
+                self.add_back_button(row=1)
                 self.add_item(ForgeCombineButton(disabled=disable_combine))
                 self.add_item(ClearForgeButton(disabled=disabled, row=1))
 
@@ -167,6 +173,8 @@ class ForgeMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance, ImplementsB
             self.loaded = True
 
         self.forge_inventory = await self.forge_manager.get_forge_inventory(self.member)
+
+        self.guild_level = await self.controller.database.get_guild_level(self.guild_id)
 
         self.refresh_elements(disabled=disabled)
         embeds = []

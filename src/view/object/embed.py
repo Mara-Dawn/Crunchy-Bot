@@ -194,6 +194,8 @@ class Affix:
         pre: str = None,
         post: str = None,
     ) -> None:
+        if name is None:
+            name = ""
         self.name = name
         self.value = value
         self.value_type = value_type
@@ -449,7 +451,13 @@ class AffixBlock(DisplayBlock):
         affix_lines = []
         prefix_max = 11
         if len(self.prefixes) > 0:
-            prefix_max = max([len(prefix.name) for prefix in self.prefixes])
+            prefix_max = max(
+                [
+                    len(prefix.name)
+                    for prefix in self.prefixes
+                    if prefix.name is not None
+                ]
+            )
 
         for prefix in self.prefixes:
             prefix.max_length = prefix_max

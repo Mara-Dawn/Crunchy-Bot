@@ -12,6 +12,8 @@ from combat.enchantments.types import (
 )
 from combat.gear.gear import Gear
 from combat.gear.types import EquipmentSlot, GearModifierType, Rarity
+from combat.types import CombatFeature
+from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_enchantment_manager import CombatEnchantmentManager
 from control.combat.combat_gear_manager import CombatGearManager
@@ -22,21 +24,13 @@ from events.types import UIEventType
 from events.ui_event import UIEvent
 from forge.forgable import ForgeInventory
 from view.combat.elements import (
-    AddToForgeButton,
-    BackButton,
-    ClearForgeButton,
-    CurrentPageButton,
-    ForgeStatusButton,
     ImplementsBack,
+    ImplementsBalance,
     ImplementsForging,
     ImplementsLocking,
     ImplementsPages,
     ImplementsScrapping,
     MenuState,
-    PageButton,
-    ScrapAllButton,
-    ScrapAmountButton,
-    ScrapBalanceButton,
 )
 from view.combat.embed import (
     EnchantmentHeadEmbed,
@@ -77,6 +71,7 @@ class EnchantmentView(
     ImplementsLocking,
     ImplementsScrapping,
     ImplementsForging,
+    ImplementsBalance,
 ):
 
     SCRAP_ILVL_MAP = {
@@ -117,6 +112,7 @@ class EnchantmentView(
         self.enchantment_manager: CombatEnchantmentManager = (
             self.controller.get_service(CombatEnchantmentManager)
         )
+        self.guild_level: int = None
 
         self.filter = EquipmentSlot.ANY
         self.filtered_items: list[EnchantmentGroup] = []
@@ -448,7 +444,10 @@ class EnchantmentView(
 
         if len(self.selected) > 1:
             disable_apply = True
-        if len(self.enchantment_info) > 0:
+        if (
+            len(self.enchantment_info) > 0
+            and self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.ENCHANTMENTS]
+        ):
             self.add_item(
                 EnchantmentTypeDropdown(
                     self.enchantment_info,
@@ -466,20 +465,21 @@ class EnchantmentView(
                 )
             )
 
-        self.add_item(PageButton("<", False))
+        self.add_page_button("<", False)
         self.add_item(ApplyButton(disabled=disable_apply))
-        self.add_item(PageButton(">", True))
-        self.add_item(CurrentPageButton(page_display))
-        self.add_item(ScrapBalanceButton(self.scrap_balance, row=2))
-        self.add_item(ScrapAllButton(disabled=disable_dismantle))
-        self.add_item(ScrapAmountButton(disabled=disable_dismantle))
-        self.add_item(AddToForgeButton(disabled=disable_forge, row=3))
-        self.add_item(BackButton())
+        self.add_page_button(">", True)
+        self.add_current_page_button(page_display)
+        self.add_scrap_balance_button(self.scrap_balance, row=2)
+        self.add_scrap_all_button(disabled=disable_dismantle)
+        self.add_scrap_amount_button(disabled=disable_dismantle)
+        self.add_add_to_forge_button(disabled=disable_forge, row=3)
+        self.add_back_button()
+
         if self.forge_inventory is not None and not self.forge_inventory.empty:
-            self.add_item(
-                ForgeStatusButton(current=self.forge_inventory, disabled=disable_forge)
+            self.add_forge_status_button(
+                current=self.forge_inventory, disabled=disable_forge
             )
-            self.add_item(ClearForgeButton(disabled=disable_forge))
+            self.add_clear_forge_button(disabled=disable_forge)
 
     async def refresh_ui(
         self,
@@ -498,6 +498,14 @@ class EnchantmentView(
 
         if gear is not None:
             self.gear = gear
+
+        self.guild_level = await self.controller.database.get_guild_level(self.guild_id)
+        if (  # noqa: SIM102
+            self.guild_level < Config.UNLOCK_LEVELS[CombatFeature.ENCHANTMENTS]
+        ):
+            if self.selected_filter_type is None:
+                self.selected_filter_type = EnchantmentType.CRAFTING
+                self.filter_items()
 
         if enchantment_inventory is not None:
             self.enchantments = enchantment_inventory

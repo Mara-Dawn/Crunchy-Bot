@@ -6,18 +6,18 @@ from combat.actors import Character
 from combat.gear.types import (
     EquipmentSlot,
 )
+from combat.types import CombatFeature
+from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.combat.elements import (
-    BackButton,
     ImplementsBack,
     ImplementsBalance,
     ImplementsMainMenu,
     MenuState,
-    ScrapBalanceButton,
 )
 from view.combat.embed import (
     AttributesHeadEmbed,
@@ -85,10 +85,10 @@ class GearMenuView(ViewMenu, ImplementsMainMenu, ImplementsBack, ImplementsBalan
                 case GearMenuState.GEAR:
                     self.add_item(StatsButton(disabled=disabled))
                 case GearMenuState.STATS:
-                    self.add_item(BackButton(disabled=disabled))
+                    self.add_back_button(disabled=disabled)
             return
 
-        self.add_item(ScrapBalanceButton(self.scrap_balance))
+        self.add_scrap_balance_button(self.scrap_balance)
 
         match self.view_state:
             case GearMenuState.GEAR:
@@ -100,10 +100,11 @@ class GearMenuView(ViewMenu, ImplementsMainMenu, ImplementsBack, ImplementsBalan
                     SelectGearSlot(EquipmentSlot.ACCESSORY, disabled=disabled)
                 )
                 self.add_item(StatsButton(disabled=disabled))
-                self.add_item(EnchantmentsButton(disabled=disabled))
+                if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.ENCHANTMENTS]:
+                    self.add_item(EnchantmentsButton(disabled=disabled))
                 self.add_item(ScrapAllButton(disabled=disabled))
             case GearMenuState.STATS:
-                self.add_item(BackButton(disabled=disabled))
+                self.add_back_button(disabled=disabled)
 
     async def refresh_ui(
         self,
@@ -122,6 +123,8 @@ class GearMenuView(ViewMenu, ImplementsMainMenu, ImplementsBack, ImplementsBalan
 
         if self.character is not None and self.scrap_balance is not None:
             self.loaded = True
+
+        self.guild_level = await self.controller.database.get_guild_level(self.guild_id)
 
         self.refresh_elements(disabled=disabled)
         embeds = []

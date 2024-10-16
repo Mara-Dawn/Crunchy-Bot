@@ -10,7 +10,6 @@ from view.combat.elements import (
     ImplementsBalance,
     ImplementsMainMenu,
     MenuState,
-    ScrapBalanceButton,
 )
 from view.combat.embed import (
     SkillsHeadEmbed,
@@ -69,7 +68,7 @@ class SkillMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance):
         if self.limited:
             return
 
-        self.add_item(ScrapBalanceButton(self.scrap_balance))
+        self.add_scrap_balance_button(self.scrap_balance)
         self.add_item(SkillManageButton(disabled=disabled))
         self.add_item(SkillEquipButton(disabled=disabled))
 
@@ -90,6 +89,8 @@ class SkillMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance):
 
         if self.character is not None and self.scrap_balance is not None:
             self.loaded = True
+
+        self.guild_level = await self.controller.database.get_guild_level(self.guild_id)
 
         self.refresh_elements(disabled=disabled)
 

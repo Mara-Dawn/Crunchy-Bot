@@ -3,6 +3,8 @@ from enum import Enum
 
 import discord
 
+from combat.types import CombatFeature
+from config import Config
 from forge.forgable import ForgeInventory
 from view.view_menu import ViewMenu
 
@@ -12,6 +14,9 @@ class MenuState(str, Enum):
     SKILLS = "Skills"
     FORGE = "Forge"
     INVENTORY = "Inventory"
+
+
+# MAIN MENU
 
 
 class ImplementsMainMenu(ABC):
@@ -48,155 +53,22 @@ class MenuButton(discord.ui.Button):
         await view.set_state(self.state, interaction)
 
 
+# PAGE NAVIGATION
+
+
 class ImplementsPages(ABC):
 
     @abstractmethod
     async def flip_page(self, interaction: discord.Interaction, right: bool = False):
         pass
 
-
-class ImplementsBalance(ABC):
-
-    @abstractmethod
-    async def open_shop(self, interaction: discord.Interaction):
-        pass
-
-
-class ImplementsBack(ABC):
-
-    @abstractmethod
-    async def go_back(
-        self,
-        interaction: discord.Interaction,
+    def add_page_button(
+        self, label: str, right: bool, disabled: bool = False, row: int = 2
     ):
-        pass
+        self.add_item(PageButton(label=label, right=right, disabled=disabled, row=row))
 
-
-class ImplementsLocking(ABC):
-
-    @abstractmethod
-    async def lock_selected(
-        self,
-        interaction: discord.Interaction,
-    ):
-        pass
-
-    @abstractmethod
-    async def unlock_selected(
-        self,
-        interaction: discord.Interaction,
-    ):
-        pass
-
-
-class ImplementsScrapping(ABC):
-
-    @abstractmethod
-    async def scrap_selected(
-        self,
-        interaction: discord.Interaction,
-        scrap_all: bool = False,
-        amount: int | None = None,
-        scrap_until: bool = False,
-    ):
-        pass
-
-
-class ImplementsCrafting(ABC):
-
-    @abstractmethod
-    async def craft_selected(
-        self,
-        interaction: discord.Interaction,
-    ):
-        pass
-
-
-class ImplementsForging(ABC):
-
-    @abstractmethod
-    async def add_to_forge(
-        self,
-        interaction: discord.Interaction,
-    ):
-        pass
-
-    @abstractmethod
-    async def open_forge(
-        self,
-        interaction: discord.Interaction,
-    ):
-        pass
-
-    @abstractmethod
-    async def clear_forge(
-        self,
-        interaction: discord.Interaction,
-    ):
-        pass
-
-
-class AddToForgeButton(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False, row: int = 4):
-        super().__init__(
-            label="Add to Forge",
-            style=discord.ButtonStyle.gray,
-            row=row,
-            disabled=disabled,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: ImplementsBack = self.view
-
-        if await view.interaction_check(interaction):
-            await view.add_to_forge(interaction)
-
-
-class ClearForgeButton(discord.ui.Button):
-
-    def __init__(self, disabled: bool = False, row: int = 4):
-        super().__init__(
-            label="Clear Forge",
-            style=discord.ButtonStyle.gray,
-            row=row,
-            disabled=disabled,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: ImplementsBack = self.view
-
-        if await view.interaction_check(interaction):
-            await view.clear_forge(interaction)
-
-
-class ForgeStatusButton(discord.ui.Button):
-
-    def __init__(
-        self,
-        current: ForgeInventory,
-        row: int = 4,
-        disabled: bool = False,
-    ):
-        forgeables = []
-        for forgeable in current.items:
-            if forgeable is not None:
-                forgeables.append(forgeable.name)
-
-        label = "/".join(forgeables)
-
-        super().__init__(
-            label=f"Forge: {label}",
-            style=discord.ButtonStyle.grey,
-            row=row,
-            disabled=disabled,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: ImplementsBalance = self.view
-
-        if await view.interaction_check(interaction):
-            await view.open_forge(interaction)
+    def add_current_page_button(self, label: str, row: int = 2):
+        self.add_item(CurrentPageButton(label=label, row=row))
 
 
 class PageButton(discord.ui.Button):
@@ -222,10 +94,38 @@ class CurrentPageButton(discord.ui.Button):
         )
 
 
+# BALANCE DISPLAY
+
+
+class ImplementsBalance(ABC):
+
+    def __init__(self):
+        self.guild_level: int = None
+
+    @abstractmethod
+    async def open_shop(self, interaction: discord.Interaction):
+        pass
+
+    def add_scrap_balance_button(self, balance: int, row: int = 0):
+        shop_unlocked = (
+            self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_SHOP]
+        )
+        self.add_item(
+            ScrapBalanceButton(balance=balance, row=row, link_shop=shop_unlocked)
+        )
+
+    def add_beans_balance_button(self, balance: int, row: int = 0):
+        shop_unlocked = self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.SHOP]
+        self.add_item(
+            BeansBalanceButton(balance=balance, row=row, link_shop=shop_unlocked)
+        )
+
+
 class ScrapBalanceButton(discord.ui.Button):
 
-    def __init__(self, balance: int, row: int = 0):
+    def __init__(self, balance: int, row: int = 0, link_shop: bool = False):
         self.balance = balance
+        self.link_shop = link_shop
         super().__init__(
             label=f"⚙️{balance}", style=discord.ButtonStyle.blurple, row=row
         )
@@ -234,13 +134,17 @@ class ScrapBalanceButton(discord.ui.Button):
         view: ImplementsBalance = self.view
 
         if await view.interaction_check(interaction):
+            if not self.link_shop:
+                await interaction.response.defer()
+                return
             await view.open_shop(interaction)
 
 
 class BeansBalanceButton(discord.ui.Button):
 
-    def __init__(self, balance: int, row: int = 0):
+    def __init__(self, balance: int, row: int = 0, link_shop: bool = False):
         self.balance = balance
+        self.link_shop = link_shop
         super().__init__(
             label=f"🅱️{balance}", style=discord.ButtonStyle.blurple, row=row
         )
@@ -249,7 +153,26 @@ class BeansBalanceButton(discord.ui.Button):
         view: ImplementsBalance = self.view
 
         if await view.interaction_check(interaction):
+            if not self.link_shop:
+                await interaction.response.defer()
+                return
             await view.open_shop(interaction)
+
+
+# BACK BUTTON
+
+
+class ImplementsBack(ABC):
+
+    @abstractmethod
+    async def go_back(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+    def add_back_button(self, disabled: bool = False, row: int = 4):
+        self.add_item(BackButton(disabled=disabled, row=row))
 
 
 class BackButton(discord.ui.Button):
@@ -267,6 +190,32 @@ class BackButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.go_back(interaction)
+
+
+# GEAR LOCKING
+
+
+class ImplementsLocking(ABC):
+
+    @abstractmethod
+    async def lock_selected(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+    @abstractmethod
+    async def unlock_selected(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+    def add_lock_button(self, row: int = 3, disabled: bool = False):
+        self.add_item(LockButton(disabled=disabled, row=row))
+
+    def add_unlock_button(self, row: int = 3, disabled: bool = False):
+        self.add_item(UnlockButton(disabled=disabled, row=row))
 
 
 class LockButton(discord.ui.Button):
@@ -301,6 +250,31 @@ class UnlockButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.unlock_selected(interaction)
+
+
+# SCRAPPING
+
+
+class ImplementsScrapping(ABC):
+
+    @abstractmethod
+    async def scrap_selected(
+        self,
+        interaction: discord.Interaction,
+        scrap_all: bool = False,
+        amount: int | None = None,
+        scrap_until: bool = False,
+    ):
+        pass
+
+    def add_scrap_selected_button(self, row: int = 3, disabled: bool = False):
+        self.add_item(ScrapSelectedButton(disabled=disabled, row=row))
+
+    def add_scrap_amount_button(self, row: int = 3, disabled: bool = False):
+        self.add_item(ScrapAmountButton(disabled=disabled, row=row))
+
+    def add_scrap_all_button(self, row: int = 3, disabled: bool = False):
+        self.add_item(ScrapAllButton(disabled=disabled, row=row))
 
 
 class ScrapSelectedButton(discord.ui.Button):
@@ -401,11 +375,11 @@ class ScrapAmountModal(discord.ui.Modal):
 
 class ScrapAllButton(discord.ui.Button):
 
-    def __init__(self, disabled: bool = False):
+    def __init__(self, row: int = 3, disabled: bool = False):
         super().__init__(
             label="Scrap All",
             style=discord.ButtonStyle.red,
-            row=3,
+            row=row,
             disabled=disabled,
         )
 
@@ -416,14 +390,37 @@ class ScrapAllButton(discord.ui.Button):
             await view.scrap_selected(interaction, scrap_all=True)
 
 
+# CRAFTING
+
+
+class ImplementsCrafting(ABC):
+
+    def __init__(self):
+        self.guild_level: int = None
+
+    @abstractmethod
+    async def craft_selected(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+    def add_craft_button(self, row: int = 3, disabled: bool = True):
+        if (
+            self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.ENCHANTMENTS]
+            or self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.CRAFTING]
+        ):
+            self.add_item(CraftSelectedButton(disabled=disabled, row=row))
+
+
 class CraftSelectedButton(discord.ui.Button):
 
-    def __init__(self, disabled: bool = True):
+    def __init__(self, row: int = 3, disabled: bool = True):
 
         super().__init__(
             label="Enchant",
             style=discord.ButtonStyle.gray,
-            row=3,
+            row=row,
             disabled=disabled,
         )
 
@@ -432,3 +429,115 @@ class CraftSelectedButton(discord.ui.Button):
 
         if await view.interaction_check(interaction):
             await view.craft_selected(interaction)
+
+
+# FORGE
+
+
+class ImplementsForging(ABC):
+
+    def __init__(self):
+        self.guild_level: int = None
+
+    @abstractmethod
+    async def add_to_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+    @abstractmethod
+    async def open_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+    @abstractmethod
+    async def clear_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        pass
+
+    def add_add_to_forge_button(self, disabled: bool = False, row: int = 4):
+        if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_RECIPES]:
+            self.add_item(AddToForgeButton(disabled=disabled, row=row))
+
+    def add_clear_forge_button(self, disabled: bool = False, row: int = 4):
+        if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_RECIPES]:
+            self.add_item(ClearForgeButton(disabled=disabled, row=row))
+
+    def add_forge_status_button(
+        self,
+        current: ForgeInventory,
+        row: int = 4,
+        disabled: bool = False,
+    ):
+        if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_RECIPES]:
+            self.add_item(
+                ForgeStatusButton(current=current, disabled=disabled, row=row)
+            )
+
+
+class AddToForgeButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False, row: int = 4):
+        super().__init__(
+            label="Add to Forge",
+            style=discord.ButtonStyle.gray,
+            row=row,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ImplementsBack = self.view
+
+        if await view.interaction_check(interaction):
+            await view.add_to_forge(interaction)
+
+
+class ClearForgeButton(discord.ui.Button):
+
+    def __init__(self, disabled: bool = False, row: int = 4):
+        super().__init__(
+            label="Clear Forge",
+            style=discord.ButtonStyle.gray,
+            row=row,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ImplementsBack = self.view
+
+        if await view.interaction_check(interaction):
+            await view.clear_forge(interaction)
+
+
+class ForgeStatusButton(discord.ui.Button):
+
+    def __init__(
+        self,
+        current: ForgeInventory,
+        row: int = 4,
+        disabled: bool = False,
+    ):
+        forgeables = []
+        for forgeable in current.items:
+            if forgeable is not None:
+                forgeables.append(forgeable.name)
+
+        label = "/".join(forgeables)
+
+        super().__init__(
+            label=f"Forge: {label}",
+            style=discord.ButtonStyle.grey,
+            row=row,
+            disabled=disabled,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: ImplementsBalance = self.view
+
+        if await view.interaction_check(interaction):
+            await view.open_forge(interaction)

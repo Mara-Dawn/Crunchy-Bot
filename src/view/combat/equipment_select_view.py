@@ -14,24 +14,14 @@ from events.types import UIEventType
 from events.ui_event import UIEvent
 from forge.forgable import ForgeInventory
 from view.combat.elements import (
-    AddToForgeButton,
-    BackButton,
-    ClearForgeButton,
-    CraftSelectedButton,
-    CurrentPageButton,
-    ForgeStatusButton,
     ImplementsBack,
+    ImplementsBalance,
     ImplementsCrafting,
     ImplementsForging,
     ImplementsLocking,
     ImplementsPages,
     ImplementsScrapping,
-    LockButton,
     MenuState,
-    PageButton,
-    ScrapBalanceButton,
-    ScrapSelectedButton,
-    UnlockButton,
 )
 from view.combat.embed import SelectGearHeadEmbed
 from view.combat.forge_menu_view import ForgeMenuState
@@ -47,6 +37,7 @@ class EquipmentSelectView(
     ImplementsScrapping,
     ImplementsCrafting,
     ImplementsForging,
+    ImplementsBalance,
 ):
 
     def __init__(
@@ -289,22 +280,22 @@ class EquipmentSelectView(
             self.add_item(
                 Dropdown(self.display_items, self.selected, equipped, disabled=disabled)
             )
-        self.add_item(PageButton("<", False, disabled=disabled))
+        self.add_page_button("<", False, disabled=disabled)
         self.add_item(SelectButton(disabled=disable_equip))
-        self.add_item(PageButton(">", True, disabled=disabled))
-        self.add_item(CurrentPageButton(page_display))
-        self.add_item(ScrapBalanceButton(self.scrap_balance, row=2))
-        self.add_item(ScrapSelectedButton(disabled=disable_dismantle))
-        self.add_item(CraftSelectedButton(disabled=disable_craft))
-        self.add_item(LockButton(disabled=disable_lock))
-        self.add_item(UnlockButton(disabled=disable_lock))
-        self.add_item(AddToForgeButton(disabled=disable_forge, row=3))
-        self.add_item(BackButton(disabled=disabled))
+        self.add_page_button(">", True, disabled=disabled)
+        self.add_current_page_button(page_display)
+        self.add_scrap_balance_button(self.scrap_balance, row=2)
+        self.add_scrap_selected_button(disabled=disable_dismantle)
+        self.add_craft_button(disabled=disable_craft)
+        self.add_lock_button(disabled=disable_lock)
+        self.add_unlock_button(disabled=disable_lock)
+        self.add_add_to_forge_button(disabled=disable_forge, row=3)
+        self.add_back_button(disabled=disabled)
         if self.forge_inventory is not None and not self.forge_inventory.empty:
-            self.add_item(
-                ForgeStatusButton(current=self.forge_inventory, disabled=disable_forge)
+            self.add_forge_status_button(
+                current=self.forge_inventory, disabled=disable_forge
             )
-            self.add_item(ClearForgeButton(disabled=disable_forge))
+            self.add_clear_forge_button(disabled=disable_forge)
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.WEAPON,
@@ -367,6 +358,8 @@ class EquipmentSelectView(
 
         if None not in [self.scrap_balance, self.gear, self.current]:
             self.loaded = True
+
+        self.guild_level = await self.controller.database.get_guild_level(self.guild_id)
 
         self.filter_items()
         self.current_page = min(self.current_page, (self.page_count - 1))

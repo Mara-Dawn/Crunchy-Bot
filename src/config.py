@@ -1,3 +1,6 @@
+from combat.types import CombatFeature
+
+
 class Config:
 
     # Lootbox Settings
@@ -47,6 +50,62 @@ class Config:
         5: 2.8,
         6: 3.0,
         7: 3.2,
+    }
+
+    LEVEL_UNLOCKS = {
+        1: [
+            CombatFeature.GARDEN_1,
+            CombatFeature.FORGE_RECIPES,
+        ],
+        2: [
+            CombatFeature.SHOP,
+            CombatFeature.FORGE_SCRAP,
+            CombatFeature.MAX_GAMBA_1,
+        ],
+        3: [
+            CombatFeature.CRAFTING,
+            CombatFeature.DAILY_BEANS_1,
+            CombatFeature.GARDEN_2,
+        ],
+        4: [
+            CombatFeature.ENCHANTMENTS,
+            CombatFeature.FORGE_SHOP,
+        ],
+        5: [
+            CombatFeature.GARDEN_3,
+            CombatFeature.DAILY_BEANS_2,
+        ],
+        6: [
+            CombatFeature.MAX_GAMBA_2,
+        ],
+        7: [
+            CombatFeature.GARDEN_4,
+            CombatFeature.DAILY_BEANS_3,
+        ],
+    }
+
+    UNLOCK_LEVELS = {
+        CombatFeature.GARDEN_1: 1,
+        # CombatFeature.FORGE_RECIPES: 1,
+        CombatFeature.FORGE_RECIPES: 9,
+        CombatFeature.SHOP: 2,
+        CombatFeature.FORGE_SCRAP: 2,
+        CombatFeature.MAX_GAMBA_1: 2,
+        # CombatFeature.CRAFTING: 3,
+        CombatFeature.CRAFTING: 9,
+        # CombatFeature.DAILY_BEANS_1: 3,
+        CombatFeature.DAILY_BEANS_1: 9,
+        CombatFeature.GARDEN_2: 3,
+        # CombatFeature.ENCHANTMENTS: 4,
+        CombatFeature.ENCHANTMENTS: 9,
+        CombatFeature.FORGE_SHOP: 4,
+        CombatFeature.GARDEN_3: 5,
+        # CombatFeature.DAILY_BEANS_2: 5,
+        CombatFeature.DAILY_BEANS_2: 9,
+        # CombatFeature.MAX_GAMBA_2: 6,
+        CombatFeature.MAX_GAMBA_2: 9,
+        CombatFeature.GARDEN_4: 7,
+        CombatFeature.DAILY_BEANS_3: 7,
     }
 
     CHARACTER_BASE_INITIATIVE = 10

@@ -8,6 +8,8 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot import CrunchyBot
+from combat.types import CombatFeature
+from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
 from control.event_manager import EventManager
@@ -161,6 +163,15 @@ class Shop(commands.Cog):
         if not await self.__check_enabled(interaction):
             return
         if not await self.__beans_role_check(interaction):
+            return
+
+        guild_level = await self.database.get_guild_level(interaction.guild_id)
+        if guild_level < Config.UNLOCK_LEVELS[CombatFeature.SHOP]:
+            await self.bot.command_response(
+                self.__cog_name__,
+                interaction,
+                "Increase your server level to unlock this feature.",
+            )
             return
 
         log_message = (

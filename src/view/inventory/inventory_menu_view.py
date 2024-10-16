@@ -14,17 +14,11 @@ from forge.forgable import ForgeInventory
 from items.item import Item
 from items.types import ItemState, ItemType, ShopCategory
 from view.combat.elements import (
-    AddToForgeButton,
-    BeansBalanceButton,
-    ClearForgeButton,
-    CurrentPageButton,
-    ForgeStatusButton,
     ImplementsBalance,
     ImplementsForging,
     ImplementsMainMenu,
     ImplementsPages,
     MenuState,
-    PageButton,
 )
 from view.combat.forge_menu_view import ForgeMenuState
 from view.elements import CategoryFilter
@@ -99,7 +93,7 @@ class InventoryMenuView(
         self.clear_items()
 
         self.add_menu(self.state, False, False)
-        self.add_item(BeansBalanceButton(self.inventory.balance))
+        self.add_beans_balance_button(self.inventory.balance)
         disable_forge = disabled
 
         match selected_state:
@@ -123,21 +117,19 @@ class InventoryMenuView(
         self.add_item(CategoryFilter(self.filter, row=1))
         if len(controllable_items) > 0:
             self.add_item(Dropdown(controllable_items, self.selected))
-        self.add_item(PageButton("<", False, row=3))
+        self.add_page_button("<", False, row=3)
         self.add_item(ActionButton(button_action, disabled))
-        self.add_item(PageButton(">", True, row=3))
-        self.add_item(CurrentPageButton(page_display, row=3))
+        self.add_page_button(">", False, row=3)
+        self.add_current_page_button(page_display, row=3)
         self.add_item(SellButton(disabled))
         self.add_item(SellAmountButton(disabled))
         self.add_item(SellAllButton(disabled))
-        self.add_item(AddToForgeButton(disabled=disable_forge, row=4))
+        self.add_add_to_forge_button(disabled=disable_forge, row=4)
         if self.forge_inventory is not None and not self.forge_inventory.empty:
-            self.add_item(
-                ForgeStatusButton(
-                    current=self.forge_inventory, row=3, disabled=disabled
-                )
+            self.add_forge_status_button(
+                current=self.forge_inventory, row=3, disabled=disabled
             )
-            self.add_item(ClearForgeButton(disabled=disabled))
+            self.add_clear_forge_button(disabled=disabled)
 
     async def refresh_ui(
         self,
@@ -155,6 +147,8 @@ class InventoryMenuView(
             )
 
             self.current_page = min(self.current_page, (self.page_count - 1))
+
+        self.guild_level = await self.controller.database.get_guild_level(self.guild_id)
 
         self.filter_items()
 

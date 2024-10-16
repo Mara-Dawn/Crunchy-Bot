@@ -18,21 +18,13 @@ from events.types import UIEventType
 from events.ui_event import UIEvent
 from forge.forgable import ForgeInventory
 from view.combat.elements import (
-    AddToForgeButton,
-    BackButton,
-    ClearForgeButton,
-    CurrentPageButton,
-    ForgeStatusButton,
     ImplementsBack,
+    ImplementsBalance,
     ImplementsForging,
     ImplementsLocking,
     ImplementsPages,
     ImplementsScrapping,
     MenuState,
-    PageButton,
-    ScrapAllButton,
-    ScrapAmountButton,
-    ScrapBalanceButton,
 )
 from view.combat.embed import ManageSkillHeadEmbed, SelectSkillHeadEmbed
 from view.combat.forge_menu_view import ForgeMenuState
@@ -80,6 +72,7 @@ class SkillSelectView(
     ImplementsLocking,
     ImplementsScrapping,
     ImplementsForging,
+    ImplementsBalance,
 ):
 
     def __init__(
@@ -448,11 +441,11 @@ class SkillSelectView(
                                 row=slot + 1,
                             )
                         )
-                self.add_item(PageButton("<", False, row=0))
+                self.add_page_button("<", False, row=0)
                 self.add_item(SelectButton(disabled=False, row=0))
-                self.add_item(PageButton(">", True, row=0))
-                self.add_item(CurrentPageButton(page_display, row=0))
-                self.add_item(BackButton(row=0))
+                self.add_page_button(">", True, row=0)
+                self.add_current_page_button(page_display, row=0)
+                self.add_back_button(row=0)
 
             case SkillViewState.MANAGE:
                 if len(self.selected) > 1:
@@ -481,22 +474,20 @@ class SkillSelectView(
                         )
                     )
 
-                self.add_item(PageButton("<", False))
+                self.add_page_button("<", False)
                 self.add_item(SelectSingleButton(disabled=disable_equip))
-                self.add_item(PageButton(">", True))
-                self.add_item(CurrentPageButton(page_display))
-                self.add_item(ScrapBalanceButton(self.scrap_balance, row=2))
-                self.add_item(ScrapAllButton(disabled=disable_dismantle))
-                self.add_item(ScrapAmountButton(disabled=disable_dismantle))
-                self.add_item(AddToForgeButton(disabled=disable_forge, row=3))
-                self.add_item(BackButton())
+                self.add_page_button(">", True)
+                self.add_current_page_button(page_display)
+                self.add_scrap_balance_button(self.scrap_balance, row=2)
+                self.add_scrap_all_button(disabled=disable_dismantle)
+                self.add_scrap_amount_button(disabled=disable_dismantle)
+                self.add_add_to_forge_button(disabled=disable_forge, row=3)
+                self.add_back_button()
                 if self.forge_inventory is not None and not self.forge_inventory.empty:
-                    self.add_item(
-                        ForgeStatusButton(
-                            current=self.forge_inventory, disabled=disable_forge
-                        )
+                    self.add_forge_status_button(
+                        current=self.forge_inventory, disabled=disable_forge
                     )
-                    self.add_item(ClearForgeButton(disabled=disable_forge))
+                    self.add_clear_forge_button(disabled=disable_forge)
 
             case SkillViewState.SELECT_MODE:
                 if len(self.selected) > 1:
@@ -515,13 +506,13 @@ class SkillSelectView(
                         )
                     )
 
-                self.add_item(PageButton("<", False, disabled=True, row=1))
+                self.add_page_button("<", False, disabled=True, row=1)
                 self.add_item(
                     SelectSingleButton(label="Select a Slot:", disabled=True, row=1)
                 )
-                self.add_item(PageButton(">", True, disabled=True, row=1))
-                self.add_item(CurrentPageButton(page_display, row=1))
-                self.add_item(ScrapBalanceButton(self.scrap_balance, row=1))
+                self.add_page_button(">", True, disabled=True, row=1)
+                self.add_current_page_button(page_display, row=1)
+                self.add_scrap_balance_button(self.scrap_balance, row=1)
 
                 for slot, skill_data in self.equipped_skill_slot_data.items():
                     self.add_item(
@@ -560,6 +551,8 @@ class SkillSelectView(
 
         if self.selected is None or len(self.selected) <= 0:
             disabled = True
+
+        self.guild_level = await self.controller.database.get_guild_level(self.guild_id)
 
         if no_embeds:
             await self.refresh_elements(disabled)
