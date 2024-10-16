@@ -1010,7 +1010,7 @@ class Combat(commands.Cog):
             )
             return
 
-        await self.encounter_manager.refresh_encounter_thread(encounter.id)
+        await self.encounter_manager.reload_encounter(encounter.id)
 
         await self.bot.command_response(
             self.__cog_name__,

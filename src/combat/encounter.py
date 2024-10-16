@@ -262,6 +262,7 @@ class EncounterContext:
             for event in self.encounter_events:
                 if event.encounter_event_type == EncounterEventType.INITIATE:
                     self._initiated = True
+                    return self._initiated
             self._initiated = False
         return self._initiated
 
@@ -271,6 +272,7 @@ class EncounterContext:
             for event in self.encounter_events:
                 if event.encounter_event_type == EncounterEventType.END:
                     self._concluded = True
+                    return self._concluded
                 self._concluded = False
         return self._concluded
 

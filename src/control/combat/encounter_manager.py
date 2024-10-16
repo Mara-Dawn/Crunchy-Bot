@@ -9,6 +9,7 @@ from combat.encounter import Encounter, EncounterContext
 from combat.enemies import *  # noqa: F403
 from combat.enemies.types import EnemyType
 from combat.engine.engine import Engine
+from combat.engine.types import StateType
 from combat.skills.skill import CharacterSkill
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
@@ -226,3 +227,37 @@ class EncounterManager(Service):
             CombatEventType.MEMBER_TURN_SKIP,
         )
         await self.controller.dispatch_event(event)
+
+    async def reload_encounter(self, encounter_id: int):
+        encounter = await self.database.get_encounter_by_encounter_id(encounter_id)
+
+        for engine in self.engine_cache:
+            if engine.context.encounter.id == encounter.id:
+                self.engine_cache.remove(engine)
+                break
+
+        context = await self.context_loader.load_encounter_context(encounter_id)
+        engine = Engine(self.controller, context)
+
+        if context.initiated:
+            context._current_actor = context.last_actor
+            if context._current_actor is not None:
+                context.refresh_initiative()
+                context._current_initiative.rotate(-1)
+                context._current_actor = context._current_initiative[0]
+
+            if not context.current_actor.is_enemy:
+                await self.discord.delete_active_player_input(context.thread)
+
+            engine.current_state = StateType.TURN_END
+        elif context.concluded:
+            return
+        else:
+            if context.min_participants > len(context.combatants):
+                engine.current_state = StateType.FILLING
+            else:
+                engine.current_state = StateType.COUNTDOWN
+
+        engine.state = engine.states[engine.current_state]
+        self.engine_cache.append(engine)
+        await engine.run()

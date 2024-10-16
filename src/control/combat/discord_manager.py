@@ -13,7 +13,6 @@ from combat.encounter import Encounter, EncounterContext
 from combat.enemies.types import EnemyType
 from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
-from control.combat.context_loader import ContextLoader
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.logger import BotLogger
@@ -44,7 +43,6 @@ class DiscordManager(Service):
             CombatEmbedManager
         )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
-        self.context_loader: ContextLoader = self.controller.get_service(ContextLoader)
         self.log_name = "Discord"
 
     async def listen_for_event(self, event: BotEvent):
@@ -175,6 +173,21 @@ class DiscordManager(Service):
                         await message.delete()
                     break
 
+    async def delete_active_player_input(self, thread: discord.Thread | None):
+        if thread is None:
+            return
+        async for message in thread.history(limit=100):
+            if (  # noqa: SIM102
+                len(message.embeds) > 0 and message.author.id == self.bot.user.id
+            ):
+                if len(message.content) > 0:
+                    view = discord.ui.View.from_message(message)
+                    if view is not None:
+                        self.controller.detach_view_by_id(view.id)
+                    with contextlib.suppress(discord.NotFound):
+                        await message.delete()
+                    break
+
     async def get_previous_enemy_info(self, thread: discord.Thread):
         async for message in thread.history(limit=100):
             if len(message.embeds) == 1 and message.author.id == self.bot.user.id:
@@ -226,7 +239,9 @@ class DiscordManager(Service):
 
             await self.refresh_combat_messages(guild_id)
 
-    async def get_previous_round_message(self, thread: discord.Thread):
+    async def get_previous_round_message(
+        self, thread: discord.Thread
+    ) -> discord.Message:
         async for message in thread.history(limit=100):
             if len(message.embeds) >= 1 and message.author.id == self.bot.user.id:
                 embed = message.embeds[0]
