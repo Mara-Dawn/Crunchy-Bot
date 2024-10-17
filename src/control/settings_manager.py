@@ -1,5 +1,7 @@
 from discord.ext import commands
 
+from combat.types import UnlockableFeature
+from config import Config
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -83,6 +85,22 @@ class SettingsManager(Service):
 
     MISC_SETTINGS_KEY = "misc"
     MANUAL_NAME_COLOR_ENABLED_KEY = "manuial_name_color_enabled"
+
+    DAILY_BEANS_SCALING = {
+        UnlockableFeature.DAILY_BEANS_1: 2,
+        UnlockableFeature.DAILY_BEANS_2: 4,
+        UnlockableFeature.DAILY_BEANS_3: 8,
+    }
+
+    MAX_GAMBA_SCALING = {
+        UnlockableFeature.MAX_GAMBA_1: 2,
+        UnlockableFeature.MAX_GAMBA_2: 4,
+    }
+
+    LOTTERY_SCALING = {
+        UnlockableFeature.LOTTERY_1: 2,
+        UnlockableFeature.LOTTERY_2: 4,
+    }
 
     def __init__(
         self,
@@ -211,7 +229,7 @@ class SettingsManager(Service):
             self.BEANS_GAMBA_MIN_KEY, 1, "Minimum amount of beans that can be gambled"
         )
         beans_settings.add_setting(
-            self.BEANS_GAMBA_MAX_KEY, 100, "Maximum amount of beans that can be gambled"
+            self.BEANS_GAMBA_MAX_KEY, 50, "Maximum amount of beans that can be gambled"
         )
         beans_settings.add_setting(
             self.BEANS_BONUS_CARD_AMOUNT_10_KEY, 50, "Daily bonus beans after 10 gambas"
@@ -329,6 +347,16 @@ class SettingsManager(Service):
 
     async def listen_for_event(self, event: BotEvent) -> None:
         pass
+
+    async def get_unlocked_features(self, guild_id: int) -> list[UnlockableFeature]:
+        guild_level = await self.database.get_guild_level(guild_id)
+
+        features = []
+        for feature, level in Config.UNLOCK_LEVELS.items():
+            if level <= guild_level:
+                features.append(feature)
+
+        return features
 
     async def update_setting(
         self, guild: int, subsetting_key: str, key: str, value
@@ -779,19 +807,33 @@ class SettingsManager(Service):
         )
 
     async def get_beans_daily_min(self, guild: int) -> int:
-        return await self.get_setting(
+        base = await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN_KEY
         )
+        unlocked = await self.get_unlocked_features(guild)
+        unlocked_daily_beans = [
+            value for key, value in self.DAILY_BEANS_SCALING.items() if key in unlocked
+        ]
+        multiplier = 1 if len(unlocked_daily_beans) == 0 else max(unlocked_daily_beans)
+
+        return base * multiplier
 
     async def set_beans_daily_min(self, guild: int, amount: int) -> None:
-        await self.update_setting(
+        return self.update_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MIN_KEY, amount
         )
 
     async def get_beans_daily_max(self, guild: int) -> int:
-        return await self.get_setting(
+        base = await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_DAILY_MAX_KEY
         )
+        unlocked = await self.get_unlocked_features(guild)
+        unlocked_daily_beans = [
+            value for key, value in self.DAILY_BEANS_SCALING.items() if key in unlocked
+        ]
+        multiplier = 1 if len(unlocked_daily_beans) == 0 else max(unlocked_daily_beans)
+
+        return base * multiplier
 
     async def set_beans_daily_max(self, guild: int, amount: int) -> None:
         await self.update_setting(
@@ -853,9 +895,15 @@ class SettingsManager(Service):
         )
 
     async def get_beans_gamba_max(self, guild: int) -> int:
-        return await self.get_setting(
+        base = await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_GAMBA_MAX_KEY
         )
+        unlocked = await self.get_unlocked_features(guild)
+        unlocked_daily_beans = [
+            value for key, value in self.MAX_GAMBA_SCALING.items() if key in unlocked
+        ]
+        multiplier = 1 if len(unlocked_daily_beans) == 0 else max(unlocked_daily_beans)
+        return base * multiplier
 
     async def set_beans_gamba_max(self, guild: int, amount: int) -> None:
         await self.update_setting(
@@ -863,9 +911,15 @@ class SettingsManager(Service):
         )
 
     async def get_beans_bonus_amount_10(self, guild: int) -> int:
-        return await self.get_setting(
+        base = await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_10_KEY
         )
+        unlocked = await self.get_unlocked_features(guild)
+        unlocked_daily_beans = [
+            value for key, value in self.MAX_GAMBA_SCALING.items() if key in unlocked
+        ]
+        multiplier = 1 if len(unlocked_daily_beans) == 0 else max(unlocked_daily_beans)
+        return base * multiplier
 
     async def set_beans_bonus_amount_10(self, guild: int, amount: int) -> None:
         await self.update_setting(
@@ -876,9 +930,15 @@ class SettingsManager(Service):
         )
 
     async def get_beans_bonus_amount_25(self, guild: int) -> int:
-        return await self.get_setting(
+        base = await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_BONUS_CARD_AMOUNT_25_KEY
         )
+        unlocked = await self.get_unlocked_features(guild)
+        unlocked_daily_beans = [
+            value for key, value in self.MAX_GAMBA_SCALING.items() if key in unlocked
+        ]
+        multiplier = 1 if len(unlocked_daily_beans) == 0 else max(unlocked_daily_beans)
+        return base * multiplier
 
     async def set_beans_bonus_amount_25(self, guild: int, amount: int) -> None:
         await self.update_setting(
@@ -889,9 +949,15 @@ class SettingsManager(Service):
         )
 
     async def get_beans_lottery_base_amount(self, guild: int) -> int:
-        return await self.get_setting(
+        base = await self.get_setting(
             guild, self.BEANS_SUBSETTINGS_KEY, self.BEANS_LOTTERY_BASE_AMOUNT_KEY
         )
+        unlocked = await self.get_unlocked_features(guild)
+        unlocked_daily_beans = [
+            value for key, value in self.LOTTERY_SCALING.items() if key in unlocked
+        ]
+        multiplier = 1 if len(unlocked_daily_beans) == 0 else max(unlocked_daily_beans)
+        return base * multiplier
 
     async def set_beans_lottery_base_amount(self, guild: int, amount: int) -> None:
         await self.update_setting(

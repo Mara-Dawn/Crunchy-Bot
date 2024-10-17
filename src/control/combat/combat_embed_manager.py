@@ -175,8 +175,8 @@ class CombatEmbedManager(Service):
 
         spacing = ""
         content_length = len(value)
-        if content_length < (max_width + 20):
-            spacing = " " + "\u00a0" * max_width
+        if content_length < max_width:
+            spacing = " " + "\u00a0" * (max_width - content_length)
 
         embed_content = "```\n" + value + spacing + "```"
         embed.add_field(name=name, value=embed_content, inline=False)
@@ -413,9 +413,7 @@ class CombatEmbedManager(Service):
 
         for skill in actor.skills:
             embeds.append(
-                (await self.skill_manager.get_skill_data(actor, skill)).get_embed(
-                    show_data=True
-                )
+                (await self.skill_manager.get_skill_data(actor, skill)).get_embed()
             )
 
         return embeds

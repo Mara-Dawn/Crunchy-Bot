@@ -1,14 +1,15 @@
 import discord
+from discord.ext import commands
+
 from config import Config
 from datalayer.inventory import UserInventory
-from discord.ext import commands
 from items.item import Item
 from items.types import ItemState, ItemType
 
 
 class InventoryEmbed(discord.Embed):
 
-    ITEMS_PER_PAGE = 10
+    ITEMS_PER_PAGE = 5
 
     def __init__(
         self,

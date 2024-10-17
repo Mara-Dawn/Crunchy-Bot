@@ -1,5 +1,6 @@
 import datetime
 
+from combat.types import UnlockableFeature
 from datalayer.types import PlantType, PlotState
 from events.garden_event import GardenEvent
 from events.types import GardenEventType
@@ -586,7 +587,13 @@ class Plot:
 
 
 class UserGarden:
-    MAX_PLOTS = 9
+    MAX_PLOTS = 12
+    PLOT_UNLOCKS = {
+        UnlockableFeature.GARDEN_1: 3,
+        UnlockableFeature.GARDEN_2: 6,
+        UnlockableFeature.GARDEN_3: 9,
+        UnlockableFeature.GARDEN_4: 12,
+    }
     PLOT_ORDER = [
         (0, 0),
         (1, 0),
@@ -597,6 +604,9 @@ class UserGarden:
         (0, 2),
         (1, 2),
         (2, 2),
+        (3, 0),
+        (3, 1),
+        (3, 2),
     ]
 
     def __init__(

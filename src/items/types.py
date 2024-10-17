@@ -1,7 +1,9 @@
 from enum import Enum
 
+from forge.types import ForgeableType
 
-class ItemType(str, Enum):
+
+class ItemType(ForgeableType, str, Enum):
     AUTO_CRIT = "AutoCrit"
     FART_BOOST = "FartBoost"
     ULTRA_FART_BOOST = "UltraFartBoost"

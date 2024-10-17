@@ -551,7 +551,7 @@ class ItemManager(Service):
         match item_type:
             case ItemType.SPOOK_BEAN:
                 item = await self.get_item(guild.id, item_type)
-                embed = item.get_embed(self.bot, show_price=False)
+                embed = item.get_embed(self.bot, show_title=False, show_price=False)
 
                 view = ShopUserSelectView(self.controller, interaction, item, None)
                 await view.init()
@@ -573,7 +573,7 @@ class ItemManager(Service):
                 | ItemType.ENCOUNTER_KEY_6
             ):
                 item = await self.get_item(guild.id, item_type)
-                embed = item.get_embed(self.bot, show_price=False)
+                embed = item.get_embed(self.bot, show_title=False, show_price=False)
 
                 view = InventoryConfirmView(self.controller, interaction, item, None)
 

@@ -1,6 +1,7 @@
 import discord
-from datalayer.garden import UserGarden
 from discord.ext import commands
+
+from datalayer.garden import UserGarden
 
 
 class GardenEmbed(discord.Embed):
@@ -41,9 +42,8 @@ class GardenEmbed(discord.Embed):
         self.bot = bot
 
     def get_garden_content(self) -> str:
-        message = ""
+        rows = [[], [], [], [], []]
         for plot in self.garden.plots:
-            if plot.x == 0:
-                message += "\n"
-            message += str(self.bot.get_emoji(plot.get_status_emoji()))
-        return message
+            rows[plot.y].append(str(self.bot.get_emoji(plot.get_status_emoji())))
+        rows_text = ["".join(row) for row in rows]
+        return "\n".join(rows_text)

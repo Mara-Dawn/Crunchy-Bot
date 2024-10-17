@@ -8,6 +8,7 @@ from discord.ext import commands
 from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
+from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.garden import Plot, UserGarden
@@ -38,6 +39,7 @@ class GardenViewController(ViewController):
         super().__init__(bot, logger, database)
         self.controller = controller
         self.item_manager: ItemManager = controller.get_service(ItemManager)
+        self.settings_manager: SettingsManager = controller.get_service(SettingsManager)
 
     async def listen_for_event(self, event: BotEvent) -> None:
         member_id = None
@@ -454,7 +456,20 @@ class GardenViewController(ViewController):
         await self.__harvest_plant(interaction, plot.plant.type)
 
         garden = await self.database.get_user_garden(guild_id, user_id)
-        garden = await self.database.add_garden_plot(garden)
+
+        unlocked_features = await self.settings_manager.get_unlocked_features(guild_id)
+
+        max_plots = max(
+            [
+                value
+                for key, value in UserGarden.PLOT_UNLOCKS.items()
+                if key in unlocked_features
+            ]
+        )
+        plot_count = len(garden.plots)
+        if plot_count < max_plots:
+            garden = await self.database.add_garden_plot(garden)
+
         event = UIEvent(
             UIEventType.GARDEN_REFRESH,
             garden,

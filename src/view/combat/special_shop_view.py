@@ -10,15 +10,15 @@ from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.combat.elements import (
-    BackButton,
     ImplementsBack,
-    ScrapBalanceButton,
+    ImplementsBalance,
+    MenuState,
 )
 from view.combat.special_shop_embed import SpecialShopHeadEmbed
 from view.view_menu import ViewMenu
 
 
-class SpecialShopView(ViewMenu, ImplementsBack):
+class SpecialShopView(ViewMenu, ImplementsBack, ImplementsBalance):
 
     def __init__(
         self,
@@ -83,8 +83,8 @@ class SpecialShopView(ViewMenu, ImplementsBack):
     ):
         await interaction.response.defer()
         event = UIEvent(
-            UIEventType.FORGE_OPEN_OVERVIEW,
-            interaction,
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.FORGE, False),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -104,9 +104,9 @@ class SpecialShopView(ViewMenu, ImplementsBack):
         if self.selected is not None:
             selected_value = self.item_values[self.selected.id]
 
-        self.add_item(BackButton(disabled=disabled, row=2))
+        self.add_back_button(disabled=disabled, row=2)
         self.add_item(SelectButton(current_value=selected_value, disabled=disable_buy))
-        self.add_item(ScrapBalanceButton(self.scrap_balance))
+        self.add_scrap_balance_button(self.scrap_balance, row=2)
 
     async def refresh_ui(
         self,
@@ -128,6 +128,8 @@ class SpecialShopView(ViewMenu, ImplementsBack):
 
         if self.scrap_balance is not None:
             self.loaded = True
+
+        self.guild_level = await self.controller.database.get_guild_level(self.guild_id)
 
         self.refresh_elements(disabled)
 

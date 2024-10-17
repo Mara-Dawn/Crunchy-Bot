@@ -54,7 +54,7 @@ class BlindHandler(StatusEffectHandler):
         if roll < miss_chance:
             outcome.modifier = 0
             embed_data_collection = EmbedDataCollection()
-            description = f"{handler_context.target.name} misses their attack!"
+            description = f"{handler_context.source.name} misses their attack!"
             embed_data = EffectEmbedData(
                 self.status_effect, self.status_effect.title, description
             )

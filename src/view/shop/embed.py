@@ -1,6 +1,7 @@
 import discord
-from config import Config
 from discord.ext import commands
+
+from config import Config
 from items.item import Item
 from items.types import ItemType
 

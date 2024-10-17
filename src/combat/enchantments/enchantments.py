@@ -15,6 +15,7 @@ from combat.gear.types import EquipmentSlot, Rarity
 from combat.skills.skill import BaseSkill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillEffect, SkillType
+from view.object.types import ValueType
 
 # Enchantments used for internal logic only
 
@@ -184,14 +185,13 @@ class SkillStacksProxy(BaseEffectEnchantment):
             stacks=None,
             droppable=True,
             value=1,
-            cooldown=0,
             skill_effect=SkillEffect.NOTHING,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.SKILL_CHARGE],
             consumed=[],
             emoji="",
             value_label="Charges",
-            int_value=True,
+            value_type=ValueType.INT,
         )
 
 
@@ -319,7 +319,6 @@ class MagDamageProc(BaseEffectEnchantment):
             droppable=True,
             value=1.5,
             proc_chance=0.25,
-            cooldown=0,
             weight=20,
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
             image_url="https://i.imgur.com/B6TuHg3.png",
@@ -344,6 +343,7 @@ class CleansingHeal(BaseEffectEnchantment):
             value=10,
             cooldown=0,
             weight=15,
+            value_type=ValueType.PERCENTAGE,
             skill_effect=SkillEffect.BUFF,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.ON_ATTACK],
@@ -367,6 +367,7 @@ class BallReset(BaseEffectEnchantment):
             value=10,
             cooldown=0,
             weight=15,
+            value_type=ValueType.NONE,
             skill_effect=SkillEffect.CHANCE,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.POST_SKILL],
@@ -376,14 +377,6 @@ class BallReset(BaseEffectEnchantment):
 
 
 class ExtraMissile(BaseEffectEnchantment):
-
-    RARITY_VALUE_SCALING = {
-        Rarity.DEFAULT: 1,
-        Rarity.COMMON: 1,
-        Rarity.UNCOMMON: 1,
-        Rarity.RARE: 1,
-        Rarity.LEGENDARY: 1,
-    }
 
     def __init__(self):
         super().__init__(
@@ -396,15 +389,38 @@ class ExtraMissile(BaseEffectEnchantment):
             stacks=10,
             droppable=True,
             value=1,
-            cooldown=0,
             weight=10,
             value_label="Missiles:",
-            rarities=[Rarity.LEGENDARY],
             skill_effect=SkillEffect.NOTHING,
-            int_value=True,
+            value_type=ValueType.INT,
             image_url="https://i.imgur.com/B6TuHg3.png",
             trigger=[EffectTrigger.ON_ATTACK, EffectTrigger.SKILL_HITS],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
-            custom_scaling=self.RARITY_VALUE_SCALING,
+            custom_value_scaling=self.NO_SCALING,
             emoji="",
+        )
+
+
+class ExtraGore(BaseEffectEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            name="Extra Gore",
+            min_level=4,
+            enchantment_type=EnchantmentType.EXTRA_GORE,
+            description="Bleeds you inflict will apply an extra stack.",
+            information="",
+            slot=EquipmentSlot.WEAPON,
+            stacks=10,
+            droppable=True,
+            value=1,
+            weight=25,
+            skill_effect=SkillEffect.NOTHING,
+            value_label="Stacks",
+            value_type=ValueType.INT,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+            trigger=[EffectTrigger.ON_STATUS_APPLICATION],
+            consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
+            custom_value_scaling=self.NO_SCALING,
+            emoji="🩸",
         )

@@ -4,6 +4,7 @@ from combat.encounter import Encounter, EncounterContext
 from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
+from control.combat.discord_manager import DiscordManager
 from control.combat.effect_manager import CombatEffectManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
@@ -14,7 +15,7 @@ from events.bot_event import BotEvent
 from events.combat_event import CombatEvent
 from events.encounter_event import EncounterEvent
 from events.status_effect_event import StatusEffectEvent
-from events.types import EncounterEventType, EventType
+from events.types import CombatEventType, EncounterEventType, EventType
 
 
 class ContextLoader(Service):
@@ -38,6 +39,7 @@ class ContextLoader(Service):
             CombatEffectManager
         )
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
+        self.discord: DiscordManager = self.controller.get_service(DiscordManager)
         self.log_name = "ContextLoader"
 
         self.context_cache: dict[int, EncounterContext] = {}
@@ -166,12 +168,45 @@ class ContextLoader(Service):
             thread=thread,
         )
 
+        for event in encounter_events:
+            match event.encounter_event_type:
+                case EncounterEventType.NEW_ROUND:
+                    context.round_event_id_cutoff = event.id
+                    break
+
+        for event in combat_events:
+            if (
+                context.turn_event_id_cutoff is not None
+                and context.current_actor is not None
+            ):
+                break
+            match event.combat_event_type:
+                case CombatEventType.MEMBER_END_TURN | CombatEventType.ENEMY_END_TURN:
+                    context.turn_event_id_cutoff = event.id
+                    context._last_actor = event.id
+
+        if thread is not None:
+            message = await self.discord.get_previous_round_message(thread)
+            if message is not None:
+                context.current_turn_embed = message.embeds[-1]
+
         outcome = await self.effect_manager.on_attribute(context, context.opponent)
         context.opponent.round_modifier = outcome
 
         for combatant in context.combatants:
             outcome = await self.effect_manager.on_attribute(context, combatant)
             combatant.round_modifier = outcome
+
+        guild_level = await self.database.get_guild_level(encounter.guild_id)
+        min_encounter_size = enemy.min_encounter_scale
+        if encounter.enemy_level > 1 and encounter.enemy_level == guild_level:
+            min_encounter_size = max(
+                min_encounter_size,
+                int(enemy.max_players * Config.ENCOUNTER_MAX_LVL_SIZE_SCALING),
+            )
+            context.max_lvl = True
+
+        context.min_participants = min_encounter_size
 
         self.context_cache[encounter_id] = context
         return self.context_cache[encounter_id]

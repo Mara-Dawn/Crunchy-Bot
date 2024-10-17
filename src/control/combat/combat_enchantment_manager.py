@@ -10,6 +10,7 @@ from combat.effects.types import EffectTrigger
 from combat.enchantments.enchantment import (
     CraftDisplayWrapper,
     EffectEnchantment,
+    Enchantment,
     GearEnchantment,
 )
 from combat.enchantments.enchantment_handler import (
@@ -18,7 +19,6 @@ from combat.enchantments.enchantment_handler import (
 )
 from combat.enchantments.types import EnchantmentEffect, EnchantmentType
 from combat.encounter import EncounterContext
-from combat.gear.gear import Enchantment
 from combat.gear.types import CharacterAttribute, GearModifierType
 from combat.skills.skill import SkillInstance
 from combat.skills.skills import *  # noqa: F403
@@ -206,10 +206,19 @@ class CombatEnchantmentManager(Service):
         handler_context: HandlerContext,
     ) -> EffectOutcome:
 
-        triggered_enchantments = await self.enchantment_trigger(
+        triggered_source_enchantments = await self.enchantment_trigger(
+            handler_context.context,
+            handler_context.source,
+            EffectTrigger.ON_STATUS_APPLICATION,
+        )
+
+        triggered_target_enchantments = await self.enchantment_trigger(
             handler_context.context,
             handler_context.target,
             EffectTrigger.ON_STATUS_APPLICATION,
+        )
+        triggered_enchantments = (
+            triggered_source_enchantments + triggered_target_enchantments
         )
 
         if len(triggered_enchantments) <= 0:

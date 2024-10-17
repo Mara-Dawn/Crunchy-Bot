@@ -125,6 +125,7 @@ class UIEventType(str, Enum):
     STOP_INTERACTIONS = "stop_interactions"
     RESUME_INTERACTIONS = "resume_interactions"
     SHOW_INVENTORY = "show_inventory"
+    SHOW_SHOP = "show_shop"
     SHOP_BUY = "shop_buy"
     SHOP_CHANGED = "shop_changed"
     SHOP_REFRESH = "refresh_shop"
@@ -207,10 +208,11 @@ class UIEventType(str, Enum):
 
     CLAIM_SPECIAL_DROP = "claim_special_drop"
 
+    MAIN_MENU_STATE_CHANGE = "main_menu_state_change"
+
     GEAR_EQUIP = "gear_equip"
     GEAR_DISMANTLE = "gear_dismantle"
-    GEAR_OPEN_SECELT = "gear_open_select"
-    GEAR_OPEN_OVERVIEW = "gear_open_overview"
+    GEAR_OPEN_SELECT = "gear_open_select"
     GEAR_LOCK = "gear_lock"
     GEAR_UNLOCK = "gear_unlock"
 
@@ -221,9 +223,11 @@ class UIEventType(str, Enum):
 
     FORGE_VIEW = "forge_view"
     FORGE_USE = "forge_use"
+    FORGE_COMBINE = "forge_combine"
     FORGE_OPEN_SHOP = "forge_open_select"
-    FORGE_OPEN_OVERVIEW = "forge_open_overview"
     FORGE_SHOP_BUY = "forge_shop_buy"
+    FORGE_ADD_ITEM = "forge_add_item"
+    FORGE_CLEAR = "forge_clear"
 
     ENCHANTMENTS_OPEN = "enchantments_open"
     ENCHANTMENTS_APPLY = "enchantments_apply"

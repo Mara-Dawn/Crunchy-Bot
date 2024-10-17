@@ -65,7 +65,7 @@ class CombatActorManager(Service):
         for event in reversed(combat_events):
             if event.target_id != actor.id:
                 continue
-            health = await self.get_event_health_delta(event)
+            health += await self.get_event_health_delta(event)
             health = max(0, min(health, actor.max_hp))
 
         return int(health)

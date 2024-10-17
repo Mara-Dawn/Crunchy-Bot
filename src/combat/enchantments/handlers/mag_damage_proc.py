@@ -41,7 +41,7 @@ class MagDamageProcHandler(EnchantmentEffectHandler):
         if enchantment_type != self.base_enchantment.enchantment_type:
             return outcome
 
-        if handler_context.skill.base_skill.skill_effect not in SkillEffect.damaging:
+        if not handler_context.skill.base_skill.skill_effect.damaging:
             outcome.flags = [OutcomeFlag.NO_CONSUME]
             return outcome
 

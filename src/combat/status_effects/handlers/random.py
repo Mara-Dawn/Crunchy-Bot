@@ -7,7 +7,7 @@ from combat.status_effects.status_effects import Random
 from combat.status_effects.status_handler import StatusEffectHandler
 from combat.status_effects.types import StatusEffectType
 from config import Config
-from control.combat.status_effect_manager import CombatStatusEffectManager
+from control.combat.effect_manager import CombatEffectManager
 from control.controller import Controller
 
 
@@ -17,8 +17,8 @@ class RandomHandler(StatusEffectHandler):
         StatusEffectHandler.__init__(
             self, controller=controller, status_effect=Random()
         )
-        self.status_effect_manager: CombatStatusEffectManager = (
-            self.controller.get_service(CombatStatusEffectManager)
+        self.effect_manager: CombatEffectManager = self.controller.get_service(
+            CombatEffectManager
         )
 
     async def handle(
@@ -53,7 +53,7 @@ class RandomHandler(StatusEffectHandler):
             case StatusEffectType.PROTECTION:
                 application_value = 15
 
-        application_outcome = await self.status_effect_manager.apply_status(
+        application_outcome = await self.effect_manager.apply_status(
             handler_context.context,
             handler_context.source,
             handler_context.target,

@@ -16,6 +16,7 @@ from control.combat.combat_gear_manager import CombatGearManager
 from control.combat.encounter_manager import EncounterManager
 from control.controller import Controller
 from control.event_manager import EventManager
+from control.forge_manager import ForgeManager
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
 from datalayer.database import Database
@@ -24,15 +25,16 @@ from events.equipment_event import EquipmentEvent
 from events.inventory_event import InventoryEvent
 from events.types import EquipmentEventType, EventType, UIEventType
 from events.ui_event import UIEvent
+from forge.forgable import ForgeInventory
+from forge.recipe import RecipeHandler
 from items.types import ItemType
+from view.combat.elements import MenuState
 from view.combat.embed import (
-    EquipmentHeadEmbed,
     SelectGearHeadEmbed,
     SelectSkillHeadEmbed,
 )
 from view.combat.enchantment_view import EnchantmentView
 from view.combat.equipment_select_view import EquipmentSelectView
-from view.combat.equipment_view import EquipmentView, EquipmentViewState
 from view.combat.skill_select_view import SkillSelectView, SkillViewState
 from view.combat.special_shop_view import SpecialShopView
 
@@ -61,6 +63,7 @@ class EquipmentViewController(ViewController):
         self.gear_manager: CombatGearManager = self.controller.get_service(
             CombatGearManager
         )
+        self.forge_manager: ForgeManager = self.controller.get_service(ForgeManager)
         self.log_name = "Equipment"
 
     async def listen_for_event(self, event: BotEvent) -> None:
@@ -91,14 +94,10 @@ class EquipmentViewController(ViewController):
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
-            case UIEventType.GEAR_OPEN_SECELT:
+            case UIEventType.GEAR_OPEN_SELECT:
                 interaction = event.payload[0]
                 slot = event.payload[1]
                 await self.open_gear_select(interaction, slot, event.view_id)
-            case UIEventType.GEAR_OPEN_OVERVIEW:
-                interaction = event.payload[0]
-                state = event.payload[1]
-                await self.open_gear_overview(interaction, event.view_id, state)
             case UIEventType.GEAR_EQUIP:
                 interaction = event.payload[0]
                 selected = event.payload[1]
@@ -142,9 +141,6 @@ class EquipmentViewController(ViewController):
                 level = event.payload[1]
                 slot = event.payload[2]
                 await self.use_forge(interaction, level, slot)
-            case UIEventType.FORGE_OPEN_OVERVIEW:
-                interaction = event.payload
-                await self.open_gear_overview(interaction, event.view_id)
             case UIEventType.FORGE_OPEN_SHOP:
                 interaction = event.payload
                 await self.open_forge_shop(interaction, event.view_id)
@@ -152,6 +148,15 @@ class EquipmentViewController(ViewController):
                 interaction = event.payload[0]
                 selected = event.payload[1]
                 await self.buy_gear(interaction, selected, event.view_id)
+            case UIEventType.FORGE_CLEAR:
+                interaction = event.payload
+                await self.clear_forge_inventory(interaction, event.view_id)
+            case UIEventType.FORGE_COMBINE:
+                interaction = event.payload[0]
+                forge_inventory = event.payload[1]
+                await self.combine_forge_inventory(
+                    interaction, forge_inventory, event.view_id
+                )
             case UIEventType.ENCHANTMENTS_OPEN:
                 interaction = event.payload[0]
                 gear = event.payload[1]
@@ -296,76 +301,6 @@ class EquipmentViewController(ViewController):
 
         message = await interaction.original_response()
         await message.edit(embeds=embeds, view=view, attachments=[])
-        view.set_message(message)
-        await view.refresh_ui()
-        self.controller.detach_view_by_id(view_id)
-
-    async def open_gear_overview(
-        self,
-        interaction: discord.Interaction,
-        view_id: int,
-        state: EquipmentViewState = EquipmentViewState.GEAR,
-    ):
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
-
-        character = await self.actor_manager.get_character(interaction.user)
-
-        user_items = await self.database.get_item_counts_by_user(
-            guild_id, member_id, item_types=[ItemType.SCRAP]
-        )
-        scrap_balance = 0
-        if ItemType.SCRAP in user_items:
-            scrap_balance = user_items[ItemType.SCRAP]
-
-        forge_level = await self.controller.database.get_forge_level(guild_id)
-
-        view = EquipmentView(
-            self.controller, interaction, character, scrap_balance, forge_level, state
-        )
-
-        embeds = []
-        embeds.append(EquipmentHeadEmbed(interaction.user))
-
-        loading_embed = discord.Embed(
-            title="Loadin Gear", color=discord.Colour.light_grey()
-        )
-        self.embed_manager.add_text_bar(loading_embed, "", "Please Wait...")
-        loading_embed.set_thumbnail(url=self.bot.user.display_avatar)
-        embeds.append(loading_embed)
-
-        message = await interaction.original_response()
-        await message.edit(embeds=embeds, view=view, attachments=[])
-        view.set_message(message)
-        await view.refresh_ui()
-        self.controller.detach_view_by_id(view_id)
-
-    async def open_forge_overview(
-        self,
-        interaction: discord.Interaction,
-        view_id: int,
-        state: EquipmentViewState = EquipmentViewState.FORGE,
-    ):
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
-
-        character = await self.actor_manager.get_character(interaction.user)
-
-        user_items = await self.database.get_item_counts_by_user(
-            guild_id, member_id, item_types=[ItemType.SCRAP]
-        )
-        scrap_balance = 0
-        if ItemType.SCRAP in user_items:
-            scrap_balance = user_items[ItemType.SCRAP]
-
-        forge_level = await self.controller.database.get_forge_level(guild_id)
-
-        view = EquipmentView(
-            self.controller, interaction, character, scrap_balance, forge_level, state
-        )
-
-        message = await interaction.original_response()
-        await message.edit(view=view, attachments=[])
         view.set_message(message)
         await view.refresh_ui()
         self.controller.detach_view_by_id(view_id)
@@ -531,7 +466,12 @@ class EquipmentViewController(ViewController):
             await self.database.update_lock_gear_by_id(gear.id, lock=lock)
 
         if gear_slot is None:
-            await self.open_gear_overview(interaction, view_id)
+            event = UIEvent(
+                UIEventType.MAIN_MENU_STATE_CHANGE,
+                (interaction, MenuState.GEAR, False),
+                view_id,
+            )
+            await self.controller.dispatch_ui_event(event)
             return
 
         if gear_slot == EquipmentSlot.SKILL:
@@ -577,14 +517,22 @@ class EquipmentViewController(ViewController):
             return
 
         if gear_slot is None:
-            await self.open_gear_overview(interaction, view_id)
+            event = UIEvent(
+                UIEventType.MAIN_MENU_STATE_CHANGE,
+                (interaction, MenuState.GEAR, False),
+                view_id,
+            )
+            await self.controller.dispatch_ui_event(event)
             return
 
         if gear_slot == EquipmentSlot.SKILL:
             if scrap_all:
-                await self.open_gear_overview(
-                    interaction, view_id, state=EquipmentViewState.SKILLS
+                event = UIEvent(
+                    UIEventType.MAIN_MENU_STATE_CHANGE,
+                    (interaction, MenuState.SKILLS, False),
+                    view_id,
                 )
+                await self.controller.dispatch_ui_event(event)
                 return
             await self.refresh_skill_view(interaction, SkillViewState.MANAGE, view_id)
             return
@@ -693,9 +641,13 @@ class EquipmentViewController(ViewController):
             self.logger.log(interaction.guild_id, message, self.log_name)
 
         await self.database.set_selected_user_skills(guild_id, member_id, skills)
-        await self.open_gear_overview(
-            interaction, view_id=view_id, state=EquipmentViewState.SKILLS
+
+        event = UIEvent(
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.SKILLS, False),
+            view_id,
         )
+        await self.controller.dispatch_ui_event(event)
 
     async def use_forge(
         self,
@@ -705,45 +657,44 @@ class EquipmentViewController(ViewController):
     ):
         if not await self.encounter_check(interaction):
             return
-        guild_id = interaction.guild_id
-        member_id = interaction.user.id
+        drop = await self.forge_manager.use_scrap(interaction.user, slot, level)
 
-        scaling = 1
-        if slot is not None:
-            scaling = CombatGearManager.SLOT_SCALING[slot] * Config.SCRAP_FORGE_MULTI
-        scrap_value = int(EquipmentView.SCRAP_ILVL_MAP[level] * scaling)
-
-        user_items = await self.database.get_item_counts_by_user(
-            guild_id, member_id, item_types=[ItemType.SCRAP]
-        )
-        scrap_balance = 0
-        if ItemType.SCRAP in user_items:
-            scrap_balance = user_items[ItemType.SCRAP]
-
-        if scrap_balance < scrap_value:
+        if drop is None:
             await interaction.followup.send(
                 "You don't have enough scrap for this. Go and scrap some equipment you no longer need and come back.",
                 ephemeral=True,
             )
             return
 
-        drop = await self.gear_manager.generate_drop(
-            member_id, guild_id, level, gear_slot=slot
-        )
-
-        event = InventoryEvent(
-            datetime.datetime.now(),
-            guild_id,
-            member_id,
-            ItemType.SCRAP,
-            -scrap_value,
-        )
-        await self.controller.dispatch_event(event)
-
-        message = f"{interaction.user.display_name} Forge: [level {level}, slot {slot}] -> {drop.rarity.value} {drop.name} ({drop.id})"
-        self.logger.log(interaction.guild_id, message, self.log_name)
-
         await interaction.followup.send(embed=drop.get_embed(), ephemeral=True)
+
+    async def clear_forge_inventory(
+        self, interaction: discord.Interaction, view_id: int
+    ):
+        if not await self.encounter_check(interaction):
+            return
+
+        await self.forge_manager.clear_forge_inventory(interaction.user)
+
+        view: EnchantmentView = self.controller.get_view(view_id)
+        await view.refresh_ui()
+
+    async def combine_forge_inventory(
+        self, interaction: discord.Interaction, inventory: ForgeInventory, view_id: int
+    ):
+        if not await self.encounter_check(interaction):
+            return
+
+        result = await self.forge_manager.combine(interaction.user)
+
+        if result is None:
+            await interaction.followup.send("Not a valid recipe!", ephemeral=True)
+            return
+
+        await interaction.followup.send(embed=result.get_embed(), ephemeral=True)
+
+        view: EnchantmentView = self.controller.get_view(view_id)
+        await view.refresh_ui()
 
     async def apply_gear_enchantment(
         self,

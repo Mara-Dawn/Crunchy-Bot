@@ -12,23 +12,22 @@ from combat.skills.types import SkillType
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
+from control.forge_manager import ForgeManager
 from control.types import ControllerType
 from events.types import UIEventType
 from events.ui_event import UIEvent
+from forge.forgable import ForgeInventory
 from view.combat.elements import (
-    BackButton,
-    CurrentPageButton,
     ImplementsBack,
+    ImplementsBalance,
+    ImplementsForging,
     ImplementsLocking,
     ImplementsPages,
     ImplementsScrapping,
-    PageButton,
-    ScrapAllButton,
-    ScrapAmountButton,
-    ScrapBalanceButton,
+    MenuState,
 )
 from view.combat.embed import ManageSkillHeadEmbed, SelectSkillHeadEmbed
-from view.combat.equipment_view import EquipmentViewState
+from view.combat.forge_menu_view import ForgeMenuState
 from view.view_menu import ViewMenu
 
 
@@ -67,7 +66,13 @@ class SkillGroup:
 
 
 class SkillSelectView(
-    ViewMenu, ImplementsPages, ImplementsBack, ImplementsLocking, ImplementsScrapping
+    ViewMenu,
+    ImplementsPages,
+    ImplementsBack,
+    ImplementsLocking,
+    ImplementsScrapping,
+    ImplementsForging,
+    ImplementsBalance,
 ):
 
     def __init__(
@@ -116,6 +121,7 @@ class SkillSelectView(
         self.message = None
         self.state = state
         self.loaded = False
+        self.forge_inventory: ForgeInventory = None
 
         self.controller_type = ControllerType.EQUIPMENT
         self.controller.register_view(self)
@@ -126,6 +132,7 @@ class SkillSelectView(
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
         )
+        self.forge_manager: ForgeManager = self.controller.get_service(ForgeManager)
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -313,8 +320,8 @@ class SkillSelectView(
     ):
         await interaction.response.defer()
         event = UIEvent(
-            UIEventType.GEAR_OPEN_OVERVIEW,
-            (interaction, EquipmentViewState.SKILLS),
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.SKILLS, False),
             self.id,
         )
         await self.controller.dispatch_ui_event(event)
@@ -322,7 +329,7 @@ class SkillSelectView(
     async def change_skill(self, interaction: discord.Interaction, slot: EquipmentSlot):
         await interaction.response.defer()
         event = UIEvent(
-            UIEventType.GEAR_OPEN_SECELT,
+            UIEventType.GEAR_OPEN_SELECT,
             (interaction, slot),
             self.id,
         )
@@ -338,6 +345,50 @@ class SkillSelectView(
         self.state = SkillViewState.SELECT_MODE
         await self.refresh_ui()
 
+    async def add_to_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer(ephemeral=True)
+        if len(self.selected) != 1:
+            return
+        selected = self.selected[0]
+        for skill in selected.skills:
+            if self.forge_inventory is None or skill.id not in [
+                x.id for x in self.forge_inventory.items if x is not None
+            ]:
+                event = UIEvent(
+                    UIEventType.FORGE_ADD_ITEM,
+                    (interaction, skill),
+                    self.id,
+                )
+                await self.controller.dispatch_ui_event(event)
+                return
+
+    async def open_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.FORGE, False, ForgeMenuState.COMBINE),
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
+    async def clear_forge(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.defer()
+        event = UIEvent(
+            UIEventType.FORGE_CLEAR,
+            interaction,
+            self.id,
+        )
+        await self.controller.dispatch_ui_event(event)
+
     async def refresh_elements(self, disabled: bool = False):
         page_display = f"Page {self.current_page + 1}/{self.page_count}"
 
@@ -346,6 +397,7 @@ class SkillSelectView(
 
         disable_equip = disabled
         disable_dismantle = disabled
+        disable_forge = disabled
         for skill_group in self.selected:
             if skill_group is None:
                 continue
@@ -354,12 +406,14 @@ class SkillSelectView(
             #     break
             if skill_group.skill.id is None or skill_group.skill.id < 0:
                 # Default Gear
+                disable_forge = True
                 disable_dismantle = True
                 break
 
         if len(self.selected) <= 0:
             disable_equip = True
             disable_dismantle = True
+            disable_forge = True
 
         self.clear_items()
 
@@ -387,11 +441,11 @@ class SkillSelectView(
                                 row=slot + 1,
                             )
                         )
-                self.add_item(PageButton("<", False, row=0))
+                self.add_page_button("<", False, row=0)
                 self.add_item(SelectButton(disabled=False, row=0))
-                self.add_item(PageButton(">", True, row=0))
-                self.add_item(CurrentPageButton(page_display, row=0))
-                self.add_item(BackButton(row=0))
+                self.add_page_button(">", True, row=0)
+                self.add_current_page_button(page_display, row=0)
+                self.add_back_button(row=0)
 
             case SkillViewState.MANAGE:
                 if len(self.selected) > 1:
@@ -420,14 +474,20 @@ class SkillSelectView(
                         )
                     )
 
-                self.add_item(PageButton("<", False))
+                self.add_page_button("<", False)
                 self.add_item(SelectSingleButton(disabled=disable_equip))
-                self.add_item(PageButton(">", True))
-                self.add_item(CurrentPageButton(page_display))
-                self.add_item(ScrapBalanceButton(self.scrap_balance))
-                self.add_item(ScrapAllButton(disabled=disable_dismantle))
-                self.add_item(ScrapAmountButton(disabled=disable_dismantle))
-                self.add_item(BackButton())
+                self.add_page_button(">", True)
+                self.add_current_page_button(page_display)
+                self.add_scrap_balance_button(self.scrap_balance, row=2)
+                self.add_scrap_all_button(disabled=disable_dismantle)
+                self.add_scrap_amount_button(disabled=disable_dismantle)
+                self.add_add_to_forge_button(disabled=disable_forge, row=3)
+                self.add_back_button()
+                if self.forge_inventory is not None and not self.forge_inventory.empty:
+                    self.add_forge_status_button(
+                        current=self.forge_inventory, disabled=disable_forge
+                    )
+                    self.add_clear_forge_button(disabled=disable_forge)
 
             case SkillViewState.SELECT_MODE:
                 if len(self.selected) > 1:
@@ -446,13 +506,13 @@ class SkillSelectView(
                         )
                     )
 
-                self.add_item(PageButton("<", False, disabled=True, row=1))
+                self.add_page_button("<", False, disabled=True, row=1)
                 self.add_item(
                     SelectSingleButton(label="Select a Slot:", disabled=True, row=1)
                 )
-                self.add_item(PageButton(">", True, disabled=True, row=1))
-                self.add_item(CurrentPageButton(page_display, row=1))
-                self.add_item(ScrapBalanceButton(self.scrap_balance, row=1))
+                self.add_page_button(">", True, disabled=True, row=1)
+                self.add_current_page_button(page_display, row=1)
+                self.add_scrap_balance_button(self.scrap_balance, row=1)
 
                 for slot, skill_data in self.equipped_skill_slot_data.items():
                     self.add_item(
@@ -492,6 +552,8 @@ class SkillSelectView(
         if self.selected is None or len(self.selected) <= 0:
             disabled = True
 
+        self.guild_level = await self.controller.database.get_guild_level(self.guild_id)
+
         if no_embeds:
             await self.refresh_elements(disabled)
             await self.message.edit(view=self)
@@ -528,7 +590,6 @@ class SkillSelectView(
 
             skill_embed = skill_data.get_embed(
                 equipped=equipped,
-                show_full_data=True,
                 amount=skill_group.amount,
             )
             embeds.append(skill_embed)
@@ -548,6 +609,8 @@ class SkillSelectView(
             self.equipped_skill_slot_data[slot] = (
                 await self.skill_manager.get_skill_data(self.character, skill)
             )
+
+        self.forge_inventory = await self.forge_manager.get_forge_inventory(self.member)
 
         await self.refresh_elements(disabled)
 

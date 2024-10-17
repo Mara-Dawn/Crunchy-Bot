@@ -67,6 +67,7 @@ class LootPayoutState(State):
                 if (
                     drop.level <= auto_scrap
                     and drop.base.base_type != Base.SKILL
+                    and drop.base.base_type != Base.ENCHANTMENT
                     and drop.rarity != Rarity.UNIQUE
                 ):
                     gear_to_scrap.append(drop)
@@ -92,7 +93,9 @@ class LootPayoutState(State):
                 item = await self.item_manager.give_item(
                     member.guild.id, member.id, item
                 )
-                embeds.append(item.get_embed(self.bot, show_price=False))
+                embeds.append(
+                    item.get_embed(self.bot, show_title=True, show_price=False)
+                )
                 await asyncio.sleep(1)
 
                 await self.discord.edit_message(message, embeds=embeds)

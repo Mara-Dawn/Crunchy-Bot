@@ -9,15 +9,13 @@ from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.view.view_controller import ViewController
 from datalayer.database import Database
-from datalayer.types import LootboxType
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from events.types import BeansEventType, EventType, UIEventType
 from events.ui_event import UIEvent
 from items.types import ItemGroup, ItemType
-from view.inventory.embed import InventoryEmbed
-from view.inventory.view import InventoryView
+from view.combat.elements import MenuState
 from view.shop.color_select_view import ShopColorSelectView  # noqa: F401
 from view.shop.confirm_view import ShopConfirmView  # noqa: F401
 from view.shop.prediction_submission_view import (
@@ -109,7 +107,7 @@ class ShopViewController(ViewController):
                     event = UIEvent(UIEventType.SHOP_DISABLE, True, view_id)
                     await self.controller.dispatch_ui_event(event)
 
-                    embed = item.get_embed(self.bot)
+                    embed = item.get_embed(self.bot, show_title=False, show_price=True)
                     view_class_name = item.view_class
 
                     view_class = globals()[view_class_name]
@@ -229,7 +227,7 @@ class ShopViewController(ViewController):
                 await self.refresh_ui(guild_id, member_id, event.view_id)
             case UIEventType.SHOW_INVENTORY:
                 interaction = event.payload
-                await self.send_inventory_message(interaction)
+                await self.send_inventory_message(interaction, event.view_id)
 
     async def refresh_ui(self, guild_id: int, member_id: int, view_id: int):
         new_user_balance = await self.database.get_member_beans(guild_id, member_id)
@@ -239,17 +237,12 @@ class ShopViewController(ViewController):
         )
         await self.controller.dispatch_ui_event(event)
 
-    async def send_inventory_message(self, interaction: discord.Interaction):
-        inventory = await self.item_manager.get_user_inventory(
-            interaction.guild_id, interaction.user.id
+    async def send_inventory_message(
+        self, interaction: discord.Interaction, view_id: int
+    ):
+        event = UIEvent(
+            UIEventType.MAIN_MENU_STATE_CHANGE,
+            (interaction, MenuState.INVENTORY, False),
+            view_id,
         )
-        embed = InventoryEmbed(self.bot, inventory)
-        view = InventoryView(self.controller, interaction, inventory)
-
-        message = await interaction.followup.send(
-            "", embed=embed, view=view, ephemeral=True
-        )
-        view.set_message(message)
-        await view.refresh_ui()
-
-        return
+        await self.controller.dispatch_ui_event(event)

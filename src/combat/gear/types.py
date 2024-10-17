@@ -1,5 +1,7 @@
 from enum import Enum
 
+from forge.types import ForgeableType
+
 
 class EquipmentSlot(str, Enum):
     HEAD = "Head"
@@ -137,7 +139,7 @@ class Base(str, Enum):
     ENCHANTMENT = "Enchant"
 
 
-class GearBaseType(str, Enum):
+class GearBaseType(ForgeableType, str, Enum):
     EMPTY = "Empty"
 
     DEFAULT_PHYS = "DefaultPhys"

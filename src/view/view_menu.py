@@ -19,6 +19,7 @@ class ViewMenu(discord.ui.View, ABC):
         self.member_id = None
         self.controller_type: ControllerType = None
         self.message: discord.Message = None
+        self.guild_level: int = 1
         ViewMenu.class_counter += 1
 
     @abstractmethod
