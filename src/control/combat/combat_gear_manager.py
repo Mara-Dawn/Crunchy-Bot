@@ -38,12 +38,14 @@ from combat.gear.uniques import Unique
 from combat.skills.skill import BaseSkill, Skill
 from combat.skills.skills import *  # noqa: F403
 from combat.skills.types import SkillType
+from combat.types import UnlockableFeature
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.combat.object_factory import ObjectFactory
 from control.controller import Controller
 from control.item_manager import ItemManager
 from control.logger import BotLogger
 from control.service import Service
+from control.settings_manager import SettingsManager
 from datalayer.database import Database
 from events.bot_event import BotEvent
 from events.encounter_event import EncounterEvent
@@ -61,7 +63,6 @@ class CombatGearManager(Service):
     ITEM_LEVEL_MIN_DROP = 0.6
     SKILL_DROP_CHANCE = 0.1
     ENCHANTMENT_DROP_CHANCE = 0.05
-    # ENCHANTMENT_DROP_CHANCE = 0
     GEAR_LEVEL_SCALING = 1
     MOB_LOOT_BONUS_SCALING = 1
     MOB_LOOT_UNIQUE_SCALING = 0.2
@@ -185,6 +186,9 @@ class CombatGearManager(Service):
         self.controller = controller
         self.log_name = "Combat Loot"
         self.item_manager: ItemManager = self.controller.get_service(ItemManager)
+        self.settings_manager: SettingsManager = self.controller.get_service(
+            SettingsManager
+        )
         self.skill_manager: CombatSkillManager = self.controller.get_service(
             CombatSkillManager
         )
@@ -195,6 +199,7 @@ class CombatGearManager(Service):
 
     async def get_bases_by_lvl(
         self,
+        guild_id: int,
         item_level: int,
         exclude_skills: bool = False,
         gear_slot: EquipmentSlot = None,
@@ -202,14 +207,32 @@ class CombatGearManager(Service):
         matching_bases = []
 
         gear_base_types = [base_type for base_type in GearBaseType]
-        enchantment_base_types = [base_type for base_type in EnchantmentType]
-        # enchantment_base_types = []
+
+        skill_base_types = []
+        enchantment_base_types = []
 
         if not exclude_skills:
             skill_base_types = [base_type for base_type in SkillType]
-            base_types = gear_base_types + skill_base_types + enchantment_base_types
-        else:
-            base_types = gear_base_types + enchantment_base_types
+
+        unlocked = await self.settings_manager.get_unlocked_features(guild_id)
+        crafting_unlocked = UnlockableFeature.CRAFTING in unlocked
+        enchantments_unlocked = UnlockableFeature.ENCHANTMENTS in unlocked
+        if enchantments_unlocked and crafting_unlocked:
+            enchantment_base_types = [base_type for base_type in EnchantmentType]
+        elif enchantments_unlocked:
+            enchantment_base_types = [
+                base_type
+                for base_type in EnchantmentType
+                if not EnchantmentType.is_crafting(base_type)
+            ]
+        elif crafting_unlocked:
+            enchantment_base_types = [
+                base_type
+                for base_type in EnchantmentType
+                if EnchantmentType.is_crafting(base_type)
+            ]
+
+        base_types = gear_base_types + skill_base_types + enchantment_base_types
 
         for base_type in base_types:
             base_class = globals()[base_type]
@@ -231,6 +254,7 @@ class CombatGearManager(Service):
 
     async def get_random_base(
         self,
+        guild_id: int,
         item_level: int,
         enemy: Enemy = None,
         exclude_skills: bool = False,
@@ -239,7 +263,10 @@ class CombatGearManager(Service):
     ) -> DroppableBase:
 
         bases = await self.get_bases_by_lvl(
-            item_level, exclude_skills=exclude_skills, gear_slot=gear_slot
+            guild_id=guild_id,
+            item_level=item_level,
+            exclude_skills=exclude_skills,
+            gear_slot=gear_slot,
         )
 
         if len(bases) <= 0:
@@ -537,7 +564,8 @@ class CombatGearManager(Service):
     ) -> Gear:
 
         droppable_base = await self.get_random_base(
-            item_level,
+            guild_id=guild_id,
+            item_level=item_level,
             enemy=enemy,
             exclude_skills=exclude_skills,
             gear_slot=gear_slot,

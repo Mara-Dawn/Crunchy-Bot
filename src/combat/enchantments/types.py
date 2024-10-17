@@ -28,6 +28,10 @@ class EnchantmentType(ForgeableType, str, Enum):
     def is_crafting(enchantment_type: "EnchantmentType"):
         return enchantment_type in [
             EnchantmentType.CHAOS,
+            EnchantmentType.DIVINE,
+            EnchantmentType.EXALTED,
+            EnchantmentType.CHANCE,
+            EnchantmentType.CRANGLE,
         ]
 
 

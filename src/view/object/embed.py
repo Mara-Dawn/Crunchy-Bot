@@ -445,7 +445,7 @@ class AffixBlock(DisplayBlock):
         self.suffixes = suffixes
         self.max_width = max_width
 
-    def text(self) -> str:
+    def text(self, max_width: int = None) -> str:
         if self.content is None:
             return ""
 

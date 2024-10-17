@@ -67,6 +67,7 @@ class LootPayoutState(State):
                 if (
                     drop.level <= auto_scrap
                     and drop.base.base_type != Base.SKILL
+                    and drop.base.base_type != Base.ENCHANTMENT
                     and drop.rarity != Rarity.UNIQUE
                 ):
                     gear_to_scrap.append(drop)
