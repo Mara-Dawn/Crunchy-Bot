@@ -57,15 +57,17 @@ class Config:
         UnlockableFeature.FORGE_RECIPES: 9,  # 1
         UnlockableFeature.SHOP: 2,  # 2
         UnlockableFeature.FORGE_SCRAP: 2,  # 2
-        UnlockableFeature.MAX_GAMBA_1: 2,  # 2
+        UnlockableFeature.MAX_GAMBA_1: 9,  # 2
         UnlockableFeature.CRAFTING: 9,  # 3
         UnlockableFeature.DAILY_BEANS_1: 9,  # 3
         UnlockableFeature.GARDEN_2: 3,  # 3
+        UnlockableFeature.LOTTERY_1: 9,  # 4
         UnlockableFeature.ENCHANTMENTS: 9,  # 4
-        UnlockableFeature.FORGE_SHOP: 4,  # 2
+        UnlockableFeature.FORGE_SHOP: 4,  # 4
         UnlockableFeature.GARDEN_3: 5,  # 5
         UnlockableFeature.DAILY_BEANS_2: 9,  # 5
         UnlockableFeature.MAX_GAMBA_2: 9,  # 6
+        UnlockableFeature.LOTTERY_2: 9,  # 6
         UnlockableFeature.GARDEN_4: 7,  # 7
         UnlockableFeature.DAILY_BEANS_3: 7,  # 7
     }
