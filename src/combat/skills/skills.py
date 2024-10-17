@@ -484,7 +484,8 @@ class DopeShades(BaseSkill):
             information="",
             skill_effect=SkillEffect.BUFF,
             cooldown=5,
-            min_level=6,
+            # min_level=6,
+            min_level=7,
             base_value=1,
             status_effects=[
                 SkillStatusEffect(
