@@ -1,5 +1,7 @@
 from discord.ext import commands
 
+from combat.types import UnlockableFeature
+from config import Config
 from control.controller import Controller
 from control.logger import BotLogger
 from control.service import Service
@@ -329,6 +331,16 @@ class SettingsManager(Service):
 
     async def listen_for_event(self, event: BotEvent) -> None:
         pass
+
+    async def get_unlocked_features(self, guild_id: int) -> list[UnlockableFeature]:
+        guild_level = await self.database.get_guild_level(guild_id)
+
+        features = []
+        for feature, level in Config.UNLOCK_LEVELS.items():
+            if level <= guild_level:
+                features.append(feature)
+
+        return features
 
     async def update_setting(
         self, guild: int, subsetting_key: str, key: str, value

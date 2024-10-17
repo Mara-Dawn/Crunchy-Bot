@@ -8,7 +8,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot import CrunchyBot
-from combat.types import CombatFeature
+from combat.types import UnlockableFeature
 from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
@@ -166,7 +166,7 @@ class Shop(commands.Cog):
             return
 
         guild_level = await self.database.get_guild_level(interaction.guild_id)
-        if guild_level < Config.UNLOCK_LEVELS[CombatFeature.SHOP]:
+        if guild_level < Config.UNLOCK_LEVELS[UnlockableFeature.SHOP]:
             await self.bot.command_response(
                 self.__cog_name__,
                 interaction,

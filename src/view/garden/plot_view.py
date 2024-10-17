@@ -1,11 +1,12 @@
 import contextlib
 
 import discord
+from discord.ext import commands
+
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.garden import UserGarden
 from datalayer.types import PlantType, PlotState
-from discord.ext import commands
 from events.types import UIEventType
 from events.ui_event import UIEvent
 from view.garden.embed import GardenEmbed

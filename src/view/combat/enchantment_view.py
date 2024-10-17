@@ -12,7 +12,7 @@ from combat.enchantments.types import (
 )
 from combat.gear.gear import Gear
 from combat.gear.types import EquipmentSlot, GearModifierType, Rarity
-from combat.types import CombatFeature
+from combat.types import UnlockableFeature
 from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_enchantment_manager import CombatEnchantmentManager
@@ -446,7 +446,7 @@ class EnchantmentView(
             disable_apply = True
         if (
             len(self.enchantment_info) > 0
-            and self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.ENCHANTMENTS]
+            and self.guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.ENCHANTMENTS]
         ):
             self.add_item(
                 EnchantmentTypeDropdown(
@@ -501,7 +501,7 @@ class EnchantmentView(
 
         self.guild_level = await self.controller.database.get_guild_level(self.guild_id)
         if (  # noqa: SIM102
-            self.guild_level < Config.UNLOCK_LEVELS[CombatFeature.ENCHANTMENTS]
+            self.guild_level < Config.UNLOCK_LEVELS[UnlockableFeature.ENCHANTMENTS]
         ):
             if self.selected_filter_type is None:
                 self.selected_filter_type = EnchantmentType.CRAFTING

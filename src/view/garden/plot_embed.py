@@ -1,4 +1,5 @@
 import discord
+
 from datalayer.garden import FlashBeanPlant, Plot, UserGarden, YellowBeanPlant
 
 
@@ -54,7 +55,7 @@ class PlotEmbed(discord.Embed):
             description += (
                 "* **Watered** plants grow **twice as fast.**\n"
                 "* A plot will stay **wet for 24 hours**.\n"
-                f"* **Harvesting** gives you an **additional plot**\n(max {UserGarden.MAX_PLOTS})."
+                "* **Harvesting** gives you an **additional plot**\n."
             )
         super().__init__(
             title=title,

@@ -6,7 +6,7 @@ from combat.actors import Character
 from combat.gear.types import (
     EquipmentSlot,
 )
-from combat.types import CombatFeature
+from combat.types import UnlockableFeature
 from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
@@ -100,7 +100,10 @@ class GearMenuView(ViewMenu, ImplementsMainMenu, ImplementsBack, ImplementsBalan
                     SelectGearSlot(EquipmentSlot.ACCESSORY, disabled=disabled)
                 )
                 self.add_item(StatsButton(disabled=disabled))
-                if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.ENCHANTMENTS]:
+                if (
+                    self.guild_level
+                    >= Config.UNLOCK_LEVELS[UnlockableFeature.ENCHANTMENTS]
+                ):
                     self.add_item(EnchantmentsButton(disabled=disabled))
                 self.add_item(ScrapAllButton(disabled=disabled))
             case GearMenuState.STATS:

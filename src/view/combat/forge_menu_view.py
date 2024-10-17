@@ -7,7 +7,7 @@ from combat.gear.types import (
     EquipmentSlot,
     Rarity,
 )
-from combat.types import CombatFeature
+from combat.types import UnlockableFeature
 from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_gear_manager import CombatGearManager
@@ -126,14 +126,20 @@ class ForgeMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance, ImplementsB
 
         match self.forge_state:
             case ForgeMenuState.OVERVIEW:
-                if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_SCRAP]:
+                if (
+                    self.guild_level
+                    >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SCRAP]
+                ):
                     self.add_item(ForgeStateButton(ForgeMenuState.SCRAP))
                 if (
                     self.guild_level
-                    >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_RECIPES]
+                    >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_RECIPES]
                 ):
                     self.add_item(ForgeStateButton(ForgeMenuState.COMBINE))
-                if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_SHOP]:
+                if (
+                    self.guild_level
+                    >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SHOP]
+                ):
                     self.add_item(ForgeShopButton(row=2))
             case ForgeMenuState.SCRAP:
                 self.add_item(ForgeDropdown(self.forge_options, self.selected))
@@ -146,7 +152,10 @@ class ForgeMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance, ImplementsB
                     )
                 total = int(ForgeManager.SCRAP_ILVL_MAP[self.selected] * scaling)
                 self.add_item(ForgeUseButton(total))
-                if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_SHOP]:
+                if (
+                    self.guild_level
+                    >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SHOP]
+                ):
                     self.add_item(ForgeShopButton())
                 self.add_back_button()
             case ForgeMenuState.COMBINE:

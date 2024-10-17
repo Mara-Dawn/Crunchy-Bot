@@ -1,4 +1,4 @@
-from combat.types import CombatFeature
+from combat.types import UnlockableFeature
 
 
 class Config:
@@ -52,60 +52,22 @@ class Config:
         7: 3.2,
     }
 
-    LEVEL_UNLOCKS = {
-        1: [
-            CombatFeature.GARDEN_1,
-            CombatFeature.FORGE_RECIPES,
-        ],
-        2: [
-            CombatFeature.SHOP,
-            CombatFeature.FORGE_SCRAP,
-            CombatFeature.MAX_GAMBA_1,
-        ],
-        3: [
-            CombatFeature.CRAFTING,
-            CombatFeature.DAILY_BEANS_1,
-            CombatFeature.GARDEN_2,
-        ],
-        4: [
-            CombatFeature.ENCHANTMENTS,
-            CombatFeature.FORGE_SHOP,
-        ],
-        5: [
-            CombatFeature.GARDEN_3,
-            CombatFeature.DAILY_BEANS_2,
-        ],
-        6: [
-            CombatFeature.MAX_GAMBA_2,
-        ],
-        7: [
-            CombatFeature.GARDEN_4,
-            CombatFeature.DAILY_BEANS_3,
-        ],
-    }
-
     UNLOCK_LEVELS = {
-        CombatFeature.GARDEN_1: 1,
-        # CombatFeature.FORGE_RECIPES: 1,
-        CombatFeature.FORGE_RECIPES: 9,
-        CombatFeature.SHOP: 2,
-        CombatFeature.FORGE_SCRAP: 2,
-        CombatFeature.MAX_GAMBA_1: 2,
-        # CombatFeature.CRAFTING: 3,
-        CombatFeature.CRAFTING: 9,
-        # CombatFeature.DAILY_BEANS_1: 3,
-        CombatFeature.DAILY_BEANS_1: 9,
-        CombatFeature.GARDEN_2: 3,
-        # CombatFeature.ENCHANTMENTS: 4,
-        CombatFeature.ENCHANTMENTS: 9,
-        CombatFeature.FORGE_SHOP: 4,
-        CombatFeature.GARDEN_3: 5,
-        # CombatFeature.DAILY_BEANS_2: 5,
-        CombatFeature.DAILY_BEANS_2: 9,
-        # CombatFeature.MAX_GAMBA_2: 6,
-        CombatFeature.MAX_GAMBA_2: 9,
-        CombatFeature.GARDEN_4: 7,
-        CombatFeature.DAILY_BEANS_3: 7,
+        UnlockableFeature.GARDEN_1: 1,  # 1
+        UnlockableFeature.FORGE_RECIPES: 9,  # 1
+        UnlockableFeature.SHOP: 2,  # 2
+        UnlockableFeature.FORGE_SCRAP: 2,  # 2
+        UnlockableFeature.MAX_GAMBA_1: 2,  # 2
+        UnlockableFeature.CRAFTING: 9,  # 3
+        UnlockableFeature.DAILY_BEANS_1: 9,  # 3
+        UnlockableFeature.GARDEN_2: 3,  # 3
+        UnlockableFeature.ENCHANTMENTS: 9,  # 4
+        UnlockableFeature.FORGE_SHOP: 4,  # 2
+        UnlockableFeature.GARDEN_3: 5,  # 5
+        UnlockableFeature.DAILY_BEANS_2: 9,  # 5
+        UnlockableFeature.MAX_GAMBA_2: 9,  # 6
+        UnlockableFeature.GARDEN_4: 7,  # 7
+        UnlockableFeature.DAILY_BEANS_3: 7,  # 7
     }
 
     CHARACTER_BASE_INITIATIVE = 10

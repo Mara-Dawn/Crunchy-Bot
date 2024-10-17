@@ -3,7 +3,7 @@ from enum import Enum
 
 import discord
 
-from combat.types import CombatFeature
+from combat.types import UnlockableFeature
 from config import Config
 from forge.forgable import ForgeInventory
 from view.view_menu import ViewMenu
@@ -108,14 +108,14 @@ class ImplementsBalance(ABC):
 
     def add_scrap_balance_button(self, balance: int, row: int = 0):
         shop_unlocked = (
-            self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_SHOP]
+            self.guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SHOP]
         )
         self.add_item(
             ScrapBalanceButton(balance=balance, row=row, link_shop=shop_unlocked)
         )
 
     def add_beans_balance_button(self, balance: int, row: int = 0):
-        shop_unlocked = self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.SHOP]
+        shop_unlocked = self.guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.SHOP]
         self.add_item(
             BeansBalanceButton(balance=balance, row=row, link_shop=shop_unlocked)
         )
@@ -407,8 +407,8 @@ class ImplementsCrafting(ABC):
 
     def add_craft_button(self, row: int = 3, disabled: bool = True):
         if (
-            self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.ENCHANTMENTS]
-            or self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.CRAFTING]
+            self.guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.ENCHANTMENTS]
+            or self.guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.CRAFTING]
         ):
             self.add_item(CraftSelectedButton(disabled=disabled, row=row))
 
@@ -461,11 +461,11 @@ class ImplementsForging(ABC):
         pass
 
     def add_add_to_forge_button(self, disabled: bool = False, row: int = 4):
-        if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_RECIPES]:
+        if self.guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_RECIPES]:
             self.add_item(AddToForgeButton(disabled=disabled, row=row))
 
     def add_clear_forge_button(self, disabled: bool = False, row: int = 4):
-        if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_RECIPES]:
+        if self.guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_RECIPES]:
             self.add_item(ClearForgeButton(disabled=disabled, row=row))
 
     def add_forge_status_button(
@@ -474,7 +474,7 @@ class ImplementsForging(ABC):
         row: int = 4,
         disabled: bool = False,
     ):
-        if self.guild_level >= Config.UNLOCK_LEVELS[CombatFeature.FORGE_RECIPES]:
+        if self.guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_RECIPES]:
             self.add_item(
                 ForgeStatusButton(current=current, disabled=disabled, row=row)
             )

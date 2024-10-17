@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class CombatFeature(str, Enum):
+class UnlockableFeature(str, Enum):
     GARDEN_1 = "Garden 3x1"
     GARDEN_2 = "Garden 3x2"
     GARDEN_3 = "Garden 3x3"
