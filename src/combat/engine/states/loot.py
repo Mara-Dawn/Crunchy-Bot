@@ -134,6 +134,8 @@ class LootPayoutState(State):
 
         if context.encounter.enemy_level != guild_level:
             return False
+        if context.encounter.enemy_level == Config.MAX_LVL:
+            return False
         if guild_level not in Config.BOSS_LEVELS:
             return False
 
