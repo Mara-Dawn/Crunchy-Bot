@@ -11,7 +11,7 @@ class Config:
     LUCKY_ITEM_CHANCE = 0.05
 
     # General Combat
-    MAX_LVL = 6
+    MAX_LVL = 7
 
     COMBAT_INITIAL_WAIT = 90
 
@@ -54,23 +54,43 @@ class Config:
 
     UNLOCK_LEVELS = {
         UnlockableFeature.GARDEN_1: 1,  # 1
-        UnlockableFeature.FORGE_RECIPES: 9,  # 1
+        UnlockableFeature.FORGE_RECIPES: 1,  # 1
         UnlockableFeature.SHOP: 2,  # 2
         UnlockableFeature.FORGE_SCRAP: 2,  # 2
-        UnlockableFeature.MAX_GAMBA_1: 9,  # 2
-        UnlockableFeature.CRAFTING: 9,  # 3
-        UnlockableFeature.DAILY_BEANS_1: 9,  # 3
+        UnlockableFeature.MAX_GAMBA_1: 2,  # 2
+        UnlockableFeature.CRAFTING: 3,  # 3
+        UnlockableFeature.DAILY_BEANS_1: 3,  # 3
         UnlockableFeature.GARDEN_2: 3,  # 3
-        UnlockableFeature.LOTTERY_1: 9,  # 4
-        UnlockableFeature.ENCHANTMENTS: 9,  # 4
+        UnlockableFeature.LOTTERY_1: 4,  # 4
+        UnlockableFeature.ENCHANTMENTS: 4,  # 4
         UnlockableFeature.FORGE_SHOP: 4,  # 4
         UnlockableFeature.GARDEN_3: 5,  # 5
-        UnlockableFeature.DAILY_BEANS_2: 9,  # 5
-        UnlockableFeature.MAX_GAMBA_2: 9,  # 6
-        UnlockableFeature.LOTTERY_2: 9,  # 6
+        UnlockableFeature.DAILY_BEANS_2: 5,  # 5
+        UnlockableFeature.MAX_GAMBA_2: 6,  # 6
+        UnlockableFeature.LOTTERY_2: 6,  # 6
         UnlockableFeature.GARDEN_4: 7,  # 7
         UnlockableFeature.DAILY_BEANS_3: 7,  # 7
     }
+
+    # UNLOCK_LEVELS = {
+    #     UnlockableFeature.GARDEN_1: 1,  # 1
+    #     UnlockableFeature.FORGE_RECIPES: 9,  # 1
+    #     UnlockableFeature.SHOP: 2,  # 2
+    #     UnlockableFeature.FORGE_SCRAP: 2,  # 2
+    #     UnlockableFeature.MAX_GAMBA_1: 9,  # 2
+    #     UnlockableFeature.CRAFTING: 9,  # 3
+    #     UnlockableFeature.DAILY_BEANS_1: 9,  # 3
+    #     UnlockableFeature.GARDEN_2: 3,  # 3
+    #     UnlockableFeature.LOTTERY_1: 9,  # 4
+    #     UnlockableFeature.ENCHANTMENTS: 9,  # 4
+    #     UnlockableFeature.FORGE_SHOP: 4,  # 4
+    #     UnlockableFeature.GARDEN_3: 5,  # 5
+    #     UnlockableFeature.DAILY_BEANS_2: 9,  # 5
+    #     UnlockableFeature.MAX_GAMBA_2: 9,  # 6
+    #     UnlockableFeature.LOTTERY_2: 9,  # 6
+    #     UnlockableFeature.GARDEN_4: 7,  # 7
+    #     UnlockableFeature.DAILY_BEANS_3: 7,  # 7
+    # }
 
     CHARACTER_BASE_INITIATIVE = 10
     CHARACTER_LVL_HP_INCREASE = 25
@@ -107,18 +127,18 @@ class Config:
     # Code Block Formatting
     ENEMY_MAX_WIDTH = 30
     COMBAT_EMBED_MAX_WIDTH = 44
-    ITEM_MAX_WIDTH = 40
+    ITEM_MAX_WIDTH = 44
     SHOP_ITEM_MAX_WIDTH = 40
     INVENTORY_ITEM_MAX_WIDTH = 50
 
     # Guild Level Requirements
     LEVEL_REQUIREMENTS = {
         1: 100,
-        2: 200,
-        3: 233,
-        4: 266,
-        5: 300,
-        6: 350,
+        2: 150,
+        3: 175,
+        4: 200,
+        5: 225,
+        6: 250,
         7: 9999999,
     }
     BOSS_LEVELS = [3, 6, 9, 12]

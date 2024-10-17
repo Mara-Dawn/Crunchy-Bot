@@ -93,7 +93,7 @@ class LootPayoutState(State):
                     member.guild.id, member.id, item
                 )
                 embeds.append(
-                    item.get_embed(self.bot, show_title=False, show_price=False)
+                    item.get_embed(self.bot, show_title=True, show_price=False)
                 )
                 await asyncio.sleep(1)
 

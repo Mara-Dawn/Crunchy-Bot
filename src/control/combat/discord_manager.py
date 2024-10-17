@@ -224,6 +224,21 @@ class DiscordManager(Service):
                     f"Congratulations! You fulfilled the requirements to reach **Level {guild_level}**.\n"
                     "Good luck facing the challenges ahead, stronger opponents and greater rewards are waiting for you."
                 )
+
+                new_features = [
+                    feature
+                    for feature, level in Config.UNLOCK_LEVELS.items()
+                    if level == guild_level
+                ]
+
+                if len(new_features) > 0:
+                    announcement_list = []
+                    for feature in new_features:
+                        key_point = f"* {feature.value}"
+                        announcement_list.append(key_point)
+                    announcement += "\n\nUnlocked New Features:\n"
+                    announcement += "\n".join(announcement_list)
+
                 if beans_role_id is not None:
                     announcement += f"\n<@&{beans_role_id}>"
 

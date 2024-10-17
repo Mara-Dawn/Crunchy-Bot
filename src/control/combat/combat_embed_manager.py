@@ -173,7 +173,12 @@ class CombatEmbedManager(Service):
         if max_width is None:
             max_width = Config.COMBAT_EMBED_MAX_WIDTH
 
-        embed_content = "```\n" + value + "```"
+        spacing = ""
+        content_length = len(value)
+        if content_length < max_width:
+            spacing = " " + "\u00a0" * (max_width - content_length)
+
+        embed_content = "```\n" + value + spacing + "```"
         embed.add_field(name=name, value=embed_content, inline=False)
 
     def add_active_status_effect_bar(

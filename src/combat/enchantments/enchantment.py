@@ -690,7 +690,10 @@ class GearEnchantment:
         if cooldown is not None and self.on_cooldown():
             cooldown_remaining = cooldown - self.last_used
             content = f"available in {ValueColor.PINK.value}{cooldown_remaining}{ValueColor.NONE.value} turn(s)"
-            extra_blocks = extra_blocks + [DisplayBlock(BlockType.ANSI, content)]
+            raw_content = f"available in {cooldown_remaining} turn(s)"
+            extra_blocks = extra_blocks + [
+                DisplayBlock(BlockType.ANSI, content, len(raw_content))
+            ]
 
         return ObjectDisplay(
             parameters=base_display.parameters,

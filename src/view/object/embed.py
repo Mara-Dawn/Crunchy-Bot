@@ -22,17 +22,24 @@ class DisplayBlock:
         self,
         block_type: BlockType,
         content: str,
+        length: int | None = None,
     ) -> None:
         self.block_type = block_type
         self.content = content
+        if length is None:
+            length = len(content)
+        self.lenght = length
 
-    @property
-    def text(self) -> str:
+    def text(self, max_width: int) -> str:
         if self.content is None:
             return ""
 
+        spacing = ""
+        if self.lenght < max_width:
+            spacing = " " + "\u00a0" * (max_width - self.lenght)
+
         block = f"```{self.block_type.value}\n"
-        block += self.content
+        block += self.content + spacing
         block += "```"
 
         return block
@@ -115,6 +122,8 @@ class ObjectParameters:
         if self.rarity is not None:
             color_start = self.RARITY_NAME_COLOR_MAP[self.rarity]
             title = f"{color_start}{title}{ValueColor.NONE.value}"
+        else:
+            title = f"{ValueColorBold.WHITE.value}{title}{ValueColor.NONE.value}"
 
         title += self.name_suffix
         return title
@@ -160,16 +169,17 @@ class ObjectParameters:
     @property
     def title_block(self) -> DisplayBlock:
         content = f"{self.colored_title}{self.title_spacer}{self.title_suffix}"
-        return DisplayBlock(BlockType.ANSI, content)
+        raw_content = f"{self.raw_title}{self.title_spacer}{self.title_suffix}"
+        return DisplayBlock(BlockType.ANSI, content, len(raw_content))
 
     @property
     def description_block(self) -> DisplayBlock:
         if self.permanent:
             content = f'"{ValueColorBold.YELLOW.value}{self.description}{ValueColor.NONE.value}"'
-            return DisplayBlock(BlockType.ANSI, content)
+            return DisplayBlock(BlockType.ANSI, content, len(self.description))
         else:
             content = f'"{self.description}"'
-            return DisplayBlock(BlockType.PYTHON, content)
+            return DisplayBlock(BlockType.PYTHON, content, len(self.description))
 
     @property
     def information_block(self) -> DisplayBlock:
@@ -180,7 +190,7 @@ class ObjectParameters:
         content += f'"{self.information}"'
         content += f"{ValueColor.NONE.value}"
 
-        return DisplayBlock(BlockType.ANSI, content)
+        return DisplayBlock(BlockType.ANSI, content, len(self.information))
 
 
 class Affix:
@@ -435,7 +445,6 @@ class AffixBlock(DisplayBlock):
         self.suffixes = suffixes
         self.max_width = max_width
 
-    @property
     def text(self) -> str:
         if self.content is None:
             return ""
@@ -479,7 +488,7 @@ class AffixBlock(DisplayBlock):
             affix_lines.append(f"{prefix}{spacing}{suffix}")
 
         self.content = "\n".join(affix_lines)
-        return super().text
+        return super().text(self.max_width)
 
 
 class ObjectDisplay:
@@ -520,12 +529,18 @@ class ObjectDisplay:
     ) -> str:
         content = ""
         if show_title:
-            content += self.parameters.title_block.text
+            content += self.parameters.title_block.text(
+                max_width=self.parameters.max_width
+            )
         if show_data:
-            content += self.affix_block.text
-        content += self.parameters.description_block.text
+            content += self.affix_block.text()
+        content += self.parameters.description_block.text(
+            max_width=self.parameters.max_width
+        )
         if show_info:
-            content += self.parameters.information_block.text
+            content += self.parameters.information_block.text(
+                max_width=self.parameters.max_width
+            )
         return content
 
     def get_embed(
@@ -537,7 +552,7 @@ class ObjectDisplay:
         content = self.get_embed_content(show_info=show_info, show_title=show_title)
 
         for block in self.extra_blocks:
-            content += block.text
+            content += block.text(max_width=self.parameters.max_width)
 
         for object_data in self.extra_displays:
             content += object_data.get_embed_content(show_info=show_info)

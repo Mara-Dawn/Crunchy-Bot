@@ -84,6 +84,7 @@ class Item(Forgeable):
             value=weight,
             object_type=ObjectType.ITEM,
             emoji=emoji,
+            image_url=image_url,
         )
 
     def activated(self, action: ItemTrigger):
@@ -100,8 +101,11 @@ class Item(Forgeable):
         disabled: bool = False,
     ) -> ObjectDisplay:
         emoji = self.emoji
+        image_url = self.image_url
         if isinstance(self.emoji, int):
-            emoji = str(bot.get_emoji(self.emoji))
+            emoji = None
+            if image_url is None:
+                image_url = str(bot.get_emoji(self.emoji).url)
 
         parameters = ObjectParameters(
             object_type=ObjectType.ITEM,
@@ -126,7 +130,10 @@ class Item(Forgeable):
                 cost = f"🅱️{ValueColorBold.PINK.value}{self.cost}{ValueColor.NONE.value}"
                 spacing = parameters.max_width - len(f" {self.cost}") - 1
                 content = f"\n~{" "*spacing}{cost}"
-                extra_blocks.append(DisplayBlock(BlockType.ANSI, content))
+                raw_content = f"\n~{" "*spacing}{self.cost}"
+                extra_blocks.append(
+                    DisplayBlock(BlockType.ANSI, content, len(raw_content))
+                )
         else:
             if count:
                 if disabled:
@@ -153,7 +160,7 @@ class Item(Forgeable):
             prefixes=[],
             suffixes=[],
             extra_blocks=extra_blocks,
-            thumbnail_url=self.image_url,
+            thumbnail_url=image_url,
         )
 
     def get_embed(
