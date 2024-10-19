@@ -989,7 +989,9 @@ class CombatEmbedManager(Service):
         embed = discord.Embed(title=title, color=self.SYSTEM_MESSAGE_COLOR)
 
         round_count = context.round_number
-        embed.add_field(name=f"Round {round_count}", value="", inline=False)
+        self.add_text_bar(
+            embed, "", f"Round {round_count}", Config.COMBAT_EMBED_MAX_WIDTH
+        )
 
         initiative_list = context.initiative
         current_actor = context.current_actor
@@ -1000,13 +1002,13 @@ class CombatEmbedManager(Service):
                 continue
             number = idx + 1
             fraction = actor.current_hp / actor.max_hp
-            percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
+            percentage = f"{( fraction * 100 ):.1f}"
             name = actor.name[:20]
 
-            display_hp = f"[{percentage}%]"
-            display_hp_width = 7
-            spacing = " " * max(0, (display_hp_width - len(display_hp)))
-            display_hp = f"{display_hp}{spacing}"
+            display_hp = f"{percentage}"
+            display_hp_width = 8
+            spacing = " " * max(0, (display_hp_width - len(display_hp) - 3))
+            display_hp = f"[{spacing}{display_hp}%]"
 
             status_effects = ""
             if actor.defeated:
@@ -1020,20 +1022,23 @@ class CombatEmbedManager(Service):
                         status_effects += (
                             f"{effect.status_effect.emoji}{effect.remaining_stacks}"
                         )
+
             if actor.id == current_actor.id:
                 name = f">> {name} <<"
 
             width = Config.COMBAT_EMBED_MAX_WIDTH
-            line = f"{number}. {display_hp}{name}"
-            available = width - (len(line)) - 1
+            line = f"\n{number}. {display_hp} {name}"
+            available = width - len(line) - 3
 
-            if len(status_effects) < available:
-                spacing = " " * max(0, (available - len(status_effects)))
-                initiative_display += f"\n{line} {status_effects}{spacing}"
+            if len(status_effects) <= 0:
+                initiative_display += line
+            elif len(status_effects) < available:
+                line += f" {status_effects}"
+                initiative_display += line
             else:
-                spacing = " " * max(0, available)
-                initiative_display += f"\n{line}{spacing}"
-                initiative_display += f"\n    └ {status_effects}"
+                initiative_display += f"{line}"
+                spacing = " " * (len(f"\n{number}. {display_hp} "))
+                initiative_display += f"\n   ╚ {status_effects}"
 
         initiative_display = f"```python\n{initiative_display}```"
         embed.add_field(name="Turn Order:", value=initiative_display, inline=False)
