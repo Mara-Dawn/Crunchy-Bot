@@ -1016,14 +1016,15 @@ class CombatEmbedManager(Service):
                             f"{effect.status_effect.emoji}{effect.remaining_stacks}"
                         )
             if actor.id == current_actor.id:
-                width = 45
-                text = f"{number}. >> {name} << {status_effects} {display_hp}"
-                spacing = " " * max(0, width - len(text))
-                initiative_display += f"\n{text}{spacing}"
-                continue
-            initiative_display += (
-                f"\n{number}. {actor.name} {status_effects} {display_hp}"
-            )
+                name = f">> {name} <<"
+
+            width = Config.COMBAT_EMBED_MAX_WIDTH
+            line = f"{number}. {name}"
+            spacing = " " * max(0, width - len(line) - len(display_hp))
+            initiative_display += f"\n{line}{spacing}{display_hp}"
+            if len(status_effects) > 0:
+                initiative_display += f"\n    └ {status_effects}"
+
         initiative_display = f"```python\n{initiative_display}```"
         embed.add_field(name="Turn Order:", value=initiative_display, inline=False)
 
