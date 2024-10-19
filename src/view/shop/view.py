@@ -1,6 +1,7 @@
 import contextlib
 
 import discord
+
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -21,6 +22,7 @@ class ShopView(ViewMenu):
     ):
         super().__init__(timeout=300)
         self.controller = controller
+        items = sorted(items, key=lambda x: (x.shop_category.value, x.cost))
         self.items = items
         self.guild_name = interaction.guild.name
         self.member_id = interaction.user.id
