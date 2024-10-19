@@ -35,8 +35,8 @@ class DisplayBlock:
             return ""
 
         spacing = ""
-        if self.lenght < max_width:
-            spacing = " " + "\u00a0" * (max_width - self.lenght)
+        # if self.lenght < max_width:
+        #     spacing = " " + "\u00a0" * (max_width - self.lenght)
 
         block = f"```{self.block_type.value}\n"
         block += self.content + spacing
@@ -488,6 +488,7 @@ class AffixBlock(DisplayBlock):
             affix_lines.append(f"{prefix}{spacing}{suffix}")
 
         self.content = "\n".join(affix_lines)
+        self.lenght = len(self.content)
         return super().text(self.max_width)
 
 
