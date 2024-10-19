@@ -48,6 +48,16 @@ class Item(Forgeable):
         secret: bool = False,
         image_url: str = None,
     ):
+        int_id = -1 if type is None else int.from_bytes(type.name.encode(), "little")
+        super().__init__(
+            name=name,
+            id=int_id,
+            forge_type=type,
+            value=value,
+            object_type=ObjectType.ITEM,
+            emoji=emoji,
+            image_url=image_url,
+        )
         self.name = name
         self.type = type
         self.group = group
@@ -71,21 +81,6 @@ class Item(Forgeable):
         self.permanent = permanent
         self.secret = secret
         self.image_url = image_url
-
-        if self.type is None:
-            int_id = -1
-        else:
-            int_id = int.from_bytes(self.type.name.encode(), "little")
-
-        super().__init__(
-            name=name,
-            id=int_id,
-            forge_type=type,
-            value=weight,
-            object_type=ObjectType.ITEM,
-            emoji=emoji,
-            image_url=image_url,
-        )
 
     def activated(self, action: ItemTrigger):
         if self.trigger is None:
