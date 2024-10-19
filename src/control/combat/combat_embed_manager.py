@@ -1002,7 +1002,12 @@ class CombatEmbedManager(Service):
             fraction = actor.current_hp / actor.max_hp
             percentage = f"{round(fraction * 100, 1)}".rstrip("0").rstrip(".")
             name = actor.name[:20]
+
             display_hp = f"[{percentage}%]"
+            display_hp_width = 7
+            spacing = " " * max(0, (display_hp_width - len(display_hp)))
+            display_hp = f"{display_hp}{spacing}"
+
             status_effects = ""
             if actor.defeated:
                 status_effects = "💀"
@@ -1019,10 +1024,15 @@ class CombatEmbedManager(Service):
                 name = f">> {name} <<"
 
             width = Config.COMBAT_EMBED_MAX_WIDTH
-            line = f"{number}. {name}"
-            spacing = " " * max(0, width - len(line) - len(display_hp))
-            initiative_display += f"\n{line}{spacing}{display_hp}"
-            if len(status_effects) > 0:
+            line = f"{number}. {display_hp}{name}"
+            available = width - (len(line)) - 1
+
+            if len(status_effects) < available:
+                spacing = " " * max(0, (available - len(status_effects)))
+                initiative_display += f"\n{line} {status_effects}{spacing}"
+            else:
+                spacing = " " * max(0, available)
+                initiative_display += f"\n{line}{spacing}"
                 initiative_display += f"\n    └ {status_effects}"
 
         initiative_display = f"```python\n{initiative_display}```"
