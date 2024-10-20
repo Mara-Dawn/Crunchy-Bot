@@ -1002,13 +1002,16 @@ class CombatEmbedManager(Service):
                 continue
             number = idx + 1
             fraction = actor.current_hp / actor.max_hp
-            percentage = f"{( fraction * 100 ):.1f}"
+            if fraction == 1:
+                percentage = f"{int( fraction * 100 )}"
+            else:
+                percentage = f"{( fraction * 100 ):.1f}"
             name = actor.name[:20]
 
             display_hp = f"{percentage}"
-            display_hp_width = 8
+            display_hp_width = 7
             spacing = " " * max(0, (display_hp_width - len(display_hp) - 3))
-            display_hp = f"[{spacing}{display_hp}%]"
+            display_hp = f"{spacing}[{display_hp}%]"
 
             status_effects = ""
             if actor.defeated:
