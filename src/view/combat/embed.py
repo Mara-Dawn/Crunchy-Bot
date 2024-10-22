@@ -284,14 +284,14 @@ class EnemyOverviewEmbed(discord.Embed):
             f"Current Server Level: [35m{guild_level}[0m\n"
         )
 
-        if guild_level < Config.MAX_LVL:
-            if (
-                fresh_prog
-                and progress < Config.FORGE_UNLOCK_REQUIREMENT
-                and guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SCRAP]
-            ):
-                description += f"Progress to next forge level: [35m{progress}[0m/[35m{Config.FORGE_UNLOCK_REQUIREMENT}[0m\n"
+        if (
+            fresh_prog
+            and progress < Config.FORGE_UNLOCK_REQUIREMENT
+            and guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SCRAP]
+        ):
+            description += f"Progress to next forge level: [35m{progress}[0m/[35m{Config.FORGE_UNLOCK_REQUIREMENT}[0m\n"
 
+        if guild_level < Config.MAX_LVL:
             description += f"Progress to next guild level: [35m{progress}[0m/[35m{requirement}[0m"
 
             if guild_level in Config.BOSS_LEVELS and progress >= requirement:
