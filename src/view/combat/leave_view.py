@@ -17,7 +17,7 @@ class EncounterLeaveView(ViewMenu):
         self.controller = controller
         self.encounter_id = encounter_id
 
-        self.controller_type = ControllerType.COMBAT
+        self.controller_types = [ControllerType.COMBAT]
         self.controller.register_view(self)
 
         self.add_item(LeaveButton())

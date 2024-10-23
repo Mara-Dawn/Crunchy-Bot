@@ -17,7 +17,7 @@ class ViewMenu(discord.ui.View, ABC):
         super().__init__(*args, **kwargs)
         self.id = ViewMenu.class_counter
         self.member_id = None
-        self.controller_type: ControllerType = None
+        self.controller_types: list[ControllerType] = None
         self.message: discord.Message = None
         self.guild_level: int = 1
         ViewMenu.class_counter += 1

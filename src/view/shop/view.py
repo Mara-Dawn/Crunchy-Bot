@@ -39,7 +39,7 @@ class ShopView(ViewMenu):
         self.user_items: dict[ItemType, int] = {}
         self.disabled = False
 
-        self.controller_type = ControllerType.SHOP_VIEW
+        self.controller_types = [ControllerType.SHOP_VIEW]
         self.controller.register_view(self)
         self.refresh_elements()
 

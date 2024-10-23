@@ -63,7 +63,11 @@ class InventoryMenuView(
         self.forge_inventory: ForgeInventory = None
         self.filter_items()
 
-        self.controller_type = ControllerType.INVENTORY_VIEW
+        self.controller_types = [
+            ControllerType.MAIN_MENU,
+            ControllerType.EQUIPMENT,
+            ControllerType.INVENTORY_VIEW,
+        ]
         self.controller.register_view(self)
         self.refresh_elements()
 
@@ -127,9 +131,9 @@ class InventoryMenuView(
         self.add_add_to_forge_button(disabled=disable_forge, row=4)
         if self.forge_inventory is not None and not self.forge_inventory.empty:
             self.add_forge_status_button(
-                current=self.forge_inventory, row=3, disabled=disabled
+                current=self.forge_inventory, row=3, disabled=False
             )
-            self.add_clear_forge_button(disabled=disabled)
+            self.add_clear_forge_button(disabled=False)
 
     async def refresh_ui(
         self,
@@ -163,10 +167,10 @@ class InventoryMenuView(
 
         self.forge_inventory = await self.forge_manager.get_forge_inventory(self.member)
 
-        self.refresh_elements(disabled)
-
         if self.selected not in [item.type for item in self.display_items]:
             self.selected = None
+
+        self.refresh_elements(disabled)
 
         embed = InventoryEmbed(self.controller.bot, self.inventory, self.display_items)
         if self.message is None:

@@ -485,7 +485,7 @@ class AddToForgeButton(discord.ui.Button):
     def __init__(self, disabled: bool = False, row: int = 4):
         super().__init__(
             label="Add to Forge",
-            style=discord.ButtonStyle.gray,
+            style=discord.ButtonStyle.green,
             row=row,
             disabled=disabled,
         )
@@ -502,7 +502,7 @@ class ClearForgeButton(discord.ui.Button):
     def __init__(self, disabled: bool = False, row: int = 4):
         super().__init__(
             label="Clear Forge",
-            style=discord.ButtonStyle.gray,
+            style=discord.ButtonStyle.red,
             row=row,
             disabled=disabled,
         )
@@ -531,7 +531,7 @@ class ForgeStatusButton(discord.ui.Button):
 
         super().__init__(
             label=f"Forge: {label}",
-            style=discord.ButtonStyle.grey,
+            style=discord.ButtonStyle.blurple,
             row=row,
             disabled=disabled,
         )

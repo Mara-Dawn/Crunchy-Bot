@@ -30,21 +30,20 @@ class Controller:
         self.view_controllers: list[ViewController] = []
         self.views: list[ViewMenu] = []
 
-        from control.view.main_menu_controller import MainMenuViewController
-
-        self.add_view_controller(MainMenuViewController)
-
     def register_view(self, view: ViewMenu):
-        controller_type = view.controller_type.value
 
-        controller_class = getattr(
-            importlib.import_module(
-                "control.view." + ControllerModuleMap.get_module(controller_type)
-            ),
-            controller_type,
-        )
+        controller_types = view.controller_types
+
+        for controller_type in controller_types:
+            controller_type = controller_type.value
+            controller_class = getattr(
+                importlib.import_module(
+                    "control.view." + ControllerModuleMap.get_module(controller_type)
+                ),
+                controller_type,
+            )
+            self.add_view_controller(controller_class)
         self.views.append(view)
-        self.add_view_controller(controller_class)
 
     def detach_view(self, view: ViewMenu):
         if view in self.views:

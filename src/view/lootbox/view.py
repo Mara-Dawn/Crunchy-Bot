@@ -1,4 +1,5 @@
 import discord
+
 from control.controller import Controller
 from control.types import ControllerType
 from events.types import UIEventType
@@ -16,7 +17,7 @@ class LootBoxView(ViewMenu):
 
         self.blocked = False
 
-        self.controller_type = ControllerType.LOOTBOX_VIEW
+        self.controller_types = [ControllerType.LOOTBOX_VIEW]
         self.controller.register_view(self)
 
     async def claim(self, interaction: discord.Interaction):

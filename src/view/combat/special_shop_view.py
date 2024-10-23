@@ -44,7 +44,7 @@ class SpecialShopView(ViewMenu, ImplementsBack, ImplementsBalance):
         self.message = None
         self.loaded = False
 
-        self.controller_type = ControllerType.EQUIPMENT
+        self.controller_types = [ControllerType.EQUIPMENT]
         self.controller.register_view(self)
         self.refresh_elements()
         self.embed_manager: CombatEmbedManager = controller.get_service(

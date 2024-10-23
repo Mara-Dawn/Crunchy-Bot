@@ -50,7 +50,7 @@ class UserSettingView(ViewMenu):
             for setting_type in UserSettingType
         ]
 
-        self.controller_type = ControllerType.USER_SETTING
+        self.controller_types = [ControllerType.USER_SETTING]
         self.controller.register_view(self)
         self.refresh_elements()
 

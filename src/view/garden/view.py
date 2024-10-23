@@ -34,7 +34,7 @@ class GardenView(ViewMenu):
 
         self.state = GardenViewState.NORMAL
 
-        self.controller_type = ControllerType.GARDEN_VIEW
+        self.controller_types = [ControllerType.GARDEN_VIEW]
         self.controller.register_view(self)
         self.refresh_elements()
 

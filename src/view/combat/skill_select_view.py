@@ -123,7 +123,7 @@ class SkillSelectView(
         self.loaded = False
         self.forge_inventory: ForgeInventory = None
 
-        self.controller_type = ControllerType.EQUIPMENT
+        self.controller_types = [ControllerType.MAIN_MENU, ControllerType.EQUIPMENT]
         self.controller.register_view(self)
         self.embed_manager: CombatEmbedManager = controller.get_service(
             CombatEmbedManager
@@ -485,9 +485,9 @@ class SkillSelectView(
                 self.add_back_button()
                 if self.forge_inventory is not None and not self.forge_inventory.empty:
                     self.add_forge_status_button(
-                        current=self.forge_inventory, disabled=disable_forge
+                        current=self.forge_inventory, disabled=False
                     )
-                    self.add_clear_forge_button(disabled=disable_forge)
+                    self.add_clear_forge_button(disabled=False)
 
             case SkillViewState.SELECT_MODE:
                 if len(self.selected) > 1:

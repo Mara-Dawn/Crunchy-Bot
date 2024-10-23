@@ -26,7 +26,7 @@ class ApproveMemberView(ViewMenu):
         self.joining_member = joining_member
         self.owner = owner
 
-        self.controller_type = ControllerType.COMBAT
+        self.controller_types = [ControllerType.COMBAT]
         self.controller.register_view(self)
 
         self.add_item(ApproveButton())
