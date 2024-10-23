@@ -49,7 +49,7 @@ class ShopResponseView(ViewMenu):
         self.reaction_input_button: ReactionInputButton = None
         self.submission_button: SubmissionInputButton = None
 
-        self.controller_type = ControllerType.SHOP_RESPONSE_VIEW
+        self.controller_types = [ControllerType.SHOP_RESPONSE_VIEW]
         self.controller.register_view(self)
 
     async def init(self):

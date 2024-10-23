@@ -31,7 +31,7 @@ class SpecialDropView(ViewMenu):
             CombatEmbedManager
         )
 
-        self.controller_type = ControllerType.COMBAT
+        self.controller_types = [ControllerType.COMBAT]
         self.controller.register_view(self)
 
         if delay is not None:

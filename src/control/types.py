@@ -49,6 +49,7 @@ class ControllerType(str, Enum):
     PREDICTION_VIEW = "PredictionViewController"
     INVENTORY_VIEW = "InventoryViewController"
     GARDEN_VIEW = "GardenViewController"
+    MAIN_MENU = "MainMenuViewController"
     COMBAT = "CombatViewController"
     EQUIPMENT = "EquipmentViewController"
     USER_SETTING = "UserSettingViewController"
@@ -79,6 +80,7 @@ class ControllerModuleMap(str, Enum):
             ControllerType.INVENTORY_VIEW: "inventory_view_controller",
             ControllerType.GARDEN_VIEW: "garden_view_controller",
             ControllerType.COMBAT: "combat_view_controller",
+            ControllerType.MAIN_MENU: "main_menu_controller",
             ControllerType.EQUIPMENT: "equipment_view_controller",
             ControllerType.USER_SETTING: "user_setting_view_controller",
             ControllerType.BASIC_ENEMY: "basic_enemy",

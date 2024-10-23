@@ -1,6 +1,6 @@
 import contextlib
-import os
 import datetime
+import os
 
 import discord
 
@@ -37,7 +37,7 @@ class PredictionInteractionView(ViewMenu):
 
         self.selected_outcome: int = None
 
-        self.controller_type = ControllerType.PREDICTION_INTERACTION_VIEW
+        self.controller_types = [ControllerType.PREDICTION_INTERACTION_VIEW]
         self.controller.register_view(self)
 
         self.select_win_button: SelectWinnerButton = None

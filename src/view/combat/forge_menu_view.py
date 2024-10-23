@@ -87,7 +87,7 @@ class ForgeMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance, ImplementsB
         else:
             self.forge_state: ForgeMenuState = state
 
-        self.controller_type = ControllerType.EQUIPMENT
+        self.controller_types = [ControllerType.MAIN_MENU, ControllerType.EQUIPMENT]
         self.controller.register_view(self)
         self.refresh_elements()
 

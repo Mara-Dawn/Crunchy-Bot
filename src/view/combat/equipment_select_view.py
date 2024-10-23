@@ -72,7 +72,7 @@ class EquipmentSelectView(
         self.loaded = False
         self.forge_inventory: ForgeInventory = None
 
-        self.controller_type = ControllerType.EQUIPMENT
+        self.controller_types = [ControllerType.MAIN_MENU, ControllerType.EQUIPMENT]
         self.controller.register_view(self)
         self.refresh_elements()
         self.embed_manager: CombatEmbedManager = controller.get_service(
@@ -292,10 +292,8 @@ class EquipmentSelectView(
         self.add_add_to_forge_button(disabled=disable_forge, row=3)
         self.add_back_button(disabled=disabled)
         if self.forge_inventory is not None and not self.forge_inventory.empty:
-            self.add_forge_status_button(
-                current=self.forge_inventory, disabled=disable_forge
-            )
-            self.add_clear_forge_button(disabled=disable_forge)
+            self.add_forge_status_button(current=self.forge_inventory, disabled=False)
+            self.add_clear_forge_button(disabled=False)
         self.add_item(
             SelectGearSlot(
                 EquipmentSlot.WEAPON,

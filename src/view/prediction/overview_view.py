@@ -23,7 +23,7 @@ class PredictionOverviewView(ViewMenu):
 
         self.prediction_stats = prediction_stats
 
-        self.controller_type = ControllerType.PREDICTION_VIEW
+        self.controller_types = [ControllerType.PREDICTION_VIEW]
         self.controller.register_view(self)
 
         self.refresh_elements()

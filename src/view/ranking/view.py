@@ -23,7 +23,7 @@ class RankingView(ViewMenu):
         self.member_id = interaction.user.id
         self.season = season
 
-        self.controller_type = ControllerType.RANKING_VIEW
+        self.controller_types = [ControllerType.RANKING_VIEW]
         self.controller.register_view(self)
 
     async def listen_for_ui_event(self, event: UIEvent):

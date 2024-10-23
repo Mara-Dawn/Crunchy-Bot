@@ -1,6 +1,7 @@
 import contextlib
 
 import discord
+
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.prediction import Prediction
@@ -19,7 +20,7 @@ class PredictionInfoView(ViewMenu):
         super().__init__(timeout=None)
         self.controller = controller
 
-        self.controller_type = ControllerType.PREDICTION_VIEW
+        self.controller_types = [ControllerType.PREDICTION_VIEW]
         self.controller.register_view(self)
 
         self.reload_elements()

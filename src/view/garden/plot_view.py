@@ -42,7 +42,7 @@ class PlotView(ViewMenu):
         if len(self.user_seeds) > 0:
             self.selected_seed = list(self.user_seeds.keys())[0]
 
-        self.controller_type = ControllerType.GARDEN_VIEW
+        self.controller_types = [ControllerType.GARDEN_VIEW]
         self.controller.register_view(self)
 
         self.back_button: BackButton = None

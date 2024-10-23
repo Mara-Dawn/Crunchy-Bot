@@ -16,7 +16,7 @@ class GracePeriodView(ViewMenu):
         super().__init__(timeout=wait_time)
         self.controller = controller
 
-        self.controller_type = ControllerType.COMBAT
+        self.controller_types = [ControllerType.COMBAT]
         self.controller.register_view(self)
         self.encounter = encounter
 

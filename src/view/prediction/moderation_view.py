@@ -42,7 +42,7 @@ class PredictionModerationView(ViewMenu):
 
         self.disabled = False
 
-        self.controller_type = ControllerType.PREDICTION_MODERATION_VIEW
+        self.controller_types = [ControllerType.PREDICTION_MODERATION_VIEW]
         self.controller.register_view(self)
         self.refresh_elements()
 

@@ -53,7 +53,7 @@ class CombatTurnView(ViewMenu):
             CombatSkillManager
         )
 
-        self.controller_type = ControllerType.COMBAT
+        self.controller_types = [ControllerType.COMBAT]
         self.controller.register_view(self)
         self.skill_data = []
 

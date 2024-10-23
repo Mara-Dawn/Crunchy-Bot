@@ -46,7 +46,7 @@ class PredictionView(ViewMenu):
 
         self.message = None
 
-        self.controller_type = ControllerType.PREDICTION_VIEW
+        self.controller_types = [ControllerType.PREDICTION_VIEW]
         self.controller.register_view(self)
         self.refresh_elements()
 

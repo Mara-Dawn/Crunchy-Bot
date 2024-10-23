@@ -41,7 +41,7 @@ class InventoryConfirmView(ViewMenu):
 
         self.cancel_button: CancelButton = None
 
-        self.controller_type = ControllerType.INVENTORY_VIEW
+        self.controller_types = [ControllerType.INVENTORY_VIEW]
         self.controller.register_view(self)
 
         self.refresh_elements()
