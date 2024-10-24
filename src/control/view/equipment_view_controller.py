@@ -1,7 +1,5 @@
 import datetime
-import cProfile as profile
 
-import discord
 from discord.ext import commands
 
 from combat.enchantments.enchantment import Enchantment
@@ -27,7 +25,6 @@ from events.inventory_event import InventoryEvent
 from events.types import EquipmentEventType, EventType, UIEventType
 from events.ui_event import UIEvent
 from forge.forgable import ForgeInventory
-from forge.recipe import RecipeHandler
 from items.types import ItemType
 from view.combat.elements import MenuState
 from view.combat.embed import (
@@ -98,11 +95,7 @@ class EquipmentViewController(ViewController):
             case UIEventType.GEAR_OPEN_SELECT:
                 interaction = event.payload[0]
                 slot = event.payload[1]
-                p = profile.Profile()
-                p.enable()
                 await self.open_gear_select(interaction, slot, event.view_id)
-                p.disable()
-                p.print_stats(sort="cumulative")
             case UIEventType.GEAR_EQUIP:
                 interaction = event.payload[0]
                 selected = event.payload[1]
