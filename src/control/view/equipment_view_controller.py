@@ -1,5 +1,6 @@
 import datetime
 
+import discord
 from discord.ext import commands
 
 from combat.enchantments.enchantment import Enchantment
