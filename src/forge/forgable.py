@@ -44,24 +44,6 @@ class Ingredient:
 
 
 @dataclass
-class IngredientList:
-    ingredients: tuple[Ingredient, Ingredient, Ingredient]
-
-    def match(self, forgeable: Forgeable) -> bool:
-        if self.forge_type is not None and self.forge_type != forgeable.forge_type:
-            return False
-        if self.object_type is not None and self.object_type != forgeable.object_type:
-            return False
-        if self.value is not None and self.value != forgeable.value:
-            return False
-        if self.level is not None and self.level != forgeable.level:
-            return False
-        if self.rarity is not None and self.rarity != forgeable.rarity:  # noqa: SIM103
-            return False
-        return True
-
-
-@dataclass
 class ForgeInventory:
     first: Forgeable | None = None
     second: Forgeable | None = None
@@ -74,6 +56,10 @@ class ForgeInventory:
     @property
     def empty(self) -> bool:
         return all(forgeable is None for forgeable in self.items)
+
+    @property
+    def full(self) -> bool:
+        return all(forgeable is not None for forgeable in self.items)
 
     def set(self, index: int, item: Forgeable):
         match index:
