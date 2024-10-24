@@ -1,6 +1,8 @@
 import datetime
+import sys
 
 import discord
+import line_profiler
 from discord.ext import commands
 
 from combat.enchantments.enchantment import Enchantment
@@ -256,6 +258,7 @@ class EquipmentViewController(ViewController):
             scrap_balance=scrap_balance,
         )
 
+    @line_profiler.profile
     async def open_gear_select(
         self, interaction: discord.Interaction, slot: EquipmentSlot, view_id: int
     ):
@@ -304,6 +307,7 @@ class EquipmentViewController(ViewController):
         view.set_message(message)
         await view.refresh_ui()
         self.controller.detach_view_by_id(view_id)
+        sys.exit()
 
     async def open_forge_shop(self, interaction: discord.Interaction, view_id: int):
         guild_id = interaction.guild.id
