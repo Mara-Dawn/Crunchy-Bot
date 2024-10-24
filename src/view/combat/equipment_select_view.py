@@ -3,7 +3,7 @@ import copy
 
 import discord
 
-from combat.gear.gear import Gear
+from combat.gear.gear import Gear, GearProxy
 from combat.gear.types import EquipmentSlot, GearModifierType, Rarity
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
@@ -44,7 +44,7 @@ class EquipmentSelectView(
         self,
         controller: Controller,
         interaction: discord.Interaction,
-        gear_inventory: list[Gear],
+        gear_inventory: list[GearProxy],
         currently_equipped: list[Gear],
         scrap_balance: int,
         slot: EquipmentSlot,
@@ -82,6 +82,7 @@ class EquipmentSelectView(
             CombatActorManager
         )
         self.forge_manager: ForgeManager = self.controller.get_service(ForgeManager)
+        self.database = self.controller.database
 
     async def listen_for_ui_event(self, event: UIEvent):
         match event.type:
@@ -337,7 +338,7 @@ class EquipmentSelectView(
 
     async def refresh_ui(
         self,
-        gear_inventory: list[Gear] = None,
+        gear_inventory: list[GearProxy] = None,
         currently_equipped: list[Gear] = None,
         scrap_balance: int = None,
         disabled: bool = False,
@@ -367,10 +368,33 @@ class EquipmentSelectView(
             (start_offset + SelectGearHeadEmbed.ITEMS_PER_PAGE),
             len(self.filtered_items),
         )
-        self.display_items = self.filtered_items[start_offset:end_offset]
 
+        display_items = []
+        for gear_proxy in self.filtered_items[start_offset:end_offset]:
+            gear = gear_proxy
+            if gear_proxy.id > 0:
+                gear = await self.controller.database.get_gear_by_id(gear_proxy.id)
+
+            if gear is None:
+                gear_list = [
+                    gear for gear in self.display_items if gear.id == gear_proxy.id
+                ]
+                if len(gear_list) > 0:
+                    gear = gear_list[0]
+                else:
+                    continue
+
+            display_items.append(gear)
+
+        self.display_items = display_items
         self.selected = [
-            gear for gear in self.gear if gear.id in [x.id for x in self.selected]
+            (
+                await self.controller.database.get_gear_by_id(gear_proxy.id)
+                if gear_proxy.id > 0
+                else gear_proxy
+            )
+            for gear_proxy in self.gear
+            if gear_proxy.id in [x.id for x in self.selected]
         ]
 
         self.forge_inventory = await self.forge_manager.get_forge_inventory(self.member)
