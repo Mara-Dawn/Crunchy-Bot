@@ -1,7 +1,9 @@
 import contextlib
 import copy
+import sys
 
 import discord
+import line_profiler
 
 from combat.gear.gear import Gear, GearProxy
 from combat.gear.types import EquipmentSlot, GearModifierType, Rarity
@@ -336,6 +338,7 @@ class EquipmentSelectView(
             )
         )
 
+    @line_profiler.profile
     async def refresh_ui(
         self,
         gear_inventory: list[GearProxy] = None,
@@ -426,6 +429,8 @@ class EquipmentSelectView(
             embeds.append(embed)
 
         await self.message.edit(embeds=embeds, view=self)
+
+        sys.exit()
 
     async def set_selected(self, interaction: discord.Interaction, gear_ids: list[int]):
         await interaction.response.defer()
