@@ -1,8 +1,7 @@
 import datetime
-import sys
+import cProfile as profile
 
 import discord
-import line_profiler
 from discord.ext import commands
 
 from combat.enchantments.enchantment import Enchantment
@@ -99,7 +98,11 @@ class EquipmentViewController(ViewController):
             case UIEventType.GEAR_OPEN_SELECT:
                 interaction = event.payload[0]
                 slot = event.payload[1]
+                p = profile.Profile()
+                p.enable()
                 await self.open_gear_select(interaction, slot, event.view_id)
+                p.disable()
+                p.print_stats(sort="cumulative")
             case UIEventType.GEAR_EQUIP:
                 interaction = event.payload[0]
                 selected = event.payload[1]
@@ -258,7 +261,6 @@ class EquipmentViewController(ViewController):
             scrap_balance=scrap_balance,
         )
 
-    @line_profiler.profile
     async def open_gear_select(
         self, interaction: discord.Interaction, slot: EquipmentSlot, view_id: int
     ):
@@ -307,7 +309,6 @@ class EquipmentViewController(ViewController):
         view.set_message(message)
         await view.refresh_ui()
         self.controller.detach_view_by_id(view_id)
-        sys.exit()
 
     async def open_forge_shop(self, interaction: discord.Interaction, view_id: int):
         guild_id = interaction.guild.id
