@@ -3210,7 +3210,8 @@ class Database:
         return Encounter.from_db_row(rows[0])
 
     async def get_active_encounters(self, guild_id: int) -> list[int]:
-        start_timestamp = await self.get_guild_current_season_start(guild_id)
+        start_timestamp = datetime.datetime.now() - datetime.timedelta(hours=3)
+        start_timestamp = start_timestamp.timestamp()
 
         command = f"""
             SELECT * FROM {self.ENCOUNTER_EVENT_TABLE}
