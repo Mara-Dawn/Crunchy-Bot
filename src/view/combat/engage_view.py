@@ -51,12 +51,12 @@ class EnemyEngageView(ViewMenu):
         self.timer = None
 
         now = datetime.datetime.now().timestamp()
+        self.restriction_timestamp = int(now + self.DEFAULT_RESTRICTION_TIMEOUT)
 
         if self.context.min_participants > 1 and self.context.max_lvl:
             self.timer = Timer(
                 self.DEFAULT_RESTRICTION_TIMEOUT, self.remove_restriction
             )
-            self.restriction_timestamp = int(now + self.DEFAULT_RESTRICTION_TIMEOUT)
 
         if timeout is not None:
             self.timeout_timestamp = int(now + timeout)
@@ -115,6 +115,7 @@ class EnemyEngageView(ViewMenu):
     async def refresh_ui(
         self,
         embed: discord.Embed = None,
+        mock_context: EncounterContext = None,
         done: bool = None,
     ):
         if self.message is None:
@@ -122,6 +123,10 @@ class EnemyEngageView(ViewMenu):
 
         if done is not None and done:
             self.done = done
+
+        context = self.context
+        if mock_context is not None:
+            context = mock_context
 
         self.refresh_elements(disabled=(not self.loaded))
 
@@ -154,7 +159,7 @@ class EnemyEngageView(ViewMenu):
         if (
             not self.active
             and not self.done
-            and self.context.min_participants > 1
+            and context.min_participants > 1
             and self.context.max_lvl
         ):
             embed.add_field(

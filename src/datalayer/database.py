@@ -25,7 +25,7 @@ from combat.gear.default_gear import (
     DefaultWand,
     Gear,
 )
-from combat.gear.gear import Droppable
+from combat.gear.gear import Droppable, GearProxy
 from combat.gear.types import (
     Base,
     EquipmentSlot,
@@ -4111,6 +4111,45 @@ class Database:
         armory = []
         for row in rows:
             gear_piece = await self.get_gear_by_id(row[self.USER_GEAR_ID_COL])
+            armory.append(gear_piece)
+
+        return armory
+
+    async def get_user_armory_proxy(
+        self, guild_id: int, member_id: int
+    ) -> list[GearProxy]:
+
+        command = f""" 
+            SELECT * FROM {self.USER_GEAR_TABLE} 
+            WHERE {self.USER_GEAR_GUILD_ID_COL} = ?
+            AND {self.USER_GEAR_MEMBER_ID_COL} = ?
+            AND {self.USER_GEAR_BASE_TYPE_COL} = ?
+            AND {self.USER_GEAR_IS_SCRAPPED_COL} = 0
+            ;
+        """
+        task = (guild_id, member_id, Base.GEAR)
+        rows = await self.__query_select(command, task)
+        if not rows:
+            return []
+        armory = []
+        for row in rows:
+            id = row[self.USER_GEAR_ID_COL]
+            name = row[self.USER_GEAR_NAME_COL]
+            gear_base_type = GearBaseType(row[self.USER_GEAR_TYPE_COL])
+            base_class = globals()[gear_base_type]
+            gear_base: GearBase = base_class()  # noqa: F405
+            rarity = Rarity(row[self.USER_GEAR_RARITY_COL])
+            level = row[self.USER_GEAR_LEVEL_COL]
+            locked = int(row[self.USER_GEAR_IS_LOCKED_COL]) == 1
+
+            gear_piece = GearProxy(
+                name=name,
+                base=gear_base,
+                rarity=rarity,
+                level=level,
+                locked=locked,
+                id=id,
+            )
             armory.append(gear_piece)
 
         return armory

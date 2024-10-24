@@ -193,7 +193,7 @@ class EquipmentViewController(ViewController):
         if not await self.encounter_check(interaction):
             return
 
-        gear_inventory = await self.database.get_user_armory(guild_id, member_id)
+        gear_inventory = await self.database.get_user_armory_proxy(guild_id, member_id)
         default_gear = await self.gear_manager.get_default_gear()
         gear_inventory.extend(default_gear)
         currently_equipped = await self.database.get_user_equipment_slot(
@@ -265,7 +265,7 @@ class EquipmentViewController(ViewController):
         if not await self.encounter_check(interaction):
             return
 
-        gear_inventory = await self.database.get_user_armory(guild_id, member_id)
+        gear_inventory = await self.database.get_user_armory_proxy(guild_id, member_id)
         default_gear = await self.gear_manager.get_default_gear()
         gear_inventory.extend(default_gear)
 

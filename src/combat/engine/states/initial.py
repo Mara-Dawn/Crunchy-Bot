@@ -76,10 +76,10 @@ class InitialState(State):
                 mock_encounter
             )
             embed = await self.embed_manager.get_spawn_embed(mock_context)
+            await view.refresh_ui(embed=embed, mock_context=mock_context)
         else:
             embed = await self.embed_manager.get_spawn_embed(self.context)
-
-        await view.refresh_ui(embed=embed)
+            await view.refresh_ui(embed=embed)
 
         event = EncounterEvent(
             datetime.datetime.now(),

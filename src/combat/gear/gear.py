@@ -135,7 +135,7 @@ class GearBase(DroppableBase):
                 ]
 
 
-class Gear(Droppable, Forgeable):
+class GearProxy(Droppable, Forgeable):
 
     def __init__(
         self,
@@ -143,9 +143,6 @@ class Gear(Droppable, Forgeable):
         base: GearBase,
         rarity: Rarity,
         level: int,
-        modifiers: dict[GearModifierType, float],
-        skills: list[SkillType],
-        enchantments: list[EffectEnchantment],
         locked: bool = False,
         id: int = None,
     ):
@@ -168,15 +165,7 @@ class Gear(Droppable, Forgeable):
         self.base = base
         self.rarity = rarity
         self.level = level
-        self.modifiers = modifiers
 
-        index_map = {v: i for i, v in enumerate(GearModifierType.prio())}
-        self.modifiers = dict(
-            sorted(self.modifiers.items(), key=lambda pair: index_map[pair[0]])
-        )
-
-        self.skills = skills
-        self.enchantments = enchantments
         self.locked = locked
         self.id = id
 
@@ -191,6 +180,37 @@ class Gear(Droppable, Forgeable):
             rarity=rarity,
             image_url=base.image_url,
         )
+
+
+class Gear(GearProxy):
+
+    def __init__(
+        self,
+        name: str,
+        base: GearBase,
+        rarity: Rarity,
+        level: int,
+        modifiers: dict[GearModifierType, float],
+        skills: list[SkillType],
+        enchantments: list[EffectEnchantment],
+        locked: bool = False,
+        id: int = None,
+    ):
+        super().__init__(
+            name=name,
+            base=base,
+            rarity=rarity,
+            level=level,
+            locked=locked,
+            id=id,
+        )
+        self.modifiers = modifiers
+        index_map = {v: i for i, v in enumerate(GearModifierType.prio())}
+        self.modifiers = dict(
+            sorted(self.modifiers.items(), key=lambda pair: index_map[pair[0]])
+        )
+        self.skills = skills
+        self.enchantments = enchantments
 
     def display(
         self,
