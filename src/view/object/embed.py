@@ -292,6 +292,8 @@ class Prefix(Affix):
     def spacer(self) -> str:
         if self.name is None or len(self.name) == 0:
             spacing = " " * (self.max_length + len(self.separator))
+        elif self.value_type == ValueType.NONE:
+            spacing = " " * (self.max_length + 2)
         else:
             spacing = " " * (self.max_length - len(self.name))
         return spacing
@@ -305,13 +307,17 @@ class Prefix(Affix):
 
     @property
     def text(self) -> str:
-        penalty = ""
-        if self.penalty:
-            penalty = f"{ValueColor.GREY.value}{penalty}{ValueColor.NONE.value}"
-        colored_value = (
-            f"{self.value_color.value}{self.display_value}{ValueColor.NONE.value}"
-        )
-        return f"{self.spacer}{self.name}{self.separator}{self.pre}{colored_value}{self.post}{penalty}"
+        if self.value_type != ValueType.NONE:
+            penalty = ""
+            if self.penalty:
+                penalty = f"{ValueColor.GREY.value}{penalty}{ValueColor.NONE.value}"
+            colored_value = (
+                f"{self.value_color.value}{self.display_value}{ValueColor.NONE.value}"
+            )
+            return f"{self.spacer}{self.name}{self.separator}{self.pre}{colored_value}{self.post}{penalty}"
+        else:
+            colored_name = f"{self.value_color.value}{self.name}{ValueColor.NONE.value}"
+            return f"{self.spacer}{self.pre}{colored_name}{self.post}"
 
     @staticmethod
     def EMPTY() -> "Prefix":
