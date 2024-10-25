@@ -43,7 +43,7 @@ class MenuButton(discord.ui.Button):
         label = state.value
         self.state = state
         if selected:
-            label = f">{label}<"
+            label = f"> {label} <"
             disabled = True
 
         super().__init__(label=label, style=color, disabled=disabled, row=0)

@@ -1011,7 +1011,7 @@ class CombatEmbedManager(Service):
             display_hp = f"{percentage}"
             display_hp_width = 7
             spacing = " " * max(0, (display_hp_width - len(display_hp) - 3))
-            display_hp = f"{spacing}[{display_hp}%]"
+            display_hp = f"[{display_hp}%]{spacing}"
 
             status_effects = ""
             if actor.defeated:

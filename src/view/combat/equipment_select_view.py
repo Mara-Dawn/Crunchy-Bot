@@ -49,7 +49,7 @@ class EquipmentSelectView(
         scrap_balance: int,
         slot: EquipmentSlot,
     ):
-        super().__init__(timeout=300)
+        super().__init__(timeout=None)
         self.controller = controller
         self.guild_name = interaction.guild.name
         self.member_id = interaction.user.id

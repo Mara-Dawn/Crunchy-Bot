@@ -84,7 +84,7 @@ class SkillSelectView(
         scrap_balance: int,
         state: SkillViewState,
     ):
-        super().__init__(timeout=300)
+        super().__init__(timeout=None)
         self.controller = controller
         self.guild_name = interaction.guild.name
         self.member_id = interaction.user.id
