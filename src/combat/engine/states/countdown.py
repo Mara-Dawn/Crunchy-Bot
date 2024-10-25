@@ -40,8 +40,17 @@ class CountdownState(State):
         round_embed = await self.embed_manager.get_initiation_embed(
             wait_time, self.context.opponent
         )
+
+        guild_level = await self.database.get_guild_level(
+            self.context.encounter.guild_id
+        )
+        disable_skip = guild_level == encounter.enemy_level
+        initial_member = self.context.combatants[0].member
+
         # will trigger the combat start on expiration
-        view = GracePeriodView(self.controller, encounter, wait_time)
+        view = GracePeriodView(
+            self.controller, encounter, wait_time, initial_member, disable_skip
+        )
         message = await self.discord.send_message(
             thread, content="", embed=round_embed, view=view
         )
