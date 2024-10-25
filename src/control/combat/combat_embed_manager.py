@@ -1031,11 +1031,11 @@ class CombatEmbedManager(Service):
 
             width = Config.COMBAT_EMBED_MAX_WIDTH
             line = f"\n{number}. {display_hp} {name}"
-            available = width - len(line) - 3
+            available = width - len(line)
 
             if len(status_effects) <= 0:
                 initiative_display += line
-            elif len(status_effects) < available:
+            elif int(len(status_effects) * 1.5) < available:
                 line += f" {status_effects}"
                 initiative_display += line
             else:
