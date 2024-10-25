@@ -390,7 +390,7 @@ class ExtraMissile(BaseEffectEnchantment):
             droppable=True,
             value=1,
             weight=10,
-            value_label="Missiles:",
+            value_label="Missiles",
             skill_effect=SkillEffect.NOTHING,
             value_type=ValueType.INT,
             image_url="https://i.imgur.com/B6TuHg3.png",
