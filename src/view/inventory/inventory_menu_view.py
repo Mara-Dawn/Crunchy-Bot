@@ -123,7 +123,7 @@ class InventoryMenuView(
             self.add_item(Dropdown(controllable_items, self.selected))
         self.add_page_button("<", False, row=3)
         self.add_item(ActionButton(button_action, disabled))
-        self.add_page_button(">", False, row=3)
+        self.add_page_button(">", True, row=3)
         self.add_current_page_button(page_display, row=3)
         self.add_item(SellButton(disabled))
         self.add_item(SellAmountButton(disabled))
