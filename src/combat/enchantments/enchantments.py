@@ -95,11 +95,39 @@ class Exalted(BaseCraftingEnchantment):
             enchantment_type=EnchantmentType.EXALTED,
             description=(
                 "Adds a random modifier to the item and upgrades it to the next rarity. "
-                "Only works on gear of the same rarity as this item."
+                "Only usable on gear of common, uncommon and rare rarity."
             ),
             information="",
-            rarities=[Rarity.COMMON, Rarity.UNCOMMON, Rarity.RARE],
-            filter_flags=[EnchantmentFilterFlags.MATCH_RARITY],
+            rarities=[Rarity.UNIQUE],
+            filter_flags=[
+                EnchantmentFilterFlags.MATCH_COMMON_RARITY,
+                EnchantmentFilterFlags.MATCH_UNCOMMON_RARITY,
+                EnchantmentFilterFlags.MATCH_RARE_RARITY,
+            ],
+            droppable=True,
+            weight=30,
+            image_url="https://i.imgur.com/B6TuHg3.png",
+        )
+
+
+class Null(BaseCraftingEnchantment):
+
+    def __init__(self):
+        super().__init__(
+            min_level=5,
+            name="Null Bean",
+            enchantment_type=EnchantmentType.NULL,
+            description=(
+                "Removes a random modifier from the item, lowering its rarity in the process. "
+                "Only usable on gear with two or more modifiers."
+            ),
+            information="",
+            rarities=[Rarity.UNIQUE],
+            filter_flags=[
+                EnchantmentFilterFlags.MATCH_UNCOMMON_RARITY,
+                EnchantmentFilterFlags.MATCH_RARE_RARITY,
+                EnchantmentFilterFlags.MATCH_LEGENDARY_RARITY,
+            ],
             droppable=True,
             weight=30,
             image_url="https://i.imgur.com/B6TuHg3.png",
@@ -165,7 +193,7 @@ class DeathSave(BaseEffectEnchantment):
             value=0.2,
             cooldown=2,
             skill_effect=SkillEffect.HEALING,
-            image_url="https://i.imgur.com/B6TuHg3.png",
+            image_url="https://i.imgur.com/SdrGu9S.png",
             trigger=[EffectTrigger.ON_DEATH],
             consumed=[EffectTrigger.ON_DEATH],
             emoji="💞",
@@ -298,7 +326,7 @@ class PhysDamageProc(BaseEffectEnchantment):
             cooldown=0,
             weight=20,
             skill_effect=SkillEffect.PHYSICAL_DAMAGE,
-            image_url="https://i.imgur.com/B6TuHg3.png",
+            image_url="https://i.imgur.com/F0OXFWJ.png",
             trigger=[EffectTrigger.ON_ATTACK],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
             emoji="💢",
@@ -321,7 +349,7 @@ class MagDamageProc(BaseEffectEnchantment):
             proc_chance=0.25,
             weight=20,
             skill_effect=SkillEffect.MAGICAL_DAMAGE,
-            image_url="https://i.imgur.com/B6TuHg3.png",
+            image_url="https://i.imgur.com/ddzEEsL.png",
             trigger=[EffectTrigger.ON_ATTACK],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
             emoji="💫",
@@ -345,7 +373,7 @@ class CleansingHeal(BaseEffectEnchantment):
             weight=15,
             value_type=ValueType.PERCENTAGE,
             skill_effect=SkillEffect.BUFF,
-            image_url="https://i.imgur.com/B6TuHg3.png",
+            image_url="https://i.imgur.com/nsIlPtX.png",
             trigger=[EffectTrigger.ON_ATTACK],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
             emoji="🩹",
@@ -369,7 +397,7 @@ class BallReset(BaseEffectEnchantment):
             weight=15,
             value_type=ValueType.NONE,
             skill_effect=SkillEffect.CHANCE,
-            image_url="https://i.imgur.com/B6TuHg3.png",
+            image_url="https://i.imgur.com/9PbLrAZ.png",
             trigger=[EffectTrigger.POST_SKILL],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
             emoji="🏐",
@@ -393,7 +421,7 @@ class ExtraMissile(BaseEffectEnchantment):
             value_label="Missiles",
             skill_effect=SkillEffect.NOTHING,
             value_type=ValueType.INT,
-            image_url="https://i.imgur.com/B6TuHg3.png",
+            image_url="https://i.imgur.com/JOR70Lk.png",
             trigger=[EffectTrigger.ON_ATTACK, EffectTrigger.SKILL_HITS],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
             custom_value_scaling=self.NO_SCALING,
@@ -418,7 +446,7 @@ class ExtraGore(BaseEffectEnchantment):
             skill_effect=SkillEffect.NOTHING,
             value_label="Stacks",
             value_type=ValueType.INT,
-            image_url="https://i.imgur.com/B6TuHg3.png",
+            image_url="https://i.imgur.com/KXzAT53.png",
             trigger=[EffectTrigger.ON_STATUS_APPLICATION],
             consumed=[EffectTrigger.ON_TRIGGER_SUCCESS],
             custom_value_scaling=self.NO_SCALING,

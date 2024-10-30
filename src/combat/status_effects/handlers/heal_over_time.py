@@ -29,6 +29,9 @@ class HealOverTimeHandler(StatusEffectHandler):
         if effect_type != self.effect_type:
             return outcome
 
+        if handler_context.target.current_hp <= 0:
+            return outcome
+
         healing = int(status_effect.event.value)
         event = CombatEvent(
             datetime.datetime.now(),

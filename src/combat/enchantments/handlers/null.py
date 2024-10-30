@@ -4,17 +4,17 @@ from combat.enchantments.enchantment import Enchantment
 from combat.enchantments.enchantment_handler import EnchantmentCraftHandler
 from combat.enchantments.enchantments import Exalted
 from combat.gear.gear import Gear
-from combat.gear.types import GearModifierType, Rarity
+from combat.gear.types import Rarity
 from control.combat.combat_gear_manager import CombatGearManager
 from control.controller import Controller
 
 
-class ExaltedHandler(EnchantmentCraftHandler):
+class NullHandler(EnchantmentCraftHandler):
 
-    UPGRADE_MAP = {
-        Rarity.COMMON: Rarity.UNCOMMON,
-        Rarity.UNCOMMON: Rarity.RARE,
-        Rarity.RARE: Rarity.LEGENDARY,
+    DOWNGRADE_MAP = {
+        Rarity.UNCOMMON: Rarity.COMMON,
+        Rarity.RARE: Rarity.UNCOMMON,
+        Rarity.LEGENDARY: Rarity.RARE,
     }
 
     def __init__(self, controller: Controller):
@@ -27,25 +27,17 @@ class ExaltedHandler(EnchantmentCraftHandler):
         self.database = self.controller.database
 
     async def handle(self, enchantment: Enchantment, gear: Gear) -> Gear:
-        if gear.rarity not in self.UPGRADE_MAP:
+        if gear.rarity not in self.DOWNGRADE_MAP:
             return gear
 
-        existing_modifiers: dict[GearModifierType, float] = gear.modifiers
-
         allowed_modifiers = gear.base.get_allowed_modifiers()
-        possible_modifiers = [
-            mod for mod in allowed_modifiers if mod not in existing_modifiers
-        ]
+        possible_modifiers = [mod for mod in gear.modifiers if mod in allowed_modifiers]
 
-        new_modifier_type = random.choice(possible_modifiers)
+        removed = random.choice(possible_modifiers)
 
-        new_modifier_value = await self.gear_manager.roll_modifier_value(
-            gear.base, gear.level, new_modifier_type
-        )
+        del gear.modifiers[removed]
 
-        gear.modifiers[new_modifier_type] = new_modifier_value
-
-        new_rarity = self.UPGRADE_MAP[gear.rarity]
+        new_rarity = self.DOWNGRADE_MAP[gear.rarity]
 
         await self.database.delete_user_gear_modifiers(gear.id)
         await self.database.log_user_gear_modifiers(gear.id, gear)
