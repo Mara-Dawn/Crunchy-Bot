@@ -220,14 +220,31 @@ class EnchantmentView(
                 ):
                     continue
                 flag_hit = False
+                if (
+                    len(enchantment_group.enchantment.base_enchantment.filter_flags)
+                    <= 0
+                ):
+                    flag_hit = True
                 for flag in enchantment_group.enchantment.base_enchantment.filter_flags:
                     match flag:
                         case EnchantmentFilterFlags.MATCH_RARITY:
-                            if self.gear.rarity != enchantment_group.rarity:
+                            if self.gear.rarity == enchantment_group.rarity:
                                 flag_hit = True
                                 break
                         case EnchantmentFilterFlags.MATCH_COMMON_RARITY:
-                            if self.gear.rarity != Rarity.COMMON:
+                            if self.gear.rarity == Rarity.COMMON:
+                                flag_hit = True
+                                break
+                        case EnchantmentFilterFlags.MATCH_UNCOMMON_RARITY:
+                            if self.gear.rarity == Rarity.UNCOMMON:
+                                flag_hit = True
+                                break
+                        case EnchantmentFilterFlags.MATCH_RARE_RARITY:
+                            if self.gear.rarity == Rarity.RARE:
+                                flag_hit = True
+                                break
+                        case EnchantmentFilterFlags.MATCH_LEGENDARY_RARITY:
+                            if self.gear.rarity == Rarity.LEGENDARY:
                                 flag_hit = True
                                 break
                         case EnchantmentFilterFlags.LESS_OR_EQUAL_RARITY:
@@ -239,10 +256,10 @@ class EnchantmentView(
                                     enchantment_group.rarity
                                 ]
                             )
-                            if gear_rarity_weight > enchantment_rarity_weight:
+                            if gear_rarity_weight <= enchantment_rarity_weight:
                                 flag_hit = True
                                 break
-                if not flag_hit:
+                if flag_hit:
                     filtered.append(enchantment_group)
                     enchantment = enchantment_group.enchantment
                     if (
@@ -266,7 +283,7 @@ class EnchantmentView(
                         and enchantment.base_enchantment.enchantment_effect
                         == EnchantmentEffect.CRAFTING
                     ):
-                        enchantment_info[EnchantmentType.CRAFTING] = "Crafting"
+                        enchantment_info[EnchantmentType.CRAFTING] = "*Crafting*"
             self.enchantment_info = enchantment_info
             self.filtered_items = filtered
 

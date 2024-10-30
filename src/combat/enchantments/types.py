@@ -13,6 +13,7 @@ class EnchantmentType(ForgeableType, str, Enum):
     EXALTED = "Exalted"
     CHANCE = "Chance"
     CRANGLE = "Crangle"
+    NULL = "Null"
 
     # ENCHANTMENTS
     DEATH_SAVE = "DeathSave"
@@ -44,3 +45,6 @@ class EnchantmentFilterFlags(Enum):
     MATCH_RARITY = 1
     LESS_OR_EQUAL_RARITY = 2
     MATCH_COMMON_RARITY = 3
+    MATCH_UNCOMMON_RARITY = 4
+    MATCH_RARE_RARITY = 5
+    MATCH_LEGENDARY_RARITY = 6
