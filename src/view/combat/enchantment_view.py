@@ -605,7 +605,10 @@ class EnchantmentView(
             empty_embed.set_thumbnail(url=self.controller.bot.user.display_avatar)
             embeds.append(empty_embed)
 
-        await self.message.edit(embeds=embeds, view=self)
+        try:
+            await self.message.edit(embeds=embeds, view=self)
+        except (discord.NotFound, discord.HTTPException):
+            self.controller.detach_view(self)
 
     async def set_filter_type(
         self,

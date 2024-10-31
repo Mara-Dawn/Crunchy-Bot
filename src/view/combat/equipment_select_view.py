@@ -401,7 +401,10 @@ class EquipmentSelectView(
             )
             embeds.append(embed)
 
-        await self.message.edit(embeds=embeds, view=self)
+        try:
+            await self.message.edit(embeds=embeds, view=self)
+        except (discord.NotFound, discord.HTTPException):
+            self.controller.detach_view(self)
 
     async def set_selected(self, interaction: discord.Interaction, gear_ids: list[int]):
         await interaction.response.defer()

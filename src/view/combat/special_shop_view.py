@@ -149,7 +149,10 @@ class SpecialShopView(ViewMenu, ImplementsBack, ImplementsBalance):
         for gear in self.display_items:
             embeds.append(gear.get_embed(scrap_value=self.item_values[gear.id]))
 
-        await self.message.edit(embeds=embeds, view=self)
+        try:
+            await self.message.edit(embeds=embeds, view=self)
+        except (discord.NotFound, discord.HTTPException):
+            self.controller.detach_view(self)
 
     async def set_selected(self, interaction: discord.Interaction, gear: Gear):
         await interaction.response.defer()
