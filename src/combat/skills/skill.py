@@ -252,9 +252,9 @@ class Skill(Droppable, Forgeable):
         if max_stacks is not None and max_stacks > 0:
             name = "Uses"
             if self.base_skill.reset_after_encounter:
-                append = "(per Combat)"
+                append = " (per Combat)"
             else:
-                append = "(Total)"
+                append = " (Total)"
             prefixes.append(Prefix(name, max_stacks, ValueType.STRING, post=append))
 
         extra_blocks: list[DisplayBlock] = []
