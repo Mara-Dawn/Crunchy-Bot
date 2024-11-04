@@ -190,6 +190,7 @@ class Skill(Droppable, Forgeable):
             id=id,
             object_type=ObjectType.SKILL,
             forge_type=base_skill.skill_type,
+            equipment_slot=base_skill.slot,
             value=base_skill.base_value,
             level=level,
             rarity=rarity,

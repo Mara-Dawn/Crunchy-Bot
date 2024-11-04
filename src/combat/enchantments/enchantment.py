@@ -342,6 +342,7 @@ class Enchantment(Droppable, Forgeable):
             id=id,
             object_type=ObjectType.ENCHANTMENT,
             forge_type=base_enchantment.enchantment_type,
+            equipment_slot=base_enchantment.slot,
             value=base_enchantment.value,
             level=level,
             rarity=rarity,

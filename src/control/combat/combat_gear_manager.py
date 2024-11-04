@@ -202,6 +202,7 @@ class CombatGearManager(Service):
         guild_id: int,
         item_level: int,
         exclude_skills: bool = False,
+        exclude_enchantments: bool = False,
         gear_slot: EquipmentSlot = None,
     ) -> list[DroppableBase]:
         matching_bases = []
@@ -214,23 +215,24 @@ class CombatGearManager(Service):
         if not exclude_skills:
             skill_base_types = [base_type for base_type in SkillType]
 
-        unlocked = await self.settings_manager.get_unlocked_features(guild_id)
-        crafting_unlocked = UnlockableFeature.CRAFTING in unlocked
-        enchantments_unlocked = UnlockableFeature.ENCHANTMENTS in unlocked
-        if enchantments_unlocked and crafting_unlocked:
-            enchantment_base_types = [base_type for base_type in EnchantmentType]
-        elif enchantments_unlocked:
-            enchantment_base_types = [
-                base_type
-                for base_type in EnchantmentType
-                if not EnchantmentType.is_crafting(base_type)
-            ]
-        elif crafting_unlocked:
-            enchantment_base_types = [
-                base_type
-                for base_type in EnchantmentType
-                if EnchantmentType.is_crafting(base_type)
-            ]
+        if not exclude_enchantments:
+            unlocked = await self.settings_manager.get_unlocked_features(guild_id)
+            crafting_unlocked = UnlockableFeature.CRAFTING in unlocked
+            enchantments_unlocked = UnlockableFeature.ENCHANTMENTS in unlocked
+            if enchantments_unlocked and crafting_unlocked:
+                enchantment_base_types = [base_type for base_type in EnchantmentType]
+            elif enchantments_unlocked:
+                enchantment_base_types = [
+                    base_type
+                    for base_type in EnchantmentType
+                    if not EnchantmentType.is_crafting(base_type)
+                ]
+            elif crafting_unlocked:
+                enchantment_base_types = [
+                    base_type
+                    for base_type in EnchantmentType
+                    if EnchantmentType.is_crafting(base_type)
+                ]
 
         base_types = gear_base_types + skill_base_types + enchantment_base_types
 
@@ -258,6 +260,7 @@ class CombatGearManager(Service):
         item_level: int,
         enemy: Enemy = None,
         exclude_skills: bool = False,
+        exclude_enchantments: bool = False,
         gear_slot: EquipmentSlot = None,
         random_seed=None,
     ) -> DroppableBase:
@@ -266,6 +269,7 @@ class CombatGearManager(Service):
             guild_id=guild_id,
             item_level=item_level,
             exclude_skills=exclude_skills,
+            exclude_enchantments=exclude_enchantments,
             gear_slot=gear_slot,
         )
 
@@ -350,10 +354,15 @@ class CombatGearManager(Service):
 
         return result
 
-    async def get_random_rarity(self, item_level, random_seed=None) -> Rarity:
+    async def get_random_rarity(
+        self, item_level, random_seed=None, min_rarity: Rarity = None
+    ) -> Rarity:
         weights = {}
 
         for rarity, weight in self.RARITY_WEIGHTS.items():
+            if min_rarity is not None and weight > self.RARITY_WEIGHTS[min_rarity]:
+                continue
+
             weight += item_level * self.RARITY_SCALING[rarity]
             weight = max(0, weight)
 

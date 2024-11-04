@@ -16,9 +16,9 @@ from datalayer.database import Database
 from events.bot_event import BotEvent
 from events.inventory_event import InventoryEvent
 from forge.forgable import Forgeable, ForgeInventory
-from forge.recipe import RecipeHandler
+from forge.recipe import ForgeRecipe
+from forge.recipe_handler_collection import RecipeHandlerCollection
 from items.types import ItemType
-from view.object.types import ObjectType
 
 
 class ForgeManager(Service):
@@ -51,7 +51,7 @@ class ForgeManager(Service):
         self.factory: ObjectFactory = self.controller.get_service(ObjectFactory)
         self.forge_cache: dict[discord.Member, ForgeInventory] = {}
 
-        self.recipe_handler = RecipeHandler()
+        self.recipe_handler = RecipeHandlerCollection(logger, database, controller)
 
     async def listen_for_event(self, event: BotEvent) -> str:
         pass
@@ -66,7 +66,7 @@ class ForgeManager(Service):
         self, member: discord.Member, item: Forgeable
     ) -> ForgeInventory:
         if member not in self.forge_cache:
-            self.forge_cache[member] = ForgeInventory()
+            self.forge_cache[member] = ForgeInventory(member)
 
         if self.forge_cache[member].add(item):
             message = (
@@ -78,7 +78,7 @@ class ForgeManager(Service):
         self, member: discord.Member, item: Forgeable
     ) -> ForgeInventory:
         if member not in self.forge_cache:
-            self.forge_cache[member] = ForgeInventory()
+            self.forge_cache[member] = ForgeInventory(member)
 
         if self.forge_cache[member].remove(item):
             message = (
@@ -94,62 +94,16 @@ class ForgeManager(Service):
         message = f"{member.display_name} cleared the forge."
         self.logger.log(member.guild.id, message, self.log_name)
 
-    async def combine(self, member: discord.Member) -> Droppable:
-        if member not in self.forge_cache:
+    async def combine(self, inventory: ForgeInventory) -> tuple[ForgeRecipe, Droppable]:
+        handler = self.recipe_handler.get_handler(inventory)
+        member = inventory.member
+
+        if handler is None:
             return None
 
-        inventory = self.forge_cache[member]
+        result = await handler.handle(inventory)
+        recipe = handler.get_recipe(inventory)
 
-        recipe = self.recipe_handler.get_recipe(inventory)
-
-        if recipe is None:
-            return None
-
-        result = None
-
-        min_level = None
-        min_rarity = None
-        for forgeable in inventory.items:
-            if forgeable.level is not None:
-                if min_level is None:
-                    min_level = forgeable.level
-                min_level = min(min_level, forgeable.level)
-
-            if forgeable.rarity is not None:
-                if min_rarity is None:
-                    min_rarity = forgeable.rarity
-                min_rarity_val = CombatGearManager.RARITY_WEIGHTS[min_rarity]
-                forgeable_val = CombatGearManager.RARITY_WEIGHTS[forgeable.rarity]
-                if min_rarity_val < forgeable_val:
-                    min_rarity = forgeable.rarity
-
-        rarity = recipe.result_rarity
-        level = recipe.result_level
-
-        if rarity is None:
-            rarity = min_rarity
-
-        if level is None:
-            level = min_level
-
-        match recipe.result_object_type:
-            case ObjectType.ITEM:
-                item = await self.item_manager.get_item(
-                    member.guild.id, recipe.result_type
-                )
-                result = await self.item_manager.give_item(
-                    member.guild.id, member.id, item, recipe.result_amount
-                )
-            case ObjectType.ENCHANTMENT | ObjectType.GEAR | ObjectType.SKILL:
-                droppable_base = await self.factory.get_base(recipe.result_type)
-
-                result = await self.gear_manager.generate_specific_drop(
-                    member_id=member.id,
-                    guild_id=member.guild.id,
-                    item_level=level,
-                    base=droppable_base,
-                    rarity=rarity,
-                )
         if result is None:
             return None
 
@@ -157,34 +111,10 @@ class ForgeManager(Service):
         message += f"Result: {result.name}"
         self.logger.log(member.guild.id, message, self.log_name)
 
-        for forgeable in inventory.items:
-            match forgeable.object_type:
-                case ObjectType.ITEM:
-                    event = InventoryEvent(
-                        datetime.datetime.now(),
-                        member.guild.id,
-                        member.id,
-                        forgeable.forge_type,
-                        -1,
-                    )
-                    await self.controller.dispatch_event(event)
-                case ObjectType.ENCHANTMENT | ObjectType.GEAR | ObjectType.SKILL:
-                    await self.database.delete_gear_by_ids(forgeable.id)
-                    self.logger.log(
-                        member.guild.id,
-                        f"{forgeable.object_type.value} was consumed in the forge by {member.display_name}: lvl.{forgeable.level} {forgeable.rarity.value} {forgeable.name}",
-                        cog=self.log_name,
-                    )
-
+        await handler.consume_inventory(inventory)
         await self.clear_forge_inventory(member)
 
-        self.logger.log(
-            member.guild.id,
-            f"{result.name} was given to {member.display_name}",
-            cog=self.log_name,
-        )
-
-        return result
+        return recipe, result
 
     async def use_scrap(
         self, member: discord.Member, slot: EquipmentSlot | None, level: int
