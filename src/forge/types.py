@@ -17,3 +17,6 @@ class IngredientFlag(Enum):
 class RecipeType(Enum):
     GEAR_RARITY_UPGRADE = 0
     GEAR_SLOT_REROLL = 1
+    GEAR_FULL_REROLL = 2
+    GEAR_BASE_RARITY_UPGRADE = 3
+    GEAR_BASE_REROLL = 4

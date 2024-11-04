@@ -419,6 +419,7 @@ class EquipmentSelectView(
         if len(self.selected) != 1:
             return
         selected = self.selected[0]
+        self.selected = []
         event = UIEvent(
             UIEventType.FORGE_ADD_ITEM,
             (interaction, selected),
