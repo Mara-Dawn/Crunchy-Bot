@@ -225,61 +225,59 @@ class Interactions(commands.Cog):
         embed = await self.__get_response_embed(command_type)
         response = await self.__get_response(command_type, interaction, user)
 
-        user_items = []
+        if await self.settings_manager.get_beans_enabled(guild_id):
+            user_items = []
 
-        if interaction.user.id != user.id:
-            user_items = (
-                await self.item_manager.get_user_items_activated_by_interaction(
-                    interaction.guild_id, interaction.user.id, command_type
+            if interaction.user.id != user.id:
+                user_items = (
+                    await self.item_manager.get_user_items_activated_by_interaction(
+                        interaction.guild_id, interaction.user.id, command_type
+                    )
                 )
-            )
 
-        major_actions = []
-        has_major_jail_actions = False
+            major_actions = []
+            has_major_jail_actions = False
 
-        for item in user_items:
-            match item.group:
-                case ItemGroup.MAJOR_ACTION:
-                    major_actions.append(item)
-                case ItemGroup.MAJOR_JAIL_ACTION:
-                    major_actions.append(item)
-                    has_major_jail_actions = True
+            for item in user_items:
+                match item.group:
+                    case ItemGroup.MAJOR_ACTION:
+                        major_actions.append(item)
+                    case ItemGroup.MAJOR_JAIL_ACTION:
+                        major_actions.append(item)
+                        has_major_jail_actions = True
 
-        if len(major_actions) > 0:
-            major_action_response = (
-                await self.interaction_manager.handle_major_action_items(
-                    major_actions, interaction.user, user
+            if len(major_actions) > 0:
+                major_action_response = (
+                    await self.interaction_manager.handle_major_action_items(
+                        major_actions, interaction.user, user
+                    )
                 )
-            )
-            response += major_action_response
-            if len(major_action_response) <= 0:
-                has_major_jail_actions = False
+                response += major_action_response
+                if len(major_action_response) <= 0:
+                    has_major_jail_actions = False
 
-        items_used = None
-        if not has_major_jail_actions:
-            message, items_used = (
-                await self.interaction_manager.user_command_interaction(
-                    interaction, user, command_type, user_items
+            items_used = None
+            if not has_major_jail_actions:
+                message, items_used = (
+                    await self.interaction_manager.user_command_interaction(
+                        interaction, user, command_type, user_items
+                    )
                 )
-            )
 
-            response += message
+                response += message
+
+            for item in items_used:
+                event = InventoryEvent(
+                    datetime.datetime.now(),
+                    interaction.guild.id,
+                    interaction.user.id,
+                    item.type,
+                    -1,
+                )
+                await self.controller.dispatch_event(event)
 
         await interaction.channel.send(response)
         await interaction.followup.send(embed=embed)
-
-        if items_used is None:
-            return
-
-        for item in items_used:
-            event = InventoryEvent(
-                datetime.datetime.now(),
-                interaction.guild.id,
-                interaction.user.id,
-                item.type,
-                -1,
-            )
-            await self.controller.dispatch_event(event)
 
     @commands.Cog.listener()
     async def on_ready(self):
