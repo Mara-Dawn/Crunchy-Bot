@@ -175,6 +175,7 @@ class GearProxy(Droppable, Forgeable):
             id=id,
             object_type=ObjectType.GEAR,
             forge_type=base.type,
+            equipment_slot=base.slot,
             value=base.scaling,
             level=level,
             rarity=rarity,

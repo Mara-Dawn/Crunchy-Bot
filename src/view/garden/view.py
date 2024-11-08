@@ -2,6 +2,7 @@ import contextlib
 from enum import Enum
 
 import discord
+
 from control.controller import Controller
 from control.types import ControllerType
 from datalayer.garden import Plot, UserGarden
@@ -14,7 +15,7 @@ from view.view_menu import ViewMenu
 
 class GardenViewState(Enum):
     NORMAL = 0
-    WATER = 1
+    DIRECT = 1
 
 
 class GardenView(ViewMenu):
@@ -61,9 +62,9 @@ class GardenView(ViewMenu):
                     self.id,
                 )
                 await self.controller.dispatch_ui_event(event)
-            case GardenViewState.WATER:
+            case GardenViewState.DIRECT:
                 event = UIEvent(
-                    UIEventType.GARDEN_PLOT_WATER,
+                    UIEventType.GARDEN_PLOT_DIRECT,
                     (interaction, plot),
                     self.id,
                 )
@@ -114,10 +115,10 @@ class ModeSelectButton(discord.ui.Button):
 
         match view_state:
             case GardenViewState.NORMAL:
-                label = "Enter Water Mode"
+                label = "Enter Water & Harvest Mode"
                 color = discord.ButtonStyle.blurple
-                self.click_state = GardenViewState.WATER
-            case GardenViewState.WATER:
+                self.click_state = GardenViewState.DIRECT
+            case GardenViewState.DIRECT:
                 label = "Done"
                 color = discord.ButtonStyle.grey
                 self.click_state = GardenViewState.NORMAL
@@ -151,7 +152,6 @@ class PlotButton(discord.ui.Button):
                 color = discord.ButtonStyle.blurple
             case PlotState.READY:
                 color = discord.ButtonStyle.green
-                disabled = True
 
         if view_state == GardenViewState.NORMAL:
             disabled = False

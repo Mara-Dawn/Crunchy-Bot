@@ -647,6 +647,7 @@ class EnchantmentView(
             if self.forge_inventory is None or enchantment.id not in [
                 x.id for x in self.forge_inventory.items if x is not None
             ]:
+                self.selected = []
                 event = UIEvent(
                     UIEventType.FORGE_ADD_ITEM,
                     (interaction, enchantment),

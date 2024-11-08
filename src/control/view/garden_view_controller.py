@@ -12,7 +12,7 @@ from control.settings_manager import SettingsManager
 from control.view.view_controller import ViewController
 from datalayer.database import Database
 from datalayer.garden import Plot, UserGarden
-from datalayer.types import LootboxType, PlantType
+from datalayer.types import LootboxType, PlantType, PlotState
 from events.beans_event import BeansEvent
 from events.bot_event import BotEvent
 from events.garden_event import GardenEvent
@@ -78,6 +78,10 @@ class GardenViewController(ViewController):
                 interaction = event.payload[0]
                 plot = event.payload[1]
                 await self.water(interaction, plot, event.view_id)
+            case UIEventType.GARDEN_PLOT_DIRECT:
+                interaction = event.payload[0]
+                plot = event.payload[1]
+                await self.direct(interaction, plot, event.view_id)
             case UIEventType.GARDEN_PLOT_PLANT:
                 interaction = event.payload[0]
                 plot = event.payload[1]
@@ -317,6 +321,18 @@ class GardenViewController(ViewController):
         view.set_message(message)
         content = embed.get_garden_content()
         await message.edit(content=content, embed=embed, view=view, attachments=[])
+
+    async def direct(
+        self,
+        interaction: discord.Interaction,
+        plot: Plot,
+        view_id: int,
+    ):
+        match plot.get_status():
+            case PlotState.READY:
+                await self.harvest(interaction, plot, view_id)
+            case _:
+                await self.water(interaction, plot, view_id)
 
     async def water(
         self,

@@ -684,13 +684,19 @@ class EquipmentViewController(ViewController):
         if not await self.encounter_check(interaction):
             return
 
-        result = await self.forge_manager.combine(interaction.user)
+        recipe, result = await self.forge_manager.combine(inventory)
 
         if result is None:
             await interaction.followup.send("Not a valid recipe!", ephemeral=True)
             return
 
-        await interaction.followup.send(embed=result.get_embed(), ephemeral=True)
+        message = f"## {recipe.name}\n"
+        message += f"> {recipe.description}\n"
+        message += "### Result:\n"
+
+        await interaction.followup.send(
+            content=message, embed=result.get_embed(), ephemeral=True
+        )
 
         view: EnchantmentView = self.controller.get_view(view_id)
         await view.refresh_ui()

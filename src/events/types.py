@@ -186,6 +186,7 @@ class UIEventType(str, Enum):
     GARDEN_DETACH = "garden_detach"
 
     GARDEN_PLOT_WATER = "garden_plot_water"
+    GARDEN_PLOT_DIRECT = "garden_plot_direct"
     GARDEN_PLOT_PLANT = "garden_plot_plant"
     GARDEN_PLOT_HARVEST = "garden_plot_harvest"
     GARDEN_PLOT_BACK = "garden_plot_back"

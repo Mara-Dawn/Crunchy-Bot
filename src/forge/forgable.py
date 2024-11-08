@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
-from combat.gear.types import Rarity
+import discord
+
+from combat.gear.types import EquipmentSlot, Rarity
 from forge.types import ForgeableType
 from view.object.types import ObjectType
 
@@ -12,6 +14,7 @@ class Forgeable:
     forge_type: ForgeableType
     object_type: ObjectType
     value: int
+    equipment_slot: EquipmentSlot = None
     level: int = None
     rarity: Rarity = None
     emoji: str = None
@@ -25,6 +28,7 @@ class Forgeable:
 class Ingredient:
     forge_type: ForgeableType | None = None
     object_type: ObjectType | None = None
+    equipment_slot: EquipmentSlot | None = None
     value: int | None = None
     level: int | None = None
     rarity: Rarity | None = None
@@ -33,6 +37,11 @@ class Ingredient:
         if self.forge_type is not None and self.forge_type != forgeable.forge_type:
             return False
         if self.object_type is not None and self.object_type != forgeable.object_type:
+            return False
+        if (
+            self.equipment_slot is not None
+            and self.equipment_slot != forgeable.equipment_slot
+        ):
             return False
         if self.value is not None and self.value != forgeable.value:
             return False
@@ -45,6 +54,7 @@ class Ingredient:
 
 @dataclass
 class ForgeInventory:
+    member: discord.Member
     first: Forgeable | None = None
     second: Forgeable | None = None
     third: Forgeable | None = None

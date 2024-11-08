@@ -276,6 +276,7 @@ class InventoryMenuView(
             if self.forge_inventory is None or item.id not in [
                 x.id for x in self.forge_inventory.items if x is not None
             ]:
+                self.selected = None
                 event = UIEvent(
                     UIEventType.FORGE_ADD_ITEM,
                     (interaction, item),
