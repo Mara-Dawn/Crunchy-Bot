@@ -85,6 +85,7 @@ class SettingsManager(Service):
 
     MISC_SETTINGS_KEY = "misc"
     MANUAL_NAME_COLOR_ENABLED_KEY = "manuial_name_color_enabled"
+    SERVER_TIME_STATUS_KEY = "server_time_status"
 
     DAILY_BEANS_SCALING = {
         UnlockableFeature.DAILY_BEANS_1: 2,
@@ -331,6 +332,9 @@ class SettingsManager(Service):
         misc_settings = ModuleSettings(self.MISC_SETTINGS_KEY, "Misc")
         misc_settings.add_setting(
             self.MANUAL_NAME_COLOR_ENABLED_KEY, False, "Manual Name Color Enabled"
+        )
+        misc_settings.add_setting(
+            self.SERVER_TIME_STATUS_KEY, False, "Show FFXIV server time as status"
         )
 
         self.settings = GuildSettings()
@@ -1315,5 +1319,18 @@ class SettingsManager(Service):
             guild_id,
             self.MISC_SETTINGS_KEY,
             self.MANUAL_NAME_COLOR_ENABLED_KEY,
+            enabled,
+        )
+
+    async def get_server_time_enabled(self, guild_id: int) -> bool:
+        return await self.get_setting(
+            guild_id, self.MISC_SETTINGS_KEY, self.SERVER_TIME_STATUS_KEY
+        )
+
+    async def set_server_time_enabled(self, guild_id: int, enabled: bool) -> None:
+        await self.update_setting(
+            guild_id,
+            self.MISC_SETTINGS_KEY,
+            self.SERVER_TIME_STATUS_KEY,
             enabled,
         )

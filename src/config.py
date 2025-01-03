@@ -3,6 +3,8 @@ from combat.types import UnlockableFeature
 
 class Config:
 
+    DEV_SERVER_ID = 1197312669179461683
+
     # Lootbox Settings
     MIMIC_CHANCE = 0.1
     LARGE_CHEST_CHANCE = 0.03
