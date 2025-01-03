@@ -1,3 +1,4 @@
+import datetime
 import os
 import traceback
 from typing import Literal
@@ -7,6 +8,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot import CrunchyBot
+from config import Config
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
@@ -34,6 +36,7 @@ class Statistics(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.system_monitor.start()
+        self.status_clock.start()
         self.logger.log(
             "init", str(self.__cog_name__) + " loaded.", cog=self.__cog_name__
         )
@@ -65,6 +68,17 @@ class Statistics(commands.Cog):
             print(traceback.format_exc())
             error_handler = ErrorHandler(self.bot)
             await error_handler.post_error(e)
+
+    @tasks.loop(seconds=30)
+    async def status_clock(self):
+        if await self.settings_manager.get_server_time_enabled(Config.DEV_SERVER_ID):
+            utc_time = datetime.datetime.now(datetime.UTC)
+            hours = int(utc_time.strftime("%I"))
+            status = f"It's {hours}:{utc_time.strftime("%M%p").lower()} ST"
+            activity = discord.Activity(
+                type=discord.ActivityType.custom, name="Clock", state=status
+            )
+            await self.bot.change_presence(activity=activity)
 
     @commands.command()
     @commands.guild_only()
@@ -236,6 +250,36 @@ class Statistics(commands.Cog):
             interaction,
             "Patch applied.",
             ephemeral=False,
+        )
+
+    @app_commands.command(
+        name="st_status_toggle",
+        description="Enable or disable display of FFXIV server time as status.",
+    )
+    @app_commands.describe(enabled="Toggle the time display.")
+    @app_commands.guild_only()
+    async def st_status_toggle(
+        self, interaction: discord.Interaction, enabled: Literal["on", "off"]
+    ):
+        author_id = int(os.environ.get(CrunchyBot.ADMIN_ID))
+        if interaction.user.id != author_id:
+            raise app_commands.MissingPermissions(missing_permissions=[])
+
+        await self.settings_manager.set_server_time_enabled(
+            Config.DEV_SERVER_ID, enabled == "on"
+        )
+
+        if enabled == "off":
+            activity = discord.Activity(
+                type=discord.ActivityType.playing, name="with your beans"
+            )
+            await self.bot.change_presence(activity=activity)
+
+        await self.bot.command_response(
+            self.__cog_name__,
+            interaction,
+            f"ST display was turned {enabled}.",
+            args=[enabled],
         )
 
 
