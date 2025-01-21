@@ -256,7 +256,7 @@ class Interactions(commands.Cog):
                 if len(major_action_response) <= 0:
                     has_major_jail_actions = False
 
-            items_used = None
+            items_used = []
             if not has_major_jail_actions:
                 message, items_used = (
                     await self.interaction_manager.user_command_interaction(
