@@ -3097,6 +3097,8 @@ class Database:
         if start_id is None:
             start_id = 0
 
+        start_timestamp, end_timestamp = await self.__get_season_interval(guild_id)
+
         command = f""" 
             SELECT COUNT(*) as progress FROM {self.ENCOUNTER_TABLE} 
             INNER JOIN {self.ENCOUNTER_EVENT_TABLE} ON {self.ENCOUNTER_EVENT_ENCOUNTER_ID_COL} = {self.ENCOUNTER_ID_COL}
@@ -3105,10 +3107,19 @@ class Database:
             AND {self.ENCOUNTER_EVENT_TYPE_COL} = ?
             AND {self.ENCOUNTER_GUILD_ID_COL} = ?
             AND {self.EVENT_ID_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} > ?
+            AND {self.EVENT_TIMESTAMP_COL} <= ?
             GROUP BY {self.ENCOUNTER_GUILD_ID_COL}
             ;
         """
-        task = (guild_level, EncounterEventType.ENEMY_DEFEAT, guild_id, start_id)
+        task = (
+            guild_level,
+            EncounterEventType.ENEMY_DEFEAT,
+            guild_id,
+            start_id,
+            start_timestamp,
+            end_timestamp,
+        )
         rows = await self.__query_select(command, task)
         if not rows:
             return 0

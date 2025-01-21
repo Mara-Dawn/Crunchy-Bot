@@ -389,7 +389,11 @@ class BeansBasics(BeansGroup):
         for rank, (user_id, score) in enumerate(rankings):
             author = self.bot.get_user(user_id)
             if author is not None and author.id != self.bot.user.id:
-                amount = int(score / 10000)
+                # amount = int(score / 100000)
+                amount = int(score / 1000)
+
+                if amount <= 0:
+                    continue
 
                 event = InventoryEvent(
                     datetime.datetime.now(),
@@ -400,10 +404,10 @@ class BeansBasics(BeansGroup):
                 )
                 await self.controller.dispatch_event(event)
 
-                message = f"Congratulations, the current Beans Season has concluded and your final rank is: 🎉**Rank {rank+1}.**🎉\n"
-                if rank < 10:
-                    message += "You made it to the top 10, which means you get to choose additional rewards! Check out the Beans Info channel for more Information."
-                message += f"```python\nHigh Score: 🅱️{score}\nReward: 1 Prestige Bean per 10k\n-----------------------\nPayout: {amount} x Prestige Bean```"
+                message = f"Congratulations, the current Beans Season has concluded and your final rank is: 🎉 **Rank {rank+1}.** 🎉\n"
+                # if rank < 10:
+                #     message += "You made it to the top 10, which means you get to choose additional rewards! Check out the Beans Info channel for more Information."
+                message += f"```python\nHigh Score: 🅱️{score}\nReward: 1 Prestige Bean per 100k\n-----------------------\nPayout: {amount} x Prestige Bean```"
                 await author.send(message)
 
         output = "Action complete."
