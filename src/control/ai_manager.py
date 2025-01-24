@@ -122,9 +122,9 @@ class AIManager(Service):
         self.personality_map = {
             1197312669179461683: mogbuck,  # Testing
             934270158518779954: kitten_crunch,  # Crunchy Laser
-            838732802534146088: honey_b_lovely,  # TCK
+            838732802534146088: mogbuck,  # TCK
         }
-        self.default_personality = mistress_crunch
+        self.default_personality = mogbuck
 
         self.backstory_GPT4 = (
             "Each message will lead with the name of the user delimited with <user> XML tags. If they have information about themselves, "
