@@ -389,8 +389,7 @@ class BeansBasics(BeansGroup):
         for rank, (user_id, score) in enumerate(rankings):
             author = self.bot.get_user(user_id)
             if author is not None and author.id != self.bot.user.id:
-                # amount = int(score / 100000)
-                amount = int(score / 1000)
+                amount = int(score / 100000)
 
                 if amount <= 0:
                     continue
