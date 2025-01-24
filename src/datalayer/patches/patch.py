@@ -52,6 +52,17 @@ class DBPatcher:
             )
         )
 
+        self.patches.append(
+            Patch(
+                command=f"""
+                ALTER TABLE {self.database.PLOT_TABLE}
+                ADD {self.database.PLOT_CREATE_TIMESTAMP} INTEGER;
+            """,
+                timestamp=datetime.datetime(day=24, month=1, year=2025),
+                id="plot_create_date",
+            )
+        )
+
     def get_patch(self, patch_id: str) -> Patch | None:
         for patch in self.patches:
             if patch.id == patch_id:

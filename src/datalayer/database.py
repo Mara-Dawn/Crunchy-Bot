@@ -432,12 +432,14 @@ class Database:
     PLOT_GARDEN_ID = "plot_garden_id"
     PLOT_X = "plot_x"
     PLOT_Y = "plot_y"
+    PLOT_CREATE_TIMESTAMP = "plot_create_date"
     CREATE_PLOT_TABLE = f"""
     CREATE TABLE if not exists {PLOT_TABLE} (
         {PLOT_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
         {PLOT_GARDEN_ID} INTEGER REFERENCES {GARDEN_TABLE} ({GARDEN_ID}), 
         {PLOT_X} INTEGER,
-        {PLOT_Y} INTEGER
+        {PLOT_Y} INTEGER,
+        {PLOT_CREATE_TIMESTAMP} INTEGER
     );"""
 
     GARDEN_EVENT_TABLE = "gardenevents"
@@ -2843,16 +2845,7 @@ class Database:
         """
         task = (guild_id, user_id)
 
-        insert_id = await self.__query_insert(command, task)
-
-        if insert_id != 0:
-            command = f"""
-                INSERT OR IGNORE INTO {self.PLOT_TABLE}
-                ({self.PLOT_GARDEN_ID}, {self.PLOT_X}, {self.PLOT_Y}) 
-                VALUES(?, ?, ?);
-            """
-            task = (insert_id, 0, 0)
-            insert_id = await self.__query_insert(command, task)
+        await self.__query_insert(command, task)
 
     async def add_garden_plot(self, garden: UserGarden) -> UserGarden:
 
@@ -2861,13 +2854,14 @@ class Database:
             return garden
 
         new_position = UserGarden.PLOT_ORDER[plot_count]
+        create_timestamp = datetime.datetime.now().timestamp()
 
         command = f"""
                 INSERT INTO {self.PLOT_TABLE}
-                ({self.PLOT_GARDEN_ID}, {self.PLOT_X}, {self.PLOT_Y}) 
-                VALUES(?, ?, ?);
+                ({self.PLOT_GARDEN_ID}, {self.PLOT_X}, {self.PLOT_Y}, {self.PLOT_CREATE_TIMESTAMP}) 
+                VALUES(?, ?, ?, ?);
             """
-        task = (garden.id, new_position[0], new_position[1])
+        task = (garden.id, new_position[0], new_position[1], create_timestamp)
         insert_id = await self.__query_insert(command, task)
 
         plot = Plot(insert_id, garden.id, new_position[0], new_position[1])
@@ -2877,12 +2871,19 @@ class Database:
     async def get_garden_plots(
         self, guild_id: int, garden_id: int, season: int = None
     ) -> list[Plot]:
+        start_timestamp, end_timestamp = await self.__get_season_interval(
+            guild_id, season
+        )
+
         command = f"""
             SELECT * FROM {self.GARDEN_TABLE}
             INNER JOIN {self.PLOT_TABLE} ON {self.PLOT_TABLE}.{self.PLOT_GARDEN_ID} = {self.GARDEN_TABLE}.{self.GARDEN_ID}
-            WHERE {self.GARDEN_ID} = {int(garden_id)};
+            WHERE {self.GARDEN_ID} = {int(garden_id)}
+            AND {self.PLOT_CREATE_TIMESTAMP} > ?
+            AND {self.PLOT_CREATE_TIMESTAMP} <= ?;
         """
-        rows = await self.__query_select(command)
+        task = (start_timestamp, end_timestamp)
+        rows = await self.__query_select(command, task)
         if not rows or len(rows) < 1:
             return []
 
@@ -2897,9 +2898,6 @@ class Database:
             )
             plots.append(plot)
 
-        start_timestamp, end_timestamp = await self.__get_season_interval(
-            guild_id, season
-        )
         command = f"""
             SELECT * FROM {self.GARDEN_EVENT_TABLE}
             INNER JOIN {self.EVENT_TABLE} ON {self.EVENT_TABLE}.{self.EVENT_ID_COL} = {self.GARDEN_EVENT_TABLE}.{self.GARDEN_EVENT_ID_COL}
@@ -3013,13 +3011,18 @@ class Database:
         plots = await self.get_garden_plots(guild_id, garden_id, season)
         user_seeds = await self.get_user_seeds(guild_id, user_id, season=season)
 
-        return UserGarden(
+        garden = UserGarden(
             garden_id,
             guild_id,
             user_id,
             plots,
             user_seeds,
         )
+
+        if len(plots) <= 0:
+            garden = await self.add_garden_plot(garden)
+
+        return garden
 
     async def get_guild_gardens(
         self, guild_id: int, season: int = None
