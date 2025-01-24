@@ -13,8 +13,7 @@ class Config:
     LUCKY_ITEM_CHANCE = 0.05
 
     # General Combat
-    # MAX_LVL = 7
-    MAX_LVL = 6
+    MAX_LVL = 7
 
     COMBAT_INITIAL_WAIT = 90
 
@@ -57,20 +56,20 @@ class Config:
 
     UNLOCK_LEVELS = {
         UnlockableFeature.GARDEN_1: 1,  # 1
-        UnlockableFeature.FORGE_RECIPES: 9,  # 1
+        UnlockableFeature.FORGE_RECIPES: 1,  # 1
         UnlockableFeature.SHOP: 2,  # 2
         UnlockableFeature.FORGE_SCRAP: 2,  # 2
-        UnlockableFeature.MAX_GAMBA_1: 9,  # 2
-        UnlockableFeature.CRAFTING: 9,  # 3
-        UnlockableFeature.DAILY_BEANS_1: 9,  # 3
+        UnlockableFeature.MAX_GAMBA_1: 2,  # 2
+        UnlockableFeature.CRAFTING: 3,  # 3
+        UnlockableFeature.DAILY_BEANS_1: 3,  # 3
         UnlockableFeature.GARDEN_2: 3,  # 3
-        UnlockableFeature.LOTTERY_1: 9,  # 4
-        UnlockableFeature.ENCHANTMENTS: 9,  # 4
+        UnlockableFeature.LOTTERY_1: 4,  # 4
+        UnlockableFeature.ENCHANTMENTS: 4,  # 4
         UnlockableFeature.FORGE_SHOP: 4,  # 4
         UnlockableFeature.GARDEN_3: 5,  # 5
-        UnlockableFeature.DAILY_BEANS_2: 9,  # 5
-        UnlockableFeature.MAX_GAMBA_2: 9,  # 6
-        UnlockableFeature.LOTTERY_2: 9,  # 6
+        UnlockableFeature.DAILY_BEANS_2: 5,  # 5
+        UnlockableFeature.MAX_GAMBA_2: 6,  # 6
+        UnlockableFeature.LOTTERY_2: 6,  # 6
         UnlockableFeature.GARDEN_4: 7,  # 7
         UnlockableFeature.DAILY_BEANS_3: 7,  # 7
     }

@@ -9,6 +9,7 @@ from discord.ext import commands, tasks
 
 from bot import CrunchyBot
 from config import Config
+from control.combat.discord_manager import DiscordManager
 from control.controller import Controller
 from control.event_manager import EventManager
 from control.logger import BotLogger
@@ -28,6 +29,7 @@ class Statistics(commands.Cog):
         self.logger: BotLogger = bot.logger
         self.database: Database = bot.database
         self.controller: Controller = bot.controller
+        self.discord: DiscordManager = self.controller.get_service(DiscordManager)
         self.event_manager: EventManager = self.controller.get_service(EventManager)
         self.settings_manager: SettingsManager = self.controller.get_service(
             SettingsManager
@@ -223,6 +225,7 @@ class Statistics(commands.Cog):
 
         await self.database.end_current_season(interaction.guild_id)
         await self.database.set_guild_level(interaction.guild_id, 1)
+        await self.discord.refresh_combat_messages(interaction.guild_id, purge=True)
 
         await self.bot.command_response(
             self.__cog_name__,

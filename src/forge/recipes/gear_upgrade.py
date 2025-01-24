@@ -31,7 +31,7 @@ class GearRecipeHandler(RecipeHandler):
                 name="Upgrade Base Rarity",
                 description=(
                     "Uses three gear pieces of the same base, rarity and gear slot and "
-                    "returns a gear piece of the same base type and slot of the next higher rarity. "
+                    "returns a gear piece of the same base type and slot of the next higher rarity.\n"
                     "Item level will be equal to the lowest level ingredient."
                 ),
                 recipe_type=RecipeType.GEAR_BASE_RARITY_UPGRADE,
@@ -59,7 +59,7 @@ class GearRecipeHandler(RecipeHandler):
                 name="Upgrade Rarity",
                 description=(
                     "Uses three gear pieces of the same rarity and gear slot and "
-                    "returns a random gear piece of the same slot of the next higher rarity. "
+                    "returns a random gear piece of the same slot of the next higher rarity.\n"
                     "Item level will be equal to the lowest level ingredient."
                 ),
                 recipe_type=RecipeType.GEAR_RARITY_UPGRADE,
@@ -83,11 +83,11 @@ class GearRecipeHandler(RecipeHandler):
                 result_type=None,
             ),
             ForgeRecipe(
-                name="Reroll Base",
+                name="Reroll with same Base",
                 description=(
                     "Uses three gear pieces with the same base and "
-                    "returns a random gear piece of the same base. "
-                    "Item level will be equal to the lowest level ingredient. "
+                    "returns a random gear piece of the same base.\n"
+                    "Item level will be equal to the lowest level ingredient.\n"
                     "Item rarity will be equal or greater than the lowest rarity ingredient."
                 ),
                 recipe_type=RecipeType.GEAR_BASE_REROLL,
@@ -113,8 +113,8 @@ class GearRecipeHandler(RecipeHandler):
                 name="Reroll Gear with same Slot",
                 description=(
                     "Uses three gear pieces of the same gear slot and "
-                    "returns a random gear piece of the same slot. "
-                    "Item level will be equal to the lowest level ingredient. "
+                    "returns a random gear piece of the same slot.\n"
+                    "Item level will be equal to the lowest level ingredient.\n"
                     "Item rarity will be equal or greater than the lowest rarity ingredient."
                 ),
                 recipe_type=RecipeType.GEAR_SLOT_REROLL,
