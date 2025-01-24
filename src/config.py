@@ -59,8 +59,8 @@ class Config:
         UnlockableFeature.FORGE_RECIPES: 1,  # 1
         UnlockableFeature.SHOP: 2,  # 2
         UnlockableFeature.FORGE_SCRAP: 2,  # 2
-        UnlockableFeature.MAX_GAMBA_1: 2,  # 2
-        UnlockableFeature.CRAFTING: 3,  # 3
+        UnlockableFeature.CRAFTING: 2,  # 2
+        UnlockableFeature.MAX_GAMBA_1: 3,  # 3
         UnlockableFeature.DAILY_BEANS_1: 3,  # 3
         UnlockableFeature.GARDEN_2: 3,  # 3
         UnlockableFeature.LOTTERY_1: 4,  # 4
