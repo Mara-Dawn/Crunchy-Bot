@@ -275,12 +275,23 @@ class EquipmentSelectView(
                 disable_craft = True
                 disable_forge = True
 
+            if self.forge_inventory is not None and selected_gear.id in [
+                gear.id for gear in self.forge_inventory.items if gear is not None
+            ]:
+                disable_forge = True
+
         equipped = [gear.id for gear in self.current if gear.base.slot == self.filter]
 
         self.clear_items()
         if len(self.display_items) > 0:
             self.add_item(
-                Dropdown(self.display_items, self.selected, equipped, disabled=disabled)
+                Dropdown(
+                    self.display_items,
+                    self.selected,
+                    equipped,
+                    self.forge_inventory,
+                    disabled=disabled,
+                )
             )
         self.add_page_button("<", False, disabled=disabled)
         self.add_item(SelectButton(disabled=disable_equip))
@@ -395,12 +406,21 @@ class EquipmentSelectView(
 
         for gear in self.display_items:
             equipped = False
+            forge_selected = False
             if gear.id in [gear.id for gear in self.current]:
                 equipped = True
+            if self.forge_inventory is not None and gear.id in [
+                gear.id for gear in self.forge_inventory.items if gear is not None
+            ]:
+                forge_selected = True
 
             character = await self.actor_manager.get_character(self.member)
             embed = await self.embed_manager.get_gear_embed(
-                gear, character, equipped=equipped, show_locked_state=True
+                gear,
+                character,
+                equipped=equipped,
+                forge_selected=forge_selected,
+                show_locked_state=True,
             )
             embeds.append(embed)
 
@@ -485,6 +505,7 @@ class Dropdown(discord.ui.Select):
         gear: list[Gear],
         selected: list[Gear],
         equipped: list[Gear],
+        forge_inventory: ForgeInventory,
         disabled: bool = False,
     ):
 
@@ -504,6 +525,10 @@ class Dropdown(discord.ui.Select):
                     name += " [EQ]"
                 if item.locked:
                     name += " [🔒]"
+                if forge_inventory is not None and item.id in [
+                    gear.id for gear in forge_inventory.items if gear is not None
+                ]:
+                    name += " [⚙️]"
 
             description = [f"ILVL: {item.level}"]
 

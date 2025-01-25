@@ -216,6 +216,7 @@ class Gear(GearProxy):
     def display(
         self,
         equipped: bool = False,
+        forge_selected: bool = False,
         show_locked_state: bool = False,
         scrap_value: int = None,
         enchantment_data: list[GearEnchantment] = None,
@@ -228,6 +229,7 @@ class Gear(GearProxy):
             description=self.description,
             rarity=self.rarity,
             equipped=equipped,
+            forge_selected=forge_selected,
             locked=(self.locked and show_locked_state),
             information=self.information,
         )
@@ -377,6 +379,7 @@ class Gear(GearProxy):
         show_data: bool = True,
         show_info: bool = False,
         equipped: bool = False,
+        forge_selected: bool = False,
         show_locked_state: bool = False,
         scrap_value: int = None,
         max_width: int = None,
@@ -385,6 +388,7 @@ class Gear(GearProxy):
     ) -> discord.Embed:
         display = self.display(
             equipped=equipped,
+            forge_selected=forge_selected,
             show_locked_state=show_locked_state,
             scrap_value=scrap_value,
             enchantment_data=enchantment_data,

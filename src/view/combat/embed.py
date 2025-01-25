@@ -95,7 +95,8 @@ class SelectGearHeadEmbed(discord.Embed):
         description = "Manage your gear here. Equip pieces, lock them to keep them safe or scrap anything you don't need.\n\n"
         description += (
             "[EQ] - Item is currently equipped.\n\n"
-            "[🔒] - Item is locked and wont get scrapped by any scrap buttons."
+            "[🔒] - Item is locked and wont get scrapped by any scrap buttons.\n\n"
+            "[⚙️] - Item is currently selected for the forge."
         )
         if len(description) < max_width:
             spacing = max_width - len(description)

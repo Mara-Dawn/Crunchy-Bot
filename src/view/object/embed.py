@@ -58,6 +58,7 @@ class ObjectParameters:
     rarity: Rarity = None
     equipped: bool = False
     locked: bool = False
+    forge_selected: bool = False
     information: str = None
     emoji: str = None
     suffix: str = None
@@ -135,6 +136,8 @@ class ObjectParameters:
             suffix += " [EQ]"
         if self.locked:
             suffix += " [🔒]"
+        if self.forge_selected:
+            suffix += " [⚙️]"
         if self.suffix is not None:
             suffix += f" - {self.suffix}"
         return suffix
