@@ -9,6 +9,9 @@ class UnlockableFeature(str, Enum):
     FORGE_SCRAP = (
         "**Forge Scrap** - Throw your Scrap into the forge to gain random items"
     )
+    FORGE_SCRAP_SPECIFIC = (
+        "**Advanced Forge Scrap** - Target specific gear slots with your scrap."
+    )
     FORGE_SHOP = (
         "**Secret Forge Shop** - Access to totally not Ethel's secret Scrap Shop"
     )

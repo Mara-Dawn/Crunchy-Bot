@@ -146,7 +146,11 @@ class ForgeMenuView(ViewMenu, ImplementsMainMenu, ImplementsBalance, ImplementsB
                     self.add_item(ForgeShopButton(row=2))
             case ForgeMenuState.SCRAP:
                 self.add_item(ForgeDropdown(self.forge_options, self.selected))
-                self.add_item(SlotDropdown(self.selected_slot, disabled=disabled))
+                if (
+                    self.guild_level
+                    >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SCRAP_SPECIFIC]
+                ):
+                    self.add_item(SlotDropdown(self.selected_slot, disabled=disabled))
                 scaling = 1
                 if self.selected_slot is not None:
                     scaling = (
