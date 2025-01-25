@@ -105,7 +105,11 @@ class GearMenuView(ViewMenu, ImplementsMainMenu, ImplementsBack, ImplementsBalan
                     >= Config.UNLOCK_LEVELS[UnlockableFeature.ENCHANTMENTS]
                 ):
                     self.add_item(EnchantmentsButton(disabled=disabled))
-                self.add_item(ScrapAllButton(disabled=disabled))
+                if (
+                    self.guild_level
+                    >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SCRAP]
+                ):
+                    self.add_item(ScrapAllButton(disabled=disabled))
             case GearMenuState.STATS:
                 self.add_back_button(disabled=disabled)
 

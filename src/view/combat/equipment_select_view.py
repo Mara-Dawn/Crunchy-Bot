@@ -5,6 +5,8 @@ import discord
 
 from combat.gear.gear import Gear
 from combat.gear.types import EquipmentSlot, GearModifierType, Rarity
+from combat.types import UnlockableFeature
+from config import Config
 from control.combat.combat_actor_manager import CombatActorManager
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.controller import Controller
@@ -284,8 +286,9 @@ class EquipmentSelectView(
         self.add_item(SelectButton(disabled=disable_equip))
         self.add_page_button(">", True, disabled=disabled)
         self.add_current_page_button(page_display)
-        self.add_scrap_balance_button(self.scrap_balance, row=2)
-        self.add_scrap_selected_button(disabled=disable_dismantle)
+        if self.guild_level >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SCRAP]:
+            self.add_scrap_balance_button(self.scrap_balance, row=2)
+            self.add_scrap_selected_button(disabled=disable_dismantle)
         self.add_craft_button(disabled=disable_craft)
         self.add_lock_button(disabled=disable_lock)
         self.add_unlock_button(disabled=disable_lock)
