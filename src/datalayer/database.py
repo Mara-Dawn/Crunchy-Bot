@@ -2980,7 +2980,9 @@ class Database:
         self, guild_id: int, user_id: int, season: int = None
     ) -> dict[PlantType, int]:
         user_balance = await self.get_member_beans(guild_id, user_id, season)
-        user_seeds = {PlantType.BEAN: user_balance}
+        user_seeds = {}
+        if user_balance > 0:
+            user_seeds[PlantType.BEAN] = user_balance
 
         seed_items = await self.get_item_counts_by_user(
             guild_id, user_id, season=season, item_types=BaseSeed.SEED_TYPES

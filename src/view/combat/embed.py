@@ -95,7 +95,8 @@ class SelectGearHeadEmbed(discord.Embed):
         description = "Manage your gear here. Equip pieces, lock them to keep them safe or scrap anything you don't need.\n\n"
         description += (
             "[EQ] - Item is currently equipped.\n\n"
-            "[🔒] - Item is locked and wont get scrapped by any scrap buttons."
+            "[🔒] - Item is locked and wont get scrapped by any scrap buttons.\n\n"
+            "[⚙️] - Item is currently selected for the forge."
         )
         if len(description) < max_width:
             spacing = max_width - len(description)
@@ -242,13 +243,23 @@ class ForgeEmbed(discord.Embed):
         max_rarity: Rarity,
         max_width: int = 45,
     ):
-        description = (
-            "Toss your scrap into this gaping hole and it will spit out random items for you.\n\n"
-            "Alternatively you can combine any three items in here to forge them into a new one. "
-            "Try to find all the possible combinations!\n\n"
-            f"Max item level: [35m{forge_level}[0m\n"
-            f"Max item rarity: [35m{max_rarity.value}[0m"
-        )
+
+        description = ["Welcome to the Mighty Forge!"]
+
+        if forge_level >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_RECIPES]:
+            description.append(
+                "You can attempt to combine any three items in here to forge them into a new one."
+            )
+
+        if forge_level >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SCRAP]:
+
+            description.append(
+                "Toss your scrap into this gaping hole and it will spit out random items for you.\n\n"
+                f"Max item level: [35m{forge_level}[0m\n"
+                f"Max item rarity: [35m{max_rarity.value}[0m"
+            )
+
+        description = "\n\n".join(description)
 
         if len(description) < max_width:
             spacing = max_width - len(description)

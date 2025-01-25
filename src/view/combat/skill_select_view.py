@@ -9,6 +9,8 @@ from combat.gear.types import EquipmentSlot, Rarity
 from combat.skills.skill import CharacterSkill, Skill
 from combat.skills.skills import EmptySkill
 from combat.skills.types import SkillType
+from combat.types import UnlockableFeature
+from config import Config
 from control.combat.combat_embed_manager import CombatEmbedManager
 from control.combat.combat_skill_manager import CombatSkillManager
 from control.controller import Controller
@@ -479,9 +481,13 @@ class SkillSelectView(
                 self.add_item(SelectSingleButton(disabled=disable_equip))
                 self.add_page_button(">", True)
                 self.add_current_page_button(page_display)
+                if (
+                    self.guild_level
+                    >= Config.UNLOCK_LEVELS[UnlockableFeature.FORGE_SCRAP]
+                ):
+                    self.add_scrap_amount_button(disabled=disable_dismantle)
+                    self.add_scrap_all_button(disabled=disable_dismantle)
                 self.add_scrap_balance_button(self.scrap_balance, row=2)
-                self.add_scrap_all_button(disabled=disable_dismantle)
-                self.add_scrap_amount_button(disabled=disable_dismantle)
                 self.add_add_to_forge_button(disabled=disable_forge, row=3)
                 self.add_back_button()
                 if self.forge_inventory is not None and not self.forge_inventory.empty:

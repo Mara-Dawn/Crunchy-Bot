@@ -136,9 +136,12 @@ class PlotView(ViewMenu):
 
         match self.plot.get_status():
             case PlotState.EMPTY:
+                plant_disabled = False
                 if len(self.user_seeds) > 0:
                     self.seed_select = SeedSelect(self.controller.bot, self.garden)
-                self.plant_button = PlantButton()
+                else:
+                    plant_disabled = True
+                self.plant_button = PlantButton(disabled=plant_disabled)
                 self.back_button = BackButton()
             case (
                 PlotState.SEED_PLANTED
@@ -226,8 +229,10 @@ class WaterButton(discord.ui.Button):
 
 class PlantButton(discord.ui.Button):
 
-    def __init__(self, label: str = "Plant"):
-        super().__init__(label=label, style=discord.ButtonStyle.green, row=1)
+    def __init__(self, label: str = "Plant", disabled: bool = False):
+        super().__init__(
+            label=label, style=discord.ButtonStyle.green, row=1, disabled=disabled
+        )
 
     async def callback(self, interaction: discord.Interaction):
         view: PlotView = self.view
