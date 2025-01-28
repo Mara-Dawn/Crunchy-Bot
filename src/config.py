@@ -60,6 +60,7 @@ class Config:
         UnlockableFeature.SHOP: 2,  # 2
         UnlockableFeature.FORGE_SCRAP: 2,  # 2
         UnlockableFeature.CRAFTING: 2,  # 2
+        UnlockableFeature.FORGE_SCRAP_SPECIFIC: 3,  # 3
         UnlockableFeature.MAX_GAMBA_1: 3,  # 3
         UnlockableFeature.DAILY_BEANS_1: 3,  # 3
         UnlockableFeature.GARDEN_2: 3,  # 3
@@ -68,7 +69,6 @@ class Config:
         UnlockableFeature.FORGE_SHOP: 4,  # 4
         UnlockableFeature.GARDEN_3: 5,  # 5
         UnlockableFeature.DAILY_BEANS_2: 5,  # 5
-        UnlockableFeature.FORGE_SCRAP_SPECIFIC: 5,  # 5
         UnlockableFeature.MAX_GAMBA_2: 6,  # 6
         UnlockableFeature.LOTTERY_2: 6,  # 6
         UnlockableFeature.GARDEN_4: 7,  # 7
