@@ -56,7 +56,6 @@ class Chaos(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Chaos Bean",
-            min_level=4,
             enchantment_type=EnchantmentType.CHAOS,
             description="Randomly rerolls all modifiers on a gear piece of any rarity.",
             information="",
@@ -72,7 +71,6 @@ class Divine(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Divine Bean",
-            min_level=5,
             enchantment_type=EnchantmentType.DIVINE,
             description=(
                 "Rerolls all modifier values on a gear piece of any rarity. "
@@ -91,7 +89,6 @@ class Exalted(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Exalted Bean",
-            min_level=4,
             enchantment_type=EnchantmentType.EXALTED,
             description=(
                 "Adds a random modifier to the item and upgrades it to the next rarity. "
@@ -114,7 +111,6 @@ class Null(BaseCraftingEnchantment):
 
     def __init__(self):
         super().__init__(
-            min_level=5,
             name="Null Bean",
             enchantment_type=EnchantmentType.NULL,
             description=(
@@ -139,7 +135,6 @@ class Chance(BaseCraftingEnchantment):
     def __init__(self):
         super().__init__(
             name="Chance Bean",
-            min_level=4,
             enchantment_type=EnchantmentType.CHANCE,
             description=(
                 "Upgrades a common item to a random rarity and rerolls "
@@ -157,7 +152,6 @@ class Crangle(BaseCraftingEnchantment):
 
     def __init__(self):
         super().__init__(
-            min_level=5,
             name="Crangle Bean",
             enchantment_type=EnchantmentType.CRANGLE,
             description=(
