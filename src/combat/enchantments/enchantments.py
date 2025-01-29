@@ -62,7 +62,7 @@ class Chaos(BaseCraftingEnchantment):
             rarities=[Rarity.UNIQUE],
             droppable=True,
             weight=80,
-            image_url="https://i.imgur.com/B6TuHg3.png",
+            image_url="https://i.imgur.com/7JQfvj3.png",
         )
 
 
