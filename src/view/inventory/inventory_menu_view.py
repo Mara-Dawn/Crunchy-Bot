@@ -279,7 +279,7 @@ class InventoryMenuView(
                 self.selected = None
                 event = UIEvent(
                     UIEventType.FORGE_ADD_ITEM,
-                    (interaction, item),
+                    (interaction, [item]),
                     self.id,
                 )
                 await self.controller.dispatch_ui_event(event)
