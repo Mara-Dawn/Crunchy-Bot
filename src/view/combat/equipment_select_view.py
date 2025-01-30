@@ -252,12 +252,12 @@ class EquipmentSelectView(
             disable_equip = True
             disable_dismantle = True
             disable_lock = True
+            disable_forge = True
         elif len(self.selected) > max_values:
             disable_equip = True
 
         if len(self.selected) != 1:
             disable_craft = True
-            disable_forge = True
 
         for selected_gear in self.selected:
             if selected_gear.id in [gear.id for gear in self.current]:
@@ -439,9 +439,7 @@ class EquipmentSelectView(
         interaction: discord.Interaction,
     ):
         await interaction.response.defer(ephemeral=True)
-        if len(self.selected) != 1:
-            return
-        selected = self.selected[0]
+        selected = self.selected
         self.selected = []
         event = UIEvent(
             UIEventType.FORGE_ADD_ITEM,

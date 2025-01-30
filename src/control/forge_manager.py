@@ -63,16 +63,17 @@ class ForgeManager(Service):
             return None
 
     async def add_to_forge(
-        self, member: discord.Member, item: Forgeable
+        self, member: discord.Member, items: list[Forgeable]
     ) -> ForgeInventory:
         if member not in self.forge_cache:
             self.forge_cache[member] = ForgeInventory(member)
 
-        if self.forge_cache[member].add(item):
-            message = (
-                f"{member.display_name} added {item.name} ({item.id}) to the forge."
-            )
-            self.logger.log(member.guild.id, message, self.log_name)
+        for item in items:
+            if self.forge_cache[member].add(item):
+                message = (
+                    f"{member.display_name} added {item.name} ({item.id}) to the forge."
+                )
+                self.logger.log(member.guild.id, message, self.log_name)
 
     async def remove_from_forge(
         self, member: discord.Member, item: Forgeable

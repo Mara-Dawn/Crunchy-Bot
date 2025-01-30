@@ -362,7 +362,7 @@ class SkillSelectView(
                 self.selected = []
                 event = UIEvent(
                     UIEventType.FORGE_ADD_ITEM,
-                    (interaction, skill),
+                    (interaction, [skill]),
                     self.id,
                 )
                 await self.controller.dispatch_ui_event(event)

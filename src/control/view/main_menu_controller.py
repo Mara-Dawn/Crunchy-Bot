@@ -67,8 +67,8 @@ class MainMenuViewController(ViewController):
                 )
             case UIEventType.FORGE_ADD_ITEM:
                 interaction = event.payload[0]
-                forgeable = event.payload[1]
-                await self.add_to_forge(interaction, forgeable, event.view_id)
+                forgeables = event.payload[1]
+                await self.add_to_forge(interaction, forgeables, event.view_id)
 
     async def main_menu_select(
         self,
@@ -224,9 +224,12 @@ class MainMenuViewController(ViewController):
         self.controller.detach_view_by_id(view_id)
 
     async def add_to_forge(
-        self, interaction: discord.Interaction, forgeable: Forgeable, view_id: int
+        self,
+        interaction: discord.Interaction,
+        forgeables: list[Forgeable],
+        view_id: int,
     ):
-        await self.forge_manager.add_to_forge(interaction.user, forgeable)
+        await self.forge_manager.add_to_forge(interaction.user, forgeables)
 
         view: EnchantmentView = self.controller.get_view(view_id)
         await view.refresh_ui()
